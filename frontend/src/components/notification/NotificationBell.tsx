@@ -111,8 +111,13 @@ export function NotificationBell() {
         page: 1,
         page_size: 10,
       })
-      setNotifications(result.notifications)
-      setUnreadCount(result.unread_count)
+      const nextNotifications = Array.isArray(result.notifications)
+        ? result.notifications
+        : []
+      setNotifications(nextNotifications)
+      setUnreadCount(
+        typeof result.unread_count === 'number' ? result.unread_count : 0,
+      )
     } catch (err) {
       console.error('Failed to fetch notifications:', err)
       setError('Failed to load notifications')

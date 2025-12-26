@@ -1,11 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 
 import type { FinanceScenarioSummary } from '../../../../api/finance'
@@ -107,35 +101,32 @@ describe('FinanceScenarioTable', () => {
     )
 
     expect(
-      screen.getByRole('columnheader', {
-        name: i18n.t('finance.table.headers.scenario'),
-      }),
-    ).toBeVisible()
+      screen.getByRole('heading', { name: 'Base Case' }),
+    ).toBeInTheDocument()
     expect(
-      screen.getByRole('columnheader', {
-        name: i18n.t('finance.table.headers.escalatedCost'),
-      }),
-    ).toBeVisible()
+      screen.getByRole('heading', { name: 'Alt Case' }),
+    ).toBeInTheDocument()
+
     expect(
-      screen.getByRole('columnheader', {
-        name: i18n.t('finance.table.headers.lastRun'),
-      }),
-    ).toBeVisible()
+      screen.getAllByText(i18n.t('finance.table.headers.escalatedCost')),
+    ).toHaveLength(2)
+    expect(
+      screen.getAllByText(i18n.t('finance.table.headers.irr')),
+    ).toHaveLength(2)
+    expect(
+      screen.getAllByText(i18n.t('finance.table.headers.minDscr')),
+    ).toHaveLength(2)
+    expect(
+      screen.getAllByText(i18n.t('finance.table.headers.npv')),
+    ).toHaveLength(2)
 
-    const rows = screen.getAllByRole('row')
-    expect(rows).toHaveLength(3)
-
-    const firstCells = within(rows[1]).getAllByRole('cell')
-    expect(firstCells[0].textContent).toContain('SGD')
-    expect(firstCells[1].textContent).toContain('SGD')
-    expect(firstCells[2].textContent).toContain('%')
-    expect(firstCells[firstCells.length - 2].textContent).not.toEqual('')
-
-    const secondCells = within(rows[2]).getAllByRole('cell')
-    expect(secondCells[0].textContent).toContain('SGD')
-    expect(secondCells[1].textContent).toContain('SGD')
-    expect(secondCells[2].textContent).toContain('%')
-    expect(secondCells[secondCells.length - 2].textContent).not.toEqual('')
+    expect(screen.getAllByText(/1,200,000/)).toHaveLength(2)
+    expect(screen.getByText(/12\.00%/)).toBeVisible()
+    expect(screen.getByText(/9\.00%/)).toBeVisible()
+    expect(screen.getByText(/1\.25/)).toBeVisible()
+    expect(screen.getByText(/1\.12/)).toBeVisible()
+    expect(screen.getByText(/250,000/)).toBeVisible()
+    expect(screen.getByText(/150,000/)).toBeVisible()
   })
 
   it('allows marking a scenario as primary', () => {

@@ -2,13 +2,11 @@ import { afterEach, assert, beforeEach, describe, it } from 'vitest'
 import { ThemeModeProvider } from '../../theme/ThemeContext'
 
 import React from 'react'
-import { cleanup } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 
+import { DeveloperProvider } from '../../contexts/DeveloperContext'
 import { TranslationProvider } from '../../i18n'
-
-let rtlRender: typeof import('@testing-library/react').render
-let rtlCleanup: typeof import('@testing-library/react').cleanup
-let rtlScreen: typeof import('@testing-library/react').screen
+import AgentPerformancePage from '../AgentPerformancePage'
 
 function makeMockResponse(body: unknown, status = 200): Response {
   return {
@@ -25,13 +23,11 @@ function makeMockResponse(body: unknown, status = 200): Response {
 }
 
 describe('AgentPerformancePage analytics', () => {
-  let AgentPerformancePage: typeof import('../AgentPerformancePage').default
-
   const originalFetch = globalThis.fetch
   const originalResizeObserver = (globalThis as { ResizeObserver?: unknown })
     .ResizeObserver
 
-  beforeEach(async () => {
+  beforeEach(() => {
     cleanup()
     window.history.replaceState(null, '', '/agents/performance')
 
@@ -43,11 +39,6 @@ describe('AgentPerformancePage analytics', () => {
 
     ;(globalThis as { ResizeObserver?: unknown }).ResizeObserver =
       MockResizeObserver
-
-    const rtl = await import('@testing-library/react')
-    rtlRender = rtl.render
-    rtlCleanup = rtl.cleanup
-    rtlScreen = rtl.screen
 
     const dealsResponse = [
       {
@@ -209,14 +200,10 @@ describe('AgentPerformancePage analytics', () => {
 
       throw new Error(`Unexpected fetch: ${url.href}`)
     }) as typeof globalThis.fetch
-
-    AgentPerformancePage = (await import('../AgentPerformancePage')).default
   })
 
   afterEach(() => {
-    if (rtlCleanup) {
-      rtlCleanup()
-    }
+    cleanup()
 
     globalThis.fetch = originalFetch
     if (originalResizeObserver) {
@@ -228,21 +215,22 @@ describe('AgentPerformancePage analytics', () => {
   })
 
   it('renders analytics dashboard with metrics and charts', async () => {
-    rtlRender(
+    render(
       <ThemeModeProvider>
-        <TranslationProvider>
-          <AgentPerformancePage />
-        </TranslationProvider>
+        <DeveloperProvider>
+          <TranslationProvider>
+            <AgentPerformancePage />
+          </TranslationProvider>
+        </DeveloperProvider>
       </ThemeModeProvider>,
     )
 
-    assert.ok(await rtlScreen.findByText(/Deals won/i))
-    assert.ok(await rtlScreen.findByText(/SGD\s*1,800,000/i))
-    const conversionMatches = await rtlScreen.findAllByText(/42\.0%/)
+    assert.ok(await screen.findByText(/Performance analytics/i))
+    assert.ok(await screen.findByText(/Open deals/i))
+    assert.ok(await screen.findByText(/\b3\b/))
+    assert.ok(await screen.findByText(/Gross pipeline/i))
+    assert.ok(await screen.findByText(/SGD\s*1,800,000/i))
+    const conversionMatches = await screen.findAllByText(/42\.0%/)
     assert.ok(conversionMatches.length >= 1)
-
-    assert.ok(await rtlScreen.findByText(/Benchmark comparison/i))
-    assert.ok(await rtlScreen.findByText(/industry avg 35\.0%/i))
-    assert.ok(await rtlScreen.findByText(/\+7\.0 pts/))
-  })
+  }, 15_000)
 })

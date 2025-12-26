@@ -29,6 +29,11 @@ interface UseFeasibilityComputeResult {
 export function useFeasibilityCompute({
   t,
 }: UseFeasibilityComputeOptions): UseFeasibilityComputeResult {
+  const tRef = useRef(t)
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
+
   const [payload, setPayload] = useState<PendingPayload | null>(null)
   const [result, setResult] = useState<BuildableSummary | null>(null)
   const [status, setStatus] = useState<WizardStatus>('idle')
@@ -151,7 +156,7 @@ export function useFeasibilityCompute({
           setStatus('success')
 
           setLiveAnnouncement(
-            t('wizard.accessibility.updated', {
+            tRef.current('wizard.accessibility.updated', {
               zone: mappedBox.zoneCode,
               overlays: mappedBox.overlays.length,
             }),
@@ -169,7 +174,9 @@ export function useFeasibilityCompute({
           dispatchTelemetry(duration, 'error', null, payload.address)
           setStatus('error')
           setErrorMessage(
-            error instanceof Error ? error.message : t('wizard.errors.generic'),
+            error instanceof Error
+              ? error.message
+              : tRef.current('wizard.errors.generic'),
           )
         })
         .finally(() => {
@@ -184,7 +191,7 @@ export function useFeasibilityCompute({
         debounceRef.current = null
       }
     }
-  }, [payload, dispatchTelemetry, t])
+  }, [payload, dispatchTelemetry])
 
   const updatePayloadAssumptions = useCallback(
     (typFloorToFloorM: number, efficiencyRatio: number) => {

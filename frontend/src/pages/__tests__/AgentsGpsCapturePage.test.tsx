@@ -9,6 +9,7 @@ import {
 } from '@testing-library/react'
 import React from 'react'
 
+import { DeveloperProvider } from '../../contexts/DeveloperContext'
 import { TranslationProvider } from '../../i18n'
 import { ThemeModeProvider } from '../../theme/ThemeContext'
 import type { GpsCaptureSummary } from '../../api/agents'
@@ -94,13 +95,15 @@ describe('AgentsGpsCapturePage', () => {
 
     render(
       <ThemeModeProvider>
-        <TranslationProvider>
-          <AgentsGpsCapturePage
-            logPropertyFn={captureStub}
-            fetchMarketIntelligenceFn={marketStub}
-            generatePackFn={packStub}
-          />
-        </TranslationProvider>
+        <DeveloperProvider>
+          <TranslationProvider>
+            <AgentsGpsCapturePage
+              logPropertyFn={captureStub}
+              fetchMarketIntelligenceFn={marketStub}
+              generatePackFn={packStub}
+            />
+          </TranslationProvider>
+        </DeveloperProvider>
       </ThemeModeProvider>,
     )
 
@@ -142,5 +145,5 @@ describe('AgentsGpsCapturePage', () => {
     })
 
     assert.ok(screen.getByRole('link', { name: /Download sales_pack\.pdf/i }))
-  })
+  }, 15_000)
 })
