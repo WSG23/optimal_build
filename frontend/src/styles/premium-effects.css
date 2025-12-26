@@ -1,0 +1,317 @@
+/* =============================================================================
+   PREMIUM EFFECTS CSS - Cyber/Mission Control Aesthetic
+   =============================================================================
+   Inspired by Google AI Studio "optimal-build-pro" reference.
+   Provides glassmorphism, neon glows, pulsing indicators, and premium animations.
+
+   Usage: Import this file in main.tsx or App.tsx
+   ============================================================================= */
+
+/* ===========================================================================
+   1. GLASSMORPHISM
+   =========================================================================== */
+
+.ob-glass {
+    background: var(--ob-surface-premium);
+    backdrop-filter: blur(var(--ob-blur-xl));
+    -webkit-backdrop-filter: blur(var(--ob-blur-xl));
+    border: var(--ob-border-fine);
+}
+
+.ob-glass-subtle {
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    border: var(--ob-border-fine);
+}
+
+/* ===========================================================================
+   2. NEON TEXT & GLOW EFFECTS
+   =========================================================================== */
+
+.ob-neon-text {
+    color: var(--ob-color-neon-cyan);
+    text-shadow: var(--ob-glow-neon-text);
+}
+
+.ob-neon-text-strong {
+    color: var(--ob-color-neon-cyan);
+    text-shadow: var(--ob-glow-neon-cyan);
+}
+
+.ob-neon-border {
+    border: var(--ob-border-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan);
+}
+
+.ob-neon-bg {
+    background-color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan);
+}
+
+/* ===========================================================================
+   3. BACKGROUND GRID PATTERN
+   =========================================================================== */
+
+.ob-grid-bg {
+    position: relative;
+}
+
+.ob-grid-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image:
+        linear-gradient(var(--ob-bg-grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--ob-bg-grid-color) 1px, transparent 1px);
+    background-size: var(--ob-bg-grid-size) var(--ob-bg-grid-size);
+    z-index: 0;
+}
+
+/* ===========================================================================
+   4. PREMIUM CARD TOP ACCENT BORDER
+   =========================================================================== */
+
+.ob-card-accent {
+    position: relative;
+}
+
+.ob-card-accent::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--ob-gradient-accent-fade);
+    border-radius: var(--ob-radius-sm) var(--ob-radius-sm) 0 0;
+}
+
+/* ===========================================================================
+   5. PULSING STATUS INDICATORS
+   =========================================================================== */
+
+@keyframes ob-pulse {
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes ob-pulse-glow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.6);
+    }
+    70% {
+        box-shadow: 0 0 0 8px rgba(0, 243, 255, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 243, 255, 0);
+    }
+}
+
+.ob-status-pulse {
+    animation: ob-pulse var(--ob-motion-pulse-duration) ease-in-out infinite;
+}
+
+.ob-status-pulse-glow {
+    animation: ob-pulse-glow var(--ob-motion-pulse-duration) infinite;
+}
+
+/* Status dot variants */
+.ob-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--ob-radius-xs);
+    background-color: var(--ob-color-neon-cyan);
+}
+
+.ob-status-dot--live {
+    background-color: var(--ob-color-neon-cyan);
+    animation: ob-pulse-glow var(--ob-motion-pulse-duration) infinite;
+}
+
+.ob-status-dot--success {
+    background-color: var(--ob-success-500);
+}
+
+.ob-status-dot--warning {
+    background-color: var(--ob-warning-500);
+}
+
+.ob-status-dot--error {
+    background-color: var(--ob-error-500);
+}
+
+.ob-status-dot--inactive {
+    background-color: var(--ob-neutral-600);
+}
+
+/* ===========================================================================
+   6. SCANLINE ANIMATION (Dark mode only, subtle)
+   =========================================================================== */
+
+@keyframes ob-scanline {
+    0% {
+        top: -100px;
+    }
+    100% {
+        top: 100vh;
+    }
+}
+
+.ob-scanline {
+    width: 100%;
+    height: 100px;
+    z-index: 1000;
+    background: linear-gradient(
+        0deg,
+        rgba(0, 243, 255, 0) 0%,
+        rgba(0, 243, 255, 0.02) 50%,
+        rgba(0, 243, 255, 0) 100%
+    );
+    position: fixed;
+    top: -100px;
+    left: 0;
+    pointer-events: none;
+    animation: ob-scanline var(--ob-motion-scanline-duration) linear infinite;
+}
+
+/* ===========================================================================
+   7. HOVER EFFECTS
+   =========================================================================== */
+
+.ob-hover-lift {
+    transition:
+        transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.2s ease;
+}
+
+.ob-hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--ob-shadow-lg);
+}
+
+.ob-hover-glow {
+    transition:
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.ob-hover-glow:hover {
+    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-neon-cyan);
+}
+
+/* ===========================================================================
+   8. FADE IN ANIMATION
+   =========================================================================== */
+
+@keyframes ob-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ob-fade-in {
+    animation: ob-fade-in 0.5s ease forwards;
+}
+
+/* ===========================================================================
+   9. HOLOGRAPHIC SHINE EFFECT (for premium cards)
+   =========================================================================== */
+
+@keyframes ob-holographic-shine {
+    0% {
+        background-position: -200% center;
+    }
+    100% {
+        background-position: 200% center;
+    }
+}
+
+.ob-holographic {
+    position: relative;
+    overflow: hidden;
+}
+
+.ob-holographic::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        120deg,
+        transparent 30%,
+        rgba(0, 243, 255, 0.1) 50%,
+        transparent 70%
+    );
+    background-size: 200% 100%;
+    animation: ob-holographic-shine var(--ob-motion-shine-duration) ease-in-out
+        infinite;
+    pointer-events: none;
+}
+
+/* ===========================================================================
+   10. PROGRESS BAR STRIPES
+   =========================================================================== */
+
+@keyframes ob-progress-stripes {
+    0% {
+        background-position: 100% 0;
+    }
+    100% {
+        background-position: 0 0;
+    }
+}
+
+.ob-progress-striped {
+    background-image: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.15) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.15) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 1rem 1rem;
+    animation: ob-progress-stripes 1s linear infinite;
+}
+
+/* ===========================================================================
+   11. ACCESSIBILITY - Respect reduced motion
+   =========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .ob-status-pulse,
+    .ob-status-pulse-glow,
+    .ob-status-dot--live,
+    .ob-scanline,
+    .ob-holographic::after,
+    .ob-progress-striped {
+        animation: none;
+    }
+
+    .ob-hover-lift:hover {
+        transform: none;
+    }
+
+    .ob-fade-in {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+}

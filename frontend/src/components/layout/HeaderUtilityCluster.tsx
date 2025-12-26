@@ -78,18 +78,17 @@ export function HeaderUtilityCluster() {
   }
 
   const iconButtonSx = {
-    color: 'text.secondary',
-    border: 1,
-    borderColor: alpha(theme.palette.divider, 0.2),
-    borderRadius: 'var(--ob-radius-pill)',
+    color: 'var(--ob-text-dim)',
+    border: 'var(--ob-border-fine)',
+    borderRadius: 'var(--ob-radius-sm)',
     width: 'var(--ob-space-250)',
     height: 'var(--ob-space-250)',
-    background: alpha(theme.palette.background.paper, 0.05),
+    background: 'var(--ob-overlay-subtle)',
     backdropFilter: 'blur(var(--ob-blur-sm))',
     '&:hover': {
-      color: 'text.primary',
-      background: alpha(theme.palette.text.primary, 0.05),
-      borderColor: alpha(theme.palette.text.primary, 0.2),
+      color: 'var(--ob-color-neon-cyan)',
+      background: 'var(--ob-color-neon-cyan-dim)',
+      borderColor: 'var(--ob-color-neon-cyan)',
     },
   }
 
@@ -209,11 +208,15 @@ export function HeaderUtilityCluster() {
           sx={{
             width: 'var(--ob-space-250)',
             height: 'var(--ob-space-250)',
-            border: 1,
-            borderColor: alpha(theme.palette.background.paper, 0.25),
+            border: '1px solid var(--ob-color-neon-cyan)',
             cursor: 'pointer',
-            bgcolor: 'primary.main',
+            bgcolor: 'var(--ob-color-neon-cyan-dim)',
+            color: 'var(--ob-color-neon-cyan)',
             fontSize: 'var(--ob-font-size-sm)',
+            fontWeight: 700,
+            '&:hover': {
+              boxShadow: 'var(--ob-glow-neon-cyan)',
+            },
           }}
         >
           US

@@ -102,20 +102,19 @@ export function TopUtilityMenu() {
   }
 
   const iconButtonSx = {
-    borderRadius: 'var(--ob-radius-pill)',
-    border: 1,
-    borderColor: alpha(theme.palette.divider, 0.2),
+    borderRadius: 'var(--ob-radius-sm)',
+    border: 'var(--ob-border-fine)',
     width: 'var(--ob-space-250)',
     height: 'var(--ob-space-250)',
-    color: open ? 'text.primary' : 'text.secondary',
+    color: open ? 'var(--ob-color-neon-cyan)' : 'var(--ob-text-dim)',
     background: open
-      ? alpha(theme.palette.text.primary, 0.06)
-      : alpha(theme.palette.background.paper, 0.05),
+      ? 'var(--ob-color-neon-cyan-dim)'
+      : 'var(--ob-overlay-subtle)',
     backdropFilter: 'blur(var(--ob-blur-sm))',
     '&:hover': {
-      color: 'text.primary',
-      background: alpha(theme.palette.text.primary, 0.07),
-      borderColor: alpha(theme.palette.text.primary, 0.2),
+      color: 'var(--ob-color-neon-cyan)',
+      background: 'var(--ob-color-neon-cyan-dim)',
+      borderColor: 'var(--ob-color-neon-cyan)',
     },
   } as const
 

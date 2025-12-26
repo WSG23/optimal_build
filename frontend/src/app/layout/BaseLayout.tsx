@@ -2,8 +2,10 @@ import { ReactNode, useEffect, useState } from 'react'
 import { Box } from '@mui/material'
 import { BaseLayoutProvider } from './BaseLayoutContext'
 import { YosaiTopNav } from '../../components/layout/YosaiTopNav'
+import { useThemeMode } from '../../theme/ThemeContext'
 
 export function BaseLayout({ children }: { children: ReactNode }) {
+  const { mode } = useThemeMode()
   const [isNavPinned, setIsNavPinned] = useState(() => {
     if (typeof window === 'undefined') return true
     const value = window.localStorage.getItem('ob_top_nav_pinned')
@@ -29,8 +31,29 @@ export function BaseLayout({ children }: { children: ReactNode }) {
           overflow: 'hidden',
           bgcolor: 'background.default',
           color: 'text.primary',
+          position: 'relative',
         }}
       >
+        {/* Background Grid Pattern */}
+        <Box
+          aria-hidden
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            pointerEvents: 'none',
+            opacity: mode === 'dark' ? 0.5 : 0.3,
+            backgroundImage: `
+              linear-gradient(var(--ob-bg-grid-color) 1px, transparent 1px),
+              linear-gradient(90deg, var(--ob-bg-grid-color) 1px, transparent 1px)
+            `,
+            backgroundSize: 'var(--ob-bg-grid-size) var(--ob-bg-grid-size)',
+            zIndex: 0,
+          }}
+        />
+
+        {/* Scanline Animation (dark mode only) */}
+        {mode === 'dark' && <Box className="ob-scanline" aria-hidden />}
+
         <YosaiTopNav
           isPinned={isNavPinned}
           onTogglePinned={() => setIsNavPinned((prev) => !prev)}
@@ -43,6 +66,8 @@ export function BaseLayout({ children }: { children: ReactNode }) {
             flexDirection: 'column',
             minHeight: 0,
             overflow: 'hidden',
+            position: 'relative',
+            zIndex: 1,
           }}
         >
           {children}

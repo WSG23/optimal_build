@@ -353,6 +353,52 @@
     --ob-glow-warning: 0 0 10px rgba(234, 179, 8, 0.2);
 
     /* ===========================================================================
+     9.3 PREMIUM NEON EFFECTS - Cyber/Mission Control Aesthetic
+     =========================================================================== */
+
+    /* Neon Cyan Accent (Premium data visualization) */
+    --ob-color-neon-cyan: #00f3ff;
+    --ob-color-neon-cyan-rgb: 0 243 255;
+    --ob-color-neon-cyan-dim: rgba(0, 243, 255, 0.15);
+
+    /* Neon Glow Effects */
+    --ob-glow-neon-cyan: 0 0 15px rgba(0, 243, 255, 0.4);
+    --ob-glow-neon-cyan-strong: 0 0 20px rgba(0, 243, 255, 0.5);
+    --ob-glow-neon-text: 0 0 8px rgba(0, 243, 255, 0.4);
+
+    /* Status Glows (pulsing indicators) */
+    --ob-glow-status-live: 0 0 8px rgba(0, 243, 255, 0.6);
+    --ob-glow-status-success: 0 0 8px rgba(0, 255, 157, 0.6);
+    --ob-glow-status-error: 0 0 8px rgba(255, 51, 102, 0.6);
+    --ob-glow-status-warning: 0 0 8px rgba(245, 158, 11, 0.6);
+
+    /* Premium Glass Surface (darker, more blur) */
+    --ob-surface-premium: rgba(15, 23, 42, 0.75);
+    --ob-surface-premium-blur: 16px;
+
+    /* Overlay colors (for dark backgrounds) */
+    --ob-overlay-subtle: rgba(0, 0, 0, 0.05);
+    --ob-overlay-light: rgba(0, 0, 0, 0.1);
+    --ob-overlay-medium: rgba(0, 0, 0, 0.2);
+    --ob-overlay-strong: rgba(0, 0, 0, 0.3);
+
+    /* Background grid pattern */
+    --ob-bg-grid-color: rgba(255, 255, 255, 0.03);
+    --ob-bg-grid-size: 40px;
+
+    /* Neon Borders */
+    --ob-border-neon-cyan: 1px solid var(--ob-color-neon-cyan);
+    --ob-border-neon-hover: 1px solid rgba(0, 243, 255, 0.3);
+
+    /* Gradient Accent (for card top borders) */
+    --ob-gradient-accent-fade: linear-gradient(to right, var(--ob-color-neon-cyan), transparent);
+
+    /* Animation Tokens */
+    --ob-motion-pulse-duration: 2s;
+    --ob-motion-shine-duration: 3s;
+    --ob-motion-scanline-duration: 10s;
+
+    /* ===========================================================================
      10. SHADOWS
      =========================================================================== */
 
@@ -494,4 +540,15 @@ html[data-theme='light'] {
     --ob-border-fine-hover: 1px solid rgba(0, 0, 0, 0.15);
     --ob-divider: 1px solid rgba(0, 0, 0, 0.05);
     --ob-divider-strong: 1px solid rgba(0, 0, 0, 0.08);
+
+    /* Premium Effects (light mode adjustments) */
+    --ob-surface-premium: rgba(255, 255, 255, 0.9);
+    --ob-glow-neon-cyan: 0 0 10px rgba(0, 243, 255, 0.3);
+    --ob-bg-grid-color: rgba(0, 0, 0, 0.03);
+
+    /* Overlay colors (for light backgrounds - higher opacity for visibility) */
+    --ob-overlay-subtle: rgba(0, 0, 0, 0.06);
+    --ob-overlay-light: rgba(0, 0, 0, 0.10);
+    --ob-overlay-medium: rgba(0, 0, 0, 0.15);
+    --ob-overlay-strong: rgba(0, 0, 0, 0.22);
 }

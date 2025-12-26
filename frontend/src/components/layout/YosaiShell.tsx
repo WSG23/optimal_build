@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { Box, Typography, Stack, useTheme, alpha } from '@mui/material'
+import { Box, Typography, Stack } from '@mui/material'
 import { YosaiSidebar } from './YosaiSidebar'
 import { useBaseLayoutContext } from '../../app/layout/BaseLayoutContext'
 import { HeaderUtilityCluster } from './HeaderUtilityCluster'
@@ -32,7 +32,6 @@ export function AppShell({
   hideSidebar,
   hideHeader = false,
 }: AppShellProps) {
-  const theme = useTheme()
   const { inBaseLayout, topOffset } = useBaseLayoutContext()
   const { path } = useRouterController()
 
@@ -82,17 +81,14 @@ export function AppShell({
             <Box
               component="header"
               key={path}
+              className="ob-glass ob-card-accent"
               sx={{
                 py: 'var(--ob-space-200)',
                 px: 'var(--ob-space-300)',
-                borderBottom: 1,
-                borderColor: 'divider',
                 display: 'flex',
                 alignItems: 'flex-start',
                 justifyContent: 'space-between',
                 gap: 'var(--ob-space-150)',
-                bgcolor: alpha(theme.palette.background.default, 0.8),
-                backdropFilter: 'blur(var(--ob-blur-md))',
                 // When the top ribbon is unpinned, it becomes an overlay; give the
                 // content a small breathing room so the header doesn't feel cramped.
                 mt: inBaseLayout && topOffset === 0 ? 'var(--ob-space-075)' : 0,

@@ -142,26 +142,24 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
         variant="text"
         sx={{
           justifyContent: 'center',
-          color: isActive ? 'primary.main' : 'text.secondary',
-          bgcolor: isActive
-            ? alpha(theme.palette.primary.main, 0.12)
-            : 'transparent',
-          borderRadius: 'var(--ob-radius-xs)',
-          px: 'var(--ob-space-075)',
-          py: 'var(--ob-space-050)',
-          textTransform: 'none',
-          fontWeight: isActive ? 600 : 500,
-          fontSize: 'var(--ob-font-size-sm)',
+          color: isActive ? 'var(--ob-color-neon-cyan)' : 'text.secondary',
+          bgcolor: isActive ? 'var(--ob-color-neon-cyan-dim)' : 'transparent',
+          borderRadius: 0,
+          px: 'var(--ob-space-150)',
+          py: 'var(--ob-space-100)',
+          textTransform: 'uppercase',
+          fontWeight: isActive ? 800 : 600,
+          fontSize: 'var(--ob-font-size-xs)',
+          letterSpacing: 'var(--ob-letter-spacing-wider)',
           whiteSpace: 'nowrap',
-          border: 1,
-          borderColor: isActive
-            ? alpha(theme.palette.primary.main, 0.25)
-            : 'transparent',
+          position: 'relative',
+          borderBottom: isActive
+            ? '2px solid var(--ob-color-neon-cyan)'
+            : '2px solid transparent',
+          textShadow: isActive ? 'var(--ob-glow-neon-text)' : 'none',
           '&:hover': {
-            bgcolor: isActive
-              ? alpha(theme.palette.primary.main, 0.16)
-              : alpha(theme.palette.text.primary, 0.06),
-            color: isActive ? 'primary.main' : 'text.primary',
+            bgcolor: 'var(--ob-color-neon-cyan-dim)',
+            color: 'var(--ob-text-main)',
           },
         }}
       >
@@ -230,21 +228,14 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
         }}
       >
         <Box
+          className="ob-glass"
           sx={{
             height: UTILITY_BAR_HEIGHT,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             px: 'var(--ob-space-200)',
-            borderBottom: 1,
-            borderColor: alpha(theme.palette.divider, 0.35),
-            bgcolor: alpha(
-              theme.palette.background.default,
-              isPinned ? 0.85 : 0.92,
-            ),
-            backdropFilter: isPinned
-              ? 'blur(var(--ob-blur-md))'
-              : 'blur(var(--ob-blur-lg))',
+            borderBottom: 'var(--ob-border-fine)',
           }}
         >
           <Stack
@@ -304,17 +295,10 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
         <Box
           component="nav"
           aria-label="Primary"
+          className="ob-glass"
           sx={{
             height: NAV_BAR_HEIGHT,
-            borderBottom: 1,
-            borderColor: 'divider',
-            bgcolor: alpha(
-              theme.palette.background.default,
-              isPinned ? 0.85 : 0.92,
-            ),
-            backdropFilter: isPinned
-              ? 'blur(var(--ob-blur-md))'
-              : 'blur(var(--ob-blur-lg))',
+            borderBottom: 'var(--ob-border-fine)',
           }}
         >
           <Stack
@@ -331,37 +315,69 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
               to="/"
               variant="text"
               sx={{
-                px: 'var(--ob-space-050)',
+                px: 'var(--ob-space-100)',
                 py: 'var(--ob-space-050)',
                 borderRadius: 'var(--ob-radius-xs)',
                 textTransform: 'none',
                 whiteSpace: 'nowrap',
                 minWidth: 0,
+                '&:hover': {
+                  bgcolor: 'var(--ob-color-neon-cyan-dim)',
+                },
               }}
             >
-              <Stack direction="row" alignItems="baseline" spacing={1}>
-                <Typography
-                  component="span"
+              <Stack direction="row" alignItems="center" spacing={1.5}>
+                {/* Neon CPU Icon */}
+                <Box
                   sx={{
-                    color: 'primary.main',
-                    fontWeight: 700,
-                    letterSpacing: 'var(--ob-letter-spacing-wider)',
-                    fontSize: 'var(--ob-font-size-sm)',
+                    width: 'var(--ob-space-250)',
+                    height: 'var(--ob-space-250)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 'var(--ob-radius-sm)',
+                    border: '1px solid var(--ob-color-neon-cyan)',
+                    boxShadow: 'var(--ob-glow-neon-cyan)',
+                    bgcolor: 'var(--ob-color-neon-cyan-dim)',
                   }}
                 >
-                  OPTIMAL BUILD
-                </Typography>
-                <Typography
-                  component="span"
-                  sx={{
-                    color: 'text.secondary',
-                    fontFamily: 'var(--ob-font-family-mono)',
-                    fontSize: 'var(--ob-font-size-2xs)',
-                    letterSpacing: 'var(--ob-letter-spacing-wider)',
-                  }}
-                >
-                  v2
-                </Typography>
+                  <Box
+                    component="span"
+                    sx={{
+                      color: 'var(--ob-color-neon-cyan)',
+                      fontSize: 'var(--ob-font-size-md)',
+                      lineHeight: 1,
+                    }}
+                  >
+                    ⬡
+                  </Box>
+                </Box>
+                <Stack direction="row" alignItems="baseline" spacing={1}>
+                  <Typography
+                    component="span"
+                    sx={{
+                      color: 'var(--ob-text-main)',
+                      fontWeight: 800,
+                      letterSpacing: 'var(--ob-letter-spacing-wider)',
+                      fontSize: 'var(--ob-font-size-md)',
+                    }}
+                  >
+                    OPTIMAL BUILD
+                  </Typography>
+                  <Box
+                    component="span"
+                    className="ob-neon-text"
+                    sx={{
+                      fontSize: 'var(--ob-font-size-2xs)',
+                      fontWeight: 800,
+                      border: '1px solid var(--ob-color-neon-cyan-dim)',
+                      padding: '2px 6px',
+                      borderRadius: 'var(--ob-radius-xs)',
+                    }}
+                  >
+                    V2.5_PRO
+                  </Box>
+                </Stack>
               </Stack>
             </Button>
 

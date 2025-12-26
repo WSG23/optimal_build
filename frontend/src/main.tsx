@@ -7,6 +7,7 @@ import { DeveloperProvider } from './contexts/DeveloperContext'
 import { AppThemeProvider } from './theme/YosaiThemeProvider'
 import '@ob/tokens.css'
 import './styles/index.css'
+import './styles/premium-effects.css'
 import { AppShell } from './app/layout/AppShell'
 import { BaseLayout } from './app/layout/BaseLayout'
 
