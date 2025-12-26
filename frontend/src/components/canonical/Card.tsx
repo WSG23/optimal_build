@@ -8,15 +8,21 @@ export interface CardProps {
    * - 'default': Solid surface background
    * - 'glass': Glassmorphism with backdrop blur
    * - 'ghost': Minimal, border only
+   * - 'premium': Premium dark glass with stronger blur (cyber aesthetic)
    */
-  variant?: 'default' | 'glass' | 'ghost'
+  variant?: 'default' | 'glass' | 'ghost' | 'premium'
   /**
    * Hover effect:
    * - 'none': No hover effect
    * - 'subtle': Slight border highlight
    * - 'lift': Lift with shadow
+   * - 'glow': Neon cyan border glow (cyber aesthetic)
    */
-  hover?: 'none' | 'subtle' | 'lift'
+  hover?: 'none' | 'subtle' | 'lift' | 'glow'
+  /**
+   * Show gradient accent border on top (cyber aesthetic)
+   */
+  accent?: boolean
   /**
    * Enable entrance animation
    */
@@ -45,6 +51,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
       children,
       variant = 'default',
       hover = 'subtle',
+      accent = false,
       animated = false,
       onClick,
       sx = {},
@@ -75,6 +82,11 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         background: 'transparent',
         border: 'var(--ob-border-fine-strong)',
       },
+      premium: {
+        background: 'var(--ob-surface-premium)',
+        backdropFilter: 'blur(var(--ob-blur-xl))',
+        WebkitBackdropFilter: 'blur(var(--ob-blur-xl))',
+      },
     }
 
     // Hover styles
@@ -92,7 +104,30 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           border: 'var(--ob-border-fine-hover)',
         },
       },
+      glow: {
+        '&:hover': {
+          borderColor: 'var(--ob-color-neon-cyan)',
+          boxShadow: 'var(--ob-glow-neon-cyan)',
+        },
+      },
     }
+
+    // Accent styles (gradient top border)
+    const accentStyles: SxProps<Theme> = accent
+      ? {
+          position: 'relative',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '2px',
+            background: 'var(--ob-gradient-accent-fade)',
+            borderRadius: 'var(--ob-radius-sm) var(--ob-radius-sm) 0 0',
+          },
+        }
+      : {}
 
     // Animation styles
     const animationStyles: SxProps<Theme> = animated
@@ -122,6 +157,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           baseStyles,
           variantStyles[variant],
           hoverStyles[hover],
+          accentStyles,
           animationStyles,
           ...resolvedSx,
         ]}
