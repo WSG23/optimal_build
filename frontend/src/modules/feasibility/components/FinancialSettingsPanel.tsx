@@ -118,10 +118,14 @@ export function FinancialSettingsPanel({
                   color: 'rgba(255,255,255,0.9)',
                   '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
                   '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.4)' },
-                  '&.Mui-focused fieldset': { borderColor: '#06b6d4' },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'var(--ob-color-brand-primary)',
+                  },
                 },
                 '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                '& .MuiInputLabel-root.Mui-focused': { color: '#06b6d4' },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: 'var(--ob-color-brand-primary)',
+                },
                 '& .MuiInputAdornment-root': { color: 'rgba(255,255,255,0.5)' },
               }}
             />
@@ -144,10 +148,14 @@ export function FinancialSettingsPanel({
                   color: 'rgba(255,255,255,0.9)',
                   '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
                   '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.4)' },
-                  '&.Mui-focused fieldset': { borderColor: '#06b6d4' },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'var(--ob-color-brand-primary)',
+                  },
                 },
                 '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                '& .MuiInputLabel-root.Mui-focused': { color: '#06b6d4' },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: 'var(--ob-color-brand-primary)',
+                },
                 '& .MuiInputAdornment-root': { color: 'rgba(255,255,255,0.5)' },
               }}
             />
@@ -170,10 +178,14 @@ export function FinancialSettingsPanel({
                   color: 'rgba(255,255,255,0.9)',
                   '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
                   '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.4)' },
-                  '&.Mui-focused fieldset': { borderColor: '#06b6d4' },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'var(--ob-color-brand-primary)',
+                  },
                 },
                 '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                '& .MuiInputLabel-root.Mui-focused': { color: '#06b6d4' },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: 'var(--ob-color-brand-primary)',
+                },
                 '& .MuiInputAdornment-root': { color: 'rgba(255,255,255,0.5)' },
               }}
             />

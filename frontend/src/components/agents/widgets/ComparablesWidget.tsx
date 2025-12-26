@@ -167,7 +167,7 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
       </Box>
 
       {statistics && (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid container spacing="var(--ob-space-100)" sx={{ mb: 3 }}>
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>

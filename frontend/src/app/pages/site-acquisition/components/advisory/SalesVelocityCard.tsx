@@ -57,8 +57,8 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
     <section
       style={{
         background: 'white',
-        border: '1px solid #e5e7eb',
-        borderRadius: '4px',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
@@ -88,7 +88,7 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
           <p
             style={{
               margin: '0.25rem 0 0',
-              color: '#6b7280',
+              color: 'var(--ob-color-text-muted)',
               fontSize: '0.95rem',
             }}
           >
@@ -102,9 +102,11 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
           disabled={disabled}
           style={{
             padding: '0.65rem 1.4rem',
-            borderRadius: '999px',
+            borderRadius: 'var(--ob-radius-pill)',
             border: 'none',
-            background: disabled ? '#d1d5db' : '#111827',
+            background: disabled
+              ? 'var(--ob-color-border-subtle)'
+              : 'var(--ob-color-text-primary)',
             color: 'white',
             fontWeight: 600,
             cursor: disabled ? 'not-allowed' : 'pointer',
@@ -184,11 +186,11 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
       {error && (
         <div
           style={{
-            background: '#fef2f2',
-            border: '1px solid #fecdd3',
-            color: '#b91c1c',
+            background: 'var(--ob-error-50)',
+            border: '1px solid var(--ob-error-200)',
+            color: 'var(--ob-error-700)',
             padding: '0.9rem 1rem',
-            borderRadius: '4px',
+            borderRadius: 'var(--ob-radius-sm)',
             fontSize: '0.95rem',
           }}
         >
@@ -236,20 +238,20 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
                   key={idx}
                   style={{
                     padding: '0.35rem 0.75rem',
-                    borderRadius: '999px',
-                    border: '1px solid #e5e7eb',
+                    borderRadius: 'var(--ob-radius-pill)',
+                    border: '1px solid var(--ob-color-border-subtle)',
                     background:
                       risk.level === 'high'
-                        ? '#fef2f2'
+                        ? 'var(--ob-error-50)'
                         : risk.level === 'medium'
-                          ? '#fefce8'
-                          : '#f1f5f9',
+                          ? 'var(--ob-warning-50)'
+                          : 'var(--ob-color-bg-surface-elevated)',
                     color:
                       risk.level === 'high'
-                        ? '#b91c1c'
+                        ? 'var(--ob-error-700)'
                         : risk.level === 'medium'
-                          ? '#854d0e'
-                          : '#1f2937',
+                          ? 'var(--ob-warning-700)'
+                          : 'var(--ob-color-text-primary)',
                     fontSize: '0.85rem',
                     fontWeight: 600,
                   }}
@@ -272,7 +274,11 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
                 Recommendations
               </h4>
               <ul
-                style={{ margin: 0, paddingLeft: '1.25rem', color: '#4b5563' }}
+                style={{
+                  margin: 0,
+                  paddingLeft: '1.25rem',
+                  color: 'var(--ob-color-text-secondary)',
+                }}
               >
                 {result.recommendations.map((rec, idx) => (
                   <li key={idx} style={{ marginBottom: '0.2rem' }}>
@@ -349,7 +355,11 @@ function InputField({
 }: InputFieldProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-      <label style={{ fontSize: '0.85rem', color: '#374151' }}>{label}</label>
+      <label
+        style={{ fontSize: '0.85rem', color: 'var(--ob-color-text-secondary)' }}
+      >
+        {label}
+      </label>
       <input
         type={type}
         value={value}
@@ -360,8 +370,8 @@ function InputField({
         style={{
           width: '100%',
           padding: '0.75rem',
-          borderRadius: '6px',
-          border: '1px solid #d2d2d7',
+          borderRadius: 'var(--ob-radius-md)',
+          border: '1px solid var(--ob-color-border-subtle)',
         }}
       />
     </div>
@@ -385,7 +395,11 @@ function SelectField({
 }: SelectFieldProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-      <label style={{ fontSize: '0.85rem', color: '#374151' }}>{label}</label>
+      <label
+        style={{ fontSize: '0.85rem', color: 'var(--ob-color-text-secondary)' }}
+      >
+        {label}
+      </label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -393,9 +407,11 @@ function SelectField({
         style={{
           width: '100%',
           padding: '0.75rem',
-          borderRadius: '6px',
-          border: '1px solid #d2d2d7',
-          background: readOnly ? '#f9fafb' : 'white',
+          borderRadius: 'var(--ob-radius-md)',
+          border: '1px solid var(--ob-color-border-subtle)',
+          background: readOnly
+            ? 'var(--ob-color-bg-surface-elevated)'
+            : 'white',
         }}
       >
         {options.map((option) => (
@@ -413,12 +429,16 @@ type StatCardProps = { label: string; value: string }
 function StatCard({ label, value }: StatCardProps) {
   return (
     <div
-      style={{ padding: '1rem', background: '#f5f5f7', borderRadius: '4px' }}
+      style={{
+        padding: '1rem',
+        background: 'var(--ob-color-bg-surface-elevated)',
+        borderRadius: 'var(--ob-radius-sm)',
+      }}
     >
       <div
         style={{
           fontSize: '0.875rem',
-          color: '#6e6e73',
+          color: 'var(--ob-color-text-muted)',
           marginBottom: '0.35rem',
         }}
       >
@@ -444,9 +464,15 @@ function Benchmark({ label, value, suffix }: BenchmarkProps) {
         : String(value)
   return (
     <div
-      style={{ padding: '0.9rem', background: '#f8fafc', borderRadius: '4px' }}
+      style={{
+        padding: '0.9rem',
+        background: 'var(--ob-color-bg-surface-elevated)',
+        borderRadius: 'var(--ob-radius-sm)',
+      }}
     >
-      <div style={{ fontSize: '0.85rem', color: '#6e6e73' }}>{label}</div>
+      <div style={{ fontSize: '0.85rem', color: 'var(--ob-color-text-muted)' }}>
+        {label}
+      </div>
       <div style={{ fontWeight: 600 }}>{display}</div>
     </div>
   )

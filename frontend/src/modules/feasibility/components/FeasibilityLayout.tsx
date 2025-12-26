@@ -88,7 +88,7 @@ export function FeasibilityLayout({
           display: 'flex',
           flexDirection: 'column',
           gap: '0',
-          borderRadius: '4px', // Rounded corners for floating feel
+          borderRadius: 'var(--ob-radius-sm)', // Rounded corners for floating feel
           background: 'rgba(20, 20, 25, 0.65)', // Darker glass for "Command Center"
           backdropFilter: 'blur(var(--ob-blur-lg)) saturate(180%)',
           WebkitBackdropFilter: 'blur(var(--ob-blur-lg)) saturate(180%)',
@@ -104,7 +104,7 @@ export function FeasibilityLayout({
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '24px',
+            padding: 'var(--ob-space-300)',
             scrollbarWidth: 'thin',
           }}
         >
@@ -143,15 +143,15 @@ export function FeasibilityLayout({
       <Box
         sx={{
           position: 'absolute',
-          top: '24px',
-          right: '24px',
+          top: 'var(--ob-space-300)',
+          right: 'var(--ob-space-300)',
           zIndex: 20,
         }}
       >
         <Paper
           elevation={0}
           sx={{
-            borderRadius: '4px',
+            borderRadius: 'var(--ob-radius-sm)',
             overflow: 'hidden',
             background: 'rgba(20, 20, 30, 0.7)',
             backdropFilter: 'blur(var(--ob-blur-md))',
@@ -171,7 +171,7 @@ export function FeasibilityLayout({
                 border: 'none',
                 borderBottom: '1px solid rgba(255,255,255,0.05)',
                 '&.Mui-selected': {
-                  color: '#06b6d4', // Cyan
+                  color: 'var(--ob-color-brand-primary)', // Cyan
                   background: 'rgba(6, 182, 212, 0.15)',
                   '&:hover': {
                     background: 'rgba(6, 182, 212, 0.25)',

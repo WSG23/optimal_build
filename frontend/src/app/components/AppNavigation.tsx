@@ -107,14 +107,14 @@ export function AppNavigation({
             fontWeight: 500,
             color:
               selectedWorkspace === 'agent'
-                ? '#fff'
+                ? 'var(--ob-color-text-strong)'
                 : 'rgba(255, 255, 255, 0.6)',
             background:
               selectedWorkspace === 'agent'
                 ? 'rgba(255, 255, 255, 0.1)'
                 : 'transparent',
             border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '6px',
+            borderRadius: 'var(--ob-radius-md)',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
           }}
@@ -131,14 +131,14 @@ export function AppNavigation({
             fontWeight: 500,
             color:
               selectedWorkspace === 'developer'
-                ? '#fff'
+                ? 'var(--ob-color-text-strong)'
                 : 'rgba(255, 255, 255, 0.6)',
             background:
               selectedWorkspace === 'developer'
                 ? 'rgba(255, 255, 255, 0.1)'
                 : 'transparent',
             border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '6px',
+            borderRadius: 'var(--ob-radius-md)',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
           }}

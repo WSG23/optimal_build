@@ -638,7 +638,7 @@ export function SiteAcquisitionPage() {
                     sx={{
                       mt: 4,
                       bgcolor: 'background.default',
-                      borderRadius: 2,
+                      borderRadius: 'var(--ob-radius-sm)',
                       overflow: 'hidden',
                     }}
                   >
@@ -659,7 +659,7 @@ export function SiteAcquisitionPage() {
                           px: 1,
                           border: '1px solid',
                           borderColor: 'secondary.main',
-                          borderRadius: 1,
+                          borderRadius: 'var(--ob-radius-xs)',
                         }}
                       >
                         {previewJob.status.toUpperCase()}

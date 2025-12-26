@@ -61,7 +61,7 @@ function HolographicCard({
         minWidth: 160,
         flex: 1,
         p: 2,
-        borderRadius: 3,
+        borderRadius: 'var(--ob-radius-md)',
         background: 'rgba(30, 30, 30, 0.6)',
         backdropFilter: 'blur(var(--ob-blur-md))',
         border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -128,7 +128,7 @@ function HolographicCard({
           variant="h4"
           sx={{
             fontWeight: 700,
-            color: '#fff',
+            color: 'var(--ob-color-text-inverse)',
             textShadow: '0 2px 10px rgba(0,0,0,0.5)',
             fontSize: '1.75rem',
             lineHeight: 1,
@@ -164,9 +164,12 @@ function HolographicCard({
               sx={{
                 width: 6,
                 height: 6,
-                borderRadius: '50%',
-                bgcolor: status === 'good' ? '#00ff9d' : '#ff3366',
-                boxShadow: `0 0 8px ${status === 'good' ? '#00ff9d' : '#ff3366'}`,
+                borderRadius: 'var(--ob-radius-pill)',
+                bgcolor:
+                  status === 'good'
+                    ? 'var(--ob-color-status-success-text)'
+                    : 'var(--ob-color-status-error-text)',
+                boxShadow: `0 0 8px ${status === 'good' ? 'var(--ob-color-status-success-text)' : 'var(--ob-color-status-error-text)'}`,
                 animation: 'pulse 2s infinite',
                 '@keyframes pulse': {
                   '0%': { opacity: 1, transform: 'scale(1)' },
@@ -351,10 +354,10 @@ export function PhaseManagementPage() {
     <Box
       className="phase-management-page"
       sx={{
-        backgroundColor: '#121212',
+        backgroundColor: 'var(--ob-color-bg-surface)',
         minHeight: '100vh',
         p: 3,
-        color: '#fff',
+        color: 'var(--ob-color-text-inverse)',
       }}
     >
       {error && (
@@ -365,52 +368,74 @@ export function PhaseManagementPage() {
 
       <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <HolographicCard
-          icon={<TimelineIcon sx={{ fontSize: 28, color: '#00f3ff' }} />}
+          icon={
+            <TimelineIcon
+              sx={{ fontSize: 28, color: 'var(--ob-color-brand-primary)' }}
+            />
+          }
           value={stats.totalPhases}
           label="Total Phases"
           progress={75} // Example progress
-          color="#00f3ff"
+          color="var(--ob-color-brand-primary)"
         />
         <HolographicCard
           icon={
             <BarChartIcon
               sx={{
                 fontSize: 28,
-                color: stats.criticalPhases > 0 ? '#ff3366' : '#00ff9d',
+                color:
+                  stats.criticalPhases > 0
+                    ? 'var(--ob-color-status-error-text)'
+                    : 'var(--ob-color-status-success-text)',
               }}
             />
           }
           value={stats.criticalPhases}
           label="Critical Path"
           status={stats.criticalPhases > 0 ? 'alert' : 'good'}
-          color={stats.criticalPhases > 0 ? '#ff3366' : '#00ff9d'}
+          color={
+            stats.criticalPhases > 0
+              ? 'var(--ob-color-status-error-text)'
+              : 'var(--ob-color-status-success-text)'
+          }
         />
         <HolographicCard
-          icon={<AccountBalanceIcon sx={{ fontSize: 28, color: '#f59e0b' }} />}
+          icon={
+            <AccountBalanceIcon
+              sx={{
+                fontSize: 28,
+                color: 'var(--ob-color-status-warning-text)',
+              }}
+            />
+          }
           value={stats.heritagePhases}
           label="Heritage Phases"
           progress={45}
-          color="#f59e0b"
+          color="var(--ob-color-status-warning-text)"
         />
         <HolographicCard
-          icon={<PeopleIcon sx={{ fontSize: 28, color: '#a855f7' }} />}
+          icon={
+            <PeopleIcon
+              sx={{ fontSize: 28, color: '#a855f7' /* purple - no token */ }}
+            />
+          }
           value={stats.tenantPhases}
           label="Tenant Coord"
           progress={60}
-          color="#a855f7"
+          color="#a855f7" /* purple - no token */
         />
         <HolographicCard
           value={stats.totalDuration}
           label="Total Days"
           suffix="d"
           progress={35} // Just an example, ideally calculated (elapsed / total)
-          color="#fff"
+          color="var(--ob-color-text-inverse)"
         />
         <HolographicCard
           value={stats.criticalDuration}
           label="Critical Days"
           suffix="d"
-          color="#ff3366"
+          color="var(--ob-color-status-error-text)"
           status="alert"
         />
       </Box>
@@ -422,7 +447,7 @@ export function PhaseManagementPage() {
           background: 'rgba(30, 30, 30, 0.4)',
           backdropFilter: 'blur(var(--ob-blur-md))',
           border: '1px solid rgba(255, 255, 255, 0.08)',
-          borderRadius: 3,
+          borderRadius: 'var(--ob-radius-md)',
           overflow: 'hidden',
         }}
       >
@@ -550,7 +575,7 @@ function DemoGanttChart({
         isCritical: true,
         isHeritage: false,
         hasTenantCoordination: false,
-        color: '#10b981',
+        color: 'var(--ob-color-status-success-text)',
         budgetAmount: 500000,
         actualCostAmount: 480000,
       },
@@ -567,7 +592,7 @@ function DemoGanttChart({
         isCritical: true,
         isHeritage: true,
         hasTenantCoordination: false,
-        color: '#f59e0b',
+        color: 'var(--ob-color-status-warning-text)',
         budgetAmount: 2000000,
         actualCostAmount: null,
       },
@@ -584,7 +609,7 @@ function DemoGanttChart({
         isCritical: false,
         isHeritage: false,
         hasTenantCoordination: true,
-        color: '#3b82f6',
+        color: 'var(--ob-color-brand-primary)',
         budgetAmount: 300000,
         actualCostAmount: null,
       },
@@ -601,7 +626,7 @@ function DemoGanttChart({
         isCritical: true,
         isHeritage: false,
         hasTenantCoordination: false,
-        color: '#94a3b8',
+        color: 'var(--ob-color-text-muted)',
         budgetAmount: 3500000,
         actualCostAmount: null,
       },
@@ -618,7 +643,7 @@ function DemoGanttChart({
         isCritical: true,
         isHeritage: false,
         hasTenantCoordination: false,
-        color: '#94a3b8',
+        color: 'var(--ob-color-text-muted)',
         budgetAmount: 2500000,
         actualCostAmount: null,
       },
@@ -635,7 +660,7 @@ function DemoGanttChart({
         isCritical: false,
         isHeritage: false,
         hasTenantCoordination: true,
-        color: '#94a3b8',
+        color: 'var(--ob-color-text-muted)',
         budgetAmount: 1800000,
         actualCostAmount: null,
       },
@@ -689,8 +714,8 @@ function CriticalPathView({ data }: { data: CriticalPathResult }) {
                     display: 'flex',
                     justifyContent: 'space-between',
                     p: 1,
-                    backgroundColor: '#fef2f2',
-                    borderRadius: 1,
+                    backgroundColor: '#fef2f2' /* light red - no token */,
+                    borderRadius: 'var(--ob-radius-xs)',
                   }}
                 >
                   <Typography variant="body2">{phase.name}</Typography>
@@ -718,8 +743,8 @@ function CriticalPathView({ data }: { data: CriticalPathResult }) {
                     display: 'flex',
                     justifyContent: 'space-between',
                     p: 1,
-                    backgroundColor: '#f0fdf4',
-                    borderRadius: 1,
+                    backgroundColor: '#f0fdf4' /* light green - no token */,
+                    borderRadius: 'var(--ob-radius-xs)',
                   }}
                 >
                   <Typography variant="body2">{phase.name}</Typography>
@@ -805,11 +830,11 @@ function HeritageView({ data }: { data: HeritageTracker }) {
               py: 0.5,
               backgroundColor:
                 data.overallApprovalStatus === 'approved'
-                  ? '#dcfce7'
+                  ? '#dcfce7' /* light green - no token */
                   : data.overallApprovalStatus === 'pending'
-                    ? '#fef3c7'
-                    : '#fee2e2',
-              borderRadius: 1,
+                    ? '#fef3c7' /* light yellow - no token */
+                    : '#fee2e2' /* light red - no token */,
+              borderRadius: 'var(--ob-radius-xs)',
             }}
           >
             {data.overallApprovalStatus}
@@ -886,9 +911,11 @@ function HeritageView({ data }: { data: HeritageTracker }) {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 p: 1.5,
-                backgroundColor: phase.approvalRequired ? '#fefce8' : '#f9fafb',
-                borderRadius: 1,
-                border: '1px solid #e5e7eb',
+                backgroundColor: phase.approvalRequired
+                  ? '#fefce8' /* light yellow */
+                  : 'var(--ob-color-bg-surface-elevated)',
+                borderRadius: 'var(--ob-radius-xs)',
+                border: '1px solid var(--ob-color-border-subtle)',
               }}
             >
               <Box>
@@ -907,9 +934,9 @@ function HeritageView({ data }: { data: HeritageTracker }) {
                     py: 0.5,
                     backgroundColor:
                       phase.approvalStatus === 'approved'
-                        ? '#dcfce7'
-                        : '#fef3c7',
-                    borderRadius: 1,
+                        ? '#dcfce7' /* light green - no token */
+                        : '#fef3c7' /* light yellow - no token */,
+                    borderRadius: 'var(--ob-radius-xs)',
                   }}
                 >
                   {phase.approvalStatus ?? 'Pending'}

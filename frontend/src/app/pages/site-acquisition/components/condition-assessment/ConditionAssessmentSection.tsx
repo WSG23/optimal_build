@@ -143,8 +143,8 @@ export function ConditionAssessmentSection({
     <section
       style={{
         background: 'white',
-        border: '1px solid #d2d2d7',
-        borderRadius: '4px',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '2rem',
       }}
     >
@@ -163,9 +163,9 @@ export function ConditionAssessmentSection({
           style={{
             padding: '2.5rem',
             textAlign: 'center',
-            color: '#6e6e73',
-            background: '#f5f5f7',
-            borderRadius: '4px',
+            color: 'var(--ob-color-text-muted)',
+            background: 'var(--ob-color-bg-surface-elevated)',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           <p style={{ margin: 0 }}>Analysing building condition...</p>
@@ -175,9 +175,9 @@ export function ConditionAssessmentSection({
           style={{
             padding: '3rem 2rem',
             textAlign: 'center',
-            color: '#6e6e73',
-            background: '#f5f5f7',
-            borderRadius: '4px',
+            color: 'var(--ob-color-text-muted)',
+            background: 'var(--ob-color-bg-surface-elevated)',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏢</div>
@@ -194,18 +194,18 @@ export function ConditionAssessmentSection({
           style={{
             padding: '2.5rem 2rem',
             textAlign: 'center',
-            color: '#6e6e73',
+            color: 'var(--ob-color-text-muted)',
             background:
               (capturedProperty as { propertyId?: string })?.propertyId ===
               'offline-property'
-                ? '#f5f5f7'
-                : '#fff7ed',
-            borderRadius: '4px',
+                ? 'var(--ob-color-bg-surface-elevated)'
+                : 'var(--ob-warning-50)',
+            borderRadius: 'var(--ob-radius-sm)',
             border:
               (capturedProperty as { propertyId?: string })?.propertyId ===
               'offline-property'
                 ? 'none'
-                : '1px solid #fed7aa',
+                : '1px solid var(--ob-warning-200)',
           }}
         >
           <p style={{ margin: 0 }}>
@@ -252,8 +252,8 @@ export function ConditionAssessmentSection({
             <div
               style={{
                 flex: '1 1 280px',
-                background: '#f5f5f7',
-                borderRadius: '4px',
+                background: 'var(--ob-color-bg-surface-elevated)',
+                borderRadius: 'var(--ob-radius-sm)',
                 padding: '1.5rem',
               }}
             >
@@ -270,7 +270,7 @@ export function ConditionAssessmentSection({
                 style={{
                   margin: 0,
                   paddingLeft: '1.2rem',
-                  color: '#3a3a3c',
+                  color: 'var(--ob-color-text-secondary)',
                   fontSize: '0.9375rem',
                   lineHeight: 1.5,
                 }}
@@ -286,10 +286,10 @@ export function ConditionAssessmentSection({
           {combinedConditionInsights.length > 0 && (
             <div
               style={{
-                border: '1px solid #e5e5e7',
-                borderRadius: '4px',
+                border: '1px solid var(--ob-color-border-subtle)',
+                borderRadius: 'var(--ob-radius-sm)',
                 padding: '1.5rem',
-                background: '#f8fafc',
+                background: 'var(--ob-color-bg-surface-elevated)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '1rem',
@@ -314,7 +314,12 @@ export function ConditionAssessmentSection({
                 >
                   Condition insights
                 </h3>
-                <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+                <span
+                  style={{
+                    fontSize: '0.85rem',
+                    color: 'var(--ob-color-text-muted)',
+                  }}
+                >
                   {insightSubtitle}
                 </span>
               </div>
@@ -420,8 +425,8 @@ export function ConditionAssessmentSection({
           {/* Scenario Overrides */}
           <div
             style={{
-              border: '1px solid #e5e5e7',
-              borderRadius: '4px',
+              border: '1px solid var(--ob-color-border-subtle)',
+              borderRadius: 'var(--ob-radius-sm)',
               padding: '1.5rem',
               display: 'flex',
               flexDirection: 'column',
@@ -459,10 +464,10 @@ export function ConditionAssessmentSection({
                   onClick={() => handleReportExport('json')}
                   disabled={!capturedProperty || isExportingReport}
                   style={{
-                    border: '1px solid #1d1d1f',
-                    background: '#1d1d1f',
+                    border: '1px solid var(--ob-color-text-primary)',
+                    background: 'var(--ob-color-text-primary)',
                     color: 'white',
-                    borderRadius: '9999px',
+                    borderRadius: 'var(--ob-radius-pill)',
                     padding: '0.4rem 0.9rem',
                     fontSize: '0.8125rem',
                     fontWeight: 600,
@@ -476,10 +481,10 @@ export function ConditionAssessmentSection({
                   onClick={() => handleReportExport('pdf')}
                   disabled={!capturedProperty || isExportingReport}
                   style={{
-                    border: '1px solid #1d1d1f',
+                    border: '1px solid var(--ob-color-text-primary)',
                     background: 'white',
-                    color: '#1d1d1f',
-                    borderRadius: '9999px',
+                    color: 'var(--ob-color-text-primary)',
+                    borderRadius: 'var(--ob-radius-pill)',
                     padding: '0.4rem 0.9rem',
                     fontSize: '0.8125rem',
                     fontWeight: 600,
@@ -496,7 +501,7 @@ export function ConditionAssessmentSection({
                         alignItems: 'center',
                         gap: '0.5rem',
                         fontSize: '0.85rem',
-                        color: '#3a3a3c',
+                        color: 'var(--ob-color-text-secondary)',
                       }}
                     >
                       <span style={{ fontWeight: 600 }}>Baseline scenario</span>
@@ -508,8 +513,8 @@ export function ConditionAssessmentSection({
                           )
                         }
                         style={{
-                          borderRadius: '6px',
-                          border: '1px solid #d2d2d7',
+                          borderRadius: 'var(--ob-radius-md)',
+                          border: '1px solid var(--ob-color-border-subtle)',
                           padding: '0.4rem 0.6rem',
                           fontSize: '0.85rem',
                         }}
@@ -532,7 +537,7 @@ export function ConditionAssessmentSection({
                 style={{
                   margin: 0,
                   fontSize: '0.85rem',
-                  color: '#c53030',
+                  color: 'var(--ob-error-700)',
                 }}
               >
                 {scenarioAssessmentsError}
@@ -542,9 +547,9 @@ export function ConditionAssessmentSection({
                 style={{
                   padding: '1.5rem',
                   textAlign: 'center',
-                  color: '#6e6e73',
-                  background: '#f5f5f7',
-                  borderRadius: '4px',
+                  color: 'var(--ob-color-text-muted)',
+                  background: 'var(--ob-color-bg-surface-elevated)',
+                  borderRadius: 'var(--ob-radius-sm)',
                 }}
               >
                 <p style={{ margin: 0, fontSize: '0.9rem' }}>
@@ -556,9 +561,9 @@ export function ConditionAssessmentSection({
                 style={{
                   padding: '1.5rem',
                   textAlign: 'center',
-                  color: '#6e6e73',
-                  background: '#f5f5f7',
-                  borderRadius: '4px',
+                  color: 'var(--ob-color-text-muted)',
+                  background: 'var(--ob-color-bg-surface-elevated)',
+                  borderRadius: 'var(--ob-radius-sm)',
                 }}
               >
                 <p style={{ margin: 0, fontSize: '0.9rem' }}>
@@ -598,12 +603,17 @@ export function ConditionAssessmentSection({
                           fontWeight: 600,
                           letterSpacing: '0.06em',
                           textTransform: 'uppercase',
-                          color: '#6e6e73',
+                          color: 'var(--ob-color-text-muted)',
                         }}
                       >
                         Compare against
                       </span>
-                      <span style={{ fontSize: '0.95rem', color: '#1d1d1f' }}>
+                      <span
+                        style={{
+                          fontSize: '0.95rem',
+                          color: 'var(--ob-color-text-primary)',
+                        }}
+                      >
                         Choose the baseline inspection to benchmark other
                         scenarios.
                       </span>
@@ -614,7 +624,7 @@ export function ConditionAssessmentSection({
                         alignItems: 'center',
                         gap: '0.5rem',
                         fontSize: '0.9rem',
-                        color: '#3a3a3c',
+                        color: 'var(--ob-color-text-secondary)',
                       }}
                     >
                       <span style={{ fontWeight: 600 }}>Baseline scenario</span>
@@ -628,8 +638,8 @@ export function ConditionAssessmentSection({
                           }
                         }}
                         style={{
-                          borderRadius: '9999px',
-                          border: '1px solid #d2d2d7',
+                          borderRadius: 'var(--ob-radius-pill)',
+                          border: '1px solid var(--ob-color-border-subtle)',
                           padding: '0.4rem 0.9rem',
                           background: 'white',
                           fontSize: '0.9rem',
@@ -653,10 +663,10 @@ export function ConditionAssessmentSection({
                 {baseScenarioAssessment && (
                   <div
                     style={{
-                      border: '1px solid #d2d2d7',
-                      borderRadius: '4px',
+                      border: '1px solid var(--ob-color-border-subtle)',
+                      borderRadius: 'var(--ob-radius-sm)',
                       padding: '1.25rem',
-                      background: '#f5f5f7',
+                      background: 'var(--ob-color-bg-surface-elevated)',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '0.6rem',
@@ -668,7 +678,7 @@ export function ConditionAssessmentSection({
                         fontWeight: 600,
                         letterSpacing: '0.08em',
                         textTransform: 'uppercase',
-                        color: '#6e6e73',
+                        color: 'var(--ob-color-text-muted)',
                       }}
                     >
                       Baseline scenario
@@ -682,7 +692,7 @@ export function ConditionAssessmentSection({
                         flexWrap: 'wrap',
                         gap: '0.75rem',
                         alignItems: 'center',
-                        color: '#3a3a3c',
+                        color: 'var(--ob-color-text-secondary)',
                         fontSize: '0.9rem',
                       }}
                     >
@@ -698,7 +708,7 @@ export function ConditionAssessmentSection({
                       style={{
                         margin: 0,
                         fontSize: '0.9rem',
-                        color: '#3a3a3c',
+                        color: 'var(--ob-color-text-secondary)',
                         lineHeight: 1.5,
                       }}
                     >
@@ -709,7 +719,7 @@ export function ConditionAssessmentSection({
                         style={{
                           margin: 0,
                           fontSize: '0.85rem',
-                          color: '#0071e3',
+                          color: 'var(--ob-color-brand-primary)',
                         }}
                       >
                         {baseScenarioAssessment.scenarioContext}
@@ -723,7 +733,7 @@ export function ConditionAssessmentSection({
                             margin: 0,
                             paddingLeft: '1.1rem',
                             fontSize: '0.85rem',
-                            color: '#3a3a3c',
+                            color: 'var(--ob-color-text-secondary)',
                             lineHeight: 1.4,
                           }}
                         >
@@ -741,10 +751,10 @@ export function ConditionAssessmentSection({
                   <div
                     style={{
                       padding: '1.25rem',
-                      border: '1px solid #d2d2d7',
-                      borderRadius: '4px',
-                      background: '#ffffff',
-                      color: '#6e6e73',
+                      border: '1px solid var(--ob-color-border-subtle)',
+                      borderRadius: 'var(--ob-radius-sm)',
+                      background: 'white',
+                      color: 'var(--ob-color-text-muted)',
                       fontSize: '0.9rem',
                     }}
                   >

@@ -44,11 +44,11 @@ export function InsightCard({
     alignItems: 'center',
     gap: '0.35rem',
     padding: '0.3rem 0.6rem',
-    borderRadius: '9999px',
+    borderRadius: 'var(--ob-radius-pill)',
     fontSize: '0.75rem',
     fontWeight: 600,
     background: 'rgba(15, 23, 42, 0.08)',
-    color: '#0f172a',
+    color: 'var(--ob-color-text-primary)',
     border: '1px solid rgba(15, 23, 42, 0.12)',
   }
 
@@ -59,7 +59,7 @@ export function InsightCard({
         border: `1px solid ${visuals.border}`,
         background: visuals.background,
         color: visuals.text,
-        borderRadius: '4px',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '1.2rem',
         display: 'flex',
         flexDirection: 'column',
@@ -81,7 +81,7 @@ export function InsightCard({
           style={{
             width: '0.35rem',
             height: '0.35rem',
-            borderRadius: '9999px',
+            borderRadius: 'var(--ob-radius-pill)',
             background: visuals.indicator,
           }}
         />
@@ -110,7 +110,7 @@ export function InsightCard({
               style={{
                 ...chipStyle,
                 background: 'rgba(29, 78, 216, 0.08)',
-                color: '#1d4ed8',
+                color: 'var(--ob-color-brand-primary)',
                 border: '1px solid rgba(29, 78, 216, 0.15)',
               }}
             >

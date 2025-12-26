@@ -141,7 +141,7 @@ export function CadUploader({
               sx={{
                 width: 'var(--ob-size-icon-lg)',
                 height: 'var(--ob-size-icon-lg)',
-                borderRadius: '50%',
+                borderRadius: 'var(--ob-radius-pill)',
                 backgroundColor: 'var(--ob-brand-100)',
                 display: 'flex',
                 alignItems: 'center',

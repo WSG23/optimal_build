@@ -12,25 +12,25 @@ export function ScenarioSelector({ value, onChange }: ScenarioSelectorProps) {
       value: 'Mixed Use',
       label: 'Mixed Use',
       icon: <Business />,
-      color: '#ec4899',
+      color: 'var(--ob-color-brand-primary)',
     }, // Pink/Magenta
     {
       value: 'Residential',
       label: 'Residential',
       icon: <HomeWork />,
-      color: '#3b82f6',
+      color: 'var(--ob-color-brand-primary)',
     }, // Blue
     {
       value: 'Commercial',
       label: 'Commercial',
       icon: <Foundation />,
-      color: '#10b981',
+      color: 'var(--ob-color-status-success-text)',
     }, // Emerald
     {
       value: 'Raw Land',
       label: 'Raw Land',
       icon: <Landscape />,
-      color: '#f59e0b',
+      color: 'var(--ob-color-status-warning-text)',
     }, // Amber
   ]
 
@@ -54,8 +54,8 @@ export function ScenarioSelector({ value, onChange }: ScenarioSelectorProps) {
                 ? 'rgba(255, 255, 255, 0.1)'
                 : 'rgba(255, 255, 255, 0.03)',
               border: `1px solid ${isSelected ? option.color : 'rgba(255, 255, 255, 0.1)'}`,
-              borderRadius: '4px',
-              padding: '16px',
+              borderRadius: 'var(--ob-radius-sm)',
+              padding: 'var(--ob-space-200)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',

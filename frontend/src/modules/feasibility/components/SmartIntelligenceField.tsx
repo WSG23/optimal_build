@@ -60,7 +60,7 @@ export function SmartIntelligenceField({
           alignItems: 'center',
           background: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(var(--ob-blur-md))',
-          borderRadius: '6px', // Input shape
+          borderRadius: 'var(--ob-radius-md)', // Input shape
           padding: '8px 16px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
           border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -98,7 +98,7 @@ export function SmartIntelligenceField({
               width: '100%',
               outline: 'none',
               color: 'var(--ob-color-text-body)',
-              height: '32px',
+              height: 'var(--ob-space-400)',
               paddingRight: hasAutoData ? '200px' : '0', // Make space for badges
             }}
           />
@@ -125,10 +125,10 @@ export function SmartIntelligenceField({
                   background: 'linear-gradient(135deg, #e0f2fe, #dbeafe)',
                   color: '#0284c7',
                   padding: '4px 8px',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-sm)',
                   fontSize: '0.75rem',
                   fontWeight: 700,
-                  border: '1px solid #bfdbfe',
+                  border: '1px solid var(--ob-color-border-light)',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                 }}
               >
@@ -137,13 +137,13 @@ export function SmartIntelligenceField({
               </div>
               <div
                 style={{
-                  background: '#f3f4f6',
-                  color: '#4b5563',
+                  background: 'var(--ob-color-bg-surface-secondary)',
+                  color: 'var(--ob-color-text-secondary)',
                   padding: '4px 8px',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-sm)',
                   fontSize: '0.75rem',
                   fontWeight: 600,
-                  border: '1px solid #e5e7eb',
+                  border: '1px solid var(--ob-color-border-light)',
                 }}
               >
                 {zoning}
@@ -160,7 +160,7 @@ export function SmartIntelligenceField({
               height: '20px',
               border: '2px solid var(--ob-color-brand-primary)',
               borderTopColor: 'transparent',
-              borderRadius: '50%',
+              borderRadius: 'var(--ob-radius-pill)',
               animation: 'spin 1s linear infinite',
               marginLeft: '8px',
             }}
@@ -173,12 +173,12 @@ export function SmartIntelligenceField({
           style={{
             position: 'absolute',
             top: '100%',
-            left: '24px',
+            left: 'var(--ob-space-300)',
             marginTop: '8px',
-            background: '#fee2e2',
-            color: '#dc2626',
+            background: 'var(--ob-color-status-error-bg)',
+            color: 'var(--ob-color-status-error-text)',
             padding: '4px 12px',
-            borderRadius: '6px',
+            borderRadius: 'var(--ob-radius-md)',
             fontSize: '0.875rem',
             fontWeight: 500,
           }}
@@ -198,7 +198,7 @@ export function SmartIntelligenceField({
             right: 0,
             marginTop: '8px',
             background: 'white',
-            borderRadius: '4px',
+            borderRadius: 'var(--ob-radius-sm)',
             boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
             padding: '8px',
             zIndex: 100,
@@ -222,7 +222,7 @@ export function SmartIntelligenceField({
               key={i}
               style={{
                 padding: '12px',
-                borderRadius: '4px',
+                borderRadius: 'var(--ob-radius-sm)',
                 cursor: 'pointer',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -260,9 +260,15 @@ export function SmartIntelligenceField({
                   fontSize: '0.7rem',
                   fontWeight: 700,
                   padding: '2px 8px',
-                  borderRadius: '4px',
-                  background: i === 0 ? '#e0f2fe' : '#fef3c7',
-                  color: i === 0 ? '#0284c7' : '#d97706',
+                  borderRadius: 'var(--ob-radius-sm)',
+                  background:
+                    i === 0
+                      ? 'var(--ob-color-bg-surface-secondary)'
+                      : 'var(--ob-color-status-warning-bg)',
+                  color:
+                    i === 0
+                      ? 'var(--ob-color-brand-primary)'
+                      : 'var(--ob-color-status-warning-text)',
                 }}
               >
                 {i === 0 ? 'COMMERCIAL' : 'RESIDENTIAL'}

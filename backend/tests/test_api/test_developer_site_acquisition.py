@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 import pytest
 from backend._compat.datetime import utcnow
 
-from app.api.v1 import developers as developers_api
+from app.api.v1 import developers_gps as developers_api
 from app.models.preview import PreviewJob
 from app.services.agents.gps_property_logger import PropertyLogResult
 from app.services.geocoding import Address

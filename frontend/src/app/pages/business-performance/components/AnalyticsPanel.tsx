@@ -9,6 +9,7 @@ import {
   ListItemText,
   Stack,
   Typography,
+  useTheme,
 } from '@mui/material'
 import { BarChart } from '@mui/icons-material'
 import {
@@ -45,6 +46,7 @@ export function AnalyticsPanel({
   trend,
   benchmarks,
 }: AnalyticsPanelProps) {
+  const theme = useTheme()
   const chartData = useMemo(
     () =>
       trend.map((point) => ({
@@ -128,18 +130,18 @@ export function AnalyticsPanel({
                 />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 12, fill: theme.palette.text.secondary }}
                   minTickGap={32}
                 />
                 <YAxis
                   yAxisId="left"
                   tickFormatter={(value: number) => `${value.toFixed(1)}m`}
-                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 12, fill: theme.palette.text.secondary }}
                   label={{
                     value: 'Pipeline (SGD millions)',
                     angle: -90,
                     position: 'insideLeft',
-                    fill: '#9CA3AF',
+                    fill: theme.palette.text.secondary,
                     fontSize: 12,
                   }}
                 />
@@ -147,22 +149,26 @@ export function AnalyticsPanel({
                   yAxisId="right"
                   orientation="right"
                   tickFormatter={(value: number) => `${value.toFixed(0)}`}
-                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 12, fill: theme.palette.text.secondary }}
                   label={{
                     value: 'Conversion % / Cycle days',
                     angle: 90,
                     position: 'insideRight',
-                    fill: '#9CA3AF',
+                    fill: theme.palette.text.secondary,
                     fontSize: 12,
                   }}
                 />
                 <RechartsTooltip
                   formatter={formatTooltipValue}
-                  labelStyle={{ fontWeight: 600, color: '#111827' }}
+                  labelStyle={{
+                    fontWeight: 600,
+                    color: theme.palette.text.primary,
+                  }}
                   contentStyle={{
-                    borderRadius: 4, // Square Cyber-Minimalism: sm for tooltips
+                    borderRadius: 'var(--ob-radius-sm)',
                     border: 'none',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    boxShadow: theme.shadows[2],
+                    backgroundColor: theme.palette.background.paper,
                   }}
                 />
                 <Legend iconType="circle" />
@@ -172,7 +178,7 @@ export function AnalyticsPanel({
                   dataKey="gross"
                   name="Gross pipeline"
                   fill="url(#colorGross)"
-                  stroke="#3B82F6"
+                  stroke={theme.palette.primary.main}
                   fillOpacity={1}
                 />
                 <Area
@@ -181,13 +187,21 @@ export function AnalyticsPanel({
                   dataKey="weighted"
                   name="Weighted pipeline"
                   fill="url(#colorWeighted)"
-                  stroke="#10B981"
+                  stroke={theme.palette.success.main}
                   fillOpacity={1}
                 />
                 <defs>
                   <linearGradient id="colorGross" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                    <stop
+                      offset="5%"
+                      stopColor={theme.palette.primary.main}
+                      stopOpacity={0.3}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor={theme.palette.primary.main}
+                      stopOpacity={0}
+                    />
                   </linearGradient>
                   <linearGradient
                     id="colorWeighted"
@@ -196,8 +210,16 @@ export function AnalyticsPanel({
                     x2="0"
                     y2="1"
                   >
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                    <stop
+                      offset="5%"
+                      stopColor={theme.palette.success.main}
+                      stopOpacity={0.3}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor={theme.palette.success.main}
+                      stopOpacity={0}
+                    />
                   </linearGradient>
                 </defs>
                 <Line
@@ -205,7 +227,7 @@ export function AnalyticsPanel({
                   type="monotone"
                   dataKey="conversion"
                   name="Conversion rate"
-                  stroke="#F59E0B"
+                  stroke={theme.palette.warning.main}
                   strokeWidth={2}
                   dot={false}
                 />
@@ -214,7 +236,7 @@ export function AnalyticsPanel({
                   type="monotone"
                   dataKey="cycle"
                   name="Cycle time (days)"
-                  stroke="#8B5CF6"
+                  stroke={theme.palette.secondary.main}
                   strokeDasharray="4 2"
                   strokeWidth={2}
                   dot={false}

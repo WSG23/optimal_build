@@ -606,7 +606,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                 sx={{
                   width: 12,
                   height: 12,
-                  borderRadius: '50%',
+                  borderRadius: 'var(--ob-radius-pill)',
                   backgroundColor: color,
                 }}
               />

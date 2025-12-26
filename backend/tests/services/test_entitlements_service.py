@@ -28,7 +28,23 @@ class _ScalarsResult:
         return iter(self._items)
 
 
+class _DialectStub:
+    """Stub for SQLAlchemy dialect to satisfy session.bind.dialect.name access."""
+
+    name = "sqlite"
+
+
+class _BindStub:
+    """Stub for session.bind to provide dialect information."""
+
+    dialect = _DialectStub()
+
+
 class _SessionStub:
+    """Stub session for unit testing without real database."""
+
+    bind = _BindStub()
+
     def __init__(self, results):
         self._results = list(results)
         self.deleted = []

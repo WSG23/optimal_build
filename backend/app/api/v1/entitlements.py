@@ -501,16 +501,18 @@ async def delete_legal_instrument(
 )
 async def export_entitlements(
     project_id: int,
-    format: EntitlementsExportFormat = Query(EntitlementsExportFormat.CSV),
+    format: EntitlementsExportFormat | None = None,
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
 ) -> StreamingResponse:
     """Export entitlement information in CSV, HTML, or PDF formats."""
+    # Default to CSV if no format specified
+    fmt = format if format is not None else EntitlementsExportFormat.CSV
 
     metrics.REQUEST_COUNTER.labels(endpoint="entitlements_export").inc()
-    metrics.ENTITLEMENTS_EXPORT_COUNTER.labels(format=format.value).inc()
+    metrics.ENTITLEMENTS_EXPORT_COUNTER.labels(format=fmt.value).inc()
     payload, media_type, filename = await generate_entitlements_export(
-        session, project_id=project_id, fmt=format
+        session, project_id=project_id, fmt=fmt
     )
     response = StreamingResponse(iter([payload]), media_type=media_type)
     disposition = f"attachment; filename={filename}"

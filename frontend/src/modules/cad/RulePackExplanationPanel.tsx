@@ -74,7 +74,7 @@ export function RulePackExplanationPanel({
         {t('panels.rulePackTitle', { defaultValue: 'Rule constraints' })}
       </Typography>
 
-      <Grid container spacing={3}>
+      <Grid container spacing="var(--ob-space-150)">
         {keys.map((key) => (
           <Grid item xs={12} md={6} key={key}>
             <Box

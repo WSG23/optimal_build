@@ -1,4 +1,4 @@
-import { Box, Divider, Grid, Stack, Typography } from '@mui/material'
+import { Box, Divider, Grid, Stack, Typography, useTheme } from '@mui/material'
 import {
   CartesianGrid,
   Line,
@@ -31,6 +31,7 @@ import { AttachMoney, TrendingUp, Speed, Assignment } from '@mui/icons-material'
 export default function AgentPerformancePage() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
+  const theme = useTheme()
 
   const {
     loadingDeals: _loadingDeals,
@@ -139,7 +140,7 @@ export default function AgentPerformancePage() {
                           sx={{
                             background: 'rgba(0,0,0,0.05)',
                             px: 1,
-                            borderRadius: '2px', // Square Cyber-Minimalism: xs for badges
+                            borderRadius: 'var(--ob-radius-xs)',
                           }}
                         >
                           {items.length}
@@ -291,12 +292,12 @@ export default function AgentPerformancePage() {
                             >
                               <stop
                                 offset="5%"
-                                stopColor="#3B82F6"
+                                stopColor={theme.palette.primary.main}
                                 stopOpacity={0.3}
                               />
                               <stop
                                 offset="95%"
-                                stopColor="#3B82F6"
+                                stopColor={theme.palette.primary.main}
                                 stopOpacity={0}
                               />
                             </linearGradient>
@@ -316,14 +317,14 @@ export default function AgentPerformancePage() {
                           <Area
                             type="monotone"
                             dataKey="gross"
-                            stroke="#3B82F6"
+                            stroke={theme.palette.primary.main}
                             fillOpacity={1}
                             fill="url(#colorGross)"
                           />
                           <Area
                             type="monotone"
                             dataKey="weighted"
-                            stroke="#10B981"
+                            stroke={theme.palette.success.main}
                             fillOpacity={0}
                             strokeDasharray="4 4"
                           />
@@ -353,13 +354,13 @@ export default function AgentPerformancePage() {
                           <Line
                             type="monotone"
                             dataKey="conversion"
-                            stroke="#F59E0B"
+                            stroke={theme.palette.warning.main}
                             strokeWidth={2}
                           />
                           <Line
                             type="monotone"
                             dataKey="cycle"
-                            stroke="#8B5CF6"
+                            stroke={theme.palette.secondary.main}
                             strokeWidth={2}
                             strokeDasharray="4 4"
                           />

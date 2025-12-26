@@ -5,10 +5,40 @@ import { HomeOverview } from './App'
 import { TranslationProvider } from './i18n'
 import { DeveloperProvider } from './contexts/DeveloperContext'
 import { AppThemeProvider } from './theme/YosaiThemeProvider'
+import { ErrorBoundary } from './components/error'
+import type { ErrorDetails } from './components/error'
 import '@ob/tokens.css'
 import './styles/index.css'
 import { AppShell } from './app/layout/AppShell'
 import { BaseLayout } from './app/layout/BaseLayout'
+
+/**
+ * Global error handler for logging errors to monitoring services.
+ * Integrate with Sentry, LogRocket, or other error tracking here.
+ */
+function handleGlobalError(
+  error: Error,
+  _errorInfo: React.ErrorInfo,
+  details: ErrorDetails,
+): void {
+  // Log to console in all environments
+  console.error('[GlobalErrorBoundary] Caught error:', {
+    message: error.message,
+    timestamp: details.timestamp,
+    url: details.url,
+  })
+
+  // In production, you would send this to an error tracking service:
+  // if (process.env.NODE_ENV === 'production') {
+  //   Sentry.captureException(error, {
+  //     extra: {
+  //       componentStack: details.componentStack,
+  //       url: details.url,
+  //       timestamp: details.timestamp,
+  //     },
+  //   })
+  // }
+}
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -51,8 +81,9 @@ const AgentPerformancePage = React.lazy(
   () => import('./pages/AgentPerformancePage'),
 )
 const BusinessPerformancePage = React.lazy(async () => {
-  const module =
-    await import('./app/pages/business-performance/BusinessPerformancePage')
+  const module = await import(
+    './app/pages/business-performance/BusinessPerformancePage'
+  )
   return { default: module.BusinessPerformancePage }
 })
 const GpsCapturePage = React.lazy(async () => {
@@ -72,18 +103,21 @@ const IntegrationsPage = React.lazy(async () => {
   return { default: module.IntegrationsPage }
 })
 const SiteAcquisitionPage = React.lazy(async () => {
-  const module =
-    await import('./app/pages/site-acquisition/SiteAcquisitionPage')
+  const module = await import(
+    './app/pages/site-acquisition/SiteAcquisitionPage'
+  )
   return { default: module.SiteAcquisitionPage }
 })
 const ChecklistTemplateManager = React.lazy(async () => {
-  const module =
-    await import('./app/pages/site-acquisition/ChecklistTemplateManager')
+  const module = await import(
+    './app/pages/site-acquisition/ChecklistTemplateManager'
+  )
   return { default: module.ChecklistTemplateManager }
 })
 const DeveloperPreviewStandalone = React.lazy(async () => {
-  const module =
-    await import('./app/pages/site-acquisition/DeveloperPreviewStandalone')
+  const module = await import(
+    './app/pages/site-acquisition/DeveloperPreviewStandalone'
+  )
   return { default: module.DeveloperPreviewStandalone }
 })
 const PhaseManagementPage = React.lazy(async () => {
@@ -103,8 +137,9 @@ const DeveloperControlPanel = React.lazy(async () => {
   return { default: module.DeveloperControlPanel }
 })
 const ConstructionManagementPage = React.lazy(async () => {
-  const module =
-    await import('./app/pages/construction/ConstructionManagementPage')
+  const module = await import(
+    './app/pages/construction/ConstructionManagementPage'
+  )
   return { default: module.ConstructionManagementPage }
 })
 
@@ -462,12 +497,18 @@ if (!container) {
 
 ReactDOM.createRoot(container).render(
   <React.StrictMode>
-    <TranslationProvider>
-      <AppThemeProvider>
-        <DeveloperProvider>
-          <RouterProvider router={router} layout={BaseLayout} />
-        </DeveloperProvider>
-      </AppThemeProvider>
-    </TranslationProvider>
+    <ErrorBoundary
+      onError={handleGlobalError}
+      title="Something went wrong"
+      message="We apologize for the inconvenience. Please try refreshing the page or return to the home page."
+    >
+      <TranslationProvider>
+        <AppThemeProvider>
+          <DeveloperProvider>
+            <RouterProvider router={router} layout={BaseLayout} />
+          </DeveloperProvider>
+        </AppThemeProvider>
+      </TranslationProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
 )

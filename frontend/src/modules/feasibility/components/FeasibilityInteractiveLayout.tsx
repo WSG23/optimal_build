@@ -52,7 +52,7 @@ export function FeasibilityInteractiveLayout({
           m: 3,
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
+          borderRadius: 'var(--ob-radius-sm)', // Square Cyber-Minimalism: sm for panels
           border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
           bgcolor: alpha(theme.palette.background.paper, 0.65), // Semi-transparent
           backdropFilter: 'blur(var(--ob-blur-lg))',
@@ -82,7 +82,7 @@ export function FeasibilityInteractiveLayout({
             '&::-webkit-scrollbar-track': { background: 'transparent' },
             '&::-webkit-scrollbar-thumb': {
               background: alpha(theme.palette.text.secondary, 0.2),
-              borderRadius: '3px',
+              borderRadius: 'var(--ob-radius-sm)',
             },
           }}
         >

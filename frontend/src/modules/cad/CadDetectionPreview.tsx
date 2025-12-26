@@ -294,7 +294,7 @@ export function CadDetectionPreview({
                 p: 1,
                 pl: 2,
                 pr: 2,
-                borderRadius: '999px',
+                borderRadius: 'var(--ob-radius-pill)',
                 background: 'var(--ob-surface-glass-1)',
                 backdropFilter: 'blur(var(--ob-blur-xl))',
                 border: '1px solid var(--ob-border-fine)',
@@ -693,7 +693,11 @@ export function CadDetectionPreview({
         {/* Advisory / Hints Panel */}
         <Paper
           variant="outlined"
-          sx={{ p: 3, borderRadius: '4px', height: 'fit-content' }}
+          sx={{
+            p: 3,
+            borderRadius: 'var(--ob-radius-sm)',
+            height: 'fit-content',
+          }}
         >
           <Typography variant="h6" gutterBottom>
             {t('detection.advisory')}

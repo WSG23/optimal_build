@@ -66,7 +66,7 @@ export function PhotoGallery({
         style={{
           padding: '2rem',
           textAlign: 'center',
-          color: '#6b7280',
+          color: 'var(--ob-color-text-muted)',
         }}
       >
         Loading photos...
@@ -80,10 +80,10 @@ export function PhotoGallery({
         style={{
           padding: '2rem',
           textAlign: 'center',
-          color: '#6b7280',
-          background: '#f9fafb',
-          borderRadius: '4px',
-          border: '1px dashed #d1d5db',
+          color: 'var(--ob-color-text-muted)',
+          background: 'var(--ob-color-bg-surface-elevated)',
+          borderRadius: 'var(--ob-radius-sm)',
+          border: '1px dashed var(--ob-color-border-subtle)',
         }}
       >
         <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
@@ -112,7 +112,7 @@ export function PhotoGallery({
           style={{
             fontSize: '0.875rem',
             fontWeight: 600,
-            color: '#374151',
+            color: 'var(--ob-color-text-secondary)',
           }}
         >
           {photos.length} photo{photos.length !== 1 ? 's' : ''}
@@ -121,8 +121,8 @@ export function PhotoGallery({
         <div
           style={{
             display: 'inline-flex',
-            background: '#f3f4f6',
-            borderRadius: '9999px',
+            background: 'var(--ob-color-bg-surface-elevated)',
+            borderRadius: 'var(--ob-radius-pill)',
             padding: '0.25rem',
           }}
         >
@@ -131,10 +131,13 @@ export function PhotoGallery({
             onClick={() => setViewMode('original')}
             style={{
               padding: '0.375rem 0.875rem',
-              borderRadius: '9999px',
+              borderRadius: 'var(--ob-radius-pill)',
               border: 'none',
               background: viewMode === 'original' ? '#fff' : 'transparent',
-              color: viewMode === 'original' ? '#1f2937' : '#6b7280',
+              color:
+                viewMode === 'original'
+                  ? 'var(--ob-color-text-primary)'
+                  : 'var(--ob-color-text-muted)',
               fontSize: '0.8125rem',
               fontWeight: 500,
               cursor: 'pointer',
@@ -150,10 +153,13 @@ export function PhotoGallery({
             onClick={() => setViewMode('marketing')}
             style={{
               padding: '0.375rem 0.875rem',
-              borderRadius: '9999px',
+              borderRadius: 'var(--ob-radius-pill)',
               border: 'none',
               background: viewMode === 'marketing' ? '#fff' : 'transparent',
-              color: viewMode === 'marketing' ? '#1f2937' : '#6b7280',
+              color:
+                viewMode === 'marketing'
+                  ? 'var(--ob-color-text-primary)'
+                  : 'var(--ob-color-text-muted)',
               fontSize: '0.8125rem',
               fontWeight: 500,
               cursor: 'pointer',
@@ -172,7 +178,7 @@ export function PhotoGallery({
         style={{
           margin: 0,
           fontSize: '0.75rem',
-          color: '#9ca3af',
+          color: 'var(--ob-color-text-muted)',
           fontStyle: 'italic',
         }}
       >
@@ -199,9 +205,9 @@ export function PhotoGallery({
               style={{
                 position: 'relative',
                 aspectRatio: '1',
-                borderRadius: '4px',
+                borderRadius: 'var(--ob-radius-sm)',
                 overflow: 'hidden',
-                background: '#f3f4f6',
+                background: 'var(--ob-color-bg-surface-elevated)',
                 cursor: 'pointer',
                 opacity: isDeleting ? 0.5 : 1,
               }}
@@ -228,7 +234,7 @@ export function PhotoGallery({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#9ca3af',
+                    color: 'var(--ob-color-text-muted)',
                     fontSize: '2rem',
                   }}
                 >
@@ -257,7 +263,7 @@ export function PhotoGallery({
                       style={{
                         padding: '0.125rem 0.375rem',
                         background: 'rgba(255,255,255,0.2)',
-                        borderRadius: '4px',
+                        borderRadius: 'var(--ob-radius-sm)',
                         fontSize: '0.625rem',
                         color: '#fff',
                       }}
@@ -281,9 +287,9 @@ export function PhotoGallery({
                     position: 'absolute',
                     top: '0.25rem',
                     right: '0.25rem',
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
+                    width: 'var(--ob-space-300)',
+                    height: 'var(--ob-space-300)',
+                    borderRadius: 'var(--ob-radius-pill)',
                     border: 'none',
                     background: 'rgba(0,0,0,0.6)',
                     color: '#fff',
@@ -335,7 +341,12 @@ export function PhotoGallery({
                 {selectedPhoto.notes || 'Property Photo'}
               </div>
               {selectedPhoto.captureTimestamp && (
-                <div style={{ fontSize: '0.8125rem', color: '#9ca3af' }}>
+                <div
+                  style={{
+                    fontSize: '0.8125rem',
+                    color: 'var(--ob-color-text-muted)',
+                  }}
+                >
                   {new Date(selectedPhoto.captureTimestamp).toLocaleString()}
                 </div>
               )}
@@ -347,7 +358,7 @@ export function PhotoGallery({
                 style={{
                   display: 'inline-flex',
                   background: 'rgba(255,255,255,0.1)',
-                  borderRadius: '9999px',
+                  borderRadius: 'var(--ob-radius-pill)',
                   padding: '0.25rem',
                 }}
               >
@@ -359,7 +370,7 @@ export function PhotoGallery({
                   }}
                   style={{
                     padding: '0.375rem 0.75rem',
-                    borderRadius: '9999px',
+                    borderRadius: 'var(--ob-radius-pill)',
                     border: 'none',
                     background:
                       viewMode === 'original'
@@ -381,7 +392,7 @@ export function PhotoGallery({
                   }}
                   style={{
                     padding: '0.375rem 0.75rem',
-                    borderRadius: '9999px',
+                    borderRadius: 'var(--ob-radius-pill)',
                     border: 'none',
                     background:
                       viewMode === 'marketing'
@@ -402,7 +413,7 @@ export function PhotoGallery({
                 onClick={() => setSelectedPhoto(null)}
                 style={{
                   padding: '0.5rem 1rem',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-sm)',
                   border: 'none',
                   background: 'rgba(255,255,255,0.1)',
                   color: '#fff',
@@ -434,11 +445,13 @@ export function PhotoGallery({
                   maxWidth: '100%',
                   maxHeight: '100%',
                   objectFit: 'contain',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-sm)',
                 }}
               />
             ) : (
-              <div style={{ color: '#9ca3af' }}>Image not available</div>
+              <div style={{ color: 'var(--ob-color-text-muted)' }}>
+                Image not available
+              </div>
             )}
           </div>
 
@@ -460,7 +473,7 @@ export function PhotoGallery({
                   style={{
                     padding: '0.25rem 0.75rem',
                     background: 'rgba(255,255,255,0.1)',
-                    borderRadius: '9999px',
+                    borderRadius: 'var(--ob-radius-pill)',
                     fontSize: '0.75rem',
                     color: '#fff',
                   }}

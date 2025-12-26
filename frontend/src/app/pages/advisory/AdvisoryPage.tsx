@@ -274,7 +274,7 @@ export function AdvisoryPage() {
                             p: 2,
                             border: '1px solid',
                             borderColor: 'divider',
-                            borderRadius: 2,
+                            borderRadius: 'var(--ob-radius-sm)',
                           }}
                         >
                           <Typography
@@ -369,7 +369,7 @@ export function AdvisoryPage() {
                             sx={{
                               width: 12,
                               height: 12,
-                              borderRadius: '50%',
+                              borderRadius: 'var(--ob-radius-pill)',
                               bgcolor: 'primary.main',
                               mx: 'auto',
                               mb: 1,

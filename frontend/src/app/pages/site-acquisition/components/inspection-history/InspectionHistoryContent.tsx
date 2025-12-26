@@ -106,7 +106,7 @@ export function InspectionHistoryContent({
             style={{
               margin: '0.3rem 0 0',
               fontSize: '0.875rem',
-              color: '#6e6e73',
+              color: 'var(--ob-color-text-muted)',
               maxWidth: '480px',
             }}
           >
@@ -119,10 +119,16 @@ export function InspectionHistoryContent({
             type="button"
             onClick={() => setHistoryViewMode('timeline')}
             style={{
-              border: '1px solid #1d1d1f',
-              background: historyViewMode === 'timeline' ? '#1d1d1f' : 'white',
-              color: historyViewMode === 'timeline' ? 'white' : '#1d1d1f',
-              borderRadius: '9999px',
+              border: '1px solid var(--ob-color-text-primary)',
+              background:
+                historyViewMode === 'timeline'
+                  ? 'var(--ob-color-text-primary)'
+                  : 'white',
+              color:
+                historyViewMode === 'timeline'
+                  ? 'white'
+                  : 'var(--ob-color-text-primary)',
+              borderRadius: 'var(--ob-radius-pill)',
               padding: '0.4rem 0.9rem',
               fontSize: '0.8125rem',
               fontWeight: 600,
@@ -135,10 +141,16 @@ export function InspectionHistoryContent({
             type="button"
             onClick={() => setHistoryViewMode('compare')}
             style={{
-              border: '1px solid #1d1d1f',
-              background: historyViewMode === 'compare' ? '#1d1d1f' : 'white',
-              color: historyViewMode === 'compare' ? 'white' : '#1d1d1f',
-              borderRadius: '9999px',
+              border: '1px solid var(--ob-color-text-primary)',
+              background:
+                historyViewMode === 'compare'
+                  ? 'var(--ob-color-text-primary)'
+                  : 'white',
+              color:
+                historyViewMode === 'compare'
+                  ? 'white'
+                  : 'var(--ob-color-text-primary)',
+              borderRadius: 'var(--ob-radius-pill)',
               padding: '0.4rem 0.9rem',
               fontSize: '0.8125rem',
               fontWeight: 600,
@@ -156,7 +168,7 @@ export function InspectionHistoryContent({
           style={{
             margin: 0,
             fontSize: '0.85rem',
-            color: '#c53030',
+            color: 'var(--ob-error-700)',
           }}
         >
           {assessmentHistoryError}
@@ -166,9 +178,9 @@ export function InspectionHistoryContent({
           style={{
             padding: '1.5rem',
             textAlign: 'center',
-            color: '#6e6e73',
-            background: '#f5f5f7',
-            borderRadius: '4px',
+            color: 'var(--ob-color-text-muted)',
+            background: 'var(--ob-color-bg-surface-elevated)',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           <p style={{ margin: 0, fontSize: '0.9rem' }}>
@@ -180,9 +192,9 @@ export function InspectionHistoryContent({
           style={{
             padding: '1.5rem',
             textAlign: 'center',
-            color: '#6e6e73',
-            background: '#f5f5f7',
-            borderRadius: '4px',
+            color: 'var(--ob-color-text-muted)',
+            background: 'var(--ob-color-bg-surface-elevated)',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           <p style={{ margin: 0, fontSize: '0.9rem' }}>
@@ -207,9 +219,9 @@ export function InspectionHistoryContent({
             style={{
               padding: '1.5rem',
               textAlign: 'center',
-              color: '#6e6e73',
-              background: '#f5f5f7',
-              borderRadius: '4px',
+              color: 'var(--ob-color-text-muted)',
+              background: 'var(--ob-color-bg-surface-elevated)',
+              borderRadius: 'var(--ob-radius-sm)',
             }}
           >
             <p style={{ margin: 0, fontSize: '0.9rem' }}>

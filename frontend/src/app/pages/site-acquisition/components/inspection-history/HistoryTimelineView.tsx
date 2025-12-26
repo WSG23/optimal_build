@@ -52,17 +52,17 @@ export function HistoryTimelineView({
           <div
             key={key}
             style={{
-              border: '1px solid #e5e5e7',
+              border: '1px solid var(--ob-color-border-subtle)',
               borderLeft: `4px solid ${
                 index === 0
-                  ? '#0a84ff'
+                  ? 'var(--ob-color-brand-primary)'
                   : matchesScenario
-                    ? '#34c759'
-                    : '#d2d2d7'
+                    ? 'var(--ob-success-500)'
+                    : 'var(--ob-color-border-subtle)'
               }`,
-              borderRadius: '4px',
+              borderRadius: 'var(--ob-radius-sm)',
               padding: '1rem 1.25rem',
-              background: index === 0 ? '#f0f9ff' : '#ffffff',
+              background: index === 0 ? 'var(--ob-info-50)' : 'white',
               display: 'flex',
               flexDirection: 'column',
               gap: '0.5rem',
@@ -91,7 +91,7 @@ export function HistoryTimelineView({
                     fontWeight: 600,
                     letterSpacing: '0.08em',
                     textTransform: 'uppercase',
-                    color: '#6e6e73',
+                    color: 'var(--ob-color-text-muted)',
                   }}
                 >
                   {index === 0
@@ -110,10 +110,20 @@ export function HistoryTimelineView({
                   alignItems: 'flex-end',
                 }}
               >
-                <span style={{ fontSize: '0.85rem', color: '#6e6e73' }}>
+                <span
+                  style={{
+                    fontSize: '0.85rem',
+                    color: 'var(--ob-color-text-muted)',
+                  }}
+                >
                   {formatRecordedTimestamp(entry.recordedAt)}
                 </span>
-                <span style={{ fontSize: '0.78rem', color: '#6e6e73' }}>
+                <span
+                  style={{
+                    fontSize: '0.78rem',
+                    color: 'var(--ob-color-text-muted)',
+                  }}
+                >
                   Inspector:{' '}
                   <strong>
                     {entry.inspectorName?.trim() || 'Not recorded'}
@@ -123,7 +133,13 @@ export function HistoryTimelineView({
             </div>
 
             {/* Summary */}
-            <p style={{ margin: 0, fontSize: '0.875rem', color: '#3a3a3c' }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: '0.875rem',
+                color: 'var(--ob-color-text-secondary)',
+              }}
+            >
               {entry.summary || 'No notes recorded.'}
             </p>
 
@@ -134,7 +150,7 @@ export function HistoryTimelineView({
                 flexWrap: 'wrap',
                 gap: '0.4rem',
                 fontSize: '0.8rem',
-                color: '#6e6e73',
+                color: 'var(--ob-color-text-muted)',
               }}
             >
               <span>
@@ -159,7 +175,7 @@ export function HistoryTimelineView({
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     textTransform: 'uppercase',
-                    color: '#6e6e73',
+                    color: 'var(--ob-color-text-muted)',
                     letterSpacing: '0.06em',
                   }}
                 >
@@ -180,7 +196,7 @@ export function HistoryTimelineView({
                     style={{
                       margin: '0.35rem 0 0',
                       fontSize: '0.75rem',
-                      color: '#6e6e73',
+                      color: 'var(--ob-color-text-muted)',
                     }}
                   >
                     +{remainingActions} more actions recorded in this
@@ -198,7 +214,7 @@ export function HistoryTimelineView({
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     textTransform: 'uppercase',
-                    color: '#6e6e73',
+                    color: 'var(--ob-color-text-muted)',
                     letterSpacing: '0.06em',
                   }}
                 >
@@ -215,7 +231,7 @@ export function HistoryTimelineView({
                           href={attachment.url}
                           target="_blank"
                           rel="noreferrer"
-                          style={{ color: '#0a84ff' }}
+                          style={{ color: 'var(--ob-color-brand-primary)' }}
                         >
                           {attachment.label}
                         </a>

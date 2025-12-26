@@ -131,7 +131,7 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
       </Box>
 
       {supplyByYear.length > 0 ? (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid container spacing="var(--ob-space-100)" sx={{ mb: 3 }}>
           {supplyByYear
             .slice(0, 3)
             .map(({ year, totalGFA, totalUnits, projectCount }) => (

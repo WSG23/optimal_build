@@ -44,10 +44,10 @@ export function PropertyOverviewSection({
         <article
           key={`${card.title}-${index}`}
           style={{
-            border: '1px solid #e5e7eb',
-            borderRadius: '4px',
+            border: '1px solid var(--ob-color-border-subtle)',
+            borderRadius: 'var(--ob-radius-sm)',
             padding: '1.25rem',
-            background: '#f9fafb',
+            background: 'var(--ob-color-bg-surface-elevated)',
             display: 'flex',
             flexDirection: 'column',
             gap: '0.9rem',
@@ -64,7 +64,7 @@ export function PropertyOverviewSection({
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
                 fontWeight: 600,
-                color: '#6b7280',
+                color: 'var(--ob-color-text-muted)',
               }}
             >
               {card.title}
@@ -74,7 +74,7 @@ export function PropertyOverviewSection({
                 style={{
                   fontSize: '1rem',
                   fontWeight: 600,
-                  color: '#111827',
+                  color: 'var(--ob-color-text-primary)',
                   letterSpacing: '-0.01em',
                 }}
               >
@@ -108,7 +108,7 @@ export function PropertyOverviewSection({
                     fontWeight: 600,
                     letterSpacing: '0.06em',
                     textTransform: 'uppercase',
-                    color: '#9ca3af',
+                    color: 'var(--ob-color-text-muted)',
                   }}
                 >
                   {item.label}
@@ -118,7 +118,7 @@ export function PropertyOverviewSection({
                     margin: 0,
                     fontSize: '0.95rem',
                     fontWeight: 600,
-                    color: '#1f2937',
+                    color: 'var(--ob-color-text-primary)',
                   }}
                 >
                   {item.value}
@@ -143,9 +143,9 @@ export function PropertyOverviewSection({
                     display: 'inline-flex',
                     alignItems: 'center',
                     padding: '0.25rem 0.6rem',
-                    borderRadius: '9999px',
-                    background: '#e0e7ff',
-                    color: '#3730a3',
+                    borderRadius: 'var(--ob-radius-pill)',
+                    background: 'var(--ob-info-100)',
+                    color: 'var(--ob-color-brand-primary)',
                     fontSize: '0.75rem',
                     fontWeight: 600,
                   }}
@@ -162,7 +162,7 @@ export function PropertyOverviewSection({
               style={{
                 margin: 0,
                 fontSize: '0.75rem',
-                color: '#6b7280',
+                color: 'var(--ob-color-text-muted)',
               }}
             >
               {card.note}

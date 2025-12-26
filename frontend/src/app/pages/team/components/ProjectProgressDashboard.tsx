@@ -443,7 +443,7 @@ export const ProjectProgressDashboard: React.FC<
                 <LinearProgress
                   variant="determinate"
                   value={phase.progress}
-                  sx={{ height: 8, borderRadius: 4, mb: 1 }}
+                  sx={{ height: 8, borderRadius: 'var(--ob-radius-sm)', mb: 1 }}
                   color={
                     getStatusColor(phase.status) as
                       | 'inherit'
@@ -491,7 +491,7 @@ export const ProjectProgressDashboard: React.FC<
                 <ListItem
                   key={approval.id}
                   sx={{
-                    borderRadius: 1,
+                    borderRadius: 'var(--ob-radius-xs)',
                     mb: 1,
                     bgcolor: 'action.hover',
                     cursor: 'pointer',

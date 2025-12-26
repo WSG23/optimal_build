@@ -519,7 +519,7 @@ export function FeasibilityWizard({
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '32px',
+            gap: 'var(--ob-space-400)',
             color: 'rgba(255,255,255,0.9)',
           }}
         >
@@ -663,7 +663,7 @@ export function FeasibilityWizard({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: '4px',
+              borderRadius: 'var(--ob-radius-sm)',
               position: 'relative',
               transition: 'transform 0.3s',
             }}
@@ -856,7 +856,7 @@ export function FeasibilityWizard({
                       height: '20px',
                       border: '2px solid white',
                       borderTopColor: 'transparent',
-                      borderRadius: '50%',
+                      borderRadius: 'var(--ob-radius-pill)',
                       animation: 'spin 1s linear infinite',
                     }}
                   />
@@ -893,7 +893,7 @@ export function FeasibilityWizard({
       >
         <div className="feasibility-wizard__sidebar-content">
           {/* Section 0: Smart Intelligence Field (Merged Address/Area/Zoning) */}
-          <div style={{ marginBottom: '24px' }}>
+          <div style={{ marginBottom: 'var(--ob-space-300)' }}>
             <SmartIntelligenceField
               value={addressInput}
               siteArea={siteAreaInput ? Number(siteAreaInput) : undefined}
@@ -1031,6 +1031,7 @@ export function FeasibilityWizard({
                           height: 16,
                           border: '2px solid white',
                           borderTopColor: 'transparent',
+                          borderRadius: 'var(--ob-radius-pill)',
                         }}
                       />
                     ) : (
@@ -1100,7 +1101,7 @@ export function FeasibilityWizard({
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-sm)',
                   position: 'relative',
                   transition: 'transform 0.3s',
                 }}

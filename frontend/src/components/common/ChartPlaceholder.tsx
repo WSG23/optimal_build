@@ -19,7 +19,7 @@ export function ChartPlaceholder({
         width: '100%',
         position: 'relative',
         bgcolor: 'background.paper',
-        borderRadius: 1,
+        borderRadius: 'var(--ob-radius-xs)',
         border: '1px dashed',
         borderColor: 'divider',
         overflow: 'hidden',
@@ -48,7 +48,7 @@ export function ChartPlaceholder({
               width: '8%',
               height: `${h}%`,
               bgcolor: 'text.primary',
-              borderRadius: '4px 4px 0 0',
+              borderRadius: 'var(--ob-radius-sm) var(--ob-radius-sm) 0 0',
             }}
           />
         ))}
@@ -60,7 +60,7 @@ export function ChartPlaceholder({
           sx={{
             width: 64,
             height: 64,
-            borderRadius: '50%',
+            borderRadius: 'var(--ob-radius-pill)',
             bgcolor: 'action.hover',
             display: 'flex',
             alignItems: 'center',

@@ -65,8 +65,8 @@ class WorkflowService:
             self.db.add(step)
 
         await self.db.commit()
-        await self.db.refresh(workflow)
-        return workflow
+        # Re-fetch with steps loaded to avoid lazy loading issues
+        return await self.get_workflow(workflow.id)
 
     async def get_workflow(self, workflow_id: UUID) -> ApprovalWorkflow:
         """Get workflow with steps."""

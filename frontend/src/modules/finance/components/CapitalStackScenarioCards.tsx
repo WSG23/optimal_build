@@ -120,7 +120,7 @@ export function CapitalStackScenarioCards({
                   sx={{
                     width: 8,
                     height: 8,
-                    borderRadius: '50%',
+                    borderRadius: 'var(--ob-radius-pill)',
                     bgcolor: 'primary.main',
                     flexShrink: 0,
                   }}

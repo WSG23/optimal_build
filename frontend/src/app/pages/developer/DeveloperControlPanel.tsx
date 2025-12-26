@@ -32,7 +32,11 @@ export function DeveloperControlPanel() {
 
   return (
     <Container maxWidth="lg">
-      <Grid container spacing={4} sx={{ mt: 2 }}>
+      <Grid
+        container
+        spacing="var(--ob-space-200)"
+        sx={{ mt: 'var(--ob-space-100)' }}
+      >
         {/* Feature Flags Section */}
         <Grid item xs={12} md={6}>
           <Card variant="glass">

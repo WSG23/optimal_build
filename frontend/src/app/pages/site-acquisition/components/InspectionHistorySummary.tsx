@@ -50,8 +50,8 @@ export function InspectionHistorySummary({
   return (
     <div
       style={{
-        border: '1px solid #e5e5e7',
-        borderRadius: '4px',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
@@ -81,7 +81,7 @@ export function InspectionHistorySummary({
             style={{
               margin: '0.2rem 0 0',
               fontSize: '0.85rem',
-              color: '#6e6e73',
+              color: 'var(--ob-color-text-muted)',
             }}
           >
             Track developer inspections saved for this property.
@@ -91,9 +91,9 @@ export function InspectionHistorySummary({
           type="button"
           onClick={onViewTimeline}
           style={{
-            borderRadius: '9999px',
-            border: '1px solid #1d1d1f',
-            background: '#1d1d1f',
+            borderRadius: 'var(--ob-radius-pill)',
+            border: '1px solid var(--ob-color-text-primary)',
+            background: 'var(--ob-color-text-primary)',
             color: 'white',
             padding: '0.45rem 1rem',
             fontSize: '0.8rem',
@@ -108,10 +108,10 @@ export function InspectionHistorySummary({
           onClick={onLogInspection}
           disabled={!hasProperty}
           style={{
-            borderRadius: '9999px',
-            border: '1px solid #1d1d1f',
+            borderRadius: 'var(--ob-radius-pill)',
+            border: '1px solid var(--ob-color-text-primary)',
             background: 'white',
-            color: '#1d1d1f',
+            color: 'var(--ob-color-text-primary)',
             padding: '0.45rem 1rem',
             fontSize: '0.8rem',
             fontWeight: 600,
@@ -128,22 +128,28 @@ export function InspectionHistorySummary({
           style={{
             margin: 0,
             fontSize: '0.85rem',
-            color: '#c53030',
+            color: 'var(--ob-error-700)',
           }}
         >
           {error}
         </p>
       ) : isLoading ? (
-        <p style={{ margin: 0, fontSize: '0.9rem', color: '#6e6e73' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: '0.9rem',
+            color: 'var(--ob-color-text-muted)',
+          }}
+        >
           Loading inspection history...
         </p>
       ) : latestEntry ? (
         <div
           style={{
-            border: '1px solid #e5e5e7',
-            borderRadius: '4px',
+            border: '1px solid var(--ob-color-border-subtle)',
+            borderRadius: 'var(--ob-radius-sm)',
             padding: '1rem 1.1rem',
-            background: '#f5f5f7',
+            background: 'var(--ob-color-bg-surface-elevated)',
             display: 'flex',
             flexDirection: 'column',
             gap: '0.4rem',
@@ -155,7 +161,7 @@ export function InspectionHistorySummary({
               fontWeight: 600,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              color: '#6e6e73',
+              color: 'var(--ob-color-text-muted)',
             }}
           >
             Most recent inspection
@@ -179,7 +185,12 @@ export function InspectionHistorySummary({
               <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>
                 {formatScenario(latestEntry.scenario)}
               </span>
-              <span style={{ fontSize: '0.85rem', color: '#6e6e73' }}>
+              <span
+                style={{
+                  fontSize: '0.85rem',
+                  color: 'var(--ob-color-text-muted)',
+                }}
+              >
                 {formatTimestamp(latestEntry.recordedAt)}
               </span>
             </div>
@@ -190,13 +201,28 @@ export function InspectionHistorySummary({
                 gap: '0.25rem',
               }}
             >
-              <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+              <span
+                style={{
+                  fontSize: '0.8rem',
+                  color: 'var(--ob-color-text-muted)',
+                }}
+              >
                 Rating: <strong>{latestEntry.overallRating}</strong>
               </span>
-              <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+              <span
+                style={{
+                  fontSize: '0.8rem',
+                  color: 'var(--ob-color-text-muted)',
+                }}
+              >
                 Score: <strong>{latestEntry.overallScore}/100</strong>
               </span>
-              <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+              <span
+                style={{
+                  fontSize: '0.8rem',
+                  color: 'var(--ob-color-text-muted)',
+                }}
+              >
                 Risk:{' '}
                 <strong style={{ textTransform: 'capitalize' }}>
                   {latestEntry.riskLevel}
@@ -204,7 +230,13 @@ export function InspectionHistorySummary({
               </span>
             </div>
           </div>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: '#3a3a3c' }}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: '0.85rem',
+              color: 'var(--ob-color-text-secondary)',
+            }}
+          >
             {latestEntry.summary || 'No summary recorded.'}
           </p>
           {previousEntry && (
@@ -212,7 +244,7 @@ export function InspectionHistorySummary({
               style={{
                 margin: '0.35rem 0 0',
                 fontSize: '0.75rem',
-                color: '#6e6e73',
+                color: 'var(--ob-color-text-muted)',
               }}
             >
               Last change:{' '}
@@ -224,7 +256,13 @@ export function InspectionHistorySummary({
           )}
         </div>
       ) : (
-        <p style={{ margin: 0, fontSize: '0.9rem', color: '#6e6e73' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: '0.9rem',
+            color: 'var(--ob-color-text-muted)',
+          }}
+        >
           No developer inspections recorded yet. Save an inspection to begin the
           audit trail.
         </p>

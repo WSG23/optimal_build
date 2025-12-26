@@ -61,7 +61,7 @@ export function HomeOverview() {
               style={{
                 width: '40px',
                 height: '40px',
-                borderRadius: '50%',
+                borderRadius: 'var(--ob-radius-pill)',
                 background: 'rgba(59, 130, 246, 0.1)',
                 display: 'flex',
                 alignItems: 'center',
@@ -96,7 +96,7 @@ export function HomeOverview() {
               style={{
                 width: '40px',
                 height: '40px',
-                borderRadius: '50%',
+                borderRadius: 'var(--ob-radius-pill)',
                 background: 'rgba(16, 185, 129, 0.1)',
                 display: 'flex',
                 alignItems: 'center',
@@ -135,7 +135,7 @@ export function HomeOverview() {
           >
             <h3
               style={{
-                color: '#94A3B8',
+                color: 'var(--ob-color-text-secondary)',
                 fontSize: '0.875rem',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
@@ -145,7 +145,7 @@ export function HomeOverview() {
             </h3>
             <span
               style={{
-                color: '#10B981',
+                color: 'var(--ob-color-status-success-text)',
                 fontSize: '0.875rem',
                 fontWeight: 600,
               }}
@@ -157,14 +157,19 @@ export function HomeOverview() {
             style={{
               fontSize: '2.5rem',
               fontWeight: 700,
-              color: '#F8FAFC',
+              color: 'var(--ob-color-text-primary)',
               fontFamily: 'JetBrains Mono, monospace',
               marginBottom: '0.5rem',
             }}
           >
             $42.8M
           </div>
-          <p style={{ fontSize: '0.875rem', color: '#64748B' }}>
+          <p
+            style={{
+              fontSize: 'var(--ob-font-size-sm)',
+              color: 'var(--ob-color-text-muted)',
+            }}
+          >
             Weighted probability across 12 active deals.
           </p>
           {/* Sparkline Placeholder */}
@@ -173,7 +178,7 @@ export function HomeOverview() {
               height: '30px',
               marginTop: '1rem',
               background: 'rgba(255,255,255,0.05)',
-              borderRadius: '4px',
+              borderRadius: 'var(--ob-radius-sm)',
               position: 'relative',
               overflow: 'hidden',
             }}
@@ -193,7 +198,7 @@ export function HomeOverview() {
               <path
                 d="M0,30 L50,20 L100,25 L150,10 L200,15 L250,5 L300,20"
                 fill="none"
-                stroke="#3B82F6"
+                stroke="var(--ob-color-brand-primary)"
                 strokeWidth="2"
               />
             </svg>
@@ -205,7 +210,7 @@ export function HomeOverview() {
               marginTop: '1rem',
               width: '100%',
               background: 'rgba(59,130,246,0.1)',
-              color: '#60A5FA',
+              color: 'var(--ob-brand-400)',
             }}
           >
             View Operations
@@ -227,7 +232,7 @@ export function HomeOverview() {
               style={{
                 width: '40px',
                 height: '40px',
-                borderRadius: '50%',
+                borderRadius: 'var(--ob-radius-pill)',
                 background: 'rgba(245, 158, 11, 0.1)',
                 display: 'flex',
                 alignItems: 'center',
@@ -262,7 +267,7 @@ export function HomeOverview() {
               style={{
                 width: '40px',
                 height: '40px',
-                borderRadius: '50%',
+                borderRadius: 'var(--ob-radius-pill)',
                 background: 'rgba(239, 68, 68, 0.1)',
                 display: 'flex',
                 alignItems: 'center',

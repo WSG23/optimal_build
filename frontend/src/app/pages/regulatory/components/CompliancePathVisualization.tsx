@@ -41,9 +41,9 @@ const ASSET_TYPE_LABELS: Record<AssetType, string> = {
 }
 
 const AGENCY_COLORS: Record<string, string> = {
-  URA: '#2563eb',
+  URA: 'var(--ob-color-brand-primary)',
   BCA: '#059669',
-  SCDF: '#dc2626',
+  SCDF: 'var(--ob-color-status-error-text)',
   NEA: '#7c3aed',
   LTA: '#ea580c',
   PUB: '#0891b2',
@@ -124,7 +124,7 @@ export const CompliancePathVisualization: React.FC<
         p: 3,
         border: '1px solid rgba(255,255,255,0.1)',
         bgcolor: 'background.paper',
-        borderRadius: 2,
+        borderRadius: 'var(--ob-radius-sm)',
       }}
     >
       <Box
@@ -187,7 +187,7 @@ export const CompliancePathVisualization: React.FC<
               mb: 3,
               p: 2,
               bgcolor: 'rgba(255,255,255,0.03)',
-              borderRadius: 1,
+              borderRadius: 'var(--ob-radius-xs)',
             }}
           >
             <Box>
@@ -240,7 +240,7 @@ export const CompliancePathVisualization: React.FC<
                   height: 4,
                   background:
                     'linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 100%)',
-                  borderRadius: 2,
+                  borderRadius: 'var(--ob-radius-sm)',
                 }}
               />
 
@@ -262,7 +262,7 @@ export const CompliancePathVisualization: React.FC<
                           width: CONNECTOR_LENGTH - 20,
                           height: 8,
                           background: `linear-gradient(90deg, ${getStepColor(compliancePaths[index - 1])} 0%, ${stepColor} 100%)`,
-                          borderRadius: 4,
+                          borderRadius: 'var(--ob-radius-sm)',
                           boxShadow: `0 0 10px ${stepColor}40`,
                         }}
                       />
@@ -305,7 +305,7 @@ export const CompliancePathVisualization: React.FC<
                           left: xPos,
                           width: STEP_WIDTH,
                           height: STEP_HEIGHT,
-                          borderRadius: 2,
+                          borderRadius: 'var(--ob-radius-sm)',
                           border: `2px solid ${stepColor}`,
                           background: `linear-gradient(135deg, ${stepColor}20 0%, ${stepColor}10 100%)`,
                           cursor: 'pointer',
@@ -325,14 +325,14 @@ export const CompliancePathVisualization: React.FC<
                               left: -12,
                               width: 28,
                               height: 28,
-                              borderRadius: '50%',
+                              borderRadius: 'var(--ob-radius-pill)',
                               background: stepColor,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               fontWeight: 'bold',
                               fontSize: '0.75rem',
-                              color: '#fff',
+                              color: 'var(--ob-color-text-inverse)',
                               boxShadow: `0 0 12px ${stepColor}`,
                             }}
                           >
@@ -346,7 +346,7 @@ export const CompliancePathVisualization: React.FC<
                             icon={<AgencyIcon sx={{ fontSize: 14 }} />}
                             sx={{
                               bgcolor: stepColor,
-                              color: '#fff',
+                              color: 'var(--ob-color-text-inverse)',
                               fontWeight: 600,
                               fontSize: '0.7rem',
                               mb: 1,
@@ -391,7 +391,7 @@ export const CompliancePathVisualization: React.FC<
                                   height: 18,
                                   fontSize: '0.6rem',
                                   bgcolor: 'error.main',
-                                  color: '#fff',
+                                  color: 'var(--ob-color-text-inverse)',
                                 }}
                               />
                             ) : (
@@ -424,7 +424,7 @@ export const CompliancePathVisualization: React.FC<
                     20,
                   width: 36,
                   height: 36,
-                  borderRadius: '50%',
+                  borderRadius: 'var(--ob-radius-pill)',
                   background:
                     'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   display: 'flex',
@@ -433,7 +433,7 @@ export const CompliancePathVisualization: React.FC<
                   boxShadow: '0 0 20px rgba(16, 185, 129, 0.5)',
                 }}
               >
-                <ApprovedIcon sx={{ color: '#fff' }} />
+                <ApprovedIcon sx={{ color: 'var(--ob-color-text-inverse)' }} />
               </Box>
             </Box>
           </Box>
@@ -462,7 +462,7 @@ export const CompliancePathVisualization: React.FC<
                   sx={{
                     width: 12,
                     height: 12,
-                    borderRadius: '50%',
+                    borderRadius: 'var(--ob-radius-pill)',
                     backgroundColor: color,
                   }}
                 />

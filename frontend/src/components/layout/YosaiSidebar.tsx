@@ -91,7 +91,7 @@ export function YosaiSidebar() {
           </Button>
         </Box>
 
-        <Stack spacing={3}>
+        <Stack spacing="var(--ob-space-150)">
           {navGroups.map((group) => (
             <Box key={group.title}>
               <Typography
@@ -126,7 +126,8 @@ export function YosaiSidebar() {
                           : 'transparent',
                         borderLeft: 4,
                         borderColor: isActive ? 'primary.main' : 'transparent',
-                        borderRadius: '0 4px 4px 0', // Square Cyber-Minimalism: sm
+                        borderRadius:
+                          '0 var(--ob-radius-sm) var(--ob-radius-sm) 0',
                         px: 2, // 16px - consistent with layout gaps
                         py: 1.25,
                         textAlign: 'left',
@@ -145,7 +146,8 @@ export function YosaiSidebar() {
                               transform: 'translateY(-50%)',
                               width: '4px',
                               height: '70%',
-                              borderRadius: '0 4px 4px 0',
+                              borderRadius:
+                                '0 var(--ob-radius-sm) var(--ob-radius-sm) 0',
                               bgcolor: 'primary.main',
                               boxShadow: `0 0 12px 2px ${alpha(theme.palette.primary.main, 0.6)}`,
                             }
@@ -159,7 +161,7 @@ export function YosaiSidebar() {
                               transform: 'translateY(-50%)',
                               width: '6px',
                               height: '6px',
-                              borderRadius: '50%',
+                              borderRadius: 'var(--ob-radius-pill)',
                               bgcolor: 'primary.main',
                               boxShadow: `0 0 8px 2px ${alpha(theme.palette.primary.main, 0.5)}`,
                               animation: 'pulse 2s ease-in-out infinite',

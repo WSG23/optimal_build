@@ -283,7 +283,7 @@ function ScenarioCard({
               sx={{
                 width: 'var(--ob-space-050)',
                 height: 'var(--ob-space-050)',
-                borderRadius: '50%',
+                borderRadius: 'var(--ob-radius-pill)',
                 bgcolor: 'primary.main',
                 flexShrink: 0,
               }}

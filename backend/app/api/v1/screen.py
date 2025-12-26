@@ -7,13 +7,12 @@ from time import perf_counter
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Depends
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefGeocodeCache, RefParcel, RefZoningLayer
 from app.schemas.buildable import (
-    BUILDABLE_REQUEST_EXAMPLE,
     BUILDABLE_RESPONSE_EXAMPLE,
     BuildableMetrics,
     BuildableRequest,
@@ -53,10 +52,7 @@ class ZoneResolution:
     },
 )
 async def screen_buildable(
-    payload: BuildableRequest = Body(
-        ...,
-        examples={"default": BUILDABLE_REQUEST_EXAMPLE},
-    ),
+    payload: BuildableRequest,
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
 ) -> BuildableResponse:

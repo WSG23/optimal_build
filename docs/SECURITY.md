@@ -12,8 +12,9 @@ This document outlines security measures implemented in the codebase and provide
 6. [Password Security](#password-security)
 7. [Production Deployment Checklist](#production-deployment-checklist)
 8. [Security Headers](#security-headers)
-9. [Rate Limiting](#rate-limiting)
-10. [Reporting Vulnerabilities](#reporting-vulnerabilities)
+9. [Error Handling](#error-handling)
+10. [Rate Limiting](#rate-limiting)
+11. [Reporting Vulnerabilities](#reporting-vulnerabilities)
 
 ---
 
@@ -235,17 +236,130 @@ The `AccountLockoutService` provides brute-force protection:
 
 ## Security Headers
 
-The `SecurityHeadersMiddleware` adds these headers to all responses:
+The `SecurityHeadersMiddleware` (`backend/app/middleware/security.py`) adds comprehensive security headers to all responses.
 
-| Header | Value | Purpose |
+### Headers Added
+
+| Header | Value (Production) | Purpose |
 |--------|-------|---------|
-| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` | Force HTTPS |
+| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` | Force HTTPS (2 years) |
 | `X-Content-Type-Options` | `nosniff` | Prevent MIME sniffing |
 | `X-Frame-Options` | `DENY` | Prevent clickjacking |
-| `X-XSS-Protection` | `1; mode=block` | XSS filter |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` | Control referrer |
-| `Content-Security-Policy` | Restrictive CSP | Prevent XSS |
-| `Permissions-Policy` | Disable sensitive APIs | Limit browser features |
+| `X-XSS-Protection` | `0` | Disabled per OWASP recommendation |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Control referrer leakage |
+| `Content-Security-Policy` | Strict CSP (see below) | Prevent XSS/injection |
+| `Permissions-Policy` | `geolocation=(), microphone=(), camera=(), payment=(), usb=()` | Limit browser features |
+| `Cross-Origin-Opener-Policy` | `same-origin` | Isolate browsing context |
+| `Cross-Origin-Resource-Policy` | `cross-origin` | Control resource sharing |
+| `Cache-Control` | `no-store, no-cache, must-revalidate, private` | Prevent caching (API only) |
+
+### Content Security Policy
+
+**Production CSP (strict):**
+```
+default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests
+```
+
+**Development CSP (permissive):**
+```
+default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';
+img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' ws: wss: http://localhost:* http://127.0.0.1:*;
+frame-ancestors 'self'
+```
+
+### Environment-Specific Behavior
+
+- **Production/Staging**: Uses strict CSP and full HSTS (2 years with preload)
+- **Development**: Uses permissive CSP for dev tools, minimal HSTS (`max-age=0`)
+
+### Customizing Security Headers
+
+You can customize headers by providing a `SecurityHeadersConfig`:
+
+```python
+from app.middleware.security import SecurityHeadersConfig, SecurityHeadersMiddleware
+
+config = SecurityHeadersConfig(
+    environment="production",
+    content_security_policy="custom-csp-here",
+    cross_origin_embedder_policy="require-corp",  # Enable COEP if needed
+)
+app.add_middleware(SecurityHeadersMiddleware, config=config)
+```
+
+### Verification
+
+Test your security headers at [securityheaders.com](https://securityheaders.com) after deployment.
+
+---
+
+## Error Handling
+
+The application uses a standardized exception hierarchy (`backend/app/core/exceptions.py`) to ensure consistent error responses and prevent information leakage.
+
+### Exception Hierarchy
+
+```
+AppError (base)
+├── NotFoundError (404)
+├── ValidationError (422)
+├── AuthenticationError (401)
+├── AuthorizationError (403)
+├── ConflictError (409)
+├── RateLimitError (429)
+├── IntegrationError (502)
+├── BusinessRuleError (422)
+└── ServiceUnavailableError (503)
+```
+
+### Standardized Error Response
+
+All API errors return this consistent JSON format:
+
+```json
+{
+  "error_code": "NOT_FOUND",
+  "message": "Property with id '123' not found",
+  "status_code": 404,
+  "timestamp": "2025-12-26T10:30:00.000Z",
+  "correlation_id": "abc-123-xyz",
+  "details": [
+    {"field": "property_id", "message": "Not found", "code": "not_found"}
+  ]
+}
+```
+
+### Security Benefits
+
+1. **No stack traces in production**: Unhandled exceptions return generic messages
+2. **Consistent error codes**: Machine-readable codes for client-side handling
+3. **Correlation IDs**: Every error includes a trace ID for debugging
+4. **Proper exception chaining**: Original errors are logged but not exposed
+
+### Usage
+
+```python
+from app.core.exceptions import NotFoundError, ValidationError
+
+# Raise typed exceptions
+raise NotFoundError("Property", property_id)
+raise ValidationError("email", "Invalid format", code="invalid_format")
+
+# Exception chaining for debugging
+try:
+    result = await external_api.fetch()
+except ExternalAPIError as e:
+    raise IntegrationError("PropertyGuru", "Failed to sync") from e
+```
+
+### Frontend Error Handling
+
+The React application includes a global `ErrorBoundary` component that:
+
+- Catches JavaScript errors anywhere in the component tree
+- Displays a user-friendly error page with recovery options
+- Logs errors for monitoring (can integrate with Sentry)
+- Shows stack traces only in development mode
 
 ---
 
@@ -286,6 +400,11 @@ We will acknowledge receipt within 48 hours and provide a timeline for resolutio
 
 | Date | Change | Files Modified |
 |------|--------|----------------|
+| 2025-12-26 | Added standardized exception hierarchy | `backend/app/core/exceptions.py` |
+| 2025-12-26 | Added exception handler middleware | `backend/app/middleware/exception_handler.py` |
+| 2025-12-26 | Enhanced security headers (CSP, COEP, Cache-Control) | `backend/app/middleware/security.py` |
+| 2025-12-26 | Disabled X-XSS-Protection per OWASP | `backend/app/middleware/security.py` |
+| 2025-12-26 | Added global React error boundary | `frontend/src/components/error/ErrorBoundary.tsx` |
 | 2025-12-08 | Removed fallback JWT secret | `backend/app/core/auth/service.py` |
 | 2025-12-08 | Restricted CORS allowed headers | `backend/app/main.py` |
 | 2025-12-08 | Upgraded to bcrypt password hashing | `backend/app/utils/security.py` |

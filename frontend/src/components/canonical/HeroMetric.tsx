@@ -28,7 +28,7 @@ export function HeroMetric({
   const getBackground = () => {
     switch (variant) {
       case 'primary':
-        return 'linear-gradient(135deg, #1F2937 0%, #111827 100%)'
+        return 'linear-gradient(135deg, var(--ob-neutral-800) 0%, var(--ob-neutral-900) 100%)'
       case 'secondary':
         return 'white'
       case 'glass':
@@ -76,7 +76,7 @@ export function HeroMetric({
             height: 100,
             background:
               'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)',
-            borderRadius: '50%',
+            borderRadius: 'var(--ob-radius-pill)',
           }}
         />
       )}

@@ -68,8 +68,8 @@ export function DueDiligenceChecklistSection({
     <section
       style={{
         background: 'white',
-        border: '1px solid #d2d2d7',
-        borderRadius: '4px',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '2rem',
         marginBottom: '2rem',
       }}
@@ -99,7 +99,7 @@ export function DueDiligenceChecklistSection({
               style={{
                 margin: 0,
                 fontSize: '0.9375rem',
-                color: '#6e6e73',
+                color: 'var(--ob-color-text-muted)',
               }}
             >
               {activeScenario === 'all'
@@ -114,7 +114,7 @@ export function DueDiligenceChecklistSection({
               style={{
                 margin: '0.25rem 0 0',
                 fontSize: '0.875rem',
-                color: '#86868b',
+                color: 'var(--ob-color-text-muted)',
               }}
             >
               {activeScenarioDetails.description}
@@ -134,13 +134,13 @@ export function DueDiligenceChecklistSection({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.35rem',
-              background: '#eff3ff',
-              borderRadius: '999px',
+              background: 'var(--ob-info-50)',
+              borderRadius: 'var(--ob-radius-pill)',
               padding: '0.4rem 0.9rem',
               fontWeight: 600,
-              color: '#1d4ed8',
+              color: 'var(--ob-color-brand-primary)',
               textDecoration: 'none',
-              border: '1px solid #c7dafc',
+              border: '1px solid var(--ob-info-200)',
             }}
           >
             Manage templates
@@ -166,10 +166,16 @@ export function DueDiligenceChecklistSection({
               alignItems: 'center',
               gap: '0.5rem',
               padding: '0.5rem 0.85rem',
-              borderRadius: '9999px',
-              border: `1px solid ${activeScenario === 'all' ? '#1d1d1f' : '#d2d2d7'}`,
-              background: activeScenario === 'all' ? '#1d1d1f' : '#f5f5f7',
-              color: activeScenario === 'all' ? 'white' : '#1d1d1f',
+              borderRadius: 'var(--ob-radius-pill)',
+              border: `1px solid ${activeScenario === 'all' ? 'var(--ob-color-text-primary)' : 'var(--ob-color-border-subtle)'}`,
+              background:
+                activeScenario === 'all'
+                  ? 'var(--ob-color-text-primary)'
+                  : 'var(--ob-color-bg-surface-elevated)',
+              color:
+                activeScenario === 'all'
+                  ? 'white'
+                  : 'var(--ob-color-text-primary)',
               cursor: 'pointer',
               fontSize: '0.875rem',
               fontWeight: 500,
@@ -191,10 +197,12 @@ export function DueDiligenceChecklistSection({
                   alignItems: 'center',
                   gap: '0.5rem',
                   padding: '0.5rem 0.85rem',
-                  borderRadius: '9999px',
-                  border: `1px solid ${isActive ? '#1d1d1f' : '#d2d2d7'}`,
-                  background: isActive ? '#1d1d1f' : '#f5f5f7',
-                  color: isActive ? 'white' : '#1d1d1f',
+                  borderRadius: 'var(--ob-radius-pill)',
+                  border: `1px solid ${isActive ? 'var(--ob-color-text-primary)' : 'var(--ob-color-border-subtle)'}`,
+                  background: isActive
+                    ? 'var(--ob-color-text-primary)'
+                    : 'var(--ob-color-bg-surface-elevated)',
+                  color: isActive ? 'white' : 'var(--ob-color-text-primary)',
                   cursor: 'pointer',
                   fontSize: '0.875rem',
                   fontWeight: 500,
@@ -217,7 +225,7 @@ export function DueDiligenceChecklistSection({
           style={{
             padding: '3rem 2rem',
             textAlign: 'center',
-            color: '#6e6e73',
+            color: 'var(--ob-color-text-muted)',
           }}
         >
           <p>Loading checklist...</p>
@@ -227,9 +235,9 @@ export function DueDiligenceChecklistSection({
           style={{
             padding: '3rem 2rem',
             textAlign: 'center',
-            color: '#6e6e73',
-            background: '#f5f5f7',
-            borderRadius: '4px',
+            color: 'var(--ob-color-text-muted)',
+            background: 'var(--ob-color-bg-surface-elevated)',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
@@ -245,9 +253,9 @@ export function DueDiligenceChecklistSection({
           style={{
             padding: '2rem',
             textAlign: 'center',
-            color: '#6e6e73',
-            background: '#f5f5f7',
-            borderRadius: '4px',
+            color: 'var(--ob-color-text-muted)',
+            background: 'var(--ob-color-bg-surface-elevated)',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           <p>No checklist items found for this property.</p>
@@ -257,9 +265,9 @@ export function DueDiligenceChecklistSection({
           style={{
             padding: '2rem',
             textAlign: 'center',
-            color: '#6e6e73',
-            background: '#f5f5f7',
-            borderRadius: '4px',
+            color: 'var(--ob-color-text-muted)',
+            background: 'var(--ob-color-bg-surface-elevated)',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           <p>
@@ -274,8 +282,8 @@ export function DueDiligenceChecklistSection({
             <div
               style={{
                 marginBottom: '1.5rem',
-                background: '#f5f5f7',
-                borderRadius: '4px',
+                background: 'var(--ob-color-bg-surface-elevated)',
+                borderRadius: 'var(--ob-radius-sm)',
                 height: '8px',
                 overflow: 'hidden',
               }}
@@ -285,7 +293,7 @@ export function DueDiligenceChecklistSection({
                   width: `${displaySummary.completionPercentage}%`,
                   height: '100%',
                   background:
-                    'linear-gradient(90deg, #0071e3 0%, #005bb5 100%)',
+                    'linear-gradient(90deg, var(--ob-color-brand-primary) 0%, var(--ob-color-brand-primary) 100%)',
                   transition: 'width 0.3s ease',
                 }}
               />
@@ -310,8 +318,8 @@ export function DueDiligenceChecklistSection({
               key={category}
               style={{
                 marginBottom: '1.5rem',
-                border: '1px solid #e5e5e7',
-                borderRadius: '4px',
+                border: '1px solid var(--ob-color-border-subtle)',
+                borderRadius: 'var(--ob-radius-sm)',
                 overflow: 'hidden',
               }}
             >
@@ -325,7 +333,7 @@ export function DueDiligenceChecklistSection({
                 style={{
                   width: '100%',
                   padding: '1rem 1.25rem',
-                  background: '#f5f5f7',
+                  background: 'var(--ob-color-bg-surface-elevated)',
                   border: 'none',
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -340,7 +348,7 @@ export function DueDiligenceChecklistSection({
                 <span
                   style={{
                     fontSize: '0.875rem',
-                    color: '#6e6e73',
+                    color: 'var(--ob-color-text-muted)',
                   }}
                 >
                   {items.filter((item) => item.status === 'completed').length}/
@@ -354,7 +362,7 @@ export function DueDiligenceChecklistSection({
                       key={item.id}
                       style={{
                         padding: '1rem 1.25rem',
-                        borderTop: '1px solid #e5e5e7',
+                        borderTop: '1px solid var(--ob-color-border-subtle)',
                         display: 'flex',
                         gap: '1rem',
                         alignItems: 'flex-start',
@@ -374,8 +382,8 @@ export function DueDiligenceChecklistSection({
                         }
                         style={{
                           padding: '0.5rem',
-                          border: '1px solid #d2d2d7',
-                          borderRadius: '6px',
+                          border: '1px solid var(--ob-color-border-subtle)',
+                          borderRadius: 'var(--ob-radius-md)',
                           fontSize: '0.875rem',
                           background: 'white',
                           cursor: 'pointer',
@@ -408,11 +416,11 @@ export function DueDiligenceChecklistSection({
                             <span
                               style={{
                                 padding: '0.125rem 0.5rem',
-                                background: '#fee2e2',
-                                color: '#991b1b',
+                                background: 'var(--ob-error-50)',
+                                color: 'var(--ob-error-700)',
                                 fontSize: '0.75rem',
                                 fontWeight: 600,
-                                borderRadius: '6px',
+                                borderRadius: 'var(--ob-radius-md)',
                               }}
                             >
                               CRITICAL
@@ -422,11 +430,11 @@ export function DueDiligenceChecklistSection({
                             <span
                               style={{
                                 padding: '0.125rem 0.5rem',
-                                background: '#fef3c7',
-                                color: '#92400e',
+                                background: 'var(--ob-warning-50)',
+                                color: 'var(--ob-warning-700)',
                                 fontSize: '0.75rem',
                                 fontWeight: 600,
-                                borderRadius: '6px',
+                                borderRadius: 'var(--ob-radius-md)',
                               }}
                             >
                               HIGH
@@ -438,7 +446,7 @@ export function DueDiligenceChecklistSection({
                             style={{
                               margin: '0.5rem 0 0',
                               fontSize: '0.875rem',
-                              color: '#6e6e73',
+                              color: 'var(--ob-color-text-muted)',
                               lineHeight: 1.5,
                             }}
                           >
@@ -450,7 +458,7 @@ export function DueDiligenceChecklistSection({
                             style={{
                               margin: '0.5rem 0 0',
                               fontSize: '0.8125rem',
-                              color: '#0071e3',
+                              color: 'var(--ob-color-brand-primary)',
                             }}
                           >
                             Requires: {item.professionalType}
@@ -461,7 +469,7 @@ export function DueDiligenceChecklistSection({
                             style={{
                               margin: '0.25rem 0 0',
                               fontSize: '0.8125rem',
-                              color: '#6e6e73',
+                              color: 'var(--ob-color-text-muted)',
                             }}
                           >
                             Due: {new Date(item.dueDate).toLocaleDateString()}

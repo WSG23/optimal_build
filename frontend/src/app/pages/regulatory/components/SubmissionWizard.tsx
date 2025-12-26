@@ -183,7 +183,13 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
                 ))}
               </Select>
             </FormControl>
-            <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: 'background.default',
+                borderRadius: 'var(--ob-radius-xs)',
+              }}
+            >
               <Typography variant="caption" color="text.secondary">
                 Note: This simulation connects to a mock MockCorenet service. No
                 actual data will be sent to government agencies.

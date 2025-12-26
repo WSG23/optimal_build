@@ -339,7 +339,11 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
                 minWidth: 0,
               }}
             >
-              <Stack direction="row" alignItems="baseline" spacing={1}>
+              <Stack
+                direction="row"
+                alignItems="baseline"
+                spacing="var(--ob-space-050)"
+              >
                 <Typography
                   component="span"
                   sx={{

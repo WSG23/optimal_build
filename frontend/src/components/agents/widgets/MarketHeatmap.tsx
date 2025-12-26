@@ -268,7 +268,11 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
       </Typography>
       <Box
         ref={mapContainer}
-        sx={{ height: 450, borderRadius: 1, overflow: 'hidden' }}
+        sx={{
+          height: 450,
+          borderRadius: 'var(--ob-radius-xs)',
+          overflow: 'hidden',
+        }}
       />
     </Paper>
   )

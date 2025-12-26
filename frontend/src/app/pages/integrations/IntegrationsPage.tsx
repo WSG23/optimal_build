@@ -138,7 +138,7 @@ export function IntegrationsPage() {
         margin: '0 auto',
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
-        color: '#1d1d1f',
+        color: 'var(--ob-color-text-primary)',
       }}
     >
       {/* Header */}
@@ -157,7 +157,7 @@ export function IntegrationsPage() {
         <p
           style={{
             fontSize: '1.25rem',
-            color: '#6e6e73',
+            color: 'var(--ob-color-text-muted)',
             fontWeight: 400,
             margin: 0,
             letterSpacing: '-0.01em',
@@ -186,9 +186,9 @@ export function IntegrationsPage() {
               padding: '3rem',
               textAlign: 'center',
               background: 'white',
-              border: '1px solid #d2d2d7',
-              borderRadius: '4px',
-              color: '#6e6e73',
+              border: '1px solid var(--ob-color-border-subtle)',
+              borderRadius: 'var(--ob-radius-sm)',
+              color: 'var(--ob-color-text-muted)',
             }}
           >
             Loading integrations...
@@ -199,8 +199,8 @@ export function IntegrationsPage() {
               padding: '3rem 2rem',
               textAlign: 'center',
               background: 'white',
-              border: '1px solid #d2d2d7',
-              borderRadius: '4px',
+              border: '1px solid var(--ob-color-border-subtle)',
+              borderRadius: 'var(--ob-radius-sm)',
             }}
           >
             <div
@@ -209,7 +209,7 @@ export function IntegrationsPage() {
                 height: '60px',
                 margin: '0 auto 1.5rem',
                 background: '#fff5f5',
-                borderRadius: '50%',
+                borderRadius: 'var(--ob-radius-pill)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -222,7 +222,7 @@ export function IntegrationsPage() {
               style={{
                 fontSize: '1.125rem',
                 fontWeight: 500,
-                color: '#1d1d1f',
+                color: 'var(--ob-color-text-primary)',
                 marginBottom: '0.5rem',
                 letterSpacing: '-0.01em',
               }}
@@ -232,7 +232,7 @@ export function IntegrationsPage() {
             <p
               style={{
                 fontSize: '0.9375rem',
-                color: '#6e6e73',
+                color: 'var(--ob-color-text-muted)',
                 margin: 0,
                 letterSpacing: '-0.005em',
               }}
@@ -258,8 +258,8 @@ export function IntegrationsPage() {
                   key={provider.id}
                   style={{
                     background: 'white',
-                    border: `2px solid ${connected ? provider.color : '#d2d2d7'}`,
-                    borderRadius: '4px',
+                    border: `2px solid ${connected ? provider.color : 'var(--ob-color-border-subtle)'}`,
+                    borderRadius: 'var(--ob-radius-sm)',
                     padding: '2rem',
                     transition: 'all 0.2s ease',
                   }}
@@ -268,7 +268,7 @@ export function IntegrationsPage() {
                     style={{
                       width: '48px',
                       height: '48px',
-                      borderRadius: '4px',
+                      borderRadius: 'var(--ob-radius-sm)',
                       background: provider.color,
                       marginBottom: '1rem',
                       display: 'flex',
@@ -296,7 +296,7 @@ export function IntegrationsPage() {
                   <p
                     style={{
                       fontSize: '0.9375rem',
-                      color: '#6e6e73',
+                      color: 'var(--ob-color-text-muted)',
                       margin: '0 0 1.5rem',
                       letterSpacing: '-0.005em',
                     }}
@@ -308,15 +308,19 @@ export function IntegrationsPage() {
                     <div
                       style={{
                         padding: '0.75rem 1rem',
-                        background: '#f5f5f7',
-                        borderRadius: '4px',
+                        background: 'var(--ob-color-bg-surface-elevated)',
+                        borderRadius: 'var(--ob-radius-sm)',
                         marginBottom: '1rem',
                         fontSize: '0.875rem',
-                        color: '#6e6e73',
+                        color: 'var(--ob-color-text-muted)',
                       }}
                     >
                       <div style={{ marginBottom: '0.25rem' }}>
-                        <strong style={{ color: '#1d1d1f' }}>Status:</strong>{' '}
+                        <strong
+                          style={{ color: 'var(--ob-color-text-primary)' }}
+                        >
+                          Status:
+                        </strong>{' '}
                         {account.status}
                       </div>
                       <div style={{ fontSize: '0.8125rem' }}>
@@ -347,7 +351,7 @@ export function IntegrationsPage() {
                             color: 'white',
                             background: provider.color,
                             border: 'none',
-                            borderRadius: '4px',
+                            borderRadius: 'var(--ob-radius-sm)',
                             cursor: 'pointer',
                             transition: 'opacity 0.2s ease',
                             letterSpacing: '-0.005em',
@@ -368,16 +372,17 @@ export function IntegrationsPage() {
                             padding: '0.75rem 1.25rem',
                             fontSize: '0.9375rem',
                             fontWeight: 500,
-                            color: '#1d1d1f',
+                            color: 'var(--ob-color-text-primary)',
                             background: 'transparent',
-                            border: '1px solid #d2d2d7',
-                            borderRadius: '4px',
+                            border: '1px solid var(--ob-color-border-subtle)',
+                            borderRadius: 'var(--ob-radius-sm)',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             letterSpacing: '-0.005em',
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#f5f5f7'
+                            e.currentTarget.style.background =
+                              'var(--ob-color-bg-surface-elevated)'
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.background = 'transparent'
@@ -396,10 +401,14 @@ export function IntegrationsPage() {
                           padding: '0.75rem 1.25rem',
                           fontSize: '0.9375rem',
                           fontWeight: 500,
-                          color: connecting ? '#6e6e73' : 'white',
-                          background: connecting ? '#f5f5f7' : provider.color,
+                          color: connecting
+                            ? 'var(--ob-color-text-muted)'
+                            : 'white',
+                          background: connecting
+                            ? 'var(--ob-color-bg-surface-elevated)'
+                            : provider.color,
                           border: 'none',
-                          borderRadius: '4px',
+                          borderRadius: 'var(--ob-radius-sm)',
                           cursor: connecting ? 'not-allowed' : 'pointer',
                           transition: 'opacity 0.2s ease',
                           letterSpacing: '-0.005em',
@@ -443,7 +452,7 @@ export function IntegrationsPage() {
           <div
             style={{
               background: 'white',
-              borderRadius: '4px',
+              borderRadius: 'var(--ob-radius-sm)',
               padding: '2rem',
               maxWidth: '500px',
               width: '90%',
@@ -469,7 +478,7 @@ export function IntegrationsPage() {
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: 500,
-                    color: '#1d1d1f',
+                    color: 'var(--ob-color-text-primary)',
                     marginBottom: '0.5rem',
                     letterSpacing: '-0.005em',
                   }}
@@ -491,8 +500,8 @@ export function IntegrationsPage() {
                     width: '100%',
                     padding: '0.75rem 1rem',
                     fontSize: '1rem',
-                    border: '1px solid #d2d2d7',
-                    borderRadius: '4px',
+                    border: '1px solid var(--ob-color-border-subtle)',
+                    borderRadius: 'var(--ob-radius-sm)',
                     outline: 'none',
                     fontFamily:
                       'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
@@ -506,7 +515,7 @@ export function IntegrationsPage() {
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: 500,
-                    color: '#1d1d1f',
+                    color: 'var(--ob-color-text-primary)',
                     marginBottom: '0.5rem',
                     letterSpacing: '-0.005em',
                   }}
@@ -525,8 +534,8 @@ export function IntegrationsPage() {
                     width: '100%',
                     padding: '0.75rem 1rem',
                     fontSize: '1rem',
-                    border: '1px solid #d2d2d7',
-                    borderRadius: '4px',
+                    border: '1px solid var(--ob-color-border-subtle)',
+                    borderRadius: 'var(--ob-radius-sm)',
                     outline: 'none',
                   }}
                 />
@@ -538,7 +547,7 @@ export function IntegrationsPage() {
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: 500,
-                    color: '#1d1d1f',
+                    color: 'var(--ob-color-text-primary)',
                     marginBottom: '0.5rem',
                     letterSpacing: '-0.005em',
                   }}
@@ -557,8 +566,8 @@ export function IntegrationsPage() {
                     width: '100%',
                     padding: '0.75rem 1rem',
                     fontSize: '1rem',
-                    border: '1px solid #d2d2d7',
-                    borderRadius: '4px',
+                    border: '1px solid var(--ob-color-border-subtle)',
+                    borderRadius: 'var(--ob-radius-sm)',
                     outline: 'none',
                   }}
                 />
@@ -573,10 +582,10 @@ export function IntegrationsPage() {
                     padding: '0.875rem',
                     fontSize: '1rem',
                     fontWeight: 500,
-                    color: '#1d1d1f',
+                    color: 'var(--ob-color-text-primary)',
                     background: 'transparent',
-                    border: '1px solid #d2d2d7',
-                    borderRadius: '4px',
+                    border: '1px solid var(--ob-color-border-subtle)',
+                    borderRadius: 'var(--ob-radius-sm)',
                     cursor: 'pointer',
                   }}
                 >
@@ -593,11 +602,11 @@ export function IntegrationsPage() {
                     color: 'white',
                     background:
                       publishingProvider === publishForm.provider
-                        ? '#d2d2d7'
+                        ? 'var(--ob-color-border-subtle)'
                         : PROVIDERS.find((p) => p.id === publishForm.provider)
-                            ?.color || '#1d1d1f',
+                            ?.color || 'var(--ob-color-text-primary)',
                     border: 'none',
-                    borderRadius: '4px',
+                    borderRadius: 'var(--ob-radius-sm)',
                     cursor:
                       publishingProvider === publishForm.provider
                         ? 'not-allowed'
@@ -618,8 +627,8 @@ export function IntegrationsPage() {
       <section
         style={{
           background: 'white',
-          border: '1px solid #d2d2d7',
-          borderRadius: '4px',
+          border: '1px solid var(--ob-color-border-subtle)',
+          borderRadius: 'var(--ob-radius-sm)',
           padding: '2rem',
         }}
       >
@@ -636,7 +645,7 @@ export function IntegrationsPage() {
         <p
           style={{
             fontSize: '0.9375rem',
-            color: '#6e6e73',
+            color: 'var(--ob-color-text-muted)',
             lineHeight: 1.6,
             margin: '0 0 1rem',
             letterSpacing: '-0.005em',
@@ -650,37 +659,43 @@ export function IntegrationsPage() {
           <li
             style={{
               fontSize: '0.9375rem',
-              color: '#6e6e73',
+              color: 'var(--ob-color-text-muted)',
               lineHeight: 1.6,
               marginBottom: '0.5rem',
               letterSpacing: '-0.005em',
             }}
           >
-            <strong style={{ color: '#1d1d1f' }}>PropertyGuru:</strong>{' '}
+            <strong style={{ color: 'var(--ob-color-text-primary)' }}>
+              PropertyGuru:
+            </strong>{' '}
             Singapore's largest property portal with wide reach
           </li>
           <li
             style={{
               fontSize: '0.9375rem',
-              color: '#6e6e73',
+              color: 'var(--ob-color-text-muted)',
               lineHeight: 1.6,
               marginBottom: '0.5rem',
               letterSpacing: '-0.005em',
             }}
           >
-            <strong style={{ color: '#1d1d1f' }}>EdgeProp:</strong> Premium
-            property insights and listings
+            <strong style={{ color: 'var(--ob-color-text-primary)' }}>
+              EdgeProp:
+            </strong>{' '}
+            Premium property insights and listings
           </li>
           <li
             style={{
               fontSize: '0.9375rem',
-              color: '#6e6e73',
+              color: 'var(--ob-color-text-muted)',
               lineHeight: 1.6,
               letterSpacing: '-0.005em',
             }}
           >
-            <strong style={{ color: '#1d1d1f' }}>Zoho CRM:</strong> Lead
-            management and client tracking
+            <strong style={{ color: 'var(--ob-color-text-primary)' }}>
+              Zoho CRM:
+            </strong>{' '}
+            Lead management and client tracking
           </li>
         </ul>
       </section>

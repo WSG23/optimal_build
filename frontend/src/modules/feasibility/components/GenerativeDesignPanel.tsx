@@ -239,9 +239,9 @@ export function GenerativeDesignPanel({
       >
         <Box
           sx={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '4px',
+            width: 'var(--ob-space-400)',
+            height: 'var(--ob-space-400)',
+            borderRadius: 'var(--ob-radius-sm)',
             background:
               'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2))',
             display: 'flex',
@@ -249,7 +249,9 @@ export function GenerativeDesignPanel({
             justifyContent: 'center',
           }}
         >
-          <AutoAwesome sx={{ color: '#06b6d4', fontSize: '18px' }} />
+          <AutoAwesome
+            sx={{ color: 'var(--ob-color-brand-primary)', fontSize: '18px' }}
+          />
         </Box>
         <div>
           <h2
@@ -274,7 +276,7 @@ export function GenerativeDesignPanel({
         </div>
       </div>
 
-      <Grid container spacing={1.5}>
+      <Grid container spacing="var(--ob-space-100)">
         {GENERATIVE_OPTIONS.map((option) => {
           const isSelected = selectedStrategy === option.value
           return (
@@ -287,12 +289,12 @@ export function GenerativeDesignPanel({
                     ? 'linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(59, 130, 246, 0.1))'
                     : 'rgba(255, 255, 255, 0.03)',
                   borderColor: isSelected
-                    ? '#06b6d4'
+                    ? 'var(--ob-color-brand-primary)'
                     : 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-sm)',
                   transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
                   '&:hover': {
-                    borderColor: '#06b6d4',
+                    borderColor: 'var(--ob-color-brand-primary)',
                     transform: 'translateY(-4px) scale(1.02)',
                     boxShadow: '0 12px 32px -8px rgba(6, 182, 212, 0.4)',
                     background: 'rgba(6, 182, 212, 0.08)',
@@ -338,7 +340,9 @@ export function GenerativeDesignPanel({
                     variant="subtitle2"
                     sx={{
                       fontWeight: 600,
-                      color: isSelected ? '#06b6d4' : 'rgba(255,255,255,0.9)',
+                      color: isSelected
+                        ? 'var(--ob-color-brand-primary)'
+                        : 'rgba(255,255,255,0.9)',
                       textAlign: 'center',
                       fontSize: '0.8rem',
                     }}
@@ -368,9 +372,9 @@ export function GenerativeDesignPanel({
                         right: '8px',
                         width: '8px',
                         height: '8px',
-                        borderRadius: '50%',
-                        background: '#06b6d4',
-                        boxShadow: '0 0 8px #06b6d4',
+                        borderRadius: 'var(--ob-radius-pill)',
+                        background: 'var(--ob-color-brand-primary)',
+                        boxShadow: '0 0 8px var(--ob-color-brand-primary)',
                       }}
                     />
                   )}

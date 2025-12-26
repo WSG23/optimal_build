@@ -128,7 +128,7 @@ export function StatusChip({
               sx={{
                 width: dotSize,
                 height: dotSize,
-                borderRadius: '50%',
+                borderRadius: 'var(--ob-radius-pill)',
                 background: colors.dot,
                 ...(pulse && {
                   animation: 'statusPulse 2s ease-in-out infinite',

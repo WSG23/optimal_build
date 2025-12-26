@@ -152,7 +152,7 @@ const MarketIntelligenceDashboard: React.FC = () => {
 
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
+        <Grid container spacing="var(--ob-space-100)" alignItems="center">
           <Grid item>
             <FilterListIcon color="action" />
           </Grid>
@@ -249,7 +249,7 @@ const MarketIntelligenceDashboard: React.FC = () => {
         </Box>
 
         <TabPanel value={tabValue} index={0}>
-          <Grid container spacing={3}>
+          <Grid container spacing="var(--ob-space-150)">
             <Grid item xs={12} md={8}>
               <MarketHeatmap
                 transactions={comparables}

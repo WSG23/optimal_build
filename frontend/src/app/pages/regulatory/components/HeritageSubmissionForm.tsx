@@ -184,7 +184,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
       onClose={handleClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{ sx: { bgcolor: '#1A1D1F' } }}
+      PaperProps={{ sx: { bgcolor: 'var(--ob-color-bg-surface)' } }}
     >
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -399,7 +399,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
           }
           sx={{
             background: 'linear-gradient(135deg, #be185d 0%, #f472b6 100%)',
-            color: '#fff',
+            color: 'var(--ob-color-text-inverse)',
           }}
         >
           {submitting ? 'Creating...' : 'Create Heritage Submission'}

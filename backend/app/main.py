@@ -68,6 +68,7 @@ from app.middleware.request_guards import (
     RequestSizeLimitMiddleware,
 )
 from app.middleware.security import SecurityHeadersMiddleware
+from app.middleware.exception_handler import register_exception_handlers
 from app.models.rkp import RefRule
 from app.schemas.buildable import BUILDABLE_REQUEST_EXAMPLE, BUILDABLE_RESPONSE_EXAMPLE
 from app.schemas.finance import (
@@ -111,6 +112,9 @@ app = FastAPI(
     lifespan=lifespan,
     openapi_tags=TAGS_METADATA,
 )
+
+# Register standardized exception handlers for AppError hierarchy
+register_exception_handlers(app)
 
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=500)

@@ -64,14 +64,10 @@ def _analytics_status() -> dict[str, object]:
 
 @router.get("/report", response_model=MarketReportResponse)
 async def generate_market_report(
-    property_type: PropertyType = Query(..., description="Property type to analyse"),
-    location: str = Query("all", description="District or 'all' for nationwide view"),
-    period_months: int = Query(
-        12, ge=1, le=36, description="Lookback window in months"
-    ),
-    competitive_set_id: Optional[UUID] = Query(
-        None, description="Optional competitive set"
-    ),
+    property_type: PropertyType,
+    location: str = "all",
+    period_months: int = Query(12, ge=1, le=36),
+    competitive_set_id: Optional[UUID] = None,
     session: AsyncSession = Depends(get_session),
 ) -> MarketReportResponse:
     """Return a comprehensive market intelligence report for the requested segment."""

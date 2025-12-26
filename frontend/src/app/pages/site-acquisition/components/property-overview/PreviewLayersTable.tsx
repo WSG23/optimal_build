@@ -57,10 +57,10 @@ export function PreviewLayersTable({
     <section
       style={{
         marginTop: '1.5rem',
-        border: '1px solid #e5e7eb',
-        borderRadius: '4px',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '1.2rem',
-        background: '#ffffff',
+        background: 'white',
         display: 'flex',
         flexDirection: 'column',
         gap: '1rem',
@@ -82,12 +82,18 @@ export function PreviewLayersTable({
               fontSize: '1rem',
               fontWeight: 600,
               letterSpacing: '-0.01em',
-              color: '#111827',
+              color: 'var(--ob-color-text-primary)',
             }}
           >
             Rendered layers
           </h4>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#4b5563' }}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: '0.9rem',
+              color: 'var(--ob-color-text-secondary)',
+            }}
+          >
             Hide, solo, and zoom specific massing layers directly from the Site
             Acquisition workspace while reviewing the Phase 2B preview.
           </p>
@@ -96,7 +102,9 @@ export function PreviewLayersTable({
           style={{
             fontSize: '0.85rem',
             fontWeight: 600,
-            color: error ? '#b45309' : '#4b5563',
+            color: error
+              ? 'var(--ob-warning-700)'
+              : 'var(--ob-color-text-secondary)',
           }}
         >
           {isLoading
@@ -117,11 +125,11 @@ export function PreviewLayersTable({
           }
           style={{
             padding: '0.35rem 0.8rem',
-            borderRadius: '9999px',
-            border: '1px solid #d1d5db',
-            background: '#f9fafb',
+            borderRadius: 'var(--ob-radius-pill)',
+            border: '1px solid var(--ob-color-border-subtle)',
+            background: 'var(--ob-color-bg-surface-elevated)',
             fontWeight: 600,
-            color: '#111827',
+            color: 'var(--ob-color-text-primary)',
             fontSize: '0.85rem',
           }}
         >
@@ -133,11 +141,13 @@ export function PreviewLayersTable({
           disabled={!focusLayerId}
           style={{
             padding: '0.35rem 0.8rem',
-            borderRadius: '9999px',
-            border: '1px solid #d1d5db',
-            background: '#f9fafb',
+            borderRadius: 'var(--ob-radius-pill)',
+            border: '1px solid var(--ob-color-border-subtle)',
+            background: 'var(--ob-color-bg-surface-elevated)',
             fontWeight: 600,
-            color: focusLayerId ? '#111827' : '#9ca3af',
+            color: focusLayerId
+              ? 'var(--ob-color-text-primary)'
+              : 'var(--ob-color-text-muted)',
             fontSize: '0.85rem',
           }}
         >
@@ -145,7 +155,13 @@ export function PreviewLayersTable({
         </button>
       </div>
       {!isLoading && !error && layers.length === 0 && (
-        <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: '0.85rem',
+            color: 'var(--ob-color-text-secondary)',
+          }}
+        >
           Layer metrics will populate once the preview metadata asset is ready.
           Refresh the render if the queue has expired.
         </p>
@@ -161,13 +177,16 @@ export function PreviewLayersTable({
           >
             <thead>
               <tr
-                style={{ textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}
+                style={{
+                  textAlign: 'left',
+                  borderBottom: '1px solid var(--ob-color-border-subtle)',
+                }}
               >
                 <th
                   style={{
                     padding: '0.5rem',
                     fontSize: '0.8rem',
-                    color: '#6b7280',
+                    color: 'var(--ob-color-text-muted)',
                   }}
                 >
                   Layer
@@ -176,7 +195,7 @@ export function PreviewLayersTable({
                   style={{
                     padding: '0.5rem',
                     fontSize: '0.8rem',
-                    color: '#6b7280',
+                    color: 'var(--ob-color-text-muted)',
                   }}
                 >
                   Allocation
@@ -185,7 +204,7 @@ export function PreviewLayersTable({
                   style={{
                     padding: '0.5rem',
                     fontSize: '0.8rem',
-                    color: '#6b7280',
+                    color: 'var(--ob-color-text-muted)',
                   }}
                 >
                   GFA (sqm)
@@ -194,7 +213,7 @@ export function PreviewLayersTable({
                   style={{
                     padding: '0.5rem',
                     fontSize: '0.8rem',
-                    color: '#6b7280',
+                    color: 'var(--ob-color-text-muted)',
                   }}
                 >
                   NIA (sqm)
@@ -203,7 +222,7 @@ export function PreviewLayersTable({
                   style={{
                     padding: '0.5rem',
                     fontSize: '0.8rem',
-                    color: '#6b7280',
+                    color: 'var(--ob-color-text-muted)',
                   }}
                 >
                   Est. height (m)
@@ -212,7 +231,7 @@ export function PreviewLayersTable({
                   style={{
                     padding: '0.5rem',
                     fontSize: '0.8rem',
-                    color: '#6b7280',
+                    color: 'var(--ob-color-text-muted)',
                   }}
                 >
                   Est. floors
@@ -221,7 +240,7 @@ export function PreviewLayersTable({
                   style={{
                     padding: '0.5rem',
                     fontSize: '0.8rem',
-                    color: '#6b7280',
+                    color: 'var(--ob-color-text-muted)',
                   }}
                 >
                   Controls
@@ -234,7 +253,9 @@ export function PreviewLayersTable({
                 return (
                   <tr
                     key={layer.id}
-                    style={{ borderBottom: '1px solid #f3f4f6' }}
+                    style={{
+                      borderBottom: '1px solid var(--ob-color-border-subtle)',
+                    }}
                   >
                     <th
                       scope="row"
@@ -242,7 +263,7 @@ export function PreviewLayersTable({
                         padding: '0.65rem 0.5rem',
                         fontSize: '0.9rem',
                         fontWeight: 600,
-                        color: '#111827',
+                        color: 'var(--ob-color-text-primary)',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.5rem',
@@ -253,7 +274,7 @@ export function PreviewLayersTable({
                           display: 'inline-flex',
                           width: '14px',
                           height: '14px',
-                          borderRadius: '9999px',
+                          borderRadius: 'var(--ob-radius-pill)',
                           background: layer.color,
                           boxShadow: '0 0 0 1px rgb(255 255 255 / 0.5)',
                         }}
@@ -261,7 +282,12 @@ export function PreviewLayersTable({
                       />
                       {toTitleCase(layer.name)}
                     </th>
-                    <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
+                    <td
+                      style={{
+                        padding: '0.65rem 0.5rem',
+                        color: 'var(--ob-color-text-secondary)',
+                      }}
+                    >
                       {layer.metrics.allocationPct != null
                         ? `${formatNumber(layer.metrics.allocationPct, {
                             maximumFractionDigits:
@@ -269,7 +295,12 @@ export function PreviewLayersTable({
                           })}%`
                         : '—'}
                     </td>
-                    <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
+                    <td
+                      style={{
+                        padding: '0.65rem 0.5rem',
+                        color: 'var(--ob-color-text-secondary)',
+                      }}
+                    >
                       {layer.metrics.gfaSqm != null
                         ? `${formatNumber(layer.metrics.gfaSqm, {
                             maximumFractionDigits:
@@ -277,7 +308,12 @@ export function PreviewLayersTable({
                           })}`
                         : '—'}
                     </td>
-                    <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
+                    <td
+                      style={{
+                        padding: '0.65rem 0.5rem',
+                        color: 'var(--ob-color-text-secondary)',
+                      }}
+                    >
                       {layer.metrics.niaSqm != null
                         ? `${formatNumber(layer.metrics.niaSqm, {
                             maximumFractionDigits:
@@ -285,14 +321,24 @@ export function PreviewLayersTable({
                           })}`
                         : '—'}
                     </td>
-                    <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
+                    <td
+                      style={{
+                        padding: '0.65rem 0.5rem',
+                        color: 'var(--ob-color-text-secondary)',
+                      }}
+                    >
                       {layer.metrics.heightM != null
                         ? `${formatNumber(layer.metrics.heightM, {
                             maximumFractionDigits: 1,
                           })}`
                         : '—'}
                     </td>
-                    <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
+                    <td
+                      style={{
+                        padding: '0.65rem 0.5rem',
+                        color: 'var(--ob-color-text-secondary)',
+                      }}
+                    >
                       {layer.metrics.floors != null
                         ? formatNumber(layer.metrics.floors, {
                             maximumFractionDigits: 0,
@@ -312,10 +358,14 @@ export function PreviewLayersTable({
                         onClick={() => onLayerAction(layer.id, 'toggle')}
                         style={{
                           padding: '0.25rem 0.6rem',
-                          borderRadius: '9999px',
-                          border: '1px solid #d1d5db',
-                          background: isVisible ? '#f9fafb' : '#fee2e2',
-                          color: isVisible ? '#111827' : '#991b1b',
+                          borderRadius: 'var(--ob-radius-pill)',
+                          border: '1px solid var(--ob-color-border-subtle)',
+                          background: isVisible
+                            ? 'var(--ob-color-bg-surface-elevated)'
+                            : 'var(--ob-error-50)',
+                          color: isVisible
+                            ? 'var(--ob-color-text-primary)'
+                            : 'var(--ob-error-700)',
                           fontSize: '0.8rem',
                           fontWeight: 600,
                         }}
@@ -327,12 +377,12 @@ export function PreviewLayersTable({
                         onClick={() => onLayerAction(layer.id, 'solo')}
                         style={{
                           padding: '0.25rem 0.6rem',
-                          borderRadius: '9999px',
-                          border: '1px solid #d1d5db',
-                          background: '#f9fafb',
+                          borderRadius: 'var(--ob-radius-pill)',
+                          border: '1px solid var(--ob-color-border-subtle)',
+                          background: 'var(--ob-color-bg-surface-elevated)',
                           fontSize: '0.8rem',
                           fontWeight: 600,
-                          color: '#111827',
+                          color: 'var(--ob-color-text-primary)',
                         }}
                       >
                         Solo
@@ -342,12 +392,16 @@ export function PreviewLayersTable({
                         onClick={() => onLayerAction(layer.id, 'focus')}
                         style={{
                           padding: '0.25rem 0.6rem',
-                          borderRadius: '9999px',
-                          border: '1px solid #d1d5db',
+                          borderRadius: 'var(--ob-radius-pill)',
+                          border: '1px solid var(--ob-color-border-subtle)',
                           background:
-                            focusLayerId === layer.id ? '#e0e7ff' : '#f9fafb',
+                            focusLayerId === layer.id
+                              ? 'var(--ob-info-100)'
+                              : 'var(--ob-color-bg-surface-elevated)',
                           color:
-                            focusLayerId === layer.id ? '#312e81' : '#111827',
+                            focusLayerId === layer.id
+                              ? 'var(--ob-color-brand-primary)'
+                              : 'var(--ob-color-text-primary)',
                           fontSize: '0.8rem',
                           fontWeight: 600,
                         }}

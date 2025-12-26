@@ -33,7 +33,7 @@ export function LiveScorecard({
       value: maxGFA.toLocaleString(),
       unit: 'm²',
       icon: <SquareFootIcon sx={{ fontSize: 16 }} />,
-      color: '#06b6d4',
+      color: 'var(--ob-color-brand-primary)',
       change: `+${String(Math.round((efficiencyRatio - 0.8) * 100))}%`,
     },
     {
@@ -41,21 +41,21 @@ export function LiveScorecard({
       value: netSaleableArea.toLocaleString(),
       unit: 'm²',
       icon: <TrendingUpIcon sx={{ fontSize: 16 }} />,
-      color: '#10b981',
+      color: 'var(--ob-color-status-success-text)',
     },
     {
       label: 'Est. Floors',
       value: estimatedFloors.toString(),
       unit: 'floors',
       icon: <AccountBalanceIcon sx={{ fontSize: 16 }} />,
-      color: '#8b5cf6',
+      color: 'var(--ob-color-brand-secondary)',
     },
     {
       label: 'Est. Yield',
       value: estimatedYield,
       unit: 'M SGD',
       icon: <SpeedIcon sx={{ fontSize: 16 }} />,
-      color: '#f59e0b',
+      color: 'var(--ob-color-status-warning-text)',
     },
   ]
 
@@ -63,14 +63,14 @@ export function LiveScorecard({
     <Box
       sx={{
         position: 'absolute',
-        top: '24px',
+        top: 'var(--ob-space-300)',
         right: '80px', // Offset from layer controls
         zIndex: 20,
         background: 'rgba(15, 23, 42, 0.9)',
         backdropFilter: 'blur(var(--ob-blur-xl))',
         border: '1px solid rgba(6, 182, 212, 0.2)',
-        borderRadius: '4px',
-        padding: '16px',
+        borderRadius: 'var(--ob-radius-sm)',
+        padding: 'var(--ob-space-200)',
         minWidth: '200px',
         animation: 'slideInRight 0.4s ease-out',
       }}
@@ -103,8 +103,8 @@ export function LiveScorecard({
           sx={{
             width: '8px',
             height: '8px',
-            borderRadius: '50%',
-            background: '#10b981',
+            borderRadius: 'var(--ob-radius-pill)',
+            background: 'var(--ob-color-status-success-text)',
             animation: 'pulse-value 2s infinite',
           }}
         />
@@ -191,7 +191,11 @@ export function LiveScorecard({
             Efficiency Score
           </Typography>
           <Typography
-            sx={{ fontSize: '0.65rem', color: '#06b6d4', fontWeight: 600 }}
+            sx={{
+              fontSize: '0.65rem',
+              color: 'var(--ob-color-brand-primary)',
+              fontWeight: 600,
+            }}
           >
             {Math.round(efficiencyRatio * 100)}%
           </Typography>
@@ -199,7 +203,7 @@ export function LiveScorecard({
         <Box
           sx={{
             height: '4px',
-            borderRadius: '2px',
+            borderRadius: 'var(--ob-radius-xs)',
             background: 'rgba(255,255,255,0.1)',
             overflow: 'hidden',
           }}
@@ -208,8 +212,9 @@ export function LiveScorecard({
             sx={{
               height: '100%',
               width: `${String(efficiencyRatio * 100)}%`,
-              background: 'linear-gradient(90deg, #06b6d4, #3b82f6)',
-              borderRadius: '2px',
+              background:
+                'linear-gradient(90deg, var(--ob-color-brand-primary), var(--ob-color-brand-secondary))',
+              borderRadius: 'var(--ob-radius-xs)',
               transition: 'width 0.3s ease-out',
             }}
           />

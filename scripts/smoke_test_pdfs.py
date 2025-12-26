@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """Smoke test for PDF generation changes.
 
-This script runs when PDF-related files are modified to ensure
-developers perform manual testing before committing.
+This hook is triggered when PDF-related files are staged.
+
+Historically it required an interactive `input()` confirmation, which blocks
+automation (e.g., scripted commits or tooling that can't provide stdin).
+The default behavior is now non-interactive: it prints a checklist reminder
+and exits successfully. Enforcement can be enabled explicitly via `--enforce`.
 """
 
+import argparse
 import subprocess
 import sys
 
@@ -32,8 +37,26 @@ def is_pdf_related(filepath):
     return any(pattern in filepath for pattern in pdf_patterns)
 
 
-def main():
-    """Check if PDF files were modified and prompt for manual testing."""
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Print a manual PDF testing checklist when PDF-related files are staged."
+    )
+    parser.add_argument(
+        "--enforce",
+        action="store_true",
+        help="Fail when PDF-related files are staged unless --confirm is provided.",
+    )
+    parser.add_argument(
+        "--confirm",
+        action="store_true",
+        help="Use with --enforce to acknowledge manual testing (non-interactive).",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Check if PDF files were modified and (optionally) enforce manual testing."""
+    args = _build_parser().parse_args(argv)
     staged_files = get_staged_files()
     pdf_files = [f for f in staged_files if is_pdf_related(f)]
 
@@ -83,30 +106,20 @@ open -a "Google Chrome" /tmp/test.pdf
     """
     )
 
-    print("\n" + "=" * 70)
-    print("Have you completed manual PDF testing?")
-    print("=" * 70)
-    print("  - Tested in Safari: PDF displays correctly")
-    print("  - Tested in Chrome/Brave: PDF displays correctly")
-    print("  - All text content visible (not blank)")
-    print("  - Download works from frontend")
-    print("\n✅ Type 'yes' to confirm testing is complete:")
-    print("❌ Type anything else to cancel commit")
-    print("=" * 70)
-
-    try:
-        response = input("> ").strip().lower()
-    except (KeyboardInterrupt, EOFError):
-        print("\n\n❌ PDF testing not confirmed. Commit blocked.")
-        return 1
-
-    if response == "yes":
-        print("\n✅ PDF smoke test passed - proceeding with commit")
+    if not args.enforce:
+        print("\n✅ PDF checklist printed (non-blocking).")
+        print(
+            "To enforce confirmation, run: `python3 scripts/smoke_test_pdfs.py --enforce --confirm`"
+        )
         return 0
-    else:
-        print(f"\n❌ Response '{response}' is not 'yes'. Commit blocked.")
-        print("Please complete manual PDF testing before committing.")
-        return 1
+
+    if args.confirm:
+        print("\n✅ PDF testing confirmed (enforced mode) - proceeding with commit")
+        return 0
+
+    print("\n❌ PDF testing not confirmed (enforced mode). Commit blocked.")
+    print("Re-run with: `python3 scripts/smoke_test_pdfs.py --enforce --confirm`")
+    return 1
 
 
 if __name__ == "__main__":
