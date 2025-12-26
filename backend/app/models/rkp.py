@@ -39,7 +39,6 @@ class RefSource(BaseModel):
     """Reference source model for document tracking."""
 
     __tablename__ = "ref_sources"
-    __table_args__ = {"extend_existing": True}
 
     id = Column(Integer, primary_key=True, index=True)
     jurisdiction = Column(String(10), nullable=False, index=True)  # 'SG'
@@ -68,6 +67,7 @@ class RefSource(BaseModel):
 
     __table_args__ = (
         Index("idx_ref_sources_jurisdiction_authority", "jurisdiction", "authority"),
+        {"extend_existing": True},
     )
 
 
