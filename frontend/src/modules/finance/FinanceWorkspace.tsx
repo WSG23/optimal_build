@@ -853,12 +853,11 @@ export function FinanceWorkspace() {
             <Box
               component="header"
               key={path}
+              className="ob-glass ob-card-accent"
               sx={{
                 borderBottom: 1,
                 borderColor: 'divider',
-                background: alpha(theme.palette.background.default, 0.8),
-                backdropFilter: 'blur(var(--ob-blur-md))',
-                WebkitBackdropFilter: 'blur(var(--ob-blur-md))',
+                borderRadius: 'var(--ob-radius-sm)',
                 animation:
                   'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
                 '@media (prefers-reduced-motion: reduce)': {
@@ -906,11 +905,27 @@ export function FinanceWorkspace() {
                   allowScrollButtonsMobile
                   sx={{
                     minHeight: 'var(--ob-space-300)',
+                    '& .MuiTabs-indicator': {
+                      backgroundColor: 'var(--ob-color-neon-cyan)',
+                      boxShadow: 'var(--ob-glow-neon-cyan)',
+                      height: '2px',
+                    },
                     '& .MuiTab-root': {
                       minHeight: 'var(--ob-space-300)',
-                      textTransform: 'none',
-                      fontSize: 'var(--ob-font-size-sm)',
+                      textTransform: 'uppercase',
+                      fontSize: 'var(--ob-font-size-xs)',
+                      fontWeight: 'var(--ob-font-weight-semibold)',
+                      letterSpacing: 'var(--ob-letter-spacing-wider)',
                       px: 'var(--ob-space-100)',
+                      color: 'text.secondary',
+                      transition: 'all 0.2s ease',
+                      '&.Mui-selected': {
+                        color: 'var(--ob-color-neon-cyan)',
+                        textShadow: 'var(--ob-glow-neon-text)',
+                      },
+                      '&:hover': {
+                        color: 'var(--ob-color-neon-cyan)',
+                      },
                     },
                   }}
                 >

@@ -1,7 +1,13 @@
+import { Box, Grid, Typography } from '@mui/material'
+import { ShowChart, AccountBalanceWallet, Paid } from '@mui/icons-material'
+
 import type {
   FinanceAnalyticsBucket,
   FinanceAnalyticsMetadata,
 } from '../../../api/finance'
+import { Card } from '../../../components/canonical/Card'
+import { NeonText } from '../../../components/canonical/NeonText'
+import { PremiumMetricCard } from '../../../components/canonical/PremiumMetricCard'
 
 interface FinanceAnalyticsPanelProps {
   analytics: FinanceAnalyticsMetadata
@@ -37,45 +43,68 @@ function formatRatio(value: string | null | undefined): string {
   return `${value}x`
 }
 
-function renderBucketBar(
-  bucket: FinanceAnalyticsBucket,
-  total: number,
-): JSX.Element {
+function BucketBar({
+  bucket,
+  total,
+}: {
+  bucket: FinanceAnalyticsBucket
+  total: number
+}): JSX.Element {
   const percentage = total > 0 ? Math.round((bucket.count / total) * 100) : 0
+  const isWarning = bucket.key === 'lt_1'
+
   return (
-    <div
+    <Box
       key={bucket.key}
-      style={{
+      sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: '0.5rem',
-        marginBottom: '0.35rem',
+        gap: 'var(--ob-space-100)',
+        mb: 'var(--ob-space-075)',
       }}
     >
-      <div style={{ width: '120px', fontWeight: 600, color: '#1f2937' }}>
+      <Typography
+        sx={{
+          width: '120px',
+          fontWeight: 'var(--ob-font-weight-semibold)',
+          fontSize: 'var(--ob-font-size-sm)',
+          color: 'text.primary',
+        }}
+      >
         {bucket.label}
-      </div>
-      <div
-        style={{
+      </Typography>
+      <Box
+        sx={{
           flex: 1,
-          background: '#e5e7eb',
-          borderRadius: '9999px',
+          background: 'var(--ob-overlay-medium)',
+          borderRadius: 'var(--ob-radius-xs)',
           height: '8px',
           overflow: 'hidden',
         }}
       >
-        <div
-          style={{
+        <Box
+          sx={{
             width: `${Math.max(percentage, 2)}%`,
-            background: bucket.key === 'lt_1' ? '#f97316' : '#2563eb',
+            background: isWarning
+              ? 'var(--ob-warning-500)'
+              : 'var(--ob-color-neon-cyan)',
             height: '100%',
+            boxShadow: isWarning
+              ? 'var(--ob-glow-status-warning)'
+              : 'var(--ob-glow-neon-cyan)',
+            transition: 'width 0.5s ease-out',
           }}
         />
-      </div>
-      <div style={{ width: '40px', textAlign: 'right', fontWeight: 600 }}>
+      </Box>
+      <NeonText
+        variant="caption"
+        intensity="subtle"
+        color={isWarning ? 'warning' : 'cyan'}
+        sx={{ width: '40px', textAlign: 'right' }}
+      >
         {bucket.count}
-      </div>
-    </div>
+      </NeonText>
+    </Box>
   )
 }
 
@@ -88,126 +117,121 @@ export function FinanceAnalyticsPanel({
   const totalPeriods = buckets.reduce((sum, bucket) => sum + bucket.count, 0)
 
   return (
-    <section
-      style={{
-        marginTop: '1.5rem',
-        borderRadius: '4px',
-        border: '1px solid #d1d5db',
-        padding: '1.5rem',
-        background: '#f9fafb',
+    <Card
+      variant="premium"
+      accent
+      sx={{
+        mt: 'var(--ob-space-200)',
+        p: 'var(--ob-space-200)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '1.25rem',
+        gap: 'var(--ob-space-150)',
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '0.75rem',
-        }}
-      >
-        <div>
-          <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#111827' }}>
-            Advanced analytics
-          </h3>
-          <p style={{ margin: 0, color: '#4b5563', fontSize: '0.95rem' }}>
-            MOIC, equity multiples, and DSCR health derived from the current
-            scenario.
-          </p>
-        </div>
-      </div>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '1rem',
-        }}
-      >
-        <article
-          style={{
-            borderRadius: '4px',
-            border: '1px solid #d1d5db',
-            padding: '1rem',
-            background: '#fff',
+      {/* Header */}
+      <Box>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 'var(--ob-font-weight-bold)',
+            color: 'text.primary',
+            mb: 'var(--ob-space-025)',
           }}
         >
-          <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>
-            MOIC
-          </p>
-          <p
-            style={{
-              margin: '0.5rem 0 0',
-              fontSize: '1.5rem',
-              fontWeight: 700,
-            }}
+          Advanced Analytics
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ color: 'text.secondary', fontSize: 'var(--ob-font-size-sm)' }}
+        >
+          MOIC, equity multiples, and DSCR health derived from the current
+          scenario.
+        </Typography>
+      </Box>
+
+      {/* Metrics Grid */}
+      <Grid container spacing="var(--ob-space-100)">
+        <Grid item xs={12} sm={4}>
+          <PremiumMetricCard
+            label="MOIC"
+            value={formatRatio(analytics.moic)}
+            icon={<ShowChart />}
+            featured
+            status="live"
+            compact
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <PremiumMetricCard
+            label="Equity Multiple"
+            value={formatRatio(analytics.equity_multiple)}
+            icon={<AccountBalanceWallet />}
+            status="live"
+            compact
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <PremiumMetricCard
+            label="Equity Invested"
+            value={formatCurrencyValue(cashSummary.invested_equity, currency)}
+            icon={<Paid />}
+            status="live"
+            compact
+          />
+        </Grid>
+      </Grid>
+
+      {/* Net Cash sub-metric */}
+      <Box sx={{ mt: 'var(--ob-space-050)' }}>
+        <Typography
+          variant="caption"
+          sx={{ color: 'text.secondary', fontSize: 'var(--ob-font-size-xs)' }}
+        >
+          Net cash:{' '}
+          <NeonText
+            variant="caption"
+            intensity="subtle"
+            sx={{ display: 'inline' }}
           >
-            {formatRatio(analytics.moic)}
-          </p>
-        </article>
-        <article
-          style={{
-            borderRadius: '4px',
-            border: '1px solid #d1d5db',
-            padding: '1rem',
-            background: '#fff',
+            {formatCurrencyValue(cashSummary.net_cash, currency)}
+          </NeonText>
+        </Typography>
+      </Box>
+
+      {/* DSCR Heat Map */}
+      <Box>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 'var(--ob-font-weight-semibold)',
+            color: 'text.primary',
+            mb: 'var(--ob-space-100)',
           }}
         >
-          <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>
-            Equity multiple
-          </p>
-          <p
-            style={{
-              margin: '0.5rem 0 0',
-              fontSize: '1.5rem',
-              fontWeight: 700,
-            }}
+          DSCR Heat Map{' '}
+          <Typography
+            component="span"
+            sx={{ color: 'text.secondary', fontSize: 'var(--ob-font-size-sm)' }}
           >
-            {formatRatio(analytics.equity_multiple)}
-          </p>
-        </article>
-        <article
-          style={{
-            borderRadius: '4px',
-            border: '1px solid #d1d5db',
-            padding: '1rem',
-            background: '#fff',
-          }}
-        >
-          <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>
-            Equity invested
-          </p>
-          <p
-            style={{
-              margin: '0.5rem 0 0',
-              fontSize: '1.2rem',
-              fontWeight: 700,
-            }}
-          >
-            {formatCurrencyValue(cashSummary.invested_equity, currency)}
-          </p>
-          <p style={{ margin: 0, fontSize: '0.8rem', color: '#6b7280' }}>
-            Net cash: {formatCurrencyValue(cashSummary.net_cash, currency)}
-          </p>
-        </article>
-      </div>
-      <div>
-        <h4
-          style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: '#111827' }}
-        >
-          DSCR heat map ({totalPeriods} periods)
-        </h4>
+            ({totalPeriods} periods)
+          </Typography>
+        </Typography>
         {buckets.length === 0 ? (
-          <p style={{ margin: 0, color: '#6b7280' }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             DSCR data not available.
-          </p>
+          </Typography>
         ) : (
-          <div>
-            {buckets.map((bucket) => renderBucketBar(bucket, totalPeriods))}
-          </div>
+          <Box>
+            {buckets.map((bucket) => (
+              <BucketBar
+                key={bucket.key}
+                bucket={bucket}
+                total={totalPeriods}
+              />
+            ))}
+          </Box>
         )}
-      </div>
-    </section>
+      </Box>
+    </Card>
   )
 }

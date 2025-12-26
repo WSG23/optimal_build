@@ -2,17 +2,22 @@
  * FinanceMetricsGrid - 4-column responsive metrics grid
  *
  * Follows UI_STANDARDS.md Metrics Grid Pattern:
- * - Uses GlassCard for metric containers
+ * - Uses PremiumMetricCard for cyber aesthetic
  * - Grid uses xs={6} md={3} for responsive 2/4 columns
- * - Label uses --ob-font-size-sm, text.secondary
- * - Value uses --ob-font-size-2xl, fontWeight: 700
+ * - Neon glow on key metrics
  */
 
 import { useMemo } from 'react'
 import { Box, Grid } from '@mui/material'
+import {
+  AttachMoney as MoneyIcon,
+  TrendingUp as TrendingIcon,
+  AccountBalance as BankIcon,
+  PieChart as PieIcon,
+} from '@mui/icons-material'
 
 import { useTranslation } from '../../../i18n'
-import { MetricCard } from '../../../components/canonical/MetricCard'
+import { PremiumMetricCard } from '../../../components/canonical/PremiumMetricCard'
 import type { FinanceScenarioSummary } from '../../../api/finance'
 import { formatCurrencyFull, formatPercent } from '../utils/chartTheme'
 
@@ -24,7 +29,8 @@ interface MetricItem {
   key: string
   label: string
   value: string
-  trend?: number
+  icon: React.ReactNode
+  featured?: boolean
 }
 
 function toNumber(value: string | null | undefined): number | null {
@@ -54,11 +60,13 @@ export function FinanceMetricsGrid({ scenario }: FinanceMetricsGridProps) {
         key: 'totalCost',
         label: t('finance.metrics.totalCost', {
           defaultValue: 'Total Project Cost',
-        }), // Use explicit default to match screenshot
+        }),
         value:
           total !== null
             ? formatCurrencyFull(total, currency, locale)
             : fallback,
+        icon: <MoneyIcon />,
+        featured: true,
       },
       {
         key: 'weightedRate',
@@ -66,11 +74,13 @@ export function FinanceMetricsGrid({ scenario }: FinanceMetricsGridProps) {
           defaultValue: 'Weighted Debt Rate',
         }),
         value: weightedRate !== null ? formatPercent(weightedRate) : fallback,
+        icon: <TrendingIcon />,
       },
       {
         key: 'loanToCost',
         label: t('finance.metrics.loanToCost', { defaultValue: 'LTC' }),
         value: loanToCost !== null ? formatPercent(loanToCost) : fallback,
+        icon: <BankIcon />,
       },
       {
         key: 'equityShare',
@@ -78,6 +88,7 @@ export function FinanceMetricsGrid({ scenario }: FinanceMetricsGridProps) {
           defaultValue: 'Equity Share',
         }),
         value: equityRatio !== null ? formatPercent(equityRatio) : fallback,
+        icon: <PieIcon />,
       },
     ]
   }, [scenario, t, locale, fallback])
@@ -91,11 +102,13 @@ export function FinanceMetricsGrid({ scenario }: FinanceMetricsGridProps) {
       <Grid container spacing="var(--ob-space-100)">
         {metrics.map((metric) => (
           <Grid item xs={6} md={3} key={metric.key}>
-            <MetricCard
+            <PremiumMetricCard
               label={metric.label}
               value={metric.value}
+              icon={metric.icon}
+              featured={metric.featured}
+              status="live"
               compact
-              // We could add trends if available in data
             />
           </Grid>
         ))}

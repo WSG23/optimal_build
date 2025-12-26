@@ -7,7 +7,6 @@ import {
   IconButton,
   Tooltip,
   Typography,
-  alpha,
   useTheme,
 } from '@mui/material'
 import {
@@ -18,7 +17,9 @@ import {
 
 import type { FinanceScenarioSummary } from '../../../api/finance'
 import { useTranslation } from '../../../i18n'
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
+import { NeonText } from '../../../components/canonical/NeonText'
+import { PulsingStatusDot } from '../../../components/canonical/PulsingStatusDot'
 import { formatCurrencyShort, formatPercent } from '../utils/chartTheme'
 import { CapitalStackMiniBar } from './CapitalStackMiniBar'
 
@@ -85,24 +86,17 @@ function ScenarioCard({
   const irr = getResultValue(scenario, 'IRR')
   const dscr = getLatestDscr(scenario)
 
-  const activeBorder = alpha(theme.palette.primary.main, 0.4)
-  const activeBg = alpha(theme.palette.primary.main, 0.06)
   const canManage = scenario.scenarioId > 0
   const makingPrimary = updatingScenarioId === scenario.scenarioId
   const deleting = deletingScenarioId === scenario.scenarioId
 
   return (
-    <GlassCard
-      className="capital-stack-scenario-card"
-      role="button"
-      tabIndex={0}
+    <Card
+      variant={active ? 'premium' : 'glass'}
+      hover="glow"
+      accent={active || scenario.isPrimary}
       onClick={() => onSelect(scenario.scenarioId)}
-      onKeyDown={(event: ReactKeyboardEvent<HTMLDivElement>) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          onSelect(scenario.scenarioId)
-        }
-      }}
+      className="capital-stack-scenario-card"
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -110,15 +104,13 @@ function ScenarioCard({
         width: '100%',
         height: '100%',
         minHeight: 'var(--ob-size-finance-scenario-card-min)',
-        border: 1,
-        borderColor: active ? activeBorder : 'divider',
-        bgcolor: active ? activeBg : 'background.paper',
         p: 'var(--ob-space-150)',
         cursor: 'pointer',
-        '&:hover': {
-          borderColor: 'primary.main',
-          boxShadow: 2,
-        },
+        // Active state neon glow
+        ...(active && {
+          borderColor: 'var(--ob-color-neon-cyan)',
+          boxShadow: 'var(--ob-glow-neon-cyan)',
+        }),
         '&:focus-visible': {
           outline: `2px solid ${theme.palette.primary.main}`,
           outlineOffset: 2,
@@ -278,17 +270,7 @@ function ScenarioCard({
             </Tooltip>
           ) : null}
 
-          {active ? (
-            <Box
-              sx={{
-                width: 'var(--ob-space-050)',
-                height: 'var(--ob-space-050)',
-                borderRadius: '50%',
-                bgcolor: 'primary.main',
-                flexShrink: 0,
-              }}
-            />
-          ) : null}
+          {active ? <PulsingStatusDot status="live" size="sm" /> : null}
         </Box>
       </Box>
 
@@ -304,17 +286,15 @@ function ScenarioCard({
               defaultValue: 'Escalated cost',
             })}
           </Typography>
-          <Typography
-            sx={{
-              fontWeight: 700,
-              color: 'text.primary',
-              fontFamily: 'var(--ob-font-family-mono)',
-            }}
+          <NeonText
+            variant="body2"
+            intensity="subtle"
+            sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
           >
             {escalatedCost !== null
               ? formatCurrencyShort(escalatedCost, currency)
               : t('common.fallback.dash')}
-          </Typography>
+          </NeonText>
         </Grid>
         <Grid item xs={6}>
           <Typography
@@ -325,17 +305,15 @@ function ScenarioCard({
           >
             {t('finance.scenarios.metrics.npv', { defaultValue: 'NPV' })}
           </Typography>
-          <Typography
-            sx={{
-              fontWeight: 700,
-              color: 'text.primary',
-              fontFamily: 'var(--ob-font-family-mono)',
-            }}
+          <NeonText
+            variant="body2"
+            intensity={active ? 'medium' : 'subtle'}
+            sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
           >
             {npv !== null
               ? formatCurrencyShort(npv, currency)
               : t('common.fallback.dash')}
-          </Typography>
+          </NeonText>
         </Grid>
         <Grid item xs={6}>
           <Typography
@@ -346,15 +324,13 @@ function ScenarioCard({
           >
             {t('finance.scenarios.metrics.irr', { defaultValue: 'IRR' })}
           </Typography>
-          <Typography
-            sx={{
-              fontWeight: 700,
-              color: 'success.main',
-              fontFamily: 'var(--ob-font-family-mono)',
-            }}
+          <NeonText
+            variant="body2"
+            intensity="subtle"
+            sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
           >
             {irr !== null ? formatPercent(irr, 2) : t('common.fallback.dash')}
-          </Typography>
+          </NeonText>
         </Grid>
         <Grid item xs={6}>
           <Typography
@@ -365,15 +341,14 @@ function ScenarioCard({
           >
             {t('finance.scenarios.metrics.dscr', { defaultValue: 'DSCR' })}
           </Typography>
-          <Typography
-            sx={{
-              fontWeight: 700,
-              color: dscr !== null && dscr < 1 ? 'error.main' : 'text.primary',
-              fontFamily: 'var(--ob-font-family-mono)',
-            }}
+          <NeonText
+            variant="body2"
+            intensity="subtle"
+            color={dscr !== null && dscr < 1 ? 'error' : 'cyan'}
+            sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
           >
             {dscr !== null ? formatNumber(dscr) : t('common.fallback.dash')}
-          </Typography>
+          </NeonText>
         </Grid>
       </Grid>
 
@@ -392,7 +367,7 @@ function ScenarioCard({
           />
         )}
       </Box>
-    </GlassCard>
+    </Card>
   )
 }
 
