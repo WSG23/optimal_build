@@ -1,11 +1,26 @@
-"""Integration tests for PDFGenerator service."""
+"""Integration tests for PDFGenerator service.
+
+These tests require PDF dependencies (reportlab) to be installed.
+"""
 
 from __future__ import annotations
+
+import pytest
+
+# Check for PDF dependencies before importing modules that need them
+try:
+    from reportlab.lib.units import inch  # noqa: F401
+
+    HAS_REPORTLAB = True
+except ImportError:
+    HAS_REPORTLAB = False
+
+if not HAS_REPORTLAB:
+    pytest.skip("PDF dependencies (reportlab) not available", allow_module_level=True)
 
 import io
 from unittest.mock import MagicMock
 
-import pytest
 from reportlab.graphics.shapes import Drawing
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4

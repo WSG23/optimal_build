@@ -1,13 +1,27 @@
-"""Integration tests for InvestmentMemorandumGenerator service."""
+"""Integration tests for InvestmentMemorandumGenerator service.
+
+These tests require PDF dependencies (reportlab) to be installed.
+"""
 
 from __future__ import annotations
+
+import pytest
+
+# Check for PDF dependencies before importing modules that need them
+try:
+    from reportlab.lib.units import inch
+
+    HAS_REPORTLAB = True
+except ImportError:
+    HAS_REPORTLAB = False
+    inch = None  # type: ignore
+
+if not HAS_REPORTLAB:
+    pytest.skip("PDF dependencies (reportlab) not available", allow_module_level=True)
 
 import io
 from datetime import date
 from decimal import Decimal
-
-import pytest
-from reportlab.lib.units import inch
 
 from app.models.market import MarketCycle, YieldBenchmark
 from app.models.property import (
