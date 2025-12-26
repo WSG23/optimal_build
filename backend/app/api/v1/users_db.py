@@ -1,5 +1,7 @@
 """User API with real database support using SQLAlchemy."""
 
+import os
+from collections.abc import Generator
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -28,19 +30,36 @@ from app.services.account_lockout import get_lockout_service
 from app.utils.db import session_dependency
 
 # Database setup
-SQLALCHEMY_DATABASE_URL = "sqlite:///./users.db"
+ENVIRONMENT = (os.getenv("ENVIRONMENT") or "development").strip().lower()
+DEFAULT_USERS_DB_URL = (
+    "sqlite:////tmp/users.db" if ENVIRONMENT == "production" else "sqlite:///./users.db"
+)
+SQLALCHEMY_DATABASE_URL = os.getenv("USERS_DB_DATABASE_URL", DEFAULT_USERS_DB_URL)
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Ensure the shared user table exists
-UserORMBase.metadata.create_all(bind=engine)
+_INITIALIZED = False
+
+
+def _ensure_users_db_initialized() -> None:
+    global _INITIALIZED
+    if _INITIALIZED:
+        return
+    UserORMBase.metadata.create_all(bind=engine)
+    _INITIALIZED = True
+
 
 router = APIRouter(prefix="/users-db", tags=["Database Users"])
 
+
 # Dependency to get DB session
-get_db = session_dependency(SessionLocal)
+def get_db() -> Generator[Session, None, None]:
+    _ensure_users_db_initialized()
+    yield from session_dependency(SessionLocal)()
+
+
 auth_service = AuthService(lockout_service=get_lockout_service())
 
 
