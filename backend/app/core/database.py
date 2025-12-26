@@ -35,10 +35,43 @@ def _resolve_database_url() -> str:
     return url
 
 
+def _get_pool_settings() -> dict[str, Any]:
+    """Return connection pool settings based on environment.
+
+    Production uses a larger pool with pre-ping to handle stale connections.
+    Development uses minimal pooling for easier debugging.
+    """
+    environment = (settings.ENVIRONMENT or "").strip().lower()
+    is_production = environment == "production"
+
+    if is_production:
+        return {
+            # Production pool settings
+            "pool_size": int(os.getenv("DB_POOL_SIZE", "10")),
+            "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "20")),
+            "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
+            "pool_recycle": int(os.getenv("DB_POOL_RECYCLE", "1800")),  # 30 minutes
+            "pool_pre_ping": True,  # Verify connections before use
+            "echo": False,  # Disable SQL logging in production
+        }
+    else:
+        return {
+            # Development pool settings
+            "pool_size": 5,
+            "max_overflow": 10,
+            "pool_timeout": 30,
+            "pool_recycle": 3600,
+            "pool_pre_ping": False,
+            "echo": True,  # SQL logging for debugging
+        }
+
+
+_pool_settings = _get_pool_settings()
+
 engine: AsyncEngine = create_async_engine(
     _resolve_database_url(),
-    echo=True,
     future=True,
+    **_pool_settings,
 )
 
 logger = logging.getLogger("app.database")

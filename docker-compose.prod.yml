@@ -1,0 +1,229 @@
+# =============================================================================
+# Production Docker Compose Configuration
+# =============================================================================
+#
+# Usage:
+#   # Build images
+#   docker compose -f docker-compose.prod.yml build
+#
+#   # Start services
+#   docker compose -f docker-compose.prod.yml up -d
+#
+#   # View logs
+#   docker compose -f docker-compose.prod.yml logs -f
+#
+# Required environment variables (set via .env.production or CI/CD secrets):
+#   - SECRET_KEY: JWT signing key (min 32 chars)
+#   - POSTGRES_PASSWORD: Database password
+#   - SQLALCHEMY_DATABASE_URI: Full database connection string
+#   - BACKEND_ALLOWED_ORIGINS: Comma-separated allowed CORS origins
+#   - REDIS_URL: Redis connection URL
+#
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Backend API
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: optimal-build-backend:${IMAGE_TAG:-latest}
+    container_name: optimal-build-backend
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: production
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI:?Database URI is required}
+      BACKEND_ALLOWED_ORIGINS: ${BACKEND_ALLOWED_ORIGINS:?Allowed origins are required}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      RATE_LIMIT_STORAGE_URI: ${RATE_LIMIT_STORAGE_URI:-redis://redis:6379/3}
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PORT: 8080
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-4}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - optimal-build-network
+
+  # ---------------------------------------------------------------------------
+  # Frontend (Nginx serving static build)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+    image: optimal-build-frontend:${IMAGE_TAG:-latest}
+    container_name: optimal-build-frontend
+    restart: unless-stopped
+    environment:
+      PORT: 8080
+      API_UPSTREAM: backend:8080
+    ports:
+      - "${FRONTEND_PORT:-3000}:8080"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - optimal-build-network
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database (for self-hosted deployments)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: optimal-build-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password is required}
+      POSTGRES_DB: ${POSTGRES_DB:-building_compliance}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-building_compliance}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - optimal-build-network
+
+  # ---------------------------------------------------------------------------
+  # Redis (for rate limiting, caching, job queues)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: optimal-build-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - optimal-build-network
+
+  # ---------------------------------------------------------------------------
+  # MinIO (S3-compatible object storage)
+  # ---------------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    container_name: optimal-build-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - optimal-build-network
+
+# -----------------------------------------------------------------------------
+# Volumes
+# -----------------------------------------------------------------------------
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+
+# -----------------------------------------------------------------------------
+# Networks
+# -----------------------------------------------------------------------------
+networks:
+  optimal-build-network:
+    driver: bridge
