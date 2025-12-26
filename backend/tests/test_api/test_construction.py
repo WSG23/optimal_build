@@ -18,7 +18,7 @@ from app.models.construction import (
     SafetyIncident,
     SeverityLevel,
 )
-from app.models.projects import Project
+from app.models.projects import Project, ProjectType, ProjectPhase
 from app.models.users import User
 
 
@@ -28,6 +28,7 @@ async def test_user(session: AsyncSession) -> User:
     user = User(
         id=uuid4(),
         email="test@example.com",
+        username="testuser",
         full_name="Test User",
         hashed_password="hashed",
         is_active=True,
@@ -43,9 +44,11 @@ async def test_project(session: AsyncSession, test_user: User) -> Project:
     """Create a test project."""
     project = Project(
         id=uuid4(),
-        name="Test Construction Project",
+        project_name="Test Construction Project",
+        project_code="TEST-CONST-001",
+        project_type=ProjectType.NEW_DEVELOPMENT,
+        current_phase=ProjectPhase.CONSTRUCTION,
         owner_id=test_user.id,
-        status="active",
     )
     session.add(project)
     await session.commit()
@@ -371,7 +374,7 @@ class TestDrawdownAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "approved_architect"
-        assert data["amount_approved"] == 2000000.00
+        assert float(data["amount_approved"]) == 2000000.00
 
     async def test_approve_drawdown_partial_amount(
         self, client: AsyncClient, session: AsyncSession, test_project: Project
@@ -396,7 +399,7 @@ class TestDrawdownAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "approved_architect"
-        assert data["amount_approved"] == 2500000.00
+        assert float(data["amount_approved"]) == 2500000.00
 
     async def test_update_drawdown(
         self, client: AsyncClient, session: AsyncSession, test_project: Project
