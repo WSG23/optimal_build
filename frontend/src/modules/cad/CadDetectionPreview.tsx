@@ -155,7 +155,7 @@ export function CadDetectionPreview({
       return
     }
     const result = await onProvideMetric(unit.missingMetricKey, value)
-    if (result !== false) {
+    if (result) {
       cancelEditing()
     }
   }
@@ -176,264 +176,268 @@ export function CadDetectionPreview({
   const getSeverityIcon = (sev: OverlaySummary['severity']) => {
     switch (sev) {
       case 'high':
-        return <ErrorOutline sx={{ color: '#ef4444' }} />
+        return <ErrorOutline sx={{ color: 'var(--ob-error-500)' }} />
       case 'medium':
-        return <WarningAmber sx={{ color: '#f59e0b' }} />
+        return <WarningAmber sx={{ color: 'var(--ob-warning-500)' }} />
       case 'low':
-        return <InfoOutlined sx={{ color: '#3b82f6' }} />
+        return <InfoOutlined sx={{ color: 'var(--ob-brand-500)' }} />
       case 'none':
-        return <CheckCircleOutline sx={{ color: '#10b981' }} />
+        return <CheckCircleOutline sx={{ color: 'var(--ob-success-500)' }} />
     }
   }
 
   return (
     <section
       className="cad-preview"
-      style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--ob-spacing-500)',
+      }}
     >
       {/* 1. HERO SECTION (Map + HUD) */}
       <Box
         sx={{
           position: 'relative',
-          height: '600px',
-          minHeight: '600px', // Enforce strict height to prevent collapse
           width: '100%',
-          borderRadius: '24px',
+          borderRadius: 'var(--ob-radius-sm)',
           overflow: 'hidden',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          background: '#09090b',
-          display: 'flex', // Ensure framing context
+          boxShadow: 'var(--ob-shadow-xl)',
+          background: 'var(--ob-neutral-950)',
+          display: 'flex',
           flexDirection: 'column',
         }}
       >
-        {/* A. The Interactive Viewer */}
-        <InteractiveFloorplate units={units} loading={loopLoading} />
-
-        {/* B. Top-Left Status Header (Minimal) */}
+        {/* Top Header Bar with Zone, Title, and ROI Stats */}
         <Box
           sx={{
-            position: 'absolute',
-            top: 24,
-            left: 24,
-            zIndex: 20,
             display: 'flex',
-            flexDirection: 'column',
-            gap: 1,
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            p: 3,
+            pb: 2,
+            borderBottom: '1px solid var(--ob-border-fine)',
+            flexWrap: 'wrap',
+            gap: 2,
           }}
         >
-          <Chip
-            icon={
-              <MapIcon
-                sx={{ fontSize: '16px !important', color: '#fff !important' }}
-              />
-            }
-            label={zoneCode ? `ZONE ${zoneCode}` : 'NO ZONE DETECTED'}
-            sx={{
-              background: 'rgba(0,0,0,0.6)',
-              backdropFilter: 'blur(10px)',
-              color: '#fff',
-              fontWeight: 700,
-              border: '1px solid rgba(255,255,255,0.1)',
-              maxWidth: 'fit-content',
-            }}
-          />
-          <Typography
-            variant="h5"
-            sx={{
-              color: '#fff',
-              fontWeight: 800,
-              textShadow: '0 2px 10px rgba(0,0,0,0.5)',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            {t('detection.title')}
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-            {t('detection.summary.floors', { count: floors.length })} •{' '}
-            {t('detection.summary.units', { count: units.length })}
-          </Typography>
-        </Box>
+          {/* Left Side: Zone & Title */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Chip
+              icon={
+                <MapIcon
+                  sx={{
+                    fontSize: '16px !important',
+                    color: 'var(--ob-color-text-inverse) !important',
+                  }}
+                />
+              }
+              label={zoneCode ? `ZONE ${zoneCode}` : 'NO ZONE DETECTED'}
+              sx={{
+                background: 'rgba(var(--ob-color-surface-alt-rgb), 0.6)',
+                backdropFilter: 'blur(var(--ob-blur-md))',
+                color: 'var(--ob-color-text-inverse)',
+                fontWeight: 700,
+                border: '1px solid var(--ob-border-fine)',
+                maxWidth: 'fit-content',
+              }}
+            />
+            <Typography
+              variant="h5"
+              sx={{
+                color: 'var(--ob-color-text-inverse)',
+                fontWeight: 800,
+                textShadow:
+                  '0 2px 10px rgba(var(--ob-color-surface-alt-rgb), 0.5)',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              {t('detection.title')}
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'var(--ob-neutral-400)' }}>
+              {t('detection.summary.floors', { count: floors.length })} •{' '}
+              {t('detection.summary.units', { count: units.length })}
+            </Typography>
+          </Box>
 
-        {/* C. Right-Side HUD (ROI) */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 24,
-            right: 24,
-            zIndex: 20,
-            pointerEvents: 'none',
-          }}
-        >
-          <div style={{ pointerEvents: 'auto' }}>
+          {/* Right Side: ROI Summary */}
+          <Box sx={{ flexShrink: 0 }}>
             <RoiSummary
               metrics={displayMetrics}
               loading={loopLoading}
               isLive={true}
               variant="glass"
             />
-          </div>
+          </Box>
         </Box>
 
-        {/* D. Floating Layout Controls ("The Cockpit") */}
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: 32,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 30,
-          }}
-        >
-          <Paper
-            elevation={10}
+        {/* A. The Interactive Viewer - Now below the header */}
+        <Box sx={{ height: '450px', minHeight: '450px', position: 'relative' }}>
+          <InteractiveFloorplate units={units} loading={loopLoading} />
+
+          {/* D. Floating Layout Controls ("The Cockpit") */}
+          <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              p: 1,
-              pl: 2,
-              pr: 2,
-              borderRadius: '999px',
-              background: 'rgba(255, 255, 255, 0.1)', // Glass
-              backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              position: 'absolute',
+              bottom: 32,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 30,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: 'rgba(255,255,255,0.6)',
-                  fontWeight: 600,
-                  mr: 1,
-                  textTransform: 'uppercase',
-                }}
-              >
-                Visual Filters
-              </Typography>
-              {hiddenPendingCount > 0 && (
-                <Tooltip
-                  title={t('detection.severitySummary.hiddenPending', {
-                    count: hiddenPendingCount,
-                  })}
+            <Paper
+              elevation={10}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                p: 1,
+                pl: 2,
+                pr: 2,
+                borderRadius: 'var(--ob-radius-pill)',
+                background: 'var(--ob-surface-glass-1)',
+                backdropFilter: 'blur(var(--ob-blur-xl))',
+                border: '1px solid var(--ob-border-fine)',
+                boxShadow: 'var(--ob-shadow-lg)',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'var(--ob-neutral-400)',
+                    fontWeight: 600,
+                    mr: 1,
+                    textTransform: 'uppercase',
+                  }}
                 >
-                  <Circle
+                  Visual Filters
+                </Typography>
+                {hiddenPendingCount > 0 && (
+                  <Tooltip
+                    title={t('detection.severitySummary.hiddenPending', {
+                      count: hiddenPendingCount,
+                    })}
+                  >
+                    <Circle
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        color: 'var(--ob-error-500)',
+                        mr: 1,
+                        animation: 'pulse 2s infinite',
+                      }}
+                    />
+                  </Tooltip>
+                )}
+              </Box>
+
+              {severityOrder.map((severityKey) => {
+                const isActive = activeSeverities.includes(severityKey)
+                const count = severitySummary[severityKey]
+
+                // Get top 3 overlays for this severity for the tooltip
+                const severityOverlays = overlays
+                  .filter((o) => o.severity === severityKey)
+                  .slice(0, 3)
+                const tooltipContent = (
+                  <Box sx={{ p: 0.5 }}>
+                    <Typography
+                      variant="subtitle2"
+                      component="div"
+                      sx={{ fontWeight: 700, mb: 0.5 }}
+                    >
+                      {severityKey.toUpperCase()} ({count})
+                    </Typography>
+                    {severityOverlays.length > 0 ? (
+                      <ul style={{ margin: 0, paddingLeft: 16 }}>
+                        {severityOverlays.map((o) => (
+                          <li key={o.key}>
+                            <Typography variant="caption" component="span">
+                              {o.title}
+                            </Typography>
+                          </li>
+                        ))}
+                        {count > 3 && (
+                          <li>
+                            <Typography variant="caption" component="span">
+                              ...and {count - 3} more
+                            </Typography>
+                          </li>
+                        )}
+                      </ul>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        No issues detected
+                      </Typography>
+                    )}
+                  </Box>
+                )
+
+                return (
+                  <Tooltip
+                    key={severityKey}
+                    title={tooltipContent}
+                    arrow
+                    placement="top"
+                  >
+                    <IconButton
+                      onClick={() => {
+                        onToggleSeverity(severityKey)
+                      }}
+                      size="small"
+                      sx={{
+                        transition: 'all 0.2s',
+                        background: isActive
+                          ? 'rgba(255,255,255,0.15)'
+                          : 'transparent',
+                        border: isActive
+                          ? '1px solid rgba(255,255,255,0.3)'
+                          : '1px solid transparent',
+                        '&:hover': { background: 'rgba(255,255,255,0.2)' },
+                      }}
+                    >
+                      {getSeverityIcon(severityKey)}
+                    </IconButton>
+                  </Tooltip>
+                )
+              })}
+
+              <Box
+                sx={{
+                  width: 1,
+                  height: 24,
+                  background: 'var(--ob-border-fine)',
+                  mx: 1,
+                }}
+              />
+
+              <Tooltip title="Reset Filters">
+                <IconButton
+                  onClick={onResetSeverity}
+                  size="small"
+                  disabled={!isSeverityFiltered}
+                >
+                  <RestartAlt
                     sx={{
-                      width: 8,
-                      height: 8,
-                      color: '#ef4444',
-                      mr: 1,
-                      animation: 'pulse 2s infinite',
+                      color: isSeverityFiltered
+                        ? 'var(--ob-color-text-inverse)'
+                        : 'var(--ob-neutral-600)',
                     }}
                   />
-                </Tooltip>
-              )}
-            </Box>
-
-            {severityOrder.map((severityKey) => {
-              const isActive = activeSeverities.includes(severityKey)
-              const count = severitySummary[severityKey]
-
-              // Get top 3 overlays for this severity for the tooltip
-              const severityOverlays = overlays
-                .filter((o) => o.severity === severityKey)
-                .slice(0, 3)
-              const tooltipContent = (
-                <Box sx={{ p: 0.5 }}>
-                  <Typography
-                    variant="subtitle2"
-                    component="div"
-                    sx={{ fontWeight: 700, mb: 0.5 }}
-                  >
-                    {severityKey.toUpperCase()} ({count})
-                  </Typography>
-                  {severityOverlays.length > 0 ? (
-                    <ul style={{ margin: 0, paddingLeft: 16 }}>
-                      {severityOverlays.map((o) => (
-                        <li key={o.key}>
-                          <Typography variant="caption" component="span">
-                            {o.title}
-                          </Typography>
-                        </li>
-                      ))}
-                      {count > 3 && (
-                        <li>
-                          <Typography variant="caption" component="span">
-                            ...and {count - 3} more
-                          </Typography>
-                        </li>
-                      )}
-                    </ul>
-                  ) : (
-                    <Typography variant="caption" color="text.secondary">
-                      No issues detected
-                    </Typography>
-                  )}
-                </Box>
-              )
-
-              return (
-                <Tooltip
-                  key={severityKey}
-                  title={tooltipContent}
-                  arrow
-                  placement="top"
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Show All Overlays">
+                <IconButton
+                  size="small"
+                  onClick={onResetSeverity}
+                  disabled={!isSeverityFiltered}
                 >
-                  <IconButton
-                    onClick={() => onToggleSeverity(severityKey)}
-                    size="small"
-                    sx={{
-                      transition: 'all 0.2s',
-                      background: isActive
-                        ? 'rgba(255,255,255,0.15)'
-                        : 'transparent',
-                      border: isActive
-                        ? '1px solid rgba(255,255,255,0.3)'
-                        : '1px solid transparent',
-                      '&:hover': { background: 'rgba(255,255,255,0.2)' },
-                    }}
-                  >
-                    {getSeverityIcon(severityKey)}
-                  </IconButton>
-                </Tooltip>
-              )
-            })}
-
-            <Box
-              sx={{
-                width: 1,
-                height: 24,
-                background: 'rgba(255,255,255,0.1)',
-                mx: 1,
-              }}
-            />
-
-            <Tooltip title="Reset Filters">
-              <IconButton
-                onClick={onResetSeverity}
-                size="small"
-                disabled={!isSeverityFiltered}
-              >
-                <RestartAlt
-                  sx={{
-                    color: isSeverityFiltered
-                      ? '#fff'
-                      : 'rgba(255,255,255,0.3)',
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Show All Overlays">
-              <IconButton
-                size="small"
-                onClick={onResetSeverity}
-                disabled={!isSeverityFiltered}
-              >
-                <Visibility sx={{ color: '#fff' }} />
-              </IconButton>
-            </Tooltip>
-          </Paper>
+                  <Visibility sx={{ color: 'var(--ob-color-text-inverse)' }} />
+                </IconButton>
+              </Tooltip>
+            </Paper>
+          </Box>
         </Box>
       </Box>
 
@@ -442,7 +446,11 @@ export function CadDetectionPreview({
         {/* Unit Table */}
         <Paper
           variant="outlined"
-          sx={{ p: 0, overflow: 'hidden', borderRadius: '12px' }}
+          sx={{
+            p: 0,
+            overflow: 'hidden',
+            borderRadius: 'var(--ob-radius-sm)',
+          }}
         >
           <table
             className="cad-preview__table"
@@ -451,55 +459,55 @@ export function CadDetectionPreview({
             <caption
               style={{
                 textAlign: 'left',
-                padding: '16px',
+                padding: 'var(--ob-spacing-200)',
                 fontWeight: 700,
-                borderBottom: '1px solid #eee',
+                borderBottom: '1px solid var(--ob-color-border-subtle)',
               }}
             >
               {t('detection.tableHeading')}
             </caption>
-            <thead style={{ background: '#f9fafb' }}>
+            <thead style={{ background: 'var(--ob-neutral-50)' }}>
               <tr>
                 <th
                   style={{
-                    padding: '12px 16px',
+                    padding: 'var(--ob-spacing-150) var(--ob-spacing-200)',
                     textAlign: 'left',
-                    fontSize: '0.75rem',
+                    fontSize: 'var(--ob-font-size-xs)',
                     textTransform: 'uppercase',
-                    color: '#6b7280',
+                    color: 'var(--ob-color-text-secondary)',
                   }}
                 >
                   {t('detection.unit')}
                 </th>
                 <th
                   style={{
-                    padding: '12px 16px',
+                    padding: 'var(--ob-spacing-150) var(--ob-spacing-200)',
                     textAlign: 'left',
-                    fontSize: '0.75rem',
+                    fontSize: 'var(--ob-font-size-xs)',
                     textTransform: 'uppercase',
-                    color: '#6b7280',
+                    color: 'var(--ob-color-text-secondary)',
                   }}
                 >
                   {t('detection.floor')}
                 </th>
                 <th
                   style={{
-                    padding: '12px 16px',
+                    padding: 'var(--ob-spacing-150) var(--ob-spacing-200)',
                     textAlign: 'left',
-                    fontSize: '0.75rem',
+                    fontSize: 'var(--ob-font-size-xs)',
                     textTransform: 'uppercase',
-                    color: '#6b7280',
+                    color: 'var(--ob-color-text-secondary)',
                   }}
                 >
                   {t('detection.area')}
                 </th>
                 <th
                   style={{
-                    padding: '12px 16px',
+                    padding: 'var(--ob-spacing-150) var(--ob-spacing-200)',
                     textAlign: 'left',
-                    fontSize: '0.75rem',
+                    fontSize: 'var(--ob-font-size-xs)',
                     textTransform: 'uppercase',
-                    color: '#6b7280',
+                    color: 'var(--ob-color-text-secondary)',
                   }}
                 >
                   {t('detection.status')}
@@ -512,9 +520,9 @@ export function CadDetectionPreview({
                   <td
                     colSpan={4}
                     style={{
-                      padding: '24px',
+                      padding: 'var(--ob-spacing-300)',
                       textAlign: 'center',
-                      color: '#9ca3af',
+                      color: 'var(--ob-neutral-400)',
                     }}
                   >
                     {t('detection.empty')}
@@ -535,9 +543,16 @@ export function CadDetectionPreview({
                   return (
                     <tr
                       key={unit.id}
-                      style={{ borderTop: '1px solid #f3f4f6' }}
+                      style={{
+                        borderTop: '1px solid var(--ob-color-border-subtle)',
+                      }}
                     >
-                      <td style={{ padding: '12px 16px' }}>
+                      <td
+                        style={{
+                          padding:
+                            'var(--ob-spacing-150) var(--ob-spacing-200)',
+                        }}
+                      >
                         <div
                           style={{
                             display: 'flex',
@@ -560,17 +575,35 @@ export function CadDetectionPreview({
                                     : 'primary'
                               }
                               variant="outlined"
-                              sx={{ height: 20, fontSize: '0.65rem' }}
+                              sx={{
+                                height: 20,
+                                fontSize: 'var(--ob-font-size-xs)',
+                              }}
                             />
                           )}
                         </div>
                       </td>
-                      <td style={{ padding: '12px 16px' }}>{unit.floor}</td>
-                      <td style={{ padding: '12px 16px' }}>
+                      <td
+                        style={{
+                          padding:
+                            'var(--ob-spacing-150) var(--ob-spacing-200)',
+                        }}
+                      >
+                        {unit.floor}
+                      </td>
+                      <td
+                        style={{
+                          padding:
+                            'var(--ob-spacing-150) var(--ob-spacing-200)',
+                        }}
+                      >
                         {unit.areaSqm.toFixed(1)}
                       </td>
                       <td
-                        style={{ padding: '12px 16px' }}
+                        style={{
+                          padding:
+                            'var(--ob-spacing-150) var(--ob-spacing-200)',
+                        }}
                         className={`cad-status cad-status--${unit.status}`}
                       >
                         <div className="cad-status__label">
@@ -603,9 +636,10 @@ export function CadDetectionPreview({
                                 disabled={provideMetricDisabled}
                                 style={{
                                   width: '80px',
-                                  padding: '4px',
-                                  border: '1px solid #d1d5db',
-                                  borderRadius: '4px',
+                                  padding: 'var(--ob-spacing-100)',
+                                  border:
+                                    '1px solid var(--ob-color-border-subtle)',
+                                  borderRadius: 'var(--ob-radius-sm)',
                                 }}
                               />
                               <button
@@ -629,11 +663,13 @@ export function CadDetectionPreview({
                               type="button"
                               className="cad-preview__metric-button"
                               disabled={provideMetricDisabled}
-                              onClick={() => beginEditing(unit)}
+                              onClick={() => {
+                                beginEditing(unit)
+                              }}
                               style={{
-                                marginLeft: '8px',
-                                fontSize: '0.75rem',
-                                color: '#3b82f6',
+                                marginLeft: 'var(--ob-spacing-100)',
+                                fontSize: 'var(--ob-font-size-xs)',
+                                color: 'var(--ob-brand-500)',
                                 background: 'none',
                                 border: 'none',
                                 cursor: 'pointer',
@@ -657,7 +693,11 @@ export function CadDetectionPreview({
         {/* Advisory / Hints Panel */}
         <Paper
           variant="outlined"
-          sx={{ p: 3, borderRadius: '12px', height: 'fit-content' }}
+          sx={{
+            p: 3,
+            borderRadius: 'var(--ob-radius-sm)',
+            height: 'fit-content',
+          }}
         >
           <Typography variant="h6" gutterBottom>
             {t('detection.advisory')}
@@ -673,8 +713,8 @@ export function CadDetectionPreview({
                   key={hint.key}
                   style={{
                     marginBottom: '8px',
-                    fontSize: '0.875rem',
-                    color: '#4b5563',
+                    fontSize: 'var(--ob-font-size-sm)',
+                    color: 'var(--ob-neutral-600)',
                   }}
                 >
                   {hint.text}

@@ -35,10 +35,51 @@ def _resolve_database_url() -> str:
     return url
 
 
+def _get_pool_settings(database_url: str) -> dict[str, Any]:
+    """Return connection pool settings based on environment and database type.
+
+    Production uses a larger pool with pre-ping to handle stale connections.
+    Development uses minimal pooling for easier debugging.
+    SQLite uses StaticPool which doesn't support pool_size/max_overflow/pool_timeout.
+    """
+    # SQLite uses StaticPool which doesn't support these pool parameters
+    if database_url.startswith("sqlite"):
+        return {
+            "echo": True,  # SQL logging for debugging
+        }
+
+    environment = (settings.ENVIRONMENT or "").strip().lower()
+    is_production = environment == "production"
+
+    if is_production:
+        return {
+            # Production pool settings
+            "pool_size": int(os.getenv("DB_POOL_SIZE", "10")),
+            "max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "20")),
+            "pool_timeout": int(os.getenv("DB_POOL_TIMEOUT", "30")),
+            "pool_recycle": int(os.getenv("DB_POOL_RECYCLE", "1800")),  # 30 minutes
+            "pool_pre_ping": True,  # Verify connections before use
+            "echo": False,  # Disable SQL logging in production
+        }
+    else:
+        return {
+            # Development pool settings
+            "pool_size": 5,
+            "max_overflow": 10,
+            "pool_timeout": 30,
+            "pool_recycle": 3600,
+            "pool_pre_ping": False,
+            "echo": True,  # SQL logging for debugging
+        }
+
+
+_database_url = _resolve_database_url()
+_pool_settings = _get_pool_settings(_database_url)
+
 engine: AsyncEngine = create_async_engine(
-    _resolve_database_url(),
-    echo=True,
+    _database_url,
     future=True,
+    **_pool_settings,
 )
 
 logger = logging.getLogger("app.database")

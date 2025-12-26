@@ -7,7 +7,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--ob-spacing-500);
-    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    /* padding removed - YosaiShell provides canonical 16px layout padding */
     max-width: 1400px;
     margin: 0 auto;
     font-family: var(--ob-font-family-base);

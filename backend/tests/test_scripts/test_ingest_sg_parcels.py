@@ -1,6 +1,23 @@
+"""Tests for Singapore parcel ingestion scripts.
+
+These tests require GIS dependencies (pyproj) to be installed.
+"""
+
 from __future__ import annotations
 
-from pyproj import Transformer
+import pytest
+
+# Check for GIS dependencies before importing modules that need them
+try:
+    from pyproj import Transformer
+
+    HAS_GIS = True
+except ImportError:
+    HAS_GIS = False
+    Transformer = None  # type: ignore
+
+if not HAS_GIS:
+    pytest.skip("GIS dependencies (pyproj) not available", allow_module_level=True)
 
 from backend.scripts import ingest_sg_parcels as sg_parcels
 

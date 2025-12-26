@@ -1,8 +1,24 @@
+"""Tests for scenario builder 3D helpers.
+
+These tests require 3D dependencies (trimesh) to be installed.
+"""
+
 from __future__ import annotations
 
 from types import SimpleNamespace
 
 import pytest
+
+# Check for 3D dependencies before importing modules that need them
+try:
+    import trimesh  # noqa: F401
+
+    HAS_3D = True
+except ImportError:
+    HAS_3D = False
+
+if not HAS_3D:
+    pytest.skip("3D dependencies (trimesh) not available", allow_module_level=True)
 
 from app.models.property import PropertyType
 from app.services.agents.scenario_builder_3d import (

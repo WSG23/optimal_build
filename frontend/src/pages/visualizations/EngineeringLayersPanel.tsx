@@ -8,7 +8,6 @@ interface LayerConfig {
   key: keyof LayerState
   label: string
   icon: string
-  color: string
 }
 
 interface LayerState {
@@ -24,25 +23,21 @@ const LAYERS: LayerConfig[] = [
     key: 'structural',
     label: 'Structural Grid',
     icon: '◼',
-    color: 'var(--ob-info-500)',
   },
   {
     key: 'mep',
     label: 'MEP Trunks & Risers',
     icon: '⚡',
-    color: 'var(--ob-warning-500)',
   },
   {
     key: 'plenum',
     label: 'Plenum Depth Validation',
     icon: '≋',
-    color: 'var(--ob-color-text-muted)',
   },
   {
     key: 'facade',
     label: 'Façade Layers',
     icon: '◈',
-    color: 'var(--ob-success-500)',
   },
 ]
 
@@ -73,10 +68,7 @@ export function EngineeringLayersPanel({
         {LAYERS.map((layer) => (
           <div key={layer.key} className="engineering-layers__row">
             <div className="engineering-layers__label-group">
-              <span
-                className="engineering-layers__icon"
-                style={{ color: layer.color }}
-              >
+              <span className="engineering-layers__icon" data-layer={layer.key}>
                 {layer.icon}
               </span>
               <label

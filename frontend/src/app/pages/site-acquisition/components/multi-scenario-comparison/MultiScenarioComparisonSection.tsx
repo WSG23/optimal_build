@@ -66,8 +66,8 @@ export function MultiScenarioComparisonSection({
     <section
       style={{
         background: 'white',
-        border: '1px solid #d2d2d7',
-        borderRadius: '18px',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '2rem',
         marginBottom: '2rem',
       }}
@@ -87,9 +87,9 @@ export function MultiScenarioComparisonSection({
           style={{
             padding: '3rem 2rem',
             textAlign: 'center',
-            color: '#6e6e73',
-            background: '#f5f5f7',
-            borderRadius: '12px',
+            color: 'var(--ob-color-text-muted)',
+            background: 'var(--ob-color-bg-surface-elevated)',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
@@ -107,9 +107,9 @@ export function MultiScenarioComparisonSection({
           style={{
             padding: '2.5rem',
             textAlign: 'center',
-            color: '#6e6e73',
-            background: '#f5f5f7',
-            borderRadius: '12px',
+            color: 'var(--ob-color-text-muted)',
+            background: 'var(--ob-color-bg-surface-elevated)',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           <p style={{ margin: 0 }}>
@@ -148,10 +148,12 @@ export function MultiScenarioComparisonSection({
                 <article
                   key={row.key}
                   style={{
-                    border: `2px solid ${isActive ? '#1d1d1f' : '#e5e5e7'}`,
-                    borderRadius: '14px',
+                    border: `2px solid ${isActive ? 'var(--ob-color-text-primary)' : 'var(--ob-color-border-subtle)'}`,
+                    borderRadius: 'var(--ob-radius-sm)',
                     padding: '1.35rem',
-                    background: isActive ? '#ffffff' : '#f5f5f7',
+                    background: isActive
+                      ? 'white'
+                      : 'var(--ob-color-bg-surface-elevated)',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '1rem',
@@ -189,7 +191,7 @@ export function MultiScenarioComparisonSection({
                             fontWeight: 600,
                             letterSpacing: '0.08em',
                             textTransform: 'uppercase',
-                            color: '#6b7280',
+                            color: 'var(--ob-color-text-muted)',
                           }}
                         >
                           {row.key === 'all' ? 'Aggregate' : 'Scenario'}
@@ -209,9 +211,9 @@ export function MultiScenarioComparisonSection({
                       isActive ? (
                         <span
                           style={{
-                            borderRadius: '9999px',
-                            background: '#1d4ed8',
-                            color: '#ffffff',
+                            borderRadius: 'var(--ob-radius-pill)',
+                            background: 'var(--ob-color-brand-primary)',
+                            color: 'white',
                             padding: '0.25rem 0.75rem',
                             fontSize: '0.75rem',
                             fontWeight: 600,
@@ -228,10 +230,10 @@ export function MultiScenarioComparisonSection({
                             setActiveScenario(row.key as DevelopmentScenario)
                           }
                           style={{
-                            border: '1px solid #1d1d1f',
+                            border: '1px solid var(--ob-color-text-primary)',
                             background: 'white',
-                            color: '#1d1d1f',
-                            borderRadius: '9999px',
+                            color: 'var(--ob-color-text-primary)',
+                            borderRadius: 'var(--ob-radius-pill)',
                             padding: '0.3rem 0.85rem',
                             fontSize: '0.78rem',
                             fontWeight: 600,
@@ -244,9 +246,9 @@ export function MultiScenarioComparisonSection({
                     ) : (
                       <span
                         style={{
-                          borderRadius: '9999px',
-                          background: '#e5e7eb',
-                          color: '#374151',
+                          borderRadius: 'var(--ob-radius-pill)',
+                          background: 'var(--ob-color-border-subtle)',
+                          color: 'var(--ob-color-text-secondary)',
                           padding: '0.25rem 0.75rem',
                           fontSize: '0.75rem',
                           fontWeight: 600,
@@ -267,7 +269,7 @@ export function MultiScenarioComparisonSection({
                       alignItems: 'center',
                       gap: '0.6rem',
                       fontSize: '0.78rem',
-                      color: '#64748b',
+                      color: 'var(--ob-color-text-muted)',
                     }}
                   >
                     <span>
@@ -286,16 +288,19 @@ export function MultiScenarioComparisonSection({
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '0.3rem',
-                        borderRadius: '9999px',
+                        borderRadius: 'var(--ob-radius-pill)',
                         padding: '0.15rem 0.6rem',
                         fontWeight: 600,
                         letterSpacing: '0.05em',
                         textTransform: 'uppercase',
                         background:
                           row.source === 'manual'
-                            ? '#dcfce7'
+                            ? 'var(--ob-success-50)'
                             : 'rgba(37, 99, 235, 0.12)',
-                        color: row.source === 'manual' ? '#166534' : '#1d4ed8',
+                        color:
+                          row.source === 'manual'
+                            ? 'var(--ob-success-700)'
+                            : 'var(--ob-color-brand-primary)',
                       }}
                     >
                       {row.source === 'manual'
@@ -310,7 +315,7 @@ export function MultiScenarioComparisonSection({
                       style={{
                         margin: 0,
                         fontSize: '0.92rem',
-                        color: '#374151',
+                        color: 'var(--ob-color-text-secondary)',
                         lineHeight: 1.45,
                       }}
                     >
@@ -343,7 +348,7 @@ export function MultiScenarioComparisonSection({
                           <span
                             style={{
                               fontSize: '0.75rem',
-                              color: '#6b7280',
+                              color: 'var(--ob-color-text-muted)',
                               letterSpacing: '0.06em',
                               textTransform: 'uppercase',
                             }}
@@ -351,7 +356,10 @@ export function MultiScenarioComparisonSection({
                             {metric.label}
                           </span>
                           <strong
-                            style={{ fontSize: '0.95rem', color: '#111827' }}
+                            style={{
+                              fontSize: '0.95rem',
+                              color: 'var(--ob-color-text-primary)',
+                            }}
                           >
                             {metric.value}
                           </strong>
@@ -381,7 +389,7 @@ export function MultiScenarioComparisonSection({
                           fontSize: '0.75rem',
                           letterSpacing: '0.06em',
                           textTransform: 'uppercase',
-                          color: '#9ca3af',
+                          color: 'var(--ob-color-text-muted)',
                         }}
                       >
                         Condition
@@ -390,12 +398,17 @@ export function MultiScenarioComparisonSection({
                         style={{
                           fontSize: '1rem',
                           fontWeight: 600,
-                          color: '#111827',
+                          color: 'var(--ob-color-text-primary)',
                         }}
                       >
                         {row.conditionRating ? row.conditionRating : '—'}
                       </span>
-                      <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+                      <span
+                        style={{
+                          fontSize: '0.85rem',
+                          color: 'var(--ob-color-text-secondary)',
+                        }}
+                      >
                         {row.conditionScore !== null
                           ? `${row.conditionScore}/100`
                           : '—'}{' '}
@@ -414,7 +427,7 @@ export function MultiScenarioComparisonSection({
                           fontSize: '0.75rem',
                           letterSpacing: '0.06em',
                           textTransform: 'uppercase',
-                          color: '#9ca3af',
+                          color: 'var(--ob-color-text-muted)',
                         }}
                       >
                         Checklist progress
@@ -424,8 +437,8 @@ export function MultiScenarioComparisonSection({
                           <div
                             style={{
                               height: '6px',
-                              borderRadius: '9999px',
-                              background: '#e5e7eb',
+                              borderRadius: 'var(--ob-radius-pill)',
+                              background: 'var(--ob-color-border-subtle)',
                               overflow: 'hidden',
                             }}
                           >
@@ -433,13 +446,16 @@ export function MultiScenarioComparisonSection({
                               style={{
                                 width: `${progressPercent ?? 0}%`,
                                 height: '100%',
-                                background: '#1d4ed8',
+                                background: 'var(--ob-color-brand-primary)',
                                 transition: 'width 0.3s ease',
                               }}
                             />
                           </div>
                           <span
-                            style={{ fontSize: '0.85rem', color: '#334155' }}
+                            style={{
+                              fontSize: '0.85rem',
+                              color: 'var(--ob-color-text-secondary)',
+                            }}
                           >
                             {progressLabel}
                             {progressPercent !== null
@@ -448,7 +464,12 @@ export function MultiScenarioComparisonSection({
                           </span>
                         </>
                       ) : (
-                        <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                        <span
+                          style={{
+                            fontSize: '0.85rem',
+                            color: 'var(--ob-color-text-muted)',
+                          }}
+                        >
                           No checklist items yet.
                         </span>
                       )}
@@ -462,7 +483,7 @@ export function MultiScenarioComparisonSection({
                         border: `1px solid ${primaryVisuals.border}`,
                         background: primaryVisuals.background,
                         color: primaryVisuals.text,
-                        borderRadius: '12px',
+                        borderRadius: 'var(--ob-radius-sm)',
                         padding: '1rem',
                         display: 'flex',
                         flexDirection: 'column',
@@ -484,7 +505,7 @@ export function MultiScenarioComparisonSection({
                           style={{
                             width: '0.35rem',
                             height: '0.35rem',
-                            borderRadius: '9999px',
+                            borderRadius: 'var(--ob-radius-pill)',
                             background: primaryVisuals.indicator,
                           }}
                         />
@@ -517,7 +538,7 @@ export function MultiScenarioComparisonSection({
                       style={{
                         margin: 0,
                         fontSize: '0.85rem',
-                        color: '#334155',
+                        color: 'var(--ob-color-text-secondary)',
                       }}
                     >
                       <strong>Next action:</strong> {row.recommendedAction}
@@ -532,10 +553,10 @@ export function MultiScenarioComparisonSection({
           {feasibilitySignals.length > 0 && (
             <div
               style={{
-                border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                border: '1px solid var(--ob-color-border-subtle)',
+                borderRadius: 'var(--ob-radius-sm)',
                 padding: '1.5rem',
-                background: '#f8fafc',
+                background: 'var(--ob-color-bg-surface-elevated)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '1.25rem',
@@ -568,9 +589,9 @@ export function MultiScenarioComparisonSection({
                       alignItems: 'center',
                       gap: '0.35rem',
                       padding: '0.45rem 0.9rem',
-                      borderRadius: '9999px',
-                      border: '1px solid #0f172a',
-                      background: '#0f172a',
+                      borderRadius: 'var(--ob-radius-pill)',
+                      border: '1px solid var(--ob-color-text-primary)',
+                      background: 'var(--ob-color-text-primary)',
                       color: 'white',
                       fontSize: '0.85rem',
                       fontWeight: 600,
@@ -585,7 +606,7 @@ export function MultiScenarioComparisonSection({
                 style={{
                   margin: 0,
                   fontSize: '0.9rem',
-                  color: '#334155',
+                  color: 'var(--ob-color-text-secondary)',
                 }}
               >
                 Highlights derived from quick analysis. Prioritise these before
@@ -605,10 +626,10 @@ export function MultiScenarioComparisonSection({
                     onClick={() => handleReportExport('json')}
                     disabled={isExportingReport}
                     style={{
-                      border: '1px solid #0f172a',
-                      background: '#0f172a',
+                      border: '1px solid var(--ob-color-text-primary)',
+                      background: 'var(--ob-color-text-primary)',
                       color: '#fff',
-                      borderRadius: '9999px',
+                      borderRadius: 'var(--ob-radius-pill)',
                       padding: '0.45rem 0.95rem',
                       fontSize: '0.8rem',
                       fontWeight: 600,
@@ -623,10 +644,10 @@ export function MultiScenarioComparisonSection({
                     onClick={() => handleReportExport('pdf')}
                     disabled={isExportingReport}
                     style={{
-                      border: '1px solid #0f172a',
+                      border: '1px solid var(--ob-color-text-primary)',
                       background: 'transparent',
-                      color: '#0f172a',
-                      borderRadius: '9999px',
+                      color: 'var(--ob-color-text-primary)',
+                      borderRadius: 'var(--ob-radius-pill)',
                       padding: '0.45rem 0.95rem',
                       fontSize: '0.8rem',
                       fontWeight: 600,
@@ -644,8 +665,8 @@ export function MultiScenarioComparisonSection({
                         color: reportExportMessage
                           .toLowerCase()
                           .includes('unable')
-                          ? '#c53030'
-                          : '#15803d',
+                          ? 'var(--ob-error-700)'
+                          : 'var(--ob-success-700)',
                       }}
                     >
                       {reportExportMessage}
@@ -665,8 +686,8 @@ export function MultiScenarioComparisonSection({
                     key={entry.scenario}
                     style={{
                       background: 'white',
-                      borderRadius: '10px',
-                      border: '1px solid #e2e8f0',
+                      borderRadius: 'var(--ob-radius-sm)',
+                      border: '1px solid var(--ob-color-border-subtle)',
                       padding: '1.1rem',
                       display: 'flex',
                       flexDirection: 'column',
@@ -681,7 +702,12 @@ export function MultiScenarioComparisonSection({
                         justifyContent: 'space-between',
                       }}
                     >
-                      <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>
+                      <strong
+                        style={{
+                          fontSize: '0.95rem',
+                          color: 'var(--ob-color-text-primary)',
+                        }}
+                      >
                         {entry.label}
                       </strong>
                     </div>
@@ -691,7 +717,7 @@ export function MultiScenarioComparisonSection({
                           style={{
                             fontSize: '0.75rem',
                             fontWeight: 700,
-                            color: '#047857',
+                            color: 'var(--ob-success-700)',
                             textTransform: 'uppercase',
                             letterSpacing: '0.08em',
                           }}
@@ -703,7 +729,7 @@ export function MultiScenarioComparisonSection({
                             margin: 0,
                             paddingLeft: '1.1rem',
                             fontSize: '0.85rem',
-                            color: '#065f46',
+                            color: 'var(--ob-success-700)',
                             lineHeight: 1.4,
                           }}
                         >
@@ -719,7 +745,7 @@ export function MultiScenarioComparisonSection({
                           style={{
                             fontSize: '0.75rem',
                             fontWeight: 700,
-                            color: '#b91c1c',
+                            color: 'var(--ob-color-status-error-text)',
                             textTransform: 'uppercase',
                             letterSpacing: '0.08em',
                           }}
@@ -731,7 +757,7 @@ export function MultiScenarioComparisonSection({
                             margin: 0,
                             paddingLeft: '1.1rem',
                             fontSize: '0.85rem',
-                            color: '#7f1d1d',
+                            color: 'var(--ob-error-700)',
                             lineHeight: 1.4,
                           }}
                         >
@@ -747,7 +773,7 @@ export function MultiScenarioComparisonSection({
                           style={{
                             margin: 0,
                             fontSize: '0.85rem',
-                            color: '#475569',
+                            color: 'var(--ob-color-text-secondary)',
                           }}
                         >
                           No automated guidance produced. Review the scenario
@@ -765,9 +791,9 @@ export function MultiScenarioComparisonSection({
             <div
               style={{
                 padding: '1.25rem',
-                background: '#f0f9ff',
-                borderRadius: '12px',
-                border: '1px solid #bae6fd',
+                background: 'var(--ob-info-50)',
+                borderRadius: 'var(--ob-radius-sm)',
+                border: '1px solid var(--ob-info-200)',
               }}
             >
               <strong>Scenario focus:</strong> Viewing{' '}

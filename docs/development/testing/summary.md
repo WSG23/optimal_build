@@ -119,7 +119,7 @@ AI: "This is documented as known test harness timing issue.
 
 ## Current Known Issues
 
-As of 2025-10-11:
+As of 2025-12-26:
 
 1. **Frontend: React Testing Library Async Timing**
    - Affects: Phase 1B, Phase 1C
@@ -131,4 +131,48 @@ As of 2025-10-11:
    - Status: Fixed in Phase 1C
    - Solution: Use SQLite-compatible syntax in tests
 
+3. **Backend: Test Suite State Pollution**
+   - Affects: Full test suite runs
+   - Status: Tests pass individually, ERRORs appear in full suite
+   - Workaround: Run targeted test subsets from `backend/` directory
+
+4. **Optional Dependency Test Collection** ✅ RESOLVED
+   - Affects: 17 test files with optional dependencies (GIS, PDF, 3D)
+   - Status: Fixed by adding module-level `pytest.skip()` guards
+   - Resolution: Tests now skip gracefully when dependencies unavailable
+
 See [../../all_steps_to_product_completion.md#-known-testing-issues](../../all_steps_to_product_completion.md#-known-testing-issues) for full details.
+
+---
+
+## Running Tests
+
+### Recommended Approach
+
+Run backend tests from the `backend/` directory to avoid module namespace conflicts:
+
+```bash
+cd backend
+SECRET_KEY=test-secret-key ../.venv/bin/pytest tests -v
+```
+
+### Test Counts (2025-12-26)
+
+- **Backend tests:** 5835 collected
+- **Unit tests:** 59 collected
+
+### Running Specific Test Suites
+
+```bash
+# All backend tests
+cd backend && pytest tests -v
+
+# Specific test file
+cd backend && pytest tests/test_api/test_construction.py -v
+
+# With coverage
+cd backend && pytest tests --cov=app --cov-report=html
+
+# Unit tests from project root
+pytest unit_tests --no-cov
+```

@@ -1,6 +1,7 @@
 """MinIO/S3 storage service wrapper."""
 
 import io
+import re
 from typing import BinaryIO, Optional, Union
 
 try:  # pragma: no cover - optional runtime dependency
@@ -20,6 +21,63 @@ import structlog
 from app.core.config import settings
 
 logger = structlog.get_logger()
+
+
+def sanitize_object_name(object_name: str) -> str:
+    """Sanitize object name to prevent path traversal attacks.
+
+    Args:
+        object_name: The requested object name/path
+
+    Returns:
+        Sanitized object name safe for storage
+
+    Raises:
+        ValueError: If the object name is invalid or potentially malicious
+    """
+    if not object_name:
+        raise ValueError("Object name cannot be empty")
+
+    # Remove null bytes and other control characters
+    object_name = re.sub(r"[\x00-\x1f\x7f]", "", object_name)
+
+    # Normalize path separators
+    object_name = object_name.replace("\\", "/")
+
+    # Split into parts and filter out dangerous components
+    parts = object_name.split("/")
+    safe_parts = []
+
+    for part in parts:
+        # Skip empty parts (from leading/trailing/double slashes)
+        if not part:
+            continue
+        # Block parent directory traversal
+        if part == "..":
+            raise ValueError("Path traversal detected: '..' not allowed")
+        # Block current directory references (usually harmless but unnecessary)
+        if part == ".":
+            continue
+        # Block hidden files starting with dot (optional security measure)
+        # Uncomment if you want to block hidden files:
+        # if part.startswith("."):
+        #     raise ValueError(f"Hidden files not allowed: {part}")
+        safe_parts.append(part)
+
+    if not safe_parts:
+        raise ValueError("Object name resolves to empty path")
+
+    # Reconstruct the safe path
+    safe_name = "/".join(safe_parts)
+
+    # Additional validation: ensure the name doesn't start with /
+    safe_name = safe_name.lstrip("/")
+
+    # Limit total path length (S3 max is 1024 bytes)
+    if len(safe_name.encode("utf-8")) > 1024:
+        raise ValueError("Object name exceeds maximum length (1024 bytes)")
+
+    return safe_name
 
 
 class MinIOService:
@@ -68,6 +126,11 @@ class MinIOService:
                 logger.info(f"Created bucket: {bucket_name}")
         except MinioException as e:
             logger.error(f"Error ensuring bucket {bucket_name}: {str(e)}")
+        except Exception as e:
+            # Handle connection errors (e.g., MinIO not running)
+            logger.warning(
+                f"Could not connect to MinIO for bucket {bucket_name}: {str(e)}"
+            )
 
     async def upload_file(
         self,
@@ -76,11 +139,30 @@ class MinIOService:
         data: Union[bytes, BinaryIO],
         content_type: str = "application/octet-stream",
         metadata: Optional[dict] = None,
+        max_size_bytes: int = 50 * 1024 * 1024,  # 50MB default limit
     ) -> bool:
-        """Upload file to MinIO/S3."""
+        """Upload file to MinIO/S3.
+
+        Args:
+            bucket_name: Target bucket name
+            object_name: Object path/name (will be sanitized)
+            data: File content as bytes or file-like object
+            content_type: MIME type of the file
+            metadata: Optional metadata dict
+            max_size_bytes: Maximum allowed file size (default 50MB)
+
+        Returns:
+            True if upload succeeded, False otherwise
+
+        Raises:
+            ValueError: If object_name contains path traversal or file exceeds size limit
+        """
         if self.client is None:
             logger.warning("MinIO client unavailable; skipping upload")
             return False
+
+        # Sanitize object name to prevent path traversal
+        safe_object_name = sanitize_object_name(object_name)
 
         try:
             # Convert bytes to BytesIO if needed
@@ -92,17 +174,28 @@ class MinIOService:
             size = data.tell()
             data.seek(0)  # Reset to beginning
 
-            # Upload
+            # Enforce file size limit
+            if size > max_size_bytes:
+                logger.warning(
+                    f"File size {size} exceeds limit {max_size_bytes}",
+                    object_name=safe_object_name,
+                )
+                raise ValueError(
+                    f"File size ({size} bytes) exceeds maximum allowed "
+                    f"({max_size_bytes} bytes)"
+                )
+
+            # Upload with sanitized name
             self.client.put_object(
                 bucket_name,
-                object_name,
+                safe_object_name,
                 data,
                 size,
                 content_type=content_type,
                 metadata=metadata,
             )
 
-            logger.info(f"Uploaded {object_name} to {bucket_name}")
+            logger.info(f"Uploaded {safe_object_name} to {bucket_name}")
             return True
 
         except MinioException as e:

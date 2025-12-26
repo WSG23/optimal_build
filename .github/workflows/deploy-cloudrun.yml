@@ -1,0 +1,115 @@
+name: Deploy (Cloud Run)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "GitHub Environment to deploy to"
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    env:
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      REGION: ${{ vars.GCP_REGION }}
+      GAR_REPOSITORY: ${{ vars.GAR_REPOSITORY }}
+      API_SERVICE: ${{ vars.CLOUD_RUN_API_SERVICE }}
+      WEB_SERVICE: ${{ vars.CLOUD_RUN_WEB_SERVICE }}
+      MIGRATE_JOB: ${{ vars.CLOUD_RUN_MIGRATE_JOB }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Build + push API image
+        run: |
+          set -euo pipefail
+          IMAGE_API="${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPOSITORY}/api:${GITHUB_SHA}"
+          docker build -t "${IMAGE_API}" -f backend/Dockerfile backend
+          docker push "${IMAGE_API}"
+          echo "IMAGE_API=${IMAGE_API}" >> "${GITHUB_ENV}"
+
+      - name: Deploy/update migration job (optional)
+        run: |
+          set -euo pipefail
+          if [[ -z "${MIGRATE_JOB:-}" ]]; then
+            echo "MIGRATE_JOB not set; skipping migrations."
+            exit 0
+          fi
+
+          gcloud run jobs deploy "${MIGRATE_JOB}" \
+            --image "${IMAGE_API}" \
+            --region "${REGION}" \
+            --command python \
+            --args "-m","backend.migrations","alembic","upgrade","head" \
+            --quiet
+
+          gcloud run jobs execute "${MIGRATE_JOB}" --region "${REGION}" --wait --quiet
+
+      - name: Deploy API service
+        run: |
+          set -euo pipefail
+          gcloud run deploy "${API_SERVICE}" \
+            --image "${IMAGE_API}" \
+            --region "${REGION}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --quiet
+
+      - name: Resolve API URL
+        run: |
+          set -euo pipefail
+          API_URL="$(gcloud run services describe "${API_SERVICE}" --region "${REGION}" --format='value(status.url)')"
+          echo "API_URL=${API_URL}" >> "${GITHUB_ENV}"
+
+      - name: Build + push WEB image
+        run: |
+          set -euo pipefail
+          if [[ -z "${API_URL:-}" ]]; then
+            echo "API_URL is empty; cannot build web with VITE_API_BASE_URL." >&2
+            exit 1
+          fi
+
+          IMAGE_WEB="${REGION}-docker.pkg.dev/${PROJECT_ID}/${GAR_REPOSITORY}/web:${GITHUB_SHA}"
+          docker build \
+            --build-arg "VITE_API_BASE_URL=${API_URL}" \
+            -t "${IMAGE_WEB}" \
+            -f frontend/Dockerfile \
+            .
+          docker push "${IMAGE_WEB}"
+          echo "IMAGE_WEB=${IMAGE_WEB}" >> "${GITHUB_ENV}"
+
+      - name: Deploy WEB service
+        run: |
+          set -euo pipefail
+          gcloud run deploy "${WEB_SERVICE}" \
+            --image "${IMAGE_WEB}" \
+            --region "${REGION}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --quiet

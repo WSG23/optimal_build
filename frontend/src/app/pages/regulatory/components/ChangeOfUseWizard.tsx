@@ -56,43 +56,43 @@ const ASSET_TYPES: Array<{
     value: 'office',
     label: 'Office',
     icon: <OfficeIcon />,
-    color: '#2563eb',
+    color: 'var(--ob-color-brand-primary)',
   },
   {
     value: 'retail',
     label: 'Retail',
     icon: <RetailIcon />,
-    color: '#059669',
+    color: 'var(--ob-color-status-success-text)',
   },
   {
     value: 'residential',
     label: 'Residential',
     icon: <ResidentialIcon />,
-    color: '#7c3aed',
+    color: '#7c3aed', // Purple - no semantic token available
   },
   {
     value: 'industrial',
     label: 'Industrial',
     icon: <IndustrialIcon />,
-    color: '#ca8a04',
+    color: 'var(--ob-color-status-warning-text)',
   },
   {
     value: 'heritage',
     label: 'Heritage',
     icon: <HeritageIcon />,
-    color: '#be185d',
+    color: '#be185d', // Pink - no semantic token available
   },
   {
     value: 'mixed_use',
     label: 'Mixed-Use',
     icon: <MixedUseIcon />,
-    color: '#ea580c',
+    color: '#ea580c', // Orange - no semantic token available
   },
   {
     value: 'hospitality',
     label: 'Hospitality',
     icon: <HospitalityIcon />,
-    color: '#0891b2',
+    color: '#0891b2', // Cyan - no semantic token available
   },
 ]
 
@@ -329,7 +329,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
                 my: 4,
                 p: 3,
                 bgcolor: 'rgba(255,255,255,0.03)',
-                borderRadius: 2,
+                borderRadius: 'var(--ob-radius-sm)',
               }}
             >
               <Box sx={{ textAlign: 'center' }}>
@@ -403,7 +403,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
                   sx={{
                     p: 2,
                     bgcolor: 'rgba(255,255,255,0.03)',
-                    borderRadius: 1,
+                    borderRadius: 'var(--ob-radius-xs)',
                     whiteSpace: 'pre-wrap',
                   }}
                 >
@@ -432,7 +432,9 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
       onClose={handleClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{ sx: { bgcolor: '#1A1D1F', minHeight: 500 } }}
+      PaperProps={{
+        sx: { bgcolor: 'var(--ob-color-bg-surface)', minHeight: 500 },
+      }}
     >
       <DialogTitle>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -485,7 +487,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
             }
             sx={{
               background: 'linear-gradient(135deg, #00C853 0%, #B2FF59 100%)',
-              color: '#000',
+              color: 'var(--ob-color-text-primary)',
             }}
           >
             {submitting ? 'Submitting...' : 'Submit Application'}

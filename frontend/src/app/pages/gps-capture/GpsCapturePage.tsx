@@ -7,6 +7,7 @@ import {
   Suspense,
   type FormEvent,
 } from 'react'
+import { DEFAULT_LATITUDE_STR, DEFAULT_LONGITUDE_STR } from '@/constants'
 // Import MUI Icons
 import ConstructionIcon from '@mui/icons-material/Construction'
 import DomainIcon from '@mui/icons-material/Domain'
@@ -17,14 +18,12 @@ import LockIcon from '@mui/icons-material/Lock'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import DescriptionIcon from '@mui/icons-material/Description'
 import RadarIcon from '@mui/icons-material/Radar'
-import Tooltip from '@mui/material/Tooltip'
 
 import {
   DEFAULT_SCENARIO_ORDER,
   fetchPropertyMarketIntelligence,
   generateProfessionalPack,
   logPropertyByGpsWithFeatures,
-  type AccuracyBand,
   type DevelopmentScenario,
   type GpsCaptureSummaryWithFeatures,
   type DeveloperFeatureData,
@@ -80,8 +79,9 @@ export { getScenarioIcon }
 
 export function GpsCapturePage() {
   const role: UserRole = 'agent'
-  const [latitude, setLatitude] = useState<string>('1.3000')
-  const [longitude, setLongitude] = useState<string>('103.8500')
+  // Use canonical coordinates from constants (SSoT)
+  const [latitude, setLatitude] = useState<string>(DEFAULT_LATITUDE_STR)
+  const [longitude, setLongitude] = useState<string>(DEFAULT_LONGITUDE_STR)
   const [address, setAddress] = useState<string>('')
   const [jurisdictionCode, setJurisdictionCode] = useState<string>('SG')
   const [selectedScenarios, setSelectedScenarios] = useState<
@@ -97,7 +97,6 @@ export function GpsCapturePage() {
 
   // Immersive Experience States
   const [isScanning, setIsScanning] = useState(false)
-  const [showHud, setShowHud] = useState(false)
 
   // Feature preferences hook for optional developer features
   const {
@@ -266,7 +265,6 @@ export function GpsCapturePage() {
         setMarketSummary(null)
         setMarketError(null)
         setDeveloperFeatures(null)
-        setShowHud(false) // Hide HUD momentarily or keep it locked
 
         // Artificial delay for "Scanning" effect (1.5s) if user desires the "Wow" timing
         await new Promise((resolve) => setTimeout(resolve, 1500))
@@ -300,7 +298,6 @@ export function GpsCapturePage() {
           },
           ...prev,
         ])
-        setShowHud(true) // Unlock HUD
 
         setMarketLoading(true)
         try {
@@ -391,22 +388,7 @@ export function GpsCapturePage() {
         ref={mapContainerRef}
         aria-label="Interactive map background"
       />
-      {mapError && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 20,
-            left: 20,
-            zIndex: 1000,
-            background: 'rgba(0,0,0,0.8)',
-            padding: 10,
-            borderRadius: 8,
-            color: 'red',
-          }}
-        >
-          {mapError}
-        </div>
-      )}
+      {mapError && <div className="gps-map-error">{mapError}</div>}
 
       {/* Content Overlay */}
       <div className="gps-content-overlay">
@@ -435,23 +417,15 @@ export function GpsCapturePage() {
                   <div className="gps-form__address-actions">
                     <button
                       type="button"
+                      className="gps-geocode-btn"
                       onClick={handleForwardGeocode}
-                      style={{
-                        background: 'rgba(255,255,255,0.1)',
-                        color: '#fff',
-                        border: 'none',
-                      }}
                     >
                       Geocode
                     </button>
                     <button
                       type="button"
+                      className="gps-geocode-btn"
                       onClick={handleReverseGeocode}
-                      style={{
-                        background: 'rgba(255,255,255,0.1)',
-                        color: '#fff',
-                        border: 'none',
-                      }}
                     >
                       Reverse
                     </button>
@@ -489,32 +463,21 @@ export function GpsCapturePage() {
                 <select
                   id="jurisdictionCode"
                   name="jurisdictionCode"
-                  className="gps-input-ghost"
+                  className="gps-input-ghost gps-select-ghost"
                   value={jurisdictionCode}
                   onChange={(event) => setJurisdictionCode(event.target.value)}
                   required
-                  style={{ color: '#fff', background: 'transparent' }}
                 >
-                  <option value="SG" style={{ color: '#000' }}>
-                    Singapore
-                  </option>
-                  <option value="HK" style={{ color: '#000' }}>
-                    Hong Kong
-                  </option>
-                  <option value="NZ" style={{ color: '#000' }}>
-                    New Zealand
-                  </option>
-                  <option value="SEA" style={{ color: '#000' }}>
-                    Seattle / King County
-                  </option>
-                  <option value="TOR" style={{ color: '#000' }}>
-                    Toronto
-                  </option>
+                  <option value="SG">Singapore</option>
+                  <option value="HK">Hong Kong</option>
+                  <option value="NZ">New Zealand</option>
+                  <option value="SEA">Seattle / King County</option>
+                  <option value="TOR">Toronto</option>
                 </select>
               </div>
 
               {/* Gamified Scenarios Tiles */}
-              <div className="gps-form__group" style={{ gridColumn: '1 / -1' }}>
+              <div className="gps-form__group gps-form__group--full-width">
                 <label>MISSION SCENARIO</label>
                 <div className="gps-scenarios-grid">
                   {DEFAULT_SCENARIO_ORDER.map((scenario) => {
@@ -563,10 +526,7 @@ export function GpsCapturePage() {
 
             {captureError && <p className="gps-error">{captureError}</p>}
             {captureSummary && (
-              <div
-                className="gps-capture-meta"
-                style={{ color: 'rgba(255,255,255,0.7)' }}
-              >
+              <div className="gps-capture-meta">
                 <p>
                   Target Locked:{' '}
                   <strong>{captureSummary.address.fullAddress}</strong>
@@ -623,14 +583,7 @@ export function GpsCapturePage() {
                       )
                     })}
                     {quickAnalysis.scenarios.length > 1 && (
-                      <p
-                        style={{
-                          fontSize: '0.8rem',
-                          color: '#94a3b8',
-                          fontStyle: 'italic',
-                          marginTop: '0.5rem',
-                        }}
-                      >
+                      <p className="gps-hud-more-scenarios">
                         + {quickAnalysis.scenarios.length - 1} more scenarios
                       </p>
                     )}
@@ -650,19 +603,8 @@ export function GpsCapturePage() {
                 {!marketSummary && <LockIcon fontSize="small" />}
               </h3>
               {marketLoading ? (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    color: '#94a3b8',
-                    padding: '1rem',
-                  }}
-                >
-                  <div
-                    className="gps-spinner"
-                    style={{ width: 16, height: 16 }}
-                  ></div>
+                <div className="gps-hud-loading">
+                  <div className="gps-spinner gps-spinner--sm"></div>
                   Decrypting market data...
                 </div>
               ) : marketSummary ? (
@@ -714,10 +656,7 @@ export function GpsCapturePage() {
                     onClick={() => handleGeneratePack(packType)}
                   >
                     {packLoadingType === packType ? (
-                      <div
-                        className="gps-spinner"
-                        style={{ width: 14, height: 14 }}
-                      ></div>
+                      <div className="gps-spinner gps-spinner--xs"></div>
                     ) : packType === 'investment' || packType === 'sales' ? (
                       <PictureAsPdfIcon />
                     ) : (
@@ -887,22 +826,6 @@ function formatPackLabel(value: ProfessionalPackType) {
 
 function humanizeMetricKey(key: string) {
   return key.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
-}
-
-/**
- * Format accuracy band as display string (e.g., "±8-10%")
- */
-function formatAccuracyBand(band: AccuracyBand): string {
-  const lowAbs = Math.abs(band.low_pct)
-  const highAbs = Math.abs(band.high_pct)
-  // If low and high are same magnitude, show as single value
-  if (lowAbs === highAbs) {
-    return `±${lowAbs}%`
-  }
-  // Show range with min first
-  const minVal = Math.min(lowAbs, highAbs)
-  const maxVal = Math.max(lowAbs, highAbs)
-  return `±${minVal}-${maxVal}%`
 }
 
 function formatMetricValue(

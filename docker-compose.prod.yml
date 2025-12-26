@@ -1,0 +1,293 @@
+# =============================================================================
+# Production Docker Compose Configuration
+# =============================================================================
+#
+# SECURITY HARDENED - World-Class Production Configuration
+#
+# Usage:
+#   # Build images
+#   docker compose -f docker-compose.prod.yml build
+#
+#   # Start services
+#   docker compose -f docker-compose.prod.yml up -d
+#
+#   # View logs
+#   docker compose -f docker-compose.prod.yml logs -f
+#
+# Required environment variables (set via .env.production or CI/CD secrets):
+#   - SECRET_KEY: JWT signing key (min 32 chars)
+#   - POSTGRES_PASSWORD: Database password
+#   - REDIS_PASSWORD: Redis authentication password
+#   - SQLALCHEMY_DATABASE_URI: Full database connection string
+#   - BACKEND_ALLOWED_ORIGINS: Comma-separated allowed CORS origins
+#   - REDIS_URL: Redis connection URL (must include password)
+#
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Backend API
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: optimal-build-backend:${IMAGE_TAG:-latest}
+    container_name: optimal-build-backend
+    restart: unless-stopped
+    # Security: Read-only root filesystem
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100M
+    # Security: Drop all capabilities, prevent privilege escalation
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      ENVIRONMENT: production
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI:?Database URI is required}
+      BACKEND_ALLOWED_ORIGINS: ${BACKEND_ALLOWED_ORIGINS:?Allowed origins are required}
+      REDIS_URL: ${REDIS_URL:?Redis URL with password is required}
+      RATE_LIMIT_STORAGE_URI: ${RATE_LIMIT_STORAGE_URI:-redis://:${REDIS_PASSWORD}@redis:6379/3}
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PORT: 8080
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-4}
+    # Security: Only expose to frontend network, no host port binding
+    expose:
+      - "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "--max-time", "5", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    networks:
+      - frontend-network
+      - backend-network
+
+  # ---------------------------------------------------------------------------
+  # Frontend (Nginx serving static build)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+    image: optimal-build-frontend:${IMAGE_TAG:-latest}
+    container_name: optimal-build-frontend
+    restart: unless-stopped
+    # Security: Read-only root filesystem with required tmpfs mounts
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=50M
+      - /var/cache/nginx:noexec,nosuid,size=50M
+      - /run:noexec,nosuid,size=10M
+    # Security: Drop all capabilities, prevent privilege escalation
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      PORT: 8080
+      API_UPSTREAM: backend:8080
+    ports:
+      - "${FRONTEND_PORT:-3000}:8080"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "--timeout=5", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    networks:
+      - frontend-network
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database (for self-hosted deployments)
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: optimal-build-postgres
+    restart: unless-stopped
+    # Security: Drop unnecessary capabilities
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+      - FOWNER
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password is required}
+      POSTGRES_DB: ${POSTGRES_DB:-building_compliance}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    # Security: No host port exposure - only accessible within backend-network
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-building_compliance}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    networks:
+      - backend-network
+
+  # ---------------------------------------------------------------------------
+  # Redis (for rate limiting, caching, job queues)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: optimal-build-redis
+    restart: unless-stopped
+    # Security: Drop all capabilities, prevent privilege escalation
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # Security: Require password authentication
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --requirepass ${REDIS_PASSWORD:?Redis password is required}
+      --rename-command FLUSHDB ""
+      --rename-command FLUSHALL ""
+      --rename-command DEBUG ""
+      --rename-command CONFIG ""
+    volumes:
+      - redis_data:/data
+    # Security: No host port exposure - only accessible within backend-network
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    networks:
+      - backend-network
+
+  # ---------------------------------------------------------------------------
+  # MinIO (S3-compatible object storage)
+  # ---------------------------------------------------------------------------
+  minio:
+    image: minio/minio:RELEASE.2024-01-18T22-51-28Z
+    container_name: optimal-build-minio
+    restart: unless-stopped
+    # Security: Drop unnecessary capabilities
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?MinIO access key is required}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?MinIO secret key is required}
+    volumes:
+      - minio_data:/data
+    # Security: No host port exposure - only accessible within backend-network
+    expose:
+      - "9000"
+      - "9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "--max-time", "5", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "10"
+    networks:
+      - backend-network
+
+# -----------------------------------------------------------------------------
+# Volumes
+# -----------------------------------------------------------------------------
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+
+# -----------------------------------------------------------------------------
+# Networks - Segmented for security
+# -----------------------------------------------------------------------------
+networks:
+  # Frontend network: accessible from outside, connects frontend to backend
+  frontend-network:
+    driver: bridge
+  # Backend network: internal only, no external access
+  backend-network:
+    driver: bridge
+    internal: true

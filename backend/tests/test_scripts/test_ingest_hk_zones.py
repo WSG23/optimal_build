@@ -1,7 +1,23 @@
+"""Tests for Hong Kong zones ingestion script.
+
+These tests require GIS dependencies (shapely, pyproj) to be installed.
+"""
+
 import json
 from pathlib import Path
 
 import pytest
+
+# Check for GIS dependencies before importing modules that need them
+try:
+    from shapely.geometry import GeometryCollection  # noqa: F401
+
+    HAS_GIS = True
+except ImportError:
+    HAS_GIS = False
+
+if not HAS_GIS:
+    pytest.skip("GIS dependencies not available", allow_module_level=True)
 
 from backend.scripts import ingest_hk_zones as hk_zones
 

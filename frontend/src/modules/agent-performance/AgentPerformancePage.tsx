@@ -1,4 +1,4 @@
-import { Box, Divider, Grid, Stack, Typography } from '@mui/material'
+import { Box, Divider, Grid, Stack, Typography, useTheme } from '@mui/material'
 import {
   CartesianGrid,
   Line,
@@ -24,13 +24,14 @@ import {
   formatShortCurrency,
 } from './utils/formatters'
 import { AnimatedPageHeader } from '../../components/canonical/AnimatedPageHeader'
-import { HeroMetric } from '../../components/canonical/HeroMetric'
-import { GlassCard } from '../../components/canonical/GlassCard'
+import { MetricTile } from '../../components/canonical/MetricTile'
+import { Card } from '../../components/canonical/Card'
 import { AttachMoney, TrendingUp, Speed, Assignment } from '@mui/icons-material'
 
 export default function AgentPerformancePage() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
+  const theme = useTheme()
 
   const {
     loadingDeals: _loadingDeals,
@@ -103,7 +104,7 @@ export default function AgentPerformancePage() {
         <Grid container spacing={3}>
           {/* Kanban Section */}
           <Grid item xs={12} lg={8}>
-            <GlassCard sx={{ p: 2, height: '100%', minHeight: 400 }}>
+            <Card variant="glass" sx={{ p: 2, height: '100%', minHeight: 400 }}>
               <Stack
                 direction="row"
                 spacing={2}
@@ -139,7 +140,7 @@ export default function AgentPerformancePage() {
                           sx={{
                             background: 'rgba(0,0,0,0.05)',
                             px: 1,
-                            borderRadius: 1,
+                            borderRadius: 'var(--ob-radius-xs)',
                           }}
                         >
                           {items.length}
@@ -148,19 +149,20 @@ export default function AgentPerformancePage() {
 
                       <Stack spacing={1}>
                         {items.map((deal) => (
-                          <GlassCard
+                          <Card
+                            variant="glass"
                             key={deal.id}
-                            hoverEffect
+                            hover="lift"
                             sx={{
                               p: 1.5,
                               cursor: 'pointer',
                               border:
                                 selectedDealId === deal.id
-                                  ? '1px solid #2196f3'
+                                  ? '1px solid var(--ob-color-brand-primary)'
                                   : undefined,
                               background:
                                 selectedDealId === deal.id
-                                  ? 'rgba(33, 150, 243, 0.05)'
+                                  ? 'var(--ob-color-brand-soft)'
                                   : undefined,
                             }}
                             onClick={() => setSelectedDealId(deal.id)}
@@ -180,14 +182,14 @@ export default function AgentPerformancePage() {
                                   )
                                 : '-'}
                             </Typography>
-                          </GlassCard>
+                          </Card>
                         ))}
                       </Stack>
                     </Box>
                   )
                 })}
               </Stack>
-            </GlassCard>
+            </Card>
           </Grid>
 
           {/* Timeline Sidebar */}
@@ -261,12 +263,11 @@ export default function AgentPerformancePage() {
                     },
                   ].map((metric, idx) => (
                     <Grid item xs={12} sm={6} md={3} key={idx}>
-                      <HeroMetric
+                      <MetricTile
                         label={metric.label as string}
                         value={metric.value as string}
                         icon={metric.icon}
-                        variant={metric.variant || 'glass'}
-                        delay={idx * 100}
+                        variant="default"
                       />
                     </Grid>
                   ))}
@@ -275,7 +276,7 @@ export default function AgentPerformancePage() {
               {trendData.length > 0 && (
                 <Grid container spacing={3}>
                   <Grid item xs={12} md={6}>
-                    <GlassCard sx={{ p: 2, height: 320 }}>
+                    <Card variant="glass" sx={{ p: 2, height: 320 }}>
                       <Typography variant="h6" gutterBottom>
                         {t('agentPerformance.analytics.trend.pipelineHeading')}
                       </Typography>
@@ -291,12 +292,12 @@ export default function AgentPerformancePage() {
                             >
                               <stop
                                 offset="5%"
-                                stopColor="#3B82F6"
+                                stopColor={theme.palette.primary.main}
                                 stopOpacity={0.3}
                               />
                               <stop
                                 offset="95%"
-                                stopColor="#3B82F6"
+                                stopColor={theme.palette.primary.main}
                                 stopOpacity={0}
                               />
                             </linearGradient>
@@ -316,23 +317,23 @@ export default function AgentPerformancePage() {
                           <Area
                             type="monotone"
                             dataKey="gross"
-                            stroke="#3B82F6"
+                            stroke={theme.palette.primary.main}
                             fillOpacity={1}
                             fill="url(#colorGross)"
                           />
                           <Area
                             type="monotone"
                             dataKey="weighted"
-                            stroke="#10B981"
+                            stroke={theme.palette.success.main}
                             fillOpacity={0}
                             strokeDasharray="4 4"
                           />
                         </AreaChart>
                       </ResponsiveContainer>
-                    </GlassCard>
+                    </Card>
                   </Grid>
                   <Grid item xs={12} md={6}>
-                    <GlassCard sx={{ p: 2, height: 320 }}>
+                    <Card variant="glass" sx={{ p: 2, height: 320 }}>
                       <Typography variant="h6" gutterBottom>
                         {t(
                           'agentPerformance.analytics.trend.conversionHeading',
@@ -353,19 +354,19 @@ export default function AgentPerformancePage() {
                           <Line
                             type="monotone"
                             dataKey="conversion"
-                            stroke="#F59E0B"
+                            stroke={theme.palette.warning.main}
                             strokeWidth={2}
                           />
                           <Line
                             type="monotone"
                             dataKey="cycle"
-                            stroke="#8B5CF6"
+                            stroke={theme.palette.secondary.main}
                             strokeWidth={2}
                             strokeDasharray="4 4"
                           />
                         </LineChart>
                       </ResponsiveContainer>
-                    </GlassCard>
+                    </Card>
                   </Grid>
                 </Grid>
               )}

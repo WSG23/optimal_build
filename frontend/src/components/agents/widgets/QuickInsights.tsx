@@ -134,7 +134,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
         </Typography>
       </Alert>
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid container spacing="var(--ob-space-100)" sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="body2" color="textSecondary" gutterBottom>
@@ -218,7 +218,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
         </Grid>
       </Grid>
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid container spacing="var(--ob-space-100)" sx={{ mb: 3 }}>
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 2, height: '100%' }}>
             <Typography variant="subtitle1" fontWeight="medium" gutterBottom>

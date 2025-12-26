@@ -176,8 +176,8 @@ export function PropertyCaptureForm({
     <section
       style={{
         background: 'white',
-        border: '1px solid #d2d2d7',
-        borderRadius: '18px',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '2rem',
         marginBottom: '2rem',
       }}
@@ -203,7 +203,7 @@ export function PropertyCaptureForm({
               fontSize: '0.9375rem',
               fontWeight: 500,
               marginBottom: '0.5rem',
-              color: '#1d1d1f',
+              color: 'var(--ob-color-text-primary)',
             }}
           >
             Jurisdiction
@@ -226,8 +226,8 @@ export function PropertyCaptureForm({
               width: '100%',
               padding: '0.875rem 1rem',
               fontSize: '1rem',
-              border: '1px solid #d2d2d7',
-              borderRadius: '12px',
+              border: '1px solid var(--ob-color-border-subtle)',
+              borderRadius: 'var(--ob-radius-md)',
               outline: 'none',
               background: 'white',
               cursor: 'pointer',
@@ -251,7 +251,7 @@ export function PropertyCaptureForm({
               fontSize: '0.9375rem',
               fontWeight: 500,
               marginBottom: '0.5rem',
-              color: '#1d1d1f',
+              color: 'var(--ob-color-text-primary)',
             }}
           >
             Address
@@ -267,18 +267,20 @@ export function PropertyCaptureForm({
                 flex: 1,
                 padding: '0.875rem 1rem',
                 fontSize: '1rem',
-                border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                border: '1px solid var(--ob-color-border-subtle)',
+                borderRadius: 'var(--ob-radius-md)',
                 outline: 'none',
                 transition: 'all 0.2s ease',
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = '#1d1d1f'
+                e.currentTarget.style.borderColor =
+                  'var(--ob-color-text-primary)'
                 e.currentTarget.style.boxShadow =
                   '0 0 0 4px rgba(0, 0, 0, 0.04)'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = '#d2d2d7'
+                e.currentTarget.style.borderColor =
+                  'var(--ob-color-border-subtle)'
                 e.currentTarget.style.boxShadow = 'none'
               }}
             />
@@ -290,9 +292,9 @@ export function PropertyCaptureForm({
                 padding: '0.875rem 1rem',
                 fontSize: '0.875rem',
                 fontWeight: 500,
-                background: '#f5f5f7',
-                border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                background: 'var(--ob-color-bg-surface-elevated)',
+                border: '1px solid var(--ob-color-border-subtle)',
+                borderRadius: 'var(--ob-radius-md)',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 whiteSpace: 'nowrap',
@@ -308,9 +310,9 @@ export function PropertyCaptureForm({
                 padding: '0.875rem 1rem',
                 fontSize: '0.875rem',
                 fontWeight: 500,
-                background: '#f5f5f7',
-                border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                background: 'var(--ob-color-bg-surface-elevated)',
+                border: '1px solid var(--ob-color-border-subtle)',
+                borderRadius: 'var(--ob-radius-md)',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 whiteSpace: 'nowrap',
@@ -324,7 +326,7 @@ export function PropertyCaptureForm({
               style={{
                 marginTop: '0.5rem',
                 fontSize: '0.875rem',
-                color: '#dc2626',
+                color: 'var(--ob-color-status-error-text)',
               }}
             >
               {geocodeError}
@@ -349,7 +351,7 @@ export function PropertyCaptureForm({
                 fontSize: '0.9375rem',
                 fontWeight: 500,
                 marginBottom: '0.5rem',
-                color: '#1d1d1f',
+                color: 'var(--ob-color-text-primary)',
               }}
             >
               Latitude
@@ -363,20 +365,22 @@ export function PropertyCaptureForm({
                 width: '100%',
                 padding: '0.875rem 1rem',
                 fontSize: '1rem',
-                border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                border: '1px solid var(--ob-color-border-subtle)',
+                borderRadius: 'var(--ob-radius-md)',
                 outline: 'none',
                 fontFamily:
                   'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
                 transition: 'all 0.2s ease',
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = '#1d1d1f'
+                e.currentTarget.style.borderColor =
+                  'var(--ob-color-text-primary)'
                 e.currentTarget.style.boxShadow =
                   '0 0 0 4px rgba(0, 0, 0, 0.04)'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = '#d2d2d7'
+                e.currentTarget.style.borderColor =
+                  'var(--ob-color-border-subtle)'
                 e.currentTarget.style.boxShadow = 'none'
               }}
             />
@@ -390,7 +394,7 @@ export function PropertyCaptureForm({
                 fontSize: '0.9375rem',
                 fontWeight: 500,
                 marginBottom: '0.5rem',
-                color: '#1d1d1f',
+                color: 'var(--ob-color-text-primary)',
               }}
             >
               Longitude
@@ -404,20 +408,22 @@ export function PropertyCaptureForm({
                 width: '100%',
                 padding: '0.875rem 1rem',
                 fontSize: '1rem',
-                border: '1px solid #d2d2d7',
-                borderRadius: '12px',
+                border: '1px solid var(--ob-color-border-subtle)',
+                borderRadius: 'var(--ob-radius-md)',
                 outline: 'none',
                 fontFamily:
                   'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
                 transition: 'all 0.2s ease',
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = '#1d1d1f'
+                e.currentTarget.style.borderColor =
+                  'var(--ob-color-text-primary)'
                 e.currentTarget.style.boxShadow =
                   '0 0 0 4px rgba(0, 0, 0, 0.04)'
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = '#d2d2d7'
+                e.currentTarget.style.borderColor =
+                  'var(--ob-color-border-subtle)'
                 e.currentTarget.style.boxShadow = 'none'
               }}
             />
@@ -480,9 +486,11 @@ export function PropertyCaptureForm({
                 type="button"
                 onClick={() => onToggleScenario(scenario.value)}
                 style={{
-                  background: isSelected ? '#f5f5f7' : 'white',
-                  border: `1px solid ${isSelected ? '#1d1d1f' : '#d2d2d7'}`,
-                  borderRadius: '12px',
+                  background: isSelected
+                    ? 'var(--ob-color-bg-surface-elevated)'
+                    : 'white',
+                  border: `1px solid ${isSelected ? 'var(--ob-color-text-primary)' : 'var(--ob-color-border-subtle)'}`,
+                  borderRadius: 'var(--ob-radius-sm)',
                   padding: '1.25rem',
                   cursor: 'pointer',
                   textAlign: 'left',
@@ -507,8 +515,8 @@ export function PropertyCaptureForm({
                       right: '1rem',
                       width: '20px',
                       height: '20px',
-                      borderRadius: '50%',
-                      background: '#1d1d1f',
+                      borderRadius: 'var(--ob-radius-pill)',
+                      background: 'var(--ob-color-text-primary)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -532,7 +540,7 @@ export function PropertyCaptureForm({
                     style={{
                       fontSize: '1.0625rem',
                       fontWeight: 600,
-                      color: '#1d1d1f',
+                      color: 'var(--ob-color-text-primary)',
                       letterSpacing: '-0.005em',
                     }}
                   >
@@ -542,7 +550,7 @@ export function PropertyCaptureForm({
                 <div
                   style={{
                     fontSize: '0.875rem',
-                    color: '#6e6e73',
+                    color: 'var(--ob-color-text-muted)',
                     lineHeight: 1.4,
                     letterSpacing: '-0.005em',
                   }}
@@ -566,10 +574,10 @@ export function PropertyCaptureForm({
             color: 'white',
             background:
               isCapturing || selectedScenarios.length === 0
-                ? '#d2d2d7'
-                : '#1d1d1f',
+                ? 'var(--ob-color-border-subtle)'
+                : 'var(--ob-color-text-primary)',
             border: 'none',
-            borderRadius: '12px',
+            borderRadius: 'var(--ob-radius-md)',
             cursor:
               isCapturing || selectedScenarios.length === 0
                 ? 'not-allowed'
@@ -579,12 +587,13 @@ export function PropertyCaptureForm({
           }}
           onMouseEnter={(e) => {
             if (!isCapturing && selectedScenarios.length > 0) {
-              e.currentTarget.style.background = '#424245'
+              e.currentTarget.style.background =
+                'var(--ob-color-text-secondary)'
             }
           }}
           onMouseLeave={(e) => {
             if (!isCapturing && selectedScenarios.length > 0) {
-              e.currentTarget.style.background = '#1d1d1f'
+              e.currentTarget.style.background = 'var(--ob-color-text-primary)'
             }
           }}
         >
@@ -597,10 +606,10 @@ export function PropertyCaptureForm({
             style={{
               marginTop: '1rem',
               padding: '1rem',
-              background: '#fff5f5',
-              border: '1px solid #fed7d7',
-              borderRadius: '12px',
-              color: '#c53030',
+              background: 'var(--ob-error-50)',
+              border: '1px solid var(--ob-error-200)',
+              borderRadius: 'var(--ob-radius-sm)',
+              color: 'var(--ob-error-700)',
               fontSize: '0.9375rem',
             }}
           >
@@ -614,10 +623,10 @@ export function PropertyCaptureForm({
             style={{
               marginTop: '1rem',
               padding: '1rem',
-              background: '#f0fdf4',
-              border: '1px solid #bbf7d0',
-              borderRadius: '12px',
-              color: '#15803d',
+              background: 'var(--ob-success-50)',
+              border: '1px solid var(--ob-success-200)',
+              borderRadius: 'var(--ob-radius-sm)',
+              color: 'var(--ob-success-700)',
               fontSize: '0.9375rem',
             }}
           >

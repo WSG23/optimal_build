@@ -1,9 +1,26 @@
+"""Tests for universal site pack generator.
+
+These tests require PDF dependencies (reportlab) to be installed.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
 from types import SimpleNamespace
 
-from reportlab.platypus import Paragraph
+import pytest
+
+# Check for PDF dependencies before importing modules that need them
+try:
+    from reportlab.platypus import Paragraph
+
+    HAS_REPORTLAB = True
+except ImportError:
+    HAS_REPORTLAB = False
+    Paragraph = None  # type: ignore
+
+if not HAS_REPORTLAB:
+    pytest.skip("PDF dependencies (reportlab) not available", allow_module_level=True)
 
 from app.models.property import PropertyType, TenureType
 from app.services.agents.universal_site_pack import UniversalSitePackGenerator

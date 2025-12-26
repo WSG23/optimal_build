@@ -30,9 +30,8 @@ import { PipelineBoard } from './components/PipelineBoard'
 import { DealInsightsPanel } from './components/DealInsightsPanel'
 import { AnalyticsPanel } from './components/AnalyticsPanel'
 import { RoiPanel } from './components/RoiPanel'
-import { HeroMetric } from '../../../components/canonical/HeroMetric'
-import { GlassCard } from '../../../components/canonical/GlassCard'
-import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
+import { MetricTile } from '../../../components/canonical/MetricTile'
+import { Card } from '../../../components/canonical/Card'
 import type {
   AnalyticsMetric,
   BenchmarkEntry,
@@ -364,51 +363,45 @@ export function BusinessPerformancePage() {
   // const weightPipelineValue = useMemo(() => totalWeightedPipeline(columns), [columns])
 
   return (
-    <Box className="bp-page" sx={{ p: 3 }}>
-      <AnimatedPageHeader
-        title="Business Performance"
-        subtitle="Real-time insights into your pipeline, agent activity, and ROI."
-        breadcrumbs={[
-          { label: 'Dashboard', href: '/' },
-          { label: 'Business Performance' },
-        ]}
-      />
-
-      <Grid container spacing={3} className="bp-page__summary" sx={{ mb: 4 }}>
+    <Box className="bp-page">
+      <Grid
+        container
+        spacing="var(--ob-space-300)"
+        className="bp-page__summary"
+        sx={{ mb: 'var(--ob-space-400)' }}
+      >
         <Grid item xs={12} md={4}>
-          <HeroMetric
+          <MetricTile
             label="Last Snapshot"
             value={analyticsLoading ? '-' : lastSnapshot}
             icon={<AccessTime fontSize="small" />}
-            variant="glass"
-            delay={100}
+            variant="default"
           />
         </Grid>
         <Grid item xs={12} md={4}>
-          <HeroMetric
+          <MetricTile
             label="Open Pipeline Value"
             value={pipelineLoading ? '-' : formatCurrency(totalPipelineValue)}
-            unit="SGD"
             icon={<AttachMoney fontSize="small" />}
-            variant="primary"
-            delay={200}
-            trend={
-              !pipelineLoading ? { value: 12, direction: 'up' } : undefined
-            }
+            variant="hero"
+            trend={!pipelineLoading ? '+12%' : undefined}
           />
         </Grid>
         <Grid item xs={12} md={4}>
-          <HeroMetric
+          <MetricTile
             label="ROI Projects Tracked"
             value={analyticsLoading ? '-' : roiSummary.projectCount}
             icon={<Assessment fontSize="small" />}
-            variant="glass"
-            delay={300}
+            variant="default"
           />
         </Grid>
       </Grid>
 
-      <Stack spacing={2} className="bp-page__alerts" sx={{ mb: 3 }}>
+      <Stack
+        spacing="var(--ob-space-200)"
+        className="bp-page__alerts"
+        sx={{ mb: 'var(--ob-space-300)' }}
+      >
         {pipelineError && (
           <Alert
             severity="error"
@@ -431,14 +424,19 @@ export function BusinessPerformancePage() {
         )}
       </Stack>
 
-      <Grid container spacing={3} className="bp-page__layout">
+      <Grid container spacing="var(--ob-space-300)" className="bp-page__layout">
         <Grid item xs={12} lg={8} className="bp-page__pipeline">
-          <GlassCard
+          <Card
+            variant="glass"
             className="bp-pipeline-wrapper"
-            sx={{ height: '100%', p: 2 }}
+            sx={{ height: '100%', p: 'var(--ob-space-200)' }}
           >
             {pipelineLoading ? (
-              <Stack alignItems="center" py={4} spacing={1}>
+              <Stack
+                alignItems="center"
+                py="var(--ob-space-400)"
+                spacing="var(--ob-space-100)"
+              >
                 <CircularProgress size={28} />
                 <Typography variant="body2" color="text.secondary">
                   Loading pipeline…
@@ -453,10 +451,10 @@ export function BusinessPerformancePage() {
                 movingDealId={movingDealId}
               />
             )}
-          </GlassCard>
+          </Card>
         </Grid>
         <Grid item xs={12} lg={4} className="bp-page__sidebar">
-          <Stack spacing={3}>
+          <Stack spacing="var(--ob-space-300)">
             <DealInsightsPanel
               deal={selectedDeal}
               timeline={timeline}
@@ -469,7 +467,11 @@ export function BusinessPerformancePage() {
             />
             <RoiPanel summary={roiSummary} />
             {(dealLoading || analyticsLoading) && (
-              <Stack alignItems="center" spacing={1} py={2}>
+              <Stack
+                alignItems="center"
+                spacing="var(--ob-space-100)"
+                py="var(--ob-space-200)"
+              >
                 <CircularProgress size={24} />
                 <Typography variant="body2" color="text.secondary">
                   Loading insights…

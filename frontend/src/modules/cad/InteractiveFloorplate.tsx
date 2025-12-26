@@ -73,7 +73,7 @@ export function InteractiveFloorplate({
         width: '100%',
         height: '100%',
         position: 'relative',
-        background: '#09090b', // Deep black/slate
+        background: 'var(--ob-neutral-950)', // Deep black/slate
         overflow: 'hidden',
         // Note: minHeight is enforced by parent container now
         // But we keep internal structure robust
@@ -197,7 +197,7 @@ export function InteractiveFloorplate({
               <g transform="translate(0, 180)">
                 <text
                   textAnchor="middle"
-                  fill="#06b6d4"
+                  fill="var(--ob-brand-400)"
                   fontSize="14"
                   fontFamily="monospace"
                   letterSpacing="4"
@@ -205,7 +205,13 @@ export function InteractiveFloorplate({
                 >
                   {loading ? 'SCANNING_SECTORS' : 'WAITING_FOR_CAD_INPUT'}
                 </text>
-                <rect x="-10" y="20" width="20" height="4" fill="#06b6d4">
+                <rect
+                  x="-10"
+                  y="20"
+                  width="20"
+                  height="4"
+                  fill="var(--ob-brand-400)"
+                >
                   <animate
                     attributeName="opacity"
                     values="0;1;0"
@@ -233,7 +239,11 @@ export function InteractiveFloorplate({
                     width={unit.w}
                     height={unit.h}
                     fill={isHovered ? 'url(#unitGradHover)' : 'url(#unitGrad)'}
-                    stroke={isHovered ? '#60a5fa' : 'rgba(96, 165, 250, 0.5)'}
+                    stroke={
+                      isHovered
+                        ? 'var(--ob-brand-400)'
+                        : 'rgba(96, 165, 250, 0.5)'
+                    }
                     strokeWidth={isHovered ? 2 : 1}
                     rx="4"
                     filter={isHovered ? 'url(#glow)' : ''}
@@ -259,10 +269,10 @@ export function InteractiveFloorplate({
                       r="4"
                       fill={
                         unit.severity === 'high'
-                          ? '#ef4444'
+                          ? 'var(--ob-error-500)'
                           : unit.severity === 'medium'
-                            ? '#f59e0b'
-                            : '#3b82f6'
+                            ? 'var(--ob-warning-500)'
+                            : 'var(--ob-brand-500)'
                       }
                     />
                   )}
@@ -281,8 +291,8 @@ export function InteractiveFloorplate({
           bottom: 0,
           width: '4px',
           background:
-            'linear-gradient(to bottom, transparent, #10b981, transparent)', // Green
-          boxShadow: '0 0 15px #10b981',
+            'linear-gradient(to bottom, transparent, var(--ob-success-500), transparent)', // Green
+          boxShadow: '0 0 15px var(--ob-success-500)',
           animation: `${radarSweep} 3s linear infinite`, // Reverts to left-to-right but vertical line
           pointerEvents: 'none',
           opacity: 0.8,

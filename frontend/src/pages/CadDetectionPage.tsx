@@ -28,7 +28,7 @@ import {
   normaliseStatus,
 } from './cadDetectionHelpers'
 
-const DEFAULT_PROJECT_ID = 5821
+const DEFAULT_PROJECT_ID = 1
 const ALL_LAYERS: DetectionStatus[] = [
   'source',
   'pending',

@@ -49,8 +49,8 @@ export function FeasibilityLayout({
       className="feasibility-split-layout"
       style={{
         position: 'relative',
-        width: '100vw',
-        height: '100vh', // Full viewport (minus header usually, handled by AppLayout)
+        width: '100%',
+        height: 'calc(100vh - 140px)', // Account for AppShell header
         overflow: 'hidden',
         display: 'flex',
       }}
@@ -88,10 +88,10 @@ export function FeasibilityLayout({
           display: 'flex',
           flexDirection: 'column',
           gap: '0',
-          borderRadius: '16px', // Rounded corners for floating feel
+          borderRadius: 'var(--ob-radius-sm)', // Rounded corners for floating feel
           background: 'rgba(20, 20, 25, 0.65)', // Darker glass for "Command Center"
-          backdropFilter: 'blur(24px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+          backdropFilter: 'blur(var(--ob-blur-lg)) saturate(180%)',
+          WebkitBackdropFilter: 'blur(var(--ob-blur-lg)) saturate(180%)',
           boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
           border: '1px solid rgba(255, 255, 255, 0.08)',
           overflow: 'hidden',
@@ -104,7 +104,7 @@ export function FeasibilityLayout({
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '24px',
+            padding: 'var(--ob-space-300)',
             scrollbarWidth: 'thin',
           }}
         >
@@ -143,18 +143,18 @@ export function FeasibilityLayout({
       <Box
         sx={{
           position: 'absolute',
-          top: '24px',
-          right: '24px',
+          top: 'var(--ob-space-300)',
+          right: 'var(--ob-space-300)',
           zIndex: 20,
         }}
       >
         <Paper
           elevation={0}
           sx={{
-            borderRadius: '8px',
+            borderRadius: 'var(--ob-radius-sm)',
             overflow: 'hidden',
             background: 'rgba(20, 20, 30, 0.7)',
-            backdropFilter: 'blur(12px)',
+            backdropFilter: 'blur(var(--ob-blur-md))',
             border: '1px solid rgba(255,255,255,0.1)',
             color: 'white',
           }}
@@ -171,7 +171,7 @@ export function FeasibilityLayout({
                 border: 'none',
                 borderBottom: '1px solid rgba(255,255,255,0.05)',
                 '&.Mui-selected': {
-                  color: '#06b6d4', // Cyan
+                  color: 'var(--ob-color-brand-primary)', // Cyan
                   background: 'rgba(6, 182, 212, 0.15)',
                   '&:hover': {
                     background: 'rgba(6, 182, 212, 0.25)',

@@ -4,39 +4,144 @@ import { createBrowserRouter, RouterProvider } from './router'
 import { HomeOverview } from './App'
 import { TranslationProvider } from './i18n'
 import { DeveloperProvider } from './contexts/DeveloperContext'
-import { CadDetectionPage } from './pages/CadDetectionPage'
-import { CadPipelinesPage } from './pages/CadPipelinesPage'
-import { CadUploadPage } from './pages/CadUploadPage'
-import AgentsGpsCapturePage from './pages/AgentsGpsCapturePage'
-import { FeasibilityWizard } from './modules/feasibility/FeasibilityWizard'
-import { FinanceWorkspace } from './modules/finance'
-import AdvancedIntelligencePage from './pages/visualizations/AdvancedIntelligence'
 import { AppThemeProvider } from './theme/YosaiThemeProvider'
+import { ErrorBoundary } from './components/error'
+import type { ErrorDetails } from './components/error'
 import '@ob/tokens.css'
 import './styles/index.css'
-import AgentAdvisoryPage from './pages/AgentAdvisoryPage'
-import AgentIntegrationsPage from './pages/AgentIntegrationsPage'
-import AgentPerformancePage from './pages/AgentPerformancePage'
 import { AppShell } from './app/layout/AppShell'
 import { BaseLayout } from './app/layout/BaseLayout'
-import { BusinessPerformancePage } from './app/pages/business-performance/BusinessPerformancePage'
-import { GpsCapturePage } from './app/pages/gps-capture/GpsCapturePage'
-import { MarketingPage } from './app/pages/marketing/MarketingPage'
-import { AdvisoryPage } from './app/pages/advisory/AdvisoryPage'
-import { IntegrationsPage } from './app/pages/integrations/IntegrationsPage'
-import { SiteAcquisitionPage } from './app/pages/site-acquisition/SiteAcquisitionPage'
-import { ChecklistTemplateManager } from './app/pages/site-acquisition/ChecklistTemplateManager'
-import { DeveloperPreviewStandalone } from './app/pages/site-acquisition/DeveloperPreviewStandalone'
-import { PhaseManagementPage } from './app/pages/phase-management'
-import { TeamManagementPage } from './app/pages/team/TeamManagementPage'
-import { RegulatoryDashboardPage } from './app/pages/regulatory/RegulatoryDashboardPage'
-import { DeveloperControlPanel } from './app/pages/developer/DeveloperControlPanel'
+
+/**
+ * Global error handler for logging errors to monitoring services.
+ * Integrate with Sentry, LogRocket, or other error tracking here.
+ */
+function handleGlobalError(
+  error: Error,
+  _errorInfo: React.ErrorInfo,
+  details: ErrorDetails,
+): void {
+  // Log to console in all environments
+  console.error('[GlobalErrorBoundary] Caught error:', {
+    message: error.message,
+    timestamp: details.timestamp,
+    url: details.url,
+  })
+
+  // In production, you would send this to an error tracking service:
+  // if (process.env.NODE_ENV === 'production') {
+  //   Sentry.captureException(error, {
+  //     extra: {
+  //       componentStack: details.componentStack,
+  //       url: details.url,
+  //       timestamp: details.timestamp,
+  //     },
+  //   })
+  // }
+}
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
   const targetPath = hash.slice(1)
   window.history.replaceState(null, '', targetPath)
 }
+
+function suspense(element: React.ReactNode) {
+  return <React.Suspense fallback={null}>{element}</React.Suspense>
+}
+
+const CadDetectionPage = React.lazy(async () => {
+  const module = await import('./pages/CadDetectionPage')
+  return { default: module.CadDetectionPage }
+})
+const CadPipelinesPage = React.lazy(async () => {
+  const module = await import('./pages/CadPipelinesPage')
+  return { default: module.CadPipelinesPage }
+})
+const CadUploadPage = React.lazy(async () => {
+  const module = await import('./pages/CadUploadPage')
+  return { default: module.CadUploadPage }
+})
+const AgentsGpsCapturePage = React.lazy(
+  () => import('./pages/AgentsGpsCapturePage'),
+)
+const FeasibilityWizard = React.lazy(async () => {
+  const module = await import('./modules/feasibility/FeasibilityWizard')
+  return { default: module.FeasibilityWizard }
+})
+const FinanceWorkspace = React.lazy(() => import('./modules/finance'))
+const AdvancedIntelligencePage = React.lazy(
+  () => import('./pages/visualizations/AdvancedIntelligence'),
+)
+const AgentAdvisoryPage = React.lazy(() => import('./pages/AgentAdvisoryPage'))
+const AgentIntegrationsPage = React.lazy(
+  () => import('./pages/AgentIntegrationsPage'),
+)
+const AgentPerformancePage = React.lazy(
+  () => import('./pages/AgentPerformancePage'),
+)
+const BusinessPerformancePage = React.lazy(async () => {
+  const module = await import(
+    './app/pages/business-performance/BusinessPerformancePage'
+  )
+  return { default: module.BusinessPerformancePage }
+})
+const GpsCapturePage = React.lazy(async () => {
+  const module = await import('./app/pages/gps-capture/GpsCapturePage')
+  return { default: module.GpsCapturePage }
+})
+const MarketingPage = React.lazy(async () => {
+  const module = await import('./app/pages/marketing/MarketingPage')
+  return { default: module.MarketingPage }
+})
+const AdvisoryPage = React.lazy(async () => {
+  const module = await import('./app/pages/advisory/AdvisoryPage')
+  return { default: module.AdvisoryPage }
+})
+const IntegrationsPage = React.lazy(async () => {
+  const module = await import('./app/pages/integrations/IntegrationsPage')
+  return { default: module.IntegrationsPage }
+})
+const SiteAcquisitionPage = React.lazy(async () => {
+  const module = await import(
+    './app/pages/site-acquisition/SiteAcquisitionPage'
+  )
+  return { default: module.SiteAcquisitionPage }
+})
+const ChecklistTemplateManager = React.lazy(async () => {
+  const module = await import(
+    './app/pages/site-acquisition/ChecklistTemplateManager'
+  )
+  return { default: module.ChecklistTemplateManager }
+})
+const DeveloperPreviewStandalone = React.lazy(async () => {
+  const module = await import(
+    './app/pages/site-acquisition/DeveloperPreviewStandalone'
+  )
+  return { default: module.DeveloperPreviewStandalone }
+})
+const PhaseManagementPage = React.lazy(async () => {
+  const module = await import('./app/pages/phase-management')
+  return { default: module.PhaseManagementPage }
+})
+const TeamManagementPage = React.lazy(async () => {
+  const module = await import('./app/pages/team/TeamManagementPage')
+  return { default: module.TeamManagementPage }
+})
+const RegulatoryDashboardPage = React.lazy(async () => {
+  const module = await import('./app/pages/regulatory/RegulatoryDashboardPage')
+  return { default: module.RegulatoryDashboardPage }
+})
+const DeveloperControlPanel = React.lazy(async () => {
+  const module = await import('./app/pages/developer/DeveloperControlPanel')
+  return { default: module.DeveloperControlPanel }
+})
+const ConstructionManagementPage = React.lazy(async () => {
+  const module = await import(
+    './app/pages/construction/ConstructionManagementPage'
+  )
+  return { default: module.ConstructionManagementPage }
+})
 
 const businessPerformanceElement = (
   <AppShell
@@ -45,7 +150,7 @@ const businessPerformanceElement = (
     description="Track deal momentum, commissions, analytics, and automation ROI across your Singapore commercial pipeline."
     hideSidebar
   >
-    <BusinessPerformancePage />
+    {suspense(<BusinessPerformancePage />)}
   </AppShell>
 )
 
@@ -56,7 +161,7 @@ const gpsCaptureElement = (
     description="Capture sites in the field, run instant scenario analysis, review market intelligence, and generate marketing packs."
     hideSidebar
   >
-    <GpsCapturePage />
+    {suspense(<GpsCapturePage />)}
   </AppShell>
 )
 
@@ -67,7 +172,7 @@ const marketingElement = (
     description="Generate, track, and share professional marketing packs for developers and investors."
     hideSidebar
   >
-    <MarketingPage />
+    {suspense(<MarketingPage />)}
   </AppShell>
 )
 
@@ -78,7 +183,7 @@ const advisoryElement = (
     description="Review asset mix strategy, pricing guidance, absorption forecasts, and market feedback in one workspace."
     hideSidebar
   >
-    <AdvisoryPage />
+    {suspense(<AdvisoryPage />)}
   </AppShell>
 )
 
@@ -89,7 +194,7 @@ const integrationsElement = (
     description="Connect PropertyGuru, EdgeProp, Zoho, and future portals to publish and monitor listings."
     hideSidebar
   >
-    <IntegrationsPage />
+    {suspense(<IntegrationsPage />)}
   </AppShell>
 )
 
@@ -100,7 +205,7 @@ const siteAcquisitionElement = (
     description="Comprehensive property capture and development feasibility analysis for developers."
     hideSidebar
   >
-    <SiteAcquisitionPage />
+    {suspense(<SiteAcquisitionPage />)}
   </AppShell>
 )
 
@@ -111,7 +216,7 @@ const developerPreviewStandaloneElement = (
     description="Standalone preview viewer for manual QA of Phase 2B renders."
     hideSidebar
   >
-    <DeveloperPreviewStandalone />
+    {suspense(<DeveloperPreviewStandalone />)}
   </AppShell>
 )
 
@@ -122,22 +227,22 @@ const checklistTemplateManagerElement = (
     description="Author and import scenario-specific due diligence checklists."
     hideSidebar
   >
-    <ChecklistTemplateManager />
+    {suspense(<ChecklistTemplateManager />)}
   </AppShell>
 )
 
 const developerFeasibilityElement = (
   <AppShell
     activeItem="assetFeasibility"
-    title="Feasibility workspace"
+    title="Feasibility"
     description="Run feasibility checks, document pack generation, and advisory workflows."
     hideSidebar
   >
-    <FeasibilityWizard withLayout={false} />
+    {suspense(<FeasibilityWizard withLayout={false} />)}
   </AppShell>
 )
 
-const financialControlElement = <FinanceWorkspace />
+const financialControlElement = suspense(<FinanceWorkspace />)
 
 const phaseManagementElement = (
   <AppShell
@@ -146,7 +251,7 @@ const phaseManagementElement = (
     description="Multi-phase development scheduling, heritage tracking, and tenant coordination."
     hideSidebar
   >
-    <PhaseManagementPage />
+    {suspense(<PhaseManagementPage />)}
   </AppShell>
 )
 
@@ -157,7 +262,7 @@ const teamCoordinationElement = (
     description="Manage project team, consultants, and approval workflows."
     hideSidebar
   >
-    <TeamManagementPage />
+    {suspense(<TeamManagementPage />)}
   </AppShell>
 )
 
@@ -168,7 +273,7 @@ const regulatoryNavigationElement = (
     description="Singapore authority submissions and compliance tracking."
     hideSidebar
   >
-    <RegulatoryDashboardPage />
+    {suspense(<RegulatoryDashboardPage />)}
   </AppShell>
 )
 
@@ -178,7 +283,18 @@ const developerControlPanelElement = (
     title="Developer Console"
     description="Internal tools and configuration."
   >
-    <DeveloperControlPanel />
+    {suspense(<DeveloperControlPanel />)}
+  </AppShell>
+)
+
+const constructionManagementElement = (
+  <AppShell
+    activeItem="constructionManagement"
+    title="Construction Management"
+    description="Contractor coordination, quality inspections, safety incidents, and drawdowns."
+    hideSidebar
+  >
+    {suspense(<ConstructionManagementPage />)}
   </AppShell>
 )
 
@@ -288,6 +404,18 @@ const router = createBrowserRouter([
     element: regulatoryNavigationElement,
   },
   {
+    path: '/app/construction',
+    element: constructionManagementElement,
+  },
+  {
+    path: '/developers/construction',
+    element: constructionManagementElement,
+  },
+  {
+    path: '/projects/:projectId/construction',
+    element: constructionManagementElement,
+  },
+  {
     path: '/developer',
     element: developerControlPanelElement,
   },
@@ -297,27 +425,27 @@ const router = createBrowserRouter([
   },
   {
     path: '/legacy/cad/upload',
-    element: <CadUploadPage />,
+    element: suspense(<CadUploadPage />),
   },
   {
     path: '/legacy/cad/detection',
-    element: <CadDetectionPage />,
+    element: suspense(<CadDetectionPage />),
   },
   {
     path: '/legacy/cad/pipelines',
-    element: <CadPipelinesPage />,
+    element: suspense(<CadPipelinesPage />),
   },
   {
     path: '/cad/pipelines',
-    element: <CadPipelinesPage />,
+    element: suspense(<CadPipelinesPage />),
   },
   {
     path: '/cad/upload',
-    element: <CadUploadPage />,
+    element: suspense(<CadUploadPage />),
   },
   {
     path: '/cad/detection',
-    element: <CadDetectionPage />,
+    element: suspense(<CadDetectionPage />),
   },
   {
     path: '/legacy/feasibility',
@@ -337,27 +465,27 @@ const router = createBrowserRouter([
   },
   {
     path: '/legacy/agents/site-capture',
-    element: <AgentsGpsCapturePage />,
+    element: suspense(<AgentsGpsCapturePage />),
   },
   {
     path: '/legacy/agents/advisory',
-    element: <AgentAdvisoryPage />,
+    element: suspense(<AgentAdvisoryPage />),
   },
   {
     path: '/legacy/agents/integrations',
-    element: <AgentIntegrationsPage />,
+    element: suspense(<AgentIntegrationsPage />),
   },
   {
     path: '/legacy/agents/performance',
-    element: <AgentPerformancePage />,
+    element: suspense(<AgentPerformancePage />),
   },
   {
     path: '/visualizations/intelligence',
-    element: <AdvancedIntelligencePage />,
+    element: suspense(<AdvancedIntelligencePage />),
   },
   {
     path: '/legacy/visualizations/intelligence',
-    element: <AdvancedIntelligencePage />,
+    element: suspense(<AdvancedIntelligencePage />),
   },
 ])
 
@@ -369,12 +497,18 @@ if (!container) {
 
 ReactDOM.createRoot(container).render(
   <React.StrictMode>
-    <TranslationProvider>
-      <AppThemeProvider>
-        <DeveloperProvider>
-          <RouterProvider router={router} layout={BaseLayout} />
-        </DeveloperProvider>
-      </AppThemeProvider>
-    </TranslationProvider>
+    <ErrorBoundary
+      onError={handleGlobalError}
+      title="Something went wrong"
+      message="We apologize for the inconvenience. Please try refreshing the page or return to the home page."
+    >
+      <TranslationProvider>
+        <AppThemeProvider>
+          <DeveloperProvider>
+            <RouterProvider router={router} layout={BaseLayout} />
+          </DeveloperProvider>
+        </AppThemeProvider>
+      </TranslationProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
 )

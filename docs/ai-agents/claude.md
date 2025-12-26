@@ -70,7 +70,7 @@ This ensures you pick up exactly where the previous agent left off.
      - Rule 1: Never edit existing migration files
      - Rule 2: Use async/await for all database/API operations
      - Rule 3: Pre-commit hooks handle formatting automatically
-     - Rule 6: Follow import ordering (stdlib → third-party → local)
+     - Import ordering (Python): stdlib → third-party → local (see `CODING_RULES.md` “Python Import Ordering and Formatting”)
      - Rule 7: No unused variables, proper exception chaining
      - Rule 8: **MANDATORY testing instructions** after completing ANY feature (backend tests, frontend tests, UI manual steps)
      - Rule 9: Index all foreign keys and frequently queried columns

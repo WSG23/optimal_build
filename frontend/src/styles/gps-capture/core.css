@@ -79,7 +79,7 @@
     position: relative;
     z-index: 10;
     pointer-events: none; /* Let clicks pass through to map where no content exists */
-    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    /* padding removed - YosaiShell provides canonical 16px layout padding */
     display: flex;
     flex-direction: column;
     gap: var(--ob-spacing-500);
@@ -106,9 +106,9 @@
     flex: 1;
     max-width: 480px;
     background: rgba(20, 20, 20, 0.75); /* Darker, high-contrast cockpit feel */
-    backdrop-filter: blur(16px);
+    backdrop-filter: blur(var(--ob-blur-xl));
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
     padding: 2rem;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     display: flex;
@@ -156,9 +156,9 @@
 .gps-hud-card {
     width: 100%;
     background: rgba(20, 20, 20, 0.6);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(var(--ob-blur-md));
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for cards */
     padding: 1rem 1.25rem;
     color: #fff;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -206,7 +206,7 @@
 
 .gps-hud-card.locked .gps-hud-content {
     opacity: 0.1; /* Show faint ghost of content behind lock */
-    filter: blur(4px);
+    filter: blur(var(--ob-blur-sm));
     pointer-events: none;
 }
 
@@ -249,7 +249,7 @@
     padding: 1rem 0.5rem;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
+    border-radius: 4px; /* Square Cyber-Minimalism: sm for tiles */
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: center;
@@ -281,7 +281,7 @@
     width: 100%;
     padding: 1.25rem;
     border: none;
-    border-radius: 12px;
+    border-radius: 2px; /* Square Cyber-Minimalism: xs for buttons */
     background: linear-gradient(135deg, #2563eb, #7c3aed);
     color: #fff;
     font-weight: 700;
@@ -325,7 +325,7 @@
     padding: 0.75rem;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    border-radius: 2px; /* Square Cyber-Minimalism: xs for buttons */
     color: #fff;
     font-size: 0.8rem;
     cursor: pointer;
@@ -335,6 +335,84 @@
 .gps-pack-btn:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Map Error Toast */
+.gps-map-error {
+    position: absolute;
+    top: var(--ob-space-200);
+    left: var(--ob-space-200);
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.8);
+    padding: var(--ob-space-100);
+    border-radius: var(--ob-radius-sm);
+    color: var(--ob-color-error-500);
+    font-size: var(--ob-font-size-sm);
+}
+
+/* Geocode action buttons */
+.gps-geocode-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: none;
+    padding: var(--ob-space-050) var(--ob-space-100);
+    border-radius: var(--ob-radius-xs);
+    font-size: var(--ob-font-size-sm);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.gps-geocode-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Select ghost styling for dark option text */
+.gps-select-ghost {
+    color: #fff;
+    background: transparent;
+}
+
+.gps-select-ghost option {
+    background: var(--ob-color-surface-default);
+    color: var(--ob-color-text-primary);
+}
+
+/* Full-width form group */
+.gps-form__group--full-width {
+    grid-column: 1 / -1;
+}
+
+/* Capture meta styling */
+.gps-capture-meta {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* HUD helper text */
+.gps-hud-more-scenarios {
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-muted);
+    font-style: italic;
+    margin-top: var(--ob-space-050);
+}
+
+/* HUD loading state */
+.gps-hud-loading {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-050);
+    color: var(--ob-color-text-muted);
+    padding: var(--ob-space-100);
+}
+
+/* Spinner size variants */
+.gps-spinner--sm {
+    width: 16px;
+    height: 16px;
+}
+
+.gps-spinner--xs {
+    width: 14px;
+    height: 14px;
 }
 
 /* Mobile Responsive */

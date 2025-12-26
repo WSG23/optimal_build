@@ -5,6 +5,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import React from 'react'
 
 import type { FinanceScenarioSummary } from '../../../../api/finance'
+import { DeveloperProvider } from '../../../../contexts/DeveloperContext'
 import { TranslationProvider } from '../../../../i18n'
 import { FinanceCapitalStack } from '../FinanceCapitalStack'
 import { FinanceDrawdownSchedule } from '../FinanceDrawdownSchedule'
@@ -123,31 +124,35 @@ describe('Finance capital stack and drawdown components', () => {
   it('renders the capital stack overview for scenarios with data', () => {
     render(
       <ThemeModeProvider>
-        <TranslationProvider>
-          <FinanceCapitalStack scenarios={[baseScenario]} />
-        </TranslationProvider>
+        <DeveloperProvider>
+          <TranslationProvider>
+            <FinanceCapitalStack scenarios={[baseScenario]} />
+          </TranslationProvider>
+        </DeveloperProvider>
       </ThemeModeProvider>,
     )
 
     assert.ok(screen.getByText('Capital stack overview'))
-    assert.ok(screen.getByText('Scenario A'))
-    assert.ok(screen.getByText('Equity share'))
-    assert.ok(screen.getByText('Tranche / facility detail'))
+    assert.ok(screen.getAllByText(/Scenario A/).length > 0)
+    assert.ok(screen.getByText(/Equity share/i))
+    assert.ok(screen.getByText('Tranche / Facility Detail'))
     assert.ok(screen.getAllByText('Senior Loan').length > 0)
-    assert.ok(screen.getByText('Interest reserve (months)'))
-    assert.ok(screen.getByText('Interest handling'))
+    assert.ok(screen.getByText('Periods/Yr'))
+    assert.ok(screen.getByText('Reserve (Mos)'))
   })
 
   it('renders the drawdown table for scenarios with schedules', () => {
     render(
       <ThemeModeProvider>
-        <TranslationProvider>
-          <FinanceDrawdownSchedule scenarios={[baseScenario]} />
-        </TranslationProvider>
+        <DeveloperProvider>
+          <TranslationProvider>
+            <FinanceDrawdownSchedule scenarios={[baseScenario]} />
+          </TranslationProvider>
+        </DeveloperProvider>
       </ThemeModeProvider>,
     )
 
-    assert.ok(screen.getByText('Drawdown schedule'))
+    assert.ok(screen.getByText('Drawdown Schedule'))
     assert.ok(screen.getByText('M1'))
     assert.ok(screen.getByText('Equity draw'))
   })

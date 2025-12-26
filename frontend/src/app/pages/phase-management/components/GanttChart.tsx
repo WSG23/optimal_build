@@ -15,12 +15,12 @@ interface GanttChartProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  not_started: '#94a3b8',
-  planning: '#3b82f6',
-  in_progress: '#f59e0b', // Changed to orange for gradient
-  on_hold: '#ef4444',
-  completed: '#10b981',
-  cancelled: '#64748b',
+  not_started: 'var(--ob-color-text-muted)',
+  planning: 'var(--ob-color-brand-primary)',
+  in_progress: 'var(--ob-color-status-warning-text)',
+  on_hold: 'var(--ob-color-status-error-text)',
+  completed: 'var(--ob-color-status-success-text)',
+  cancelled: 'var(--ob-color-text-secondary)',
 }
 
 const BAR_GRADIENTS: Record<string, string> = {
@@ -128,7 +128,7 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
           top: '6px',
           width: `${width}px`,
           height: `${ROW_HEIGHT - 12}px`,
-          borderRadius: '12px',
+          borderRadius: 'var(--ob-radius-sm)',
           cursor: 'pointer',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           border: isSelected
@@ -176,7 +176,7 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
           <Typography
             variant="caption"
             sx={{
-              color: '#fff',
+              color: 'var(--ob-color-text-inverse)',
               fontWeight: 600,
               fontSize: '0.7rem',
               textShadow: '0 1px 2px rgba(0,0,0,0.5)',
@@ -188,7 +188,7 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
             <WarningAmberIcon
               sx={{
                 fontSize: 14,
-                color: '#fff',
+                color: 'var(--ob-color-text-inverse)',
                 filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
               }}
             />
@@ -197,7 +197,7 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
             <AccountBalanceIcon
               sx={{
                 fontSize: 14,
-                color: '#fff',
+                color: 'var(--ob-color-text-inverse)',
                 filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
               }}
             />
@@ -206,7 +206,7 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
             <PeopleIcon
               sx={{
                 fontSize: 14,
-                color: '#fff',
+                color: 'var(--ob-color-text-inverse)',
                 filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
               }}
             />
@@ -266,7 +266,7 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
         display: 'flex',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
         backgroundColor: 'rgba(30,30,30,0.9)',
-        backdropFilter: 'blur(10px)',
+        backdropFilter: 'blur(var(--ob-blur-md))',
         position: 'sticky',
         top: 0,
         zIndex: 20,
@@ -283,7 +283,10 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
           px: 2,
         }}
       >
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#fff' }}>
+        <Typography
+          variant="subtitle2"
+          sx={{ fontWeight: 600, color: 'var(--ob-color-text-inverse)' }}
+        >
           PHASE
         </Typography>
       </Box>
@@ -476,14 +479,14 @@ export function GanttChart({
                 px: 2,
                 gap: 1,
                 bgcolor: 'rgba(30,30,30,0.3)',
-                backdropFilter: 'blur(4px)',
+                backdropFilter: 'blur(var(--ob-blur-sm))',
               }}
             >
               <Box
                 sx={{
                   width: 8,
                   height: 8,
-                  borderRadius: '50%',
+                  borderRadius: 'var(--ob-radius-pill)',
                   background: STATUS_COLORS[task.status] || '#94a3b8',
                   boxShadow: `0 0 8px ${STATUS_COLORS[task.status] || '#94a3b8'}`,
                   flexShrink: 0,
@@ -496,7 +499,7 @@ export function GanttChart({
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  color: '#fff',
+                  color: 'var(--ob-color-text-inverse)',
                 }}
               >
                 {task.name}
@@ -559,11 +562,11 @@ export function GanttChart({
                   left: '50%',
                   transform: 'translateX(-50%)',
                   background: '#00f3ff',
-                  color: '#000',
+                  color: 'var(--ob-color-text-primary)',
                   fontSize: '0.65rem',
                   fontWeight: 'bold',
                   padding: '2px 6px',
-                  borderRadius: '10px',
+                  borderRadius: 'var(--ob-radius-sm)',
                   boxShadow: '0 0 10px #00f3ff',
                   whiteSpace: 'nowrap',
                 }}
@@ -585,19 +588,25 @@ export function GanttChart({
           borderTop: '1px solid rgba(255, 255, 255, 0.1)',
           background: 'rgba(20, 20, 20, 0.95)',
           flexWrap: 'wrap',
-          color: '#fff',
+          color: 'var(--ob-color-text-inverse)',
         }}
       >
         <Stack direction="row" spacing={0.5} alignItems="center">
-          <WarningAmberIcon sx={{ fontSize: 16, color: '#ef4444' }} />
+          <WarningAmberIcon
+            sx={{ fontSize: 16, color: 'var(--ob-color-status-error-text)' }}
+          />
           <Typography variant="caption">Critical Path</Typography>
         </Stack>
         <Stack direction="row" spacing={0.5} alignItems="center">
-          <AccountBalanceIcon sx={{ fontSize: 16, color: '#666' }} />
+          <AccountBalanceIcon
+            sx={{ fontSize: 16, color: 'var(--ob-color-text-muted)' }}
+          />
           <Typography variant="caption">Heritage Phase</Typography>
         </Stack>
         <Stack direction="row" spacing={0.5} alignItems="center">
-          <PeopleIcon sx={{ fontSize: 16, color: '#666' }} />
+          <PeopleIcon
+            sx={{ fontSize: 16, color: 'var(--ob-color-text-muted)' }}
+          />
           <Typography variant="caption">Tenant Coordination</Typography>
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, ml: 'auto' }}>
@@ -612,7 +621,7 @@ export function GanttChart({
                 sx={{
                   width: 10,
                   height: 10,
-                  borderRadius: '50%',
+                  borderRadius: 'var(--ob-radius-pill)',
                   backgroundColor: color,
                 }}
               />

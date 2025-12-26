@@ -44,8 +44,8 @@ export function ManualInspectionControls({
   return (
     <div
       style={{
-        border: '1px solid #e5e5e7',
-        borderRadius: '12px',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
@@ -82,7 +82,7 @@ export function ManualInspectionControls({
             style={{
               margin: 0,
               fontSize: '0.9rem',
-              color: '#4b5563',
+              color: 'var(--ob-color-text-secondary)',
               lineHeight: 1.5,
             }}
           >
@@ -96,10 +96,12 @@ export function ManualInspectionControls({
             onClick={onLogNew}
             disabled={!hasProperty}
             style={{
-              border: '1px solid #1d1d1f',
-              background: hasProperty ? '#1d1d1f' : '#f5f5f7',
-              color: hasProperty ? 'white' : '#1d1d1f88',
-              borderRadius: '9999px',
+              border: '1px solid var(--ob-color-text-primary)',
+              background: hasProperty
+                ? 'var(--ob-color-text-primary)'
+                : 'var(--ob-color-bg-surface-elevated)',
+              color: hasProperty ? 'white' : 'var(--ob-color-text-muted)',
+              borderRadius: 'var(--ob-radius-pill)',
               padding: '0.45rem 1.1rem',
               fontSize: '0.8125rem',
               fontWeight: 600,
@@ -114,10 +116,10 @@ export function ManualInspectionControls({
               onClick={onEditLatest}
               disabled={!hasProperty}
               style={{
-                border: '1px solid #1d1d1f',
+                border: '1px solid var(--ob-color-text-primary)',
                 background: 'white',
-                color: '#1d1d1f',
-                borderRadius: '9999px',
+                color: 'var(--ob-color-text-primary)',
+                borderRadius: 'var(--ob-radius-pill)',
                 padding: '0.45rem 1.1rem',
                 fontSize: '0.8125rem',
                 fontWeight: 600,
@@ -134,7 +136,9 @@ export function ManualInspectionControls({
           style={{
             margin: 0,
             fontSize: '0.85rem',
-            color: saveMessage.includes('success') ? '#15803d' : '#c53030',
+            color: saveMessage.includes('success')
+              ? 'var(--ob-success-700)'
+              : 'var(--ob-error-700)',
           }}
         >
           {saveMessage}
@@ -147,7 +151,7 @@ export function ManualInspectionControls({
             flexWrap: 'wrap',
             gap: '0.6rem',
             fontSize: '0.85rem',
-            color: '#4b5563',
+            color: 'var(--ob-color-text-secondary)',
           }}
         >
           {statusItems && statusItems.length > 0 ? (
@@ -169,7 +173,13 @@ export function ManualInspectionControls({
           )}
         </div>
       ) : (
-        <p style={{ margin: 0, fontSize: '0.85rem', color: '#6b7280' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: '0.85rem',
+            color: 'var(--ob-color-text-muted)',
+          }}
+        >
           Capture a property to enable manual inspection logging.
         </p>
       )}

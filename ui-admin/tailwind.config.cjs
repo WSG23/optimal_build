@@ -13,13 +13,15 @@ module.exports = {
         extend: {
             colors: {
                 surface: {
-                    DEFAULT: 'var(--ob-color-surface-default)',
-                    alt: 'var(--ob-color-surface-alt)',
+                    DEFAULT: withOpacityValue('--ob-color-surface-default-rgb'),
+                    alt: withOpacityValue('--ob-color-surface-alt-rgb'),
                     inverse: withOpacityValue('--ob-color-surface-inverse-rgb'),
                 },
                 text: {
                     primary: withOpacityValue('--ob-color-text-primary-rgb'),
+                    secondary: withOpacityValue('--ob-color-text-secondary-rgb'),
                     muted: withOpacityValue('--ob-color-text-muted-rgb'),
+                    subtle: withOpacityValue('--ob-color-text-subtle-rgb'),
                     inverse: withOpacityValue('--ob-color-text-inverse-rgb'),
                     'inverse-muted': withOpacityValue(
                         '--ob-color-text-inverse-muted-rgb',
@@ -52,12 +54,22 @@ module.exports = {
                     soft: withOpacityValue('--ob-color-error-soft-rgb'),
                 },
             },
+            /**
+             * Border Radius - Square Cyber-Minimalism Scale
+             * Sharp, geometric aesthetic for architect/designer appeal
+             */
             borderRadius: {
-                md: 'var(--ob-radius-md)',
-                lg: 'var(--ob-radius-lg)',
-                xl: 'var(--ob-radius-xl)',
-                '2xl': 'var(--ob-radius-2xl)',
-                pill: 'var(--ob-radius-pill)',
+                none: 'var(--ob-radius-none)',    // 0px - tables, data grids
+                xs: 'var(--ob-radius-xs)',        // 2px - buttons, tags, chips
+                sm: 'var(--ob-radius-sm)',        // 4px - cards, panels, tiles
+                DEFAULT: 'var(--ob-radius-sm)',   // 4px - default for rounded
+                md: 'var(--ob-radius-md)',        // 6px - inputs, selects
+                lg: 'var(--ob-radius-lg)',        // 8px - windows/modals ONLY
+                // DEPRECATED - kept for backward compatibility
+                xl: 'var(--ob-radius-lg)',        // Maps to lg (8px)
+                '2xl': 'var(--ob-radius-lg)',     // Maps to lg (8px)
+                full: 'var(--ob-radius-pill)',    // Avatars ONLY
+                pill: 'var(--ob-radius-pill)',    // Avatars ONLY
             },
             fontWeight: {
                 regular: 'var(--ob-font-weight-regular)',

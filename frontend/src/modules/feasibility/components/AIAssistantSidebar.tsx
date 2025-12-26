@@ -68,7 +68,7 @@ export function AIAssistantSidebar({
         {/* Header */}
         <div
           style={{
-            padding: '16px',
+            padding: 'var(--ob-space-200)',
             borderBottom: '1px solid var(--ob-color-border-light)',
             display: 'flex',
             alignItems: 'center',
@@ -103,11 +103,11 @@ export function AIAssistantSidebar({
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '16px',
-            background: '#f5f5f7',
+            padding: 'var(--ob-space-200)',
+            background: 'var(--ob-color-bg-surface-secondary)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
+            gap: 'var(--ob-space-200)',
           }}
         >
           {messages.map((msg) => {
@@ -124,10 +124,10 @@ export function AIAssistantSidebar({
                 <div
                   style={{
                     maxWidth: '85%',
-                    padding: '12px 16px',
+                    padding: '12px var(--ob-space-200)',
                     borderRadius: isBot
-                      ? '12px 12px 12px 2px'
-                      : '12px 12px 2px 12px',
+                      ? 'var(--ob-radius-sm) var(--ob-radius-sm) var(--ob-radius-sm) var(--ob-radius-xs)'
+                      : 'var(--ob-radius-sm) var(--ob-radius-sm) var(--ob-radius-xs) var(--ob-radius-sm)',
                     background: isBot
                       ? 'white'
                       : 'var(--ob-color-brand-primary)',
@@ -148,7 +148,8 @@ export function AIAssistantSidebar({
               <div
                 style={{
                   padding: '12px 16px',
-                  borderRadius: '12px 12px 12px 2px',
+                  borderRadius:
+                    'var(--ob-radius-sm) var(--ob-radius-sm) var(--ob-radius-sm) var(--ob-radius-xs)',
                   background: 'white',
                   boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
                 }}
@@ -167,7 +168,7 @@ export function AIAssistantSidebar({
                       width: 6,
                       height: 6,
                       background: '#ccc',
-                      borderRadius: '50%',
+                      borderRadius: 'var(--ob-radius-pill)',
                       animation: 'pulse 1s infinite',
                     }}
                   />
@@ -177,7 +178,7 @@ export function AIAssistantSidebar({
                       width: 6,
                       height: 6,
                       background: '#ccc',
-                      borderRadius: '50%',
+                      borderRadius: 'var(--ob-radius-pill)',
                       animation: 'pulse 1s infinite 0.2s',
                     }}
                   />
@@ -187,7 +188,7 @@ export function AIAssistantSidebar({
                       width: 6,
                       height: 6,
                       background: '#ccc',
-                      borderRadius: '50%',
+                      borderRadius: 'var(--ob-radius-pill)',
                       animation: 'pulse 1s infinite 0.4s',
                     }}
                   />
@@ -200,7 +201,7 @@ export function AIAssistantSidebar({
         {/* Input */}
         <div
           style={{
-            padding: '16px',
+            padding: 'var(--ob-space-200)',
             background: 'white',
             borderTop: '1px solid var(--ob-color-border-light)',
           }}
@@ -222,7 +223,7 @@ export function AIAssistantSidebar({
                   <Send />
                 </IconButton>
               ),
-              sx: { borderRadius: '24px' },
+              sx: { borderRadius: 'var(--ob-radius-md)' },
             }}
           />
         </div>

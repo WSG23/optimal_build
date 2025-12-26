@@ -56,8 +56,11 @@ def _find_repo_root(current: Path) -> Path:
 
 _REPO_ROOT = _find_repo_root(Path(__file__).resolve())
 
+_BACKEND_ROOT = _REPO_ROOT / "backend"
+if str(_BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(_BACKEND_ROOT))
 if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+    sys.path.insert(1, str(_REPO_ROOT))
 
 try:
     asyncio.get_event_loop()
@@ -405,6 +408,11 @@ def pytest_collection_modifyitems(
     config: pytest.Config, items: list[pytest.Item]
 ) -> None:  # pragma: no cover - collection hook
     for item in items:
+        # Skip the skip-pattern check for tests marked with no_db
+        # These are pure Python unit tests that don't require database/ORM features
+        if item.get_closest_marker("no_db"):
+            continue
+
         nodeid = item.nodeid
         path = str(getattr(item, "fspath", ""))
         for pattern, reason in _SKIPPED_TEST_PATTERNS.items():

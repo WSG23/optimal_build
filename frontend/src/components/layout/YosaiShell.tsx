@@ -3,6 +3,7 @@ import { Box, Typography, Stack, useTheme, alpha } from '@mui/material'
 import { YosaiSidebar } from './YosaiSidebar'
 import { useBaseLayoutContext } from '../../app/layout/BaseLayoutContext'
 import { HeaderUtilityCluster } from './HeaderUtilityCluster'
+import { useRouterController } from '../../router'
 
 export interface AppShellProps {
   title: string
@@ -10,6 +11,7 @@ export interface AppShellProps {
   actions?: ReactNode
   children: ReactNode
   hideSidebar?: boolean
+  hideHeader?: boolean
 }
 
 /**
@@ -28,9 +30,11 @@ export function AppShell({
   actions,
   children,
   hideSidebar,
+  hideHeader = false,
 }: AppShellProps) {
   const theme = useTheme()
-  const { inBaseLayout } = useBaseLayoutContext()
+  const { inBaseLayout, topOffset } = useBaseLayoutContext()
+  const { path } = useRouterController()
 
   // Default to hiding sidebar if inside BaseLayout, unless explicitly forced.
   const shouldHideSidebar =
@@ -40,9 +44,13 @@ export function AppShell({
     <Box
       sx={{
         display: 'flex',
-        minHeight: '100vh',
+        // When embedded in BaseLayout (new shell), avoid forcing a second 100vh
+        // layout which can cause the window to scroll (breaking sticky behavior).
+        minHeight: inBaseLayout ? 0 : '100vh',
+        flexGrow: 1,
         bgcolor: 'background.default',
         color: 'text.primary',
+        gap: shouldHideSidebar ? 0 : 'var(--ob-space-200)', // Consistent gap between sidebar and content
       }}
     >
       {/* "The Wall" - Sidebar */}
@@ -55,55 +63,73 @@ export function AppShell({
           display: 'flex',
           flexDirection: 'column',
           minWidth: 0,
+          minHeight: 0,
         }}
       >
-        {/* Header */}
-        <Box
-          component="header"
-          sx={{
-            py: 3,
-            px: 4,
-            borderBottom: 1,
-            borderColor: 'divider',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            bgcolor: alpha(theme.palette.background.default, 0.8),
-            backdropFilter: 'blur(12px)',
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
-          }}
-        >
-          <Box>
-            <Typography variant="h2" sx={{ color: 'text.primary' }}>
-              {title}
-            </Typography>
-            {subtitle && (
-              <Typography
-                variant="body2"
-                sx={{ color: 'text.secondary', mt: 0.5 }}
-              >
-                {subtitle}
-              </Typography>
-            )}
-          </Box>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <HeaderUtilityCluster />
-            {actions}
-          </Stack>
-        </Box>
-
-        {/* Content */}
+        {/* Content (scroll container) */}
         <Box
           component="main"
           sx={{
             flexGrow: 1,
-            p: 0,
+            padding: 'var(--ob-space-100)',
             overflow: 'auto',
             scrollbarGutter: 'stable',
+            minHeight: 0,
           }}
         >
+          {/* Page Header (scrolls with content) */}
+          {!hideHeader && (
+            <Box
+              component="header"
+              key={path}
+              sx={{
+                py: 'var(--ob-space-200)',
+                px: 'var(--ob-space-300)',
+                borderBottom: 1,
+                borderColor: 'divider',
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: 'var(--ob-space-150)',
+                bgcolor: alpha(theme.palette.background.default, 0.8),
+                backdropFilter: 'blur(var(--ob-blur-md))',
+                // When the top ribbon is unpinned, it becomes an overlay; give the
+                // content a small breathing room so the header doesn't feel cramped.
+                mt: inBaseLayout && topOffset === 0 ? 'var(--ob-space-075)' : 0,
+                mb: 'var(--ob-space-150)',
+                borderRadius: 'var(--ob-radius-sm)',
+                animation:
+                  'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
+                '@media (prefers-reduced-motion: reduce)': {
+                  animation: 'none',
+                },
+              }}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="h2" sx={{ color: 'text.primary' }}>
+                  {title}
+                </Typography>
+                {subtitle && (
+                  <Typography
+                    variant="body2"
+                    sx={{ color: 'text.secondary', mt: 'var(--ob-space-050)' }}
+                  >
+                    {subtitle}
+                  </Typography>
+                )}
+              </Box>
+              <Stack
+                direction="row"
+                spacing="var(--ob-space-200)"
+                alignItems="center"
+                sx={{ flexShrink: 0 }}
+              >
+                {!inBaseLayout && <HeaderUtilityCluster />}
+                {actions}
+              </Stack>
+            </Box>
+          )}
+
           {children}
         </Box>
       </Box>

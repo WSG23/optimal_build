@@ -6,11 +6,18 @@ import sys
 from collections.abc import Iterable
 from urllib.parse import urlparse, urlunparse
 
+# Import canonical constants (SSoT)
+from app.constants import TYP_FLOOR_TO_FLOOR_M, EFFICIENCY_RATIO
+
 _DEFAULT_ALLOWED_ORIGINS = (
     "http://localhost:3000",
     "http://localhost:5173",
     "http://localhost:4400",
     "http://localhost:4401",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:4400",
+    "http://127.0.0.1:4401",
 )
 _DEFAULT_ALLOWED_HOSTS = ("localhost", "127.0.0.1")
 _DEFAULT_RATE_LIMIT = "10/minute"
@@ -217,7 +224,7 @@ class Settings:
     PREVIEW_MAX_VERSIONS: int
     PREVIEW_GEOMETRY_DETAIL_LEVEL: str
 
-    def __init__(self) -> None:
+    def __init__(self, *, validate_production: bool | None = None) -> None:
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "Building Compliance Platform")
         self.VERSION = os.getenv("PROJECT_VERSION", "1.0.0")
         self.API_V1_STR = "/api/v1"
@@ -232,6 +239,8 @@ class Settings:
                 )
         self.SECRET_KEY = secret
         self.ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+        if validate_production is None:
+            validate_production = "pytest" not in sys.modules
 
         self.POSTGRES_SERVER = os.getenv("POSTGRES_SERVER", "localhost")
         self.POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
@@ -308,11 +317,12 @@ class Settings:
         self.SEATTLE_SODA_APP_TOKEN = os.getenv("SEATTLE_SODA_APP_TOKEN", "public")
         self.TORONTO_SODA_APP_TOKEN = os.getenv("TORONTO_SODA_APP_TOKEN", "public")
 
+        # Use canonical defaults from constants module (SSoT)
         self.BUILDABLE_TYP_FLOOR_TO_FLOOR_M = _load_positive_float(
-            "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", 4.0
+            "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", TYP_FLOOR_TO_FLOOR_M
         )
         self.BUILDABLE_EFFICIENCY_RATIO = _load_fractional_float(
-            "BUILDABLE_EFFICIENCY_RATIO", 0.82
+            "BUILDABLE_EFFICIENCY_RATIO", EFFICIENCY_RATIO
         )
         self.BUILDABLE_USE_POSTGIS = _load_bool("BUILDABLE_USE_POSTGIS", False)
 
@@ -334,6 +344,28 @@ class Settings:
         self.OFFLINE_MODE = _load_bool("OFFLINE_MODE", False)
         self.PREVIEW_MAX_VERSIONS = _load_positive_int("PREVIEW_MAX_VERSIONS", 3)
         self.PREVIEW_GEOMETRY_DETAIL_LEVEL = _load_geometry_detail_level()
+
+        if validate_production:
+            self._validate_production_settings()
+
+    def _validate_production_settings(self) -> None:
+        environment = (self.ENVIRONMENT or "").strip().lower()
+        if environment != "production":
+            return
+
+        raw_origins = os.getenv("BACKEND_ALLOWED_ORIGINS")
+        if not raw_origins or not raw_origins.strip():
+            raise RuntimeError(
+                "BACKEND_ALLOWED_ORIGINS must be set in production; configure it to "
+                "the web app URL(s) allowed to call the API."
+            )
+
+        database_uri = os.getenv("SQLALCHEMY_DATABASE_URI")
+        if not database_uri or not database_uri.strip():
+            raise RuntimeError(
+                "SQLALCHEMY_DATABASE_URI must be set in production; configure it to "
+                "your Cloud SQL / managed Postgres instance."
+            )
 
     def _load_listing_token_secret(self) -> str:
         raw = os.getenv("LISTING_TOKEN_SECRET")

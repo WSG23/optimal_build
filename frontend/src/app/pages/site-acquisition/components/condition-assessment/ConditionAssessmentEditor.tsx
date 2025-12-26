@@ -100,7 +100,7 @@ export function ConditionAssessmentEditor({
         onClick={(event) => event.stopPropagation()}
         style={{
           background: 'white',
-          borderRadius: '16px',
+          borderRadius: 'var(--ob-radius-lg)',
           maxWidth: '900px',
           width: '100%',
           maxHeight: '85vh',
@@ -122,7 +122,7 @@ export function ConditionAssessmentEditor({
             background: 'transparent',
             fontSize: '1.5rem',
             cursor: 'pointer',
-            color: '#6e6e73',
+            color: 'var(--ob-color-text-muted)',
           }}
         >
           ×
@@ -162,7 +162,7 @@ export function ConditionAssessmentEditor({
               style={{
                 margin: 0,
                 fontSize: '0.95rem',
-                color: '#4b5563',
+                color: 'var(--ob-color-text-secondary)',
                 lineHeight: 1.6,
               }}
             >
@@ -191,10 +191,12 @@ export function ConditionAssessmentEditor({
                       type="button"
                       onClick={() => setActiveScenario(option)}
                       style={{
-                        borderRadius: '9999px',
-                        border: `1px solid ${isActive ? '#1d4ed8' : '#d2d2d7'}`,
-                        background: isActive ? '#dbeafe' : 'white',
-                        color: isActive ? '#1d4ed8' : '#1d1d1f',
+                        borderRadius: 'var(--ob-radius-pill)',
+                        border: `1px solid ${isActive ? 'var(--ob-color-brand-primary)' : 'var(--ob-color-border-subtle)'}`,
+                        background: isActive ? 'var(--ob-info-50)' : 'white',
+                        color: isActive
+                          ? 'var(--ob-color-brand-primary)'
+                          : 'var(--ob-color-text-primary)',
                         padding: '0.3rem 0.9rem',
                         fontSize: '0.78rem',
                         fontWeight: 600,
@@ -213,10 +215,10 @@ export function ConditionAssessmentEditor({
             onClick={onReset}
             disabled={isSaving}
             style={{
-              border: '1px solid #d2d2d7',
+              border: '1px solid var(--ob-color-border-subtle)',
               background: 'white',
-              color: '#1d1d1f',
-              borderRadius: '9999px',
+              color: 'var(--ob-color-text-primary)',
+              borderRadius: 'var(--ob-radius-pill)',
               padding: '0.45rem 1rem',
               fontSize: '0.8125rem',
               fontWeight: 600,
@@ -254,8 +256,8 @@ export function ConditionAssessmentEditor({
                   )
                 }
                 style={{
-                  borderRadius: '8px',
-                  border: '1px solid #d2d2d7',
+                  borderRadius: 'var(--ob-radius-md)',
+                  border: '1px solid var(--ob-color-border-subtle)',
                   padding: '0.55rem 0.75rem',
                   fontSize: '0.9rem',
                 }}
@@ -282,8 +284,8 @@ export function ConditionAssessmentEditor({
                 value={draft.overallRating}
                 onChange={(e) => onFieldChange('overallRating', e.target.value)}
                 style={{
-                  borderRadius: '8px',
-                  border: '1px solid #d2d2d7',
+                  borderRadius: 'var(--ob-radius-md)',
+                  border: '1px solid var(--ob-color-border-subtle)',
                   padding: '0.55rem 0.75rem',
                   fontSize: '0.9rem',
                 }}
@@ -312,8 +314,8 @@ export function ConditionAssessmentEditor({
                 value={draft.overallScore}
                 onChange={(e) => onFieldChange('overallScore', e.target.value)}
                 style={{
-                  borderRadius: '8px',
-                  border: '1px solid #d2d2d7',
+                  borderRadius: 'var(--ob-radius-md)',
+                  border: '1px solid var(--ob-color-border-subtle)',
                   padding: '0.55rem 0.75rem',
                   fontSize: '0.9rem',
                 }}
@@ -333,8 +335,8 @@ export function ConditionAssessmentEditor({
                 value={draft.riskLevel}
                 onChange={(e) => onFieldChange('riskLevel', e.target.value)}
                 style={{
-                  borderRadius: '8px',
-                  border: '1px solid #d2d2d7',
+                  borderRadius: 'var(--ob-radius-md)',
+                  border: '1px solid var(--ob-color-border-subtle)',
                   padding: '0.55rem 0.75rem',
                   fontSize: '0.9rem',
                 }}
@@ -362,8 +364,8 @@ export function ConditionAssessmentEditor({
                 onChange={(e) => onFieldChange('inspectorName', e.target.value)}
                 placeholder="e.g. Jane Tan"
                 style={{
-                  borderRadius: '8px',
-                  border: '1px solid #d2d2d7',
+                  borderRadius: 'var(--ob-radius-md)',
+                  border: '1px solid var(--ob-color-border-subtle)',
                   padding: '0.55rem 0.75rem',
                   fontSize: '0.9rem',
                 }}
@@ -386,8 +388,8 @@ export function ConditionAssessmentEditor({
                   onFieldChange('recordedAtLocal', e.target.value)
                 }
                 style={{
-                  borderRadius: '8px',
-                  border: '1px solid #d2d2d7',
+                  borderRadius: 'var(--ob-radius-md)',
+                  border: '1px solid var(--ob-color-border-subtle)',
                   padding: '0.55rem 0.75rem',
                   fontSize: '0.9rem',
                 }}
@@ -406,8 +408,8 @@ export function ConditionAssessmentEditor({
               onChange={(e) => onFieldChange('summary', e.target.value)}
               rows={3}
               style={{
-                borderRadius: '8px',
-                border: '1px solid #d2d2d7',
+                borderRadius: 'var(--ob-radius-md)',
+                border: '1px solid var(--ob-color-border-subtle)',
                 padding: '0.75rem',
                 fontSize: '0.9rem',
               }}
@@ -425,8 +427,8 @@ export function ConditionAssessmentEditor({
               onChange={(e) => onFieldChange('scenarioContext', e.target.value)}
               rows={2}
               style={{
-                borderRadius: '8px',
-                border: '1px solid #d2d2d7',
+                borderRadius: 'var(--ob-radius-md)',
+                border: '1px solid var(--ob-color-border-subtle)',
                 padding: '0.75rem',
                 fontSize: '0.9rem',
               }}
@@ -445,8 +447,8 @@ export function ConditionAssessmentEditor({
               rows={3}
               placeholder="Site photo | https://example.com/photo.jpg"
               style={{
-                borderRadius: '8px',
-                border: '1px solid #d2d2d7',
+                borderRadius: 'var(--ob-radius-md)',
+                border: '1px solid var(--ob-color-border-subtle)',
                 padding: '0.75rem',
                 fontSize: '0.9rem',
               }}
@@ -458,8 +460,8 @@ export function ConditionAssessmentEditor({
               <div
                 key={`${system.name}-${index}`}
                 style={{
-                  border: '1px solid #e5e5e7',
-                  borderRadius: '12px',
+                  border: '1px solid var(--ob-color-border-subtle)',
+                  borderRadius: 'var(--ob-radius-sm)',
                   padding: '1rem',
                   display: 'grid',
                   gap: '0.75rem',
@@ -491,8 +493,8 @@ export function ConditionAssessmentEditor({
                         onSystemChange(index, 'name', e.target.value)
                       }
                       style={{
-                        borderRadius: '8px',
-                        border: '1px solid #d2d2d7',
+                        borderRadius: 'var(--ob-radius-md)',
+                        border: '1px solid var(--ob-color-border-subtle)',
                         padding: '0.55rem 0.75rem',
                         fontSize: '0.9rem',
                         minWidth: '12rem',
@@ -519,8 +521,8 @@ export function ConditionAssessmentEditor({
                           onSystemChange(index, 'rating', e.target.value)
                         }
                         style={{
-                          borderRadius: '8px',
-                          border: '1px solid #d2d2d7',
+                          borderRadius: 'var(--ob-radius-md)',
+                          border: '1px solid var(--ob-color-border-subtle)',
                           padding: '0.55rem 0.75rem',
                           fontSize: '0.9rem',
                           width: '6rem',
@@ -546,8 +548,8 @@ export function ConditionAssessmentEditor({
                           onSystemChange(index, 'score', e.target.value)
                         }
                         style={{
-                          borderRadius: '8px',
-                          border: '1px solid #d2d2d7',
+                          borderRadius: 'var(--ob-radius-md)',
+                          border: '1px solid var(--ob-color-border-subtle)',
                           padding: '0.55rem 0.75rem',
                           fontSize: '0.9rem',
                           width: '6rem',
@@ -574,8 +576,8 @@ export function ConditionAssessmentEditor({
                     }
                     rows={2}
                     style={{
-                      borderRadius: '8px',
-                      border: '1px solid #d2d2d7',
+                      borderRadius: 'var(--ob-radius-md)',
+                      border: '1px solid var(--ob-color-border-subtle)',
                       padding: '0.7rem',
                       fontSize: '0.9rem',
                     }}
@@ -603,8 +605,8 @@ export function ConditionAssessmentEditor({
                     }
                     rows={2}
                     style={{
-                      borderRadius: '8px',
-                      border: '1px solid #d2d2d7',
+                      borderRadius: 'var(--ob-radius-md)',
+                      border: '1px solid var(--ob-color-border-subtle)',
                       padding: '0.7rem',
                       fontSize: '0.9rem',
                     }}
@@ -627,8 +629,8 @@ export function ConditionAssessmentEditor({
               }
               rows={3}
               style={{
-                borderRadius: '8px',
-                border: '1px solid #d2d2d7',
+                borderRadius: 'var(--ob-radius-md)',
+                border: '1px solid var(--ob-color-border-subtle)',
                 padding: '0.75rem',
                 fontSize: '0.9rem',
               }}
@@ -648,10 +650,10 @@ export function ConditionAssessmentEditor({
               onClick={onClose}
               disabled={isSaving}
               style={{
-                border: '1px solid #d2d2d7',
+                border: '1px solid var(--ob-color-border-subtle)',
                 background: 'white',
-                color: '#1d1d1f',
-                borderRadius: '9999px',
+                color: 'var(--ob-color-text-primary)',
+                borderRadius: 'var(--ob-radius-pill)',
                 padding: '0.55rem 1.25rem',
                 fontSize: '0.875rem',
                 fontWeight: 600,
@@ -665,9 +667,9 @@ export function ConditionAssessmentEditor({
               disabled={isSaving}
               style={{
                 border: 'none',
-                background: '#1d1d1f',
+                background: 'var(--ob-color-text-primary)',
                 color: 'white',
-                borderRadius: '9999px',
+                borderRadius: 'var(--ob-radius-pill)',
                 padding: '0.55rem 1.5rem',
                 fontSize: '0.875rem',
                 fontWeight: 600,

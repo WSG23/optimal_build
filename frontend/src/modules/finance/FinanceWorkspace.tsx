@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
 import {
   updateConstructionLoan,
@@ -8,31 +16,18 @@ import {
   exportFinanceScenarioCsv,
   type ConstructionLoanInput,
   type SensitivityBandInput,
-  type FinanceScenarioSummary,
   type FinanceAnalyticsMetadata,
 } from '../../api/finance'
 import { resolveDefaultRole } from '../../api/identity'
 import { AppLayout } from '../../App'
 import { useTranslation } from '../../i18n'
 import { useRouterController } from '../../router'
-import { FinanceAssetBreakdown } from './components/FinanceAssetBreakdown'
-import { FinanceCapitalStack } from './components/FinanceCapitalStack'
-import { FinanceDrawdownSchedule } from './components/FinanceDrawdownSchedule'
-import { FinanceFacilityEditor } from './components/FinanceFacilityEditor'
-import { FinanceJobTimeline } from './components/FinanceJobTimeline'
-import { FinanceLoanInterest } from './components/FinanceLoanInterest'
-import { FinanceScenarioTable } from './components/FinanceScenarioTable'
-import { FinanceSensitivityTable } from './components/FinanceSensitivityTable'
-import { FinanceSensitivitySummary } from './components/FinanceSensitivitySummary'
 import { buildSensitivitySummaries } from './components/sensitivitySummary'
-import { FinanceAnalyticsPanel } from './components/FinanceAnalyticsPanel'
-import { FinanceScenarioCreator } from './components/FinanceScenarioCreator'
 import { FinanceScenarioDeleteDialog } from './components/FinanceScenarioDeleteDialog'
-import { FinanceSensitivityControls } from './components/FinanceSensitivityControls'
 import {
-  FinanceProjectSelector,
+  FinanceHeaderControls,
   type FinanceProjectOption,
-} from './components/FinanceProjectSelector'
+} from './components/FinanceHeaderControls'
 import {
   FinanceAccessGate,
   FinanceIdentityHelper,
@@ -44,19 +39,70 @@ import '../../styles/finance/polish.css'
 // Material UI Imports
 import {
   Box,
-  Button,
   Stack,
   Typography,
   Alert,
   CircularProgress,
   Tabs,
   Tab,
+  alpha,
+  useTheme,
 } from '@mui/material'
-import { Refresh, Download, Warning } from '@mui/icons-material'
+import {
+  Warning,
+  PushPin as PushPinIcon,
+  PushPinOutlined as PushPinOutlinedIcon,
+} from '@mui/icons-material'
 
 // Canonical Components
-import { AnimatedPageHeader } from '../../components/canonical/AnimatedPageHeader'
-import { GlassCard } from '../../components/canonical/GlassCard'
+import { Button } from '../../components/canonical/Button'
+import { Card } from '../../components/canonical/Card'
+
+const FinanceAssetBreakdown = lazy(
+  () => import('./components/FinanceAssetBreakdown'),
+)
+const FinanceCapitalStack = lazy(
+  () => import('./components/FinanceCapitalStack'),
+)
+const FinanceDrawdownSchedule = lazy(
+  () => import('./components/FinanceDrawdownSchedule'),
+)
+const FinanceLoanInterest = lazy(
+  () => import('./components/FinanceLoanInterest'),
+)
+const FinanceSensitivityTable = lazy(
+  () => import('./components/FinanceSensitivityTable'),
+)
+const FinanceScenarioCreator = lazy(() =>
+  import('./components/FinanceScenarioCreator').then((module) => ({
+    default: module.FinanceScenarioCreator,
+  })),
+)
+const FinanceFacilityEditor = lazy(() =>
+  import('./components/FinanceFacilityEditor').then((module) => ({
+    default: module.FinanceFacilityEditor,
+  })),
+)
+const FinanceJobTimeline = lazy(() =>
+  import('./components/FinanceJobTimeline').then((module) => ({
+    default: module.FinanceJobTimeline,
+  })),
+)
+const FinanceAnalyticsPanel = lazy(() =>
+  import('./components/FinanceAnalyticsPanel').then((module) => ({
+    default: module.FinanceAnalyticsPanel,
+  })),
+)
+const FinanceSensitivityControls = lazy(() =>
+  import('./components/FinanceSensitivityControls').then((module) => ({
+    default: module.FinanceSensitivityControls,
+  })),
+)
+const FinanceSensitivitySummary = lazy(() =>
+  import('./components/FinanceSensitivitySummary').then((module) => ({
+    default: module.FinanceSensitivitySummary,
+  })),
+)
 
 // Align with seeded Phase 2B finance demo data (see backend/scripts/seed_finance_demo.py)
 const FINANCE_PROJECT_ID = '401'
@@ -250,6 +296,7 @@ const DEFAULT_SENSITIVITY_HEADERS = [
 
 export function FinanceWorkspace() {
   const { t } = useTranslation()
+  const theme = useTheme()
   const router = useRouterController()
   const { search, path, navigate } = router
   const projectParams = useMemo(() => parseProjectParams(search), [search])
@@ -272,6 +319,7 @@ export function FinanceWorkspace() {
     FinanceProjectOption[]
   >(() => readCapturedProjectsFromStorage())
   const [activeTab, setActiveTab] = useState(0)
+  const [isHeaderPinned, setIsHeaderPinned] = useState(true)
 
   useEffect(() => {
     setCapturedProjects(readCapturedProjectsFromStorage())
@@ -344,8 +392,10 @@ export function FinanceWorkspace() {
   )
   const [runningSensitivity, setRunningSensitivity] = useState(false)
   const [sensitivityError, setSensitivityError] = useState<string | null>(null)
-  const [scenarioPendingDelete, setScenarioPendingDelete] =
-    useState<FinanceScenarioSummary | null>(null)
+  const [scenarioPendingDelete, setScenarioPendingDelete] = useState<{
+    scenarioId: number
+    scenarioName: string
+  } | null>(null)
   const [deletingScenarioId, setDeletingScenarioId] = useState<number | null>(
     null,
   )
@@ -636,8 +686,8 @@ export function FinanceWorkspace() {
   )
 
   const handleRequestDeleteScenario = useCallback(
-    (scenario: FinanceScenarioSummary) => {
-      setScenarioPendingDelete(scenario)
+    (scenarioId: number, scenarioName: string) => {
+      setScenarioPendingDelete({ scenarioId, scenarioName })
       setScenarioMessage(null)
     },
     [],
@@ -703,57 +753,178 @@ export function FinanceWorkspace() {
     [primaryScenario, refresh, runningSensitivity, t],
   )
 
-  return (
-    <AppLayout title={t('finance.title')} subtitle={t('finance.subtitle')}>
-      <Box className="finance-workspace" sx={{ pb: 8 }}>
-        <Box sx={{ p: 3 }}>
-          <AnimatedPageHeader
-            title={t('finance.title')}
-            subtitle={t('finance.subtitle')}
-            breadcrumbs={[
-              { label: 'Dashboard', href: '/' },
-              { label: 'Finance' },
-            ]}
-            actions={
-              <Stack direction="row" spacing={2}>
-                <Button
-                  variant="outlined"
-                  startIcon={
-                    loading ? <CircularProgress size={16} /> : <Refresh />
-                  }
-                  onClick={refresh}
-                  disabled={loading}
-                >
-                  {t('finance.actions.refresh')}
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<Download />}
-                  onClick={handleExportCsv}
-                  disabled={!primaryScenario || exportingScenario}
-                >
-                  {exportingScenario
-                    ? 'Exporting...'
-                    : t('finance.actions.exportCsv')}
-                </Button>
-              </Stack>
-            }
-          />
+  const headerActions = hasAccess ? (
+    <Stack
+      direction="row"
+      spacing="var(--ob-space-100)"
+      alignItems="center"
+      justifyContent="flex-end"
+      sx={{
+        flexWrap: 'nowrap',
+        minWidth: 0,
+        columnGap: 'var(--ob-space-100)',
+      }}
+    >
+      <FinanceHeaderControls
+        selectedProjectId={effectiveProjectId}
+        selectedProjectName={effectiveProjectName ?? null}
+        options={capturedProjects}
+        onProjectChange={handleProjectChange}
+        onRefresh={() => {
+          refreshCapturedProjects()
+          refresh()
+        }}
+        refreshing={loading}
+        onExportCsv={handleExportCsv}
+        exporting={exportingScenario}
+        exportDisabled={!primaryScenario}
+      />
 
-          {/* Project Selector - Wrapped in GlassCard */}
-          <Box sx={{ mt: 3, mb: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Project Selection
-            </Typography>
-            <GlassCard sx={{ p: 3 }}>
-              <FinanceProjectSelector
-                selectedProjectId={effectiveProjectId}
-                selectedProjectName={effectiveProjectName ?? null}
-                options={capturedProjects}
-                onProjectChange={handleProjectChange}
-                onRefresh={refreshCapturedProjects}
-              />
-            </GlassCard>
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() => setIsHeaderPinned((prev) => !prev)}
+        aria-label={
+          isHeaderPinned
+            ? t('finance.header.unpin', {
+                defaultValue: 'Unpin header (scroll)',
+              })
+            : t('finance.header.pin', {
+                defaultValue: 'Pin header (sticky)',
+              })
+        }
+        title={
+          isHeaderPinned
+            ? t('finance.header.unpin', {
+                defaultValue: 'Unpin header (scroll)',
+              })
+            : t('finance.header.pin', {
+                defaultValue: 'Pin header (sticky)',
+              })
+        }
+        sx={{
+          width: 'var(--ob-size-icon-md)',
+          minWidth: 'var(--ob-size-icon-md)',
+          px: 0,
+        }}
+      >
+        {isHeaderPinned ? (
+          <PushPinIcon fontSize="small" />
+        ) : (
+          <PushPinOutlinedIcon fontSize="small" />
+        )}
+      </Button>
+    </Stack>
+  ) : undefined
+
+  const panelFallback = (
+    <Card
+      variant="glass"
+      sx={{
+        p: 'var(--ob-space-200)',
+        display: 'flex',
+        justifyContent: 'center',
+      }}
+    >
+      <CircularProgress />
+    </Card>
+  )
+
+  return (
+    <AppLayout
+      title={t('finance.title')}
+      subtitle={t('finance.subtitle')}
+      hideHeader
+    >
+      <Box className="finance-workspace" sx={{ pb: 'var(--ob-space-400)' }}>
+        <Box sx={{ px: 'var(--ob-space-150)' }}>
+          <Box
+            sx={{
+              ...(isHeaderPinned
+                ? {
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 'var(--ob-z-sticky)',
+                  }
+                : {}),
+              mb: 'var(--ob-space-150)',
+            }}
+          >
+            <Box
+              component="header"
+              key={path}
+              sx={{
+                borderBottom: 1,
+                borderColor: 'divider',
+                background: alpha(theme.palette.background.default, 0.8),
+                backdropFilter: 'blur(var(--ob-blur-md))',
+                WebkitBackdropFilter: 'blur(var(--ob-blur-md))',
+                animation:
+                  'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
+                '@media (prefers-reduced-motion: reduce)': {
+                  animation: 'none',
+                },
+              }}
+            >
+              <Box
+                sx={{
+                  px: 'var(--ob-space-300)',
+                  py: 'var(--ob-space-200)',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  gap: 'var(--ob-space-150)',
+                  flexWrap: { xs: 'wrap', md: 'nowrap' },
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                    {t('finance.title')}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: 'text.secondary', mt: 'var(--ob-space-025)' }}
+                  >
+                    {t('finance.subtitle')}
+                  </Typography>
+                </Box>
+                {headerActions}
+              </Box>
+
+              <Box
+                sx={{
+                  borderTop: 1,
+                  borderColor: 'divider',
+                  px: 'var(--ob-space-300)',
+                }}
+              >
+                <Tabs
+                  value={activeTab}
+                  onChange={(_, v) => setActiveTab(v)}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  allowScrollButtonsMobile
+                  sx={{
+                    minHeight: 'var(--ob-space-300)',
+                    '& .MuiTab-root': {
+                      minHeight: 'var(--ob-space-300)',
+                      textTransform: 'none',
+                      fontSize: 'var(--ob-font-size-sm)',
+                      px: 'var(--ob-space-100)',
+                    },
+                  }}
+                >
+                  <Tab label={t('finance.tabs.capitalStack')} />
+                  <Tab label={t('finance.tabs.drawdownSchedule')} />
+                  <Tab label={t('finance.tabs.assetBreakdown')} />
+                  <Tab label={t('finance.tabs.facilityEditor')} />
+                  <Tab label={t('finance.tabs.jobTimeline')} />
+                  <Tab label={t('finance.tabs.loanInterest')} />
+                  <Tab label={t('finance.tabs.analytics')} />
+                  <Tab label={t('finance.tabs.sensitivity')} />
+                </Tabs>
+              </Box>
+            </Box>
           </Box>
 
           {!hasAccess ? (
@@ -761,7 +932,7 @@ export function FinanceWorkspace() {
           ) : (
             <>
               {error && (
-                <Alert severity="error" sx={{ mb: 3 }}>
+                <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
                   <strong>{t('finance.errors.generic')}</strong>
                   <Box component="span" sx={{ display: 'block' }}>
                     {error}
@@ -771,15 +942,20 @@ export function FinanceWorkspace() {
               )}
 
               {loading && (
-                <GlassCard
-                  sx={{ p: 4, display: 'flex', justifyContent: 'center' }}
+                <Card
+                  variant="glass"
+                  sx={{
+                    p: 'var(--ob-space-200)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                  }}
                 >
                   <CircularProgress />
-                </GlassCard>
+                </Card>
               )}
 
               {scenarioError && (
-                <Alert severity="error" sx={{ mb: 3 }}>
+                <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
                   {scenarioError}
                   {needsScenarioCreateIdentity && (
                     <FinanceIdentityHelper compact />
@@ -787,190 +963,186 @@ export function FinanceWorkspace() {
                 </Alert>
               )}
               {scenarioMessage && (
-                <Alert severity="success" sx={{ mb: 3 }}>
+                <Alert severity="success" sx={{ mb: 'var(--ob-space-150)' }}>
                   {scenarioMessage}
                 </Alert>
               )}
 
-              <Box sx={{ mb: 4 }}>
-                <FinanceScenarioCreator
-                  projectId={effectiveProjectId}
-                  projectName={projectDisplayName}
-                  onCreated={(summary) => {
-                    setScenarioMessage(
-                      t('finance.scenarioCreator.success', {
-                        name: summary.scenarioName,
-                      }),
-                    )
-                    setScenarioError(null)
-                    addScenario(summary)
-                  }}
-                  onError={(message) => {
-                    setScenarioError(message)
-                    setScenarioMessage(null)
-                  }}
-                  onRefresh={() => {
-                    refresh()
-                  }}
-                />
-              </Box>
+              <div role="tabpanel" hidden={activeTab !== 0}>
+                {activeTab === 0 && (
+                  <Stack spacing="var(--ob-space-200)">
+                    <Suspense fallback={panelFallback}>
+                      <FinanceScenarioCreator
+                        projectId={effectiveProjectId}
+                        projectName={projectDisplayName}
+                        onCreated={(summary) => {
+                          setScenarioMessage(
+                            t('finance.scenarioCreator.success', {
+                              name: summary.scenarioName,
+                            }),
+                          )
+                          setScenarioError(null)
+                          addScenario(summary)
+                        }}
+                        onError={(message) => {
+                          setScenarioError(message)
+                          setScenarioMessage(null)
+                        }}
+                        onRefresh={() => {
+                          refresh()
+                        }}
+                      />
+                    </Suspense>
 
-              {primaryScenario?.isPrivate ? (
-                <FinancePrivacyNotice projectName={projectDisplayName} />
-              ) : null}
+                    {primaryScenario?.isPrivate ? (
+                      <FinancePrivacyNotice projectName={projectDisplayName} />
+                    ) : null}
 
-              {showEmptyState && (
-                <GlassCard sx={{ p: 6, textAlign: 'center' }}>
-                  <Typography variant="h5" gutterBottom>
-                    {t('finance.table.empty')}
-                  </Typography>
-                </GlassCard>
-              )}
+                    {showEmptyState && (
+                      <Card
+                        variant="glass"
+                        sx={{ p: 'var(--ob-space-300)', textAlign: 'center' }}
+                      >
+                        <Typography variant="h5" gutterBottom>
+                          {t('finance.table.empty')}
+                        </Typography>
+                      </Card>
+                    )}
 
-              {primaryScenario?.scenarioId === 0 && (
-                <Alert severity="warning" sx={{ mb: 4 }} icon={<Warning />}>
-                  <strong>{t('finance.warnings.offlineMode')}</strong>
-                  <Typography variant="body2">
-                    {t('finance.warnings.offlineModeDetail') ||
-                      'You are viewing offline demonstration data. Changes cannot be saved correctly until the backend service is available.'}
-                  </Typography>
-                </Alert>
-              )}
+                    {primaryScenario?.scenarioId === 0 && (
+                      <Alert
+                        severity="warning"
+                        icon={<Warning />}
+                        sx={{ mb: 'var(--ob-space-050)' }}
+                      >
+                        <strong>{t('finance.warnings.offlineMode')}</strong>
+                        <Typography variant="body2">
+                          {t('finance.warnings.offlineModeDetail') ||
+                            'You are viewing offline demonstration data. Changes cannot be saved correctly until the backend service is available.'}
+                        </Typography>
+                      </Alert>
+                    )}
 
-              {scenarios.length > 0 && (
-                <Stack spacing={4}>
-                  {/* Scenario Management */}
-                  <GlassCard sx={{ p: 3 }}>
-                    <Typography variant="h5" fontWeight={600} gutterBottom>
-                      Scenarios
-                    </Typography>
-                    <FinanceScenarioTable
-                      scenarios={scenarios}
-                      onMarkPrimary={handleMarkPrimary}
-                      updatingScenarioId={promotingScenarioId}
-                      onDeleteScenario={handleRequestDeleteScenario}
-                      deletingScenarioId={deletingScenarioId}
+                    {scenarios.length > 0 && (
+                      <Suspense fallback={panelFallback}>
+                        <FinanceCapitalStack
+                          scenarios={scenarios}
+                          onMarkPrimary={handleMarkPrimary}
+                          updatingScenarioId={promotingScenarioId}
+                          onRequestDelete={handleRequestDeleteScenario}
+                          deletingScenarioId={deletingScenarioId}
+                        />
+                      </Suspense>
+                    )}
+                  </Stack>
+                )}
+              </div>
+
+              <div role="tabpanel" hidden={activeTab !== 1}>
+                {activeTab === 1 && (
+                  <Suspense fallback={panelFallback}>
+                    <FinanceDrawdownSchedule scenarios={scenarios} />
+                  </Suspense>
+                )}
+              </div>
+              <div role="tabpanel" hidden={activeTab !== 2}>
+                {activeTab === 2 && primaryScenario && (
+                  <Suspense fallback={panelFallback}>
+                    <FinanceAssetBreakdown
+                      summary={primaryScenario.assetMixSummary ?? null}
+                      breakdowns={primaryScenario.assetBreakdowns ?? []}
                     />
-                  </GlassCard>
-
-                  {/* Reports Tabs */}
-                  <Box>
-                    <Tabs
-                      value={activeTab}
-                      onChange={(_, v) => setActiveTab(v)}
-                      sx={{ mb: 2 }}
-                    >
-                      <Tab label="Capital Stack" />
-                      <Tab label="Drawdown Schedule" />
-                      <Tab label="Asset Breakdown" />
-                      <Tab label="Facility Editor" />
-                      <Tab label="Job Timeline" />
-                      <Tab label="Loan Interest" />
-                      <Tab label="Analytics" />
-                      <Tab label="Sensitivity" />
-                    </Tabs>
-
-                    <GlassCard sx={{ p: 3, minHeight: 400 }}>
-                      <div role="tabpanel" hidden={activeTab !== 0}>
-                        {activeTab === 0 && (
-                          <FinanceCapitalStack scenarios={scenarios} />
-                        )}
-                      </div>
-                      <div role="tabpanel" hidden={activeTab !== 1}>
-                        {activeTab === 1 && (
-                          <FinanceDrawdownSchedule scenarios={scenarios} />
-                        )}
-                      </div>
-                      <div role="tabpanel" hidden={activeTab !== 2}>
-                        {activeTab === 2 && primaryScenario && (
-                          <FinanceAssetBreakdown
-                            summary={primaryScenario.assetMixSummary ?? null}
-                            breakdowns={primaryScenario.assetBreakdowns ?? []}
+                  </Suspense>
+                )}
+              </div>
+              <div role="tabpanel" hidden={activeTab !== 3}>
+                {activeTab === 3 && (
+                  <Suspense fallback={panelFallback}>
+                    <FinanceFacilityEditor
+                      scenario={primaryScenario ?? null}
+                      onSave={handleSaveLoan}
+                      saving={savingLoan}
+                    />
+                  </Suspense>
+                )}
+              </div>
+              <div role="tabpanel" hidden={activeTab !== 4}>
+                {activeTab === 4 && (
+                  <Suspense fallback={panelFallback}>
+                    <FinanceJobTimeline
+                      jobs={timelineJobs}
+                      pendingCount={pendingCount}
+                    />
+                  </Suspense>
+                )}
+              </div>
+              <div role="tabpanel" hidden={activeTab !== 5}>
+                {activeTab === 5 && (
+                  <Suspense fallback={panelFallback}>
+                    <FinanceLoanInterest
+                      schedule={
+                        primaryScenario?.constructionLoanInterest ?? null
+                      }
+                    />
+                  </Suspense>
+                )}
+              </div>
+              <div role="tabpanel" hidden={activeTab !== 6}>
+                {activeTab === 6 && analyticsMetadata && (
+                  <Suspense fallback={panelFallback}>
+                    <Box>
+                      <FinanceAnalyticsPanel
+                        analytics={analyticsMetadata}
+                        currency={primaryScenario?.currency ?? 'SGD'}
+                      />
+                      <Box sx={{ mt: 'var(--ob-space-100)' }}>
+                        {primaryScenario && (
+                          <FinanceSensitivityControls
+                            scenario={primaryScenario}
+                            pendingJobs={pendingCount}
+                            disabled={runningSensitivity}
+                            error={sensitivityError}
+                            onRun={handleRunSensitivity}
                           />
                         )}
-                      </div>
-                      <div role="tabpanel" hidden={activeTab !== 3}>
-                        {activeTab === 3 && (
-                          <FinanceFacilityEditor
-                            scenario={primaryScenario ?? null}
-                            onSave={handleSaveLoan}
-                            saving={savingLoan}
+                      </Box>
+                    </Box>
+                  </Suspense>
+                )}
+              </div>
+              <div role="tabpanel" hidden={activeTab !== 7}>
+                {activeTab === 7 && (
+                  <Suspense fallback={panelFallback}>
+                    <Box>
+                      <FinanceSensitivitySummary
+                        summaries={sensitivitySummaries}
+                        currency={primaryScenario?.currency ?? 'SGD'}
+                      />
+                      <Box sx={{ my: 'var(--ob-space-100)' }}>
+                        {primaryScenario && (
+                          <FinanceSensitivityControls
+                            scenario={primaryScenario}
+                            pendingJobs={pendingCount}
+                            disabled={runningSensitivity}
+                            error={sensitivityError}
+                            onRun={handleRunSensitivity}
                           />
                         )}
-                      </div>
-                      <div role="tabpanel" hidden={activeTab !== 4}>
-                        {activeTab === 4 && (
-                          <FinanceJobTimeline
-                            jobs={timelineJobs}
-                            pendingCount={pendingCount}
-                          />
-                        )}
-                      </div>
-                      <div role="tabpanel" hidden={activeTab !== 5}>
-                        {activeTab === 5 && (
-                          <FinanceLoanInterest
-                            schedule={
-                              primaryScenario?.constructionLoanInterest ?? null
-                            }
-                          />
-                        )}
-                      </div>
-                      <div role="tabpanel" hidden={activeTab !== 6}>
-                        {activeTab === 6 && analyticsMetadata && (
-                          <Box>
-                            <FinanceAnalyticsPanel
-                              analytics={analyticsMetadata}
-                              currency={primaryScenario?.currency ?? 'SGD'}
-                            />
-                            <Box mt={2}>
-                              {primaryScenario && (
-                                <FinanceSensitivityControls
-                                  scenario={primaryScenario}
-                                  pendingJobs={pendingCount}
-                                  disabled={runningSensitivity}
-                                  error={sensitivityError}
-                                  onRun={handleRunSensitivity}
-                                />
-                              )}
-                            </Box>
-                          </Box>
-                        )}
-                      </div>
-                      <div role="tabpanel" hidden={activeTab !== 7}>
-                        {activeTab === 7 && (
-                          <Box>
-                            <FinanceSensitivitySummary
-                              summaries={sensitivitySummaries}
-                              currency={primaryScenario?.currency ?? 'SGD'}
-                            />
-                            <Box my={2}>
-                              {primaryScenario && (
-                                <FinanceSensitivityControls
-                                  scenario={primaryScenario}
-                                  pendingJobs={pendingCount}
-                                  disabled={runningSensitivity}
-                                  error={sensitivityError}
-                                  onRun={handleRunSensitivity}
-                                />
-                              )}
-                            </Box>
-                            <FinanceSensitivityTable
-                              outcomes={filteredSensitivity}
-                              currency={primaryScenario?.currency ?? 'SGD'}
-                              parameters={parameters}
-                              selectedParameters={selectedParameters}
-                              onSelectAll={handleSelectAll}
-                              onToggleParameter={handleToggleParameter}
-                              onDownloadCsv={handleDownloadCsv}
-                              onDownloadJson={handleDownloadJson}
-                            />
-                          </Box>
-                        )}
-                      </div>
-                    </GlassCard>
-                  </Box>
-                </Stack>
-              )}
+                      </Box>
+                      <FinanceSensitivityTable
+                        outcomes={filteredSensitivity}
+                        currency={primaryScenario?.currency ?? 'SGD'}
+                        parameters={parameters}
+                        selectedParameters={selectedParameters}
+                        onSelectAll={handleSelectAll}
+                        onToggleParameter={handleToggleParameter}
+                        onDownloadCsv={handleDownloadCsv}
+                        onDownloadJson={handleDownloadJson}
+                      />
+                    </Box>
+                  </Suspense>
+                )}
+              </div>
 
               <FinanceScenarioDeleteDialog
                 open={scenarioPendingDelete !== null}

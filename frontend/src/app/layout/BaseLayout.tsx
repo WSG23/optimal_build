@@ -1,31 +1,48 @@
-import { ReactNode } from 'react'
-import { YosaiSidebar } from '../../components/layout/YosaiSidebar'
+import { ReactNode, useEffect, useState } from 'react'
 import { Box } from '@mui/material'
 import { BaseLayoutProvider } from './BaseLayoutContext'
+import { YosaiTopNav } from '../../components/layout/YosaiTopNav'
 
 export function BaseLayout({ children }: { children: ReactNode }) {
+  const [isNavPinned, setIsNavPinned] = useState(() => {
+    if (typeof window === 'undefined') return true
+    const value = window.localStorage.getItem('ob_top_nav_pinned')
+    return value !== 'false'
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem('ob_top_nav_pinned', String(isNavPinned))
+  }, [isNavPinned])
+
+  const topOffset = isNavPinned
+    ? 'calc(var(--ob-space-250) + var(--ob-space-300))'
+    : 0
+
   return (
-    <BaseLayoutProvider value={{ inBaseLayout: true }}>
+    <BaseLayoutProvider value={{ inBaseLayout: true, topOffset }}>
       <Box
         sx={{
           display: 'flex',
-          minHeight: '100vh',
+          flexDirection: 'column',
+          height: '100vh',
+          overflow: 'hidden',
           bgcolor: 'background.default',
           color: 'text.primary',
         }}
       >
-        <Box
-          sx={{ position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 1200 }}
-        >
-          <YosaiSidebar />
-        </Box>
+        <YosaiTopNav
+          isPinned={isNavPinned}
+          onTogglePinned={() => setIsNavPinned((prev) => !prev)}
+        />
         <Box
           sx={{
             flexGrow: 1,
-            marginLeft: '280px',
             minWidth: 0,
             display: 'flex',
             flexDirection: 'column',
+            minHeight: 0,
+            overflow: 'hidden',
           }}
         >
           {children}

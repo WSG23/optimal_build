@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Literal, AsyncGenerator
+from typing import Annotated, Literal, AsyncGenerator
 
 from dataclasses import dataclass
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.async_db import AsyncSessionLocal
+from app.schemas.common import PaginationParams
 
 Role = Literal["viewer", "developer", "reviewer", "admin"]
 
@@ -95,6 +96,47 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
+def get_pagination(
+    limit: Annotated[
+        int,
+        Query(
+            ge=1,
+            le=100,
+            description="Maximum number of items to return (1-100)",
+        ),
+    ] = 20,
+    offset: Annotated[
+        int,
+        Query(
+            ge=0,
+            description="Number of items to skip",
+        ),
+    ] = 0,
+    cursor: Annotated[
+        str | None,
+        Query(
+            description="Opaque cursor for cursor-based pagination",
+        ),
+    ] = None,
+) -> PaginationParams:
+    """Dependency for extracting pagination parameters from query string.
+
+    Usage:
+        @router.get("/items")
+        async def list_items(
+            pagination: PaginationParams = Depends(get_pagination),
+        ):
+            limit, offset = pagination.normalize()
+            items = await fetch_items(limit=limit, offset=offset)
+            return PaginatedResponse.create(items, total, limit, offset)
+    """
+    return PaginationParams(limit=limit, offset=offset, cursor=cursor)
+
+
+# Type alias for cleaner dependency injection
+Pagination = Annotated[PaginationParams, Depends(get_pagination)]
+
+
 __all__ = [
     "RequestIdentity",
     "Role",
@@ -103,4 +145,7 @@ __all__ = [
     "require_reviewer",
     "require_viewer",
     "get_db",
+    "get_pagination",
+    "Pagination",
+    "PaginationParams",
 ]

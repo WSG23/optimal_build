@@ -68,12 +68,14 @@ from app.middleware.request_guards import (
     RequestSizeLimitMiddleware,
 )
 from app.middleware.security import SecurityHeadersMiddleware
+from app.middleware.exception_handler import register_exception_handlers
 from app.models.rkp import RefRule
 from app.schemas.buildable import BUILDABLE_REQUEST_EXAMPLE, BUILDABLE_RESPONSE_EXAMPLE
 from app.schemas.finance import (
     FINANCE_FEASIBILITY_REQUEST_EXAMPLE,
     FINANCE_FEASIBILITY_RESPONSE_EXAMPLE,
 )
+from app.utils.client_ip import get_client_ip
 from app.utils import metrics
 from app.utils.logging import configure_logging, get_logger, log_event
 from sqlalchemy import func, select, text
@@ -95,23 +97,55 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         log_event(logger, "app_shutdown")
 
 
+# Security: Disable API documentation in production to reduce attack surface
+_is_production = settings.ENVIRONMENT.lower() == "production"
+_docs_url = None if _is_production else "/docs"
+_redoc_url = None if _is_production else "/redoc"
+_openapi_url = None if _is_production else "/openapi.json"
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url=_docs_url,
+    redoc_url=_redoc_url,
+    openapi_url=_openapi_url,
     lifespan=lifespan,
     openapi_tags=TAGS_METADATA,
 )
 
+# Register standardized exception handlers for AppError hierarchy
+register_exception_handlers(app)
+
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=500)
+
+# CORS configuration - restrict headers based on environment
+# Security: Development headers (X-Role, X-User-Id, X-User-Email) are NOT allowed in production
+_PRODUCTION_ALLOWED_HEADERS = [
+    "Authorization",
+    "Content-Type",
+    "Accept",
+    "Origin",
+    "X-Requested-With",
+    "X-Correlation-ID",  # Request tracing
+]
+
+_DEVELOPMENT_ALLOWED_HEADERS = _PRODUCTION_ALLOWED_HEADERS + [
+    "X-Role",  # Development role header - NEVER in production
+    "X-User-Id",  # Development user ID header - NEVER in production
+    "X-User-Email",  # Development email header - NEVER in production
+]
+
+_ALLOWED_HEADERS = (
+    _PRODUCTION_ALLOWED_HEADERS if _is_production else _DEVELOPMENT_ALLOWED_HEADERS
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=_ALLOWED_HEADERS,
 )
 app.add_middleware(ApiErrorLoggingMiddleware, logger=logger)
 app.add_middleware(RequestMetricsMiddleware)
@@ -121,12 +155,16 @@ app.add_middleware(RequestSizeLimitMiddleware, max_size_bytes=10 * 1024 * 1024)
 app.add_middleware(CorrelationIdMiddleware)
 
 
+def _get_client_ip(request: Request) -> str:
+    return get_client_ip(request, get_remote_address)
+
+
 def _build_rate_limiter() -> Limiter:
     """Construct the rate limiter using Redis storage when available."""
 
     try:
         limiter_instance = Limiter(
-            key_func=get_remote_address,
+            key_func=_get_client_ip,
             default_limits=[settings.API_RATE_LIMIT],
             storage_uri=settings.RATE_LIMIT_STORAGE_URI,
         )
@@ -139,7 +177,7 @@ def _build_rate_limiter() -> Limiter:
             error=str(exc),
         )
         return Limiter(
-            key_func=get_remote_address,
+            key_func=_get_client_ip,
             default_limits=[settings.API_RATE_LIMIT],
         )
 
@@ -156,7 +194,7 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONRe
     log_event(
         logger,
         "rate_limit_exceeded",
-        client_host=request.client.host if request.client else "unknown",
+        client_host=_get_client_ip(request),
         path=request.url.path,
     )
     return JSONResponse(

@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { DEFAULT_COORDINATES } from '@/constants'
 
 // ============================================================================
 // Types
@@ -127,9 +128,9 @@ export function PropertyLocationMap({
 
   const [isMapLoaded, setIsMapLoaded] = useState(false)
 
-  // Parse coordinates
-  const lat = parseFloat(latitude) || 1.3
-  const lon = parseFloat(longitude) || 103.85
+  // Parse coordinates - use canonical defaults as fallback (SSoT)
+  const lat = parseFloat(latitude) || DEFAULT_COORDINATES.latitude
+  const lon = parseFloat(longitude) || DEFAULT_COORDINATES.longitude
 
   // Initialize map
   useEffect(() => {
@@ -328,9 +329,9 @@ export function PropertyLocationMap({
         style={{
           width: '100%',
           height: `${height}px`,
-          borderRadius: '12px',
+          borderRadius: 'var(--ob-radius-sm)',
           overflow: 'hidden',
-          background: '#f5f5f7',
+          background: 'var(--ob-color-bg-surface-elevated)',
         }}
         aria-label="Property location map"
       />
@@ -354,8 +355,8 @@ export function PropertyLocationMap({
             fontSize: '0.75rem',
             fontWeight: 500,
             background: 'white',
-            border: '1px solid #d2d2d7',
-            borderRadius: '8px',
+            border: '1px solid var(--ob-color-border-subtle)',
+            borderRadius: 'var(--ob-radius-sm)',
             cursor: 'pointer',
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
           }}
@@ -373,7 +374,7 @@ export function PropertyLocationMap({
             top: '0.5rem',
             left: '0.5rem',
             background: 'white',
-            borderRadius: '8px',
+            borderRadius: 'var(--ob-radius-sm)',
             padding: '0.5rem 0.75rem',
             fontSize: '0.7rem',
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
@@ -416,10 +417,10 @@ export function PropertyLocationMap({
           bottom: '0.5rem',
           left: '0.5rem',
           background: 'rgba(255,255,255,0.9)',
-          borderRadius: '4px',
+          borderRadius: 'var(--ob-radius-sm)',
           padding: '2px 6px',
           fontSize: '0.6rem',
-          color: '#666',
+          color: 'var(--ob-color-text-muted)',
           zIndex: 1000,
         }}
       >
@@ -432,7 +433,7 @@ export function PropertyLocationMap({
           style={{
             margin: '0.5rem 0 0',
             fontSize: '0.8rem',
-            color: '#6e6e73',
+            color: 'var(--ob-color-text-muted)',
           }}
         >
           Click on the map or drag the marker to adjust coordinates.

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Box,
   Button,
@@ -34,45 +34,48 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
   const [loading, setLoading] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
 
-  // Mock data for initial dev
-  const mockWorkflows: ApprovalWorkflow[] = [
-    {
-      id: 'w1',
-      project_id: projectId,
-      title: 'Concept Design Sign-off',
-      workflow_type: 'design_review',
-      status: 'in_progress',
-      created_by_id: 'u1',
-      created_at: new Date().toISOString(),
-      steps: [
-        {
-          id: 's1',
-          workflow_id: 'w1',
-          name: 'Architectural Review',
-          sequence_order: 1,
-          status: 'approved',
-          approved_by_id: 'u2',
-          decision_at: new Date().toISOString(),
-        },
-        {
-          id: 's2',
-          workflow_id: 'w1',
-          name: 'Structural Feasibility',
-          sequence_order: 2,
-          status: 'in_review',
-        },
-        {
-          id: 's3',
-          workflow_id: 'w1',
-          name: 'Client Approval',
-          sequence_order: 3,
-          status: 'pending',
-        },
-      ],
-    },
-  ]
+  // Mock data for initial dev - memoized to prevent unnecessary re-renders
+  const mockWorkflows = useMemo<ApprovalWorkflow[]>(
+    () => [
+      {
+        id: 'w1',
+        project_id: projectId,
+        title: 'Concept Design Sign-off',
+        workflow_type: 'design_review',
+        status: 'in_progress',
+        created_by_id: 'u1',
+        created_at: new Date().toISOString(),
+        steps: [
+          {
+            id: 's1',
+            workflow_id: 'w1',
+            name: 'Architectural Review',
+            sequence_order: 1,
+            status: 'approved',
+            approved_by_id: 'u2',
+            decision_at: new Date().toISOString(),
+          },
+          {
+            id: 's2',
+            workflow_id: 'w1',
+            name: 'Structural Feasibility',
+            sequence_order: 2,
+            status: 'in_review',
+          },
+          {
+            id: 's3',
+            workflow_id: 'w1',
+            name: 'Client Approval',
+            sequence_order: 3,
+            status: 'pending',
+          },
+        ],
+      },
+    ],
+    [projectId],
+  )
 
-  const fetchWorkflows = async () => {
+  const fetchWorkflows = useCallback(async () => {
     setLoading(true)
     try {
       // In real backend, we'd list workflows. Current API might only have GET /workflow/{id} or POST /workflow/
@@ -87,11 +90,11 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
     } finally {
       setLoading(false)
     }
-  }
+  }, [mockWorkflows])
 
   useEffect(() => {
     fetchWorkflows()
-  }, [projectId])
+  }, [fetchWorkflows])
 
   const handleCreateSuccess = (newWorkflow: ApprovalWorkflow) => {
     setWorkflows([newWorkflow, ...workflows])

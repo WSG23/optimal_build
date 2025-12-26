@@ -116,14 +116,14 @@ export function ImmersiveMap({
           <Box
             sx={{
               background: 'rgba(15, 23, 42, 0.85)',
-              backdropFilter: 'blur(20px)',
+              backdropFilter: 'blur(var(--ob-blur-lg))',
               border: '1px solid rgba(6, 182, 212, 0.3)',
-              borderRadius: '24px',
+              borderRadius: 'var(--ob-radius-sm)',
               padding: '48px 64px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '24px',
+              gap: 'var(--ob-space-300)',
               maxWidth: '500px',
               animation:
                 'floatUp 4s ease-in-out infinite, pulseGlow 3s ease-in-out infinite',
@@ -135,7 +135,7 @@ export function ImmersiveMap({
               sx={{
                 width: '80px',
                 height: '80px',
-                borderRadius: '50%',
+                borderRadius: 'var(--ob-radius-pill)',
                 background:
                   'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2))',
                 border: '2px solid rgba(6, 182, 212, 0.4)',
@@ -144,7 +144,9 @@ export function ImmersiveMap({
                 justifyContent: 'center',
               }}
             >
-              <ExploreIcon sx={{ fontSize: 40, color: '#06b6d4' }} />
+              <ExploreIcon
+                sx={{ fontSize: 40, color: 'var(--ob-color-brand-primary)' }}
+              />
             </Box>
 
             {/* Title */}
@@ -193,7 +195,7 @@ export function ImmersiveMap({
               sx={{
                 '& .MuiOutlinedInput-root': {
                   background: 'rgba(255,255,255,0.05)',
-                  borderRadius: '12px',
+                  borderRadius: 'var(--ob-radius-md)',
                   color: 'white',
                   fontSize: '1rem',
                   '& fieldset': {
@@ -203,7 +205,7 @@ export function ImmersiveMap({
                     borderColor: 'rgba(6, 182, 212, 0.5)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#06b6d4',
+                    borderColor: 'var(--ob-color-brand-primary)',
                   },
                 },
                 '& .MuiInputBase-input::placeholder': {
@@ -217,7 +219,7 @@ export function ImmersiveMap({
             <Box
               sx={{
                 display: 'flex',
-                gap: '16px',
+                gap: 'var(--ob-space-200)',
                 flexWrap: 'wrap',
                 justifyContent: 'center',
               }}
@@ -228,7 +230,7 @@ export function ImmersiveMap({
                     key={feature}
                     sx={{
                       padding: '6px 12px',
-                      borderRadius: '20px',
+                      borderRadius: 'var(--ob-radius-sm)',
                       background: 'rgba(6, 182, 212, 0.1)',
                       border: '1px solid rgba(6, 182, 212, 0.2)',
                       color: 'rgba(6, 182, 212, 0.9)',
@@ -267,7 +269,8 @@ export function ImmersiveMap({
           left: 0,
           right: 0,
           height: '300px',
-          background: 'linear-gradient(to top, #0f172a, transparent)',
+          background:
+            'linear-gradient(to top, var(--ob-color-bg-dark), transparent)',
           pointerEvents: 'none',
         }}
       />

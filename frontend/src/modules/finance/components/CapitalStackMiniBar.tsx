@@ -1,4 +1,7 @@
 import { useMemo } from 'react'
+
+import { Box } from '@mui/material'
+
 import type { FinanceScenarioSummary } from '../../../api/finance'
 
 interface CapitalStackMiniBarProps {
@@ -33,31 +36,31 @@ export function CapitalStackMiniBar({ stack }: CapitalStackMiniBarProps) {
   }, [stack])
 
   return (
-    <div
+    <Box
       className="capital-stack-mini-bar"
-      style={{
+      sx={{
         display: 'flex',
-        height: '8px',
+        height: 'var(--ob-space-050)',
         width: '100%',
-        borderRadius: '4px',
+        borderRadius: 'var(--ob-radius-sm)',
         overflow: 'hidden',
-        background: 'var(--ob-color-surface-muted)',
+        bgcolor: 'var(--ob-color-surface-muted)',
       }}
     >
       {bars.map(
         (bar) =>
           bar.width > 0 && (
-            <div
+            <Box
               key={bar.type}
-              style={{
+              sx={{
                 width: `${bar.width}%`,
-                background: bar.color,
+                bgcolor: bar.color,
                 height: '100%',
               }}
               title={`${bar.type}: ${bar.width.toFixed(1)}%`}
             />
           ),
       )}
-    </div>
+    </Box>
   )
 }

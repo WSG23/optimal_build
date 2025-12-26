@@ -75,7 +75,7 @@ export function MetricsView({ result, numberFormatter, t }: MetricsViewProps) {
                   color: accuracyColor,
                   background: accuracyBg,
                   padding: '1px 6px',
-                  borderRadius: '999px',
+                  borderRadius: 'var(--ob-radius-pill)',
                   verticalAlign: 'middle',
                 }}
               >

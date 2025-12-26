@@ -369,14 +369,20 @@ export function Preview3DViewer({
     return (
       <div
         style={{
-          border: '1px dashed #d1d5db',
-          borderRadius: '12px',
+          border: '1px dashed var(--ob-color-border-subtle)',
+          borderRadius: 'var(--ob-radius-sm)',
           padding: '1.5rem',
           textAlign: 'center',
-          background: '#f9fafb',
+          background: 'var(--ob-color-bg-surface-elevated)',
         }}
       >
-        <p style={{ margin: 0, fontSize: '0.95rem', color: '#6b7280' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: '0.95rem',
+            color: 'var(--ob-color-text-muted)',
+          }}
+        >
           Preview assets are not ready yet. Status:{' '}
           <strong>{status.toUpperCase()}</strong>
         </p>
@@ -387,10 +393,10 @@ export function Preview3DViewer({
   return (
     <div
       style={{
-        border: '1px solid #e5e7eb',
-        borderRadius: '12px',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '1rem',
-        background: '#ffffff',
+        background: 'var(--ob-color-bg-surface)',
       }}
     >
       <div
@@ -398,27 +404,39 @@ export function Preview3DViewer({
         style={{
           width: '100%',
           height: `${FALLBACK_HEIGHT}px`,
-          borderRadius: '8px',
+          borderRadius: 'var(--ob-radius-sm)',
           overflow: 'hidden',
         }}
       />
       {isLoading && (
         <p
-          style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#6b7280' }}
+          style={{
+            marginTop: '0.75rem',
+            fontSize: '0.9rem',
+            color: 'var(--ob-color-text-muted)',
+          }}
         >
           Loading preview assets…
         </p>
       )}
       {metadataWarning && !error && (
         <p
-          style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#b45309' }}
+          style={{
+            marginTop: '0.5rem',
+            fontSize: '0.85rem',
+            color: 'var(--ob-warning-600)',
+          }}
         >
           {metadataWarning}
         </p>
       )}
       {error && (
         <p
-          style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#b91c1c' }}
+          style={{
+            marginTop: '0.75rem',
+            fontSize: '0.9rem',
+            color: 'var(--ob-error-700)',
+          }}
         >
           Failed to load preview: {error}
         </p>
@@ -432,7 +450,9 @@ export function Preview3DViewer({
             alignItems: 'center',
           }}
         >
-          <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+          <span
+            style={{ fontSize: '0.85rem', color: 'var(--ob-color-text-muted)' }}
+          >
             Thumbnail:
           </span>
           <img
@@ -441,7 +461,7 @@ export function Preview3DViewer({
             style={{
               width: '64px',
               height: '64px',
-              borderRadius: '8px',
+              borderRadius: 'var(--ob-radius-sm)',
               objectFit: 'cover',
             }}
           />

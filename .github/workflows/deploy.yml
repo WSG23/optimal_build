@@ -1,0 +1,268 @@
+# =============================================================================
+# Deployment Workflow
+# =============================================================================
+#
+# Builds and deploys the application to staging/production environments.
+#
+# Triggers:
+#   - Push to main branch (staging deployment)
+#   - Release published (production deployment)
+#   - Manual workflow dispatch
+#
+# Required secrets:
+#   - GCP_PROJECT_ID: Google Cloud project ID
+#   - GCP_SA_KEY: Service account key JSON for authentication
+#   - GCP_REGION: Deployment region (e.g., us-central1)
+#
+# =============================================================================
+
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  REGISTRY: gcr.io
+  BACKEND_IMAGE: optimal-build-backend
+  FRONTEND_IMAGE: optimal-build-frontend
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Build and Push Docker Images
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    outputs:
+      backend_image: ${{ steps.meta-backend.outputs.tags }}
+      frontend_image: ${{ steps.meta-frontend.outputs.tags }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=sha-${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker gcr.io --quiet
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+
+      - name: Extract backend metadata
+        id: meta-backend
+        run: |
+          echo "tags=${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:${{ steps.version.outputs.version }}" >> $GITHUB_OUTPUT
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:latest
+          build-args: |
+            VITE_API_BASE_URL=/api
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Extract frontend metadata
+        id: meta-frontend
+        run: |
+          echo "tags=${{ env.REGISTRY }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:${{ steps.version.outputs.version }}" >> $GITHUB_OUTPUT
+
+  # ---------------------------------------------------------------------------
+  # Deploy to Staging
+  # ---------------------------------------------------------------------------
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment:
+      name: staging
+      url: https://staging.optimal-build.com
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Deploy backend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: optimal-build-backend-staging
+          region: ${{ secrets.GCP_REGION }}
+          image: ${{ needs.build.outputs.backend_image }}
+          env_vars: |
+            ENVIRONMENT=staging
+            LOG_LEVEL=INFO
+          secrets: |
+            SECRET_KEY=optimal-build-secret-key:latest
+            SQLALCHEMY_DATABASE_URI=optimal-build-db-uri-staging:latest
+            BACKEND_ALLOWED_ORIGINS=optimal-build-cors-staging:latest
+            REDIS_URL=optimal-build-redis-url-staging:latest
+          flags: |
+            --allow-unauthenticated
+            --cpu=2
+            --memory=2Gi
+            --min-instances=1
+            --max-instances=10
+            --concurrency=80
+            --timeout=60s
+
+      - name: Deploy frontend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: optimal-build-frontend-staging
+          region: ${{ secrets.GCP_REGION }}
+          image: ${{ needs.build.outputs.frontend_image }}
+          flags: |
+            --allow-unauthenticated
+            --cpu=1
+            --memory=256Mi
+            --min-instances=1
+            --max-instances=5
+            --concurrency=100
+
+      - name: Run smoke tests
+        run: |
+          STAGING_URL="https://staging.optimal-build.com"
+          echo "Running smoke tests against $STAGING_URL"
+
+          # Health check
+          if ! curl -sf "$STAGING_URL/api/health" > /dev/null; then
+            echo "Health check failed!"
+            exit 1
+          fi
+
+          echo "Smoke tests passed!"
+
+  # ---------------------------------------------------------------------------
+  # Deploy to Production
+  # ---------------------------------------------------------------------------
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment:
+      name: production
+      url: https://optimal-build.com
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Deploy backend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: optimal-build-backend
+          region: ${{ secrets.GCP_REGION }}
+          image: ${{ needs.build.outputs.backend_image }}
+          env_vars: |
+            ENVIRONMENT=production
+            LOG_LEVEL=WARNING
+          secrets: |
+            SECRET_KEY=optimal-build-secret-key:latest
+            SQLALCHEMY_DATABASE_URI=optimal-build-db-uri:latest
+            BACKEND_ALLOWED_ORIGINS=optimal-build-cors:latest
+            REDIS_URL=optimal-build-redis-url:latest
+          flags: |
+            --allow-unauthenticated
+            --cpu=4
+            --memory=4Gi
+            --min-instances=2
+            --max-instances=20
+            --concurrency=100
+            --timeout=60s
+
+      - name: Deploy frontend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: optimal-build-frontend
+          region: ${{ secrets.GCP_REGION }}
+          image: ${{ needs.build.outputs.frontend_image }}
+          flags: |
+            --allow-unauthenticated
+            --cpu=1
+            --memory=512Mi
+            --min-instances=2
+            --max-instances=10
+            --concurrency=100
+
+      - name: Run production smoke tests
+        run: |
+          PROD_URL="https://optimal-build.com"
+          echo "Running smoke tests against $PROD_URL"
+
+          # Health check
+          if ! curl -sf "$PROD_URL/api/health" > /dev/null; then
+            echo "Health check failed!"
+            exit 1
+          fi
+
+          echo "Production smoke tests passed!"
+
+      - name: Create deployment notification
+        if: success()
+        run: |
+          echo "::notice::Successfully deployed version ${{ needs.build.outputs.version }} to production"

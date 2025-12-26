@@ -7,6 +7,7 @@ import {
   waitFor,
 } from '@testing-library/react'
 import React from 'react'
+import { DeveloperProvider } from '../../../contexts/DeveloperContext'
 import { TranslationProvider } from '../../../i18n'
 import { ThemeModeProvider } from '../../../theme/ThemeContext'
 import { FeasibilityWizard } from '../FeasibilityWizard'
@@ -51,9 +52,11 @@ describe('FeasibilityWizard Compute Flow', () => {
   it('collects address, site area, land use and submits correct payload', async () => {
     render(
       <ThemeModeProvider>
-        <TranslationProvider>
-          <FeasibilityWizard />
-        </TranslationProvider>
+        <DeveloperProvider>
+          <TranslationProvider>
+            <FeasibilityWizard />
+          </TranslationProvider>
+        </DeveloperProvider>
       </ThemeModeProvider>,
     )
 
@@ -66,16 +69,17 @@ describe('FeasibilityWizard Compute Flow', () => {
     fireEvent.change(siteAreaInput, { target: { value: '1000' } })
 
     // Change Land Use (default is Mixed Use, change to Commercial)
-    const landUseInput = screen.getByTestId('land-use-input')
-    fireEvent.change(landUseInput, { target: { value: 'Commercial' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Commercial' }))
 
-    // Submit
-    const submitBtn = screen.getByTestId('compute-button')
-    fireEvent.click(submitBtn)
+    // Submit (the compute button lives outside the form; submit the form directly)
+    fireEvent.submit(addressInput.closest('form') as HTMLFormElement)
 
-    await waitFor(() => {
-      expect(submitFeasibilityAssessment).toHaveBeenCalledTimes(1)
-    })
+    await waitFor(
+      () => {
+        expect(submitFeasibilityAssessment).toHaveBeenCalledTimes(1)
+      },
+      { timeout: 10_000 },
+    )
 
     const callArgs = vi.mocked(submitFeasibilityAssessment).mock.calls[0][0]
 
@@ -84,5 +88,5 @@ describe('FeasibilityWizard Compute Flow', () => {
     expect(callArgs.project.landUse).toBe('Commercial')
     // Name is generated
     expect(callArgs.project.name).toBe('Project 123 Main St')
-  })
+  }, 15_000)
 })

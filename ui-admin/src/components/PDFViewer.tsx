@@ -59,7 +59,7 @@ const PDFViewer = ({ url }: PDFViewerProps) => {
 
   if (!url) {
     return (
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-text-muted">
         Select a document to preview its PDF.
       </p>
     )
@@ -67,13 +67,13 @@ const PDFViewer = ({ url }: PDFViewerProps) => {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-slate-400">Powered by PDF.js v{version}</p>
+      <p className="text-xs text-text-muted">Powered by PDF.js v{version}</p>
       {error ? (
-        <p className="text-sm text-red-400">{error}</p>
+        <p className="text-sm text-error-muted">{error}</p>
       ) : (
         <canvas
           ref={canvasRef}
-          className="rounded shadow border border-slate-800"
+          className="rounded border border-border-subtle shadow"
         />
       )}
     </div>

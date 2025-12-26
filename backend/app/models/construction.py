@@ -8,6 +8,7 @@ Phase 2G: Construction & Project Delivery
 
 from __future__ import annotations
 
+import uuid as uuid_module
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
@@ -80,7 +81,7 @@ class Contractor(BaseModel):
     __tablename__ = "contractors"
 
     id: Mapped[UUID] = mapped_column(
-        UUID(), primary_key=True, default=func.uuid_generate_v4()
+        UUID(), primary_key=True, default=uuid_module.uuid4
     )
     project_id: Mapped[UUID] = mapped_column(
         UUID(),
@@ -125,7 +126,7 @@ class QualityInspection(BaseModel):
     __tablename__ = "quality_inspections"
 
     id: Mapped[UUID] = mapped_column(
-        UUID(), primary_key=True, default=func.uuid_generate_v4()
+        UUID(), primary_key=True, default=uuid_module.uuid4
     )
     project_id: Mapped[UUID] = mapped_column(
         UUID(),
@@ -167,7 +168,7 @@ class SafetyIncident(BaseModel):
     __tablename__ = "safety_incidents"
 
     id: Mapped[UUID] = mapped_column(
-        UUID(), primary_key=True, default=func.uuid_generate_v4()
+        UUID(), primary_key=True, default=uuid_module.uuid4
     )
     project_id: Mapped[UUID] = mapped_column(
         UUID(),
@@ -186,10 +187,10 @@ class SafetyIncident(BaseModel):
     )
 
     title: Mapped[str] = mapped_column(String(200), nullable=False)
-    description: Mapped[str] = mapped_column(Text)
-    location: Mapped[str] = mapped_column(String(200))
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    location: Mapped[Optional[str]] = mapped_column(String(200))
 
-    reported_by: Mapped[str] = mapped_column(String(100))
+    reported_by: Mapped[Optional[str]] = mapped_column(String(100))
     is_resolved: Mapped[bool] = mapped_column(Boolean, default=False)
     resolution_notes: Mapped[Optional[str]] = mapped_column(Text)
 
@@ -204,7 +205,7 @@ class DrawdownRequest(BaseModel):
     __tablename__ = "drawdown_requests"
 
     id: Mapped[UUID] = mapped_column(
-        UUID(), primary_key=True, default=func.uuid_generate_v4()
+        UUID(), primary_key=True, default=uuid_module.uuid4
     )
     project_id: Mapped[UUID] = mapped_column(
         UUID(),

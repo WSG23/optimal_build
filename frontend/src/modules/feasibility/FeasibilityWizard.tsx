@@ -519,7 +519,7 @@ export function FeasibilityWizard({
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '32px',
+            gap: 'var(--ob-space-400)',
             color: 'rgba(255,255,255,0.9)',
           }}
         >
@@ -552,7 +552,6 @@ export function FeasibilityWizard({
             financialInputs={financialInputs}
             financialErrors={financialErrors}
             onFinancialChange={handleFinancialChange}
-            t={t}
           />
 
           <GenerativeDesignPanel
@@ -647,7 +646,7 @@ export function FeasibilityWizard({
         <DialogContent
           sx={{
             minHeight: '400px',
-            background: '#f5f5f7',
+            background: 'var(--ob-color-bg-surface-secondary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -664,7 +663,7 @@ export function FeasibilityWizard({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: '4px',
+              borderRadius: 'var(--ob-radius-sm)',
               position: 'relative',
               transition: 'transform 0.3s',
             }}
@@ -705,15 +704,25 @@ export function FeasibilityWizard({
                 marginTop: 'auto',
                 padding: '1rem',
                 width: '100%',
-                borderTop: '1px solid #eee',
+                borderTop: '1px solid var(--ob-color-border-light)',
                 display: 'flex',
                 justifyContent: 'space-between',
               }}
             >
-              <span style={{ fontSize: '0.7rem', color: '#999' }}>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  color: 'var(--ob-color-text-muted)',
+                }}
+              >
                 GENERATED: {new Date().toLocaleDateString()}
               </span>
-              <span style={{ fontSize: '0.7rem', color: '#999' }}>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  color: 'var(--ob-color-text-muted)',
+                }}
+              >
                 PAGE 1/12
               </span>
             </div>
@@ -811,7 +820,8 @@ export function FeasibilityWizard({
               }}
               disabled={status === 'loading'}
               style={{
-                background: 'linear-gradient(135deg, #06b6d4, #3b82f6)', // Cyan to Blue
+                background:
+                  'linear-gradient(135deg, var(--ob-color-brand-primary), var(--ob-color-brand-primary-emphasis))',
                 border: 'none',
                 borderRadius: 'var(--ob-radius-full)',
                 padding: '16px 32px',
@@ -846,7 +856,7 @@ export function FeasibilityWizard({
                       height: '20px',
                       border: '2px solid white',
                       borderTopColor: 'transparent',
-                      borderRadius: '50%',
+                      borderRadius: 'var(--ob-radius-pill)',
                       animation: 'spin 1s linear infinite',
                     }}
                   />
@@ -883,7 +893,7 @@ export function FeasibilityWizard({
       >
         <div className="feasibility-wizard__sidebar-content">
           {/* Section 0: Smart Intelligence Field (Merged Address/Area/Zoning) */}
-          <div style={{ marginBottom: '24px' }}>
+          <div style={{ marginBottom: 'var(--ob-space-300)' }}>
             <SmartIntelligenceField
               value={addressInput}
               siteArea={siteAreaInput ? Number(siteAreaInput) : undefined}
@@ -950,7 +960,6 @@ export function FeasibilityWizard({
               financialInputs={financialInputs}
               financialErrors={financialErrors}
               onFinancialChange={handleFinancialChange}
-              t={t}
             />
           </div>
 
@@ -1022,6 +1031,7 @@ export function FeasibilityWizard({
                           height: 16,
                           border: '2px solid white',
                           borderTopColor: 'transparent',
+                          borderRadius: 'var(--ob-radius-pill)',
                         }}
                       />
                     ) : (
@@ -1074,7 +1084,7 @@ export function FeasibilityWizard({
             <DialogContent
               sx={{
                 minHeight: '400px',
-                background: '#f5f5f7',
+                background: 'var(--ob-color-bg-surface-secondary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1091,7 +1101,7 @@ export function FeasibilityWizard({
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-sm)',
                   position: 'relative',
                   transition: 'transform 0.3s',
                 }}
@@ -1132,15 +1142,25 @@ export function FeasibilityWizard({
                     marginTop: 'auto',
                     padding: '1rem',
                     width: '100%',
-                    borderTop: '1px solid #eee',
+                    borderTop: '1px solid var(--ob-color-border-light)',
                     display: 'flex',
                     justifyContent: 'space-between',
                   }}
                 >
-                  <span style={{ fontSize: '0.7rem', color: '#999' }}>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      color: 'var(--ob-color-text-muted)',
+                    }}
+                  >
                     GENERATED: {new Date().toLocaleDateString()}
                   </span>
-                  <span style={{ fontSize: '0.7rem', color: '#999' }}>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      color: 'var(--ob-color-text-muted)',
+                    }}
+                  >
                     PAGE 1/12
                   </span>
                 </div>

@@ -51,8 +51,8 @@ export function OverallAssessmentCard({
     <div
       style={{
         flex: '1 1 260px',
-        background: '#f5f5f7',
-        borderRadius: '12px',
+        background: 'var(--ob-color-bg-surface-elevated)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'column',
@@ -63,7 +63,7 @@ export function OverallAssessmentCard({
         style={{
           fontSize: '0.875rem',
           fontWeight: 600,
-          color: '#6e6e73',
+          color: 'var(--ob-color-text-muted)',
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
         }}
@@ -78,7 +78,7 @@ export function OverallAssessmentCard({
         }}
       >
         <span style={{ fontSize: '2.5rem', fontWeight: 700 }}>{rating}</span>
-        <span style={{ fontSize: '1rem', color: '#6e6e73' }}>
+        <span style={{ fontSize: '1rem', color: 'var(--ob-color-text-muted)' }}>
           {score}/100 · {riskLevel} risk
         </span>
       </div>
@@ -86,7 +86,7 @@ export function OverallAssessmentCard({
         style={{
           margin: 0,
           fontSize: '0.9375rem',
-          color: '#3a3a3c',
+          color: 'var(--ob-color-text-secondary)',
           lineHeight: 1.5,
         }}
       >
@@ -97,7 +97,7 @@ export function OverallAssessmentCard({
           style={{
             margin: 0,
             fontSize: '0.875rem',
-            color: '#0071e3',
+            color: 'var(--ob-color-brand-primary)',
           }}
         >
           {scenarioContext}
@@ -109,7 +109,7 @@ export function OverallAssessmentCard({
           flexWrap: 'wrap',
           gap: '0.75rem',
           fontSize: '0.8125rem',
-          color: '#6e6e73',
+          color: 'var(--ob-color-text-muted)',
         }}
       >
         <span>
@@ -126,7 +126,7 @@ export function OverallAssessmentCard({
               fontSize: '0.75rem',
               fontWeight: 600,
               textTransform: 'uppercase',
-              color: '#6e6e73',
+              color: 'var(--ob-color-text-muted)',
               letterSpacing: '0.06em',
             }}
           >
@@ -140,7 +140,7 @@ export function OverallAssessmentCard({
                     href={attachment.url}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ color: '#0a84ff' }}
+                    style={{ color: 'var(--ob-color-brand-primary)' }}
                   >
                     {attachment.label}
                   </a>

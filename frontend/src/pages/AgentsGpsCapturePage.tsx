@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 
 import mapboxgl from 'mapbox-gl'
+import { DEFAULT_LATITUDE_STR, DEFAULT_LONGITUDE_STR } from '@/constants'
+import { colors } from '@ob/tokens'
 
 const isNodeTestEnv =
   typeof process !== 'undefined' && process.env?.NODE_ENV === 'test'
@@ -37,8 +39,9 @@ if (MAPBOX_TOKEN) {
   mapboxgl.accessToken = MAPBOX_TOKEN
 }
 
-const DEFAULT_LATITUDE = '1.3000'
-const DEFAULT_LONGITUDE = '103.8500'
+// Use canonical coordinates from constants (SSoT)
+const DEFAULT_LATITUDE = DEFAULT_LATITUDE_STR
+const DEFAULT_LONGITUDE = DEFAULT_LONGITUDE_STR
 
 interface ScenarioOption {
   value: DevelopmentScenario
@@ -205,7 +208,7 @@ function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
     })
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }))
-    new mapboxgl.Marker({ color: '#2563eb' })
+    new mapboxgl.Marker({ color: colors.brand[600] })
       .setLngLat([coordinates.longitude, coordinates.latitude])
       .addTo(map)
 

@@ -112,8 +112,8 @@ export function PhotoDocumentation({
     <section
       style={{
         background: '#fff',
-        border: '1px solid #e5e7eb',
-        borderRadius: '16px',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '1.5rem',
       }}
     >
@@ -132,7 +132,7 @@ export function PhotoDocumentation({
               margin: 0,
               fontSize: '1.125rem',
               fontWeight: 600,
-              color: '#1f2937',
+              color: 'var(--ob-color-text-primary)',
             }}
           >
             Photo Documentation
@@ -141,7 +141,7 @@ export function PhotoDocumentation({
             style={{
               margin: '0.25rem 0 0',
               fontSize: '0.8125rem',
-              color: '#6b7280',
+              color: 'var(--ob-color-text-muted)',
             }}
           >
             Capture and manage property photos with automatic watermarking
@@ -159,7 +159,7 @@ export function PhotoDocumentation({
           <span
             style={{
               fontSize: '0.8125rem',
-              color: '#6b7280',
+              color: 'var(--ob-color-text-muted)',
             }}
           >
             Phase:
@@ -169,8 +169,8 @@ export function PhotoDocumentation({
             onChange={(e) => setPhase(e.target.value as PropertyPhase)}
             style={{
               padding: '0.375rem 0.75rem',
-              borderRadius: '8px',
-              border: '1px solid #d1d5db',
+              borderRadius: 'var(--ob-radius-md)',
+              border: '1px solid var(--ob-color-border-subtle)',
               fontSize: '0.875rem',
               background: '#fff',
               cursor: 'pointer',
@@ -187,10 +187,10 @@ export function PhotoDocumentation({
         <div
           style={{
             padding: '0.75rem 1rem',
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '8px',
-            color: '#dc2626',
+            background: 'var(--ob-error-50)',
+            border: '1px solid var(--ob-error-200)',
+            borderRadius: 'var(--ob-radius-sm)',
+            color: 'var(--ob-color-status-error-text)',
             fontSize: '0.875rem',
             marginBottom: '1rem',
           }}
@@ -204,10 +204,10 @@ export function PhotoDocumentation({
         <div
           style={{
             padding: '0.75rem 1rem',
-            background: '#fffbeb',
-            border: '1px solid #fcd34d',
-            borderRadius: '8px',
-            color: '#92400e',
+            background: 'var(--ob-warning-50)',
+            border: '1px solid var(--ob-warning-200)',
+            borderRadius: 'var(--ob-radius-sm)',
+            color: 'var(--ob-warning-700)',
             fontSize: '0.875rem',
             marginBottom: '1rem',
           }}
@@ -235,9 +235,9 @@ export function PhotoDocumentation({
         style={{
           marginTop: '1.5rem',
           padding: '1rem',
-          background: '#f9fafb',
-          borderRadius: '8px',
-          border: '1px solid #e5e7eb',
+          background: 'var(--ob-color-bg-surface-elevated)',
+          borderRadius: 'var(--ob-radius-sm)',
+          border: '1px solid var(--ob-color-border-subtle)',
         }}
       >
         <h4
@@ -245,7 +245,7 @@ export function PhotoDocumentation({
             margin: '0 0 0.5rem',
             fontSize: '0.875rem',
             fontWeight: 600,
-            color: '#374151',
+            color: 'var(--ob-color-text-secondary)',
           }}
         >
           Watermark Information
@@ -253,7 +253,7 @@ export function PhotoDocumentation({
         <div
           style={{
             fontSize: '0.8125rem',
-            color: '#6b7280',
+            color: 'var(--ob-color-text-muted)',
             lineHeight: 1.5,
           }}
         >

@@ -32,9 +32,8 @@ import {
 } from '../../../api/advisory'
 
 // Canonical Components
-import { AnimatedPageHeader } from '../../../components/canonical/AnimatedPageHeader'
-import { GlassCard } from '../../../components/canonical/GlassCard'
-import { HeroMetric } from '../../../components/canonical/HeroMetric'
+import { Card } from '../../../components/canonical/Card'
+import { MetricTile } from '../../../components/canonical/MetricTile'
 
 export function AdvisoryPage() {
   const [propertyId, setPropertyId] = useState('')
@@ -146,20 +145,11 @@ export function AdvisoryPage() {
   }
 
   return (
-    <Box sx={{ pb: 8 }}>
+    <Box sx={{ pb: 'var(--ob-space-400)' }}>
       <Box sx={{ p: 3 }}>
-        <AnimatedPageHeader
-          title="Advisory Services"
-          subtitle="Development strategy insights and market positioning"
-          breadcrumbs={[
-            { label: 'Dashboard', href: '/' },
-            { label: 'Advisory' },
-          ]}
-        />
-
         <Container maxWidth="xl" sx={{ mt: 3 }}>
           {/* Search Section */}
-          <GlassCard sx={{ p: 3, mb: 4 }}>
+          <Card variant="glass" sx={{ p: 3, mb: 4 }}>
             <Typography variant="h6" gutterBottom>
               Load property analysis
             </Typography>
@@ -195,7 +185,7 @@ export function AdvisoryPage() {
                 {error}
               </Typography>
             )}
-          </GlassCard>
+          </Card>
 
           {summary && (
             <Stack spacing={4}>
@@ -222,7 +212,11 @@ export function AdvisoryPage() {
                 <Grid container spacing={3}>
                   {summary.asset_mix.mix_recommendations.map((segment, idx) => (
                     <Grid item xs={12} md={4} key={idx}>
-                      <GlassCard sx={{ height: '100%', p: 3 }} hoverEffect>
+                      <Card
+                        variant="glass"
+                        sx={{ height: '100%', p: 3 }}
+                        hover="lift"
+                      >
                         <Stack
                           direction="row"
                           justifyContent="space-between"
@@ -247,7 +241,7 @@ export function AdvisoryPage() {
                         <Typography variant="body1" sx={{ mt: 2 }}>
                           {segment.rationale}
                         </Typography>
-                      </GlassCard>
+                      </Card>
                     </Grid>
                   ))}
                 </Grid>
@@ -258,7 +252,7 @@ export function AdvisoryPage() {
                 <Typography variant="h5" fontWeight={600} gutterBottom>
                   Market Positioning
                 </Typography>
-                <GlassCard sx={{ p: 3 }}>
+                <Card variant="glass" sx={{ p: 3 }}>
                   <Stack direction="row" spacing={2} mb={3}>
                     <Chip
                       label={`Market Tier: ${summary.market_positioning.market_tier}`}
@@ -280,7 +274,7 @@ export function AdvisoryPage() {
                             p: 2,
                             border: '1px solid',
                             borderColor: 'divider',
-                            borderRadius: 2,
+                            borderRadius: 'var(--ob-radius-sm)',
                           }}
                         >
                           <Typography
@@ -314,7 +308,7 @@ export function AdvisoryPage() {
                       </Grid>
                     ))}
                   </Grid>
-                </GlassCard>
+                </Card>
               </Box>
 
               {/* Absorption Forecast */}
@@ -324,37 +318,34 @@ export function AdvisoryPage() {
                 </Typography>
                 <Grid container spacing={3} mb={3}>
                   <Grid item xs={12} sm={4}>
-                    <HeroMetric
+                    <MetricTile
                       label="Time to Stabilize"
                       value={String(
                         summary.absorption_forecast
                           .expected_months_to_stabilize,
                       )}
-                      variant="glass"
-                      delay={100}
+                      variant="compact"
                     />
                   </Grid>
                   <Grid item xs={12} sm={4}>
-                    <HeroMetric
+                    <MetricTile
                       label="Monthly Velocity"
                       value={String(
                         summary.absorption_forecast.monthly_velocity_target,
                       )}
-                      variant="glass"
-                      delay={200}
+                      variant="compact"
                     />
                   </Grid>
                   <Grid item xs={12} sm={4}>
-                    <HeroMetric
+                    <MetricTile
                       label="Confidence"
                       value={summary.absorption_forecast.confidence}
-                      variant="glass"
-                      delay={300}
+                      variant="compact"
                     />
                   </Grid>
                 </Grid>
 
-                <GlassCard sx={{ p: 3, overflowX: 'auto' }}>
+                <Card variant="glass" sx={{ p: 3, overflowX: 'auto' }}>
                   <Stack direction="row" spacing={4} sx={{ minWidth: 600 }}>
                     {summary.absorption_forecast.timeline.map(
                       (milestone, idx) => (
@@ -378,7 +369,7 @@ export function AdvisoryPage() {
                             sx={{
                               width: 12,
                               height: 12,
-                              borderRadius: '50%',
+                              borderRadius: 'var(--ob-radius-pill)',
                               bgcolor: 'primary.main',
                               mx: 'auto',
                               mb: 1,
@@ -397,7 +388,7 @@ export function AdvisoryPage() {
                       ),
                     )}
                   </Stack>
-                </GlassCard>
+                </Card>
               </Box>
 
               {/* Sales Velocity Model (Calculator) */}
@@ -433,7 +424,7 @@ export function AdvisoryPage() {
                   </Button>
                 </Stack>
 
-                <GlassCard sx={{ p: 3 }}>
+                <Card variant="glass" sx={{ p: 3 }}>
                   <Grid container spacing={3}>
                     {/* Inputs */}
                     <Grid item xs={12} md={3}>
@@ -507,24 +498,24 @@ export function AdvisoryPage() {
                         <Stack spacing={3}>
                           <Grid container spacing={2}>
                             <Grid item xs={4}>
-                              <HeroMetric
+                              <MetricTile
                                 label="Velocity"
                                 value={`${velocityResult.forecast.velocity_units_per_month ?? '—'} units/mo`}
-                                variant="glass"
+                                variant="compact"
                               />
                             </Grid>
                             <Grid item xs={4}>
-                              <HeroMetric
+                              <MetricTile
                                 label="Absorption"
                                 value={`${velocityResult.forecast.absorption_months ?? '—'} months`}
-                                variant="glass"
+                                variant="compact"
                               />
                             </Grid>
                             <Grid item xs={4}>
-                              <HeroMetric
+                              <MetricTile
                                 label="Confidence"
                                 value={`${(velocityResult.forecast.confidence * 100).toFixed(0)}%`}
-                                variant="glass"
+                                variant="compact"
                               />
                             </Grid>
                           </Grid>
@@ -561,7 +552,7 @@ export function AdvisoryPage() {
                       )}
                     </Grid>
                   </Grid>
-                </GlassCard>
+                </Card>
               </Box>
 
               {/* Feedback Loop */}
@@ -585,7 +576,8 @@ export function AdvisoryPage() {
                 </Stack>
 
                 {feedbackOpen && (
-                  <GlassCard
+                  <Card
+                    variant="glass"
                     sx={{
                       p: 3,
                       mb: 3,
@@ -638,10 +630,10 @@ export function AdvisoryPage() {
                         </Button>
                       </Stack>
                     </form>
-                  </GlassCard>
+                  </Card>
                 )}
 
-                <GlassCard sx={{ p: 0 }}>
+                <Card variant="glass" sx={{ p: 0 }}>
                   {summary.feedback.length === 0 ? (
                     <Box p={4} textAlign="center">
                       <Typography color="text.secondary">
@@ -680,14 +672,14 @@ export function AdvisoryPage() {
                       ))}
                     </Stack>
                   )}
-                </GlassCard>
+                </Card>
               </Box>
             </Stack>
           )}
 
           {/* Empty State */}
           {!summary && !loading && (
-            <GlassCard sx={{ p: 8, textAlign: 'center', mt: 4 }}>
+            <Card variant="glass" sx={{ p: 8, textAlign: 'center', mt: 4 }}>
               <Typography variant="h1" sx={{ mb: 2 }}>
                 📊
               </Typography>
@@ -697,7 +689,7 @@ export function AdvisoryPage() {
               <Typography color="text.secondary">
                 Enter a property ID above to view development insights
               </Typography>
-            </GlassCard>
+            </Card>
           )}
         </Container>
       </Box>

@@ -327,8 +327,8 @@ export function VoiceNoteRecorder({
   return (
     <div
       style={{
-        background: '#f9fafb',
-        borderRadius: '12px',
+        background: 'var(--ob-color-bg-surface-elevated)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '1.25rem',
         marginTop: '1.5rem',
       }}
@@ -338,7 +338,7 @@ export function VoiceNoteRecorder({
           margin: '0 0 1rem 0',
           fontSize: '1rem',
           fontWeight: 600,
-          color: '#1d1d1f',
+          color: 'var(--ob-color-text-primary)',
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
@@ -369,9 +369,11 @@ export function VoiceNoteRecorder({
               alignItems: 'center',
               gap: '0.5rem',
               padding: '0.75rem 1.25rem',
-              borderRadius: '8px',
+              borderRadius: 'var(--ob-radius-sm)',
               border: 'none',
-              background: canRecord ? '#dc2626' : '#d1d5db',
+              background: canRecord
+                ? 'var(--ob-color-status-error-text)'
+                : 'var(--ob-color-border-subtle)',
               color: 'white',
               fontSize: '0.9rem',
               fontWeight: 500,
@@ -383,7 +385,7 @@ export function VoiceNoteRecorder({
               style={{
                 width: '12px',
                 height: '12px',
-                borderRadius: '50%',
+                borderRadius: 'var(--ob-radius-pill)',
                 background: 'white',
               }}
             />
@@ -399,10 +401,10 @@ export function VoiceNoteRecorder({
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.75rem 1rem',
-                borderRadius: '8px',
-                border: '1px solid #d1d5db',
+                borderRadius: 'var(--ob-radius-sm)',
+                border: '1px solid var(--ob-color-border-subtle)',
                 background: 'white',
-                color: '#374151',
+                color: 'var(--ob-color-text-secondary)',
                 fontSize: '0.9rem',
                 fontWeight: 500,
                 cursor: 'pointer',
@@ -419,9 +421,9 @@ export function VoiceNoteRecorder({
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.75rem 1rem',
-                borderRadius: '8px',
+                borderRadius: 'var(--ob-radius-sm)',
                 border: 'none',
-                background: '#1d1d1f',
+                background: 'var(--ob-color-text-primary)',
                 color: 'white',
                 fontSize: '0.9rem',
                 fontWeight: 500,
@@ -443,8 +445,10 @@ export function VoiceNoteRecorder({
                 style={{
                   width: '10px',
                   height: '10px',
-                  borderRadius: '50%',
-                  background: isPaused ? '#f59e0b' : '#dc2626',
+                  borderRadius: 'var(--ob-radius-pill)',
+                  background: isPaused
+                    ? 'var(--ob-warning-500)'
+                    : 'var(--ob-color-status-error-text)',
                   animation: isPaused ? 'none' : 'pulse 1s infinite',
                 }}
               />
@@ -453,7 +457,7 @@ export function VoiceNoteRecorder({
                   fontFamily: 'ui-monospace, monospace',
                   fontSize: '1.1rem',
                   fontWeight: 600,
-                  color: '#1d1d1f',
+                  color: 'var(--ob-color-text-primary)',
                 }}
               >
                 {formatDuration(duration)}
@@ -464,8 +468,8 @@ export function VoiceNoteRecorder({
                 style={{
                   width: '60px',
                   height: '8px',
-                  background: '#e5e7eb',
-                  borderRadius: '4px',
+                  background: 'var(--ob-color-border-subtle)',
+                  borderRadius: 'var(--ob-radius-sm)',
                   overflow: 'hidden',
                 }}
               >
@@ -473,7 +477,10 @@ export function VoiceNoteRecorder({
                   style={{
                     width: `${audioLevel * 100}%`,
                     height: '100%',
-                    background: audioLevel > 0.7 ? '#dc2626' : '#22c55e',
+                    background:
+                      audioLevel > 0.7
+                        ? 'var(--ob-color-status-error-text)'
+                        : 'var(--ob-color-status-success-text)',
                     transition: 'width 0.1s',
                   }}
                 />
@@ -488,10 +495,10 @@ export function VoiceNoteRecorder({
         <div
           style={{
             padding: '0.75rem',
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '8px',
-            color: '#dc2626',
+            background: 'var(--ob-error-50)',
+            border: '1px solid var(--ob-error-200)',
+            borderRadius: 'var(--ob-radius-sm)',
+            color: 'var(--ob-color-status-error-text)',
             fontSize: '0.875rem',
             marginBottom: '1rem',
           }}
@@ -508,7 +515,7 @@ export function VoiceNoteRecorder({
               margin: '0 0 0.75rem 0',
               fontSize: '0.9rem',
               fontWeight: 500,
-              color: '#6b7280',
+              color: 'var(--ob-color-text-muted)',
             }}
           >
             Recorded Notes ({voiceNotes.length})
@@ -526,15 +533,15 @@ export function VoiceNoteRecorder({
                   gap: '0.75rem',
                   padding: '0.75rem',
                   background: 'white',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
+                  border: '1px solid var(--ob-color-border-subtle)',
+                  borderRadius: 'var(--ob-radius-sm)',
                 }}
               >
                 {/* Play button / Audio element */}
                 <audio
                   controls
                   src={URL.createObjectURL(note.blob)}
-                  style={{ height: '32px', flex: '0 0 200px' }}
+                  style={{ height: 'var(--ob-space-400)', flex: '0 0 200px' }}
                 />
 
                 {/* Title (editable) */}
@@ -550,8 +557,8 @@ export function VoiceNoteRecorder({
                     style={{
                       flex: 1,
                       padding: '0.375rem 0.5rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
+                      border: '1px solid var(--ob-color-border-subtle)',
+                      borderRadius: 'var(--ob-radius-sm)',
                       fontSize: '0.875rem',
                     }}
                     autoFocus
@@ -561,7 +568,7 @@ export function VoiceNoteRecorder({
                     style={{
                       flex: 1,
                       fontSize: '0.875rem',
-                      color: '#1d1d1f',
+                      color: 'var(--ob-color-text-primary)',
                       cursor: 'pointer',
                     }}
                     onClick={() => handleEditNote(note)}
@@ -575,7 +582,7 @@ export function VoiceNoteRecorder({
                 <span
                   style={{
                     fontSize: '0.8rem',
-                    color: '#6b7280',
+                    color: 'var(--ob-color-text-muted)',
                     fontFamily: 'ui-monospace, monospace',
                   }}
                 >
@@ -587,7 +594,7 @@ export function VoiceNoteRecorder({
                   <span
                     style={{
                       fontSize: '0.8rem',
-                      color: '#22c55e',
+                      color: 'var(--ob-color-status-success-text)',
                       fontWeight: 500,
                     }}
                   >
@@ -600,9 +607,11 @@ export function VoiceNoteRecorder({
                     disabled={isUploading || !propertyId}
                     style={{
                       padding: '0.375rem 0.75rem',
-                      borderRadius: '6px',
+                      borderRadius: 'var(--ob-radius-md)',
                       border: 'none',
-                      background: propertyId ? '#3b82f6' : '#d1d5db',
+                      background: propertyId
+                        ? 'var(--ob-color-brand-primary)'
+                        : 'var(--ob-color-border-subtle)',
                       color: 'white',
                       fontSize: '0.8rem',
                       fontWeight: 500,
@@ -624,10 +633,10 @@ export function VoiceNoteRecorder({
                   onClick={() => handleDeleteNote(note.id)}
                   style={{
                     padding: '0.375rem',
-                    borderRadius: '4px',
+                    borderRadius: 'var(--ob-radius-sm)',
                     border: 'none',
                     background: 'transparent',
-                    color: '#9ca3af',
+                    color: 'var(--ob-color-text-muted)',
                     cursor: 'pointer',
                     fontSize: '1rem',
                   }}
@@ -647,7 +656,7 @@ export function VoiceNoteRecorder({
           style={{
             margin: '0.75rem 0 0 0',
             fontSize: '0.8rem',
-            color: '#6b7280',
+            color: 'var(--ob-color-text-muted)',
             fontStyle: 'italic',
           }}
         >

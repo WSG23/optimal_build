@@ -291,6 +291,7 @@ export interface FinanceScenarioSummary {
   projectId: number | string
   finProjectId: number | null
   scenarioName: string
+  description?: string | null
   currency: string
   escalatedCost: string
   costIndex: CostIndexProvenance
@@ -1325,6 +1326,10 @@ function createFinanceFallbackSummary(
   request: FinanceFeasibilityRequest,
 ): FinanceScenarioSummary {
   const fallback = cloneFinanceSummary(FINANCE_FALLBACK_SUMMARY)
+  // Ensure locally-created fallback scenarios do not collide with the static
+  // offline summary (scenarioId=0) used by listFinanceScenarios fallback.
+  fallback.scenarioId = -Date.now()
+  fallback.isPrimary = true
   if (request.projectId !== undefined && request.projectId !== null) {
     fallback.projectId = request.projectId as typeof fallback.projectId
   }
@@ -1385,6 +1390,11 @@ function createFinanceFallbackSummary(
 
 export interface FinanceFeasibilityOptions {
   signal?: AbortSignal
+  /**
+   * Optional client-side timeout for API calls.
+   * When reached, the request aborts and callers may fall back to offline data.
+   */
+  timeoutMs?: number
 }
 
 export async function runFinanceFeasibility(
@@ -1443,6 +1453,137 @@ export interface FinanceScenarioListParams {
   finProjectId?: number
 }
 
+function scaleFixed(
+  value: string | null | undefined,
+  multiplier: number,
+): string {
+  if (typeof value !== 'string') return '0.00'
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) return value
+  return (parsed * multiplier).toFixed(2)
+}
+
+function setResultValue(
+  summary: FinanceScenarioSummary,
+  key: string,
+  value: string,
+) {
+  const target = key.trim().toLowerCase()
+  const match = summary.results.find(
+    (result) => result.name.trim().toLowerCase() === target,
+  )
+  if (match) {
+    match.value = value
+    return
+  }
+  summary.results.push({
+    name: key,
+    value,
+    unit: 'currency',
+    metadata: { currency: summary.currency ?? 'SGD' },
+  })
+}
+
+function createFinanceFallbackScenarioList(
+  params: FinanceScenarioListParams,
+): FinanceScenarioSummary[] {
+  const base = cloneFinanceSummary(FINANCE_FALLBACK_SUMMARY)
+  if (params.projectId !== undefined && params.projectId !== null) {
+    base.projectId = params.projectId as typeof base.projectId
+  }
+  if (typeof params.finProjectId === 'number') {
+    base.finProjectId = params.finProjectId
+  }
+
+  const scenarioA = cloneFinanceSummary(base)
+  scenarioA.scenarioId = 0
+  scenarioA.scenarioName = 'Scenario A'
+  scenarioA.isPrimary = true
+  scenarioA.escalatedCost = scaleFixed(base.escalatedCost, 1)
+  setResultValue(scenarioA, 'NPV', '375863.00')
+  setResultValue(scenarioA, 'IRR', '0.0688')
+
+  const scenarioB = cloneFinanceSummary(base)
+  scenarioB.scenarioId = -1
+  scenarioB.scenarioName = 'Scenario B'
+  scenarioB.isPrimary = false
+  scenarioB.escalatedCost = scaleFixed(base.escalatedCost, 1.045)
+  setResultValue(scenarioB, 'NPV', '1270733.00')
+  setResultValue(scenarioB, 'IRR', '0.1091')
+
+  const scenarioC = cloneFinanceSummary(base)
+  scenarioC.scenarioId = -2
+  scenarioC.scenarioName = 'Scenario C'
+  scenarioC.isPrimary = false
+  scenarioC.escalatedCost = scaleFixed(base.escalatedCost, 0.955)
+  setResultValue(scenarioC, 'NPV', '4160673.00')
+  setResultValue(scenarioC, 'IRR', '-0.0745')
+
+  const variants = [
+    { scenario: scenarioA, multiplier: 1 },
+    { scenario: scenarioB, multiplier: 1.045 },
+    { scenario: scenarioC, multiplier: 0.955 },
+  ]
+
+  for (const { scenario, multiplier } of variants) {
+    if (scenario.capitalStack) {
+      scenario.capitalStack.total = scaleFixed(
+        scenario.capitalStack.total,
+        multiplier,
+      )
+      scenario.capitalStack.equityTotal = scaleFixed(
+        scenario.capitalStack.equityTotal,
+        multiplier,
+      )
+      scenario.capitalStack.debtTotal = scaleFixed(
+        scenario.capitalStack.debtTotal,
+        multiplier,
+      )
+      scenario.capitalStack.otherTotal = scaleFixed(
+        scenario.capitalStack.otherTotal,
+        multiplier,
+      )
+      scenario.capitalStack.slices = scenario.capitalStack.slices.map(
+        (slice) => ({
+          ...slice,
+          amount: scaleFixed(slice.amount, multiplier),
+        }),
+      )
+    }
+    if (scenario.drawdownSchedule) {
+      scenario.drawdownSchedule.totalEquity = scaleFixed(
+        scenario.drawdownSchedule.totalEquity,
+        multiplier,
+      )
+      scenario.drawdownSchedule.totalDebt = scaleFixed(
+        scenario.drawdownSchedule.totalDebt,
+        multiplier,
+      )
+      scenario.drawdownSchedule.peakDebtBalance = scaleFixed(
+        scenario.drawdownSchedule.peakDebtBalance,
+        multiplier,
+      )
+      scenario.drawdownSchedule.finalDebtBalance = scaleFixed(
+        scenario.drawdownSchedule.finalDebtBalance,
+        multiplier,
+      )
+      scenario.drawdownSchedule.entries = scenario.drawdownSchedule.entries.map(
+        (entry) => ({
+          ...entry,
+          equityDraw: scaleFixed(entry.equityDraw, multiplier),
+          debtDraw: scaleFixed(entry.debtDraw, multiplier),
+          totalDraw: scaleFixed(entry.totalDraw, multiplier),
+          cumulativeEquity: scaleFixed(entry.cumulativeEquity, multiplier),
+          cumulativeDebt: scaleFixed(entry.cumulativeDebt, multiplier),
+          outstandingDebt: scaleFixed(entry.outstandingDebt, multiplier),
+        }),
+      )
+    }
+  }
+
+  return [scenarioA, scenarioB, scenarioC]
+}
+
 export async function listFinanceScenarios(
   params: FinanceScenarioListParams = {},
   options: FinanceFeasibilityOptions = {},
@@ -1450,6 +1591,34 @@ export async function listFinanceScenarios(
   const headers = applyIdentityHeaders({
     'Content-Type': 'application/json',
   })
+
+  const timeoutMs =
+    typeof options.timeoutMs === 'number' && options.timeoutMs > 0
+      ? options.timeoutMs
+      : 2500
+  const timeoutController = new AbortController()
+  const timeoutId = setTimeout(() => {
+    timeoutController.abort()
+  }, timeoutMs)
+
+  let composedSignal: AbortSignal | undefined
+  const incomingSignal = options.signal
+  const timeoutSignal = timeoutController.signal
+  if (incomingSignal) {
+    if (typeof AbortSignal !== 'undefined' && 'any' in AbortSignal) {
+      composedSignal = (
+        AbortSignal as unknown as { any: (s: AbortSignal[]) => AbortSignal }
+      ).any([incomingSignal, timeoutSignal])
+    } else {
+      const bridge = new AbortController()
+      const abortBridge = () => bridge.abort()
+      incomingSignal.addEventListener('abort', abortBridge, { once: true })
+      timeoutSignal.addEventListener('abort', abortBridge, { once: true })
+      composedSignal = bridge.signal
+    }
+  } else {
+    composedSignal = timeoutSignal
+  }
 
   const query = new URLSearchParams()
   if (typeof params.projectId === 'number') {
@@ -1471,12 +1640,19 @@ export async function listFinanceScenarios(
       {
         method: 'GET',
         headers,
-        signal: options.signal,
+        signal: composedSignal,
       },
     )
 
     if (!response.ok) {
       const message = await response.text()
+      if (response.status >= 500) {
+        console.warn(
+          `[finance] scenario list request failed (server ${response.status}), using offline fallback data`,
+          message,
+        )
+        return createFinanceFallbackScenarioList(params)
+      }
       throw new Error(
         message ||
           `Finance scenario list request failed with status ${response.status}`,
@@ -1488,44 +1664,34 @@ export async function listFinanceScenarios(
     return Array.isArray(payload) ? payload.map(mapResponse) : []
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      throw error
-    }
-    if (error instanceof TypeError) {
+      const timedOut =
+        timeoutController.signal.aborted && !options.signal?.aborted
+      if (!timedOut) {
+        throw error
+      }
       console.warn(
-        '[finance] scenario list request failed, using offline fallback data',
+        `[finance] scenario list request timed out after ${timeoutMs}ms, using offline fallback data`,
+      )
+      return createFinanceFallbackScenarioList(params)
+    }
+    // Use fallback data for network errors (TypeError) or API auth errors (401/403)
+    const isNetworkError = error instanceof TypeError
+    const isAuthError =
+      error instanceof Error &&
+      (error.message.includes('401') ||
+        error.message.includes('403') ||
+        error.message.includes('restricted') ||
+        error.message.includes('owner'))
+    if (isNetworkError || isAuthError) {
+      console.warn(
+        `[finance] scenario list request failed (${isNetworkError ? 'network' : 'auth'}), using offline fallback data`,
         error,
       )
-      const fallbackRequest: FinanceFeasibilityRequest = {
-        projectId: params.projectId ?? FINANCE_FALLBACK_SUMMARY.projectId,
-        finProjectId:
-          typeof params.finProjectId === 'number'
-            ? params.finProjectId
-            : typeof FINANCE_FALLBACK_SUMMARY.finProjectId === 'number'
-              ? FINANCE_FALLBACK_SUMMARY.finProjectId
-              : undefined,
-        projectName: 'Offline Project',
-        scenario: {
-          name: 'Offline Feasibility Scenario',
-          currency: FINANCE_FALLBACK_SUMMARY.currency,
-          costEscalation: {
-            amount: FINANCE_FALLBACK_SUMMARY.escalatedCost,
-            basePeriod: FINANCE_FALLBACK_SUMMARY.costIndex.basePeriod,
-            seriesName: FINANCE_FALLBACK_SUMMARY.costIndex.seriesName,
-            jurisdiction: FINANCE_FALLBACK_SUMMARY.costIndex.jurisdiction,
-            provider: FINANCE_FALLBACK_SUMMARY.costIndex.provider ?? null,
-          },
-          cashFlow: {
-            discountRate: '0.08',
-            cashFlows: [],
-          },
-          dscr: undefined,
-          capitalStack: undefined,
-          drawdownSchedule: undefined,
-        },
-      }
-      return [createFinanceFallbackSummary(fallbackRequest)]
+      return createFinanceFallbackScenarioList(params)
     }
     throw error
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
 

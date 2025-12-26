@@ -43,10 +43,21 @@ class ContractorUpdate(BaseModel):
     metadata: dict[str, Any] | None = None
 
 
-class ContractorResponse(ContractorBase):
+class ContractorResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
     project_id: UUID
+    company_name: str
+    contractor_type: ContractorType = ContractorType.GENERAL_CONTRACTOR
+    contact_person: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    contract_value: Decimal | None = None
+    contract_date: date | None = None
+    is_active: bool = True
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, validation_alias="metadata_json"
+    )
     created_at: datetime
     updated_at: datetime | None = None
 

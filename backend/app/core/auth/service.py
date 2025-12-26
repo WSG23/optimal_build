@@ -6,7 +6,6 @@ live here to avoid the previous split across multiple modules.
 
 from __future__ import annotations
 
-import os
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -53,12 +52,16 @@ class TokenResponse(BaseModel):
 
 
 def _secret_key() -> str:
-    """Return the configured JWT secret key."""
+    """Return the configured JWT secret key.
 
-    return settings.SECRET_KEY or os.getenv(
-        "SECRET_KEY",
-        "fallback-secret-key-for-development-only-do-not-use-in-production",
-    )
+    The SECRET_KEY is validated at startup in config.py, so this should
+    never fail in a properly configured environment.
+    """
+    if not settings.SECRET_KEY:
+        raise RuntimeError(
+            "SECRET_KEY is not configured. This should have been caught at startup."
+        )
+    return settings.SECRET_KEY
 
 
 def create_access_token(data: dict[str, Any]) -> str:

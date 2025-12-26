@@ -68,7 +68,7 @@ export function AssumptionsPanel({
         }}
         sx={{
           boxShadow: 'none',
-          background: '#1A1A1A', // Darker card background as requested
+          background: 'var(--ob-color-bg-surface-inverse)', // Darker card background as requested
           '&:before': { display: 'none' },
           border: '1px solid var(--ob-color-border-premium)',
           borderRadius: 'var(--ob-radius-lg) !important',
@@ -136,7 +136,7 @@ export function AssumptionsPanel({
                       padding: '10px 12px',
                       background: 'rgba(255, 255, 255, 0.05)',
                       border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '8px',
+                      borderRadius: 'var(--ob-radius-md)',
                       color: 'white',
                       fontSize: '0.9rem',
                       outline: 'none',
@@ -208,8 +208,8 @@ export function AssumptionsPanel({
                       padding: '4px 24px 4px 8px',
                       background: 'rgba(6, 182, 212, 0.1)',
                       border: '1px solid rgba(6, 182, 212, 0.3)',
-                      borderRadius: '6px',
-                      color: '#06b6d4',
+                      borderRadius: 'var(--ob-radius-md)',
+                      color: 'var(--ob-color-brand-primary)',
                       fontFamily: 'monospace',
                       fontWeight: 700,
                       fontSize: '0.875rem',
@@ -304,8 +304,8 @@ export function AssumptionsPanel({
                       padding: '4px 20px 4px 8px',
                       background: 'rgba(6, 182, 212, 0.1)',
                       border: '1px solid rgba(6, 182, 212, 0.3)',
-                      borderRadius: '6px',
-                      color: '#06b6d4',
+                      borderRadius: 'var(--ob-radius-md)',
+                      color: 'var(--ob-color-brand-primary)',
                       fontFamily: 'monospace',
                       fontWeight: 700,
                       fontSize: '0.8125rem',
@@ -463,7 +463,11 @@ export function AssumptionsPanel({
               </div>
 
               <div
-                style={{ display: 'flex', alignItems: 'center', gap: '16px' }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--ob-space-200)',
+                }}
               >
                 <TunerSlider
                   value={Number(assumptionInputs.mepLoadWpsm) || 150}
@@ -486,7 +490,7 @@ export function AssumptionsPanel({
                     style={{
                       width: '100%',
                       padding: '4px 8px',
-                      borderRadius: '6px',
+                      borderRadius: 'var(--ob-radius-md)',
                       border: '1px solid var(--ob-color-border-premium)',
                       textAlign: 'right',
                       fontSize: '0.875rem',

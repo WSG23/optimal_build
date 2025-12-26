@@ -1,5 +1,3 @@
-import { cssVar } from '../../../tokens'
-
 export function formatFileSize(bytes: number | null, locale: string): string {
   if (bytes == null || Number.isNaN(bytes)) {
     return '—'
@@ -28,10 +26,6 @@ export function anonymiseAddress(address: string): string {
   const prefix = trimmed.slice(0, 3)
   const suffix = trimmed.slice(-2)
   return `${prefix}…${suffix}`
-}
-
-export function readCssVar(token: string): string {
-  return String((cssVar as (name: string) => unknown)(token))
 }
 
 export function createNumberFormatter(

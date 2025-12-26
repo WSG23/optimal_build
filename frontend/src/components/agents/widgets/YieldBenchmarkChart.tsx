@@ -103,7 +103,7 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
       </Box>
 
       {statistics ? (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid container spacing="var(--ob-space-100)" sx={{ mb: 3 }}>
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
@@ -229,7 +229,11 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
                     payload.payload.label,
                   ]}
                 />
-                <Bar dataKey="value" fill="#1976d2" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="value"
+                  fill="var(--ob-color-brand-primary)"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </Box>

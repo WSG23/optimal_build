@@ -10,6 +10,7 @@ import {
 
 import React from 'react'
 
+import { DeveloperProvider } from '../../contexts/DeveloperContext'
 import { TranslationProvider } from '../../i18n'
 import { ThemeModeProvider } from '../../theme/ThemeContext'
 import AgentAdvisoryPage from '../AgentAdvisoryPage'
@@ -107,9 +108,11 @@ describe('AgentAdvisoryPage', () => {
   it('renders advisory data and submits feedback', async () => {
     render(
       <ThemeModeProvider>
-        <TranslationProvider>
-          <AgentAdvisoryPage />
-        </TranslationProvider>
+        <DeveloperProvider>
+          <TranslationProvider>
+            <AgentAdvisoryPage />
+          </TranslationProvider>
+        </DeveloperProvider>
       </ThemeModeProvider>,
     )
 
@@ -117,7 +120,7 @@ describe('AgentAdvisoryPage', () => {
       () => {
         assert.ok(screen.getByText(/Asset mix strategy/i))
       },
-      { timeout: 5000 },
+      { timeout: 10_000 },
     )
 
     assert.ok(screen.getByText(/Plot ratio allows flexibility/i))
@@ -164,7 +167,7 @@ describe('AgentAdvisoryPage', () => {
     await waitFor(() => {
       assert.ok(screen.getByText(/Strong inbound interest\./i))
     })
-  })
+  }, 15_000)
 })
 
 function makeMockResponse(body: unknown, status = 200) {

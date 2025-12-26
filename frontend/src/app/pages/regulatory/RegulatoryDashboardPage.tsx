@@ -313,7 +313,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
             sx={{
               background: 'linear-gradient(135deg, #00C9FF 0%, #92FE9D 100%)',
               boxShadow: '0px 4px 12px rgba(0, 201, 255, 0.3)',
-              color: '#000',
+              color: 'var(--ob-color-text-primary)',
               fontWeight: 'bold',
             }}
           >
@@ -330,7 +330,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
             sx={{
               border: '1px solid rgba(255,255,255,0.1)',
               bgcolor: 'background.paper',
-              borderRadius: 2,
+              borderRadius: 'var(--ob-radius-sm)',
               overflow: 'hidden',
             }}
           >
@@ -430,7 +430,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
             sx={{
               background: 'linear-gradient(135deg, #ea580c 0%, #fb923c 100%)',
               boxShadow: '0px 4px 12px rgba(234, 88, 12, 0.3)',
-              color: '#fff',
+              color: 'var(--ob-color-text-inverse)',
               fontWeight: 'bold',
             }}
           >
@@ -442,7 +442,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
           sx={{
             border: '1px solid rgba(255,255,255,0.1)',
             bgcolor: 'background.paper',
-            borderRadius: 2,
+            borderRadius: 'var(--ob-radius-sm)',
             overflow: 'hidden',
           }}
         >
@@ -543,7 +543,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
             sx={{
               background: 'linear-gradient(135deg, #be185d 0%, #f472b6 100%)',
               boxShadow: '0px 4px 12px rgba(190, 24, 93, 0.3)',
-              color: '#fff',
+              color: 'var(--ob-color-text-inverse)',
               fontWeight: 'bold',
             }}
           >
@@ -555,7 +555,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
           sx={{
             border: '1px solid rgba(255,255,255,0.1)',
             bgcolor: 'background.paper',
-            borderRadius: 2,
+            borderRadius: 'var(--ob-radius-sm)',
             overflow: 'hidden',
           }}
         >

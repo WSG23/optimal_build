@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import {
+  Box,
   Button,
   IconButton,
   Menu,
   MenuItem,
+  Stack,
   Tooltip,
   useTheme,
   alpha,
@@ -59,31 +61,32 @@ export function HeaderUtilityCluster() {
   const currentLangObj =
     LANGUAGES.find((l) => l.code === currentLanguage) || LANGUAGES[0]
 
-  const buttonStyle = {
+  const buttonSx = {
     color: 'text.primary',
     borderColor: alpha(theme.palette.divider, 0.2),
-    borderRadius: '20px', // Pill shape
-    padding: '6px 16px',
-    height: '40px',
+    borderRadius: 'var(--ob-radius-xs)',
+    px: 'var(--ob-space-100)',
+    height: 'var(--ob-space-250)',
     textTransform: 'none' as const,
-    fontSize: '0.875rem',
+    fontSize: 'var(--ob-font-size-sm)',
     fontWeight: 500,
     background: alpha(theme.palette.background.paper, 0.05),
-    backdropFilter: 'blur(4px)',
+    backdropFilter: 'blur(var(--ob-blur-sm))',
     '&:hover': {
       background: alpha(theme.palette.text.primary, 0.05),
       borderColor: alpha(theme.palette.text.primary, 0.2),
     },
   }
 
-  const iconButtonStyle = {
+  const iconButtonSx = {
     color: 'text.secondary',
-    border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
-    borderRadius: '50%', // Circular
-    width: '40px',
-    height: '40px',
+    border: 1,
+    borderColor: alpha(theme.palette.divider, 0.2),
+    borderRadius: 'var(--ob-radius-pill)',
+    width: 'var(--ob-space-250)',
+    height: 'var(--ob-space-250)',
     background: alpha(theme.palette.background.paper, 0.05),
-    backdropFilter: 'blur(4px)',
+    backdropFilter: 'blur(var(--ob-blur-sm))',
     '&:hover': {
       color: 'text.primary',
       background: alpha(theme.palette.text.primary, 0.05),
@@ -92,15 +95,17 @@ export function HeaderUtilityCluster() {
   }
 
   return (
-    <div
+    <Stack
       className="header-utility-cluster"
-      style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+      direction="row"
+      alignItems="center"
+      spacing="var(--ob-space-075)"
     >
       {/* Theme Toggle */}
       <Tooltip title={mode === 'dark' ? 'Light Mode' : 'Dark Mode'}>
         <IconButton
           onClick={toggleMode}
-          sx={iconButtonStyle}
+          sx={iconButtonSx}
           aria-label="Toggle theme"
         >
           {mode === 'dark' ? (
@@ -117,19 +122,25 @@ export function HeaderUtilityCluster() {
         onClick={handleClick}
         endIcon={
           <KeyboardArrowDown
-            sx={{ color: 'text.secondary', fontSize: '1rem' }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: 'var(--ob-font-size-sm)',
+            }}
           />
         }
         startIcon={
-          <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>
+          <Box
+            component="span"
+            sx={{ fontSize: 'var(--ob-font-size-lg)', lineHeight: 1 }}
+          >
             {currentLangObj.flag}
-          </span>
+          </Box>
         }
-        sx={buttonStyle}
+        sx={buttonSx}
       >
-        <span style={{ marginRight: '4px' }}>
+        <Box component="span" sx={{ mr: 'var(--ob-space-025)' }}>
           {currentLangObj.code.toUpperCase()}
-        </span>
+        </Box>
       </Button>
 
       <Menu
@@ -139,10 +150,12 @@ export function HeaderUtilityCluster() {
         PaperProps={{
           elevation: 8,
           sx: {
-            mt: 1,
-            borderRadius: '12px',
-            minWidth: '160px',
-            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+            mt: 'var(--ob-space-050)',
+            borderRadius: 'var(--ob-radius-sm)',
+            minWidth:
+              'calc(var(--ob-space-400) + var(--ob-space-400) + var(--ob-space-200))',
+            border: 1,
+            borderColor: alpha(theme.palette.divider, 0.1),
           },
         }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
@@ -153,9 +166,11 @@ export function HeaderUtilityCluster() {
             key={lang.code}
             onClick={() => handleLanguageChange(lang.code)}
             selected={currentLanguage === lang.code}
-            sx={{ gap: 2, fontSize: '0.9rem' }}
+            sx={{ gap: 2, fontSize: 'var(--ob-font-size-sm)' }}
           >
-            <span style={{ fontSize: '1.2rem' }}>{lang.flag}</span>
+            <Box component="span" sx={{ fontSize: 'var(--ob-font-size-lg)' }}>
+              {lang.flag}
+            </Box>
             {lang.label}
           </MenuItem>
         ))}
@@ -169,7 +184,7 @@ export function HeaderUtilityCluster() {
         <IconButton
           onClick={toggleDeveloperMode}
           sx={{
-            ...iconButtonStyle,
+            ...iconButtonSx,
             color: isDeveloperMode ? 'primary.main' : 'text.secondary',
             borderColor: isDeveloperMode
               ? 'primary.main'
@@ -185,7 +200,7 @@ export function HeaderUtilityCluster() {
 
       {/* Settings */}
       <Tooltip title="Settings">
-        <IconButton sx={iconButtonStyle}>
+        <IconButton sx={iconButtonSx}>
           <SettingsIcon fontSize="small" />
         </IconButton>
       </Tooltip>
@@ -196,17 +211,18 @@ export function HeaderUtilityCluster() {
           alt="User"
           src="" // Placeholder for now
           sx={{
-            width: 40,
-            height: 40,
-            border: `2px solid ${alpha(theme.palette.background.paper, 0.2)}`,
+            width: 'var(--ob-space-250)',
+            height: 'var(--ob-space-250)',
+            border: 1,
+            borderColor: alpha(theme.palette.background.paper, 0.25),
             cursor: 'pointer',
             bgcolor: 'primary.main',
-            fontSize: '0.9rem',
+            fontSize: 'var(--ob-font-size-sm)',
           }}
         >
           US
         </Avatar>
       </Tooltip>
-    </div>
+    </Stack>
   )
 }

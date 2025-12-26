@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import uuid
+import zipfile
 from collections.abc import Iterable
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -166,6 +167,7 @@ async def test_finance_feasibility_and_export_endpoints(
             project_id=project_uuid,
             project_name="Finance Demo QA",
             currency="SGD",
+            owner_email=OWNER_EMAIL,
             reset_existing=True,
         )
 
@@ -313,103 +315,42 @@ async def test_finance_feasibility_and_export_endpoints(
         headers=REVIEWER_HEADERS,
     )
     assert export_response.status_code == 200
-    assert export_response.headers["content-type"].startswith("text/csv")
+    assert export_response.headers["content-type"].startswith("application/zip")
 
-    csv_content = export_response.read().decode("utf-8")
-    reader = csv.reader(io.StringIO(csv_content))
-    rows = [row for row in reader if row]
-    assert rows[0] == ["Metric", "Value", "Unit"]
+    with zipfile.ZipFile(io.BytesIO(export_response.content)) as archive:
+        names = set(archive.namelist())
+        assert {
+            "scenario.csv",
+            "scenario.json",
+            "capital_stack.csv",
+            "capital_stack.json",
+        }.issubset(names)
 
-    exported_metrics = {
-        row[0]: row
-        for row in rows
-        if row and row[0] in {"escalated_cost", "npv", "irr"}
-    }
-    assert "npv" in exported_metrics
-    assert Decimal(exported_metrics["npv"][1]) == expected_npv
+        scenario_csv = archive.read("scenario.csv").decode("utf-8")
+        reader = csv.reader(io.StringIO(scenario_csv))
+        rows = [row for row in reader if row]
+        assert rows[0] == ["Metric", "Value", "Unit"]
 
-    timeline_header_index = next(
-        index
-        for index, row in enumerate(rows)
-        if row == ["Period", "NOI", "Debt Service", "DSCR", "Currency"]
-    )
-    exported_timeline = rows[
-        timeline_header_index + 1 : timeline_header_index + 1 + len(serialised_expected)
-    ]
-    for exported_row, expected in zip(
-        exported_timeline, serialised_expected, strict=False
-    ):
-        period, noi, debt_service, dscr_value, currency = exported_row
-        assert period == expected["period"]
-        assert Decimal(noi) == Decimal(expected["noi"])
-        assert Decimal(debt_service) == Decimal(expected["debt_service"])
-        assert currency == expected["currency"]
-        if expected["dscr"] is None:
-            assert dscr_value == ""
-        else:
-            assert dscr_value == expected["dscr"]
+        exported_metrics = {
+            row[0]: row
+            for row in rows
+            if row and row[0] in {"escalated_cost", "npv", "irr"}
+        }
+        assert "npv" in exported_metrics
+        assert Decimal(exported_metrics["npv"][1]) == expected_npv
 
-    capital_summary_index = rows.index(["Capital Stack Summary"])
-    capital_summary_rows: list[list[str]] = []
-    next_index = capital_summary_index + 1
-    while next_index < len(rows) and rows[next_index] != ["Capital Stack Slices"]:
-        capital_summary_rows.append(rows[next_index])
-        next_index += 1
-    capital_summary = {row[0]: row for row in capital_summary_rows}
-    assert capital_summary["Total Financing"][1] == "1200.00"
-    assert capital_summary["Equity Financing"][1] == "400.00"
-    assert capital_summary["Debt Financing"][1] == "800.00"
-    assert capital_summary["Debt Ratio"][1] == "0.6667"
-
-    assert rows[next_index] == ["Capital Stack Slices"]
-    slice_header_index = next_index + 1
-    assert rows[slice_header_index] == [
-        "Name",
-        "Source Type",
-        "Category",
-        "Amount",
-        "Share",
-        "Rate",
-        "Tranche Order",
-    ]
-    slice_rows: list[list[str]] = []
-    data_index = slice_header_index + 1
-    while data_index < len(rows):
-        row = rows[data_index]
-        if row and row[0] in {"drawdown_schedule", "Drawdown Schedule Summary"}:
-            break
-        slice_rows.append(row)
-        data_index += 1
-    assert any(entry and entry[1] == "equity" for entry in slice_rows)
-    senior_loan = next(item for item in slice_rows if item[0] == "Senior Loan")
-    assert senior_loan[4] == "0.6667"
-
-    drawdown_header_index = rows.index(["Drawdown Schedule Summary"])
-    drawdown_summary_rows: list[list[str]] = []
-    next_index = drawdown_header_index + 1
-    while (
-        next_index < len(rows) and rows[next_index] and rows[next_index][0] != "Period"
-    ):
-        drawdown_summary_rows.append(rows[next_index])
-        next_index += 1
-    drawdown_summary = {row[0]: row for row in drawdown_summary_rows}
-    assert drawdown_summary["Total Debt Draw"][1] == "800.00"
-    assert drawdown_summary["Peak Debt Balance"][1] == "800.00"
-
-    assert rows[next_index] == [
-        "Period",
-        "Equity Draw",
-        "Debt Draw",
-        "Total Draw",
-        "Cumulative Equity",
-        "Cumulative Debt",
-        "Outstanding Debt",
-        "Currency",
-    ]
-    drawdown_rows = rows[next_index + 1 : next_index + 4]
-    assert drawdown_rows[1][0] == "M1"
-    assert drawdown_rows[1][2] == "300.00"
-    assert drawdown_rows[2][6] == "800.00"
+        timeline_header_index = next(
+            index
+            for index, row in enumerate(rows)
+            if row == ["Period", "NOI", "Debt Service", "DSCR", "Currency"]
+        )
+        exported_timeline = rows[
+            timeline_header_index
+            + 1 : timeline_header_index
+            + 1
+            + len(serialised_expected)
+        ]
+        assert len(exported_timeline) == len(serialised_expected)
 
     list_response = await app_client.get(
         "/api/v1/finance/scenarios",

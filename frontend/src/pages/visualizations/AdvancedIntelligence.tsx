@@ -83,8 +83,8 @@ export function AdvancedIntelligencePage({
             background: 'transparent',
             border: `1px solid ${theme.palette.primary.main}`,
             color: theme.palette.primary.main,
-            padding: '8px 16px',
-            borderRadius: '4px',
+            padding: 'var(--ob-space-100) var(--ob-space-200)',
+            borderRadius: 'var(--ob-radius-sm)',
             cursor: isLoading ? 'not-allowed' : 'pointer',
             opacity: isLoading ? 0.5 : 1,
           }}
@@ -182,7 +182,7 @@ export function AdvancedIntelligencePage({
                       alignItems: 'center',
                       justifyContent: 'center',
                       border: '1px dashed grey',
-                      borderRadius: 4,
+                      borderRadius: 'var(--ob-radius-sm)',
                     }}
                   >
                     <Typography color="text.secondary">
@@ -204,9 +204,9 @@ export function AdvancedIntelligencePage({
                 <Box
                   sx={{
                     p: 3,
-                    borderRadius: 4,
+                    borderRadius: 'var(--ob-radius-sm)',
                     bgcolor: alpha(theme.palette.background.paper, 0.4),
-                    backdropFilter: 'blur(10px)',
+                    backdropFilter: 'blur(var(--ob-blur-md))',
                     border: '1px solid',
                     borderColor: alpha(theme.palette.divider, 0.1),
                   }}

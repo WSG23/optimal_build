@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import io
 import uuid
+import zipfile
 from collections.abc import Iterable
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -165,6 +167,7 @@ async def test_finance_feasibility_and_export_metrics(
             project_id=project_uuid,
             project_name="Finance Smoke Project",
             currency="SGD",
+            owner_email=OWNER_EMAIL,
             reset_existing=True,
         )
 
@@ -282,10 +285,18 @@ async def test_finance_feasibility_and_export_metrics(
         headers=REVIEWER_HEADERS,
     )
     assert export_response.status_code == 200
-    assert export_response.headers["content-type"].startswith("text/csv")
+    assert export_response.headers["content-type"].startswith("application/zip")
 
-    csv_content = export_response.text
-    assert csv_content.splitlines()[0].startswith("Metric,Value,Unit")
+    with zipfile.ZipFile(io.BytesIO(export_response.content)) as archive:
+        names = set(archive.namelist())
+        assert {
+            "scenario.csv",
+            "scenario.json",
+            "capital_stack.csv",
+            "capital_stack.json",
+        }.issubset(names)
+        scenario_csv = archive.read("scenario.csv").decode("utf-8")
+        assert scenario_csv.splitlines()[0].startswith("Metric,Value,Unit")
 
     export_total = metrics.counter_value(metrics.FINANCE_EXPORT_TOTAL, {})
     assert export_total == pytest.approx(baseline_export + 1.0)

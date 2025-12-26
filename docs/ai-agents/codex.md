@@ -54,7 +54,7 @@ Key rules for AI agents:
 - Rule 1: Never edit existing migration files
 - Rule 2: Use async/await for all database/API operations
 - Rule 3: Pre-commit hooks handle formatting automatically
-- Rule 6: Follow import ordering (stdlib → third-party → local)
+- Import ordering (Python): stdlib → third-party → local (see `CODING_RULES.md` “Python Import Ordering and Formatting”)
 - Rule 7: No unused variables, proper exception chaining
 - **Rule 8: MANDATORY testing instructions** - After completing ANY feature, provide backend tests, frontend tests, AND UI manual test steps to the user
 - Rule 9: Index all foreign keys and frequently queried columns

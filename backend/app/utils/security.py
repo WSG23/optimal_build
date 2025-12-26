@@ -15,7 +15,13 @@ except ModuleNotFoundError:  # pragma: no cover - fallback implementation
 
 
 if _HAS_PASSLIB:
-    pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
+    # Use bcrypt as primary scheme (more secure than sha256_crypt)
+    # Keep sha256_crypt as deprecated for backward compatibility with existing hashes
+    pwd_context = CryptContext(
+        schemes=["bcrypt", "sha256_crypt"],
+        default="bcrypt",
+        deprecated=["sha256_crypt"],
+    )
 
     def hash_password(password: str) -> str:
         """Hash a password for storing using passlib."""

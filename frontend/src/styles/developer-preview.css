@@ -10,7 +10,7 @@
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
-    padding: var(--ob-spacing-600) var(--ob-spacing-500);
+    /* padding removed - YosaiShell provides canonical 16px layout padding */
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
 }

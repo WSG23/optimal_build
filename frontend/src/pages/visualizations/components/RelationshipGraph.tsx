@@ -191,12 +191,12 @@ export function RelationshipGraph({
         width: width,
         height: height,
         bgcolor: alpha(theme.palette.background.paper, 0.4),
-        borderRadius: 4,
+        borderRadius: 'var(--ob-radius-sm)', // Square Cyber-Minimalism: sm for panels
         border: '1px solid',
         borderColor: alpha(theme.palette.divider, 0.1),
         position: 'relative',
         overflow: 'hidden',
-        backdropFilter: 'blur(10px)',
+        backdropFilter: 'blur(var(--ob-blur-md))',
       }}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}

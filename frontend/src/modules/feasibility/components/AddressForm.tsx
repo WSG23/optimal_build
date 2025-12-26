@@ -34,7 +34,7 @@ export function AddressForm({
     background: 'rgba(255, 255, 255, 0.05)',
     border: '1px solid rgba(255, 255, 255, 0.1)',
     color: 'white',
-    borderRadius: '8px',
+    borderRadius: 'var(--ob-radius-md)',
     padding: '10px 12px',
     fontSize: '0.9rem',
     width: '100%',
@@ -55,7 +55,11 @@ export function AddressForm({
       className="feasibility-form"
       onSubmit={onSubmit}
       noValidate
-      style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--ob-space-200)',
+      }}
     >
       {!hideAddress && (
         <div className="feasibility-form__field">
@@ -73,7 +77,10 @@ export function AddressForm({
             style={inputStyle}
           />
           {addressError && (
-            <p className="feasibility-form__error" style={{ color: '#f87171' }}>
+            <p
+              className="feasibility-form__error"
+              style={{ color: 'var(--ob-color-status-error-text)' }}
+            >
               {addressError}
             </p>
           )}

@@ -29,10 +29,10 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
     <section
       style={{
         marginTop: '2rem',
-        border: '1px solid #e5e7eb',
-        borderRadius: '16px',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '1.5rem',
-        background: '#ffffff',
+        background: 'white',
         display: 'flex',
         flexDirection: 'column',
         gap: '1.25rem',
@@ -51,7 +51,7 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
             fontSize: '1rem',
             fontWeight: 600,
             letterSpacing: '-0.01em',
-            color: '#111827',
+            color: 'var(--ob-color-text-primary)',
           }}
         >
           Layer breakdown
@@ -60,7 +60,7 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
           style={{
             margin: 0,
             fontSize: '0.9rem',
-            color: '#4b5563',
+            color: 'var(--ob-color-text-secondary)',
           }}
         >
           Detailed optimiser output per massing layer (allocation, GFA, NIA, and
@@ -78,13 +78,13 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
           <article
             key={layer.id}
             style={{
-              border: '1px solid #e5e7eb',
-              borderRadius: '12px',
+              border: '1px solid var(--ob-color-border-subtle)',
+              borderRadius: 'var(--ob-radius-sm)',
               padding: '1rem',
               display: 'flex',
               flexDirection: 'column',
               gap: '0.75rem',
-              background: '#f9fafb',
+              background: 'var(--ob-color-bg-surface-elevated)',
             }}
           >
             <div
@@ -95,7 +95,7 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
                 style={{
                   width: '14px',
                   height: '14px',
-                  borderRadius: '9999px',
+                  borderRadius: 'var(--ob-radius-pill)',
                   background: layer.color,
                   boxShadow: '0 0 0 1px rgb(255 255 255 / 0.8)',
                 }}
@@ -111,12 +111,17 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
                   style={{
                     fontWeight: 600,
                     letterSpacing: '-0.01em',
-                    color: '#111827',
+                    color: 'var(--ob-color-text-primary)',
                   }}
                 >
                   {layer.label}
                 </span>
-                <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+                <span
+                  style={{
+                    fontSize: '0.85rem',
+                    color: 'var(--ob-color-text-muted)',
+                  }}
+                >
                   {layer.subtitle}
                 </span>
               </div>
@@ -144,7 +149,7 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
                       fontSize: '0.7rem',
                       letterSpacing: '0.08em',
                       textTransform: 'uppercase',
-                      color: '#9ca3af',
+                      color: 'var(--ob-color-text-muted)',
                       fontWeight: 600,
                     }}
                   >
@@ -154,7 +159,7 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
                     style={{
                       margin: 0,
                       fontWeight: 600,
-                      color: '#1f2937',
+                      color: 'var(--ob-color-text-primary)',
                       fontSize: '0.95rem',
                     }}
                   >
@@ -168,7 +173,7 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
                 style={{
                   margin: 0,
                   fontSize: '0.8rem',
-                  color: '#4b5563',
+                  color: 'var(--ob-color-text-secondary)',
                 }}
               >
                 {layer.description}

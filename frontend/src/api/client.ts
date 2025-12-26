@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 
 import { ensureIdentityHeaders } from './identity'
+import { API_BASE_URL, TIMEOUTS } from '@/constants'
 
 export interface DetectedFloorSummary {
   name: string
@@ -275,7 +276,8 @@ export class ApiClient {
       envBaseUrl,
       fallbackBase,
       typeof window !== 'undefined' ? window.location.origin : undefined,
-      'http://localhost:9400',
+      // Use canonical API_BASE_URL from constants (SSoT)
+      API_BASE_URL,
     ] as Array<string | undefined>
 
     this.baseUrl =
@@ -285,7 +287,7 @@ export class ApiClient {
         }
         const trimmed = value.trim()
         return trimmed.length > 0 && trimmed !== '/'
-      }) ?? 'http://localhost:9400'
+      }) ?? API_BASE_URL
   }
 
   private buildUrl(path: string) {
@@ -295,9 +297,7 @@ export class ApiClient {
     const trimmed = path.startsWith('/') ? path.slice(1) : path
     const root =
       this.baseUrl ||
-      (typeof window !== 'undefined'
-        ? window.location.origin
-        : 'http://localhost:9400')
+      (typeof window !== 'undefined' ? window.location.origin : API_BASE_URL)
     try {
       return new URL(trimmed, root.endsWith('/') ? root : `${root}/`).toString()
     } catch (error) {
@@ -321,27 +321,36 @@ export class ApiClient {
     if (!response.ok) {
       const message = await response.text()
       throw new Error(
-        message || `Request to ${path} failed with ${response.status}`,
+        message || `Request to ${path} failed with ${String(response.status)}`,
       )
     }
     if (response.status === 204) {
       return undefined as T
     }
-    return (await response.json()) as T
+    const text = await response.text()
+    if (!text || text.trim() === '') {
+      return undefined as T
+    }
+    try {
+      return JSON.parse(text) as T
+    } catch {
+      throw new Error(
+        `Invalid JSON response from ${path}: ${text.slice(0, 100)}`,
+      )
+    }
   }
 
   public async get<T>(
     path: string,
     config?: RequestInit & { params?: Record<string, string> },
   ): Promise<{ data: T }> {
-    const url = new URL(this.buildUrl(path))
+    let finalUrl = this.buildUrl(path)
     if (config?.params) {
-      Object.entries(config.params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null)
-          url.searchParams.append(key, String(value))
-      })
+      const searchParams = new URLSearchParams(config.params)
+      const separator = finalUrl.includes('?') ? '&' : '?'
+      finalUrl = `${finalUrl}${separator}${searchParams.toString()}`
     }
-    const data = await this.request<T>(url.toString(), {
+    const data = await this.request<T>(finalUrl, {
       method: 'GET',
       headers: config?.headers,
     })
@@ -353,20 +362,43 @@ export class ApiClient {
     body?: unknown,
     config?: RequestInit & { params?: Record<string, string> },
   ): Promise<{ data: T }> {
-    const url = new URL(this.buildUrl(path))
+    let finalUrl = this.buildUrl(path)
     if (config?.params) {
-      Object.entries(config.params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null)
-          url.searchParams.append(key, String(value))
-      })
+      const searchParams = new URLSearchParams(config.params)
+      const separator = finalUrl.includes('?') ? '&' : '?'
+      finalUrl = `${finalUrl}${separator}${searchParams.toString()}`
     }
-    const data = await this.request<T>(url.toString(), {
+    const headers: HeadersInit = { 'Content-Type': 'application/json' }
+    if (config?.headers) {
+      Object.assign(headers, config.headers)
+    }
+    const data = await this.request<T>(finalUrl, {
       method: 'POST',
       body: JSON.stringify(body),
-      headers: {
-        'Content-Type': 'application/json',
-        ...config?.headers,
-      },
+      headers,
+    })
+    return { data }
+  }
+
+  public async patch<T>(
+    path: string,
+    body?: unknown,
+    config?: RequestInit & { params?: Record<string, string> },
+  ): Promise<{ data: T }> {
+    let finalUrl = this.buildUrl(path)
+    if (config?.params) {
+      const searchParams = new URLSearchParams(config.params)
+      const separator = finalUrl.includes('?') ? '&' : '?'
+      finalUrl = `${finalUrl}${separator}${searchParams.toString()}`
+    }
+    const headers: HeadersInit = { 'Content-Type': 'application/json' }
+    if (config?.headers) {
+      Object.assign(headers, config.headers)
+    }
+    const data = await this.request<T>(finalUrl, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+      headers,
     })
     return { data }
   }
@@ -375,14 +407,13 @@ export class ApiClient {
     path: string,
     config?: RequestInit & { params?: Record<string, string> },
   ): Promise<{ data: T }> {
-    const url = new URL(this.buildUrl(path))
+    let finalUrl = this.buildUrl(path)
     if (config?.params) {
-      Object.entries(config.params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null)
-          url.searchParams.append(key, String(value))
-      })
+      const searchParams = new URLSearchParams(config.params)
+      const separator = finalUrl.includes('?') ? '&' : '?'
+      finalUrl = `${finalUrl}${separator}${searchParams.toString()}`
     }
-    const data = await this.request<T>(url.toString(), {
+    const data = await this.request<T>(finalUrl, {
       method: 'DELETE',
       headers: config?.headers,
     })
@@ -548,7 +579,13 @@ export class ApiClient {
     intervalMs?: number
     timeoutMs?: number
   }) {
-    const { importId, onUpdate, intervalMs = 2000, timeoutMs = 60000 } = options
+    // Use canonical timeouts from constants (SSoT)
+    const {
+      importId,
+      onUpdate,
+      intervalMs = TIMEOUTS.POLL_INTERVAL,
+      timeoutMs = TIMEOUTS.POLL_MAX,
+    } = options
     let cancelled = false
     const startedAt = Date.now()
 
@@ -620,7 +657,7 @@ export class ApiClient {
     projectId: number,
   ): Promise<OverlaySuggestion[]> {
     const payload = await this.request<OverlayListingResponse>(
-      `api/v1/overlay/${projectId}`,
+      `api/v1/overlay/${String(projectId)}`,
     )
     return payload.items.map((item) => this.mapOverlaySuggestion(item))
   }
@@ -634,7 +671,7 @@ export class ApiClient {
     evaluated?: number
   }> {
     const payload = await this.request<OverlayRunResponse>(
-      `api/v1/overlay/${projectId}/run`,
+      `api/v1/overlay/${String(projectId)}/run`,
       {
         method: 'POST',
       },
@@ -652,7 +689,7 @@ export class ApiClient {
   async getLatestImport(projectId: number): Promise<CadImportSummary | null> {
     try {
       const payload = await this.request<ImportResultResponse>(
-        `api/v1/import/latest?project_id=${projectId}`,
+        `api/v1/import/latest?project_id=${String(projectId)}`,
       )
       return this.mapImportResult(payload)
     } catch (error) {
@@ -688,7 +725,7 @@ export class ApiClient {
     },
   ): Promise<OverlaySuggestion> {
     const payload = await this.request<OverlayDecisionResponse>(
-      `api/v1/overlay/${projectId}/decision`,
+      `api/v1/overlay/${String(projectId)}/decision`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -712,8 +749,8 @@ export class ApiClient {
       searchParams.set('event_type', options.eventType)
     }
     const path = searchParams.size
-      ? `api/v1/audit/${projectId}?${searchParams.toString()}`
-      : `api/v1/audit/${projectId}`
+      ? `api/v1/audit/${String(projectId)}?${searchParams.toString()}`
+      : `api/v1/audit/${String(projectId)}`
     const payload = await this.request<AuditResponse>(path)
     return payload.items.map((item) => ({
       id: item.id,
@@ -728,11 +765,19 @@ export class ApiClient {
 
   async listRules(): Promise<RuleSummary[]> {
     const data = await this.request<RulesResponse>('api/v1/rules')
-    return data.items
+    return data.items.map((item) => ({
+      ...item,
+      overlays: Array.isArray(item.overlays) ? item.overlays : [],
+      advisoryHints: Array.isArray(item.advisoryHints)
+        ? item.advisoryHints
+        : [],
+    }))
   }
 
   async getProjectRoi(projectId: number): Promise<ProjectRoiMetrics> {
-    const payload = await this.request<RoiResponse>(`api/v1/roi/${projectId}`)
+    const payload = await this.request<RoiResponse>(
+      `api/v1/roi/${String(projectId)}`,
+    )
     return {
       projectId: payload.project_id,
       iterations: payload.iterations,
@@ -778,16 +823,20 @@ export class ApiClient {
     const headers = new Headers({ 'Content-Type': 'application/json' })
     ensureIdentityHeaders(headers)
 
-    const response = await fetch(this.buildUrl(`api/v1/export/${projectId}`), {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-    })
+    const response = await fetch(
+      this.buildUrl(`api/v1/export/${String(projectId)}`),
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      },
+    )
 
     if (!response.ok) {
       const message = await response.text()
       throw new Error(
-        message || `Export request failed with status ${response.status}`,
+        message ||
+          `Export request failed with status ${String(response.status)}`,
       )
     }
 
@@ -827,11 +876,16 @@ export class ApiClient {
     const suggestions: PipelineSuggestion[] = []
 
     byTopic.forEach((topicRules, topic) => {
-      const related = topicRules.filter(
-        (rule) =>
-          rule.overlays.some((overlay) => overlays.has(overlay)) ||
-          rule.advisoryHints.some((hint) => hints.has(hint)),
-      )
+      const related = topicRules.filter((rule) => {
+        const ruleOverlays = Array.isArray(rule.overlays) ? rule.overlays : []
+        const ruleHints = Array.isArray(rule.advisoryHints)
+          ? rule.advisoryHints
+          : []
+        return (
+          ruleOverlays.some((overlay) => overlays.has(overlay)) ||
+          ruleHints.some((hint) => hints.has(hint))
+        )
+      })
       const automationScore =
         related.length > 0
           ? Math.min(0.95, 0.5 + related.length / (topicRules.length * 1.5))
@@ -843,11 +897,11 @@ export class ApiClient {
       )
 
       suggestions.push({
-        id: `pipeline-${topic.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+        id: `pipeline-${topic.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${suggestions.length}`,
         title: `${topic} fast-track`,
         description:
           related.length > 0
-            ? `Prioritise ${related.length} overlays-triggered checks within the ${topic} rules.`
+            ? `Prioritise ${String(related.length)} overlays-triggered checks within the ${topic} rules.`
             : `Establish defaults for ${topic} checks before overlays arrive.`,
         focus: topic,
         automationScore,

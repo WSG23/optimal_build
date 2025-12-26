@@ -1,6 +1,24 @@
+"""Tests for marketing assets generation.
+
+These tests require PDF dependencies (reportlab) to be installed.
+"""
+
 from __future__ import annotations
 
 from types import SimpleNamespace
+
+import pytest
+
+# Check for PDF dependencies before importing modules that need them
+try:
+    from reportlab.lib import colors  # noqa: F401
+
+    HAS_REPORTLAB = True
+except ImportError:
+    HAS_REPORTLAB = False
+
+if not HAS_REPORTLAB:
+    pytest.skip("PDF dependencies (reportlab) not available", allow_module_level=True)
 
 from app.services.agents.investment_memorandum import InvestmentMemorandumGenerator
 from app.services.agents.marketing_materials import AmenityIcons

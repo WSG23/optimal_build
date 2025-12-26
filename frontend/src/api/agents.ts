@@ -680,7 +680,10 @@ export const DEFAULT_SCENARIO_ORDER: readonly DevelopmentScenario[] = [
 
 // ========== Hybrid API for optional developer features ==========
 
-const DEVELOPER_GPS_ENDPOINT = '/api/v1/developers/properties/log-gps'
+import { ENDPOINTS } from '@/constants'
+
+// Use canonical endpoint from constants (SSoT)
+const DEVELOPER_GPS_ENDPOINT = ENDPOINTS.DEVELOPERS.LOG_GPS
 
 export interface FeatureEnabledRequest extends LogPropertyByGpsRequest {
   enabledFeatures: {

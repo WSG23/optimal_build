@@ -68,9 +68,9 @@ export function ScenarioFocusSection({
   return (
     <section
       style={{
-        background: '#f5f5f7',
-        border: '1px solid #e5e5e7',
-        borderRadius: '16px',
+        background: 'var(--ob-color-bg-surface-elevated)',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '1.5rem',
         marginBottom: '2rem',
       }}
@@ -94,12 +94,17 @@ export function ScenarioFocusSection({
               fontWeight: 600,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              color: '#6e6e73',
+              color: 'var(--ob-color-text-muted)',
             }}
           >
             Scenario focus
           </span>
-          <span style={{ fontSize: '0.95rem', color: '#3a3a3c' }}>
+          <span
+            style={{
+              fontSize: '0.95rem',
+              color: 'var(--ob-color-text-secondary)',
+            }}
+          >
             Switch context to see checklist, feasibility, and inspections for
             the selected development path.
           </span>
@@ -123,16 +128,26 @@ export function ScenarioFocusSection({
             <span
               style={{
                 fontWeight: 700,
-                color: '#0f172a',
+                color: 'var(--ob-color-text-primary)',
               }}
             >
               {activeScenarioSummary.label}
             </span>
-            <span style={{ fontSize: '0.82rem', color: '#475569' }}>
+            <span
+              style={{
+                fontSize: '0.82rem',
+                color: 'var(--ob-color-text-secondary)',
+              }}
+            >
               {activeScenarioSummary.headline}
             </span>
             {activeScenarioSummary.detail && (
-              <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
+              <span
+                style={{
+                  fontSize: '0.78rem',
+                  color: 'var(--ob-color-text-muted)',
+                }}
+              >
                 {activeScenarioSummary.detail}
               </span>
             )}
@@ -149,10 +164,14 @@ export function ScenarioFocusSection({
               onClick={onCompareScenarios}
               disabled={!scenarioComparisonVisible}
               style={{
-                borderRadius: '9999px',
-                border: '1px solid #1d1d1f',
-                background: scenarioComparisonVisible ? '#1d1d1f' : '#f5f5f7',
-                color: scenarioComparisonVisible ? 'white' : '#a1a1aa',
+                borderRadius: 'var(--ob-radius-pill)',
+                border: '1px solid var(--ob-color-text-primary)',
+                background: scenarioComparisonVisible
+                  ? 'var(--ob-color-text-primary)'
+                  : 'var(--ob-color-bg-surface-elevated)',
+                color: scenarioComparisonVisible
+                  ? 'white'
+                  : 'var(--ob-color-text-muted)',
                 padding: '0.45rem 0.95rem',
                 fontSize: '0.78rem',
                 fontWeight: 600,
@@ -166,11 +185,16 @@ export function ScenarioFocusSection({
               onClick={onOpenQuickAnalysisHistory}
               disabled={quickAnalysisHistoryCount === 0}
               style={{
-                borderRadius: '9999px',
-                border: '1px solid #d2d2d7',
+                borderRadius: 'var(--ob-radius-pill)',
+                border: '1px solid var(--ob-color-border-subtle)',
                 background:
-                  quickAnalysisHistoryCount === 0 ? '#f5f5f7' : 'white',
-                color: quickAnalysisHistoryCount === 0 ? '#a1a1aa' : '#1d1d1f',
+                  quickAnalysisHistoryCount === 0
+                    ? 'var(--ob-color-bg-surface-elevated)'
+                    : 'white',
+                color:
+                  quickAnalysisHistoryCount === 0
+                    ? 'var(--ob-color-text-muted)'
+                    : 'var(--ob-color-text-primary)',
                 padding: '0.45rem 0.95rem',
                 fontSize: '0.78rem',
                 fontWeight: 600,
@@ -184,10 +208,10 @@ export function ScenarioFocusSection({
               type="button"
               onClick={onOpenInspectionHistory}
               style={{
-                borderRadius: '9999px',
-                border: '1px solid #d2d2d7',
+                borderRadius: 'var(--ob-radius-pill)',
+                border: '1px solid var(--ob-color-border-subtle)',
                 background: 'white',
-                color: '#1d1d1f',
+                color: 'var(--ob-color-text-primary)',
                 padding: '0.45rem 0.95rem',
                 fontSize: '0.78rem',
                 fontWeight: 600,
@@ -239,10 +263,12 @@ export function ScenarioFocusSection({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.65rem',
-                borderRadius: '9999px',
-                border: `1px solid ${isActive ? '#0071e3' : '#d2d2d7'}`,
-                background: isActive ? '#dbeafe' : 'white',
-                color: isActive ? '#0c4a6e' : '#1d1d1f',
+                borderRadius: 'var(--ob-radius-pill)',
+                border: `1px solid ${isActive ? 'var(--ob-color-brand-primary)' : 'var(--ob-color-border-subtle)'}`,
+                background: isActive ? 'var(--ob-info-50)' : 'white',
+                color: isActive
+                  ? 'var(--ob-color-brand-primary)'
+                  : 'var(--ob-color-text-primary)',
                 padding: '0.55rem 1.1rem',
                 fontSize: '0.95rem',
                 fontWeight: 600,
@@ -260,9 +286,11 @@ export function ScenarioFocusSection({
                     justifyContent: 'center',
                     minWidth: '2.5rem',
                     padding: '0.2rem 0.6rem',
-                    borderRadius: '9999px',
-                    background: isActive ? '#1d4ed8' : '#e5e7eb',
-                    color: isActive ? 'white' : '#1f2937',
+                    borderRadius: 'var(--ob-radius-pill)',
+                    background: isActive
+                      ? 'var(--ob-color-brand-primary)'
+                      : 'var(--ob-color-border-subtle)',
+                    color: isActive ? 'white' : 'var(--ob-color-text-primary)',
                     fontSize: '0.75rem',
                     fontWeight: 600,
                   }}

@@ -150,17 +150,25 @@ Read these documents IN ORDER before writing any code:
     - Must follow in ALL code
     - ~45 min read
 
-5. **[CONTRIBUTING.md](CONTRIBUTING.md)** - Workflow and tooling
+5. **[frontend/UI_STANDARDS.md](frontend/UI_STANDARDS.md)** - UI Design Token Standards (CRITICAL for UI work)
+
+    - Design token usage for spacing, radius, colors, typography
+    - Square Cyber-Minimalism border-radius standards
+    - Canonical component requirements
+    - MUST READ before any frontend UI changes
+    - ~10 min read
+
+6. **[CONTRIBUTING.md](CONTRIBUTING.md)** - Workflow and tooling
     - Setup, testing, linting
     - Code review checklist
     - ~15 min read
 
 ### Priority 3: Context Documents (REFERENCE)
 
-6. **[README.md](README.md)** - Project overview
-7. **[docs/planning/ui-status.md](docs/planning/ui-status.md)** - UI implementation status
-8. **[docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues)** - Known test failures
-9. **[docs/development/testing/summary.md](docs/development/testing/summary.md)** - Test suites
+7. **[README.md](README.md)** - Project overview
+8. **[docs/planning/ui-status.md](docs/planning/ui-status.md)** - UI implementation status
+9. **[docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues)** - Known test failures
+10. **[docs/development/testing/summary.md](docs/development/testing/summary.md)** - Test suites
 
 ### Verification Checkpoint
 
@@ -249,7 +257,9 @@ Follow ALL rules in CODING_RULES.md:
 -   Run `make verify` before committing
 -   Pre-commit hooks auto-format code
 
-**Rule 6: Import Ordering**
+**Import Ordering (Python)**
+
+Import ordering is enforced for Python via Ruff/isort (see `CODING_RULES.md` “Python Import Ordering and Formatting”).
 
 ```python
 # 1. Standard library
@@ -879,6 +889,56 @@ op.create_index('ix_finance_scenarios_project_id', 'finance_scenarios', ['projec
 # ❌ WRONG - No indexes
 # Foreign key without index will cause slow queries
 ```
+
+### Single Source of Truth (SSoT) - Constants
+
+**NEVER duplicate constants.** All shared values must be imported from canonical modules.
+
+**Frontend Constants** - Import from `@/constants`:
+
+```typescript
+// ✅ CORRECT - Import from canonical source
+import { DEFAULT_COORDINATES, ENDPOINTS, TIMEOUTS } from '@/constants'
+
+const lat = DEFAULT_COORDINATES.latitude  // 1.3521
+const endpoint = ENDPOINTS.DEVELOPERS.LOG_GPS
+const timeout = TIMEOUTS.DEFAULT  // 30_000
+
+// ❌ WRONG - Hardcoded duplicates
+const lat = 1.3521  // Duplicate!
+const endpoint = '/api/v1/developers/properties/log-gps'  // Duplicate!
+const timeout = 30000  // Duplicate!
+```
+
+**Backend Constants** - Import from `app.constants`:
+
+```python
+# ✅ CORRECT - Import from canonical source
+from app.constants import TYP_FLOOR_TO_FLOOR_M, EFFICIENCY_RATIO, COORDINATES
+
+floor_height = TYP_FLOOR_TO_FLOOR_M  # 3.5
+efficiency = EFFICIENCY_RATIO  # 0.82
+
+# ❌ WRONG - Hardcoded duplicates
+floor_height = 3.5  # Duplicate!
+efficiency = 0.82  # Duplicate!
+```
+
+**Canonical Modules:**
+
+| Location | Module | Contents |
+|----------|--------|----------|
+| Frontend | `frontend/src/constants/api.ts` | API endpoints, timeouts, fetch limits |
+| Frontend | `frontend/src/constants/locations.ts` | Coordinates, jurisdictions, map config |
+| Frontend | `frontend/src/constants/scenarios.ts` | Development types, assumptions |
+| Backend | `backend/app/constants/defaults.py` | Shared defaults (synced with frontend) |
+
+**Before Adding New Constants:**
+
+1. Search for existing: `grep -r "YOUR_VALUE" --include="*.ts" --include="*.py"`
+2. Check if it belongs in an existing canonical module
+3. Add to appropriate module with proper typing
+4. Update tests in `frontend/src/constants/__tests__/constants.test.ts`
 
 ---
 
@@ -1704,6 +1764,20 @@ git commit -m "Add finance scenario privacy feature"
 -   [ ] Ran `make hooks` and pre-commit passes ✅
 -   [ ] Tests written and passing ✅
 -   [ ] **Provided test instructions to user (Rule 8)** - backend, frontend, and UI manual tests
+
+### Before Committing UI/Frontend Code (ADDITIONAL)
+
+-   [ ] Read [frontend/UI_STANDARDS.md](frontend/UI_STANDARDS.md) before making UI changes
+-   [ ] No hardcoded pixel values (use `--ob-space-*` or `--ob-size-*` tokens)
+-   [ ] No MUI spacing numbers like `spacing={2}` (use `spacing="var(--ob-space-200)"`)
+-   [ ] No hardcoded border-radius (use `--ob-radius-*` tokens)
+-   [ ] Cards/panels use `--ob-radius-sm` (4px), NOT larger radii
+-   [ ] Buttons use `--ob-radius-xs` (2px)
+-   [ ] Modals/dialogs use `--ob-radius-lg` (8px)
+-   [ ] No hardcoded colors (use theme palette or design tokens)
+-   [ ] Using canonical components from `src/components/canonical/` where available
+-   [ ] Font sizes use `--ob-font-size-*` tokens
+-   [ ] Ran `cd frontend && npm run lint` and passes ✅
 
 ### Before Marking Phase Complete
 

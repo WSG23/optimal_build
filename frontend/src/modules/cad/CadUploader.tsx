@@ -1,37 +1,29 @@
 import { ChangeEvent, DragEvent, useRef, useState } from 'react'
 import {
   Box,
-  Card,
   Typography,
   Stack,
   Stepper,
   Step,
   StepLabel,
-  Skeleton,
   Grid,
-  Paper,
-  Divider,
-  useTheme,
-  alpha,
 } from '@mui/material'
 import {
   CloudUpload,
   Error as ErrorIcon,
   InsertDriveFile,
-  Engineering,
 } from '@mui/icons-material'
 
 import type { CadImportSummary, ParseStatusUpdate } from '../../api/client'
 import { useTranslation } from '../../i18n'
+import { GlassCard } from '../../components/canonical/GlassCard'
+import { StatusChip } from '../../components/canonical/StatusChip'
 
 interface CadUploaderProps {
   onUpload: (file: File) => void
   isUploading?: boolean
   status?: ParseStatusUpdate | null
   summary?: CadImportSummary | null
-  // Allowing for Project Details to be passed in or handled here if extended
-  projectId?: string
-  zoning?: string
 }
 
 export function CadUploader({
@@ -39,11 +31,8 @@ export function CadUploader({
   isUploading = false,
   status,
   summary,
-  projectId = 'PROJ-2024-001', // Mock default or prop
-  zoning = 'Commercial', // Mock default or prop
 }: CadUploaderProps) {
   const { t } = useTranslation()
-  const theme = useTheme()
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -79,7 +68,7 @@ export function CadUploader({
   // Determine active step for Stepper
   const getActiveStep = () => {
     if (status?.status === 'completed') return 3
-    if (status?.status === 'failed') return 1 // Error state
+    if (status?.status === 'failed') return 1
     if (
       isUploading ||
       status?.status === 'pending' ||
@@ -87,269 +76,242 @@ export function CadUploader({
     )
       return 0
     if (status?.status === 'running') return 1
-    return -1 // Idle
+    return -1
   }
   const activeStep = getActiveStep()
 
   const detectedFloors = status?.detectedFloors ?? summary?.detectedFloors ?? []
   const detectedUnits = status?.detectedUnits ?? summary?.detectedUnits ?? []
 
-  const steps = ['Uploading', 'Processing Layers', 'Detecting Units']
+  const steps = [
+    t('uploader.steps.uploading', { defaultValue: 'Uploading' }),
+    t('uploader.steps.processing', { defaultValue: 'Processing Layers' }),
+    t('uploader.steps.detecting', { defaultValue: 'Detecting Units' }),
+  ]
 
   return (
     <Box
       className="cad-uploader"
-      sx={{ maxWidth: 1200, margin: '0 auto', p: 2 }}
+      sx={{ maxWidth: 'var(--ob-max-width-content)', margin: '0 auto' }}
     >
-      {/* Project Details Header */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: 3,
-          mb: 4,
-          background: alpha(theme.palette.background.paper, 0.6),
-          border: `1px solid ${theme.palette.divider}`,
-          backdropFilter: 'blur(10px)',
-        }}
-      >
-        <Grid container spacing={4} alignItems="center">
-          <Grid item xs={12} md={6}>
-            <Box>
-              <Typography
-                variant="overline"
-                color="text.secondary"
-                fontWeight={600}
-              >
-                Project ID
-              </Typography>
-              <Typography variant="h6" fontWeight={600}>
-                {projectId}
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Box>
-              <Typography
-                variant="overline"
-                color="text.secondary"
-                fontWeight={600}
-              >
-                Zoning
-              </Typography>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Engineering fontSize="small" color="primary" />
-                <Typography variant="h6">{zoning}</Typography>
-              </Stack>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      <Grid container spacing={4}>
-        {/* Left Col: Hero Drop Zone */}
-        <Grid item xs={12} lg={7}>
-          <Card
-            elevation={0}
+      <Stack sx={{ gap: 'var(--ob-space-200)' }}>
+        {/* Top: Compact Hero Drop Zone */}
+        <GlassCard
+          className="cad-drop-zone"
+          onClick={!isUploading ? handleBrowse : undefined}
+          onDrop={!isUploading ? handleDrop : undefined}
+          onDragOver={!isUploading ? handleDragOver : undefined}
+          onDragLeave={!isUploading ? handleDragLeave : undefined}
+          sx={{
+            minHeight: 'var(--ob-size-drop-zone)',
+            p: 'var(--ob-space-300)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '2px dashed',
+            borderColor: isDragging
+              ? 'var(--ob-brand-500)'
+              : 'var(--ob-color-border-subtle)',
+            backgroundColor: isDragging ? 'var(--ob-brand-50)' : undefined,
+            cursor: isUploading ? 'default' : 'pointer',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              borderColor: !isUploading ? 'var(--ob-brand-500)' : undefined,
+              backgroundColor: !isUploading ? 'var(--ob-brand-50)' : undefined,
+            },
+          }}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".dxf,.ifc,.json,.pdf,.svg,.jpg,.jpeg,.png"
+            style={{ display: 'none' }}
+            onChange={handleChange}
+            disabled={isUploading}
+          />
+          <Stack
+            direction="row"
             sx={{
-              height: 400,
-              display: 'flex',
+              gap: 'var(--ob-space-200)',
               alignItems: 'center',
-              justifyContent: 'center',
-              border: `2px dashed ${isDragging ? theme.palette.primary.main : theme.palette.divider}`,
-              backgroundColor: isDragging
-                ? alpha(theme.palette.primary.main, 0.05)
-                : '#1E1E1E',
-              cursor: isUploading ? 'default' : 'pointer',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                borderColor: !isUploading
-                  ? theme.palette.primary.main
-                  : undefined,
-                backgroundColor: !isUploading
-                  ? alpha(theme.palette.primary.main, 0.02)
-                  : undefined,
-              },
+              textAlign: 'left',
             }}
-            onClick={!isUploading ? handleBrowse : undefined}
-            onDrop={!isUploading ? handleDrop : undefined}
-            onDragOver={!isUploading ? handleDragOver : undefined}
-            onDragLeave={!isUploading ? handleDragLeave : undefined}
           >
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".dxf,.ifc,.json,.pdf,.svg,.jpg,.jpeg,.png"
-              style={{ display: 'none' }}
-              onChange={handleChange}
-              disabled={isUploading}
-            />
-            <Stack spacing={3} alignItems="center" textAlign="center">
-              <Box
-                sx={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: '50%',
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: theme.palette.primary.main,
-                }}
-              >
-                {isUploading ? (
-                  <Box
-                    className="dot-flashing"
-                    sx={{ transform: 'scale(1.5)' }}
-                  />
-                ) : (
-                  <CloudUpload sx={{ fontSize: 40 }} />
-                )}
-              </Box>
-              <Box>
-                <Typography variant="h5" fontWeight={600} gutterBottom>
-                  {isUploading
-                    ? 'Uploading & Processing...'
-                    : 'Upload CAD File'}
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  {isUploading
-                    ? 'Please wait while we analyze your file.'
-                    : 'Drag & drop or click to browse'}
-                </Typography>
-              </Box>
-              {!isUploading && (
-                <Typography variant="caption" color="text.disabled">
-                  Supports .dxf, .ifc, .pdf, .png
-                </Typography>
-              )}
-            </Stack>
-          </Card>
-        </Grid>
-
-        {/* Right Col: Status & Explanation */}
-        <Grid item xs={12} lg={5}>
-          <Stack spacing={3}>
-            {/* Stepper Status */}
-            <Paper
+            <Box
               sx={{
-                p: 3,
-                backgroundColor: 'transparent',
-                border: `1px solid ${theme.palette.divider}`,
+                width: 'var(--ob-size-icon-lg)',
+                height: 'var(--ob-size-icon-lg)',
+                borderRadius: 'var(--ob-radius-pill)',
+                backgroundColor: 'var(--ob-brand-100)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--ob-brand-500)',
+                flexShrink: 0,
               }}
             >
-              <Typography
-                variant="h6"
-                fontWeight={600}
-                gutterBottom
-                sx={{ mb: 3 }}
-              >
-                {t('uploader.latestStatus') || 'Processing Status'}
-              </Typography>
-
-              <Stepper activeStep={activeStep} orientation="vertical">
-                {steps.map((label) => (
-                  <Step key={label}>
-                    <StepLabel
-                      StepIconProps={{
-                        sx: {
-                          '&.Mui-active': { color: theme.palette.primary.main },
-                          '&.Mui-completed': {
-                            color: theme.palette.success.main,
-                          },
-                        },
-                      }}
-                    >
-                      {label}
-                    </StepLabel>
-                  </Step>
-                ))}
-              </Stepper>
-
-              {status?.error && (
+              {isUploading ? (
                 <Box
-                  sx={{
-                    mt: 2,
-                    p: 2,
-                    borderRadius: 1,
-                    backgroundColor: alpha(theme.palette.error.main, 0.1),
-                    color: theme.palette.error.main,
-                    display: 'flex',
-                    gap: 2,
-                  }}
-                >
-                  <ErrorIcon />
-                  <Typography variant="body2">{status.error}</Typography>
-                </Box>
+                  className="dot-flashing"
+                  sx={{ transform: 'scale(1.0)' }}
+                />
+              ) : (
+                <CloudUpload sx={{ fontSize: 'var(--ob-font-size-xl)' }} />
               )}
-            </Paper>
-
-            {/* Meta Data (Floors/Units) */}
-            <Paper sx={{ p: 3, backgroundColor: '#1E1E1E' }}>
-              <Stack spacing={2}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <InsertDriveFile color="action" />
-                    <Typography variant="body2" color="text.secondary">
-                      File Name
-                    </Typography>
-                  </Stack>
-                  <Typography variant="body2" fontWeight={500}>
-                    {summary?.fileName ||
-                      (isUploading ? <Skeleton width={100} /> : '-')}
-                  </Typography>
-                </Box>
-                <Divider />
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    Floors Detected
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600} color="white">
-                    {detectedFloors.length > 0 ? (
-                      detectedFloors.length
-                    ) : isUploading ? (
-                      <Skeleton width={40} />
-                    ) : (
-                      '-'
-                    )}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    Units Count
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600} color="white">
-                    {detectedUnits.length > 0 ? (
-                      detectedUnits.length
-                    ) : isUploading ? (
-                      <Skeleton width={40} />
-                    ) : (
-                      '-'
-                    )}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Paper>
+            </Box>
+            <Box>
+              <Typography
+                variant="subtitle1"
+                fontWeight={600}
+                gutterBottom={false}
+              >
+                {isUploading
+                  ? t('uploader.uploadingTitle', {
+                      defaultValue: 'Uploading...',
+                    })
+                  : t('uploader.dropTitle', {
+                      defaultValue: 'Upload CAD File',
+                    })}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {isUploading
+                  ? t('uploader.uploadingHint', {
+                      defaultValue: 'Please wait...',
+                    })
+                  : t('uploader.dropHint', {
+                      defaultValue: 'Drag & drop or click to browse',
+                    })}
+              </Typography>
+            </Box>
+            {!isUploading && (
+              <Box
+                sx={{
+                  ml: 'var(--ob-space-200)',
+                  borderLeft: '1px solid var(--ob-color-border-subtle)',
+                  pl: 'var(--ob-space-200)',
+                }}
+              >
+                <Typography variant="caption" color="text.disabled">
+                  {t('uploader.supportedFormats', {
+                    defaultValue: '.dxf, .ifc, .pdf',
+                  })}
+                </Typography>
+              </Box>
+            )}
           </Stack>
-        </Grid>
-      </Grid>
+        </GlassCard>
+
+        {/* Bottom: Active Job Strip - Compact Row */}
+        {(isUploading || status || summary) && (
+          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
+            <Grid container spacing="var(--ob-space-200)" alignItems="center">
+              {/* File Info */}
+              <Grid item xs={12} md={3}>
+                <Stack
+                  direction="row"
+                  sx={{ gap: 'var(--ob-space-150)', alignItems: 'center' }}
+                >
+                  <Box
+                    sx={{
+                      width: 'var(--ob-size-icon-md)',
+                      height: 'var(--ob-size-icon-md)',
+                      borderRadius: 'var(--ob-radius-sm)',
+                      bgcolor: 'action.hover',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <InsertDriveFile color="action" fontSize="small" />
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="body2" noWrap fontWeight={600}>
+                      {summary?.fileName ||
+                        (isUploading ? 'Uploading...' : 'Pending')}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Grid>
+
+              {/* Progress Stepper - Compact */}
+              <Grid item xs={12} md={6}>
+                <Stepper
+                  activeStep={activeStep}
+                  alternativeLabel
+                  sx={{
+                    '& .MuiStepLabel-label': {
+                      marginTop: 'var(--ob-space-050) !important',
+                      fontSize: 'var(--ob-font-size-xs)',
+                    },
+                    '& .MuiStepIcon-root': {
+                      fontSize: 'var(--ob-font-size-lg)',
+                    },
+                  }}
+                >
+                  {steps.map((label) => (
+                    <Step key={label}>
+                      <StepLabel
+                        StepIconProps={{
+                          sx: {
+                            '&.Mui-active': { color: 'var(--ob-brand-500)' },
+                            '&.Mui-completed': {
+                              color: 'var(--ob-success-500)',
+                            },
+                          },
+                        }}
+                      >
+                        {label}
+                      </StepLabel>
+                    </Step>
+                  ))}
+                </Stepper>
+              </Grid>
+
+              {/* Specs / Status */}
+              <Grid item xs={12} md={3}>
+                <Stack
+                  direction="row"
+                  sx={{
+                    gap: 'var(--ob-space-100)',
+                    justifyContent: 'flex-end',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  {detectedFloors.length > 0 && (
+                    <StatusChip size="sm" status="success">
+                      {`${String(detectedFloors.length)} Flrs`}
+                    </StatusChip>
+                  )}
+                  {detectedUnits.length > 0 && (
+                    <StatusChip size="sm" status="success">
+                      {`${String(detectedUnits.length)} Units`}
+                    </StatusChip>
+                  )}
+                </Stack>
+              </Grid>
+            </Grid>
+
+            {/* Error Message Row */}
+            {status?.error && (
+              <Box
+                sx={{
+                  mt: 'var(--ob-space-150)',
+                  p: 'var(--ob-space-100)',
+                  borderRadius: 'var(--ob-radius-sm)',
+                  backgroundColor: 'var(--ob-error-muted)',
+                  color: 'var(--ob-error-600)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--ob-space-100)',
+                }}
+              >
+                <ErrorIcon fontSize="small" />
+                <Typography variant="caption">{status.error}</Typography>
+              </Box>
+            )}
+          </GlassCard>
+        )}
+      </Stack>
     </Box>
   )
 }

@@ -25,7 +25,7 @@ export function StructureSelectionCard({
       sx={{
         position: 'relative',
         cursor: 'pointer',
-        borderRadius: 2,
+        borderRadius: 'var(--ob-radius-sm)',
         padding: 2,
         display: 'flex',
         flexDirection: 'column',
@@ -73,7 +73,7 @@ export function StructureSelectionCard({
             mt: 1,
             px: 1,
             py: 0.25,
-            borderRadius: 1,
+            borderRadius: 'var(--ob-radius-xs)',
             bgcolor: alpha(theme.palette.success.main, 0.1),
             color: 'success.dark',
             fontSize: '0.65rem',

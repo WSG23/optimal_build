@@ -27,10 +27,10 @@ const CyclePhases = [
 ] as const
 
 const PhaseColors: Record<string, string> = {
-  recovery: '#4caf50',
-  expansion: '#2196f3',
-  hyper_supply: '#ff9800',
-  recession: '#f44336',
+  recovery: 'var(--ob-success-500)',
+  expansion: 'var(--ob-info-500)',
+  hyper_supply: 'var(--ob-warning-500)',
+  recession: 'var(--ob-error-500)',
 }
 
 const CycleContainer = styled(Box)(() => ({
@@ -163,7 +163,7 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
         {cycleData.outlook?.next_12_months ?? 'No outlook available'}
       </Typography>
 
-      <Grid container spacing={2}>
+      <Grid container spacing="var(--ob-space-100)">
         <Grid item xs={6}>
           <Box>
             <Box display="flex" alignItems="center" gap={1} mb={1}>

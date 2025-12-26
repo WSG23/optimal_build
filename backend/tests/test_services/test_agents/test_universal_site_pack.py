@@ -1,12 +1,26 @@
-"""Integration tests for UniversalSitePackGenerator service."""
+"""Integration tests for UniversalSitePackGenerator service.
+
+These tests require PDF dependencies (reportlab) to be installed.
+"""
 
 from __future__ import annotations
+
+import pytest
+
+# Check for PDF dependencies before importing modules that need them
+try:
+    from reportlab.lib.units import inch  # noqa: F401
+
+    HAS_REPORTLAB = True
+except ImportError:
+    HAS_REPORTLAB = False
+
+if not HAS_REPORTLAB:
+    pytest.skip("PDF dependencies (reportlab) not available", allow_module_level=True)
 
 import io
 from datetime import date, datetime
 from decimal import Decimal
-
-import pytest
 
 from app.models.market import YieldBenchmark
 from app.models.property import (

@@ -49,7 +49,11 @@ export function ScenarioComparisonCard({
   recommendedActions,
 }: ScenarioComparisonCardProps) {
   const scoreDeltaColor =
-    scoreDelta > 0 ? '#15803d' : scoreDelta < 0 ? '#c53030' : '#6e6e73'
+    scoreDelta > 0
+      ? 'var(--ob-success-700)'
+      : scoreDelta < 0
+        ? 'var(--ob-error-700)'
+        : 'var(--ob-color-text-muted)'
 
   const formattedDelta =
     scoreDelta === 0 ? 'Δ 0' : `Δ ${scoreDelta > 0 ? '+' : ''}${scoreDelta}`
@@ -58,13 +62,13 @@ export function ScenarioComparisonCard({
     <div
       key={scenarioKey}
       style={{
-        border: '1px solid #e5e5e7',
-        borderRadius: '12px',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '1.25rem',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.6rem',
-        background: '#ffffff',
+        background: 'white',
       }}
     >
       <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
@@ -76,7 +80,7 @@ export function ScenarioComparisonCard({
           flexDirection: 'column',
           gap: '0.4rem',
           fontSize: '0.9rem',
-          color: '#3a3a3c',
+          color: 'var(--ob-color-text-secondary)',
         }}
       >
         <span>
@@ -111,7 +115,7 @@ export function ScenarioComparisonCard({
         style={{
           margin: 0,
           fontSize: '0.9rem',
-          color: '#3a3a3c',
+          color: 'var(--ob-color-text-secondary)',
           lineHeight: 1.5,
         }}
       >
@@ -122,7 +126,7 @@ export function ScenarioComparisonCard({
           style={{
             margin: 0,
             fontSize: '0.85rem',
-            color: '#0071e3',
+            color: 'var(--ob-color-brand-primary)',
           }}
         >
           {scenarioContext}
@@ -136,7 +140,7 @@ export function ScenarioComparisonCard({
               margin: 0,
               paddingLeft: '1.1rem',
               fontSize: '0.85rem',
-              color: '#3a3a3c',
+              color: 'var(--ob-color-text-secondary)',
               lineHeight: 1.4,
             }}
           >

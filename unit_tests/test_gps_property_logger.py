@@ -1,7 +1,27 @@
+"""Tests for GPS property logger service.
+
+These tests require the backend app services to be available.
+"""
 from typing import Any
 from uuid import UUID
 
 import pytest
+
+# Check for required backend dependencies before importing
+try:
+    from backend.app.services.agents.gps_property_logger import (
+        DevelopmentScenario,
+        GPSPropertyLogger,
+    )
+
+    HAS_BACKEND_SERVICES = True
+except ImportError:
+    HAS_BACKEND_SERVICES = False
+
+if not HAS_BACKEND_SERVICES:
+    pytest.skip(
+        "Backend services dependencies not available", allow_module_level=True
+    )
 
 from backend.app.services.agents.gps_property_logger import (
     DevelopmentScenario,

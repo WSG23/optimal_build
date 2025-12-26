@@ -26,12 +26,13 @@
         0 10px 10px -5px rgba(0, 0, 0, 0.04);
     --ob-depth-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
 
-    /* Radius */
-    --ob-radius-sm: 6px;
-    --ob-radius-md: 8px;
-    --ob-radius-lg: 12px;
-    --ob-radius-xl: 16px;
-    --ob-radius-full: 9999px;
+    /* Radius - Square Cyber-Minimalism (do NOT override canonical tokens.css values)
+       See: core/design-tokens/tokens.css for canonical values:
+       --ob-radius-xs: 2px (buttons, tags)
+       --ob-radius-sm: 4px (cards, panels)
+       --ob-radius-md: 6px (inputs)
+       --ob-radius-lg: 8px (windows/modals ONLY)
+    */
 
     /* Colors (Refined) */
     --ob-color-accent: #0f766e; /* Teal 700 */
@@ -56,7 +57,7 @@
     min-width: 400px;
     max-width: 480px;
     background: rgba(255, 255, 255, 0.85); /* Proper glass */
-    backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(var(--ob-blur-lg)) saturate(180%);
     border-right: 1px solid rgba(0, 0, 0, 0.04);
     display: flex;
     flex-direction: column;

@@ -111,8 +111,13 @@ export function NotificationBell() {
         page: 1,
         page_size: 10,
       })
-      setNotifications(result.notifications)
-      setUnreadCount(result.unread_count)
+      const nextNotifications = Array.isArray(result.notifications)
+        ? result.notifications
+        : []
+      setNotifications(nextNotifications)
+      setUnreadCount(
+        typeof result.unread_count === 'number' ? result.unread_count : 0,
+      )
     } catch (err) {
       console.error('Failed to fetch notifications:', err)
       setError('Failed to load notifications')
@@ -169,7 +174,7 @@ export function NotificationBell() {
   const iconButtonStyle = {
     color: 'text.secondary',
     border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
-    borderRadius: '50%',
+    borderRadius: 'var(--ob-radius-pill)',
     width: '40px',
     height: '40px',
     background: alpha(theme.palette.background.paper, 0.05),
@@ -223,7 +228,7 @@ export function NotificationBell() {
           elevation: 8,
           sx: {
             mt: 1,
-            borderRadius: '12px',
+            borderRadius: 'var(--ob-radius-lg)',
             width: '380px',
             maxHeight: '500px',
             border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
@@ -367,7 +372,7 @@ export function NotificationBell() {
                         sx={{
                           width: 8,
                           height: 8,
-                          borderRadius: '50%',
+                          borderRadius: 'var(--ob-radius-pill)',
                           bgcolor: 'primary.main',
                           ml: 1,
                         }}

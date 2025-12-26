@@ -31,10 +31,10 @@ export function KPITickerCard({
       sx={{
         position: 'relative',
         p: 3,
-        borderRadius: 4,
+        borderRadius: 'var(--ob-radius-sm)', // Square Cyber-Minimalism: sm for cards
         overflow: 'hidden',
         bgcolor: alpha(theme.palette.background.paper, 0.6), // Glassmorphic base
-        backdropFilter: 'blur(20px)',
+        backdropFilter: 'blur(var(--ob-blur-lg))',
         border: '1px solid',
         borderColor: active
           ? theme.palette.primary.main
@@ -86,7 +86,7 @@ export function KPITickerCard({
               color: trendColor,
               px: 1,
               py: 0.25,
-              borderRadius: 2,
+              borderRadius: 'var(--ob-radius-xs)', // Square Cyber-Minimalism: xs for badges
               fontSize: '0.75rem',
               fontWeight: 700,
             }}

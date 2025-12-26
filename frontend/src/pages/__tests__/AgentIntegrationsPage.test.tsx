@@ -10,6 +10,7 @@ import {
 
 import React from 'react'
 
+import { DeveloperProvider } from '../../contexts/DeveloperContext'
 import { TranslationProvider } from '../../i18n'
 import { ThemeModeProvider } from '../../theme/ThemeContext'
 import AgentIntegrationsPage from '../AgentIntegrationsPage'
@@ -106,9 +107,11 @@ describe('AgentIntegrationsPage', () => {
     async () => {
       render(
         <ThemeModeProvider>
-          <TranslationProvider>
-            <AgentIntegrationsPage />
-          </TranslationProvider>
+          <DeveloperProvider>
+            <TranslationProvider>
+              <AgentIntegrationsPage />
+            </TranslationProvider>
+          </DeveloperProvider>
         </ThemeModeProvider>,
       )
 

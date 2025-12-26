@@ -73,7 +73,7 @@ export function QuickAnalysisHistoryModal({
         onClick={(event) => event.stopPropagation()}
         style={{
           background: 'white',
-          borderRadius: '16px',
+          borderRadius: 'var(--ob-radius-lg)',
           maxWidth: '900px',
           width: '100%',
           maxHeight: '85vh',
@@ -95,7 +95,7 @@ export function QuickAnalysisHistoryModal({
             background: 'transparent',
             fontSize: '1.5rem',
             cursor: 'pointer',
-            color: '#6e6e73',
+            color: 'var(--ob-color-text-muted)',
           }}
         >
           ×
@@ -116,13 +116,25 @@ export function QuickAnalysisHistoryModal({
             >
               Quick analysis history
             </h2>
-            <p style={{ margin: 0, fontSize: '0.9rem', color: '#4b5563' }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: '0.9rem',
+                color: 'var(--ob-color-text-secondary)',
+              }}
+            >
               Review the last {quickAnalysisHistory.length} generated snapshots
               of multi-scenario feasibility metrics.
             </p>
           </div>
           {quickAnalysisHistory.length === 0 ? (
-            <p style={{ margin: 0, fontSize: '0.9rem', color: '#6b7280' }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: '0.9rem',
+                color: 'var(--ob-color-text-muted)',
+              }}
+            >
               Capture a property to build the quick analysis history timeline.
             </p>
           ) : (
@@ -130,13 +142,13 @@ export function QuickAnalysisHistoryModal({
               <article
                 key={`${snapshot.propertyId}-${snapshot.generatedAt}`}
                 style={{
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '14px',
+                  border: '1px solid var(--ob-color-border-subtle)',
+                  borderRadius: 'var(--ob-radius-sm)',
                   padding: '1.5rem',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '1rem',
-                  background: '#f9fafb',
+                  background: 'var(--ob-color-bg-surface-elevated)',
                 }}
               >
                 <div
@@ -158,7 +170,12 @@ export function QuickAnalysisHistoryModal({
                   >
                     Generated {formatTimestamp(snapshot.generatedAt)}
                   </h3>
-                  <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                  <span
+                    style={{
+                      fontSize: '0.8rem',
+                      color: 'var(--ob-color-text-muted)',
+                    }}
+                  >
                     Property ID: {snapshot.propertyId}
                   </span>
                 </div>
@@ -184,8 +201,8 @@ export function QuickAnalysisHistoryModal({
                       <section
                         key={`${snapshot.generatedAt}-${scenarioKey}`}
                         style={{
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '12px',
+                          border: '1px solid var(--ob-color-border-subtle)',
+                          borderRadius: 'var(--ob-radius-sm)',
                           padding: '1rem',
                           background: 'white',
                           display: 'flex',
@@ -203,7 +220,7 @@ export function QuickAnalysisHistoryModal({
                           <span
                             style={{
                               fontSize: '0.75rem',
-                              color: '#6b7280',
+                              color: 'var(--ob-color-text-muted)',
                               textTransform: 'uppercase',
                             }}
                           >
@@ -213,7 +230,7 @@ export function QuickAnalysisHistoryModal({
                             style={{
                               fontSize: '1rem',
                               fontWeight: 600,
-                              color: '#111827',
+                              color: 'var(--ob-color-text-primary)',
                             }}
                           >
                             {label}
@@ -224,7 +241,7 @@ export function QuickAnalysisHistoryModal({
                             style={{
                               margin: 0,
                               fontSize: '0.85rem',
-                              color: '#374151',
+                              color: 'var(--ob-color-text-secondary)',
                             }}
                           >
                             {scenario.headline}
@@ -249,7 +266,7 @@ export function QuickAnalysisHistoryModal({
                                     fontSize: '0.75rem',
                                     letterSpacing: '0.06em',
                                     textTransform: 'uppercase',
-                                    color: '#9ca3af',
+                                    color: 'var(--ob-color-text-muted)',
                                   }}
                                 >
                                   {metric.label}
@@ -258,7 +275,7 @@ export function QuickAnalysisHistoryModal({
                                   style={{
                                     fontSize: '0.9rem',
                                     fontWeight: 600,
-                                    color: '#1f2937',
+                                    color: 'var(--ob-color-text-primary)',
                                   }}
                                 >
                                   {formatScenarioMetricValue(
@@ -274,7 +291,7 @@ export function QuickAnalysisHistoryModal({
                             style={{
                               margin: 0,
                               fontSize: '0.8rem',
-                              color: '#6b7280',
+                              color: 'var(--ob-color-text-muted)',
                             }}
                           >
                             No quantitative metrics captured for this scenario

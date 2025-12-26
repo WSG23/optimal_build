@@ -10,7 +10,7 @@ const projectRoot = resolve(__dirname, '..')
 
 const filesToCheck = [
   {
-    path: resolve(projectRoot, 'frontend/src/index.css'),
+    path: resolve(projectRoot, 'frontend/src/styles/index.css'),
     filter: (line) => line.includes('feasibility') || line.includes('finance'),
   },
   {

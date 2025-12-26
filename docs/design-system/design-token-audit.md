@@ -1,6 +1,16 @@
 # Design Token Audit
 
-This snapshot captures the primitives currently hard-coded across the front-end surfaces. It will guide the first pass at extracting shared design tokens.
+> **⚠️ HISTORICAL DOCUMENT - SUPERSEDED**
+>
+> This audit was created during initial token extraction. For current design token standards, see:
+> - **[frontend/UI_STANDARDS.md](../../frontend/UI_STANDARDS.md)** - Current token values and usage
+> - **[core/design-tokens/tokens.css](../../core/design-tokens/tokens.css)** - Actual token definitions
+>
+> The radius values below (0.75rem, 1.5rem) are **OUTDATED**. Current Square Cyber-Minimalism standard uses 2px-8px radii.
+
+---
+
+This snapshot captures the primitives that were hard-coded across the front-end surfaces during the initial audit. It guided the first pass at extracting shared design tokens.
 
 ## Color Primitive Inventory
 

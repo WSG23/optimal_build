@@ -104,7 +104,7 @@ export function PhotoCapture({
             display: 'block',
             fontSize: '0.8125rem',
             fontWeight: 600,
-            color: '#374151',
+            color: 'var(--ob-color-text-secondary)',
             marginBottom: '0.25rem',
           }}
         >
@@ -120,8 +120,8 @@ export function PhotoCapture({
           style={{
             width: '100%',
             padding: '0.5rem 0.75rem',
-            borderRadius: '8px',
-            border: '1px solid #d1d5db',
+            borderRadius: 'var(--ob-radius-md)',
+            border: '1px solid var(--ob-color-border-subtle)',
             fontSize: '0.875rem',
             outline: 'none',
           }}
@@ -139,11 +139,15 @@ export function PhotoCapture({
         onDragOver={handleDrag}
         onDrop={handleDrop}
         style={{
-          border: `2px dashed ${dragActive ? '#3b82f6' : '#d1d5db'}`,
-          borderRadius: '12px',
+          border: `2px dashed ${dragActive ? 'var(--ob-color-brand-primary)' : 'var(--ob-color-border-subtle)'}`,
+          borderRadius: 'var(--ob-radius-sm)',
           padding: '2rem',
           textAlign: 'center',
-          background: dragActive ? '#eff6ff' : disabled ? '#f9fafb' : '#fff',
+          background: dragActive
+            ? 'var(--ob-info-50)'
+            : disabled
+              ? 'var(--ob-color-bg-surface-elevated)'
+              : 'white',
           cursor: disabled || isUploading ? 'not-allowed' : 'pointer',
           transition: 'all 0.2s ease',
           opacity: disabled ? 0.6 : 1,
@@ -161,15 +165,15 @@ export function PhotoCapture({
         />
 
         {isUploading ? (
-          <div style={{ color: '#6b7280' }}>
+          <div style={{ color: 'var(--ob-color-text-muted)' }}>
             <div
               style={{
                 width: '40px',
                 height: '40px',
                 margin: '0 auto 0.75rem',
-                border: '3px solid #e5e7eb',
-                borderTop: '3px solid #3b82f6',
-                borderRadius: '50%',
+                border: '3px solid var(--ob-color-border-subtle)',
+                borderTop: '3px solid var(--ob-color-brand-primary)',
+                borderRadius: 'var(--ob-radius-pill)',
                 animation: 'spin 1s linear infinite',
               }}
             />
@@ -190,7 +194,7 @@ export function PhotoCapture({
                 margin: '0 0 0.25rem',
                 fontSize: '0.9375rem',
                 fontWeight: 600,
-                color: '#374151',
+                color: 'var(--ob-color-text-secondary)',
               }}
             >
               {dragActive ? 'Drop photos here' : 'Upload Photos'}
@@ -199,7 +203,7 @@ export function PhotoCapture({
               style={{
                 margin: 0,
                 fontSize: '0.8125rem',
-                color: '#6b7280',
+                color: 'var(--ob-color-text-muted)',
               }}
             >
               Drag and drop or click to select
@@ -208,7 +212,7 @@ export function PhotoCapture({
               style={{
                 margin: '0.5rem 0 0',
                 fontSize: '0.75rem',
-                color: '#9ca3af',
+                color: 'var(--ob-color-text-muted)',
               }}
             >
               Photos will be watermarked for{' '}

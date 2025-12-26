@@ -105,7 +105,13 @@
     "feasibility": "フィージビリティウィザード",
     "finance": "ファイナンスワークスペース",
     "intelligence": "高度なインテリジェンス",
-    "agentCapture": "エージェントGPS取得"
+    "agentCapture": "エージェントGPS取得",
+    "siteAcquisition": "用地取得",
+    "assetFeasibility": "資産フィージビリティ",
+    "financialControl": "財務管理",
+    "phaseManagement": "フェーズ管理",
+    "teamCoordination": "チーム連携",
+    "regulatoryNavigation": "規制ナビゲーション"
   },
   "home": {
     "cards": {

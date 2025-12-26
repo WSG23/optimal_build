@@ -79,25 +79,25 @@ export function ResultsPanel({
             height: '100%',
             minHeight: '600px',
             overflow: 'hidden',
-            borderRadius: '16px',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           {/* The Blurred Content (Teaser) */}
           <div
             style={{
-              filter: 'blur(8px)',
+              filter: 'blur(var(--ob-blur-xs))',
               opacity: 0.5,
               pointerEvents: 'none',
               display: 'grid',
-              gap: '24px',
+              gap: 'var(--ob-space-300)',
             }}
           >
             {/* Fake Header */}
             <div
               style={{
                 height: '120px',
-                background: '#e5e7eb',
-                borderRadius: '16px',
+                background: 'var(--ob-color-bg-surface-secondary)',
+                borderRadius: 'var(--ob-radius-sm)',
               }}
             />
 
@@ -106,21 +106,21 @@ export function ResultsPanel({
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
-                gap: '24px',
+                gap: 'var(--ob-space-300)',
               }}
             >
               <div
                 style={{
                   height: '200px',
-                  background: '#e5e7eb',
-                  borderRadius: '16px',
+                  background: 'var(--ob-color-bg-surface-secondary)',
+                  borderRadius: 'var(--ob-radius-sm)',
                 }}
               />
               <div
                 style={{
                   height: '200px',
-                  background: '#e5e7eb',
-                  borderRadius: '16px',
+                  background: 'var(--ob-color-bg-surface-secondary)',
+                  borderRadius: 'var(--ob-radius-sm)',
                 }}
               />
             </div>
@@ -128,8 +128,8 @@ export function ResultsPanel({
             <div
               style={{
                 height: '300px',
-                background: '#e5e7eb',
-                borderRadius: '16px',
+                background: 'var(--ob-color-bg-surface-secondary)',
+                borderRadius: 'var(--ob-radius-sm)',
               }}
             />
           </div>
@@ -146,7 +146,7 @@ export function ResultsPanel({
               paddingBottom: '48px',
               // FIXED: Semi-transparent black with blur
               background: 'rgba(0,0,0,0.4)',
-              backdropFilter: 'blur(4px)',
+              backdropFilter: 'blur(var(--ob-blur-sm))',
               zIndex: 10,
             }}
           >
@@ -166,16 +166,16 @@ export function ResultsPanel({
                   style={{
                     width: '80px',
                     height: '80px',
-                    border: '4px solid #3b82f6',
+                    border: '4px solid var(--ob-color-brand-primary)',
                     borderTopColor: 'transparent',
-                    borderRadius: '50%',
+                    borderRadius: 'var(--ob-radius-pill)',
                     animation: 'spin 1s linear infinite',
                   }}
                 />
                 <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
                 <h3
                   style={{
-                    marginTop: '24px',
+                    marginTop: 'var(--ob-space-300)',
                     fontSize: '1.25rem',
                     fontWeight: 600,
                     color: 'white',
@@ -193,13 +193,13 @@ export function ResultsPanel({
                 className="glass-panel"
                 style={{
                   background: 'rgba(30, 30, 30, 0.6)', // Glassmorphic dark
-                  backdropFilter: 'blur(12px)',
+                  backdropFilter: 'blur(var(--ob-blur-md))',
                   border: '1px solid rgba(255,255,255,0.1)',
                   padding: '24px 32px',
-                  borderRadius: '24px',
+                  borderRadius: 'var(--ob-radius-sm)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '16px',
+                  gap: 'var(--ob-space-200)',
                   boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
                   transform: 'translateY(0)',
                   animation: 'float 6s ease-in-out infinite',
@@ -215,7 +215,7 @@ export function ResultsPanel({
                 <div
                   style={{
                     background: 'white',
-                    borderRadius: '50%',
+                    borderRadius: 'var(--ob-radius-pill)',
                     width: '48px',
                     height: '48px',
                     display: 'flex',
@@ -331,7 +331,8 @@ export function ResultsPanel({
                       fontWeight: 700,
                       margin: 0,
                       letterSpacing: '-0.02em',
-                      background: 'linear-gradient(45deg, #111827, #374151)',
+                      background:
+                        'linear-gradient(45deg, var(--ob-color-text-primary), var(--ob-color-text-secondary))',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                     }}
@@ -348,10 +349,10 @@ export function ResultsPanel({
                           fontSize: '0.7rem',
                           fontWeight: 600,
                           padding: '2px 8px',
-                          borderRadius: '12px',
-                          background: '#EFF6FF',
-                          color: '#2563EB',
-                          border: '1px solid #BFDBFE',
+                          borderRadius: 'var(--ob-radius-sm)',
+                          background: 'var(--ob-color-bg-surface-secondary)',
+                          color: 'var(--ob-color-brand-primary)',
+                          border: '1px solid var(--ob-color-border-light)',
                         }}
                       >
                         {overlay}
@@ -363,7 +364,7 @@ export function ResultsPanel({
                 {/* Summary Metric Card (e.g. Total GFA) */}
                 <div
                   style={{
-                    background: '#1F2937',
+                    background: 'var(--ob-color-bg-surface-inverse)',
                     color: 'white',
                     padding: 'var(--ob-space-5)',
                     borderRadius: 'var(--ob-radius-lg)',

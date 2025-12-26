@@ -82,7 +82,10 @@ def get_engine(database_url: str, echo: bool = False):
 def create_session_factory(engine) -> sessionmaker:
     """Return a sessionmaker bound to the provided engine or fallback."""
 
-    return sessionmaker(engine)  # type: ignore[misc]
+    return sessionmaker(  # type: ignore[misc]
+        bind=engine,
+        expire_on_commit=False,
+    )
 
 
 @contextmanager

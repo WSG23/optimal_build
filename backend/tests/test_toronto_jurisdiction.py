@@ -1,4 +1,22 @@
+"""Tests for Toronto jurisdiction functionality.
+
+These tests require GIS dependencies (shapely, geopandas) to be installed.
+"""
+
 from __future__ import annotations
+
+import pytest
+
+# Check for GIS dependencies before importing modules that need them
+try:
+    from shapely.geometry import GeometryCollection  # noqa: F401
+
+    HAS_GIS = True
+except ImportError:
+    HAS_GIS = False
+
+if not HAS_GIS:
+    pytest.skip("GIS dependencies not available", allow_module_level=True)
 
 from app.core.config import Settings
 

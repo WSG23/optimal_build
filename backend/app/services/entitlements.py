@@ -208,6 +208,12 @@ class EntitlementsService:
         items to temporary negative values and flush, then assign the final positive sequence.
         """
         items_list = list(items)
+        dialect_name = getattr(getattr(self.session.bind, "dialect", None), "name", "")
+        if dialect_name == "sqlite":
+            for index, item in enumerate(items_list, start=1):
+                item.sequence_order = index
+            await self.session.flush()
+            return
         # First pass: set temporary negative values to avoid unique constraint violation
         for index, item in enumerate(items_list):
             item.sequence_order = -(index + 1)

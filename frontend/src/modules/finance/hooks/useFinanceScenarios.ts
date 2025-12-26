@@ -78,7 +78,10 @@ export function useFinanceScenarios(
       const filtered = prev.filter(
         (entry) => entry.scenarioId !== scenario.scenarioId,
       )
-      return [scenario, ...filtered]
+      const next = scenario.isPrimary
+        ? filtered.map((entry) => ({ ...entry, isPrimary: false }))
+        : filtered
+      return [scenario, ...next]
     })
   }, [])
 

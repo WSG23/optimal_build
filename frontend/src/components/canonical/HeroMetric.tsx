@@ -1,7 +1,7 @@
 import { Box, Typography, useTheme, alpha } from '@mui/material'
 import { TrendingUp, TrendingDown } from '@mui/icons-material'
 
-interface HeroMetricProps {
+export interface HeroMetricProps {
   label: string
   value: string | number
   unit?: string
@@ -28,7 +28,7 @@ export function HeroMetric({
   const getBackground = () => {
     switch (variant) {
       case 'primary':
-        return 'linear-gradient(135deg, #1F2937 0%, #111827 100%)'
+        return 'linear-gradient(135deg, var(--ob-neutral-800) 0%, var(--ob-neutral-900) 100%)'
       case 'secondary':
         return 'white'
       case 'glass':
@@ -45,10 +45,11 @@ export function HeroMetric({
     <Box
       sx={{
         background: getBackground(),
-        backdropFilter: variant === 'glass' ? 'blur(12px)' : 'none',
+        backdropFilter:
+          variant === 'glass' ? 'blur(var(--ob-blur-md))' : 'none',
         border: `1px solid ${variant === 'primary' ? 'transparent' : theme.palette.divider}`,
-        borderRadius: 4, // var(--ob-radius-lg) which is usually 16px
-        padding: 3,
+        borderRadius: 'var(--ob-radius-sm)', // 4px - cards, panels, tiles
+        padding: 'var(--ob-space-300)',
         boxShadow:
           variant === 'glass'
             ? '0 8px 32px rgba(0,0,0,0.05)'
@@ -75,7 +76,7 @@ export function HeroMetric({
             height: 100,
             background:
               'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)',
-            borderRadius: '50%',
+            borderRadius: 'var(--ob-radius-pill)',
           }}
         />
       )}
