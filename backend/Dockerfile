@@ -31,6 +31,10 @@ RUN apt-get update \
 COPY --from=builder /install /usr/local
 
 COPY app /app/app
+COPY _compat /app/backend/_compat
+COPY jobs /app/backend/jobs
+COPY scripts /app/backend/scripts
+COPY prefect /app/backend/prefect
 COPY migrations /app/backend/migrations
 
 USER appuser
