@@ -45,8 +45,6 @@ import {
   CircularProgress,
   Tabs,
   Tab,
-  alpha,
-  useTheme,
 } from '@mui/material'
 import {
   Warning,
@@ -296,7 +294,6 @@ const DEFAULT_SENSITIVITY_HEADERS = [
 
 export function FinanceWorkspace() {
   const { t } = useTranslation()
-  const theme = useTheme()
   const router = useRouterController()
   const { search, path, navigate } = router
   const projectParams = useMemo(() => parseProjectParams(search), [search])

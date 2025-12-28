@@ -66,7 +66,7 @@ export function AdvancedIntelligencePage({
     <AppLayout
       title="Advanced Intelligence"
       subtitle="Predictive analytics and relationship insights"
-      controls={
+      actions={
         <button
           type="button"
           className="advanced-intelligence__refresh"

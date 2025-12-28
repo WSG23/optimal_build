@@ -1,5 +1,3 @@
-import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
-
 import {
   Box,
   CircularProgress,
@@ -7,7 +5,6 @@ import {
   IconButton,
   Tooltip,
   Typography,
-  useTheme,
 } from '@mui/material'
 import {
   DeleteOutline as DeleteOutlineIcon,
@@ -91,7 +88,6 @@ function ScenarioCard({
   deletingScenarioId = null,
 }: ScenarioCardProps) {
   const { t, i18n } = useTranslation()
-  const theme = useTheme()
 
   const currency = scenario.currency ?? 'SGD'
   const escalatedCost = toNumber(scenario.escalatedCost)
@@ -189,7 +185,8 @@ function ScenarioCard({
                 color: 'text.disabled',
               }}
             >
-              {t('finance.scenarios.lastUpdated', { defaultValue: 'Updated' })}: {lastUpdated}
+              {t('finance.scenarios.lastUpdated', { defaultValue: 'Updated' })}:{' '}
+              {lastUpdated}
             </Typography>
           )}
         </Box>

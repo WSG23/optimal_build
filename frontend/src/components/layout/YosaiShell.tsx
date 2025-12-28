@@ -6,7 +6,7 @@ import { HeaderUtilityCluster } from './HeaderUtilityCluster'
 import { useRouterController } from '../../router'
 
 export interface AppShellProps {
-  title: string
+  title?: string
   subtitle?: string
   actions?: ReactNode
   children: ReactNode
@@ -104,13 +104,15 @@ export function AppShell({
               }}
             >
               <Box sx={{ minWidth: 0 }}>
-                <Typography
-                  variant="h2"
-                  className="ob-page-header__title"
-                  sx={{ color: 'text.primary' }}
-                >
-                  {title}
-                </Typography>
+                {title ? (
+                  <Typography
+                    variant="h2"
+                    className="ob-page-header__title"
+                    sx={{ color: 'text.primary' }}
+                  >
+                    {title}
+                  </Typography>
+                ) : null}
                 {subtitle && (
                   <Typography
                     variant="body2"
