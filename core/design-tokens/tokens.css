@@ -451,6 +451,9 @@
     --ob-size-icon-lg: 48px;
     --ob-size-icon-xl: 64px;
     --ob-size-drop-zone: 120px;
+    --ob-size-drop-zone-lg: 200px;
+    --ob-size-input-sm: 200px;
+    --ob-size-input-md: 280px;
     --ob-size-controls-min: 400px;
     --ob-size-finance-summary-panel: 340px;
     --ob-size-finance-header-controls: 520px;

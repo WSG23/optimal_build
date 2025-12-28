@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { Box, Stack, MenuItem, Typography } from '@mui/material'
+import { Box, Stack, MenuItem } from '@mui/material'
 
 import {
   type CadImportSummary,
@@ -87,108 +87,89 @@ export function CadUploadPage() {
     [apiClient, projectId, t, zoneCode],
   )
 
-  const Controls = (
-    <Stack
-      direction="row"
-      spacing="var(--ob-space-200)"
-      sx={{ minWidth: 'var(--ob-size-controls-min)' }}
-    >
-      <Input
-        id={projectIdInputId}
-        label={t('uploader.projectLabel')}
-        type="number"
-        value={projectId}
-        onChange={(event) => {
-          const value = Number(event.target.value)
-          if (Number.isNaN(value) || value <= 0) {
-            setProjectId(DEFAULT_PROJECT_ID)
-            return
-          }
-          setProjectId(Math.trunc(value))
-        }}
-        size="small"
-        sx={{ flex: 1 }}
-      />
-      <Input
-        id={zoneInputId}
-        select
-        label={t('uploader.zoneLabel')}
-        value={zoneCode}
-        onChange={(event) => {
-          setZoneCode(event.target.value)
-        }}
-        size="small"
-        sx={{ flex: 1.5 }}
-      >
-        {ZONE_OPTIONS.map((option) => (
-          <MenuItem key={option.value} value={option.value}>
-            {t(`uploader.zoneOptions.${option.labelKey}`)}
-          </MenuItem>
-        ))}
-      </Input>
-    </Stack>
-  )
-
   return (
     <AppLayout title={t('uploader.title')} subtitle={t('uploader.subtitle')}>
-      <Box className="cad-upload" sx={{ pb: 'var(--ob-space-800)' }}>
-        <Stack spacing="var(--ob-space-300)">
-          {/* Context Bar - Depth 1 (Glass Card with cyan edge) */}
+      <Box className="cad-upload" sx={{ pb: 'var(--ob-space-400)' }}>
+        {/* Error Banner - Outside the card */}
+        {error && (
           <Box
-            className="ob-card-module"
             sx={{
               p: 'var(--ob-space-200)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--ob-space-100)',
+              mb: 'var(--ob-space-200)',
+              border: '1px solid var(--ob-error-500)',
+              borderRadius: 'var(--ob-radius-sm)',
+              bgcolor: 'var(--ob-error-muted)',
+              color: 'var(--ob-error-icon)',
             }}
           >
-            <Typography
-              variant="subtitle2"
-              sx={{
-                color: 'text.secondary',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                mr: 'var(--ob-space-200)',
-              }}
-            >
-              Project Settings
-            </Typography>
-            {Controls}
+            {error}
           </Box>
+        )}
 
-          {/* Error Banner */}
-          {error && (
-            <Box
-              sx={{
-                p: 'var(--ob-space-200)',
-                border: '1px solid var(--ob-error-500)',
-                borderRadius: 'var(--ob-radius-sm)',
-                bgcolor: 'var(--ob-error-muted)',
-                color: 'var(--ob-error-icon)',
+        {/* Single Card Container - One cyan edge */}
+        <Box className="ob-card-module" sx={{ p: 'var(--ob-space-250)' }}>
+          {/* Project Settings Row */}
+          <Stack
+            direction="row"
+            spacing="var(--ob-space-200)"
+            sx={{
+              mb: 'var(--ob-space-200)',
+              flexWrap: 'wrap',
+              alignItems: 'flex-end',
+            }}
+          >
+            <Input
+              id={projectIdInputId}
+              label={t('uploader.projectLabel')}
+              type="number"
+              value={projectId}
+              onChange={(event) => {
+                const value = Number(event.target.value)
+                if (Number.isNaN(value) || value <= 0) {
+                  setProjectId(DEFAULT_PROJECT_ID)
+                  return
+                }
+                setProjectId(Math.trunc(value))
               }}
-            >
-              {error}
-            </Box>
-          )}
-
-          {/* CAD Uploader - Depth 1 (Glass Card with cyan edge) */}
-          <Box className="ob-card-module">
-            <CadUploader
-              onUpload={(file) => {
-                void handleUpload(file)
-              }}
-              isUploading={isUploading}
-              status={status}
-              summary={job}
+              size="small"
+              sx={{ maxWidth: 'var(--ob-size-input-sm)' }}
             />
-          </Box>
+            <Input
+              id={zoneInputId}
+              select
+              label={t('uploader.zoneLabel')}
+              value={zoneCode}
+              onChange={(event) => {
+                setZoneCode(event.target.value)
+              }}
+              size="small"
+              sx={{ maxWidth: 'var(--ob-size-input-md)' }}
+            >
+              {ZONE_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {t(`uploader.zoneOptions.${option.labelKey}`)}
+                </MenuItem>
+              ))}
+            </Input>
+          </Stack>
 
-          {/* Rules Panel - Depth 1 (Glass Card with cyan edge) */}
-          <Box className="ob-card-module">
-            <RulePackExplanationPanel rules={rules} loading={loading} />
-          </Box>
-        </Stack>
+          {/* CAD Uploader (embedded) */}
+          <CadUploader
+            variant="embedded"
+            onUpload={(file) => {
+              void handleUpload(file)
+            }}
+            isUploading={isUploading}
+            status={status}
+            summary={job}
+          />
+
+          <RulePackExplanationPanel
+            variant="embedded"
+            rules={rules}
+            loading={loading}
+          />
+        </Box>
       </Box>
     </AppLayout>
   )

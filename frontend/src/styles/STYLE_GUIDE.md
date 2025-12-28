@@ -137,3 +137,70 @@ The following patterns are flagged by the style linter:
 **Allowed exceptions (rare):**
 
 - `style={{...}}` for third-party visualisation/canvas/SVG libraries where MUI `sx`/CSS classes are not practical, and only for non-tokenizable dynamic values.
+
+---
+
+### Embedded Variant Pattern
+
+**Rule:** Pages should avoid nested surface containers. If a page provides a primary card surface (`.ob-card-module`), child components should support an `embedded` variant that renders surface-less content.
+
+#### Problem: Nested Surface Containers
+
+When a page wraps content in `.ob-card-module` AND child components render their own card surfaces (e.g., `GlassCard`), you get:
+- Double padding/margins (wasted space)
+- Color mismatch (outer glassmorphic vs inner solid white)
+- Inconsistent visual hierarchy
+
+```tsx
+// ❌ WRONG - nested surfaces
+<Box className="ob-card-module">          {/* Page provides surface */}
+  <GlassCard>                              {/* Component adds ANOTHER surface */}
+    <CadUploader />
+  </GlassCard>
+</Box>
+```
+
+#### Solution: Embedded Variant Prop
+
+Components that may be used inside `.ob-card-module` should accept a `variant` prop:
+
+```tsx
+interface ComponentProps {
+  /** When 'embedded', removes outer card surface for use inside a parent .ob-card-module */
+  variant?: 'standalone' | 'embedded'
+}
+```
+
+- **`standalone` (default):** Component renders its own card surface (for use on bare pages)
+- **`embedded`:** Component renders content only, no surface (for use inside `.ob-card-module`)
+
+```tsx
+// ✅ CORRECT - single surface, embedded components
+<Box className="ob-card-module">
+  <CadUploader variant="embedded" />       {/* No inner surface */}
+  <Divider />
+  <RulePackExplanationPanel variant="embedded" />
+</Box>
+```
+
+#### Implementation Guidelines
+
+1. **Embedded mode removes:**
+   - Outer `GlassCard` or card wrapper
+   - `maxWidth` constraints (let parent control width)
+   - Centering (`margin: '0 auto'`)
+
+2. **Embedded mode keeps:**
+   - Internal layout and spacing
+   - Functional styling (borders on interactive areas like drop zones)
+   - All business logic
+
+3. **Page owns the surface:**
+   - One `.ob-card-module` per logical section
+   - Use `<Divider />` to separate internal sections
+   - Error banners go OUTSIDE the card
+
+#### Example Components with Embedded Support
+
+- `CadUploader` - renders drop zone as plain `Box` in embedded mode
+- `RulePackExplanationPanel` - removes `GlassCard` wrapper in embedded mode

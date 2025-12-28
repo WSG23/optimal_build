@@ -9,13 +9,18 @@ import { StatusChip } from '../../components/canonical/StatusChip'
 interface RulePackExplanationPanelProps {
   rules: RuleSummary[]
   loading?: boolean
+  /** When 'embedded', removes outer card surface for use inside a parent .ob-card-module */
+  variant?: 'standalone' | 'embedded'
 }
 
 export function RulePackExplanationPanel({
   rules,
   loading = false,
+  variant = 'standalone',
 }: RulePackExplanationPanelProps) {
   const { t } = useTranslation()
+
+  const isEmbedded = variant === 'embedded'
 
   const grouped = useMemo(
     () =>
@@ -29,7 +34,22 @@ export function RulePackExplanationPanel({
 
   const keys = useMemo(() => Object.keys(grouped).sort(), [grouped])
 
+  // Loading state
   if (loading) {
+    if (isEmbedded) {
+      return (
+        <Box sx={{ width: '100%' }}>
+          <Typography variant="h6" sx={{ mb: 'var(--ob-space-200)' }}>
+            {t('panels.rulePackTitle', { defaultValue: 'Rule constraints' })}
+          </Typography>
+          <Stack sx={{ gap: 'var(--ob-space-200)' }}>
+            <Skeleton variant="rectangular" height={40} />
+            <Skeleton variant="rectangular" height={40} />
+            <Skeleton variant="rectangular" height={40} />
+          </Stack>
+        </Box>
+      )
+    }
     return (
       <GlassCard sx={{ p: 'var(--ob-space-300)' }}>
         <Typography variant="h6" sx={{ mb: 'var(--ob-space-300)' }}>
@@ -44,7 +64,17 @@ export function RulePackExplanationPanel({
     )
   }
 
+  // Empty state
   if (keys.length === 0) {
+    if (isEmbedded) {
+      return (
+        <Typography variant="body2" color="text.secondary">
+          {t('panels.rulePackEmpty', {
+            defaultValue: 'Rules will appear after the first overlays are processed.',
+          })}
+        </Typography>
+      )
+    }
     return (
       <GlassCard sx={{ p: 'var(--ob-space-300)', textAlign: 'center' }}>
         <Typography variant="body2" color="text.secondary">
@@ -56,20 +86,14 @@ export function RulePackExplanationPanel({
     )
   }
 
-  return (
-    <GlassCard
-      sx={{
-        p: 'var(--ob-space-300)',
-        maxWidth: 1000,
-        width: '100%',
-        mx: 'auto',
-      }}
-    >
+  // Content with rules
+  const RulesContent = (
+    <>
       <Typography
         variant="h6"
         fontWeight={600}
         gutterBottom
-        sx={{ mb: 'var(--ob-space-300)' }}
+        sx={{ mb: 'var(--ob-space-200)' }}
       >
         {t('panels.rulePackTitle', { defaultValue: 'Rule constraints' })}
       </Typography>
@@ -158,6 +182,25 @@ export function RulePackExplanationPanel({
           </Grid>
         ))}
       </Grid>
+    </>
+  )
+
+  // Embedded variant: no outer card, full width
+  if (isEmbedded) {
+    return <Box sx={{ width: '100%' }}>{RulesContent}</Box>
+  }
+
+  // Standalone variant: original with GlassCard
+  return (
+    <GlassCard
+      sx={{
+        p: 'var(--ob-space-300)',
+        maxWidth: 1000,
+        width: '100%',
+        mx: 'auto',
+      }}
+    >
+      {RulesContent}
     </GlassCard>
   )
 }
