@@ -6,6 +6,7 @@ import {
 interface AppShellProps extends Omit<BaseAppShellProps, 'subtitle'> {
   activeItem?: string // Kept for backward compatibility
   description?: string
+  hideHeader?: boolean
 }
 
 export function AppShell({
@@ -14,6 +15,7 @@ export function AppShell({
   actions,
   children,
   hideSidebar,
+  hideHeader,
 }: AppShellProps) {
   return (
     <BaseAppShell
@@ -21,6 +23,7 @@ export function AppShell({
       subtitle={description}
       actions={actions}
       hideSidebar={hideSidebar}
+      hideHeader={hideHeader}
     >
       {children}
     </BaseAppShell>

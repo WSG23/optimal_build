@@ -25,7 +25,7 @@
 }
 
 .finance-table__actions-button:focus-visible {
-    outline: 2px solid var(--ob-color-brand-primary);
+    outline: 2px solid var(--ob-color-neon-cyan);
     outline-offset: 2px;
 }
 
@@ -35,7 +35,7 @@
     right: 0;
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm); /* 4px - cards */
     box-shadow: var(--ob-shadow-lg);
     min-width: 160px;
     padding: var(--ob-spacing-100);
@@ -48,7 +48,7 @@
     background: transparent;
     text-align: left;
     padding: var(--ob-spacing-200) var(--ob-spacing-300);
-    border-radius: var(--ob-radius-md);
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
     cursor: pointer;
     color: var(--ob-color-text-secondary);
     font-weight: 500;
@@ -58,8 +58,8 @@
 
 .finance-table__actions-menu button:hover,
 .finance-table__actions-menu button:focus-visible {
-    background: var(--ob-color-bg-muted);
-    color: var(--ob-color-text-primary);
+    background: rgba(0, 243, 255, 0.08);
+    color: var(--ob-color-neon-cyan);
 }
 
 .finance-table__actions-menu button:disabled {
@@ -81,7 +81,7 @@
 .finance-modal__content {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: var(--ob-radius-lg); /* 8px - modals */
     box-shadow: var(--ob-shadow-xl);
     max-width: 480px;
     width: 100%;
@@ -109,7 +109,7 @@
 }
 
 .finance-modal__button {
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
     padding: var(--ob-spacing-150) var(--ob-spacing-350);
     border: 1px solid var(--ob-color-border-subtle);
     background: var(--ob-color-bg-muted);
@@ -120,7 +120,8 @@
 }
 
 .finance-modal__button:hover:not(:disabled) {
-    background: var(--ob-color-action-hover);
+    background: rgba(0, 243, 255, 0.08);
+    border-color: var(--ob-color-neon-cyan);
 }
 
 .finance-modal__danger {

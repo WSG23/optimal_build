@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { Box, Stack, MenuItem } from '@mui/material'
+import { Box, Stack, MenuItem, Typography } from '@mui/material'
 
 import {
   type CadImportSummary,
@@ -12,7 +12,6 @@ import CadUploader from '../modules/cad/CadUploader'
 import RulePackExplanationPanel from '../modules/cad/RulePackExplanationPanel'
 import useRules from '../hooks/useRules'
 import { Input } from '../components/canonical/Input'
-import { GlassCard } from '../components/canonical/GlassCard'
 
 const DEFAULT_PROJECT_ID = 1
 const DEFAULT_ZONE_CODE = 'SG:residential'
@@ -134,17 +133,29 @@ export function CadUploadPage() {
     <AppLayout title={t('uploader.title')} subtitle={t('uploader.subtitle')}>
       <Box className="cad-upload" sx={{ pb: 'var(--ob-space-800)' }}>
         <Stack spacing="var(--ob-space-300)">
-          {/* Context Bar */}
-          <GlassCard
+          {/* Context Bar - Depth 1 (Glass Card with cyan edge) */}
+          <Box
+            className="ob-card-module"
             sx={{
-              p: 'var(--ob-space-100)',
+              p: 'var(--ob-space-200)',
               display: 'flex',
               alignItems: 'center',
               gap: 'var(--ob-space-100)',
             }}
           >
+            <Typography
+              variant="subtitle2"
+              sx={{
+                color: 'text.secondary',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                mr: 'var(--ob-space-200)',
+              }}
+            >
+              Project Settings
+            </Typography>
             {Controls}
-          </GlassCard>
+          </Box>
 
           {/* Error Banner */}
           {error && (
@@ -161,18 +172,22 @@ export function CadUploadPage() {
             </Box>
           )}
 
-          {/* CAD Uploader */}
-          <CadUploader
-            onUpload={(file) => {
-              void handleUpload(file)
-            }}
-            isUploading={isUploading}
-            status={status}
-            summary={job}
-          />
+          {/* CAD Uploader - Depth 1 (Glass Card with cyan edge) */}
+          <Box className="ob-card-module">
+            <CadUploader
+              onUpload={(file) => {
+                void handleUpload(file)
+              }}
+              isUploading={isUploading}
+              status={status}
+              summary={job}
+            />
+          </Box>
 
-          {/* Rules Panel */}
-          <RulePackExplanationPanel rules={rules} loading={loading} />
+          {/* Rules Panel - Depth 1 (Glass Card with cyan edge) */}
+          <Box className="ob-card-module">
+            <RulePackExplanationPanel rules={rules} loading={loading} />
+          </Box>
         </Stack>
       </Box>
     </AppLayout>

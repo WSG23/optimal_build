@@ -52,9 +52,8 @@ const AgentPerformancePage = React.lazy(
   () => import('./pages/AgentPerformancePage'),
 )
 const BusinessPerformancePage = React.lazy(async () => {
-  const module = await import(
-    './app/pages/business-performance/BusinessPerformancePage'
-  )
+  const module =
+    await import('./app/pages/business-performance/BusinessPerformancePage')
   return { default: module.BusinessPerformancePage }
 })
 const GpsCapturePage = React.lazy(async () => {
@@ -74,21 +73,18 @@ const IntegrationsPage = React.lazy(async () => {
   return { default: module.IntegrationsPage }
 })
 const SiteAcquisitionPage = React.lazy(async () => {
-  const module = await import(
-    './app/pages/site-acquisition/SiteAcquisitionPage'
-  )
+  const module =
+    await import('./app/pages/site-acquisition/SiteAcquisitionPage')
   return { default: module.SiteAcquisitionPage }
 })
 const ChecklistTemplateManager = React.lazy(async () => {
-  const module = await import(
-    './app/pages/site-acquisition/ChecklistTemplateManager'
-  )
+  const module =
+    await import('./app/pages/site-acquisition/ChecklistTemplateManager')
   return { default: module.ChecklistTemplateManager }
 })
 const DeveloperPreviewStandalone = React.lazy(async () => {
-  const module = await import(
-    './app/pages/site-acquisition/DeveloperPreviewStandalone'
-  )
+  const module =
+    await import('./app/pages/site-acquisition/DeveloperPreviewStandalone')
   return { default: module.DeveloperPreviewStandalone }
 })
 const PhaseManagementPage = React.lazy(async () => {
@@ -109,23 +105,13 @@ const DeveloperControlPanel = React.lazy(async () => {
 })
 
 const businessPerformanceElement = (
-  <AppShell
-    activeItem="performance"
-    title="Business performance"
-    description="Track deal momentum, commissions, analytics, and automation ROI across your Singapore commercial pipeline."
-    hideSidebar
-  >
+  <AppShell activeItem="performance" hideSidebar hideHeader>
     {suspense(<BusinessPerformancePage />)}
   </AppShell>
 )
 
 const gpsCaptureElement = (
-  <AppShell
-    activeItem="gpsCapture"
-    title="GPS capture & quick analysis"
-    description="Capture sites in the field, run instant scenario analysis, review market intelligence, and generate marketing packs."
-    hideSidebar
-  >
+  <AppShell activeItem="gpsCapture" hideSidebar hideHeader>
     {suspense(<GpsCapturePage />)}
   </AppShell>
 )
@@ -164,12 +150,7 @@ const integrationsElement = (
 )
 
 const siteAcquisitionElement = (
-  <AppShell
-    activeItem="siteAcquisition"
-    title="Site acquisition"
-    description="Comprehensive property capture and development feasibility analysis for developers."
-    hideSidebar
-  >
+  <AppShell activeItem="siteAcquisition" hideSidebar hideHeader>
     {suspense(<SiteAcquisitionPage />)}
   </AppShell>
 )
@@ -210,34 +191,19 @@ const developerFeasibilityElement = (
 const financialControlElement = suspense(<FinanceWorkspace />)
 
 const phaseManagementElement = (
-  <AppShell
-    activeItem="phaseManagement"
-    title="Phase management"
-    description="Multi-phase development scheduling, heritage tracking, and tenant coordination."
-    hideSidebar
-  >
+  <AppShell activeItem="phaseManagement" hideSidebar hideHeader>
     {suspense(<PhaseManagementPage />)}
   </AppShell>
 )
 
 const teamCoordinationElement = (
-  <AppShell
-    activeItem="teamCoordination"
-    title="Team coordination"
-    description="Manage project team, consultants, and approval workflows."
-    hideSidebar
-  >
+  <AppShell activeItem="teamCoordination" hideSidebar hideHeader>
     {suspense(<TeamManagementPage />)}
   </AppShell>
 )
 
 const regulatoryNavigationElement = (
-  <AppShell
-    activeItem="regulatoryNavigation"
-    title="Regulatory Navigation"
-    description="Singapore authority submissions and compliance tracking."
-    hideSidebar
-  >
+  <AppShell activeItem="regulatoryNavigation" hideSidebar hideHeader>
     {suspense(<RegulatoryDashboardPage />)}
   </AppShell>
 )

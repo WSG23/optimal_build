@@ -893,7 +893,7 @@ export function FeasibilityWizard({
       >
         <div className="feasibility-wizard__sidebar-content">
           {/* Section 0: Smart Intelligence Field (Merged Address/Area/Zoning) */}
-          <div style={{ marginBottom: '24px' }}>
+          <div className="ob-section-gap">
             <SmartIntelligenceField
               value={addressInput}
               siteArea={siteAreaInput ? Number(siteAreaInput) : undefined}
@@ -917,9 +917,14 @@ export function FeasibilityWizard({
               }}
             />
           </div>
-          {/* Section 1: Site Details (Hidden in favor of Smart Search mostly, but we keep extras) */}
-          <div className="feasibility-section">
-            <h3>{t('wizard.steps.siteDetails')}</h3>
+          {/* Section 1: Site Details - Depth 1 Glass Card */}
+          <div className="feasibility-section ob-card-module ob-section-gap">
+            <h3
+              className="ob-page-header__subtitle"
+              style={{ margin: 0, marginBottom: 'var(--ob-space-200)' }}
+            >
+              {t('wizard.steps.siteDetails')}
+            </h3>
             <div className="feasibility-form__field">
               <label className="feasibility-form__label">
                 {t('wizard.form.siteArea')}
@@ -932,10 +937,16 @@ export function FeasibilityWizard({
                 data-testid="site-area-input"
               />
             </div>
-            <div className="feasibility-form__field">
+            <div
+              className="feasibility-form__field"
+              style={{ marginTop: 'var(--ob-space-200)' }}
+            >
               <label
                 className="feasibility-form__label"
-                style={{ marginBottom: '12px', display: 'block' }}
+                style={{
+                  marginBottom: 'var(--ob-space-150)',
+                  display: 'block',
+                }}
               >
                 {t('wizard.form.landUse')}
               </label>
@@ -946,8 +957,8 @@ export function FeasibilityWizard({
             </div>
           </div>
 
-          {/* Section 2: Assumptions (Accordion Style) */}
-          <div className="feasibility-section">
+          {/* Section 2: Assumptions - Depth 1 Glass Card */}
+          <div className="feasibility-section ob-card-module ob-section-gap">
             <AssumptionsPanel
               assumptionInputs={assumptionInputs}
               assumptionErrors={assumptionErrors}
@@ -956,6 +967,10 @@ export function FeasibilityWizard({
               onResetAssumptions={handleResetAssumptions}
               t={t}
             />
+          </div>
+
+          {/* Section 2b: Financial Settings - Depth 1 Glass Card */}
+          <div className="feasibility-section ob-card-module ob-section-gap">
             <FinancialSettingsPanel
               financialInputs={financialInputs}
               financialErrors={financialErrors}
@@ -965,9 +980,9 @@ export function FeasibilityWizard({
 
           {/* Section 3: Computing Action - MOVED TO STICKY FOOTER */}
 
-          {/* Section 4: Results (Dynamic) */}
+          {/* Section 4: Results (Dynamic) - Depth 1 Glass Card */}
           {result && (
-            <div className="feasibility-section">
+            <div className="feasibility-section ob-card-module ob-section-gap">
               <ResultsPanel
                 status={status}
                 result={result}
@@ -981,9 +996,9 @@ export function FeasibilityWizard({
             </div>
           )}
 
-          {/* Section 5: Packs */}
+          {/* Section 5: Packs - Depth 1 Glass Card */}
           {result && (
-            <div className="feasibility-section">
+            <div className="feasibility-section ob-card-module ob-section-gap">
               <PackGrid
                 value={packType}
                 onChange={setPackType}

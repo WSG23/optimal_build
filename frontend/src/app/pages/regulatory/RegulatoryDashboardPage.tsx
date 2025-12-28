@@ -35,13 +35,7 @@ import { CompliancePathTimeline } from './components/CompliancePathTimeline'
 import { ChangeOfUseWizard } from './components/ChangeOfUseWizard'
 import { HeritageSubmissionForm } from './components/HeritageSubmissionForm'
 import { useRouterPath } from '../../../router'
-import { Card } from '../../../components/canonical/Card'
-import {
-  getSectionHeaderSx,
-  getTableSx,
-  getPrimaryButtonSx,
-  getBorderColor,
-} from '../../../utils/themeStyles'
+import { getTableSx, getPrimaryButtonSx } from '../../../utils/themeStyles'
 
 const AGENCIES_INFO = [
   { code: 'URA', name: 'Urban Redevelopment Authority', status: 'Online' },
@@ -90,9 +84,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
 
   // Theme-aware styles
-  const sectionHeaderSx = getSectionHeaderSx(isDarkMode)
   const tableSx = getTableSx(isDarkMode)
-  const borderColor = getBorderColor(isDarkMode)
 
   const fetchSubmissions = useCallback(
     async (isRefresh = false) => {
@@ -174,58 +166,91 @@ export const RegulatoryDashboardPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ maxWidth: 1400, margin: '0 auto' }}>
+    <Box sx={{ width: '100%' }}>
+      {/* Compact Page Header - TIGHT layout with animation */}
       <Box
+        component="header"
         sx={{
           display: 'flex',
-          justifyContent: 'flex-end',
-          gap: 'var(--ob-space-200)',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           flexWrap: 'wrap',
-          mb: 'var(--ob-space-200)',
+          gap: 'var(--ob-space-100)',
+          mb: 'var(--ob-space-150)',
+          animation:
+            'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
         }}
       >
-        <Button
-          variant="outlined"
-          startIcon={<RefreshIcon />}
-          onClick={() => fetchSubmissions(true)}
-          disabled={refreshing || loading}
-        >
-          {refreshing ? 'Updating...' : 'Check Status'}
-        </Button>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setWizardOpen(true)}
-          sx={getPrimaryButtonSx()}
-        >
-          New Submission
-        </Button>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+            Regulatory Dashboard
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: 'text.secondary', mt: 'var(--ob-space-025)' }}
+          >
+            Manage authority submissions and compliance tracking
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 'var(--ob-space-150)' }}>
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={() => fetchSubmissions(true)}
+            disabled={refreshing || loading}
+            size="small"
+          >
+            {refreshing ? 'Updating...' : 'Check Status'}
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setWizardOpen(true)}
+            sx={getPrimaryButtonSx()}
+            size="small"
+          >
+            New Submission
+          </Button>
+        </Box>
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 'var(--ob-space-300)' }}>
+        <Alert severity="error" sx={{ mb: 'var(--ob-space-200)' }}>
           {error}
         </Alert>
       )}
 
-      {/* Quick Actions */}
-      <Grid
-        container
-        spacing="var(--ob-space-200)"
-        sx={{ mb: 'var(--ob-space-300)' }}
-      >
-        <Grid item xs={12} sm={4}>
-          <Card
-            variant="glass"
-            hover="lift"
-            onClick={() => setChangeOfUseOpen(true)}
-            sx={{ p: 'var(--ob-space-200)', cursor: 'pointer' }}
-          >
+      {/* Quick Actions - Depth 1 (Glass Card with cyan edge) */}
+      <Box className="ob-card-module ob-section-gap">
+        <Typography
+          variant="subtitle2"
+          sx={{
+            color: 'text.secondary',
+            mb: 'var(--ob-space-200)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          Quick Actions
+        </Typography>
+        <Grid container spacing="var(--ob-space-200)">
+          <Grid item xs={12} sm={4}>
             <Box
+              onClick={() => setChangeOfUseOpen(true)}
               sx={{
+                p: 'var(--ob-space-200)',
+                cursor: 'pointer',
+                borderRadius: 'var(--ob-radius-sm)',
+                border: '1px solid',
+                borderColor: 'divider',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 'var(--ob-space-200)',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  transform: 'translateY(-2px)',
+                },
               }}
             >
               <SwapIcon color="primary" fontSize="large" />
@@ -238,20 +263,24 @@ export const RegulatoryDashboardPage: React.FC = () => {
                 </Typography>
               </Box>
             </Box>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card
-            variant="glass"
-            hover="lift"
-            onClick={() => setHeritageFormOpen(true)}
-            sx={{ p: 'var(--ob-space-200)', cursor: 'pointer' }}
-          >
+          </Grid>
+          <Grid item xs={12} sm={4}>
             <Box
+              onClick={() => setHeritageFormOpen(true)}
               sx={{
+                p: 'var(--ob-space-200)',
+                cursor: 'pointer',
+                borderRadius: 'var(--ob-radius-sm)',
+                border: '1px solid',
+                borderColor: 'divider',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 'var(--ob-space-200)',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  transform: 'translateY(-2px)',
+                },
               }}
             >
               <HeritageIcon color="primary" fontSize="large" />
@@ -264,20 +293,24 @@ export const RegulatoryDashboardPage: React.FC = () => {
                 </Typography>
               </Box>
             </Box>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card
-            variant="glass"
-            hover="lift"
-            onClick={() => setTabValue(1)}
-            sx={{ p: 'var(--ob-space-200)', cursor: 'pointer' }}
-          >
+          </Grid>
+          <Grid item xs={12} sm={4}>
             <Box
+              onClick={() => setTabValue(1)}
               sx={{
+                p: 'var(--ob-space-200)',
+                cursor: 'pointer',
+                borderRadius: 'var(--ob-radius-sm)',
+                border: '1px solid',
+                borderColor: 'divider',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 'var(--ob-space-200)',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  transform: 'translateY(-2px)',
+                },
               }}
             >
               <TimelineIcon color="primary" fontSize="large" />
@@ -290,9 +323,9 @@ export const RegulatoryDashboardPage: React.FC = () => {
                 </Typography>
               </Box>
             </Box>
-          </Card>
+          </Grid>
         </Grid>
-      </Grid>
+      </Box>
 
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -312,45 +345,49 @@ export const RegulatoryDashboardPage: React.FC = () => {
 
       {/* Tab 0: Submissions */}
       <TabPanel value={tabValue} index={0}>
-        {/* Agency Status Cards */}
-        <Typography
-          variant="h6"
-          gutterBottom
-          sx={{ mb: 'var(--ob-space-200)', ...sectionHeaderSx }}
-        >
-          Connected Agencies
-        </Typography>
-        <Grid
-          container
-          spacing="var(--ob-space-200)"
-          sx={{ mb: 'var(--ob-space-400)' }}
-        >
-          {AGENCIES_INFO.map((agency) => (
-            <Grid item xs={12} sm={6} md={3} key={agency.code}>
-              <Card
-                variant="glass"
-                sx={{
-                  p: 'var(--ob-space-200)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--ob-space-200)',
-                }}
-              >
-                <AgencyIcon color="primary" fontSize="large" />
-                <Box>
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    {agency.code}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {agency.name}
-                  </Typography>
+        {/* Agency Status Cards - Depth 1 (Glass Card with cyan edge) */}
+        <Box className="ob-card-module ob-section-gap">
+          <Typography
+            variant="subtitle2"
+            sx={{
+              color: 'text.secondary',
+              mb: 'var(--ob-space-200)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
+            Connected Agencies
+          </Typography>
+          <Grid container spacing="var(--ob-space-200)">
+            {AGENCIES_INFO.map((agency) => (
+              <Grid item xs={12} sm={6} md={3} key={agency.code}>
+                <Box
+                  sx={{
+                    p: 'var(--ob-space-200)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--ob-space-200)',
+                    borderRadius: 'var(--ob-radius-sm)',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                  }}
+                >
+                  <AgencyIcon color="primary" fontSize="large" />
+                  <Box>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      {agency.code}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {agency.name}
+                    </Typography>
+                  </Box>
                 </Box>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
 
-        {/* Submissions Table */}
+        {/* Submissions Table - Depth 1 (Glass Card with cyan edge) */}
         {loading ? (
           <Box
             sx={{
@@ -362,17 +399,18 @@ export const RegulatoryDashboardPage: React.FC = () => {
             <CircularProgress />
           </Box>
         ) : (
-          <Card variant="glass" sx={{ overflow: 'hidden' }}>
-            <Box
+          <Box className="ob-card-module" sx={{ overflow: 'hidden' }}>
+            <Typography
+              variant="subtitle2"
               sx={{
-                p: 'var(--ob-space-200)',
-                borderBottom: `1px solid ${borderColor}`,
+                color: 'text.secondary',
+                mb: 'var(--ob-space-200)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
               }}
             >
-              <Typography variant="h6" sx={sectionHeaderSx}>
-                Active Submissions
-              </Typography>
-            </Box>
+              Active Submissions
+            </Typography>
             {submissions.length === 0 ? (
               <Box sx={{ p: 'var(--ob-space-400)', textAlign: 'center' }}>
                 <Typography color="text.secondary">
@@ -453,13 +491,15 @@ export const RegulatoryDashboardPage: React.FC = () => {
                 </TableBody>
               </Table>
             )}
-          </Card>
+          </Box>
         )}
       </TabPanel>
 
-      {/* Tab 1: Compliance Path */}
+      {/* Tab 1: Compliance Path - Depth 1 (Glass Card with cyan edge) */}
       <TabPanel value={tabValue} index={1}>
-        <CompliancePathTimeline projectId={projectId} />
+        <Box className="ob-card-module">
+          <CompliancePathTimeline projectId={projectId} />
+        </Box>
       </TabPanel>
 
       {/* Dialogs */}

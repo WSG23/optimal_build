@@ -11,29 +11,30 @@
 import { Theme, alpha } from '@mui/material'
 
 /**
- * Returns chart colors derived from the MUI theme.
- * Use these instead of hardcoded hex colors to support dark mode.
+ * Returns chart colors using cyan-family palette for visual consistency.
+ * Reference: optimal-build-v2-dashboard uses ['#00f3ff', '#0096cc', '#1e293b']
+ * Semantic colors (green, orange, blue) reserved for status badges only.
  */
-export function getChartColors(theme: Theme) {
+export function getChartColors(_theme: Theme) {
   return {
-    // Capital stack colors
-    equity: theme.palette.success.main,
-    seniorDebt: theme.palette.primary.main,
-    mezzanine: theme.palette.secondary.main,
-    bridge: theme.palette.warning.main,
-    other: theme.palette.grey[500],
+    // Capital stack colors - cyan family for consistency
+    equity: '#00f3ff', // Bright cyan (neon)
+    seniorDebt: '#0096cc', // Medium cyan
+    mezzanine: '#0077a3', // Darker cyan
+    bridge: '#005577', // Deep cyan
+    other: '#1e293b', // Dark slate
 
     // Chart structural colors
-    grid: alpha(theme.palette.divider, 0.3),
-    gridDashed: alpha(theme.palette.divider, 0.4),
-    axisText: theme.palette.text.secondary,
-    tooltipBg: theme.palette.background.paper,
-    tooltipBorder: theme.palette.divider,
+    grid: 'rgba(255, 255, 255, 0.1)',
+    gridDashed: 'rgba(255, 255, 255, 0.15)',
+    axisText: 'rgba(255, 255, 255, 0.6)',
+    tooltipBg: 'rgba(15, 23, 42, 0.95)',
+    tooltipBorder: 'rgba(0, 243, 255, 0.2)',
 
-    // Line chart colors
-    line: theme.palette.text.primary,
-    lineDot: theme.palette.text.primary,
-    lineArea: alpha(theme.palette.primary.main, 0.1),
+    // Line chart colors - cyan accent
+    line: '#00f3ff',
+    lineDot: '#00f3ff',
+    lineArea: 'rgba(0, 243, 255, 0.1)',
   }
 }
 

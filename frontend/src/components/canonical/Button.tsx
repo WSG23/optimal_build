@@ -67,19 +67,19 @@ const StyledButton = styled(MuiButton, {
     },
   }
 
-  // Primary variant - gradient with shimmer
+  // Primary variant - cyan gradient with shimmer (premium cyber aesthetic)
   if (obVariant === 'primary') {
     return {
       ...common,
       background:
-        'linear-gradient(135deg, var(--ob-brand-600) 0%, var(--ob-brand-500) 100%)',
-      color: 'var(--ob-color-text-inverse)',
+        'linear-gradient(135deg, #0096cc 0%, var(--ob-color-neon-cyan) 100%)',
+      color: '#0a1628', // Dark text for contrast on bright cyan
       border: 'none',
-      boxShadow: 'var(--ob-glow-brand-subtle)',
+      boxShadow: 'var(--ob-glow-neon-cyan)',
       '&:hover': {
         background:
-          'linear-gradient(135deg, var(--ob-brand-500) 0%, var(--ob-brand-400) 100%)',
-        boxShadow: 'var(--ob-glow-brand-medium)',
+          'linear-gradient(135deg, var(--ob-color-neon-cyan) 0%, #0096cc 100%)',
+        boxShadow: 'var(--ob-glow-neon-cyan-strong)',
         transform: 'translateY(-1px)',
       },
       // Shimmer effect overlay

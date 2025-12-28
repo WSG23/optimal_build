@@ -143,24 +143,34 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
         sx={{
           justifyContent: 'center',
           color: isActive ? 'var(--ob-color-neon-cyan)' : 'text.secondary',
-          bgcolor: isActive ? 'var(--ob-color-neon-cyan-dim)' : 'transparent',
+          bgcolor: 'transparent', // Always transparent - no filled background
           borderRadius: 0,
           px: 'var(--ob-space-150)',
           py: 'var(--ob-space-100)',
           textTransform: 'uppercase',
           fontWeight: isActive ? 800 : 600,
-          fontSize: 'var(--ob-font-size-xs)',
+          fontSize: 'var(--ob-font-size-2xs)', // 10px - matches V3 reference
           letterSpacing: 'var(--ob-letter-spacing-wider)',
           whiteSpace: 'nowrap',
           position: 'relative',
-          borderBottom: isActive
-            ? '2px solid var(--ob-color-neon-cyan)'
-            : '2px solid transparent',
           textShadow: isActive ? 'var(--ob-glow-neon-text)' : 'none',
           '&:hover': {
-            bgcolor: 'var(--ob-color-neon-cyan-dim)',
-            color: 'var(--ob-text-main)',
+            bgcolor: 'transparent', // Keep transparent on hover
+            color: isActive ? 'var(--ob-color-neon-cyan)' : 'text.primary',
           },
+          // Glowing underline for active state - positioned below the nav bar
+          '&::after': isActive
+            ? {
+                content: '""',
+                position: 'absolute',
+                bottom: '-4px',
+                left: 0,
+                right: 0,
+                height: '2px',
+                bgcolor: 'var(--ob-color-neon-cyan)',
+                boxShadow: '0 0 8px var(--ob-color-neon-cyan)',
+              }
+            : {},
         }}
       >
         {item.label}
@@ -356,7 +366,8 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
                   <Typography
                     component="span"
                     sx={{
-                      color: 'var(--ob-text-main)',
+                      color: 'var(--ob-color-neon-cyan)',
+                      textShadow: 'var(--ob-glow-neon-text)',
                       fontWeight: 800,
                       letterSpacing: 'var(--ob-letter-spacing-wider)',
                       fontSize: 'var(--ob-font-size-md)',

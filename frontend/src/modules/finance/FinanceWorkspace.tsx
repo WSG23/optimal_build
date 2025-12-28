@@ -850,14 +850,16 @@ export function FinanceWorkspace() {
               mb: 'var(--ob-space-150)',
             }}
           >
+            {/* Finance Header - Depth 0 (Direct on Grid)
+                AI Studio Protocol: Headers sit directly on the background
+                NO glass, NO cyan edge for Depth 0 elements */}
             <Box
               component="header"
               key={path}
-              className="ob-glass ob-card-accent"
+              className="ob-page-header"
               sx={{
                 borderBottom: 1,
                 borderColor: 'divider',
-                borderRadius: 'var(--ob-radius-sm)',
                 animation:
                   'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
                 '@media (prefers-reduced-motion: reduce)': {
@@ -983,31 +985,34 @@ export function FinanceWorkspace() {
                 </Alert>
               )}
 
+              {/* Tab Panels - Depth 1 (Glass Cards with ob-card-module) */}
               <div role="tabpanel" hidden={activeTab !== 0}>
                 {activeTab === 0 && (
                   <Stack spacing="var(--ob-space-200)">
-                    <Suspense fallback={panelFallback}>
-                      <FinanceScenarioCreator
-                        projectId={effectiveProjectId}
-                        projectName={projectDisplayName}
-                        onCreated={(summary) => {
-                          setScenarioMessage(
-                            t('finance.scenarioCreator.success', {
-                              name: summary.scenarioName,
-                            }),
-                          )
-                          setScenarioError(null)
-                          addScenario(summary)
-                        }}
-                        onError={(message) => {
-                          setScenarioError(message)
-                          setScenarioMessage(null)
-                        }}
-                        onRefresh={() => {
-                          refresh()
-                        }}
-                      />
-                    </Suspense>
+                    <Box className="ob-card-module">
+                      <Suspense fallback={panelFallback}>
+                        <FinanceScenarioCreator
+                          projectId={effectiveProjectId}
+                          projectName={projectDisplayName}
+                          onCreated={(summary) => {
+                            setScenarioMessage(
+                              t('finance.scenarioCreator.success', {
+                                name: summary.scenarioName,
+                              }),
+                            )
+                            setScenarioError(null)
+                            addScenario(summary)
+                          }}
+                          onError={(message) => {
+                            setScenarioError(message)
+                            setScenarioMessage(null)
+                          }}
+                          onRefresh={() => {
+                            refresh()
+                          }}
+                        />
+                      </Suspense>
+                    </Box>
 
                     {primaryScenario?.isPrivate ? (
                       <FinancePrivacyNotice projectName={projectDisplayName} />
@@ -1039,15 +1044,17 @@ export function FinanceWorkspace() {
                     )}
 
                     {scenarios.length > 0 && (
-                      <Suspense fallback={panelFallback}>
-                        <FinanceCapitalStack
-                          scenarios={scenarios}
-                          onMarkPrimary={handleMarkPrimary}
-                          updatingScenarioId={promotingScenarioId}
-                          onRequestDelete={handleRequestDeleteScenario}
-                          deletingScenarioId={deletingScenarioId}
-                        />
-                      </Suspense>
+                      <Box className="ob-card-module">
+                        <Suspense fallback={panelFallback}>
+                          <FinanceCapitalStack
+                            scenarios={scenarios}
+                            onMarkPrimary={handleMarkPrimary}
+                            updatingScenarioId={promotingScenarioId}
+                            onRequestDelete={handleRequestDeleteScenario}
+                            deletingScenarioId={deletingScenarioId}
+                          />
+                        </Suspense>
+                      </Box>
                     )}
                   </Stack>
                 )}
@@ -1055,95 +1062,111 @@ export function FinanceWorkspace() {
 
               <div role="tabpanel" hidden={activeTab !== 1}>
                 {activeTab === 1 && (
-                  <Suspense fallback={panelFallback}>
-                    <FinanceDrawdownSchedule scenarios={scenarios} />
-                  </Suspense>
+                  <Box className="ob-card-module">
+                    <Suspense fallback={panelFallback}>
+                      <FinanceDrawdownSchedule scenarios={scenarios} />
+                    </Suspense>
+                  </Box>
                 )}
               </div>
               <div role="tabpanel" hidden={activeTab !== 2}>
                 {activeTab === 2 && primaryScenario && (
-                  <Suspense fallback={panelFallback}>
-                    <FinanceAssetBreakdown
-                      summary={primaryScenario.assetMixSummary ?? null}
-                      breakdowns={primaryScenario.assetBreakdowns ?? []}
-                    />
-                  </Suspense>
+                  <Box className="ob-card-module">
+                    <Suspense fallback={panelFallback}>
+                      <FinanceAssetBreakdown
+                        summary={primaryScenario.assetMixSummary ?? null}
+                        breakdowns={primaryScenario.assetBreakdowns ?? []}
+                      />
+                    </Suspense>
+                  </Box>
                 )}
               </div>
               <div role="tabpanel" hidden={activeTab !== 3}>
                 {activeTab === 3 && (
-                  <Suspense fallback={panelFallback}>
-                    <FinanceFacilityEditor
-                      scenario={primaryScenario ?? null}
-                      onSave={handleSaveLoan}
-                      saving={savingLoan}
-                    />
-                  </Suspense>
+                  <Box className="ob-card-module">
+                    <Suspense fallback={panelFallback}>
+                      <FinanceFacilityEditor
+                        scenario={primaryScenario ?? null}
+                        onSave={handleSaveLoan}
+                        saving={savingLoan}
+                      />
+                    </Suspense>
+                  </Box>
                 )}
               </div>
               <div role="tabpanel" hidden={activeTab !== 4}>
                 {activeTab === 4 && (
-                  <Suspense fallback={panelFallback}>
-                    <FinanceJobTimeline
-                      jobs={timelineJobs}
-                      pendingCount={pendingCount}
-                    />
-                  </Suspense>
+                  <Box className="ob-card-module">
+                    <Suspense fallback={panelFallback}>
+                      <FinanceJobTimeline
+                        jobs={timelineJobs}
+                        pendingCount={pendingCount}
+                      />
+                    </Suspense>
+                  </Box>
                 )}
               </div>
               <div role="tabpanel" hidden={activeTab !== 5}>
                 {activeTab === 5 && (
-                  <Suspense fallback={panelFallback}>
-                    <FinanceLoanInterest
-                      schedule={
-                        primaryScenario?.constructionLoanInterest ?? null
-                      }
-                    />
-                  </Suspense>
+                  <Box className="ob-card-module">
+                    <Suspense fallback={panelFallback}>
+                      <FinanceLoanInterest
+                        schedule={
+                          primaryScenario?.constructionLoanInterest ?? null
+                        }
+                      />
+                    </Suspense>
+                  </Box>
                 )}
               </div>
               <div role="tabpanel" hidden={activeTab !== 6}>
                 {activeTab === 6 && analyticsMetadata && (
-                  <Suspense fallback={panelFallback}>
-                    <Box>
-                      <FinanceAnalyticsPanel
-                        analytics={analyticsMetadata}
-                        currency={primaryScenario?.currency ?? 'SGD'}
-                      />
-                      <Box sx={{ mt: 'var(--ob-space-100)' }}>
-                        {primaryScenario && (
-                          <FinanceSensitivityControls
-                            scenario={primaryScenario}
-                            pendingJobs={pendingCount}
-                            disabled={runningSensitivity}
-                            error={sensitivityError}
-                            onRun={handleRunSensitivity}
-                          />
-                        )}
-                      </Box>
+                  <Stack spacing="var(--ob-space-200)">
+                    <Box className="ob-card-module">
+                      <Suspense fallback={panelFallback}>
+                        <FinanceAnalyticsPanel
+                          analytics={analyticsMetadata}
+                          currency={primaryScenario?.currency ?? 'SGD'}
+                        />
+                      </Suspense>
                     </Box>
-                  </Suspense>
+                    {primaryScenario && (
+                      <Box className="ob-card-module">
+                        <FinanceSensitivityControls
+                          scenario={primaryScenario}
+                          pendingJobs={pendingCount}
+                          disabled={runningSensitivity}
+                          error={sensitivityError}
+                          onRun={handleRunSensitivity}
+                        />
+                      </Box>
+                    )}
+                  </Stack>
                 )}
               </div>
               <div role="tabpanel" hidden={activeTab !== 7}>
                 {activeTab === 7 && (
-                  <Suspense fallback={panelFallback}>
-                    <Box>
-                      <FinanceSensitivitySummary
-                        summaries={sensitivitySummaries}
-                        currency={primaryScenario?.currency ?? 'SGD'}
-                      />
-                      <Box sx={{ my: 'var(--ob-space-100)' }}>
-                        {primaryScenario && (
-                          <FinanceSensitivityControls
-                            scenario={primaryScenario}
-                            pendingJobs={pendingCount}
-                            disabled={runningSensitivity}
-                            error={sensitivityError}
-                            onRun={handleRunSensitivity}
-                          />
-                        )}
+                  <Stack spacing="var(--ob-space-200)">
+                    <Box className="ob-card-module">
+                      <Suspense fallback={panelFallback}>
+                        <FinanceSensitivitySummary
+                          summaries={sensitivitySummaries}
+                          currency={primaryScenario?.currency ?? 'SGD'}
+                        />
+                      </Suspense>
+                    </Box>
+                    {primaryScenario && (
+                      <Box className="ob-card-module">
+                        <FinanceSensitivityControls
+                          scenario={primaryScenario}
+                          pendingJobs={pendingCount}
+                          disabled={runningSensitivity}
+                          error={sensitivityError}
+                          onRun={handleRunSensitivity}
+                        />
                       </Box>
+                    )}
+                    <Box className="ob-card-module">
                       <FinanceSensitivityTable
                         outcomes={filteredSensitivity}
                         currency={primaryScenario?.currency ?? 'SGD'}
@@ -1155,7 +1178,7 @@ export function FinanceWorkspace() {
                         onDownloadJson={handleDownloadJson}
                       />
                     </Box>
-                  </Suspense>
+                  </Stack>
                 )}
               </div>
 

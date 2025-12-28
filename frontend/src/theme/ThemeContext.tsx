@@ -26,11 +26,7 @@ function getInitialMode(): ThemeMode {
     return stored
   }
 
-  // Check system preference
-  if (window.matchMedia?.('(prefers-color-scheme: light)').matches) {
-    return 'light'
-  }
-
+  // Default to dark mode - this is a fullscreen application, not a document
   return 'dark'
 }
 

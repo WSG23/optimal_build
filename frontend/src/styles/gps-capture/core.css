@@ -224,12 +224,12 @@
 }
 
 .gps-input-ghost:focus {
-    border-bottom-color: #3b82f6 !important;
-    box-shadow: 0 4px 6px -4px rgba(59, 130, 246, 0.5);
+    border-bottom-color: var(--ob-color-neon-cyan) !important;
+    box-shadow: var(--ob-glow-neon-cyan);
     background: linear-gradient(
         to bottom,
         transparent,
-        rgba(59, 130, 246, 0.05)
+        rgba(0, 243, 255, 0.05)
     ) !important;
 }
 
@@ -256,14 +256,15 @@
 }
 
 .gps-scenario-tile:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(0, 243, 255, 0.08);
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .gps-scenario-tile--selected {
-    background: rgba(59, 130, 246, 0.15);
-    border: 1px solid #3b82f6;
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+    background: rgba(0, 243, 255, 0.15);
+    border: 1px solid var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .gps-scenario-tile span {
@@ -272,8 +273,9 @@
 }
 
 .gps-scenario-tile--selected span {
-    color: #fff;
+    color: var(--ob-color-neon-cyan);
     font-weight: 500;
+    text-shadow: var(--ob-glow-neon-text);
 }
 
 /* Scan Button - Gamified */
@@ -281,14 +283,18 @@
     width: 100%;
     padding: 1.25rem;
     border: none;
-    border-radius: 2px; /* Square Cyber-Minimalism: xs for buttons */
-    background: linear-gradient(135deg, #2563eb, #7c3aed);
-    color: #fff;
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
+    background: linear-gradient(
+        135deg,
+        #0096cc 0%,
+        var(--ob-color-neon-cyan) 100%
+    );
+    color: #0a1628;
     font-weight: 700;
     font-size: 1.1rem;
     letter-spacing: 0.02em;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+    box-shadow: var(--ob-glow-neon-cyan);
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
@@ -299,14 +305,19 @@
 
 .gps-scan-button:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.6);
+    background: linear-gradient(
+        135deg,
+        var(--ob-color-neon-cyan) 0%,
+        #0096cc 100%
+    );
+    box-shadow: var(--ob-glow-neon-cyan-strong);
 }
 
 .gps-scan-button:disabled {
-    background: #334155;
+    background: var(--ob-color-bg-muted);
     cursor: not-allowed;
     box-shadow: none;
-    color: #94a3b8;
+    color: var(--ob-color-text-muted);
 }
 
 /* Marketing Packs Grid */
@@ -333,8 +344,9 @@
 }
 
 .gps-pack-btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(0, 243, 255, 0.08);
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 /* Map Error Toast */
@@ -363,7 +375,8 @@
 }
 
 .gps-geocode-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 243, 255, 0.15);
+    color: var(--ob-color-neon-cyan);
 }
 
 /* Select ghost styling for dark option text */

@@ -17,7 +17,7 @@
 .finance-project-selector {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: var(--ob-radius-sm); /* 4px - cards */
     box-shadow: var(--ob-shadow-md);
     padding: var(--ob-spacing-500);
     display: flex;
@@ -80,35 +80,49 @@
 .finance-project-selector__recent select {
     flex: 1;
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-md); /* 6px - inputs */
     padding: var(--ob-spacing-200) var(--ob-spacing-300);
     font-size: var(--ob-font-size-sm);
     background: var(--ob-color-bg-surface);
     color: var(--ob-color-text-primary);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .finance-project-selector__input-row input:focus,
 .finance-project-selector__recent select:focus {
     outline: none;
-    border-color: var(--ob-color-brand-primary);
-    box-shadow: 0 0 0 4px var(--ob-color-brand-primary-glow);
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .finance-project-selector__input-row button,
 .finance-project-selector__refresh {
     border: none;
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
     padding: var(--ob-spacing-200) var(--ob-spacing-350);
-    background: var(--ob-color-brand-primary);
-    color: white;
+    background: linear-gradient(
+        135deg,
+        #0096cc 0%,
+        var(--ob-color-neon-cyan) 100%
+    );
+    color: #0a1628;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .finance-project-selector__input-row button:hover:not(:disabled),
 .finance-project-selector__refresh:hover:not(:disabled) {
-    background: var(--ob-color-brand-primary-emphasis);
+    background: linear-gradient(
+        135deg,
+        var(--ob-color-neon-cyan) 0%,
+        #0096cc 100%
+    );
+    box-shadow: var(--ob-glow-neon-cyan-strong);
+    transform: translateY(-1px);
 }
 
 .finance-project-selector__recent-header {
@@ -127,7 +141,7 @@
 
 .finance-privacy-banner,
 .finance-access-gate {
-    border-radius: var(--ob-radius-xl);
+    border-radius: var(--ob-radius-sm); /* 4px - cards */
     padding: var(--ob-spacing-350) var(--ob-spacing-400);
     border: 1px solid var(--ob-warning-subtle);
     background: var(--ob-warning-muted);
@@ -158,22 +172,33 @@
 .finance-access-gate__action {
     margin-top: var(--ob-spacing-100);
     padding: var(--ob-spacing-150) var(--ob-spacing-350);
-    border-radius: 9999px;
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
     border: none;
-    background: var(--ob-color-brand-primary);
-    color: white;
+    background: linear-gradient(
+        135deg,
+        #0096cc 0%,
+        var(--ob-color-neon-cyan) 100%
+    );
+    color: #0a1628;
     font-weight: 600;
     cursor: pointer;
     width: fit-content;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .finance-access-gate__action:hover:not(:disabled) {
-    background: var(--ob-color-brand-primary-emphasis);
+    background: linear-gradient(
+        135deg,
+        var(--ob-color-neon-cyan) 0%,
+        #0096cc 100%
+    );
+    box-shadow: var(--ob-glow-neon-cyan-strong);
+    transform: translateY(-1px);
 }
 
 .finance-access-gate__action:focus-visible {
-    outline: 2px solid var(--ob-color-brand-primary);
+    outline: 2px solid var(--ob-color-neon-cyan);
     outline-offset: 2px;
 }
 
@@ -212,31 +237,43 @@
 .finance-workspace__refresh,
 .finance-workspace__export {
     padding: var(--ob-spacing-150) var(--ob-spacing-350);
-    border-radius: 9999px;
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
     border: none;
-    background: var(--ob-color-brand-primary);
-    color: white;
+    background: linear-gradient(
+        135deg,
+        #0096cc 0%,
+        var(--ob-color-neon-cyan) 100%
+    );
+    color: #0a1628;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .finance-workspace__refresh:hover:not(:disabled),
 .finance-workspace__export:hover:not(:disabled) {
-    background: var(--ob-color-brand-primary-emphasis);
+    background: linear-gradient(
+        135deg,
+        var(--ob-color-neon-cyan) 0%,
+        #0096cc 100%
+    );
+    box-shadow: var(--ob-glow-neon-cyan-strong);
+    transform: translateY(-1px);
 }
 
 .finance-workspace__refresh:disabled,
 .finance-workspace__export:disabled {
     background: var(--ob-color-bg-muted);
     color: var(--ob-color-text-muted);
+    box-shadow: none;
     cursor: not-allowed;
 }
 
 .finance-workspace__error {
     margin: 0;
     padding: var(--ob-spacing-300) var(--ob-spacing-350);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm); /* 4px - cards */
     background: var(--ob-error-muted);
     border: 1px solid var(--ob-error-subtle);
     color: var(--ob-error-400);
@@ -266,7 +303,7 @@
 .finance-table__wrapper {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: var(--ob-radius-sm); /* 4px - cards */
     box-shadow: var(--ob-shadow-md);
     overflow: auto;
 }
@@ -325,10 +362,10 @@
 }
 
 .finance-table__primary-button {
-    border: 1px solid var(--ob-color-brand-primary);
+    border: 1px solid var(--ob-color-neon-cyan);
     background: transparent;
-    color: var(--ob-color-brand-primary);
-    border-radius: var(--ob-radius-lg);
+    color: var(--ob-color-neon-cyan);
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
     padding: var(--ob-spacing-150) var(--ob-spacing-300);
     font-size: var(--ob-font-size-sm);
     font-weight: 500;
@@ -344,7 +381,8 @@
 
 .finance-table__primary-button:not(:disabled):hover,
 .finance-table__primary-button:not(:disabled):focus-visible {
-    background: var(--ob-color-action-hover);
+    background: rgba(0, 243, 255, 0.1);
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .finance-table__actions-cell {

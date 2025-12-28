@@ -112,7 +112,7 @@ function ScenarioCard({
           boxShadow: 'var(--ob-glow-neon-cyan)',
         }),
         '&:focus-visible': {
-          outline: `2px solid ${theme.palette.primary.main}`,
+          outline: '2px solid var(--ob-color-neon-cyan)',
           outlineOffset: 2,
         },
       }}
@@ -149,7 +149,8 @@ function ScenarioCard({
                 fontSize: 'var(--ob-font-size-xs)',
                 fontWeight: 800,
                 letterSpacing: 'var(--ob-letter-spacing-wider)',
-                color: 'primary.main',
+                color: 'var(--ob-color-neon-cyan)',
+                textShadow: 'var(--ob-glow-neon-text)',
                 textTransform: 'uppercase',
               }}
             >
@@ -344,7 +345,7 @@ function ScenarioCard({
           <NeonText
             variant="body2"
             intensity="subtle"
-            color={dscr !== null && dscr < 1 ? 'error' : 'cyan'}
+            color="cyan"
             sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
           >
             {dscr !== null ? formatNumber(dscr) : t('common.fallback.dash')}

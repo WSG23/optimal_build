@@ -1,12 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import {
-  Box,
-  Container,
-  Grid,
-  Typography,
-  useTheme,
-  alpha,
-} from '@mui/material'
+import { Box, Grid, Typography, useTheme } from '@mui/material'
 
 import { AppLayout } from '../../App'
 import {
@@ -72,8 +65,8 @@ export function AdvancedIntelligencePage({
   return (
     <AppLayout
       title="Advanced Intelligence"
-      subtitle="Command Center"
-      actions={
+      subtitle="Predictive analytics and relationship insights"
+      controls={
         <button
           type="button"
           className="advanced-intelligence__refresh"
@@ -83,10 +76,11 @@ export function AdvancedIntelligencePage({
             background: 'transparent',
             border: `1px solid ${theme.palette.primary.main}`,
             color: theme.palette.primary.main,
-            padding: '8px 16px',
-            borderRadius: '4px',
+            padding: '6px 12px',
+            borderRadius: '2px',
             cursor: isLoading ? 'not-allowed' : 'pointer',
             opacity: isLoading ? 0.5 : 1,
+            fontSize: '0.875rem',
           }}
         >
           {isLoading ? 'SYNCING...' : 'SYNC WORKSPACE'}
@@ -95,164 +89,177 @@ export function AdvancedIntelligencePage({
     >
       <Box
         sx={{
-          minHeight: '100vh',
-          bgcolor: 'background.default',
-          pb: 8,
-          backgroundImage: `radial-gradient(circle at 50% 0%, ${alpha(theme.palette.primary.main, 0.1)} 0%, transparent 50%)`,
+          width: '100%',
+          pb: 'var(--ob-space-400)',
         }}
       >
-        <Container maxWidth="xl" sx={{ pt: 4 }}>
-          {/* 1. Hero Section: Workspace Signals */}
-          <Box mb={4}>
-            <Typography
-              variant="h6"
-              gutterBottom
-              sx={{
-                color: 'text.secondary',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-              }}
-            >
-              Workspace Signals
-            </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={3}>
-                <KPITickerCard
-                  label="Adoption Likelihood"
-                  value={`${adoptionRate.toFixed(1)}%`}
-                  trend={adoptionTrend}
-                  data={generateSparkline(adoptionRate)}
-                  active={true}
-                />
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <KPITickerCard
-                  label="Projected Uplift"
-                  value={`${uplift.toFixed(1)}%`}
-                  trend={upliftTrend}
-                  data={generateSparkline(uplift)}
-                />
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <KPITickerCard
-                  label="Active Experiments"
-                  value="12"
-                  trend={8.2}
-                  data={generateSparkline(12)}
-                />
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <KPITickerCard
-                  label="Intelligence Score"
-                  value="94"
-                  trend={-2.4}
-                  data={generateSparkline(94)}
-                />
-              </Grid>
+        {/* 1. Hero Section: Workspace Signals - Depth 1 (Glass Card with cyan edge) */}
+        <Box className="ob-card-module ob-section-gap">
+          <Typography
+            variant="subtitle2"
+            sx={{
+              color: 'text.secondary',
+              mb: 'var(--ob-space-200)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
+            Workspace Signals
+          </Typography>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={3}>
+              <KPITickerCard
+                label="Adoption Likelihood"
+                value={`${adoptionRate.toFixed(1)}%`}
+                trend={adoptionTrend}
+                data={generateSparkline(adoptionRate)}
+                active={true}
+              />
             </Grid>
-          </Box>
-
-          <Grid container spacing={4}>
-            {/* 2. Relationship Intelligence (Main Centerpiece) */}
-            <Grid item xs={12} lg={8}>
-              <Box sx={{ height: '100%', minHeight: 500 }}>
-                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
-                  Relationship Intelligence
-                </Typography>
-                {graph.status === 'ok' ? (
-                  <RelationshipGraph
-                    nodes={graph.graph.nodes.map((n) => ({
-                      id: n.id,
-                      label: n.label,
-                      category: n.category as 'Team' | 'Workflow',
-                      weight: n.score,
-                    }))}
-                    links={graph.graph.edges.map((e) => ({
-                      source: e.source,
-                      target: e.target,
-                      strength: e.weight ?? 1,
-                    }))}
-                    height={600}
-                  />
-                ) : (
-                  <Box
-                    sx={{
-                      height: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1px dashed grey',
-                      borderRadius: '4px', // Square Cyber-Minimalism: sm
-                    }}
-                  >
-                    <Typography color="text.secondary">
-                      {graph.status === 'loading'
-                        ? 'Mapping organization network...'
-                        : 'No relationship data available'}
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
+            <Grid item xs={12} md={3}>
+              <KPITickerCard
+                label="Projected Uplift"
+                value={`${uplift.toFixed(1)}%`}
+                trend={upliftTrend}
+                data={generateSparkline(uplift)}
+              />
             </Grid>
-
-            {/* 3. Predictive & Correlation (Side Panel) */}
-            <Grid item xs={12} lg={4}>
-              <Box mb={4}>
-                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
-                  Predictive Forecast
-                </Typography>
-                <Box
-                  sx={{
-                    p: 3,
-                    borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
-                    bgcolor: alpha(theme.palette.background.paper, 0.4),
-                    backdropFilter: 'blur(var(--ob-blur-md))',
-                    border: '1px solid',
-                    borderColor: alpha(theme.palette.divider, 0.1),
-                  }}
-                >
-                  {predictive.status === 'ok' ? (
-                    predictive.segments
-                      .slice(0, 5)
-                      .map((segment) => (
-                        <ConfidenceGauge
-                          key={segment.segmentId}
-                          label={segment.segmentName}
-                          value={Math.round(segment.probability * 100)}
-                          projection={`Projection: ${segment.projection}`}
-                        />
-                      ))
-                  ) : (
-                    <Typography color="text.secondary">
-                      Loading forecasts...
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
-
-              <Box>
-                <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
-                  Cross-Correlation
-                </Typography>
-                {correlation.status === 'ok' ? (
-                  <CorrelationHeatmap
-                    data={correlation.relationships.map((r) => ({
-                      id: r.pairId,
-                      driver: r.driver,
-                      outcome: r.outcome,
-                      coefficient: r.coefficient,
-                      pValue: r.pValue,
-                    }))}
-                  />
-                ) : (
-                  <Typography color="text.secondary">
-                    Analyzing correlations...
-                  </Typography>
-                )}
-              </Box>
+            <Grid item xs={12} md={3}>
+              <KPITickerCard
+                label="Active Experiments"
+                value="12"
+                trend={8.2}
+                data={generateSparkline(12)}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
+              <KPITickerCard
+                label="Intelligence Score"
+                value="94"
+                trend={-2.4}
+                data={generateSparkline(94)}
+              />
             </Grid>
           </Grid>
-        </Container>
+        </Box>
+
+        {/* Main Content Grid */}
+        <Grid container spacing="var(--ob-space-300)">
+          {/* 2. Relationship Intelligence (Main Centerpiece) - Depth 1 */}
+          <Grid item xs={12} lg={8}>
+            <Box
+              className="ob-card-module"
+              sx={{ height: '100%', minHeight: 500 }}
+            >
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  color: 'text.secondary',
+                  mb: 'var(--ob-space-200)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Relationship Intelligence
+              </Typography>
+              {graph.status === 'ok' ? (
+                <RelationshipGraph
+                  nodes={graph.graph.nodes.map((n) => ({
+                    id: n.id,
+                    label: n.label,
+                    category: n.category as 'Team' | 'Workflow',
+                    weight: n.score,
+                  }))}
+                  links={graph.graph.edges.map((e) => ({
+                    source: e.source,
+                    target: e.target,
+                    strength: e.weight ?? 1,
+                  }))}
+                  height={600}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    height: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px dashed grey',
+                    borderRadius: '4px', // Square Cyber-Minimalism: sm
+                  }}
+                >
+                  <Typography color="text.secondary">
+                    {graph.status === 'loading'
+                      ? 'Mapping organization network...'
+                      : 'No relationship data available'}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Grid>
+
+          {/* 3. Predictive & Correlation (Side Panel) - Depth 1 */}
+          <Grid item xs={12} lg={4}>
+            <Box className="ob-card-module" sx={{ mb: 'var(--ob-space-300)' }}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  color: 'text.secondary',
+                  mb: 'var(--ob-space-200)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Predictive Forecast
+              </Typography>
+              {predictive.status === 'ok' ? (
+                predictive.segments
+                  .slice(0, 5)
+                  .map((segment) => (
+                    <ConfidenceGauge
+                      key={segment.segmentId}
+                      label={segment.segmentName}
+                      value={Math.round(segment.probability * 100)}
+                      projection={`Projection: ${segment.projection}`}
+                    />
+                  ))
+              ) : (
+                <Typography color="text.secondary">
+                  Loading forecasts...
+                </Typography>
+              )}
+            </Box>
+
+            <Box className="ob-card-module">
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  color: 'text.secondary',
+                  mb: 'var(--ob-space-200)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Cross-Correlation
+              </Typography>
+              {correlation.status === 'ok' ? (
+                <CorrelationHeatmap
+                  data={correlation.relationships.map((r) => ({
+                    id: r.pairId,
+                    driver: r.driver,
+                    outcome: r.outcome,
+                    coefficient: r.coefficient,
+                    pValue: r.pValue,
+                  }))}
+                />
+              ) : (
+                <Typography color="text.secondary">
+                  Analyzing correlations...
+                </Typography>
+              )}
+            </Box>
+          </Grid>
+        </Grid>
       </Box>
     </AppLayout>
   )

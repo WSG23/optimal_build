@@ -348,169 +348,195 @@ export function PhaseManagementPage() {
   }
 
   return (
-    <Box
-      className="phase-management-page"
-      sx={{
-        backgroundColor: '#121212',
-        minHeight: '100vh',
-        p: 3,
-        color: '#fff',
-      }}
-    >
+    <Box className="phase-management-page" sx={{ width: '100%' }}>
+      {/* Compact Page Header - TIGHT layout with animation */}
+      <Box
+        component="header"
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 'var(--ob-space-100)',
+          mb: 'var(--ob-space-150)',
+          animation:
+            'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
+        }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+            Phase Management
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: 'text.secondary', mt: 'var(--ob-space-025)' }}
+          >
+            Project timeline, critical path analysis, and coordination tracking
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleAddPhase}
+          size="small"
+        >
+          Add Phase
+        </Button>
+      </Box>
+
       {error && (
-        <Alert severity="info" sx={{ mb: 3 }}>
+        <Alert severity="info" sx={{ mb: 'var(--ob-space-200)' }}>
           {error} Demo data is shown below.
         </Alert>
       )}
 
-      <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-        <HolographicCard
-          icon={<TimelineIcon sx={{ fontSize: 28, color: '#00f3ff' }} />}
-          value={stats.totalPhases}
-          label="Total Phases"
-          progress={75} // Example progress
-          color="#00f3ff"
-        />
-        <HolographicCard
-          icon={
-            <BarChartIcon
-              sx={{
-                fontSize: 28,
-                color: stats.criticalPhases > 0 ? '#ff3366' : '#00ff9d',
-              }}
-            />
-          }
-          value={stats.criticalPhases}
-          label="Critical Path"
-          status={stats.criticalPhases > 0 ? 'alert' : 'good'}
-          color={stats.criticalPhases > 0 ? '#ff3366' : '#00ff9d'}
-        />
-        <HolographicCard
-          icon={<AccountBalanceIcon sx={{ fontSize: 28, color: '#f59e0b' }} />}
-          value={stats.heritagePhases}
-          label="Heritage Phases"
-          progress={45}
-          color="#f59e0b"
-        />
-        <HolographicCard
-          icon={<PeopleIcon sx={{ fontSize: 28, color: '#a855f7' }} />}
-          value={stats.tenantPhases}
-          label="Tenant Coord"
-          progress={60}
-          color="#a855f7"
-        />
-        <HolographicCard
-          value={stats.totalDuration}
-          label="Total Days"
-          suffix="d"
-          progress={35} // Just an example, ideally calculated (elapsed / total)
-          color="#fff"
-        />
-        <HolographicCard
-          value={stats.criticalDuration}
-          label="Critical Days"
-          suffix="d"
-          color="#ff3366"
-          status="alert"
-        />
+      {/* KPI Metrics - Depth 1 (Glass Card with cyan edge) */}
+      <Box className="ob-card-module ob-section-gap">
+        <Typography
+          variant="subtitle2"
+          sx={{
+            color: 'text.secondary',
+            mb: 'var(--ob-space-200)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          Project Overview
+        </Typography>
+        <Box
+          sx={{ display: 'flex', gap: 'var(--ob-space-200)', flexWrap: 'wrap' }}
+        >
+          <HolographicCard
+            icon={<TimelineIcon sx={{ fontSize: 28, color: '#00f3ff' }} />}
+            value={stats.totalPhases}
+            label="Total Phases"
+            progress={75} // Example progress
+            color="#00f3ff"
+          />
+          <HolographicCard
+            icon={
+              <BarChartIcon
+                sx={{
+                  fontSize: 28,
+                  color: stats.criticalPhases > 0 ? '#ff3366' : '#00ff9d',
+                }}
+              />
+            }
+            value={stats.criticalPhases}
+            label="Critical Path"
+            status={stats.criticalPhases > 0 ? 'alert' : 'good'}
+            color={stats.criticalPhases > 0 ? '#ff3366' : '#00ff9d'}
+          />
+          <HolographicCard
+            icon={
+              <AccountBalanceIcon sx={{ fontSize: 28, color: '#f59e0b' }} />
+            }
+            value={stats.heritagePhases}
+            label="Heritage Phases"
+            progress={45}
+            color="#f59e0b"
+          />
+          <HolographicCard
+            icon={<PeopleIcon sx={{ fontSize: 28, color: '#a855f7' }} />}
+            value={stats.tenantPhases}
+            label="Tenant Coord"
+            progress={60}
+            color="#a855f7"
+          />
+          <HolographicCard
+            value={stats.totalDuration}
+            label="Total Days"
+            suffix="d"
+            progress={35} // Just an example, ideally calculated (elapsed / total)
+            color="#fff"
+          />
+          <HolographicCard
+            value={stats.criticalDuration}
+            label="Critical Days"
+            suffix="d"
+            color="#ff3366"
+            status="alert"
+          />
+        </Box>
       </Box>
 
-      {/* Main Content with Tabs */}
-      <Paper
-        elevation={0}
+      {/* Tabs - Depth 0 (Direct on Grid) */}
+      <Box
         sx={{
-          background: 'rgba(30, 30, 30, 0.4)',
-          backdropFilter: 'blur(var(--ob-blur-md))',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          borderRadius: 3,
-          overflow: 'hidden',
+          borderBottom: 1,
+          borderColor: 'divider',
+          mb: 'var(--ob-space-300)',
         }}
       >
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Tabs value={activeTab} onChange={handleTabChange}>
-              <Tab
-                label="Gantt Chart"
-                icon={<TimelineIcon />}
-                iconPosition="start"
-              />
-              <Tab
-                label="Critical Path"
-                icon={<BarChartIcon />}
-                iconPosition="start"
-              />
-              <Tab
-                label="Heritage Tracking"
-                icon={<AccountBalanceIcon />}
-                iconPosition="start"
-              />
-              <Tab
-                label="Tenant Coordination"
-                icon={<PeopleIcon />}
-                iconPosition="start"
-              />
-            </Tabs>
+        <Tabs value={activeTab} onChange={handleTabChange}>
+          <Tab
+            label="Gantt Chart"
+            icon={<TimelineIcon />}
+            iconPosition="start"
+          />
+          <Tab
+            label="Critical Path"
+            icon={<BarChartIcon />}
+            iconPosition="start"
+          />
+          <Tab
+            label="Heritage Tracking"
+            icon={<AccountBalanceIcon />}
+            iconPosition="start"
+          />
+          <Tab
+            label="Tenant Coordination"
+            icon={<PeopleIcon />}
+            iconPosition="start"
+          />
+        </Tabs>
+      </Box>
 
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleAddPhase}
-              size="small"
-            >
-              Add Phase
-            </Button>
-          </Stack>
-        </Box>
+      {/* Tab Content - Depth 1 (Glass Card with cyan edge) */}
+      <Box className="ob-card-module" sx={{ overflow: 'hidden' }}>
+        {/* Gantt Chart Tab */}
+        <TabPanel value={activeTab} index={0}>
+          {ganttData ? (
+            <GanttChart
+              data={ganttData}
+              onTaskClick={handleTaskClick}
+              selectedTaskId={selectedTaskId}
+            />
+          ) : (
+            <DemoGanttChart
+              onTaskClick={handleTaskClick}
+              selectedTaskId={selectedTaskId}
+            />
+          )}
+        </TabPanel>
 
-        <Box sx={{ p: 2 }}>
-          {/* Gantt Chart Tab */}
-          <TabPanel value={activeTab} index={0}>
-            {ganttData ? (
-              <GanttChart
-                data={ganttData}
-                onTaskClick={handleTaskClick}
-                selectedTaskId={selectedTaskId}
-              />
-            ) : (
-              <DemoGanttChart
-                onTaskClick={handleTaskClick}
-                selectedTaskId={selectedTaskId}
-              />
-            )}
-          </TabPanel>
+        {/* Critical Path Tab */}
+        <TabPanel value={activeTab} index={1}>
+          {criticalPath ? (
+            <CriticalPathView data={criticalPath} />
+          ) : (
+            <DemoCriticalPath />
+          )}
+        </TabPanel>
 
-          {/* Critical Path Tab */}
-          <TabPanel value={activeTab} index={1}>
-            {criticalPath ? (
-              <CriticalPathView data={criticalPath} />
-            ) : (
-              <DemoCriticalPath />
-            )}
-          </TabPanel>
+        {/* Heritage Tracking Tab */}
+        <TabPanel value={activeTab} index={2}>
+          {heritageData ? (
+            <HeritageView data={heritageData} />
+          ) : (
+            <DemoHeritageView />
+          )}
+        </TabPanel>
 
-          {/* Heritage Tracking Tab */}
-          <TabPanel value={activeTab} index={2}>
-            {heritageData ? (
-              <HeritageView data={heritageData} />
-            ) : (
-              <DemoHeritageView />
-            )}
-          </TabPanel>
-
-          {/* Tenant Coordination Tab */}
-          <TabPanel value={activeTab} index={3}>
-            {tenantData ? (
-              <TenantRelocationDashboard data={tenantData} />
-            ) : (
-              <DemoTenantCoordination />
-            )}
-          </TabPanel>
-        </Box>
-      </Paper>
+        {/* Tenant Coordination Tab */}
+        <TabPanel value={activeTab} index={3}>
+          {tenantData ? (
+            <TenantRelocationDashboard data={tenantData} />
+          ) : (
+            <DemoTenantCoordination />
+          )}
+        </TabPanel>
+      </Box>
 
       {/* Phase Editor Dialog */}
       <PhaseEditor

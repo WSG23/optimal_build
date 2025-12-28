@@ -53,7 +53,6 @@ import { PropertyCaptureForm } from './components/capture-form'
 // MUI & Canonical Components
 import {
   Box,
-  Container,
   Stack,
   Typography,
   Button,
@@ -63,7 +62,6 @@ import {
   InputLabel,
 } from '@mui/material'
 import { Refresh } from '@mui/icons-material'
-import { Card } from '../../../components/canonical/Card'
 
 export function SiteAcquisitionPage() {
   const [jurisdictionCode, setJurisdictionCode] = useState('SG')
@@ -599,269 +597,298 @@ export function SiteAcquisitionPage() {
   )
 
   return (
-    <Box className="page site-acquisition" sx={{ pb: 'var(--ob-space-400)' }}>
-      <Box sx={{ p: 3 }}>
-        <Container maxWidth="xl" sx={{ mt: 3 }}>
-          {/* Property Capture Form */}
-          <Card variant="glass" sx={{ p: 3, mb: 4 }}>
-            <PropertyCaptureForm
-              jurisdictionCode={jurisdictionCode}
-              setJurisdictionCode={setJurisdictionCode}
-              address={address}
-              setAddress={setAddress}
-              latitude={latitude}
-              setLatitude={setLatitude}
-              longitude={longitude}
-              setLongitude={setLongitude}
-              selectedScenarios={selectedScenarios}
-              isCapturing={isCapturing}
-              error={error}
-              geocodeError={geocodeError}
-              capturedProperty={capturedProperty}
-              onCapture={handleCapture}
-              onForwardGeocode={handleForwardGeocode}
-              onReverseGeocode={handleReverseGeocode}
-              onToggleScenario={toggleScenario}
-            />
-          </Card>
+    <Box
+      className="page site-acquisition"
+      sx={{ width: '100%', pb: 'var(--ob-space-300)' }}
+    >
+      {/* Compact Page Header - TIGHT layout with animation */}
+      <Box
+        component="header"
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 'var(--ob-space-100)',
+          mb: 'var(--ob-space-150)',
+          animation:
+            'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
+        }}
+      >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+            Site Acquisition
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: 'text.secondary', mt: 'var(--ob-space-025)' }}
+          >
+            Capture and analyze development potential for properties
+          </Typography>
+        </Box>
+      </Box>
 
-          {capturedProperty && (
-            <Stack spacing={4}>
-              <Card variant="glass" sx={{ p: 3 }}>
-                <Typography variant="h5" fontWeight={600} gutterBottom>
-                  Property Overview
-                </Typography>
-                <PropertyOverviewSection cards={propertyOverviewCards} />
+      <Stack spacing="var(--ob-space-200)">
+        {/* Property Capture Form - Depth 1 (Glass Card with cyan edge) */}
+        <Box className="ob-card-module">
+          <PropertyCaptureForm
+            jurisdictionCode={jurisdictionCode}
+            setJurisdictionCode={setJurisdictionCode}
+            address={address}
+            setAddress={setAddress}
+            latitude={latitude}
+            setLatitude={setLatitude}
+            longitude={longitude}
+            setLongitude={setLongitude}
+            selectedScenarios={selectedScenarios}
+            isCapturing={isCapturing}
+            error={error}
+            geocodeError={geocodeError}
+            capturedProperty={capturedProperty}
+            onCapture={handleCapture}
+            onForwardGeocode={handleForwardGeocode}
+            onReverseGeocode={handleReverseGeocode}
+            onToggleScenario={toggleScenario}
+          />
+        </Box>
 
-                {previewJob && (
+        {capturedProperty && (
+          <>
+            {/* Property Overview - Depth 1 */}
+            <Box className="ob-card-module">
+              <Typography variant="h5" fontWeight={600} gutterBottom>
+                Property Overview
+              </Typography>
+              <PropertyOverviewSection cards={propertyOverviewCards} />
+
+              {previewJob && (
+                <Box
+                  sx={{
+                    mt: 4,
+                    bgcolor: 'background.default',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                  }}
+                >
                   <Box
                     sx={{
-                      mt: 4,
-                      bgcolor: 'background.default',
-                      borderRadius: 2,
-                      overflow: 'hidden',
+                      p: 2,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
                     }}
                   >
-                    <Box
+                    <Typography variant="h6">Development Preview</Typography>
+                    <Typography
+                      variant="overline"
                       sx={{
-                        p: 2,
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        borderBottom: '1px solid',
-                        borderColor: 'divider',
+                        px: 1,
+                        border: '1px solid',
+                        borderColor: 'secondary.main',
+                        borderRadius: 1,
                       }}
                     >
-                      <Typography variant="h6">Development Preview</Typography>
-                      <Typography
-                        variant="overline"
-                        sx={{
-                          px: 1,
-                          border: '1px solid',
-                          borderColor: 'secondary.main',
-                          borderRadius: 1,
-                        }}
-                      >
-                        {previewJob.status.toUpperCase()}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ height: 500, bgcolor: 'black' }}>
-                      <Preview3DViewer
-                        previewUrl={previewJob.previewUrl}
-                        metadataUrl={previewViewerMetadataUrl}
-                        status={previewJob.status}
-                        thumbnailUrl={previewJob.thumbnailUrl}
-                        layerVisibility={previewLayerVisibility}
-                        focusLayerId={previewFocusLayerId}
-                      />
-                    </Box>
-
-                    <Box
-                      sx={{
-                        p: 2,
-                        borderTop: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      <Stack direction="row" spacing={3} alignItems="center">
-                        <FormControl size="small" sx={{ minWidth: 200 }}>
-                          <InputLabel>Geometry Detail</InputLabel>
-                          <Select
-                            value={previewDetailLevel}
-                            label="Geometry Detail"
-                            onChange={(e) =>
-                              setPreviewDetailLevel(
-                                e.target.value as GeometryDetailLevel,
-                              )
-                            }
-                            disabled={isRefreshingPreview}
-                          >
-                            {PREVIEW_DETAIL_OPTIONS.map((option) => (
-                              <MenuItem key={option} value={option}>
-                                {PREVIEW_DETAIL_LABELS[option]}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-
-                        <Button
-                          variant="outlined"
-                          startIcon={
-                            <Refresh
-                              className={isRefreshingPreview ? 'fa-spin' : ''}
-                            />
-                          }
-                          onClick={handleRefreshPreview}
-                          disabled={isRefreshingPreview}
-                        >
-                          {isRefreshingPreview
-                            ? 'Refreshing...'
-                            : 'Refresh Render'}
-                        </Button>
-
-                        <Typography variant="caption" color="text.secondary">
-                          Geometry detail:{' '}
-                          <strong>
-                            {describeDetailLevel(
-                              previewJob.geometryDetailLevel,
-                            )}
-                          </strong>
-                        </Typography>
-                      </Stack>
-                    </Box>
+                      {previewJob.status.toUpperCase()}
+                    </Typography>
                   </Box>
-                )}
 
-                {previewJob && (
-                  <Box sx={{ mt: 2 }}>
-                    <PreviewLayersTable
-                      layers={previewLayerMetadata}
-                      visibility={previewLayerVisibility}
+                  <Box sx={{ height: 500, bgcolor: 'black' }}>
+                    <Preview3DViewer
+                      previewUrl={previewJob.previewUrl}
+                      metadataUrl={previewViewerMetadataUrl}
+                      status={previewJob.status}
+                      thumbnailUrl={previewJob.thumbnailUrl}
+                      layerVisibility={previewLayerVisibility}
                       focusLayerId={previewFocusLayerId}
-                      hiddenLayerCount={hiddenLayerCount}
-                      isLoading={isPreviewMetadataLoading}
-                      error={previewMetadataError}
-                      onLayerAction={handleLayerAction}
-                      onShowAll={handleShowAllLayers}
-                      onResetFocus={handleResetLayerFocus}
-                      formatNumber={formatNumberMetric}
                     />
                   </Box>
-                )}
 
-                <Box sx={{ mt: 2 }}>
-                  <ColorLegendEditor
-                    entries={colorLegendEntries}
-                    hasPendingChanges={legendHasPendingChanges}
-                    onChange={handleLegendEntryChange}
-                    onReset={handleLegendReset}
-                  />
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderTop: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Stack direction="row" spacing={3} alignItems="center">
+                      <FormControl size="small" sx={{ minWidth: 200 }}>
+                        <InputLabel>Geometry Detail</InputLabel>
+                        <Select
+                          value={previewDetailLevel}
+                          label="Geometry Detail"
+                          onChange={(e) =>
+                            setPreviewDetailLevel(
+                              e.target.value as GeometryDetailLevel,
+                            )
+                          }
+                          disabled={isRefreshingPreview}
+                        >
+                          {PREVIEW_DETAIL_OPTIONS.map((option) => (
+                            <MenuItem key={option} value={option}>
+                              {PREVIEW_DETAIL_LABELS[option]}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+
+                      <Button
+                        variant="outlined"
+                        startIcon={
+                          <Refresh
+                            className={isRefreshingPreview ? 'fa-spin' : ''}
+                          />
+                        }
+                        onClick={handleRefreshPreview}
+                        disabled={isRefreshingPreview}
+                      >
+                        {isRefreshingPreview
+                          ? 'Refreshing...'
+                          : 'Refresh Render'}
+                      </Button>
+
+                      <Typography variant="caption" color="text.secondary">
+                        Geometry detail:{' '}
+                        <strong>
+                          {describeDetailLevel(previewJob.geometryDetailLevel)}
+                        </strong>
+                      </Typography>
+                    </Stack>
+                  </Box>
                 </Box>
-
-                <Box sx={{ mt: 2 }}>
-                  <LayerBreakdownCards layers={layerBreakdown} />
-                </Box>
-              </Card>
-
-              {scenarioFocusOptions.length > 0 && (
-                <Card variant="glass" sx={{ p: 3 }}>
-                  <ScenarioFocusSection
-                    scenarioFocusOptions={scenarioFocusOptions}
-                    scenarioLookup={scenarioLookup}
-                    activeScenario={activeScenario}
-                    activeScenarioSummary={activeScenarioSummary}
-                    scenarioChecklistProgress={scenarioChecklistProgress}
-                    displaySummary={displaySummary}
-                    quickAnalysisHistoryCount={quickAnalysisHistory.length}
-                    scenarioComparisonVisible={scenarioComparisonVisible}
-                    setActiveScenario={setActiveScenario}
-                    onCompareScenarios={handleScenarioComparisonScroll}
-                    onOpenQuickAnalysisHistory={() =>
-                      setQuickAnalysisHistoryOpen(true)
-                    }
-                    onOpenInspectionHistory={() => setHistoryModalOpen(true)}
-                    formatScenarioLabel={formatScenarioLabel}
-                  />
-                </Card>
               )}
 
-              <SalesVelocityCard jurisdictionCode={jurisdictionCode} />
+              {previewJob && (
+                <Box sx={{ mt: 2 }}>
+                  <PreviewLayersTable
+                    layers={previewLayerMetadata}
+                    visibility={previewLayerVisibility}
+                    focusLayerId={previewFocusLayerId}
+                    hiddenLayerCount={hiddenLayerCount}
+                    isLoading={isPreviewMetadataLoading}
+                    error={previewMetadataError}
+                    onLayerAction={handleLayerAction}
+                    onShowAll={handleShowAllLayers}
+                    onResetFocus={handleResetLayerFocus}
+                    formatNumber={formatNumberMetric}
+                  />
+                </Box>
+              )}
 
-              <Card variant="glass" sx={{ p: 3 }}>
-                <DueDiligenceChecklistSection
-                  capturedProperty={capturedProperty}
-                  checklistItems={checklistItems}
-                  filteredChecklistItems={filteredChecklistItems}
-                  availableChecklistScenarios={availableChecklistScenarios}
+              <Box sx={{ mt: 2 }}>
+                <ColorLegendEditor
+                  entries={colorLegendEntries}
+                  hasPendingChanges={legendHasPendingChanges}
+                  onChange={handleLegendEntryChange}
+                  onReset={handleLegendReset}
+                />
+              </Box>
+
+              <Box sx={{ mt: 2 }}>
+                <LayerBreakdownCards layers={layerBreakdown} />
+              </Box>
+            </Box>
+
+            {/* Scenario Focus - Depth 1 */}
+            {scenarioFocusOptions.length > 0 && (
+              <Box className="ob-card-module">
+                <ScenarioFocusSection
+                  scenarioFocusOptions={scenarioFocusOptions}
                   scenarioLookup={scenarioLookup}
+                  activeScenario={activeScenario}
+                  activeScenarioSummary={activeScenarioSummary}
+                  scenarioChecklistProgress={scenarioChecklistProgress}
                   displaySummary={displaySummary}
-                  activeScenario={activeScenario}
-                  activeScenarioDetails={activeScenarioDetails}
-                  selectedCategory={selectedCategory}
-                  isLoadingChecklist={isLoadingChecklist}
+                  quickAnalysisHistoryCount={quickAnalysisHistory.length}
+                  scenarioComparisonVisible={scenarioComparisonVisible}
                   setActiveScenario={setActiveScenario}
-                  setSelectedCategory={setSelectedCategory}
-                  handleChecklistUpdate={handleChecklistUpdate}
-                />
-              </Card>
-
-              <Card variant="glass" sx={{ p: 3 }}>
-                <MultiScenarioComparisonSection
-                  capturedProperty={capturedProperty}
-                  quickAnalysisScenariosCount={quickAnalysisScenarios.length}
-                  scenarioComparisonData={scenarioComparisonData}
-                  feasibilitySignals={feasibilitySignals}
-                  comparisonScenariosCount={comparisonScenarios.length}
-                  activeScenario={activeScenario}
-                  scenarioLookup={scenarioLookup}
-                  propertyId={capturedProperty?.propertyId ?? null}
-                  isExportingReport={isExportingReport}
-                  reportExportMessage={reportExportMessage}
-                  setActiveScenario={setActiveScenario}
-                  handleReportExport={handleReportExport}
-                  formatRecordedTimestamp={formatRecordedTimestamp}
-                />
-              </Card>
-
-              <Card variant="glass" sx={{ p: 3 }}>
-                <ConditionAssessmentSection
-                  capturedProperty={capturedProperty}
-                  conditionAssessment={conditionAssessment}
-                  isLoadingCondition={isLoadingCondition}
-                  latestAssessmentEntry={latestAssessmentEntry}
-                  previousAssessmentEntry={previousAssessmentEntry}
-                  assessmentHistoryError={assessmentHistoryError}
-                  isLoadingAssessmentHistory={isLoadingAssessmentHistory}
-                  assessmentSaveMessage={assessmentSaveMessage}
-                  scenarioAssessments={scenarioAssessments}
-                  isLoadingScenarioAssessments={isLoadingScenarioAssessments}
-                  scenarioAssessmentsError={scenarioAssessmentsError}
-                  scenarioOverrideEntries={scenarioOverrideEntries}
-                  baseScenarioAssessment={baseScenarioAssessment}
-                  scenarioComparisonEntries={scenarioComparisonEntries}
-                  combinedConditionInsights={combinedConditionInsights}
-                  insightSubtitle={insightSubtitle}
-                  systemComparisonMap={systemComparisonMap}
-                  isExportingReport={isExportingReport}
-                  scenarioLookup={scenarioLookup}
-                  formatRecordedTimestamp={formatRecordedTimestamp}
-                  formatScenarioLabel={formatScenarioLabel}
-                  describeRatingChange={describeRatingChange}
-                  describeRiskChange={describeRiskChange}
-                  openAssessmentEditor={openAssessmentEditor}
-                  setScenarioComparisonBase={setScenarioComparisonBase}
-                  handleReportExport={handleReportExport}
-                  setHistoryModalOpen={setHistoryModalOpen}
-                  InlineInspectionHistorySummary={
-                    InlineInspectionHistorySummary
+                  onCompareScenarios={handleScenarioComparisonScroll}
+                  onOpenQuickAnalysisHistory={() =>
+                    setQuickAnalysisHistoryOpen(true)
                   }
+                  onOpenInspectionHistory={() => setHistoryModalOpen(true)}
+                  formatScenarioLabel={formatScenarioLabel}
                 />
-              </Card>
-            </Stack>
-          )}
-        </Container>
-      </Box>
+              </Box>
+            )}
+
+            <SalesVelocityCard jurisdictionCode={jurisdictionCode} />
+
+            {/* Due Diligence Checklist - Depth 1 */}
+            <Box className="ob-card-module">
+              <DueDiligenceChecklistSection
+                capturedProperty={capturedProperty}
+                checklistItems={checklistItems}
+                filteredChecklistItems={filteredChecklistItems}
+                availableChecklistScenarios={availableChecklistScenarios}
+                scenarioLookup={scenarioLookup}
+                displaySummary={displaySummary}
+                activeScenario={activeScenario}
+                activeScenarioDetails={activeScenarioDetails}
+                selectedCategory={selectedCategory}
+                isLoadingChecklist={isLoadingChecklist}
+                setActiveScenario={setActiveScenario}
+                setSelectedCategory={setSelectedCategory}
+                handleChecklistUpdate={handleChecklistUpdate}
+              />
+            </Box>
+
+            {/* Multi-Scenario Comparison - Depth 1 */}
+            <Box className="ob-card-module">
+              <MultiScenarioComparisonSection
+                capturedProperty={capturedProperty}
+                quickAnalysisScenariosCount={quickAnalysisScenarios.length}
+                scenarioComparisonData={scenarioComparisonData}
+                feasibilitySignals={feasibilitySignals}
+                comparisonScenariosCount={comparisonScenarios.length}
+                activeScenario={activeScenario}
+                scenarioLookup={scenarioLookup}
+                propertyId={capturedProperty?.propertyId ?? null}
+                isExportingReport={isExportingReport}
+                reportExportMessage={reportExportMessage}
+                setActiveScenario={setActiveScenario}
+                handleReportExport={handleReportExport}
+                formatRecordedTimestamp={formatRecordedTimestamp}
+              />
+            </Box>
+
+            {/* Condition Assessment - Depth 1 */}
+            <Box className="ob-card-module">
+              <ConditionAssessmentSection
+                capturedProperty={capturedProperty}
+                conditionAssessment={conditionAssessment}
+                isLoadingCondition={isLoadingCondition}
+                latestAssessmentEntry={latestAssessmentEntry}
+                previousAssessmentEntry={previousAssessmentEntry}
+                assessmentHistoryError={assessmentHistoryError}
+                isLoadingAssessmentHistory={isLoadingAssessmentHistory}
+                assessmentSaveMessage={assessmentSaveMessage}
+                scenarioAssessments={scenarioAssessments}
+                isLoadingScenarioAssessments={isLoadingScenarioAssessments}
+                scenarioAssessmentsError={scenarioAssessmentsError}
+                scenarioOverrideEntries={scenarioOverrideEntries}
+                baseScenarioAssessment={baseScenarioAssessment}
+                scenarioComparisonEntries={scenarioComparisonEntries}
+                combinedConditionInsights={combinedConditionInsights}
+                insightSubtitle={insightSubtitle}
+                systemComparisonMap={systemComparisonMap}
+                isExportingReport={isExportingReport}
+                scenarioLookup={scenarioLookup}
+                formatRecordedTimestamp={formatRecordedTimestamp}
+                formatScenarioLabel={formatScenarioLabel}
+                describeRatingChange={describeRatingChange}
+                describeRiskChange={describeRiskChange}
+                openAssessmentEditor={openAssessmentEditor}
+                setScenarioComparisonBase={setScenarioComparisonBase}
+                handleReportExport={handleReportExport}
+                setHistoryModalOpen={setHistoryModalOpen}
+                InlineInspectionHistorySummary={InlineInspectionHistorySummary}
+              />
+            </Box>
+          </>
+        )}
+      </Stack>
     </Box>
   )
 }

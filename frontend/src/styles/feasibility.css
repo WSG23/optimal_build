@@ -73,17 +73,28 @@
 
 .feasibility-wizard__copy {
     padding: var(--ob-spacing-150) var(--ob-spacing-350);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
     border: none;
-    background: var(--ob-color-brand-primary);
-    color: white;
+    background: linear-gradient(
+        135deg,
+        #0096cc 0%,
+        var(--ob-color-neon-cyan) 100%
+    );
+    color: #0a1628;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .feasibility-wizard__copy:hover:not(:disabled) {
-    background: var(--ob-color-brand-primary-emphasis);
+    background: linear-gradient(
+        135deg,
+        var(--ob-color-neon-cyan) 0%,
+        #0096cc 100%
+    );
+    box-shadow: var(--ob-glow-neon-cyan-strong);
+    transform: translateY(-1px);
 }
 
 .feasibility-wizard__copy:disabled {
@@ -94,7 +105,8 @@
 
 .feasibility-wizard__copy-status {
     font-size: var(--ob-font-size-sm);
-    color: var(--ob-color-brand-primary);
+    color: var(--ob-color-neon-cyan);
+    text-shadow: var(--ob-glow-neon-text);
 }
 
 .feasibility-wizard__layout {
@@ -113,7 +125,7 @@
 .feasibility-wizard__controls {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: var(--ob-radius-sm); /* 4px - cards */
     padding: var(--ob-spacing-500);
     display: flex;
     flex-direction: column;
@@ -141,7 +153,7 @@
 
 .feasibility-form__field input {
     padding: var(--ob-spacing-200) var(--ob-spacing-300);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-md); /* 6px - inputs */
     border: 1px solid var(--ob-color-border-subtle);
     font-size: var(--ob-font-size-base);
     background: var(--ob-color-bg-surface);
@@ -150,8 +162,8 @@
 
 .feasibility-form__field input:focus {
     outline: none;
-    border-color: var(--ob-color-brand-primary);
-    box-shadow: 0 0 0 4px var(--ob-color-brand-primary-glow);
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .feasibility-form__error {
@@ -166,17 +178,28 @@
 
 .feasibility-form__submit {
     padding: var(--ob-spacing-200) var(--ob-spacing-400);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
     border: none;
-    background: var(--ob-color-brand-primary);
-    color: white;
+    background: linear-gradient(
+        135deg,
+        #0096cc 0%,
+        var(--ob-color-neon-cyan) 100%
+    );
+    color: #0a1628;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .feasibility-form__submit:hover:not(:disabled) {
-    background: var(--ob-color-brand-primary-emphasis);
+    background: linear-gradient(
+        135deg,
+        var(--ob-color-neon-cyan) 0%,
+        #0096cc 100%
+    );
+    box-shadow: var(--ob-glow-neon-cyan-strong);
+    transform: translateY(-1px);
 }
 
 .feasibility-form__submit:disabled {
@@ -216,7 +239,7 @@
 .feasibility-assumptions__grid input {
     width: 100%;
     padding: var(--ob-spacing-150) var(--ob-spacing-200);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-md); /* 6px - inputs */
     border: 1px solid var(--ob-color-border-subtle);
     font-size: var(--ob-font-size-sm);
     background: var(--ob-color-bg-surface);
@@ -225,8 +248,8 @@
 
 .feasibility-assumptions__grid input:focus {
     outline: none;
-    border-color: var(--ob-color-brand-primary);
-    box-shadow: 0 0 0 4px var(--ob-color-brand-primary-glow);
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .feasibility-assumptions__hint {
@@ -262,7 +285,7 @@
     margin-top: var(--ob-spacing-400);
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-xl);
+    border-radius: var(--ob-radius-sm); /* 4px - cards */
     padding: var(--ob-spacing-500);
     box-shadow: var(--ob-shadow-md);
     display: flex;
@@ -304,7 +327,7 @@
 .feasibility-pack__field input,
 .feasibility-pack__field select {
     padding: var(--ob-spacing-150) var(--ob-spacing-200);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-md); /* 6px - inputs */
     border: 1px solid var(--ob-color-border-subtle);
     font-size: var(--ob-font-size-sm);
     background: var(--ob-color-bg-surface);
@@ -314,8 +337,8 @@
 .feasibility-pack__field input:focus,
 .feasibility-pack__field select:focus {
     outline: none;
-    border-color: var(--ob-color-brand-primary);
-    box-shadow: 0 0 0 4px var(--ob-color-brand-primary-glow);
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .feasibility-pack__field small {
@@ -326,22 +349,35 @@
 .feasibility-pack__submit {
     align-self: flex-start;
     padding: var(--ob-spacing-150) var(--ob-spacing-350);
-    border-radius: 9999px;
-    background: var(--ob-color-action-hover);
-    color: var(--ob-color-brand-primary);
-    font-weight: 600;
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
     border: none;
+    background: linear-gradient(
+        135deg,
+        #0096cc 0%,
+        var(--ob-color-neon-cyan) 100%
+    );
+    color: #0a1628;
+    font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .feasibility-pack__submit:hover:not(:disabled) {
-    background: var(--ob-color-brand-primary-glow);
+    background: linear-gradient(
+        135deg,
+        var(--ob-color-neon-cyan) 0%,
+        #0096cc 100%
+    );
+    box-shadow: var(--ob-glow-neon-cyan-strong);
+    transform: translateY(-1px);
 }
 
 .feasibility-pack__submit:disabled {
+    background: var(--ob-color-bg-muted);
+    color: var(--ob-color-text-muted);
+    box-shadow: none;
     cursor: not-allowed;
-    opacity: 0.65;
 }
 
 .feasibility-pack__error {
@@ -350,7 +386,7 @@
     border: 1px solid var(--ob-error-subtle);
     color: var(--ob-error-400);
     padding: var(--ob-spacing-200) var(--ob-spacing-300);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm); /* 4px - cards */
     font-size: var(--ob-font-size-sm);
 }
 
@@ -364,23 +400,24 @@
 .feasibility-pack__download {
     align-self: flex-start;
     padding: var(--ob-spacing-150) var(--ob-spacing-300);
-    border-radius: 9999px;
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
     background: var(--ob-success-muted);
     color: var(--ob-success-500);
     font-weight: 600;
     text-decoration: none;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .feasibility-pack__download:hover {
     background: var(--ob-success-subtle);
+    transform: translateY(-1px);
 }
 
 .feasibility-results {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
     color: var(--ob-color-text-primary);
-    border-radius: var(--ob-radius-xl);
+    border-radius: var(--ob-radius-sm); /* 4px - cards */
     padding: var(--ob-spacing-500);
     display: flex;
     flex-direction: column;
@@ -403,7 +440,7 @@
     border: 1px solid var(--ob-error-subtle);
     color: var(--ob-error-400);
     padding: var(--ob-spacing-250) var(--ob-spacing-300);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm); /* 4px - cards */
     font-size: var(--ob-font-size-sm);
 }
 
@@ -456,7 +493,14 @@
 }
 
 .feasibility-section {
-    margin-bottom: var(--ob-space-10); /* Significant vertical rhythm */
+    /* Significant vertical rhythm - now controlled by ob-section-gap */
+}
+
+/* When used with ob-card-module, override padding to use design tokens */
+.feasibility-section.ob-card-module {
+    /* ob-card-module provides the glass background + cyan top edge */
+    /* Override the nested section margin since card handles spacing */
+    margin-bottom: 0;
 }
 
 .feasibility-section h3 {
@@ -469,7 +513,7 @@
     align-items: center;
     background: white;
     padding: var(--ob-space-4);
-    border-radius: var(--ob-radius-xl);
+    border-radius: var(--ob-radius-sm); /* 4px - cards */
     box-shadow: var(--ob-depth-lg);
     gap: var(--ob-space-3);
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -477,9 +521,8 @@
 }
 
 .smart-search__container:focus-within {
-    box-shadow:
-        var(--ob-depth-floating),
-        0 0 0 2px rgba(15, 118, 110, 0.1); /* Subtle ring */
+    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-neon-cyan);
     transform: translateY(-1px);
 }
 
@@ -513,7 +556,7 @@
     position: relative;
     background: white;
     border: 1px solid var(--ob-color-border-premium);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm); /* 4px - cards */
 }
 
 .feasibility-metrics__item dt {
@@ -541,15 +584,15 @@
 }
 
 .pack-card:hover {
-    border-color: var(--ob-color-accent);
-    transform: translateY(-4px); /* Significant lift */
-    box-shadow: var(--ob-depth-lg);
+    border-color: var(--ob-color-neon-cyan);
+    transform: translateY(-2px);
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .pack-card--selected {
-    border-color: var(--ob-color-accent);
-    background: var(--ob-color-accent-light);
-    box-shadow: var(--ob-depth-md);
+    border-color: var(--ob-color-neon-cyan);
+    background: rgba(0, 243, 255, 0.08);
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .pack-card__icon {
@@ -558,7 +601,8 @@
 }
 
 .pack-card--selected .pack-card__icon {
-    color: var(--ob-color-accent);
+    color: var(--ob-color-neon-cyan);
+    text-shadow: var(--ob-glow-neon-text);
 }
 
 .pack-card__title {
@@ -597,25 +641,30 @@
     align-items: center;
     gap: var(--ob-space-3);
     padding: var(--ob-space-3) var(--ob-space-6);
-    background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
-    color: white;
+    background: linear-gradient(
+        135deg,
+        #0096cc 0%,
+        var(--ob-color-neon-cyan) 100%
+    );
+    color: #0a1628;
     border: none;
-    border-radius: var(--ob-radius-full);
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
     font-weight: 600;
     font-size: 0.9375rem;
-    box-shadow:
-        0 10px 15px -3px rgba(15, 118, 110, 0.3),
-        0 4px 6px -4px rgba(15, 118, 110, 0.2);
+    box-shadow: var(--ob-glow-neon-cyan);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Spring-like release */
     letter-spacing: 0.01em;
 }
 
 .scenario-fab:hover {
+    background: linear-gradient(
+        135deg,
+        var(--ob-color-neon-cyan) 0%,
+        #0096cc 100%
+    );
     transform: translateY(-2px) scale(1.05);
-    box-shadow:
-        0 20px 25px -5px rgba(15, 118, 110, 0.4),
-        0 8px 10px -6px rgba(15, 118, 110, 0.2);
+    box-shadow: var(--ob-glow-neon-cyan-strong);
 }
 
 .scenario-fab:active {
@@ -650,9 +699,9 @@
     align-self: flex-start;
     margin-top: var(--ob-spacing-100);
     padding: var(--ob-spacing-100) var(--ob-spacing-150);
-    border-radius: var(--ob-radius-md);
-    background: var(--ob-color-action-hover);
-    color: var(--ob-color-brand-primary);
+    border-radius: var(--ob-radius-xs); /* 2px - tags */
+    background: rgba(0, 243, 255, 0.1);
+    color: var(--ob-color-neon-cyan);
     font-size: var(--ob-font-size-xs);
     font-weight: 500;
 }
@@ -686,7 +735,7 @@
 
 .skeleton--grid {
     height: 140px;
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm); /* 4px - cards */
 }
 
 @keyframes shimmer {

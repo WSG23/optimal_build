@@ -1,15 +1,13 @@
 /**
  * DrawdownStatsCards - 3-column stats grid with icons
  *
+ * Premium cyber aesthetic - all icons use cyan for visual consistency.
  * Displays: Equity Deployed, Debt Deployed, Peak Debt Balance
- * Each card has:
- * - Icon on right side
- * - Label, large value, and subtext
  *
  * Follows UI_STANDARDS.md for design tokens and GlassCard usage.
  */
 
-import { Box, Grid, Typography, useTheme, alpha } from '@mui/material'
+import { Box, Grid, Typography } from '@mui/material'
 import {
   AccountBalanceWallet as WalletIcon,
   AccountBalance as BankIcon,
@@ -30,48 +28,12 @@ interface StatsCardProps {
   value: string
   subtext: string
   icon: React.ElementType
-  iconColor?: 'primary' | 'success' | 'warning' | 'error' | 'info'
 }
 
-function StatsCard({
-  label,
-  value,
-  subtext,
-  icon: Icon,
-  iconColor = 'primary',
-}: StatsCardProps) {
-  const theme = useTheme()
-
-  const getIconBgColor = () => {
-    switch (iconColor) {
-      case 'success':
-        return alpha(theme.palette.success.main, 0.1)
-      case 'warning':
-        return alpha(theme.palette.warning.main, 0.1)
-      case 'error':
-        return alpha(theme.palette.error.main, 0.1)
-      case 'info':
-        return alpha(theme.palette.info.main, 0.1)
-      default:
-        return alpha(theme.palette.primary.main, 0.1)
-    }
-  }
-
-  const getIconColor = () => {
-    switch (iconColor) {
-      case 'success':
-        return 'success.main'
-      case 'warning':
-        return 'warning.main'
-      case 'error':
-        return 'error.main'
-      case 'info':
-        return 'info.main'
-      default:
-        return 'primary.main'
-    }
-  }
-
+/**
+ * StatsCard - Uses consistent cyan styling for premium cyber aesthetic.
+ */
+function StatsCard({ label, value, subtext, icon: Icon }: StatsCardProps) {
   return (
     <GlassCard
       sx={{
@@ -97,7 +59,8 @@ function StatsCard({
           sx={{
             fontSize: 'var(--ob-font-size-2xl)',
             fontWeight: 700,
-            color: 'text.primary',
+            color: 'var(--ob-color-neon-cyan)',
+            textShadow: 'var(--ob-glow-neon-text)',
             letterSpacing: '-0.02em',
           }}
         >
@@ -117,8 +80,8 @@ function StatsCard({
         sx={{
           p: 'var(--ob-space-075)',
           borderRadius: 'var(--ob-radius-sm)',
-          bgcolor: getIconBgColor(),
-          color: getIconColor(),
+          bgcolor: 'rgba(0, 243, 255, 0.1)',
+          color: 'var(--ob-color-neon-cyan)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -162,7 +125,6 @@ export function DrawdownStatsCards({ scenario }: DrawdownStatsCardsProps) {
           : fallback,
       subtext: t('finance.drawdown.stats.sponsorContribution'),
       icon: WalletIcon,
-      iconColor: 'primary' as const,
     },
     {
       key: 'debtDeployed',
@@ -173,7 +135,6 @@ export function DrawdownStatsCards({ scenario }: DrawdownStatsCardsProps) {
           : fallback,
       subtext: t('finance.drawdown.stats.lenderContribution'),
       icon: BankIcon,
-      iconColor: 'info' as const,
     },
     {
       key: 'peakDebtBalance',
@@ -184,7 +145,6 @@ export function DrawdownStatsCards({ scenario }: DrawdownStatsCardsProps) {
           : fallback,
       subtext: t('finance.drawdown.stats.maxExposure'),
       icon: TrendingUpIcon,
-      iconColor: 'success' as const,
     },
   ]
 
@@ -201,7 +161,6 @@ export function DrawdownStatsCards({ scenario }: DrawdownStatsCardsProps) {
             value={stat.value}
             subtext={stat.subtext}
             icon={stat.icon}
-            iconColor={stat.iconColor}
           />
         </Grid>
       ))}

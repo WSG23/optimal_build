@@ -23,8 +23,9 @@
 }
 
 .cad-uploader__dropzone--dragging {
-    background: rgb(var(--ob-color-brand-primary-rgb) / 0.15);
-    border-color: var(--ob-color-brand-primary);
+    background: rgba(0, 243, 255, 0.08);
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .cad-uploader__input {
@@ -39,12 +40,28 @@
 .cad-uploader__browse {
     align-self: center;
     padding: 0.65rem 1.5rem;
-    border-radius: 2px; /* Square Cyber-Minimalism: xs for buttons */
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
     border: none;
-    background: var(--ob-color-brand-primary);
-    color: var(--ob-color-text-inverse);
+    background: linear-gradient(
+        135deg,
+        #0096cc 0%,
+        var(--ob-color-neon-cyan) 100%
+    );
+    color: #0a1628;
     font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--ob-glow-neon-cyan);
+}
+
+.cad-uploader__browse:hover {
+    background: linear-gradient(
+        135deg,
+        var(--ob-color-neon-cyan) 0%,
+        #0096cc 100%
+    );
+    box-shadow: var(--ob-glow-neon-cyan-strong);
+    transform: translateY(-1px);
 }
 
 .cad-uploader__status {
@@ -83,7 +100,7 @@
 .cad-upload {
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-500);
+    gap: var(--ob-space-200); /* Tightened from 500 for information density */
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
@@ -109,15 +126,25 @@
 .cad-upload__label select,
 .cad-upload__label input {
     padding: 0.5rem 0.75rem;
-    border-radius: 6px; /* Square Cyber-Minimalism: md for inputs */
+    border-radius: var(--ob-radius-md); /* 6px - inputs */
     border: 1px solid var(--ob-color-border-subtle);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.cad-upload__label select:focus,
+.cad-upload__label input:focus {
+    outline: none;
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .cad-upload__error,
 .cad-detection__error,
 .cad-pipelines__error {
-    padding: var(--ob-spacing-200) var(--ob-spacing-300);
-    border-radius: var(--ob-radius-lg);
+    padding: var(--ob-space-200) var(--ob-space-300);
+    border-radius: var(--ob-radius-sm); /* 4px - cards */
     background: var(--ob-error-muted);
     border: 1px solid var(--ob-error-subtle);
     color: var(--ob-error-400);
@@ -125,25 +152,44 @@
 }
 
 .cad-preview {
-    background: var(--ob-color-bg-surface);
-    border: 1px solid var(--ob-color-border-subtle);
-    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
-    padding: var(--ob-spacing-500);
+    /* Depth 1: Glass Card with cyan edge - matches ob-card-module */
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-lg));
+    -webkit-backdrop-filter: blur(var(--ob-blur-lg));
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-sm);
+    padding: var(--ob-space-300);
     box-shadow: var(--ob-shadow-md);
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-500);
+    gap: var(--ob-space-300);
+    position: relative;
+}
+
+.cad-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        var(--ob-color-neon-cyan),
+        transparent 80%
+    );
+    border-radius: var(--ob-radius-sm) var(--ob-radius-sm) 0 0;
 }
 
 .cad-preview__header {
     display: flex;
     justify-content: space-between;
-    gap: var(--ob-spacing-500);
+    gap: var(--ob-space-200);
 }
 
 .cad-preview__summary {
     display: flex;
-    gap: var(--ob-spacing-300);
+    gap: var(--ob-space-300);
     align-items: center;
     font-weight: 600;
     color: var(--ob-color-text-secondary);
@@ -184,14 +230,14 @@
 .cad-preview__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--ob-spacing-400);
+    gap: var(--ob-space-400);
 }
 
 .cad-preview__panel {
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
-    padding: var(--ob-spacing-400);
+    padding: var(--ob-space-400);
 }
 
 .cad-preview__panel h3 {
@@ -655,14 +701,33 @@
 }
 
 .cad-panel {
-    background: var(--ob-color-bg-surface);
-    border: 1px solid var(--ob-color-border-subtle);
-    padding: var(--ob-spacing-400);
-    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
+    /* Depth 1: Glass Card with cyan edge - matches ob-card-module */
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-lg));
+    -webkit-backdrop-filter: blur(var(--ob-blur-lg));
+    border: var(--ob-border-fine);
+    padding: var(--ob-space-300);
+    border-radius: var(--ob-radius-sm);
     box-shadow: var(--ob-shadow-md);
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-300);
+    gap: var(--ob-space-200);
+    position: relative;
+}
+
+.cad-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        var(--ob-color-neon-cyan),
+        transparent 80%
+    );
+    border-radius: var(--ob-radius-sm) var(--ob-radius-sm) 0 0;
 }
 
 .cad-panel h3 {
@@ -682,16 +747,24 @@
 
 .cad-layer-toggle__button {
     padding: 0.5rem 1rem;
-    border-radius: 999px;
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
     border: 1px solid var(--ob-color-border-subtle);
     background: var(--ob-color-surface-alt);
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cad-layer-toggle__button:hover {
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .cad-layer-toggle__button--active {
-    background: var(--ob-color-brand-primary);
-    color: var(--ob-color-text-inverse);
-    border-color: var(--ob-color-brand-primary);
+    background: rgba(0, 243, 255, 0.15);
+    color: var(--ob-color-neon-cyan);
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan);
+    text-shadow: var(--ob-glow-neon-text);
 }
 
 .cad-layer-toggle__hint {
@@ -716,21 +789,49 @@
 
 .cad-bulk-controls button,
 .cad-panel button,
-.cad-export button,
+.cad-export button {
+    padding: 0.5rem 1rem;
+    border-radius: var(--ob-radius-xs); /* 2px - buttons */
+    border: none;
+    background: linear-gradient(
+        135deg,
+        #0096cc 0%,
+        var(--ob-color-neon-cyan) 100%
+    );
+    color: #0a1628;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--ob-glow-neon-cyan);
+}
+
+.cad-bulk-controls button:hover,
+.cad-panel button:hover,
+.cad-export button:hover {
+    background: linear-gradient(
+        135deg,
+        var(--ob-color-neon-cyan) 0%,
+        #0096cc 100%
+    );
+    box-shadow: var(--ob-glow-neon-cyan-strong);
+    transform: translateY(-1px);
+}
+
 .cad-pipelines__toolbar select {
     padding: 0.5rem 1rem;
-    border-radius: 2px; /* Square Cyber-Minimalism: xs for buttons */
+    border-radius: var(--ob-radius-md); /* 6px - inputs */
     border: 1px solid var(--ob-color-border-subtle);
-    background: var(--ob-color-brand-primary);
-    color: var(--ob-color-text-inverse);
+    background: var(--ob-color-bg-surface);
+    color: var(--ob-color-text-primary);
     cursor: pointer;
 }
 
 .cad-bulk-controls button:disabled,
 .cad-panel button:disabled,
 .cad-export button:disabled {
-    background: var(--ob-color-border-subtle);
-    color: var(--ob-neutral-500);
+    background: var(--ob-color-bg-muted);
+    color: var(--ob-color-text-muted);
+    box-shadow: none;
     cursor: not-allowed;
 }
 
@@ -738,7 +839,9 @@
 .cad-pipelines-page {
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-500);
+    gap: var(
+        --ob-space-200
+    ); /* Tightened from old --ob-space-500 (40px) to 16px */
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
@@ -750,8 +853,8 @@
 .cad-detection__toolbar {
     display: flex;
     align-items: center;
-    gap: var(--ob-spacing-300);
-    margin-bottom: var(--ob-spacing-500);
+    gap: var(--ob-space-200);
+    margin-bottom: var(--ob-space-200);
     color: var(--ob-color-text-secondary);
 }
 
@@ -833,7 +936,7 @@
 .cad-detection__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--ob-spacing-400);
+    gap: var(--ob-space-400);
 }
 
 .cad-rulepack {
@@ -938,7 +1041,7 @@
 .cad-pipelines__toolbar {
     display: flex;
     align-items: center;
-    gap: var(--ob-spacing-400);
+    gap: var(--ob-space-400);
 }
 
 .cad-pipelines__context {
@@ -951,21 +1054,40 @@
     padding: 0;
     margin: 0;
     display: grid;
-    gap: var(--ob-spacing-400);
+    gap: var(--ob-space-400);
 }
 
 .cad-pipelines__item {
-    background: var(--ob-color-bg-surface);
-    border: 1px solid var(--ob-color-border-subtle);
-    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
-    padding: var(--ob-spacing-400);
+    /* Depth 1: Glass Card with cyan edge - matches ob-card-module */
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-lg));
+    -webkit-backdrop-filter: blur(var(--ob-blur-lg));
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-sm);
+    padding: var(--ob-space-300);
     box-shadow: var(--ob-shadow-md);
+    position: relative;
+}
+
+.cad-pipelines__item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        var(--ob-color-neon-cyan),
+        transparent 80%
+    );
+    border-radius: var(--ob-radius-sm) var(--ob-radius-sm) 0 0;
 }
 
 .cad-pipelines__item dl {
     display: grid;
-    gap: var(--ob-spacing-200);
-    margin: var(--ob-spacing-300) 0 0;
+    gap: var(--ob-space-200);
+    margin: var(--ob-space-300) 0 0;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 

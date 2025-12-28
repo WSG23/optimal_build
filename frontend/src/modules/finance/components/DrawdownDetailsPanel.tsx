@@ -294,12 +294,13 @@ export function DrawdownDetailsPanel({
           endIcon={<ArrowForwardIcon />}
           onClick={onViewFullForecast}
           sx={{
-            color: 'primary.main',
+            color: 'var(--ob-color-neon-cyan)',
             fontSize: 'var(--ob-font-size-sm)',
             fontWeight: 500,
             textTransform: 'none',
             '&:hover': {
-              bgcolor: alpha(theme.palette.primary.main, 0.08),
+              bgcolor: 'rgba(0, 243, 255, 0.08)',
+              textShadow: 'var(--ob-glow-neon-text)',
             },
           }}
         >

@@ -292,7 +292,177 @@
 }
 
 /* ===========================================================================
-   11. ACCESSIBILITY - Respect reduced motion
+   11. LAYOUT ARCHITECTURE - Macro/Micro Hierarchy (AI Studio Protocol)
+   ===========================================================================
+   Depth 0 (Direct): Headers, titles, global actions - NO glass, NO cyan edge
+   Depth 1 (Cards): Data modules, forms, tables - glass + cyan top edge
+   =========================================================================== */
+
+/* Glass Card Module - for data tables, forms, charts (Depth 1) */
+.ob-card-module {
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-xl)); /* 16px - matches V3 reference */
+    -webkit-backdrop-filter: blur(var(--ob-blur-xl));
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-sm);
+    padding: var(--ob-space-200); /* 16px internal - tightened from 24px */
+    position: relative;
+}
+
+/* Light mode: "frosted ice" effect with preserved premium identity */
+html[data-theme='light'] .ob-card-module {
+    background: rgba(255, 255, 255, 0.7); /* More opaque glass for light mode */
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* Light mode: preserve cyan accent edge glow */
+html[data-theme='light'] .ob-card-module::before {
+    background: linear-gradient(
+        90deg,
+        var(--ob-color-neon-cyan),
+        transparent 80%
+    );
+    /* Cyan stays visible in light mode for brand identity */
+}
+
+/* Cyan top edge accent - signals "this is an interactive panel" */
+.ob-card-module::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        var(--ob-color-neon-cyan),
+        transparent 80%
+    );
+    border-radius: var(--ob-radius-sm) var(--ob-radius-sm) 0 0;
+}
+
+/* Page section spacing (between modules) - TIGHTENED for information density */
+.ob-section-gap {
+    margin-bottom: var(--ob-space-200); /* 16px - was 24px */
+}
+
+/* Large breathing room for hero sections */
+.ob-hero-gap {
+    margin-bottom: var(--ob-space-400); /* 32px - was 48px */
+}
+
+/* 12-column grid for card alignment */
+.ob-grid-12 {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: var(--ob-space-300);
+}
+
+/* Common grid spans */
+.ob-col-span-3 {
+    grid-column: span 3;
+}
+.ob-col-span-4 {
+    grid-column: span 4;
+}
+.ob-col-span-6 {
+    grid-column: span 6;
+}
+.ob-col-span-8 {
+    grid-column: span 8;
+}
+.ob-col-span-12 {
+    grid-column: span 12;
+}
+
+/* Direct content header - no glass, just typography
+   TIGHT LAYOUT: Reduced margins for command-center information density */
+.ob-page-header {
+    margin-bottom: var(--ob-space-200); /* 16px - tighter spacing */
+}
+
+/* When header has ob-section-gap, DON'T stack margins */
+.ob-page-header.ob-section-gap {
+    margin-bottom: var(--ob-space-200); /* Override stacked margin */
+}
+
+.ob-page-header__title {
+    font-size: var(--ob-font-size-xl); /* Slightly smaller for density */
+    font-weight: 700;
+    color: var(--ob-color-text-primary);
+    margin: 0 0 var(--ob-space-025) 0; /* Tighter title-subtitle gap */
+}
+
+.ob-page-header__subtitle {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-secondary);
+    margin: 0;
+}
+
+/* ===========================================================================
+   12. TABLE STYLING - V2/V3 Reference Match
+   =========================================================================== */
+
+/* Table styling for MUI tables inside glass cards */
+.ob-card-module .MuiTable-root {
+    border-collapse: collapse;
+}
+
+.ob-card-module .MuiTableHead-root {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.ob-card-module .MuiTableHead-root .MuiTableCell-root {
+    font-size: var(--ob-font-size-2xs);
+    font-weight: var(--ob-font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--ob-letter-spacing-wider);
+    color: var(--ob-color-text-secondary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: var(--ob-space-150) var(--ob-space-200);
+}
+
+.ob-card-module .MuiTableBody-root .MuiTableRow-root {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background-color 0.15s ease;
+}
+
+/* Light mode table styling */
+html[data-theme='light'] .ob-card-module .MuiTableHead-root {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+html[data-theme='light'] .ob-card-module .MuiTableHead-root .MuiTableCell-root {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme='light'] .ob-card-module .MuiTableBody-root .MuiTableRow-root {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+html[data-theme='light']
+    .ob-card-module
+    .MuiTableBody-root
+    .MuiTableRow-root:hover {
+    background-color: rgba(0, 243, 255, 0.04); /* Subtle cyan tint on hover */
+}
+
+.ob-card-module .MuiTableBody-root .MuiTableRow-root:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.ob-card-module .MuiTableBody-root .MuiTableCell-root {
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-primary);
+    padding: var(--ob-space-150) var(--ob-space-200);
+    border-bottom: none;
+}
+
+/* ===========================================================================
+   13. ACCESSIBILITY - Respect reduced motion
    =========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {

@@ -184,6 +184,172 @@ NEVER use hardcoded hex colors. Use:
 
 ---
 
+## Premium Cyber Color System (MANDATORY)
+
+This project uses a **"Mission Control" aesthetic** with Cyan (`#00f3ff`) as the primary brand color and semantic colors for functional meaning. Understanding when to use each color is critical.
+
+### Primary Color: Neon Cyan (`#00f3ff`)
+
+**Token:** `var(--ob-color-neon-cyan)`
+
+**Use For:**
+
+- Brand elements (logo, app name)
+- Active/selected states (tabs, cards, navigation items)
+- Primary data visualization (chart lines, active bars)
+- Primary action buttons
+- Selection indicators (active dots, underlines)
+- Key metric values that need emphasis
+
+**Examples:**
+
+```tsx
+// ✅ CORRECT - Cyan for active tab
+borderColor: isActive ? 'var(--ob-color-neon-cyan)' : 'transparent'
+color: isActive ? 'var(--ob-color-neon-cyan)' : 'text.secondary'
+
+// ✅ CORRECT - Cyan for primary button
+background: 'linear-gradient(135deg, #0096cc 0%, var(--ob-color-neon-cyan) 100%)'
+
+// ✅ CORRECT - Cyan for brand text
+<Typography sx={{ color: 'var(--ob-color-neon-cyan)', textShadow: 'var(--ob-glow-neon-text)' }}>
+  OPTIMAL BUILD
+</Typography>
+```
+
+### Semantic Colors (For Functional Meaning)
+
+These colors provide **instant functional meaning** and should NOT be replaced with cyan:
+
+#### 1. Green (Emerald-500/400) — Success & Vitality
+
+**Tokens:** `success.main`, `var(--ob-success-500)`, `var(--ob-color-status-success-text)`
+
+**Use For:**
+
+- "System Live" / "Active" status indicators
+- Positive performance trends (+4.2% ROI)
+- Success confirmations ("Saved", "Approved")
+- Healthy/operational states
+- "Go" signals
+
+```tsx
+// ✅ CORRECT - Green for success status
+<StatusChip status="success">Active</StatusChip>
+<StatusChip status="success" pulse>System Live</StatusChip>
+
+// ✅ CORRECT - Green for positive trend
+<Typography sx={{ color: 'success.main' }}>+4.2%</Typography>
+```
+
+#### 2. Red/Rose (Rose-500/400) — Errors & Critical Alerts
+
+**Tokens:** `error.main`, `var(--ob-error-500)`, `var(--ob-color-status-error-text)`
+
+**Use For:**
+
+- Failed pipeline jobs
+- Error messages
+- "Remove" / "Delete" actions
+- Critical alerts that need immediate attention
+- Validation failures
+
+```tsx
+// ✅ CORRECT - Red for error status
+<StatusChip status="error">Failed</StatusChip>
+
+// ✅ CORRECT - Red for delete button
+<IconButton color="error" onClick={handleDelete}>
+  <DeleteIcon />
+</IconButton>
+```
+
+#### 3. Orange/Amber (Amber-500) — Warnings & Significance
+
+**Tokens:** `warning.main`, `var(--ob-warning-500)`, `var(--ob-color-status-warning-text)`
+
+**Use For:**
+
+- "Offline Mode" banners
+- "Critical Path" in Gantt charts
+- Bottlenecks or states requiring awareness
+- Caution messages (not emergencies)
+- "Attention needed" indicators
+
+```tsx
+// ✅ CORRECT - Amber for warning
+<StatusChip status="warning">Offline Mode</StatusChip>
+<Alert severity="warning">Critical Path: Permit approval</Alert>
+```
+
+#### 4. Blue (Blue-500) — Secondary Information
+
+**Tokens:** `info.main`, `var(--ob-info-500)`, `var(--ob-brand-500)`
+
+**Use For:**
+
+- Differentiating data categories (Office vs Retail)
+- Secondary information in charts
+- Team roles differentiation
+- Informational notices (not action-required)
+
+```tsx
+// ✅ CORRECT - Blue for category differentiation
+<StatusChip status="info">Office</StatusChip>
+<StatusChip status="info">Consultant</StatusChip>
+```
+
+### Color Decision Matrix
+
+| Scenario                  | Color         | Token/Value                 |
+| ------------------------- | ------------- | --------------------------- |
+| Active tab/selection      | Cyan          | `var(--ob-color-neon-cyan)` |
+| Brand name/logo           | Cyan          | `var(--ob-color-neon-cyan)` |
+| Primary CTA button        | Cyan gradient | See Button component        |
+| Chart primary data        | Cyan          | `#00f3ff`                   |
+| "Active" / "Live" status  | Green         | `status="success"`          |
+| Positive metrics (+%)     | Green         | `success.main`              |
+| "Failed" / "Error" status | Red           | `status="error"`            |
+| Delete/Remove actions     | Red           | `error.main`                |
+| "Offline" / "Warning"     | Amber         | `status="warning"`          |
+| Critical path indicator   | Amber         | `warning.main`              |
+| Category differentiation  | Blue          | `status="info"`             |
+| Neutral/Draft status      | Gray          | `status="neutral"`          |
+
+### Glassmorphism & Glow Effects
+
+All semantic colors should use **low-opacity backgrounds and neon borders** to maintain the premium glassmorphism aesthetic:
+
+```tsx
+// ✅ CORRECT - Semantic color with glassmorphism
+<Box sx={{
+  bgcolor: 'rgba(0, 255, 157, 0.08)',  // Success with low opacity
+  border: '1px solid rgba(0, 255, 157, 0.3)',
+  borderRadius: 'var(--ob-radius-sm)',
+}}>
+
+// StatusChip handles this automatically via status prop
+<StatusChip status="success">Active</StatusChip>  // Uses correct opacity
+```
+
+### What NOT to Do
+
+```tsx
+// ❌ WRONG - Replacing semantic green with cyan for status
+<StatusChip status="live">Active</StatusChip>  // "Active" should be green!
+
+// ❌ WRONG - Using cyan for error state
+<Typography sx={{ color: 'var(--ob-color-neon-cyan)' }}>Failed</Typography>
+
+// ❌ WRONG - Using hardcoded colors
+<Box sx={{ bgcolor: '#22c55e' }}>  // Use theme tokens!
+
+// ❌ WRONG - Using full opacity semantic colors (breaks glassmorphism)
+<Box sx={{ bgcolor: 'success.main' }}>  // Should use alpha!
+```
+
+---
+
 ## Canonical Components
 
 Always prefer canonical components from `src/components/canonical/`:

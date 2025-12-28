@@ -33,20 +33,22 @@ function getModeColors(mode: ThemeMode) {
       },
     }
   }
-  // Light mode
+  // Light mode - Premium "slatedness" preserved
+  // Uses Slate-200 (#e2e8f0) as base to make glass panels pop
+  // Per AI Studio Protocol: backgrounds become Slate-50 (now Slate-200 for premium feel)
   return {
     background: {
-      default: colors.neutral[50],
-      paper: '#ffffff',
+      default: '#e2e8f0', // Slate-200: Blue-tinted gray for premium look
+      paper: '#f8fafc', // Slate-50: Slightly lighter for cards/panels
     },
     text: {
-      primary: colors.neutral[900],
-      secondary: colors.neutral[600],
+      primary: '#0f172a', // Slate-900
+      secondary: '#475569', // Slate-600
       disabled: colors.neutral[400],
     },
-    divider: colors.neutral[200],
+    divider: 'rgba(0, 0, 0, 0.08)', // Subtle divider for light mode
     surface: {
-      elevated: colors.neutral[100],
+      elevated: '#f1f5f9', // Slate-100
     },
   }
 }

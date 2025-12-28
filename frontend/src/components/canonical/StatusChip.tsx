@@ -9,7 +9,14 @@ export interface StatusChipProps {
   /**
    * Status type determines color
    */
-  status: 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'brand'
+  status:
+    | 'success'
+    | 'warning'
+    | 'error'
+    | 'info'
+    | 'neutral'
+    | 'brand'
+    | 'live'
   /**
    * Size variant
    */
@@ -64,6 +71,12 @@ const statusColors = {
     text: 'var(--ob-color-brand-primary)',
     border: 'var(--ob-brand-500)',
     dot: 'var(--ob-brand-400)',
+  },
+  live: {
+    bg: 'rgba(0, 243, 255, 0.1)',
+    text: 'var(--ob-color-neon-cyan)',
+    border: 'rgba(0, 243, 255, 0.3)',
+    dot: 'var(--ob-color-neon-cyan)',
   },
 }
 

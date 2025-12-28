@@ -1,9 +1,9 @@
 /**
  * CapitalStackScenarioTabs - Horizontal underlined tabs for scenario switching
  *
- * Matches Gemini design:
+ * Premium cyber aesthetic:
  * - Horizontal tabs with "Scenario A: Base Case" format
- * - Active tab has blue underline (border-b-2)
+ * - Active tab has cyan underline with glow
  * - Inactive tabs have transparent border
  *
  * Follows UI_STANDARDS.md for design tokens.
@@ -57,18 +57,29 @@ export function CapitalStackScenarioTabs({
                 px: 'var(--ob-space-025)',
                 borderRadius: 'var(--ob-radius-none)',
                 borderBottom: 2,
-                borderColor: isActive ? 'primary.main' : 'transparent',
-                color: isActive ? 'primary.main' : 'text.secondary',
+                borderColor: isActive
+                  ? 'var(--ob-color-neon-cyan)'
+                  : 'transparent',
+                color: isActive
+                  ? 'var(--ob-color-neon-cyan)'
+                  : 'text.secondary',
                 fontWeight: 500,
                 fontSize: 'var(--ob-font-size-sm)',
                 textTransform: 'none',
                 minWidth: 'auto',
                 whiteSpace: 'nowrap',
                 transition: 'color 0.2s ease, border-color 0.2s ease',
+                ...(isActive && {
+                  textShadow: 'var(--ob-glow-neon-text)',
+                }),
                 '&:hover': {
-                  color: isActive ? 'primary.main' : 'text.primary',
+                  color: isActive
+                    ? 'var(--ob-color-neon-cyan)'
+                    : 'text.primary',
                   bgcolor: 'transparent',
-                  borderColor: isActive ? 'primary.main' : 'divider',
+                  borderColor: isActive
+                    ? 'var(--ob-color-neon-cyan)'
+                    : 'divider',
                 },
               }}
             >

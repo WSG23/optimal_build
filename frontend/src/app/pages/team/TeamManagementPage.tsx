@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react'
 import {
   Box,
   Button,
-  Card,
-  Grid,
   Typography,
   Table,
   TableBody,
@@ -130,32 +128,51 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
   }
 
   return (
-    <Box sx={{ maxWidth: 1200, margin: '0 auto' }}>
+    <Box sx={{ width: '100%' }}>
+      {/* Compact Page Header - TIGHT layout with animation */}
       <Box
+        component="header"
         sx={{
           display: 'flex',
-          justifyContent: 'flex-end',
-          mb: 'var(--ob-space-200)',
+          justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 'var(--ob-space-100)',
+          mb: 'var(--ob-space-150)',
+          animation:
+            'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
         }}
       >
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+            Team Management
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: 'text.secondary', mt: 'var(--ob-space-025)' }}
+          >
+            Manage project team members and workflow approvals
+          </Typography>
+        </Box>
         {activeTab === 0 && (
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setInviteOpen(true)}
             className="team-invite-btn"
+            size="small"
           >
             Invite Member
           </Button>
         )}
       </Box>
 
+      {/* Tabs - Direct on Grid */}
       <Box
         sx={{
           borderBottom: 1,
           borderColor: 'divider',
-          mb: 'var(--ob-space-300)',
+          mb: 'var(--ob-space-200)',
         }}
       >
         <Tabs
@@ -186,91 +203,101 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
         </Alert>
       )}
 
+      {/* Tab 0: Team Members - Depth 1 (Glass Card with cyan edge) */}
       {activeTab === 0 && (
-        <Grid container spacing="var(--ob-space-300)">
-          <Grid item xs={12}>
-            <Card className="team-members-card">
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Role</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+        <Box className="ob-card-module" sx={{ overflow: 'hidden' }}>
+          <Typography
+            variant="subtitle2"
+            sx={{
+              color: 'text.secondary',
+              mb: 'var(--ob-space-200)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
+            Team Members
+          </Typography>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                    <CircularProgress size={24} />
+                    <Typography
+                      variant="body2"
+                      sx={{ mt: 1, color: 'text.secondary' }}
+                    >
+                      Loading team...
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : members.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No team members found.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                members.map((member) => (
+                  <TableRow key={member.id} hover>
+                    <TableCell sx={{ fontWeight: 500 }}>
+                      {member.user?.full_name || 'Unknown'}
+                    </TableCell>
+                    <TableCell>{member.user?.email || 'No email'}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={member.role}
+                        size="small"
+                        sx={{
+                          textTransform: 'capitalize',
+                          bgcolor:
+                            member.role === 'developer'
+                              ? 'primary.main'
+                              : 'default',
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={member.is_active ? 'Active' : 'Inactive'}
+                        size="small"
+                        color={member.is_active ? 'success' : 'default'}
+                        variant="outlined"
+                        sx={{ textTransform: 'capitalize' }}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <Button size="small" color="error">
+                        Remove
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                        <CircularProgress size={24} />
-                        <Typography
-                          variant="body2"
-                          sx={{ mt: 1, color: 'text.secondary' }}
-                        >
-                          Loading team...
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : members.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          No team members found.
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    members.map((member) => (
-                      <TableRow key={member.id} hover>
-                        <TableCell sx={{ fontWeight: 500 }}>
-                          {member.user?.full_name || 'Unknown'}
-                        </TableCell>
-                        <TableCell>
-                          {member.user?.email || 'No email'}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={member.role}
-                            size="small"
-                            sx={{
-                              textTransform: 'capitalize',
-                              bgcolor:
-                                member.role === 'developer'
-                                  ? 'primary.main'
-                                  : 'default',
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={member.is_active ? 'Active' : 'Inactive'}
-                            size="small"
-                            color={member.is_active ? 'success' : 'default'}
-                            variant="outlined"
-                            sx={{ textTransform: 'capitalize' }}
-                          />
-                        </TableCell>
-                        <TableCell align="right">
-                          <Button size="small" color="error">
-                            Remove
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </Card>
-          </Grid>
-        </Grid>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </Box>
       )}
 
-      {}
-      {activeTab === 1 && <WorkflowDashboard projectId={projectId} />}
+      {/* Tab 1: Approvals & Workflows - Depth 1 (Glass Card with cyan edge) */}
+      {activeTab === 1 && (
+        <Box className="ob-card-module">
+          <WorkflowDashboard projectId={projectId} />
+        </Box>
+      )}
 
-      {}
+      {/* Invite Dialog */}
       <Dialog
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}

@@ -155,16 +155,16 @@ export function FinanceScenarioCreator({
     )
   }, [assets])
 
+  // Cyan family palette for chart visualization
+  const cyanPalette = ['#00f3ff', '#0096cc', '#0077a3', '#005577']
+
   const chartData = useMemo(() => {
     const data = assets
       .filter((a) => Number(a.allocationPct) > 0)
       .map((asset, index) => ({
         name: asset.assetType || `Asset ${index + 1}`,
         value: Number(asset.allocationPct),
-        color:
-          index % 2 === 0
-            ? theme.palette.primary.main
-            : theme.palette.info.light, // Using theme colors
+        color: cyanPalette[index % cyanPalette.length],
       }))
 
     const allocated = data.reduce((acc, item) => acc + item.value, 0)
@@ -450,7 +450,8 @@ export function FinanceScenarioCreator({
                                 width: 'var(--ob-space-050)',
                                 height: 'var(--ob-space-050)',
                                 borderRadius: 'var(--ob-radius-pill)',
-                                bgcolor: 'primary.main',
+                                bgcolor: 'var(--ob-color-neon-cyan)',
+                                boxShadow: 'var(--ob-glow-neon-cyan)',
                               }}
                             />
                           }

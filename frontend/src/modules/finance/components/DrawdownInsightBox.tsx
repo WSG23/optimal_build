@@ -1,13 +1,13 @@
 /**
- * DrawdownInsightBox - Analysis callout with green border
+ * DrawdownInsightBox - Analysis callout with cyan border
  *
  * Displays dynamic insight text about peak debt exposure.
- * Styled with success color (green) background and border.
+ * Premium cyber aesthetic with cyan accents for visual consistency.
  *
  * Follows UI_STANDARDS.md for design tokens.
  */
 
-import { Box, Typography, useTheme, alpha } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 
 import { useTranslation } from '../../../i18n'
 import type { FinanceScenarioSummary } from '../../../api/finance'
@@ -25,7 +25,6 @@ function toNumber(value: string | null | undefined): number | null {
 
 export function DrawdownInsightBox({ scenario }: DrawdownInsightBoxProps) {
   const { t, i18n } = useTranslation()
-  const theme = useTheme()
   const locale = i18n.language
 
   if (!scenario?.drawdownSchedule) {
@@ -44,9 +43,9 @@ export function DrawdownInsightBox({ scenario }: DrawdownInsightBoxProps) {
   return (
     <Box
       sx={{
-        bgcolor: alpha(theme.palette.success.main, 0.08),
+        bgcolor: 'rgba(0, 243, 255, 0.08)',
         border: 2,
-        borderColor: alpha(theme.palette.success.main, 0.3),
+        borderColor: 'rgba(0, 243, 255, 0.3)',
         borderRadius: 'var(--ob-radius-sm)',
         p: 'var(--ob-space-150)',
         mt: 'var(--ob-space-150)',
@@ -58,7 +57,8 @@ export function DrawdownInsightBox({ scenario }: DrawdownInsightBoxProps) {
           fontWeight: 600,
           textTransform: 'uppercase',
           letterSpacing: 'var(--ob-letter-spacing-wider)',
-          color: 'success.dark',
+          color: 'var(--ob-color-neon-cyan)',
+          textShadow: 'var(--ob-glow-neon-text)',
           mb: 'var(--ob-space-050)',
         }}
       >
@@ -67,10 +67,11 @@ export function DrawdownInsightBox({ scenario }: DrawdownInsightBoxProps) {
       <Typography
         sx={{
           fontSize: 'var(--ob-font-size-sm)',
-          color: 'success.dark',
+          color: 'text.primary',
           lineHeight: 1.6,
           '& strong': {
             fontWeight: 600,
+            color: 'var(--ob-color-neon-cyan)',
           },
         }}
       >

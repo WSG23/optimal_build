@@ -65,35 +65,37 @@ export function AppShell({
           minHeight: 0,
         }}
       >
-        {/* Content (scroll container) */}
+        {/* Content (scroll container) - TIGHT layout for command-center density */}
         <Box
           component="main"
           sx={{
             flexGrow: 1,
-            padding: 'var(--ob-space-100)',
+            px: 'var(--ob-space-200)', // 16px horizontal - tighter than before
+            pt: 'var(--ob-space-100)', // 8px top - minimal breathing room
+            pb: 'var(--ob-space-400)', // 32px bottom - reduced from 48px
             overflow: 'auto',
             scrollbarGutter: 'stable',
             minHeight: 0,
           }}
         >
-          {/* Page Header (scrolls with content) */}
+          {/* Page Header - Direct on Grid (Depth 0, no glass card)
+              AI Studio Protocol: Headers sit directly on the background grid
+              TIGHT LAYOUT: Reduced padding for information density */}
           {!hideHeader && (
             <Box
               component="header"
               key={path}
-              className="ob-glass ob-card-accent"
+              className="ob-page-header"
               sx={{
-                py: 'var(--ob-space-200)',
-                px: 'var(--ob-space-300)',
+                py: 'var(--ob-space-100)', // 8px vertical - was 16px
+                px: 0, // No extra horizontal padding
                 display: 'flex',
                 alignItems: 'flex-start',
                 justifyContent: 'space-between',
                 gap: 'var(--ob-space-150)',
-                // When the top ribbon is unpinned, it becomes an overlay; give the
-                // content a small breathing room so the header doesn't feel cramped.
-                mt: inBaseLayout && topOffset === 0 ? 'var(--ob-space-075)' : 0,
-                mb: 'var(--ob-space-150)',
-                borderRadius: 'var(--ob-radius-sm)',
+                // When top ribbon is unpinned, minimal breathing room
+                mt: inBaseLayout && topOffset === 0 ? 'var(--ob-space-050)' : 0,
+                mb: 'var(--ob-space-150)', // 12px - tighter spacing to content
                 animation:
                   'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
                 '@media (prefers-reduced-motion: reduce)': {
@@ -102,12 +104,17 @@ export function AppShell({
               }}
             >
               <Box sx={{ minWidth: 0 }}>
-                <Typography variant="h2" sx={{ color: 'text.primary' }}>
+                <Typography
+                  variant="h2"
+                  className="ob-page-header__title"
+                  sx={{ color: 'text.primary' }}
+                >
                   {title}
                 </Typography>
                 {subtitle && (
                   <Typography
                     variant="body2"
+                    className="ob-page-header__subtitle"
                     sx={{ color: 'text.secondary', mt: 'var(--ob-space-050)' }}
                   >
                     {subtitle}

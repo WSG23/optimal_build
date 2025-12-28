@@ -78,7 +78,7 @@ export function FeasibilityLayout({
         Positioned on the left with margin.
       */}
       <aside
-        className="feasibility-split-layout__sidebar"
+        className="feasibility-split-layout__sidebar ob-card-module"
         style={{
           position: 'relative',
           zIndex: 10,
@@ -88,13 +88,9 @@ export function FeasibilityLayout({
           display: 'flex',
           flexDirection: 'column',
           gap: '0',
-          borderRadius: '4px', // Rounded corners for floating feel
-          background: 'rgba(20, 20, 25, 0.65)', // Darker glass for "Command Center"
-          backdropFilter: 'blur(var(--ob-blur-lg)) saturate(180%)',
-          WebkitBackdropFilter: 'blur(var(--ob-blur-lg)) saturate(180%)',
-          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
           overflow: 'hidden',
+          // Glass styling now comes from ob-card-module class
+          // with cyan top edge accent
         }}
         data-testid="feasibility-controls"
       >
@@ -150,12 +146,10 @@ export function FeasibilityLayout({
       >
         <Paper
           elevation={0}
+          className="ob-glass"
           sx={{
-            borderRadius: '4px',
+            borderRadius: 'var(--ob-radius-sm)',
             overflow: 'hidden',
-            background: 'rgba(20, 20, 30, 0.7)',
-            backdropFilter: 'blur(var(--ob-blur-md))',
-            border: '1px solid rgba(255,255,255,0.1)',
             color: 'white',
           }}
         >

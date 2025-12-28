@@ -363,40 +363,81 @@ export function BusinessPerformancePage() {
   // const weightPipelineValue = useMemo(() => totalWeightedPipeline(columns), [columns])
 
   return (
-    <Box className="bp-page">
-      <Grid
-        container
-        spacing="var(--ob-space-300)"
-        className="bp-page__summary"
-        sx={{ mb: 'var(--ob-space-400)' }}
+    <Box className="bp-page" sx={{ width: '100%' }}>
+      {/* Compact Page Header - TIGHT layout with animation */}
+      <Box
+        component="header"
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 'var(--ob-space-100)',
+          mb: 'var(--ob-space-150)',
+          animation:
+            'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
+        }}
       >
-        <Grid item xs={12} md={4}>
-          <MetricTile
-            label="Last Snapshot"
-            value={analyticsLoading ? '-' : lastSnapshot}
-            icon={<AccessTime fontSize="small" />}
-            variant="default"
-          />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <MetricTile
-            label="Open Pipeline Value"
-            value={pipelineLoading ? '-' : formatCurrency(totalPipelineValue)}
-            icon={<AttachMoney fontSize="small" />}
-            variant="hero"
-            trend={!pipelineLoading ? '+12%' : undefined}
-          />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <MetricTile
-            label="ROI Projects Tracked"
-            value={analyticsLoading ? '-' : roiSummary.projectCount}
-            icon={<Assessment fontSize="small" />}
-            variant="default"
-          />
-        </Grid>
-      </Grid>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+            Business Performance
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: 'text.secondary', mt: 'var(--ob-space-025)' }}
+          >
+            Pipeline tracking, deal insights, and analytics
+          </Typography>
+        </Box>
+      </Box>
 
+      {/* KPI Summary - Depth 1 (Glass Card with cyan edge) */}
+      <Box className="ob-card-module ob-section-gap">
+        <Typography
+          variant="subtitle2"
+          sx={{
+            color: 'text.secondary',
+            mb: 'var(--ob-space-200)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          Key Metrics
+        </Typography>
+        <Grid
+          container
+          spacing="var(--ob-space-300)"
+          className="bp-page__summary"
+        >
+          <Grid item xs={12} md={4}>
+            <MetricTile
+              label="Last Snapshot"
+              value={analyticsLoading ? '-' : lastSnapshot}
+              icon={<AccessTime fontSize="small" />}
+              variant="default"
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <MetricTile
+              label="Open Pipeline Value"
+              value={pipelineLoading ? '-' : formatCurrency(totalPipelineValue)}
+              icon={<AttachMoney fontSize="small" />}
+              variant="hero"
+              trend={!pipelineLoading ? '+12%' : undefined}
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <MetricTile
+              label="ROI Projects Tracked"
+              value={analyticsLoading ? '-' : roiSummary.projectCount}
+              icon={<Assessment fontSize="small" />}
+              variant="default"
+            />
+          </Grid>
+        </Grid>
+      </Box>
+
+      {/* Alerts */}
       <Stack
         spacing="var(--ob-space-200)"
         className="bp-page__alerts"

@@ -1,16 +1,16 @@
 /**
  * CapitalStackScenarioCards - Vertical scenario selector cards
  *
- * Matches Gemini design:
+ * Premium cyber aesthetic:
  * - Vertical list of scenario cards
- * - Active state: blue-50 background, ring, shadow, blue dot indicator
+ * - Active state: cyan background, neon glow, cyan dot indicator
  * - Preview button on active card
  * - "SELECT SCENARIO" header
  *
  * Follows UI_STANDARDS.md for design tokens.
  */
 
-import { Box, Button, Typography, useTheme, alpha } from '@mui/material'
+import { Box, Button, Typography } from '@mui/material'
 
 import { useTranslation } from '../../../i18n'
 import type { FinanceScenarioSummary } from '../../../api/finance'
@@ -29,7 +29,6 @@ export function CapitalStackScenarioCards({
   onPreview,
 }: CapitalStackScenarioCardsProps) {
   const { t } = useTranslation()
-  const theme = useTheme()
 
   if (scenarios.length === 0) {
     return null
@@ -78,21 +77,19 @@ export function CapitalStackScenarioCards({
               p: 'var(--ob-space-100)',
               borderRadius: 'var(--ob-radius-sm)',
               border: 1,
-              borderColor: isActive
-                ? alpha(theme.palette.primary.main, 0.3)
-                : 'divider',
+              borderColor: isActive ? 'rgba(0, 243, 255, 0.3)' : 'divider',
               bgcolor: isActive
-                ? alpha(theme.palette.primary.main, 0.05)
+                ? 'rgba(0, 243, 255, 0.05)'
                 : 'background.paper',
-              boxShadow: isActive ? 1 : 0,
+              boxShadow: isActive ? 'var(--ob-glow-neon-cyan)' : 'none',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
               '&:hover': {
-                borderColor: 'primary.main',
-                boxShadow: 2,
+                borderColor: 'var(--ob-color-neon-cyan)',
+                boxShadow: 'var(--ob-glow-neon-cyan)',
               },
               '&:focus-visible': {
-                outline: `2px solid ${theme.palette.primary.main}`,
+                outline: '2px solid var(--ob-color-neon-cyan)',
                 outlineOffset: 2,
               },
             }}
@@ -109,8 +106,11 @@ export function CapitalStackScenarioCards({
               <Typography
                 sx={{
                   fontWeight: 700,
-                  color: isActive ? 'primary.dark' : 'text.primary',
+                  color: isActive
+                    ? 'var(--ob-color-neon-cyan)'
+                    : 'text.primary',
                   fontSize: 'var(--ob-font-size-md)',
+                  ...(isActive && { textShadow: 'var(--ob-glow-neon-text)' }),
                 }}
               >
                 {scenario.scenarioName}
@@ -121,7 +121,8 @@ export function CapitalStackScenarioCards({
                     width: 8,
                     height: 8,
                     borderRadius: '50%',
-                    bgcolor: 'primary.main',
+                    bgcolor: 'var(--ob-color-neon-cyan)',
+                    boxShadow: 'var(--ob-glow-neon-cyan)',
                     flexShrink: 0,
                   }}
                 />
@@ -139,7 +140,9 @@ export function CapitalStackScenarioCards({
               <Typography
                 sx={{
                   fontSize: 'var(--ob-font-size-sm)',
-                  color: isActive ? 'primary.main' : 'text.secondary',
+                  color: isActive
+                    ? 'var(--ob-color-neon-cyan)'
+                    : 'text.secondary',
                 }}
               >
                 {scenario.description || t('finance.capitalStack.baseCase')}

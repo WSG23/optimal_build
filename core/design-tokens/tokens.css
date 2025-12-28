@@ -28,18 +28,20 @@
      1. CORE PALETTE
      =========================================================================== */
 
-    /* Neutrals: Charcoal / Dark Slate (World-Class Dark Mode) */
-    --ob-neutral-950: #121212; /* Deep Charcoal - Root Background */
-    --ob-neutral-900: #1e293b; /* Dark Slate - Card Background */
-    --ob-neutral-800: #334155; /* Surface Elevated */
-    --ob-neutral-700: #475569; /* Borders / Dividers */
-    --ob-neutral-600: #64748b; /* Muted Text */
-    --ob-neutral-500: #94a3b8; /* Subtle Text */
-    --ob-neutral-400: #cbd5e1; /* Secondary Text */
-    --ob-neutral-300: #e2e8f0;
-    --ob-neutral-200: #f1f5f9;
-    --ob-neutral-100: #f8fafc; /* Primary Text */
-    --ob-neutral-50: #ffffff;
+    /* Neutrals: Deep Slate (AI Studio Premium Dark Mode)
+       Using blue-tinted slates creates "chromatic harmony" with Cyan accents.
+       Pure grays feel "muddy" next to neon cyan; slates feel "electrified". */
+    --ob-neutral-950: #060910; /* Nearly black deep slate - Root Background */
+    --ob-neutral-900: #0b0f1a; /* Very dark blue-tinted slate - Card Background */
+    --ob-neutral-800: #1e293b; /* Surface Elevated (was neutral-900) */
+    --ob-neutral-700: #334155; /* Borders / Dividers */
+    --ob-neutral-600: #475569; /* Muted Text (was neutral-700) */
+    --ob-neutral-500: #64748b; /* Subtle Text (was neutral-600) */
+    --ob-neutral-400: #94a3b8; /* Secondary Text (was neutral-500) */
+    --ob-neutral-300: #cbd5e1;
+    --ob-neutral-200: #e2e8f0;
+    --ob-neutral-100: #f1f5f9; /* Primary Text */
+    --ob-neutral-50: #f8fafc;
 
     /* Brand: Electric Blue */
     --ob-brand-700: #1d4ed8;
@@ -102,9 +104,12 @@
     --ob-color-bg-surface-elevated: var(--ob-neutral-800);
     --ob-color-bg-muted: var(--ob-color-bg-surface-elevated);
 
-    /* Glass Surfaces (Backdrop Filter required) */
-    --ob-surface-glass-1: rgba(30, 41, 59, 0.7); /* Dark Slate glass */
-    --ob-surface-glass-2: rgba(51, 65, 85, 0.75);
+    /* Glass Surfaces - Standardized Z-Levels for depth (AI Studio protocol)
+       Level 0: Solid bg-root - the "floor" of the dashboard
+       Level 1: rgba(255,255,255,0.03) with blur(16px) - "glass" look (V3 ref: very transparent)
+       Level 2: rgba(255,255,255,0.05) - hover/lifted elements */
+    --ob-surface-glass-1: rgba(255, 255, 255, 0.03); /* Level 1 glass - more transparent to show grid */
+    --ob-surface-glass-2: rgba(255, 255, 255, 0.05); /* Level 2 lifted */
 
     /* Surface semantic aliases */
     --ob-color-surface-default: var(--ob-color-bg-surface);
@@ -121,17 +126,21 @@
      3. SEMANTIC COLORS - Text
      =========================================================================== */
 
+    /* Text colors - Typographic hierarchy via "dimming" (AI Studio protocol)
+       Primary Data: Pure White or Cyan - High contrast
+       Secondary Text: Slate-400 - Dimmed but readable
+       Tertiary/Meta: Slate-500 - Recedes into background */
     --ob-color-text: var(--ob-neutral-100);
     --ob-color-text-primary: var(--ob-neutral-100);
     --ob-color-text-primary-rgb: 241 245 249;
-    --ob-color-text-secondary: var(--ob-neutral-400);
+    --ob-color-text-secondary: var(--ob-neutral-400); /* Slate-400 for labels */
     --ob-color-text-secondary-rgb: 148 163 184;
-    --ob-color-text-muted: var(--ob-neutral-600);
-    --ob-color-text-muted-rgb: 71 85 105;
-    --ob-color-text-subtle: var(--ob-neutral-500);
-    --ob-color-text-subtle-rgb: 100 116 139;
-    --ob-color-text-strong: var(--ob-neutral-50);
-    --ob-color-text-strong-rgb: 248 250 252;
+    --ob-color-text-muted: var(--ob-neutral-500); /* Slate-500 for captions */
+    --ob-color-text-muted-rgb: 100 116 139;
+    --ob-color-text-subtle: var(--ob-neutral-600); /* Slate-600 for ghost UI */
+    --ob-color-text-subtle-rgb: 71 85 105;
+    --ob-color-text-strong: #ffffff; /* Pure white for emphasis */
+    --ob-color-text-strong-rgb: 255 255 255;
     --ob-color-text-inverse: var(--ob-neutral-900);
     --ob-color-text-inverse-rgb: 15 23 42;
     --ob-color-text-inverse-muted: var(--ob-neutral-600);
@@ -143,9 +152,10 @@
      4. SEMANTIC COLORS - Borders
      =========================================================================== */
 
-    --ob-color-border-subtle: rgba(148, 163, 184, 0.15);
-    --ob-color-border-subtle-rgb: 148 163 184;
-    --ob-color-border-faint: rgba(148, 163, 184, 0.08);
+    /* Border colors - Fine lines for sophistication (AI Studio protocol) */
+    --ob-color-border-subtle: rgba(255, 255, 255, 0.08); /* Low opacity white for elegance */
+    --ob-color-border-subtle-rgb: 255 255 255;
+    --ob-color-border-faint: rgba(255, 255, 255, 0.04);
     --ob-color-border-neutral: rgba(148, 163, 184, 0.3);
     --ob-color-border-neutral-rgb: 148 163 184;
     --ob-color-border-strong: var(--ob-neutral-600);
@@ -372,8 +382,8 @@
     --ob-glow-status-error: 0 0 8px rgba(255, 51, 102, 0.6);
     --ob-glow-status-warning: 0 0 8px rgba(245, 158, 11, 0.6);
 
-    /* Premium Glass Surface (darker, more blur) */
-    --ob-surface-premium: rgba(15, 23, 42, 0.75);
+    /* Premium Glass Surface - darker for contrast against deep slate bg */
+    --ob-surface-premium: rgba(11, 15, 26, 0.85); /* Matches --ob-neutral-900 with alpha */
     --ob-surface-premium-blur: 16px;
 
     /* Overlay colors (for dark backgrounds) */
@@ -382,8 +392,8 @@
     --ob-overlay-medium: rgba(0, 0, 0, 0.2);
     --ob-overlay-strong: rgba(0, 0, 0, 0.3);
 
-    /* Background grid pattern */
-    --ob-bg-grid-color: rgba(255, 255, 255, 0.03);
+    /* Background grid pattern - subtle cyan tint for "electrified" feel */
+    --ob-bg-grid-color: rgba(0, 243, 255, 0.03); /* Cyan-tinted grid */
     --ob-bg-grid-size: 40px;
 
     /* Neon Borders */
@@ -455,6 +465,13 @@
     --ob-max-height-panel: 400px;
     --ob-max-height-table: 500px;
     --ob-max-height-card-group: 600px;
+
+    /* ===========================================================================
+     AI STUDIO TOKEN ALIASES (for compatibility with reference implementation)
+     =========================================================================== */
+    --ob-text-main: var(--ob-color-text-primary);
+    --ob-bg-base: var(--ob-color-bg-root);
+    --ob-bg-card: var(--ob-color-bg-surface);
 }
 
 /* =============================================================================
@@ -465,15 +482,15 @@
    ============================================================================= */
 
 html[data-theme='light'] {
-    /* Surfaces */
-    --ob-color-bg-root: #f8fafc;
+    /* Surfaces - Light mode with blue tint for glass panels to pop */
+    --ob-color-bg-root: #e2e8f0; /* Blue-tinted gray - makes white glass panels pop */
     --ob-color-bg-surface: #ffffff;
-    --ob-color-bg-surface-elevated: #f1f5f9;
+    --ob-color-bg-surface-elevated: #f1f5f9; /* Slightly lighter for elevated surfaces */
     --ob-color-bg-muted: var(--ob-color-bg-surface-elevated);
 
-    /* Glass Surfaces */
-    --ob-surface-glass-1: rgba(255, 255, 255, 0.7);
-    --ob-surface-glass-2: rgba(255, 255, 255, 0.9);
+    /* Glass Surfaces - "frosted ice" effect (more transparent + more blur) */
+    --ob-surface-glass-1: rgba(255, 255, 255, 0.4); /* Level 1 - visible blur */
+    --ob-surface-glass-2: rgba(255, 255, 255, 0.55); /* Level 2 - still shows grid */
 
     /* Surface semantic */
     --ob-color-surface-default: var(--ob-color-bg-surface);
@@ -502,10 +519,10 @@ html[data-theme='light'] {
     --ob-color-text-inverse-muted: #cbd5e1;
     --ob-color-text-inverse-muted-rgb: 203 213 225;
 
-    /* Borders */
-    --ob-color-border-subtle: #e2e8f0;
-    --ob-color-border-subtle-rgb: 226 232 240;
-    --ob-color-border-faint: #f1f5f9;
+    /* Borders - Higher contrast for light mode */
+    --ob-color-border-subtle: rgba(0, 0, 0, 0.12);
+    --ob-color-border-subtle-rgb: 0 0 0;
+    --ob-color-border-faint: rgba(0, 0, 0, 0.06);
     --ob-color-border-neutral: #cbd5e1;
     --ob-color-border-neutral-rgb: 203 213 225;
     --ob-color-border-strong: #94a3b8;
@@ -542,13 +559,18 @@ html[data-theme='light'] {
     --ob-divider-strong: 1px solid rgba(0, 0, 0, 0.08);
 
     /* Premium Effects (light mode adjustments) */
-    --ob-surface-premium: rgba(255, 255, 255, 0.9);
+    --ob-surface-premium: rgba(255, 255, 255, 0.4); /* frosted ice, not white paper */
     --ob-glow-neon-cyan: 0 0 10px rgba(0, 243, 255, 0.3);
-    --ob-bg-grid-color: rgba(0, 0, 0, 0.03);
+    --ob-bg-grid-color: rgba(0, 0, 0, 0.04); /* slightly more visible grid */
 
     /* Overlay colors (for light backgrounds - higher opacity for visibility) */
     --ob-overlay-subtle: rgba(0, 0, 0, 0.06);
     --ob-overlay-light: rgba(0, 0, 0, 0.10);
     --ob-overlay-medium: rgba(0, 0, 0, 0.15);
     --ob-overlay-strong: rgba(0, 0, 0, 0.22);
+
+    /* AI Studio Token Aliases (light mode) */
+    --ob-text-main: var(--ob-color-text-primary);
+    --ob-bg-base: var(--ob-color-bg-root);
+    --ob-bg-card: var(--ob-color-bg-surface);
 }

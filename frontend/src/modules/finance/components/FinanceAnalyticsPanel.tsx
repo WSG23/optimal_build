@@ -43,6 +43,17 @@ function formatRatio(value: string | null | undefined): string {
   return `${value}x`
 }
 
+/**
+ * DSCR bucket bar color gradients - all within cyan family for visual consistency.
+ * Reference: optimal-build-v2-dashboard uses ['#00f3ff', '#0096cc', '#1e293b']
+ * Semantic colors (orange/green) reserved for status badges and alert banners only.
+ */
+const BUCKET_COLORS: Record<string, string> = {
+  lt_1: '#0096cc', // Darker cyan for DSCR < 1 (still in cyan family)
+  '1_to_1_25': 'var(--ob-color-neon-cyan)', // Bright cyan
+  gt_1_25: 'var(--ob-color-neon-cyan)', // Bright cyan
+}
+
 function BucketBar({
   bucket,
   total,
@@ -51,7 +62,7 @@ function BucketBar({
   total: number
 }): JSX.Element {
   const percentage = total > 0 ? Math.round((bucket.count / total) * 100) : 0
-  const isWarning = bucket.key === 'lt_1'
+  const barColor = BUCKET_COLORS[bucket.key] ?? 'var(--ob-color-neon-cyan)'
 
   return (
     <Box
@@ -85,13 +96,9 @@ function BucketBar({
         <Box
           sx={{
             width: `${Math.max(percentage, 2)}%`,
-            background: isWarning
-              ? 'var(--ob-warning-500)'
-              : 'var(--ob-color-neon-cyan)',
+            background: barColor,
             height: '100%',
-            boxShadow: isWarning
-              ? 'var(--ob-glow-status-warning)'
-              : 'var(--ob-glow-neon-cyan)',
+            boxShadow: 'var(--ob-glow-neon-cyan)',
             transition: 'width 0.5s ease-out',
           }}
         />
@@ -99,7 +106,7 @@ function BucketBar({
       <NeonText
         variant="caption"
         intensity="subtle"
-        color={isWarning ? 'warning' : 'cyan'}
+        color="cyan"
         sx={{ width: '40px', textAlign: 'right' }}
       >
         {bucket.count}
