@@ -58,6 +58,19 @@ function formatNumber(value: number, decimals = 2): string {
   return value.toFixed(decimals).replace(/\.00$/, '')
 }
 
+function formatDateTime(
+  value: string | null | undefined,
+  locale: string,
+): string | null {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(date)
+}
+
 interface ScenarioCardProps {
   scenario: FinanceScenarioSummary
   active: boolean
@@ -77,7 +90,7 @@ function ScenarioCard({
   onRequestDelete,
   deletingScenarioId = null,
 }: ScenarioCardProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const theme = useTheme()
 
   const currency = scenario.currency ?? 'SGD'
@@ -85,6 +98,7 @@ function ScenarioCard({
   const npv = getResultValue(scenario, 'NPV')
   const irr = getResultValue(scenario, 'IRR')
   const dscr = getLatestDscr(scenario)
+  const lastUpdated = formatDateTime(scenario.updatedAt, i18n.language)
 
   const canManage = scenario.scenarioId > 0
   const makingPrimary = updatingScenarioId === scenario.scenarioId
@@ -167,6 +181,17 @@ function ScenarioCard({
               {scenario.description || t('finance.capitalStack.baseCase')}
             </Typography>
           )}
+          {lastUpdated && (
+            <Typography
+              sx={{
+                mt: 'var(--ob-space-025)',
+                fontSize: 'var(--ob-font-size-2xs)',
+                color: 'text.disabled',
+              }}
+            >
+              {t('finance.scenarios.lastUpdated', { defaultValue: 'Updated' })}: {lastUpdated}
+            </Typography>
+          )}
         </Box>
         <Box
           sx={{
@@ -218,12 +243,19 @@ function ScenarioCard({
                   sx={{
                     borderRadius: 'var(--ob-radius-xs)',
                     border: 'var(--ob-border-fine)',
+                    // Gold color for primary scenario star
+                    ...(scenario.isPrimary && {
+                      color: '#FFD700',
+                      '&.Mui-disabled': {
+                        color: '#FFD700',
+                      },
+                    }),
                   }}
                 >
                   {makingPrimary ? (
                     <CircularProgress size={14} />
                   ) : scenario.isPrimary ? (
-                    <StarIcon fontSize="small" />
+                    <StarIcon fontSize="small" sx={{ color: '#FFD700' }} />
                   ) : (
                     <StarBorderIcon fontSize="small" />
                   )}
