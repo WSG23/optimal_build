@@ -446,6 +446,8 @@
      13. SIZE TOKENS
      =========================================================================== */
 
+    --ob-size-indicator-dot: 8px;
+    --ob-size-column-min: 100px;
     --ob-size-icon-sm: 24px;
     --ob-size-icon-md: 32px;
     --ob-size-icon-lg: 48px;
@@ -475,6 +477,14 @@
     --ob-text-main: var(--ob-color-text-primary);
     --ob-bg-base: var(--ob-color-bg-root);
     --ob-bg-card: var(--ob-color-bg-surface);
+
+    /* ===========================================================================
+     TEXT HIERARCHY ALIASES (used in UI_STANDARDS.md decision tree)
+     =========================================================================== */
+    --ob-text-primary: var(--ob-color-text-primary);
+    --ob-text-secondary: var(--ob-color-text-secondary);
+    --ob-text-tertiary: var(--ob-color-text-muted);
+    --ob-text-disabled: var(--ob-color-text-subtle);
 }
 
 /* =============================================================================

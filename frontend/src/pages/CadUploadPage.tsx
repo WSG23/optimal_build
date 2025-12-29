@@ -106,7 +106,6 @@ export function CadUploadPage() {
           </Box>
         )}
 
-        {/* Single Card Container - One cyan edge */}
         <Box className="ob-card-module" sx={{ p: 'var(--ob-space-250)' }}>
           {/* Project Settings Row */}
           <Stack
@@ -163,7 +162,12 @@ export function CadUploadPage() {
             status={status}
             summary={job}
           />
+        </Box>
 
+        {/* Rule Pack Section - Content vs Context pattern:
+            Section header and authority headers on background (context),
+            only data tables in cards (content) */}
+        <Box sx={{ mt: 'var(--ob-space-300)' }}>
           <RulePackExplanationPanel
             variant="embedded"
             rules={rules}

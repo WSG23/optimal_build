@@ -144,11 +144,11 @@ export function CadUploader({
             width: 'var(--ob-size-icon-lg)',
             height: 'var(--ob-size-icon-lg)',
             borderRadius: '50%',
-            backgroundColor: 'var(--ob-brand-100)',
+            backgroundColor: 'rgba(0, 243, 255, 0.1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--ob-brand-500)',
+            color: 'var(--ob-color-neon-cyan)',
             flexShrink: 0,
           }}
         >
@@ -186,7 +186,10 @@ export function CadUploader({
               pl: 'var(--ob-space-200)',
             }}
           >
-            <Typography variant="caption" color="text.disabled">
+            <Typography
+              variant="caption"
+              sx={{ color: 'var(--ob-text-tertiary)' }}
+            >
               {t('uploader.supportedFormats', {
                 defaultValue: '.dxf, .ifc, .pdf',
               })}

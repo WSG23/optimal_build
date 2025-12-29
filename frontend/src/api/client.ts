@@ -759,13 +759,28 @@ export class ApiClient {
 
   async listRules(): Promise<RuleSummary[]> {
     const data = await this.request<RulesResponse>('api/v1/rules')
-    return data.items.map((item) => ({
-      ...item,
-      overlays: Array.isArray(item.overlays) ? item.overlays : [],
-      advisoryHints: Array.isArray(item.advisoryHints)
-        ? item.advisoryHints
-        : [],
-    }))
+    return data.items.map((item) => {
+      // Backend returns snake_case, frontend expects camelCase
+      const rawItem = item as unknown as Record<string, unknown>
+      return {
+        id: item.id,
+        parameterKey:
+          (rawItem['parameter_key'] as string) || item.parameterKey || '',
+        operator: item.operator,
+        value: item.value,
+        unit: item.unit,
+        authority: item.authority,
+        topic: item.topic,
+        reviewStatus: (rawItem['review_status'] as string) || item.reviewStatus,
+        overlays: Array.isArray(item.overlays) ? item.overlays : [],
+        advisoryHints: Array.isArray(rawItem['advisory_hints'])
+          ? (rawItem['advisory_hints'] as string[])
+          : Array.isArray(item.advisoryHints)
+            ? item.advisoryHints
+            : [],
+        normalized: item.normalized ?? [],
+      }
+    })
   }
 
   async getProjectRoi(projectId: number): Promise<ProjectRoiMetrics> {

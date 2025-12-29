@@ -150,7 +150,12 @@ const integrationsElement = (
 )
 
 const siteAcquisitionElement = (
-  <AppShell activeItem="siteAcquisition" hideSidebar hideHeader>
+  <AppShell
+    activeItem="siteAcquisition"
+    hideSidebar
+    title="Site Acquisition"
+    description="Capture and analyze development potential for properties"
+  >
     {suspense(<SiteAcquisitionPage />)}
   </AppShell>
 )
