@@ -155,10 +155,10 @@ export function FinanceScenarioCreator({
     )
   }, [assets])
 
-  // Cyan family palette for chart visualization
-  const cyanPalette = ['#00f3ff', '#0096cc', '#0077a3', '#005577']
-
   const chartData = useMemo(() => {
+    // Cyan family palette for chart visualization
+    const cyanPalette = ['#00f3ff', '#0096cc', '#0077a3', '#005577']
+
     const data = assets
       .filter((a) => Number(a.allocationPct) > 0)
       .map((asset, index) => ({
@@ -178,7 +178,7 @@ export function FinanceScenarioCreator({
       })
     }
     return data
-  }, [assets, theme])
+  }, [assets, theme.palette.action.disabledBackground])
 
   const unallocated = Math.max(0, 100 - totalAllocation)
 

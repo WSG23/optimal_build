@@ -1,7 +1,7 @@
 import { ThemeModeProvider } from '../../../theme/ThemeContext'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import AdvancedIntelligencePage from '../AdvancedIntelligence'
 import React from 'react'

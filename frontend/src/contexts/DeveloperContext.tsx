@@ -1,19 +1,7 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { DeveloperContext } from './developerContextDef'
 
-interface DeveloperContextType {
-  isDeveloperMode: boolean
-  toggleDeveloperMode: () => void
-}
-
-const DeveloperContext = createContext<DeveloperContextType | undefined>(
-  undefined,
-)
+export { DeveloperContext }
 
 export function DeveloperProvider({ children }: { children: ReactNode }) {
   const [isDeveloperMode, setIsDeveloperMode] = useState<boolean>(() => {
@@ -34,12 +22,4 @@ export function DeveloperProvider({ children }: { children: ReactNode }) {
       {children}
     </DeveloperContext.Provider>
   )
-}
-
-export function useDeveloperMode() {
-  const context = useContext(DeveloperContext)
-  if (context === undefined) {
-    throw new Error('useDeveloperMode must be used within a DeveloperProvider')
-  }
-  return context
 }

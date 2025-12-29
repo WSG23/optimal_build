@@ -28,7 +28,7 @@ import {
 } from '@mui/icons-material'
 import { useTranslation } from '../../i18n'
 import { Link } from '../../router'
-import { useDeveloperMode } from '../../contexts/DeveloperContext'
+import { useDeveloperMode } from '../../contexts/useDeveloperMode'
 import { useThemeMode } from '../../theme/ThemeContext'
 
 const LANGUAGES = [

@@ -18,7 +18,7 @@ import {
 import { Link, useRouterPath } from '../../router'
 import { useTranslation } from '../../i18n'
 import { TopUtilityMenu } from './TopUtilityMenu'
-import { useDeveloperMode } from '../../contexts/DeveloperContext'
+import { useDeveloperMode } from '../../contexts/useDeveloperMode'
 
 type NavGroup = {
   items: Array<{ path: string; label: string }>

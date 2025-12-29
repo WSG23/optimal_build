@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 import { Box, Typography, Stack } from '@mui/material'
 import { YosaiSidebar } from './YosaiSidebar'
-import { useBaseLayoutContext } from '../../app/layout/BaseLayoutContext'
+import { useBaseLayoutContext } from '../../app/layout/useBaseLayout'
 import { HeaderUtilityCluster } from './HeaderUtilityCluster'
 import { useRouterController } from '../../router'
 

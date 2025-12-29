@@ -55,27 +55,6 @@ const Preview3DViewer = lazy(() =>
   })),
 )
 
-// Helper to get icon for scenario
-function getScenarioIcon(scenario: DevelopmentScenario) {
-  switch (scenario) {
-    case 'raw_land':
-      return <ConstructionIcon />
-    case 'existing_building':
-      return <DomainIcon />
-    case 'heritage_property':
-      return <AccountBalanceIcon />
-    case 'underused_asset':
-      return <TrendingUpIcon />
-    case 'mixed_use_redevelopment':
-      return <MapsHomeWorkIcon />
-    default:
-      return <DomainIcon />
-  }
-}
-
-// Exported for potential external use
-export { getScenarioIcon }
-
 export function GpsCapturePage() {
   const role: UserRole = 'agent'
   const [latitude, setLatitude] = useState<string>('1.3000')

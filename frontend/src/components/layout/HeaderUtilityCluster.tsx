@@ -20,7 +20,7 @@ import {
 } from '@mui/icons-material'
 import { useTranslation } from '../../i18n'
 import { useThemeMode } from '../../theme/ThemeContext'
-import { useDeveloperMode } from '../../contexts/DeveloperContext'
+import { useDeveloperMode } from '../../contexts/useDeveloperMode'
 
 export function HeaderUtilityCluster() {
   const { i18n } = useTranslation()

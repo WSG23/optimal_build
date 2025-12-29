@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { NavItem, NavItemKey } from '../navigation'
 import { AGENT_NAV_ITEMS, DEVELOPER_NAV_ITEMS } from '../navigation'
-import { useDeveloperMode } from '../../contexts/DeveloperContext'
+import { useDeveloperMode } from '../../contexts/useDeveloperMode'
 
 type Workspace = 'agent' | 'developer'
 

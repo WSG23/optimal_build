@@ -1,17 +1,4 @@
-import { createContext, useContext } from 'react'
+import { BaseLayoutContext } from './baseLayoutContextDef'
 
-interface BaseLayoutContextValue {
-  inBaseLayout: boolean
-  topOffset: number | string
-}
-
-const BaseLayoutContext = createContext<BaseLayoutContextValue>({
-  inBaseLayout: false,
-  topOffset: 0,
-})
-
-export function useBaseLayoutContext() {
-  return useContext(BaseLayoutContext)
-}
-
+export { BaseLayoutContext }
 export const BaseLayoutProvider = BaseLayoutContext.Provider
