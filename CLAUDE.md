@@ -152,23 +152,32 @@ Read these documents IN ORDER before writing any code:
 
 5. **[frontend/UI_STANDARDS.md](frontend/UI_STANDARDS.md)** - UI Design Token Standards (CRITICAL for UI work)
 
-    - Design token usage for spacing, radius, colors, typography
+    - Design token VALUES for spacing, radius, colors, typography
     - Square Cyber-Minimalism border-radius standards
     - Canonical component requirements
     - MUST READ before any frontend UI changes
+    - ~5 min read
+
+6. **[frontend/UX_ARCHITECTURE.md](frontend/UX_ARCHITECTURE.md)** - UX Architecture & Layout Patterns (CRITICAL for UI work)
+
+    - AI Studio 6 Principles (Information Density, Responsive Resilience, etc.)
+    - Content vs Context separation pattern
+    - Layout patterns (Master-Detail, Selection Cards, Data Tables)
+    - Decision trees for colors and card surfaces
+    - MUST READ when designing page structure
     - ~10 min read
 
-6. **[CONTRIBUTING.md](CONTRIBUTING.md)** - Workflow and tooling
+7. **[CONTRIBUTING.md](CONTRIBUTING.md)** - Workflow and tooling
     - Setup, testing, linting
     - Code review checklist
     - ~15 min read
 
 ### Priority 3: Context Documents (REFERENCE)
 
-7. **[README.md](README.md)** - Project overview
-8. **[docs/planning/ui-status.md](docs/planning/ui-status.md)** - UI implementation status
-9. **[docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues)** - Known test failures
-10. **[docs/development/testing/summary.md](docs/development/testing/summary.md)** - Test suites
+8. **[README.md](README.md)** - Project overview
+9. **[docs/planning/ui-status.md](docs/planning/ui-status.md)** - UI implementation status
+10. **[docs/all_steps_to_product_completion.md#-known-testing-issues](docs/all_steps_to_product_completion.md#-known-testing-issues)** - Known test failures
+11. **[docs/development/testing/summary.md](docs/development/testing/summary.md)** - Test suites
 
 ### Verification Checkpoint
 
@@ -1717,7 +1726,8 @@ git commit -m "Add finance scenario privacy feature"
 
 ### Before Committing UI/Frontend Code (ADDITIONAL)
 
--   [ ] Read [frontend/UI_STANDARDS.md](frontend/UI_STANDARDS.md) before making UI changes
+-   [ ] Read [frontend/UI_STANDARDS.md](frontend/UI_STANDARDS.md) for token values
+-   [ ] Read [frontend/UX_ARCHITECTURE.md](frontend/UX_ARCHITECTURE.md) for layout patterns
 -   [ ] No hardcoded pixel values (use `--ob-space-*` or `--ob-size-*` tokens)
 -   [ ] No MUI spacing numbers like `spacing={2}` (use `spacing="var(--ob-space-200)"`)
 -   [ ] No hardcoded border-radius (use `--ob-radius-*` tokens)
@@ -1727,6 +1737,8 @@ git commit -m "Add finance scenario privacy feature"
 -   [ ] No hardcoded colors (use theme palette or design tokens)
 -   [ ] Using canonical components from `src/components/canonical/` where available
 -   [ ] Font sizes use `--ob-font-size-*` tokens
+-   [ ] Content vs Context separation applied (headers on background, data in cards)
+-   [ ] No nested card surfaces (cards inside cards)
 -   [ ] Ran `cd frontend && npm run lint` and passes ✅
 
 ### Before Marking Phase Complete

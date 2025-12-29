@@ -4,7 +4,20 @@
 
 This document defines the authoritative styling patterns for the Optimal Build frontend.
 
+---
+
+## Document Map
+
+| Document                                        | Purpose                                               | When to Read                  |
+| ----------------------------------------------- | ----------------------------------------------------- | ----------------------------- |
+| **[UI_STANDARDS.md](../UI_STANDARDS.md)**       | Token values (spacing, radius, colors, typography)    | When writing CSS/styling      |
+| **[UX_ARCHITECTURE.md](../UX_ARCHITECTURE.md)** | Layout patterns, decision trees, AI Studio principles | When designing page structure |
+| **STYLE_GUIDE.md** (this file)                  | CSS class architecture, BEM naming                    | When adding new CSS classes   |
+
+---
+
 > **For complete design token values and usage examples, see [UI_STANDARDS.md](../UI_STANDARDS.md)**
+> **For layout patterns and architectural principles, see [UX_ARCHITECTURE.md](../UX_ARCHITECTURE.md)**
 
 ### Token Hierarchy (Source of Truth)
 
@@ -147,16 +160,21 @@ The following patterns are flagged by the style linter:
 #### Problem: Nested Surface Containers
 
 When a page wraps content in `.ob-card-module` AND child components render their own card surfaces (e.g., `GlassCard`), you get:
+
 - Double padding/margins (wasted space)
 - Color mismatch (outer glassmorphic vs inner solid white)
 - Inconsistent visual hierarchy
 
 ```tsx
 // ❌ WRONG - nested surfaces
-<Box className="ob-card-module">          {/* Page provides surface */}
-  <GlassCard>                              {/* Component adds ANOTHER surface */}
-    <CadUploader />
-  </GlassCard>
+<Box className="ob-card-module">
+    {' '}
+    {/* Page provides surface */}
+    <GlassCard>
+        {' '}
+        {/* Component adds ANOTHER surface */}
+        <CadUploader />
+    </GlassCard>
 </Box>
 ```
 
@@ -166,8 +184,8 @@ Components that may be used inside `.ob-card-module` should accept a `variant` p
 
 ```tsx
 interface ComponentProps {
-  /** When 'embedded', removes outer card surface for use inside a parent .ob-card-module */
-  variant?: 'standalone' | 'embedded'
+    /** When 'embedded', removes outer card surface for use inside a parent .ob-card-module */
+    variant?: 'standalone' | 'embedded'
 }
 ```
 
@@ -177,28 +195,28 @@ interface ComponentProps {
 ```tsx
 // ✅ CORRECT - single surface, embedded components
 <Box className="ob-card-module">
-  <CadUploader variant="embedded" />       {/* No inner surface */}
-  <Divider />
-  <RulePackExplanationPanel variant="embedded" />
+    <CadUploader variant="embedded" /> {/* No inner surface */}
+    <Divider />
+    <RulePackExplanationPanel variant="embedded" />
 </Box>
 ```
 
 #### Implementation Guidelines
 
 1. **Embedded mode removes:**
-   - Outer `GlassCard` or card wrapper
-   - `maxWidth` constraints (let parent control width)
-   - Centering (`margin: '0 auto'`)
+    - Outer `GlassCard` or card wrapper
+    - `maxWidth` constraints (let parent control width)
+    - Centering (`margin: '0 auto'`)
 
 2. **Embedded mode keeps:**
-   - Internal layout and spacing
-   - Functional styling (borders on interactive areas like drop zones)
-   - All business logic
+    - Internal layout and spacing
+    - Functional styling (borders on interactive areas like drop zones)
+    - All business logic
 
 3. **Page owns the surface:**
-   - One `.ob-card-module` per logical section
-   - Use `<Divider />` to separate internal sections
-   - Error banners go OUTSIDE the card
+    - One `.ob-card-module` per logical section
+    - Use `<Divider />` to separate internal sections
+    - Error banners go OUTSIDE the card
 
 #### Example Components with Embedded Support
 
