@@ -130,6 +130,333 @@ These 6 principles govern all UI/UX decisions in this project. Follow them in or
 
 ---
 
+## Common UX Friction Points & Solutions
+
+These patterns address the four primary friction points found in professional property development dashboards. Derived from AI Studio analysis of the Property Overview section.
+
+### Problem 1: Cognitive Overload & Data Density
+
+**Symptoms:**
+
+- Users see flat, undifferentiated data blocks
+- No clear visual hierarchy between metrics
+- Text-heavy presentations requiring mental parsing
+- Equal visual weight given to all information
+
+**Solution: Atomic Card Architecture + Hierarchical Typography**
+
+Break complex data into single-purpose **StatCards**, each displaying one metric with clear visual hierarchy:
+
+```
+┌─────────────────────┐
+│  EST. REVENUE       │  ← Tiny all-caps label (--ob-font-size-2xs)
+│  S$16.9M            │  ← Large bold value (--ob-font-size-3xl, fontWeight: 700)
+│  ████████░░ 85%     │  ← Optional progress/sparkline
+└─────────────────────┘
+```
+
+**Implementation:**
+
+```tsx
+// ✅ CORRECT - Atomic StatCard with hierarchical typography
+<GlassCard sx={{ p: 'var(--ob-space-100)' }}>
+    <Typography
+        sx={{
+            fontSize: 'var(--ob-font-size-2xs)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            color: 'text.secondary',
+            mb: 'var(--ob-space-025)',
+        }}
+    >
+        EST. REVENUE
+    </Typography>
+    <Typography
+        sx={{
+            fontSize: 'var(--ob-font-size-3xl)',
+            fontWeight: 700,
+            color: 'text.primary',
+        }}
+    >
+        S$16.9M
+    </Typography>
+</GlassCard>
+
+// ❌ WRONG - Flat text without hierarchy
+<Box>
+    <Typography>Estimated Revenue: S$16,900,000</Typography>
+</Box>
+```
+
+**Key Rules:**
+
+- One metric per card (atomic design)
+- Label: tiny, uppercase, secondary color
+- Value: large, bold, primary color
+- Use `PremiumMetricCard` from canonical components for consistency
+
+### Problem 2: "Black Box" Processing
+
+**Symptoms:**
+
+- Users see "PROCESSING..." text with no progress indication
+- No visibility into what the system is doing
+- Uncertainty about completion time
+- Anxiety during longer operations
+
+**Solution: Active Status Feedback**
+
+Replace text-only status with visual progress indicators:
+
+```
+❌ WRONG                          ✅ CORRECT
+┌─────────────────┐              ┌─────────────────────────────┐
+│  PROCESSING...  │              │  Preview Generation         │
+└─────────────────┘              │  ████████████░░░░ 75%       │
+                                 │  Rendering floor 3 of 4... │
+                                 └─────────────────────────────┘
+```
+
+**Implementation:**
+
+```tsx
+// ✅ CORRECT - Active status with progress
+<GlassCard>
+    <Stack direction="row" alignItems="center" gap="var(--ob-space-050)">
+        <PulsingStatusDot status={isComplete ? 'success' : 'processing'} />
+        <Typography fontWeight={600}>Preview Generation</Typography>
+    </Stack>
+    <LinearProgress
+        variant="determinate"
+        value={progress}
+        sx={{
+            mt: 'var(--ob-space-050)',
+            borderRadius: 'var(--ob-radius-xs)',
+            bgcolor: 'var(--ob-surface-glass-subtle)',
+            '& .MuiLinearProgress-bar': {
+                bgcolor: 'var(--ob-color-neon-cyan)',
+            },
+        }}
+    />
+    <Typography variant="caption" color="text.secondary">
+        {statusMessage}
+    </Typography>
+</GlassCard>
+
+// ❌ WRONG - Text-only status
+<Chip label="PROCESSING" />
+```
+
+**Key Rules:**
+
+- Use `LinearProgress` or circular indicators for operations > 2 seconds
+- Show what step is happening (not just "Processing")
+- Use `PulsingStatusDot` for real-time status indication
+- Green = complete, Cyan = active/processing, Amber = waiting
+
+### Problem 3: Navigational Friction
+
+**Symptoms:**
+
+- Users scroll vertically through long page sections
+- Property/scenario context lost when viewing details
+- Back-and-forth scrolling to compare data
+- No persistent access to key navigation
+
+**Solution: Dual-Axis Navigation (L-Shaped Layout)**
+
+Combine vertical sidebar navigation with horizontal workflow bar:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  [Property A] [Property B] [Property C]  ← Horizontal   │
+├──────────┬──────────────────────────────────────────────┤
+│ Overview │                                              │
+│ Analysis │           Content Area                       │
+│ Finance  │                                              │
+│ Reports  │           (scrollable)                       │
+│    ↑     │                                              │
+│ Vertical │                                              │
+└──────────┴──────────────────────────────────────────────┘
+```
+
+**Implementation:**
+
+```tsx
+// ✅ CORRECT - L-shaped navigation
+<Box sx={{ display: 'flex', height: '100vh' }}>
+    {/* Vertical sidebar - fixed */}
+    <Box
+        sx={{
+            width: 200,
+            flexShrink: 0,
+            borderRight: 1,
+            borderColor: 'divider',
+        }}
+    >
+        <SectionNavigation sections={sections} active={activeSection} />
+    </Box>
+
+    {/* Main area */}
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Horizontal entity tabs - fixed */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', flexShrink: 0 }}>
+            <Tabs value={activeProperty}>
+                {properties.map((p) => (
+                    <Tab key={p.id} label={p.name} />
+                ))}
+            </Tabs>
+        </Box>
+
+        {/* Content - scrollable */}
+        <Box sx={{ flex: 1, overflow: 'auto', p: 'var(--ob-space-150)' }}>
+            {children}
+        </Box>
+    </Box>
+</Box>
+```
+
+**Key Rules:**
+
+- Vertical axis = section/category navigation (Overview, Analysis, Finance)
+- Horizontal axis = entity switching (Property A, Property B, Scenario 1)
+- Both navigation elements persist while content scrolls
+- Use tabs for ≤6 items, dropdown for more
+
+### Problem 4: Dry Data vs Strategic Insights
+
+**Symptoms:**
+
+- Raw numbers without context or interpretation
+- Text paragraphs describing what charts should show
+- No AI-generated recommendations
+- Users must mentally process implications
+
+**Solution: Contextual Intelligence & Visualization**
+
+Replace text descriptions with charts and add AI-generated strategic recommendations:
+
+```
+❌ WRONG                              ✅ CORRECT
+┌────────────────────────┐           ┌──────────────────────────────┐
+│ Recommended Asset Mix: │           │    ┌────┐                    │
+│ 40% Residential        │           │    │████│ 40% Residential    │
+│ 35% Commercial         │           │    │████│ 35% Commercial     │
+│ 25% Industrial         │           │    │████│ 25% Industrial     │
+│                        │           │    └────┘                    │
+│ (text description)     │           │  [Donut/Pie chart visual]    │
+└────────────────────────┘           │                              │
+                                     │  ┌─ AI INSIGHT ─────────────┐│
+                                     │  │ Residential allocation    ││
+                                     │  │ optimized for 15% higher  ││
+                                     │  │ yield vs market average.  ││
+                                     │  └──────────────────────────┘│
+                                     └──────────────────────────────┘
+```
+
+**Implementation:**
+
+```tsx
+// ✅ CORRECT - Chart + AI insight
+<GlassCard>
+    <Typography variant="h6" fontWeight={700} mb="var(--ob-space-100)">
+        Recommended Asset Mix
+    </Typography>
+
+    {/* Visual chart instead of text list */}
+    <ResponsiveContainer width="100%" height={200}>
+        <PieChart>
+            <Pie
+                data={assetMixData}
+                innerRadius={50}
+                outerRadius={80}
+                dataKey="value"
+            >
+                {assetMixData.map((entry, index) => (
+                    <Cell key={index} fill={COLORS[index]} />
+                ))}
+            </Pie>
+            <Legend />
+        </PieChart>
+    </ResponsiveContainer>
+
+    {/* AI-generated insight */}
+    <Box
+        sx={{
+            mt: 'var(--ob-space-100)',
+            p: 'var(--ob-space-075)',
+            bgcolor: 'alpha(info.main, 0.08)',
+            borderLeft: 3,
+            borderColor: 'info.main',
+            borderRadius: 'var(--ob-radius-xs)',
+        }}
+    >
+        <Typography
+            variant="caption"
+            fontWeight={600}
+            color="info.main"
+            sx={{ textTransform: 'uppercase' }}
+        >
+            AI INSIGHT
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+            Residential allocation optimized for 15% higher yield vs market
+            average.
+        </Typography>
+    </Box>
+</GlassCard>
+
+// ❌ WRONG - Text-only description
+<Box>
+    <Typography variant="h6">Recommended Asset Mix</Typography>
+    <Typography>40% Residential, 35% Commercial, 25% Industrial</Typography>
+</Box>
+```
+
+**Key Rules:**
+
+- Always prefer charts over text lists for quantitative data
+- Include AI-generated strategic interpretation
+- Use indigo color for AI insights (per Functional Color Language)
+- Keep insights concise (1-2 sentences)
+
+---
+
+## Visual Styling Summary
+
+### Color Coding for Status
+
+| State      | Color                        | Use Case                    |
+| ---------- | ---------------------------- | --------------------------- |
+| Success    | Emerald/Green (success.main) | Complete, active, positive  |
+| Processing | Cyan (--ob-color-neon-cyan)  | In progress, generating     |
+| Warning    | Amber (warning.main)         | Attention needed, expiring  |
+| Error      | Red (error.main)             | Failed, critical            |
+| AI/Intel   | Indigo (info.main)           | AI insights, categorization |
+
+### Typography Hierarchy
+
+| Element        | Size                 | Weight | Transform |
+| -------------- | -------------------- | ------ | --------- |
+| Metric Label   | `--ob-font-size-2xs` | 500    | uppercase |
+| Metric Value   | `--ob-font-size-3xl` | 700    | none      |
+| Section Header | `--ob-font-size-lg`  | 700    | none      |
+| Body Text      | `--ob-font-size-sm`  | 400    | none      |
+| Insight Label  | `--ob-font-size-xs`  | 600    | uppercase |
+
+### Responsive Glassmorphism
+
+Apply blur and transparency effects that adapt to content importance:
+
+| Surface Type     | Blur           | Background                            |
+| ---------------- | -------------- | ------------------------------------- |
+| Primary card     | `--ob-blur-md` | `--ob-surface-glass`                  |
+| Secondary panel  | `--ob-blur-sm` | `--ob-surface-glass-subtle`           |
+| Overlay/modal    | `--ob-blur-xl` | `--ob-overlay-glass`                  |
+| Status indicator | none           | Solid semantic color with low opacity |
+
+---
+
 ## Content vs Context Separation
 
 This is the foundational layout principle for data-heavy pages.
@@ -567,6 +894,16 @@ Before submitting UI code changes, verify:
 - [ ] Colors from theme palette (not hardcoded hex)
 - [ ] Chart labels use i18n `t()` function
 
+**UX Friction Solutions (from Property Overview analysis):**
+
+- [ ] Metrics use Atomic Card Architecture (one metric per card)
+- [ ] Typography hierarchy: tiny uppercase labels + large bold values
+- [ ] Long operations have progress bars (not just "Processing..." text)
+- [ ] Status indicators use `PulsingStatusDot` or progress components
+- [ ] Complex pages use L-shaped navigation (vertical sidebar + horizontal tabs)
+- [ ] Quantitative data shown as charts, NOT text lists
+- [ ] AI insights styled with indigo left border and "AI INSIGHT" label
+
 ---
 
 ## Reference Implementations
@@ -574,3 +911,4 @@ Before submitting UI code changes, verify:
 - **Content vs Context**: [RulePackExplanationPanel.tsx](src/modules/cad/RulePackExplanationPanel.tsx)
 - **AI Studio Principles**: [MultiScenarioComparisonSection.tsx](src/app/pages/site-acquisition/components/multi-scenario-comparison/MultiScenarioComparisonSection.tsx)
 - **Master-Detail Layout**: [FinanceWorkspace.tsx](src/modules/finance/FinanceWorkspace.tsx)
+- **UX Friction Solutions**: [PropertyOverviewSection.tsx](src/app/pages/site-acquisition/components/property-overview/PropertyOverviewSection.tsx) (target for implementing friction solutions)
