@@ -122,8 +122,9 @@ export function ProcessingStatusCard({
           <Typography
             sx={{
               fontSize: 'var(--ob-font-size-base)',
-              fontWeight: 600,
-              color: 'var(--ob-color-text-primary)',
+              fontWeight: 700,
+              color: 'text.primary',
+              letterSpacing: '-0.01em',
             }}
           >
             {title}
@@ -154,7 +155,7 @@ export function ProcessingStatusCard({
           }
           value={displayProgress}
           sx={{
-            height: 6,
+            height: 'var(--ob-space-050)',
             borderRadius: 'var(--ob-radius-xs)',
             bgcolor: 'var(--ob-surface-glass-subtle)',
             '& .MuiLinearProgress-bar': {
@@ -183,7 +184,8 @@ export function ProcessingStatusCard({
         <Typography
           sx={{
             fontSize: 'var(--ob-font-size-sm)',
-            color: 'var(--ob-text-secondary)',
+            color: 'text.secondary',
+            lineHeight: 1.4,
           }}
         >
           {statusMessage}
@@ -230,7 +232,7 @@ export function ProcessingStatusCard({
             pt: 'var(--ob-space-075)',
             borderTop: '1px solid var(--ob-color-border-subtle)',
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+            gridTemplateColumns: 'repeat(2, 1fr)',
             gap: 'var(--ob-space-075)',
           }}
         >
@@ -240,9 +242,9 @@ export function ProcessingStatusCard({
                 sx={{
                   fontSize: 'var(--ob-font-size-2xs)',
                   fontWeight: 600,
-                  letterSpacing: '0.06em',
+                  letterSpacing: '0.05em',
                   textTransform: 'uppercase',
-                  color: 'var(--ob-text-tertiary)',
+                  color: 'text.secondary',
                 }}
               >
                 {detail.label}
@@ -250,7 +252,9 @@ export function ProcessingStatusCard({
               <Typography
                 sx={{
                   fontSize: 'var(--ob-font-size-sm)',
-                  color: 'var(--ob-color-text-primary)',
+                  fontWeight: 600,
+                  color: 'text.primary',
+                  wordBreak: 'break-word',
                 }}
               >
                 {detail.value}

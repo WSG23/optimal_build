@@ -8,7 +8,7 @@
 4. **docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work** - ⚠️ **IMPORTANT** - Active task list & technical debt follow-ups
 5. **docs/ai-agents/next_steps.md** - How to choose your next task (decision tree)
 6. **docs/all_steps_to_product_completion.md#-known-testing-issues** - Known test issues (read BEFORE testing to avoid wasting time)
-7. **docs/ai-agents/claude.md** - Coding guidelines and mandatory workflows
+7. **CLAUDE.md** - Coding guidelines and mandatory workflows
 
 ---
 
@@ -93,7 +93,7 @@ This section lists ALL 20 instruction and reference files in this repository. Th
 3. ✅ **docs/all_steps_to_product_completion.md** - Project roadmap and current status
 4. ✅ **docs/ai-agents/next_steps.md** - Task decision guide
 5. ✅ **docs/all_steps_to_product_completion.md#-known-testing-issues** - Known test harness issues (not bugs)
-6. ✅ **docs/ai-agents/claude.md** - Claude-specific instructions and workflows
+6. ✅ **CLAUDE.md** - Claude-specific instructions and workflows
 7. ✅ **docs/ai-agents/codex.md** - Codex-specific instructions and mandatory testing checklist
 
 ### 📋 Additional Reference Files (Read When Relevant)

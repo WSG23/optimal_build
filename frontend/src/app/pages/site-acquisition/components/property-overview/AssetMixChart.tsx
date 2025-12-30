@@ -17,6 +17,7 @@ import {
   ResponsiveContainer,
   Legend,
   Tooltip,
+  type LegendProps,
 } from 'recharts'
 import { GlassCard } from '../../../../../components/canonical/GlassCard'
 
@@ -153,10 +154,8 @@ export function AssetMixChart({
   }
 
   // Custom legend
-  const renderLegend = (props: {
-    payload?: Array<{ value: string; color: string }>
-  }) => {
-    const { payload } = props
+  const renderLegend: LegendProps['content'] = (props) => {
+    const payload = Array.isArray(props?.payload) ? props.payload : null
     if (!payload) return null
 
     return (
@@ -170,7 +169,11 @@ export function AssetMixChart({
         }}
       >
         {payload.map((entry, index) => {
-          const sourceItem = data.find((d) => d.label === entry.value)
+          const label = String((entry as { value?: unknown }).value ?? '')
+          const sourceItem = data.find((d) => d.label === label)
+          const color =
+            (entry as { color?: string }).color ??
+            CHART_COLORS[index % CHART_COLORS.length]
           return (
             <Box
               key={`legend-${index}`}
@@ -182,10 +185,10 @@ export function AssetMixChart({
             >
               <Box
                 sx={{
-                  width: 10,
-                  height: 10,
+                  width: 'var(--ob-space-075)',
+                  height: 'var(--ob-space-075)',
                   borderRadius: 'var(--ob-radius-xs)',
-                  bgcolor: entry.color,
+                  bgcolor: color,
                 }}
               />
               <Typography
@@ -194,7 +197,7 @@ export function AssetMixChart({
                   color: 'var(--ob-text-secondary)',
                 }}
               >
-                {entry.value}{' '}
+                {label}{' '}
                 <Box
                   component="span"
                   sx={{
@@ -275,7 +278,7 @@ export function AssetMixChart({
           sx={{
             mt: 'var(--ob-space-100)',
             p: 'var(--ob-space-100)',
-            bgcolor: 'rgba(99, 102, 241, 0.08)', // Indigo background
+            bgcolor: 'var(--ob-color-status-info-bg)',
             borderLeft: '3px solid',
             borderColor: 'info.main',
             borderRadius: 'var(--ob-radius-xs)',

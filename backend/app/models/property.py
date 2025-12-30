@@ -152,7 +152,17 @@ class Property(BaseModel):
     data_source = Column(String(50))
     external_references = Column(JSON)  # Links to other databases
 
+    # Project Linking (for Finance integration)
+    project_id = Column(
+        UUID(),
+        ForeignKey("projects.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )  # Link to project for finance workflow
+    owner_email = Column(String(255))  # Track who owns/analyzes this property
+
     # Relationships
+    project = relationship("Project", back_populates="gps_properties")
     transactions = relationship("MarketTransaction", back_populates="property")
     rental_listings = relationship("RentalListing", back_populates="property")
     development_analyses = relationship(

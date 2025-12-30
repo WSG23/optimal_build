@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 // createPortal is used by modal components
 import {
   capturePropertyForDevelopment,
+  createFinanceProjectFromCapture,
   type DevelopmentScenario,
   type SiteAcquisitionResult,
   type GeometryDetailLevel,
@@ -59,8 +60,10 @@ import {
   InputLabel,
 } from '@mui/material'
 import { Refresh } from '@mui/icons-material'
+import { useRouterController } from '../../../router'
 
 export function SiteAcquisitionPage() {
+  const router = useRouterController()
   const [jurisdictionCode] = useState('SG')
   const [latitude, setLatitude] = useState('1.3000')
   const [longitude, setLongitude] = useState('103.8500')
@@ -69,6 +72,8 @@ export function SiteAcquisitionPage() {
     DevelopmentScenario[]
   >([])
   const [isCapturing, setIsCapturing] = useState(false)
+  const [isCreatingFinanceProject, setIsCreatingFinanceProject] =
+    useState(false)
   const [error, setError] = useState<string | null>(null)
   const [capturedProperty, setCapturedProperty] =
     useState<SiteAcquisitionResult | null>(null)
@@ -560,6 +565,56 @@ export function SiteAcquisitionPage() {
     }
   }
 
+  const handleCreateFinanceProject = useCallback(async () => {
+    if (!capturedProperty?.propertyId) {
+      setError('Capture a property before creating a finance project.')
+      return
+    }
+    if (isCreatingFinanceProject) {
+      return
+    }
+
+    setIsCreatingFinanceProject(true)
+    setError(null)
+
+    try {
+      const projectLabel =
+        capturedProperty.propertyInfo?.propertyName?.trim() ||
+        capturedProperty.address?.fullAddress?.trim() ||
+        'GPS Capture'
+
+      const created = await createFinanceProjectFromCapture(
+        capturedProperty.propertyId,
+        {
+          projectName: projectLabel,
+          scenarioName: 'Base Case',
+          totalEstimatedCapexSgd:
+            capturedProperty.financialSummary?.totalEstimatedCapexSgd ?? null,
+          totalEstimatedRevenueSgd:
+            capturedProperty.financialSummary?.totalEstimatedRevenueSgd ?? null,
+        },
+      )
+
+      const query = new URLSearchParams()
+      query.set('projectId', created.projectId)
+      if (created.projectName) {
+        query.set('projectName', created.projectName)
+      }
+      if (Number.isFinite(created.finProjectId) && created.finProjectId > 0) {
+        query.set('finProjectId', String(created.finProjectId))
+      }
+      router.navigate(`/finance?${query.toString()}`)
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to create finance project from capture.',
+      )
+    } finally {
+      setIsCreatingFinanceProject(false)
+    }
+  }, [capturedProperty, isCreatingFinanceProject, router])
+
   // Note: handleChecklistUpdate is provided by useChecklist hook
   // Note: handleReportExport is provided by useConditionAssessment hook
 
@@ -610,16 +665,56 @@ export function SiteAcquisitionPage() {
             {/* Property Overview - Content vs Context pattern */}
             <Box>
               {/* Header on background */}
-              <Typography variant="h5" fontWeight={600} gutterBottom>
-                Property Overview
-              </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mb: 'var(--ob-space-200)' }}
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 'var(--ob-space-150)',
+                  justifyContent: 'space-between',
+                  alignItems: { xs: 'stretch', sm: 'flex-start' },
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  mb: 'var(--ob-space-200)',
+                }}
               >
-                Captured property data and development metrics
-              </Typography>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="h5" fontWeight={600} gutterBottom>
+                    Property Overview
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Captured property data and development metrics
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    flexShrink: 0,
+                    display: 'flex',
+                    gap: 'var(--ob-space-050)',
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    onClick={handleCreateFinanceProject}
+                    disabled={isCreatingFinanceProject}
+                    sx={{
+                      bgcolor: 'var(--ob-color-neon-cyan)',
+                      color: 'var(--ob-neutral-900)',
+                      fontWeight: 600,
+                      '&:hover': {
+                        bgcolor:
+                          'color-mix(in srgb, var(--ob-color-neon-cyan) 85%, black)',
+                      },
+                      '&.Mui-disabled': {
+                        bgcolor:
+                          'color-mix(in srgb, var(--ob-color-neon-cyan) 40%, transparent)',
+                        color: 'var(--ob-neutral-600)',
+                      },
+                    }}
+                  >
+                    {isCreatingFinanceProject
+                      ? 'Creating finance project…'
+                      : 'Create Finance Project'}
+                  </Button>
+                </Box>
+              </Box>
 
               {/* Data cards - no wrapper needed, cards have their own styling */}
               <Box>
@@ -658,7 +753,12 @@ export function SiteAcquisitionPage() {
                       </Typography>
                     </Box>
 
-                    <Box sx={{ height: 500, bgcolor: 'black' }}>
+                    <Box
+                      sx={{
+                        height: 'var(--ob-max-height-table)',
+                        bgcolor: 'var(--ob-neutral-950)',
+                      }}
+                    >
                       <Preview3DViewer
                         previewUrl={previewJob.previewUrl}
                         metadataUrl={previewViewerMetadataUrl}

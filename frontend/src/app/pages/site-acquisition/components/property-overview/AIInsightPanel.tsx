@@ -31,22 +31,22 @@ export interface AIInsightPanelProps {
 
 const variantStyles = {
   info: {
-    bgcolor: 'rgba(99, 102, 241, 0.08)',
+    bgcolor: 'color-mix(in srgb, var(--ob-info-500) 8%, transparent)',
     borderColor: 'info.main',
     labelColor: 'info.main',
   },
   success: {
-    bgcolor: 'rgba(16, 185, 129, 0.08)',
+    bgcolor: 'color-mix(in srgb, var(--ob-success-500) 8%, transparent)',
     borderColor: 'success.main',
     labelColor: 'success.main',
   },
   warning: {
-    bgcolor: 'rgba(245, 158, 11, 0.08)',
+    bgcolor: 'color-mix(in srgb, var(--ob-warning-500) 8%, transparent)',
     borderColor: 'warning.main',
     labelColor: 'warning.main',
   },
   error: {
-    bgcolor: 'rgba(239, 68, 68, 0.08)',
+    bgcolor: 'color-mix(in srgb, var(--ob-error-500) 8%, transparent)',
     borderColor: 'error.main',
     labelColor: 'error.main',
   },

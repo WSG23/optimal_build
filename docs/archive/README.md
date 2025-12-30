@@ -28,6 +28,15 @@ This directory contains historical documentation that has been completed, supers
 
 - **phase2c_finance_delivery_plan_archived_2025-11-12.md** - Complete Phase 2C implementation plan (242 lines, 13 sections: objectives, baseline, gap analysis, data flow, backend/frontend implementation, privacy, observability, QA, timeline, decisions, checklist, changelog)
 
+### Documentation Cleanup (Dec 2025)
+**Context:** Major documentation cleanup to reduce redundancy and consolidate AI agent instructions.
+
+- **CODING_RULES_detailed_archived_2025-12-30.md** - Full 2,133-line coding rules with all examples (condensed version now in root CODING_RULES.md)
+- **design-token-audit_archived_2025-12-30.md** - Historical design token extraction (superseded by frontend/UI_STANDARDS.md)
+- **ENUM_MISMATCH_ANALYSIS_archived_2025-12-30.md** - Debug analysis for enum migration issues (one-time investigation)
+- **TEST_ISOLATION_ANALYSIS_archived_2025-12-30.md** - Test isolation investigation (one-time investigation)
+- **validation_results_phase2c_20251118_archived_2025-12-30.md** - Phase 2C validation results (dated content)
+
 ### Earlier Versions
 - **feature_delivery_plan_v1_deprecated.md** - Original v1 delivery plan (replaced by v2)
 
@@ -61,4 +70,4 @@ See repository root and `docs/` for active documentation:
 
 ---
 
-**Last Updated:** 2025-11-12
+**Last Updated:** 2025-12-30

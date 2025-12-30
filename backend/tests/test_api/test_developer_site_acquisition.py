@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -7,7 +8,10 @@ import pytest
 from backend._compat.datetime import utcnow
 
 from app.api.v1 import developers as developers_api
+from app.models.finance import FinCapitalStack, FinProject, FinScenario
 from app.models.preview import PreviewJob
+from app.models.projects import Project
+from app.models.property import Property, PropertyStatus, PropertyType
 from app.services.agents.gps_property_logger import PropertyLogResult
 from app.services.geocoding import Address
 from httpx import AsyncClient
@@ -234,3 +238,113 @@ async def test_developer_log_property_returns_envelope(
     assert refresh_response.status_code == 200
     refreshed_payload = refresh_response.json()
     assert refreshed_payload["status"] in {"ready", "processing"}
+
+
+@pytest.mark.asyncio
+async def test_create_finance_project_requires_identity_headers(
+    app_client: AsyncClient,
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    async with async_session_factory() as session:
+        session.add(
+            Property(
+                id=property_id,
+                name="GPS Capture Tower",
+                address="1 Developer Way",
+                jurisdiction_code="SG",
+                property_type=PropertyType.OFFICE,
+                status=PropertyStatus.EXISTING,
+                location="POINT(103.8198 1.2801)",
+            )
+        )
+        await session.commit()
+
+    response = await app_client.post(
+        f"/api/v1/developers/properties/{property_id}/create-project",
+        json={"projectName": "GPS Capture Tower"},
+    )
+
+    assert response.status_code == 403, response.text
+    payload = response.json()
+    assert "identity headers" in payload["detail"].lower()
+
+
+@pytest.mark.asyncio
+async def test_create_finance_project_from_capture_creates_finance_entities(
+    app_client: AsyncClient,
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    async with async_session_factory() as session:
+        session.add(
+            Property(
+                id=property_id,
+                name="GPS Capture Tower",
+                address="1 Developer Way",
+                jurisdiction_code="SG",
+                property_type=PropertyType.OFFICE,
+                status=PropertyStatus.EXISTING,
+                location="POINT(103.8198 1.2801)",
+            )
+        )
+        await session.commit()
+
+    headers = {"X-Role": "admin", "X-User-Email": "qa@example.com"}
+    response = await app_client.post(
+        f"/api/v1/developers/properties/{property_id}/create-project",
+        headers=headers,
+        json={
+            "projectName": "GPS Capture Tower",
+            "scenarioName": "Base Case",
+            "totalEstimatedCapexSgd": 1_000_000,
+            "totalEstimatedRevenueSgd": 1_100_000,
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+
+    project_id = UUID(payload["project_id"])
+    fin_project_id = int(payload["fin_project_id"])
+    scenario_id = int(payload["scenario_id"])
+
+    async with async_session_factory() as session:
+        property_record = await session.get(Property, property_id)
+        assert property_record is not None
+        assert str(property_record.project_id) == str(project_id)
+        assert property_record.owner_email == "qa@example.com"
+
+        project = await session.get(Project, str(project_id))
+        assert project is not None
+        assert project.owner_email == "qa@example.com"
+
+        fin_project = await session.get(FinProject, fin_project_id)
+        assert fin_project is not None
+        assert str(fin_project.project_id) == str(project_id)
+
+        scenario = await session.get(FinScenario, scenario_id)
+        assert scenario is not None
+        assert str(scenario.project_id) == str(project_id)
+        assert scenario.fin_project_id == fin_project_id
+        assert scenario.assumptions.get("cost_escalation")
+        assert scenario.assumptions.get("cash_flow")
+        assert scenario.assumptions.get("capital_stack")
+
+        stack_rows = (
+            (
+                await session.execute(
+                    select(FinCapitalStack).where(
+                        FinCapitalStack.scenario_id == scenario_id
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        assert len(stack_rows) == 3
+        stack_by_type = {row.source_type: row for row in stack_rows}
+        assert stack_by_type["equity"].amount == Decimal("350000.00")
+        assert stack_by_type["debt"].amount == Decimal("600000.00")
+        assert stack_by_type["preferred"].amount == Decimal("50000.00")
+        assert stack_by_type["preferred"].name == "Preferred"

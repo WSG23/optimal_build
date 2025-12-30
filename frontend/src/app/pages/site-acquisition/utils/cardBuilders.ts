@@ -163,8 +163,23 @@ function buildEnvelopeCard(
   formatNumber: NumberFormatter,
 ): PropertyOverviewCard {
   const envelope = capturedProperty.buildEnvelope
+  const info = capturedProperty.propertyInfo
   const formatArea = createAreaFormatter(formatNumber)
   const formatPlotRatio = createPlotRatioFormatter(formatNumber)
+  const formatHeight = createHeightFormatter(formatNumber)
+  const formatSiteCoverage = createSiteCoverageFormatter(formatNumber)
+
+  // Use envelope height limit if available, otherwise fall back to property info
+  const heightValue =
+    envelope.buildingHeightLimitM ?? info?.buildingHeight ?? null
+
+  // Build note: prefer source reference, then first assumption
+  let noteText: string | null = null
+  if (envelope.sourceReference) {
+    noteText = `Source: ${envelope.sourceReference}`
+  } else if (envelope.assumptions?.length) {
+    noteText = envelope.assumptions[0]
+  }
 
   return {
     title: 'Build envelope',
@@ -191,8 +206,16 @@ function buildEnvelopeCard(
         label: 'Additional potential',
         value: formatArea(envelope.additionalPotentialGfaSqm),
       },
+      {
+        label: 'Building height limit',
+        value: formatHeight(heightValue),
+      },
+      {
+        label: 'Site coverage',
+        value: formatSiteCoverage(envelope.siteCoveragePct),
+      },
     ],
-    note: envelope.assumptions?.length ? envelope.assumptions[0] : null,
+    note: noteText,
   }
 }
 
@@ -419,6 +442,9 @@ function buildFinancialCard(
       ? financialSummary.notes[0]
       : 'Sync with finance modelling to validate programme-level cash flows.'
 
+  // At GPS capture stage, only show high-level estimates.
+  // Capital stack (equity/debt split) and loan rates belong in Finance page
+  // after user clicks "Create Finance Project".
   const financialItems: Array<{ label: string; value: string }> = [
     {
       label: 'Total estimated revenue',
@@ -448,36 +474,9 @@ function buildFinancialCard(
     },
   ]
 
-  const financeBlueprint = financialSummary.financeBlueprint
-  if (financeBlueprint?.capitalStructure.length) {
-    const baseScenario =
-      financeBlueprint.capitalStructure.find(
-        (entry) => entry.scenario === 'Base Case',
-      ) ?? financeBlueprint.capitalStructure[0]
-    financialItems.push({
-      label: 'Capital stack (base)',
-      value: `${formatNumber(baseScenario.debtPct, {
-        maximumFractionDigits: 0,
-      })}% debt / ${formatNumber(baseScenario.equityPct, {
-        maximumFractionDigits: 0,
-      })}% equity`,
-    })
-  }
-  if (financeBlueprint?.debtFacilities.length) {
-    const constructionLoan = financeBlueprint.debtFacilities.find((facility) =>
-      facility.facilityType.toLowerCase().includes('construction'),
-    )
-    if (constructionLoan) {
-      financialItems.push({
-        label: 'Construction loan rate',
-        value: constructionLoan.interestRate,
-      })
-    }
-  }
-
   return {
     title: 'Financial snapshot',
-    subtitle: 'Optimisation-derived rollup',
+    subtitle: 'Optimisation-derived estimates',
     items: financialItems,
     note: financeNote,
   }
@@ -569,29 +568,8 @@ function buildVisualizationCard(
   }
 }
 
-function buildSiteMetricsCard(
-  capturedProperty: SiteAcquisitionResult,
-  formatNumber: NumberFormatter,
-): PropertyOverviewCard {
-  const info = capturedProperty.propertyInfo
-  const zoning = capturedProperty.uraZoning
-  const formatArea = createAreaFormatter(formatNumber)
-  const formatHeight = createHeightFormatter(formatNumber)
-  const formatPlotRatio = createPlotRatioFormatter(formatNumber)
-
-  return {
-    title: 'Site metrics',
-    items: [
-      { label: 'Site area', value: formatArea(info?.siteAreaSqm) },
-      { label: 'Approved GFA', value: formatArea(info?.gfaApproved) },
-      { label: 'Building height', value: formatHeight(info?.buildingHeight) },
-      {
-        label: 'Plot ratio',
-        value: formatPlotRatio(zoning?.plotRatio),
-      },
-    ],
-  }
-}
+// buildSiteMetricsCard removed - data consolidated into buildEnvelopeCard
+// Site area, GFA, plot ratio, and building height are now shown in Build Envelope card
 
 function buildZoningCard(
   capturedProperty: SiteAcquisitionResult,
@@ -756,8 +734,8 @@ export function buildPropertyOverviewCards(
     cards.push(visualizationCard)
   }
 
-  // Site metrics
-  cards.push(buildSiteMetricsCard(capturedProperty, formatNumber))
+  // Site metrics card removed - data is now consolidated in Build Envelope card
+  // (site area, GFA, plot ratio, building height)
 
   // Zoning & planning
   cards.push(buildZoningCard(capturedProperty, formatNumber))

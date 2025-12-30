@@ -948,6 +948,53 @@ curl -X POST http://localhost:9400/api/v1/singapore-property/calculate/buildable
 **Tag:** `developers`
 **Prefix:** `/api/v1/developers`
 
+### `POST /api/v1/developers/properties/{property_id}/create-project`
+
+Create a `Project` + `FinProject` + `FinScenario` seeded from a GPS-captured property, link the captured `Property` to the new `Project`, and return identifiers for routing into the Finance workspace.
+
+**Auth / Identity**
+- Requires role: `reviewer` or `admin` (`X-Role` header)
+- Requires identity headers for finance privacy enforcement:
+  - `X-User-Email: <email>` **or**
+  - `X-User-Id: <uuid>`
+
+**Request Body** (all fields optional)
+```json
+{
+  "projectName": "123 Orchard Road",
+  "scenarioName": "Base Case",
+  "totalEstimatedCapexSgd": 15000000,
+  "totalEstimatedRevenueSgd": 18500000
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "project_id": "a2c7df09-2ed7-4f8f-8c4d-2e8d2f2f3b1d",
+  "project_name": "123 Orchard Road",
+  "fin_project_id": 12,
+  "scenario_id": 34
+}
+```
+
+**Example**
+```bash
+PROPERTY_ID="a2c7df09-2ed7-4f8f-8c4d-2e8d2f2f3b1d"
+curl -X POST "http://localhost:9400/api/v1/developers/properties/${PROPERTY_ID}/create-project" \
+  -H "Content-Type: application/json" \
+  -H "X-Role: reviewer" \
+  -H "X-User-Email: demo-owner@example.com" \
+  -d '{
+    "projectName": "123 Orchard Road",
+    "scenarioName": "Base Case"
+  }'
+```
+
+**Error responses**
+- `403 Forbidden` – missing/invalid identity headers or insufficient role
+- `404 Not Found` – the property does not exist
+
 ### `GET /api/v1/developers/properties/{property_id}/condition-assessment/report`
 
 Return the full developer inspection report for a captured property. Supports JSON (default) and PDF export.

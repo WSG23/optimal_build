@@ -225,6 +225,9 @@ class Project(BaseModel):
     invitations = relationship(
         "TeamInvitation", back_populates="project", cascade="all, delete-orphan"
     )
+    gps_properties = relationship(
+        "Property", back_populates="project"
+    )  # GPS-captured commercial properties
 
     def __repr__(self) -> str:
         return f"<Project {self.project_name} ({self.project_code})>"

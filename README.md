@@ -1,42 +1,45 @@
 # Optimal Build
 
-## AI Agent Onboarding _(Mandatory)_
+Commercial real estate development platform for Singapore (primary) + HK, NZ, Seattle, Toronto.
 
--   Start with `START_HERE.md` for the exact reading order.
--   Read both `docs/all_steps_to_product_completion.md` and `docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md` **before** planning, writing a to‑do list, or touching code, then grab your next task from the [📌 Unified Execution Backlog](docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work).
--   Keep `docs/all_steps_to_product_completion.md#-known-testing-issues` handy while implementing and validating changes.
+## AI Agents - READ THIS FIRST
 
-## Key Features (v2)
+**Your rules are in `.cursorrules`** - this file is auto-loaded by most AI tools.
 
-### 🏗️ Feasibility Wizard (Professional & Visionary Tier)
+If your tool doesn't auto-load it, read these in order:
+1. `.cursorrules` - Critical rules (embedded, not pointers)
+2. `docs/ai-agents/next_steps.md` - What to build next
+3. `docs/all_steps_to_product_completion.md` - Project status
 
-The crown jewel of the platform, enabling rapid site assessment:
+**Do NOT start coding until you know what task you're working on.**
 
--   **Intelligent Zoning**: Auto-retrieves URA Master Plan rules.
--   **Financial Modeling**: Built-in Cap Rate, CoC, and financing inputs with ARGUS export.
--   **Scenario Lineage**: Save, restore, and compare multiple feasibility runs.
--   **Generative Design**: AI-powered massing strategies (Max Density, Iconic, Balanced).
--   **AI Planner Bot**: Interactive chat assistant for zoning queries.
--   **Data Room Integration**: Direct export to Virtual Data Rooms.
+---
 
-## Developer Setup
-
-After cloning the repository, install git hooks to enforce code quality:
+## Quick Start (Humans)
 
 ```bash
+# Install git hooks
 ./scripts/install-git-hooks.sh
+
+# Start development
+make dev
+
+# Before committing
+make format && make verify
 ```
 
-This installs pre-push hooks that run formatting checks, linting, and coding rules verification before allowing you to push. This prevents code quality violations from reaching the remote repository.
+## Tech Stack
 
-**To bypass hooks (not recommended):**
+- **Backend:** Python 3.13, FastAPI, PostgreSQL, SQLAlchemy (async)
+- **Frontend:** React, TypeScript, MUI
+- **Key constraint:** All DB operations must be async/await
 
-```bash
-SKIP_PRE_PUSH_CHECKS=1 git push
+## Key Directories
+
 ```
-
-## Working Notes
-
--   Backend is Python/FastAPI; frontend is React/TypeScript.
--   Prefer local pytest/NPM commands for verification; always tell the user which tests to run.
--   Update delivery docs alongside code changes.
+backend/app/api/v1/   # API endpoints
+backend/app/models/   # Database models
+backend/migrations/   # Alembic (NEVER edit existing files)
+frontend/src/         # React app
+docs/                 # Planning & status docs
+```

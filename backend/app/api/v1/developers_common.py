@@ -122,7 +122,10 @@ class DeveloperBuildEnvelope(BaseModel):
     max_buildable_gfa_sqm: Optional[float] = None
     current_gfa_sqm: Optional[float] = None
     additional_potential_gfa_sqm: Optional[float] = None
+    building_height_limit_m: Optional[float] = None
+    site_coverage_pct: Optional[float] = None
     assumptions: list[str] = Field(default_factory=list)
+    source_reference: Optional[str] = None  # Data source attribution
 
 
 class DeveloperMassingLayer(BaseModel):

@@ -102,9 +102,10 @@ const FinanceSensitivitySummary = lazy(() =>
   })),
 )
 
-// Align with seeded Phase 2B finance demo data (see backend/scripts/seed_finance_demo.py)
-const FINANCE_PROJECT_ID = '401'
-const FINANCE_PROJECT_NAME = 'Finance Demo Development'
+// Demo project ID for fallback when no project is selected (legacy support)
+// Users should navigate here from Site Acquisition with ?projectId=... query param
+const DEMO_PROJECT_ID = '401'
+const DEMO_PROJECT_NAME = 'Finance Demo Development'
 const POLL_INTERVAL_MS = 5000
 const IN_PROGRESS_STATUSES = new Set([
   'queued',
@@ -298,12 +299,13 @@ export function FinanceWorkspace() {
   const { search, path, navigate } = router
   const projectParams = useMemo(() => parseProjectParams(search), [search])
   const lastProject = useMemo(() => readLastProjectSelection(), [])
+  // Priority: URL params > session storage > demo fallback (for backwards compatibility)
   const initialProjectId =
-    projectParams.projectId ?? lastProject?.projectId ?? FINANCE_PROJECT_ID
+    projectParams.projectId ?? lastProject?.projectId ?? DEMO_PROJECT_ID
   const initialProjectName =
     projectParams.projectName ??
     lastProject?.projectName ??
-    FINANCE_PROJECT_NAME
+    (initialProjectId === DEMO_PROJECT_ID ? DEMO_PROJECT_NAME : null)
   const [selectedProjectId, setSelectedProjectId] = useState(initialProjectId)
   const [selectedProjectName, setSelectedProjectName] = useState<string | null>(
     initialProjectName,
@@ -339,9 +341,10 @@ export function FinanceWorkspace() {
     selectedProjectId,
     selectedProjectName,
   ])
-  const effectiveProjectId = selectedProjectId || FINANCE_PROJECT_ID
+  const effectiveProjectId = selectedProjectId || DEMO_PROJECT_ID
   const effectiveProjectName =
-    selectedProjectName ?? (selectedProjectId ? null : FINANCE_PROJECT_NAME)
+    selectedProjectName ??
+    (selectedProjectId === DEMO_PROJECT_ID ? DEMO_PROJECT_NAME : null)
   const { scenarios, loading, error, refresh, addScenario } =
     useFinanceScenarios({
       projectId: effectiveProjectId,

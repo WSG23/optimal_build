@@ -6,8 +6,8 @@ Extended persona playbooks for `optimal_build`. These provide deeper guidance be
 
 | Document | Purpose |
 |----------|---------|
-| [MCP.md](../../MCP.md) | Core directives and persona summaries |
-| [AGENTS.md](../../AGENTS.md) | Agent roster and capability matrix |
+| [MCP.md](../../MCP.md) | Core directives, persona summaries, agent roster |
+| [CLAUDE.md](../../CLAUDE.md) | Claude-specific instructions and workflows |
 | [_TEMPLATE.md](./_TEMPLATE.md) | Template for creating new playbooks |
 
 ## Playbook Index
@@ -100,7 +100,6 @@ Each playbook follows this structure:
 2. Fill in all sections
 3. Add entry to this README
 4. Add persona to [MCP.md](../../MCP.md) Section 2
-5. Update [AGENTS.md](../../AGENTS.md) if needed
 
 ## Persona coverage checklist (for PRs/CI)
 

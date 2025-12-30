@@ -1,15 +1,70 @@
 # Claude AI Agent Guide for optimal_build
 
-> [!IMPORTANT] > **PRIMARY DIRECTIVE**: As an Anthropic agent (Claude), your primary operating procedure is to adhere to the Master Control Prompt.
-
-**Pointer**: You must read and follow **[MCP.md](./MCP.md)** before proceeding with any task.
-
-**Version:** 1.2
-**Last Updated:** 2025-12-06
-
-This document provides comprehensive guidance for Claude (and other AI agents) when working on the optimal_build codebase. Follow these rules strictly to maintain code quality and project consistency.
+> [!CAUTION]
+> **STOP - Read the 5 critical rules below BEFORE writing any code.**
 
 ---
+
+## 5 CRITICAL RULES (Build will FAIL if violated)
+
+### 1. Database Migrations - NEVER EDIT EXISTING FILES
+```bash
+# CORRECT - Create new migration
+cd backend && alembic revision -m "add_column"
+
+# WRONG - Never edit files in backend/migrations/versions/
+```
+- Use `sa.String()` for ENUM columns, NOT `sa.Enum()`
+
+### 2. Async/Await - ALL Database Operations
+```python
+# CORRECT
+async def get_item(db: AsyncSession, id: int):
+    result = await db.execute(select(Item).where(Item.id == id))
+    return result.scalar_one_or_none()
+
+# WRONG - Missing async/await
+def get_item(db: Session, id: int):
+    return db.query(Item).filter(Item.id == id).first()
+```
+
+### 3. Before Committing - MUST RUN
+```bash
+make format   # Auto-fix formatting
+make verify   # MUST PASS before commit
+```
+
+### 4. Frontend UI - Use Design Tokens (no hardcoded px/colors)
+```tsx
+// CORRECT
+<Box sx={{ p: 'var(--ob-space-100)', borderRadius: 'var(--ob-radius-sm)' }}>
+
+// WRONG
+<Box sx={{ p: '16px', borderRadius: '12px' }}>
+```
+
+### 5. Testing - Always Provide Commands
+After completing ANY feature, tell user:
+```bash
+pytest backend/tests/test_api/test_[feature].py -v
+```
+
+---
+
+## Before Starting Any Task
+
+| Question | Where to Check |
+|----------|----------------|
+| What should I build? | `docs/ai-agents/next_steps.md` |
+| What's already done? | `docs/all_steps_to_product_completion.md` |
+
+---
+
+## Full Documentation (Reference)
+
+**Version:** 1.2 | **Last Updated:** 2025-12-30
+
+The sections below provide comprehensive guidance. The 5 rules above are the most critical.
 
 ## Table of Contents
 

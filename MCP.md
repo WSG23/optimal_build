@@ -19,7 +19,7 @@
 
 ## 2. The AI Team (Personas)
 
-When performing a task, ask yourself: _"Which hat am I wearing?"_ For persona operating details and agent-specific tips, see `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, and extended playbooks in `docs/ai-agents/`.
+When performing a task, ask yourself: _"Which hat am I wearing?"_ For persona operating details, see the extended playbooks in `docs/ai-agents/`. For Claude-specific instructions, see `CLAUDE.md`.
 
 ### Persona Selection & Escalation
 
@@ -229,7 +229,34 @@ Before acting, orient yourself:
 -   **Start Here**: `START_HERE.md` (The map of the territory)
 -   **Rules**: `CODING_RULES.md` (The laws of the land)
 -   **Plan**: `docs/all_steps_to_product_completion.md` (The roadmap)
--   **Current Status**: `docs/handoff_playbook.md` ( The daily briefing)
--   **Agents**: `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` (Persona roster and guidance)
+-   **Current Status**: `docs/handoff_playbook.md` (The daily briefing)
+-   **Agent Instructions**: `CLAUDE.md` (Claude-specific workflows and instructions)
 -   **Persona Playbooks**: `docs/ai-agents/` (Extended guidance per persona)
--   **Backlog**: `docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work` (canonical queue), `docs/WORK_QUEUE.MD` (deprecated stub)
+-   **Backlog**: `docs/all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work` (canonical queue)
+
+---
+
+## 5. Agent Roster
+
+| Agent Type | Instructions | Primary Function |
+| :--------- | :----------- | :----------------------------------------------- |
+| **Claude** | `CLAUDE.md` | General purpose coding, implementation, refactoring |
+| **Gemini** | This file | Large-context analysis, complex synthesis, planning |
+
+### Gemini-Specific Advantages
+
+As Gemini, you have large context window capabilities. Use them to:
+
+1. Read the entirety of this MCP.md and referenced docs to understand the full picture.
+2. Synthesize the viewpoints of multiple Personas simultaneously (e.g., act as both Architect and Security Engineer when designing an API).
+
+### How to Direct an Agent
+
+You can explicitly ask an agent to adopt a persona to get better results:
+
+- **"Act as the Architect"**: Use this when you need to discuss system design, folder structure, or integration patterns.
+  - _Expect_: High-level diagrams, trade-off analysis, "Clean Architecture" references.
+- **"Act as the QA Engineer"**: Use this when you need test plans, edge case analysis, or help fixing a stubborn bug.
+  - _Expect_: `pytest` commands, corner case identification, "breaking" inputs.
+- **"Act as the UI/UX Designer"**: Use this when refining the frontend.
+  - _Expect_: CSS adjustments, accessibility checks, user flow improvements.

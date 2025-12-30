@@ -222,6 +222,10 @@ _No active tasks. Pull from the Ready queue below._
 ---
 
 ### ✅ Completed (Last 30 Days)
+- **2025-12-30:** Site Acquisition → Finance project handoff (Codex Local) — GPS captures can now be promoted into Finance:
+  - **DB:** `properties.project_id` link added (nullable FK + index) so GPS-captured `Property` rows can attach to `projects`.
+  - **API:** `POST /api/v1/developers/properties/{property_id}/create-project` creates `Project` → `FinProject` → `FinScenario` and returns IDs for Finance routing.
+  - **UI:** Site Acquisition page adds “Create Finance Project” button that navigates to `/finance?projectId=...&projectName=...`.
 - **2025-12-06:** Phase 2D UI COMPLETE (Claude) — Full UI integration for multi-phase development:
   - **Page:** `frontend/src/app/pages/phase-management/PhaseManagementPage.tsx` — Tabbed interface with Gantt, Critical Path, Heritage, Tenant tabs
   - **Components:**

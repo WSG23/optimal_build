@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, Optional, Sequence
 from uuid import UUID
 
@@ -39,8 +40,12 @@ from app.api.v1.developers_common import (
 )
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
+from app.api.deps import RequestIdentity, require_reviewer
 from app.models.property import Property
 from app.schemas.finance import FinanceAssetMixInput
+from app.services.finance_project_creation import (
+    create_finance_project_from_capture,
+)
 from app.services.agents.gps_property_logger import (
     DevelopmentScenario as CaptureScenario,
     GPSPropertyLogger,
@@ -52,7 +57,6 @@ from app.services import preview_generator
 from app.services.geocoding import Address, GeocodingService
 from app.services.jurisdictions import get_jurisdiction_config
 from app.services.preview_jobs import PreviewJobService, PreviewJobStatus
-from datetime import datetime
 
 router = APIRouter(prefix="/developers", tags=["developers"])
 logger = structlog.get_logger()
@@ -318,17 +322,55 @@ def _collect_quick_metrics(
 # =============================================================================
 
 
-def _derive_build_envelope(result: PropertyLogResult) -> DeveloperBuildEnvelope:
-    """Construct zoning/buildability summary from capture payload."""
+async def _derive_build_envelope(
+    result: PropertyLogResult,
+    session: AsyncSession,
+    jurisdiction: str = "SG",
+) -> DeveloperBuildEnvelope:
+    """Construct zoning/buildability summary from RefRule database.
+
+    Queries the RefRule database for zoning parameters (plot ratio, height limits,
+    site coverage) instead of using hardcoded mock values from URAIntegrationService.
+    """
+    from app.services.rules.zone_rules import get_zoning_rules_for_zone
 
     ura_data = result.ura_zoning or {}
     property_info = result.property_info or {}
 
-    zone_code = ura_data.get("zone_code") or ura_data.get("zoneCode")
-    zone_description = ura_data.get("zone_description") or ura_data.get(
-        "zoneDescription"
+    # Get zone code from URA service (still used for zone identification)
+    raw_zone_code = ura_data.get("zone_code") or ura_data.get("zoneCode")
+
+    # Query RefRule database for zoning parameters
+    rules_result = await get_zoning_rules_for_zone(
+        session=session,
+        zone_code=raw_zone_code,
+        jurisdiction=jurisdiction,
     )
-    plot_ratio = _coerce_float(ura_data.get("plot_ratio") or ura_data.get("plotRatio"))
+
+    # Use rules data if available, otherwise fall back to URA service data
+    if rules_result.has_data:
+        plot_ratio = rules_result.plot_ratio
+        zone_code = rules_result.zone_code
+        zone_description = rules_result.zone_description
+        building_height_limit = rules_result.building_height_limit_m
+        site_coverage = rules_result.site_coverage_pct
+        source_reference = rules_result.source_reference
+    else:
+        # Fallback to URA service data (mocked)
+        plot_ratio = _coerce_float(
+            ura_data.get("plot_ratio") or ura_data.get("plotRatio")
+        )
+        zone_code = str(raw_zone_code) if raw_zone_code else None
+        zone_description = ura_data.get("zone_description") or ura_data.get(
+            "zoneDescription"
+        )
+        building_height_limit = _coerce_float(
+            ura_data.get("building_height_limit") or ura_data.get("buildingHeightLimit")
+        )
+        site_coverage = _coerce_float(
+            ura_data.get("site_coverage") or ura_data.get("siteCoverage")
+        )
+        source_reference = "URA Service (Mock Data - RefRule not found)"
 
     site_area = _coerce_float(
         property_info.get("site_area_sqm") or property_info.get("siteAreaSqm")
@@ -353,13 +395,14 @@ def _derive_build_envelope(result: PropertyLogResult) -> DeveloperBuildEnvelope:
     assumptions: list[str] = []
     if plot_ratio is not None and site_area is not None:
         assumptions.append(
-            f"Assumes URA plot ratio {plot_ratio:g} applies uniformly across "
-            f"{site_area:,.0f} sqm site area."
+            f"Plot ratio {plot_ratio:g} applied to {site_area:,.0f} sqm site area."
         )
     if zone_description:
         assumptions.append(
-            f"Envelope derived from {str(zone_description).lower()} zoning guidance."
+            f"Envelope derived from {str(zone_description).lower()} zoning rules."
         )
+    if rules_result.rules_found > 0:
+        assumptions.append(f"Data from {rules_result.rules_found} RefRule entries.")
     if not assumptions:
         assumptions.append(
             "Plot ratio or site area unavailable; envelope estimated from captured metadata."
@@ -373,7 +416,10 @@ def _derive_build_envelope(result: PropertyLogResult) -> DeveloperBuildEnvelope:
         max_buildable_gfa_sqm=_round_optional(max_buildable),
         current_gfa_sqm=_round_optional(current_gfa),
         additional_potential_gfa_sqm=_round_optional(additional),
+        building_height_limit_m=_round_optional(building_height_limit),
+        site_coverage_pct=_round_optional(site_coverage),
         assumptions=assumptions,
+        source_reference=source_reference,
     )
 
 
@@ -925,6 +971,44 @@ class DeveloperGPSLogResponse(BaseModel):
 DeveloperGPSLogResponse.model_rebuild()
 
 
+class FinanceProjectCreateRequest(BaseModel):
+    """Request body for creating a finance project/scenario from a GPS capture."""
+
+    project_name: str | None = Field(
+        default=None, validation_alias=AliasChoices("project_name", "projectName")
+    )
+    scenario_name: str | None = Field(
+        default=None, validation_alias=AliasChoices("scenario_name", "scenarioName")
+    )
+    total_estimated_capex_sgd: float | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "total_estimated_capex_sgd",
+            "totalEstimatedCapexSgd",
+            "total_estimated_capex",
+            "totalEstimatedCapex",
+        ),
+    )
+    total_estimated_revenue_sgd: float | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "total_estimated_revenue_sgd",
+            "totalEstimatedRevenueSgd",
+            "total_estimated_revenue",
+            "totalEstimatedRevenue",
+        ),
+    )
+
+
+class FinanceProjectCreateResponse(BaseModel):
+    """Response envelope for finance project creation."""
+
+    project_id: UUID
+    fin_project_id: int
+    scenario_id: int
+    project_name: str
+
+
 # =============================================================================
 # Route Handlers
 # =============================================================================
@@ -998,7 +1082,9 @@ async def developer_log_property_by_gps(
     quick_analysis_dict = quick_analysis.model_dump()
     heritage_overlay = getattr(result, "heritage_overlay", None)
 
-    build_envelope = _derive_build_envelope(result)
+    build_envelope = await _derive_build_envelope(
+        result, session, property_jurisdiction
+    )
     optimizations, heritage_context, optimization_outcome = _build_asset_optimizations(
         result.existing_use,
         build_envelope,
@@ -1100,6 +1186,50 @@ async def developer_log_property_by_gps(
         preview_jobs=preview_jobs_payload,
         property_info=property_info_dict or None,
         timestamp=result.timestamp,
+    )
+
+
+@router.post(
+    "/properties/{property_id}/create-project",
+    response_model=FinanceProjectCreateResponse,
+)
+async def create_finance_project_for_capture(
+    property_id: UUID,
+    payload: FinanceProjectCreateRequest | None = None,
+    session: AsyncSession = Depends(get_session),
+    identity: RequestIdentity = Depends(require_reviewer),
+) -> FinanceProjectCreateResponse:
+    """Create a finance project/scenario seeded from the GPS capture."""
+
+    request_payload = payload or FinanceProjectCreateRequest()
+    try:
+        result = await create_finance_project_from_capture(
+            session=session,
+            identity=identity,
+            property_id=property_id,
+            project_name=request_payload.project_name,
+            scenario_name=request_payload.scenario_name,
+            total_estimated_capex_sgd=request_payload.total_estimated_capex_sgd,
+            total_estimated_revenue_sgd=request_payload.total_estimated_revenue_sgd,
+        )
+    except ValueError as exc:
+        if str(exc) == "identity_required":
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "Finance project creation requires identity headers "
+                    "(X-User-Email or X-User-Id)."
+                ),
+            ) from exc
+        if str(exc) == "property_not_found":
+            raise HTTPException(status_code=404, detail="Property not found") from exc
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return FinanceProjectCreateResponse(
+        project_id=result.project_id,
+        fin_project_id=result.fin_project_id,
+        scenario_id=result.scenario_id,
+        project_name=result.project_name,
     )
 
 

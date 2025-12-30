@@ -10,6 +10,7 @@ import {
   boolish,
   roundOptional,
 } from './shared'
+import { applyIdentityHeaders } from './identity'
 
 import {
   fetchChecklistSummary as fetchChecklistSummaryFromAgents,
@@ -54,7 +55,10 @@ export interface DeveloperBuildEnvelope {
   maxBuildableGfaSqm: number | null
   currentGfaSqm: number | null
   additionalPotentialGfaSqm: number | null
+  buildingHeightLimitM: number | null
+  siteCoveragePct: number | null
   assumptions: string[]
+  sourceReference: string | null
 }
 
 export interface DeveloperVisualizationSummary {
@@ -197,6 +201,20 @@ export interface DeveloperFinanceBlueprint {
   cashFlowTimeline: DeveloperCashFlowMilestone[]
   exitAssumptions: DeveloperExitAssumptions | null
   sensitivityBands: DeveloperSensitivityBand[]
+}
+
+export interface FinanceProjectCreatePayload {
+  projectName?: string | null
+  scenarioName?: string | null
+  totalEstimatedCapexSgd?: number | null
+  totalEstimatedRevenueSgd?: number | null
+}
+
+export interface FinanceProjectCreateResult {
+  projectId: string
+  projectName: string
+  finProjectId: number
+  scenarioId: number
 }
 
 export interface ConditionSystem {
@@ -425,7 +443,13 @@ interface RawDeveloperEnvelope {
   currentGfaSqm?: unknown
   additional_potential_gfa_sqm?: unknown
   additionalPotentialGfaSqm?: unknown
+  building_height_limit_m?: unknown
+  buildingHeightLimitM?: unknown
+  site_coverage_pct?: unknown
+  siteCoveragePct?: unknown
   assumptions?: unknown
+  source_reference?: unknown
+  sourceReference?: unknown
 }
 
 interface RawDeveloperVisualization {
@@ -505,6 +529,15 @@ function mapDeveloperEnvelope(
   const additional =
     coerceNumeric(payload?.additional_potential_gfa_sqm) ??
     coerceNumeric(payload?.additionalPotentialGfaSqm)
+  const buildingHeightLimitM =
+    coerceNumeric(payload?.building_height_limit_m) ??
+    coerceNumeric(payload?.buildingHeightLimitM)
+  const siteCoveragePct =
+    coerceNumeric(payload?.site_coverage_pct) ??
+    coerceNumeric(payload?.siteCoveragePct)
+  const sourceReference =
+    coerceString(payload?.source_reference) ??
+    coerceString(payload?.sourceReference)
 
   const assumptions = Array.isArray(payload?.assumptions)
     ? payload!.assumptions
@@ -520,7 +553,10 @@ function mapDeveloperEnvelope(
     maxBuildableGfaSqm: roundOptional(maxBuildable),
     currentGfaSqm: roundOptional(currentGfa),
     additionalPotentialGfaSqm: roundOptional(additional),
+    buildingHeightLimitM: roundOptional(buildingHeightLimitM),
+    siteCoveragePct: roundOptional(siteCoveragePct),
     assumptions,
+    sourceReference: sourceReference ?? null,
   }
 }
 
@@ -589,7 +625,7 @@ function mapDeveloperVisualization(
             coerceNumeric(item.estimated_height_m) ??
             coerceNumeric(item.estimatedHeightM) ??
             null
-          const color = coerceString(item.color) ?? '#ADB5BD'
+          const color = coerceString(item.color) ?? 'var(--ob-neutral-400)'
           if (!assetType || allocationPct === null) {
             return null
           }
@@ -1125,7 +1161,10 @@ function deriveEnvelopeFromSummary(
     maxBuildableGfaSqm: roundOptional(maxBuildable),
     currentGfaSqm: roundOptional(currentGfa),
     additionalPotentialGfaSqm: roundOptional(additional),
+    buildingHeightLimitM: null,
+    siteCoveragePct: null,
     assumptions,
+    sourceReference: null,
   }
 }
 
@@ -1534,6 +1573,52 @@ export async function listPreviewJobs(
   }
   const payload = await response.json()
   return mapPreviewJobs(payload)
+}
+
+export async function createFinanceProjectFromCapture(
+  propertyId: string,
+  payload: FinanceProjectCreatePayload = {},
+  signal?: AbortSignal,
+): Promise<FinanceProjectCreateResult> {
+  const response = await fetch(
+    buildUrl(`api/v1/developers/properties/${propertyId}/create-project`),
+    {
+      method: 'POST',
+      headers: applyIdentityHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        projectName: payload.projectName ?? undefined,
+        scenarioName: payload.scenarioName ?? undefined,
+        totalEstimatedCapexSgd: payload.totalEstimatedCapexSgd ?? undefined,
+        totalEstimatedRevenueSgd: payload.totalEstimatedRevenueSgd ?? undefined,
+      }),
+      signal,
+    },
+  )
+
+  if (!response.ok) {
+    const detail = await response.text()
+    throw new Error(
+      detail ||
+        `Request to create finance project failed with status ${response.status}`,
+    )
+  }
+
+  const parsed = (await response.json()) as {
+    project_id?: string
+    fin_project_id?: number
+    scenario_id?: number
+    project_name?: string
+  }
+  const projectId = String(parsed.project_id ?? '').trim()
+  if (!projectId) {
+    throw new Error('Finance project creation response missing project_id')
+  }
+  return {
+    projectId,
+    projectName: String(parsed.project_name ?? '').trim() || projectId,
+    finProjectId: Number(parsed.fin_project_id ?? 0),
+    scenarioId: Number(parsed.scenario_id ?? 0),
+  }
 }
 
 /**

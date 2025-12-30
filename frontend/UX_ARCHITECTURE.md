@@ -886,6 +886,14 @@ Before submitting UI code changes, verify:
 - [ ] Status badges use StatusChip with appropriate status colors
 - [ ] Summary/footer rows have gray background
 
+**Grid Column Decision (see Decision Framework below):**
+
+- [ ] Atomic/KPI data uses 4-column layout (monitoring mode)
+- [ ] Narrative/analysis content uses 3-column layout (decision mode)
+- [ ] Hybrid approach: 4-column base with col-span for charts/analysis
+- [ ] Pie charts in 1-column span, complex charts in 2-column span
+- [ ] No text-wrapping fatigue (narrative cards not squeezed into 4-col)
+
 **Charts & Visualizations:**
 
 - [ ] Using Recharts (not other chart libraries)
@@ -906,9 +914,136 @@ Before submitting UI code changes, verify:
 
 ---
 
+## Grid Column Decision Framework (4-Column vs 3-Column)
+
+The choice between 4-column and 3-column layouts is a fundamental architectural decision that dictates how users process information.
+
+### The Four Principles
+
+#### 1. Information Granularity Principle
+
+| Layout                           | Use When                                | Examples                                                             |
+| -------------------------------- | --------------------------------------- | -------------------------------------------------------------------- |
+| **4-Column** (High Density)      | Data points are **discrete and atomic** | KPIs, status badges, metrics (Temperature, Status, Price, Occupancy) |
+| **3-Column** (Narrative Density) | Each item contains a **micro-story**    | Cards with header + paragraph + action button                        |
+
+**Warning:** Using 4-columns for narrative content causes "text-wrapping fatigue" - the UI feels cluttered and cheap.
+
+#### 2. Scanning Pattern Principle (F-Pattern vs Z-Pattern)
+
+| Layout       | Eye Movement               | Best For                                                   |
+| ------------ | -------------------------- | ---------------------------------------------------------- |
+| **4-Column** | Rapid horizontal scanning  | **Comparative analysis** - comparing Site A vs B vs C vs D |
+| **3-Column** | Slower vertical absorption | **Decision-making** - each card is a significant entity    |
+
+#### 3. Mathematical Rhythm (12-Column Grid)
+
+| Layout                    | Grid Units       | Characteristics                                            |
+| ------------------------- | ---------------- | ---------------------------------------------------------- |
+| **4-Column** (12 ÷ 3 = 4) | "Speed" grid     | Flexible Golden Ratio shifts (two 1-col + one 2-col cards) |
+| **3-Column** (12 ÷ 4 = 3) | "Stability" grid | Premium feel, better tablet/mobile adaptation              |
+
+#### 4. Content Aspect Ratio & Visualization
+
+| Content Type                | 4-Column              | 3-Column                     |
+| --------------------------- | --------------------- | ---------------------------- |
+| **Pie charts, sparklines**  | ✅ Thrives            | Acceptable                   |
+| **Complex bar/line charts** | ❌ Needs tooltips     | ✅ Readable without tooltips |
+| **Photography/renders**     | Looks like thumbnails | ✅ Cinematic feel            |
+
+### The Golden Rule
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  If user needs to MONITOR (watch numbers change) → 4 columns   │
+│  If user needs to ANALYZE (read and understand)  → 3 columns   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Hybrid Approach (Recommended)
+
+Use **col-span** to create visual hierarchy within a base grid:
+
+```tsx
+// 4-column base with hybrid spans
+<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
+    {/* Atomic metrics - 1 column each */}
+    <Box>Location</Box> {/* span 1 */}
+    <Box>Envelope</Box> {/* span 1 */}
+    <Box>Heritage</Box> {/* span 1 */}
+    <Box>Status</Box> {/* span 1 */}
+    {/* Narrative content - 2 columns */}
+    <Box sx={{ gridColumn: 'span 2' }}>Asset Mix Chart</Box>
+    <Box sx={{ gridColumn: 'span 2' }}>Financial Analysis</Box>
+</Box>
+```
+
+---
+
+## ⚠️ CRITICAL LAYOUT REQUIREMENTS - DO NOT MODIFY
+
+These layout requirements are **locked** and must not be changed without explicit product approval.
+Regression tests exist in `PropertyOverviewSection.test.tsx` to enforce these.
+
+### Property Overview 4-Column Grid
+
+**Requirement:** The Property Overview section MUST use a 4-column responsive grid.
+
+**Why 4 columns for Property Overview?**
+
+- Property metrics are **atomic** (Location, Envelope, Heritage, Financial) - high density appropriate
+- Users need to **monitor** multiple KPIs simultaneously
+- 8+ cards fit in 2 rows = single viewport, minimal scrolling
+- Hybrid spans used for charts (Asset Mix spans 2 columns)
+
+```tsx
+// ⚠️ LOCKED - DO NOT CHANGE
+gridTemplateColumns: {
+  xs: '1fr',              // Mobile: 1 column
+  sm: 'repeat(2, 1fr)',   // Tablet: 2 columns
+  lg: 'repeat(4, 1fr)',   // Desktop: 4 columns ← MUST be 4
+}
+```
+
+**If you're tempted to reduce columns:** STOP. Consult product owner first.
+
+### Card-Type-Specific Layouts
+
+**Requirement:** Each card type MUST have a unique layout tailored to its content.
+
+```
+❌ WRONG - Uniform label-value pairs for all cards
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│ Label: Val  │ │ Label: Val  │ │ Label: Val  │
+│ Label: Val  │ │ Label: Val  │ │ Label: Val  │
+│ Label: Val  │ │ Label: Val  │ │ Label: Val  │
+└─────────────┘ └─────────────┘ └─────────────┘
+
+✅ CORRECT - Type-specific layouts
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│ Address     │ │ Zone │ 4.0  │ │ Risk Level  │
+│ Multi-line  │ │ ─────────── │ │ ┌─────────┐ │
+│─────────────│ │ Height: 50m │ │ │LOW RISK │ │
+│Dist │Tenure │ │ GFA: 20000  │ │ └─────────┘ │
+└─────────────┘ └─────────────┘ └─────────────┘
+ Location       Build Envelope   Heritage
+```
+
+**Card layouts are implemented via SmartCard:**
+
+- `LocationTenureCard` - Address multi-line + 2-col grid
+- `BuildEnvelopeCard` - Zone/PlotRatio header + divider + rows
+- `HeritageCard` - Risk level as colored badge
+- `FinancialCard` - Large hero numbers for Rev/CAPEX
+- `ZoningCard` - Bottom divider rows + tags
+
+**If you're tempted to "simplify" to one layout:** STOP. This causes visual monotony.
+
+---
+
 ## Reference Implementations
 
 - **Content vs Context**: [RulePackExplanationPanel.tsx](src/modules/cad/RulePackExplanationPanel.tsx)
 - **AI Studio Principles**: [MultiScenarioComparisonSection.tsx](src/app/pages/site-acquisition/components/multi-scenario-comparison/MultiScenarioComparisonSection.tsx)
 - **Master-Detail Layout**: [FinanceWorkspace.tsx](src/modules/finance/FinanceWorkspace.tsx)
-- **UX Friction Solutions**: [PropertyOverviewSection.tsx](src/app/pages/site-acquisition/components/property-overview/PropertyOverviewSection.tsx) (target for implementing friction solutions)
+- **UX Friction Solutions**: [PropertyOverviewSection.tsx](src/app/pages/site-acquisition/components/property-overview/PropertyOverviewSection.tsx) (implements 4-column grid + card-type-specific layouts)
