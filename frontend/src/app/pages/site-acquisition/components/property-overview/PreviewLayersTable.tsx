@@ -17,6 +17,7 @@
  */
 
 import { useState, Fragment } from 'react'
+
 import {
   Visibility,
   VisibilityOff,
@@ -24,6 +25,8 @@ import {
   ExpandMore,
   ExpandLess,
 } from '@mui/icons-material'
+
+import { Button } from '../../../../../components/canonical/Button'
 import type {
   PreviewLayerMetadata,
   PreviewLegendEntry,
@@ -212,35 +215,35 @@ export function PreviewLayersTable({
 
       {/* Action Bar */}
       <div className="preview-layers-master-table__actions">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onShowAll}
           disabled={
             isLoading ||
             !layers.length ||
             (hiddenLayerCount === 0 && !focusLayerId)
           }
-          className="preview-layers-master-table__btn"
         >
           Show All
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onResetFocus}
           disabled={!focusLayerId}
-          className="preview-layers-master-table__btn"
         >
           Reset View
-        </button>
+        </Button>
         {onLegendReset && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onLegendReset}
             disabled={legendEntries.length === 0}
-            className="preview-layers-master-table__btn"
           >
             Reset Legend
-          </button>
+          </Button>
         )}
       </div>
 

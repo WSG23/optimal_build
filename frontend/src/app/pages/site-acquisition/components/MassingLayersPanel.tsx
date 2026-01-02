@@ -10,11 +10,13 @@
  * - Functional Color Language: Cyan for focus state
  */
 
-import { Box, IconButton, Typography, Stack, Button } from '@mui/material'
+import { Box, IconButton, Typography, Stack } from '@mui/material'
 import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material'
+
+import { Button } from '../../../../components/canonical/Button'
 import type { PreviewLayerMetadata } from '../previewMetadata'
 
 export interface MassingLayersPanelProps {
@@ -83,18 +85,7 @@ export function MassingLayersPanel({
           Massing Layers
         </Typography>
         {focusLayerId && (
-          <Button
-            size="small"
-            onClick={onResetFocus}
-            sx={{
-              fontSize: 'var(--ob-font-size-2xs)',
-              color: 'var(--ob-color-neon-cyan)',
-              textTransform: 'uppercase',
-              fontWeight: 700,
-              py: 0,
-              minHeight: 'auto',
-            }}
-          >
+          <Button variant="ghost" size="sm" onClick={onResetFocus}>
             Show All
           </Button>
         )}
@@ -176,27 +167,10 @@ export function MassingLayersPanel({
 
               {/* Focus Button */}
               <Button
-                size="small"
+                variant="ghost"
+                size="sm"
                 onClick={() => onFocus(layerId)}
                 disabled={isFocused}
-                sx={{
-                  fontSize: 'var(--ob-font-size-2xs)',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  color: isFocused
-                    ? 'var(--ob-color-neon-cyan)'
-                    : 'text.secondary',
-                  py: 0,
-                  px: 'var(--ob-space-050)',
-                  minHeight: 'auto',
-                  '&:hover': {
-                    color: 'var(--ob-color-neon-cyan)',
-                    bgcolor: 'transparent',
-                  },
-                  '&.Mui-disabled': {
-                    color: 'var(--ob-color-neon-cyan)',
-                  },
-                }}
               >
                 {isFocused ? 'Focused' : 'Focus'}
               </Button>

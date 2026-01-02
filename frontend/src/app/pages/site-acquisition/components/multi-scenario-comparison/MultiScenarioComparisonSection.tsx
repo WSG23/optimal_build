@@ -19,12 +19,15 @@
  */
 
 import { useMemo } from 'react'
-import { Link } from '../../../../../router'
+
 import { ArrowForward as ArrowRight } from '@mui/icons-material'
+
 import type {
   DevelopmentScenario,
   CapturedProperty,
 } from '../../../../../api/siteAcquisition'
+import { Button } from '../../../../../components/canonical/Button'
+import { Link } from '../../../../../router'
 import type {
   ScenarioComparisonDatum,
   FeasibilitySignalEntry,
@@ -258,9 +261,11 @@ export function MultiScenarioComparisonSection({
                   {propertyId && (
                     <Link
                       to={`/app/asset-feasibility?propertyId=${encodeURIComponent(propertyId)}`}
-                      className="multi-scenario__workspace-link"
+                      style={{ textDecoration: 'none' }}
                     >
-                      Open Feasibility Workspace →
+                      <Button variant="secondary" size="sm">
+                        Open Feasibility Workspace →
+                      </Button>
                     </Link>
                   )}
                 </div>
@@ -270,22 +275,22 @@ export function MultiScenarioComparisonSection({
                 </p>
                 {capturedProperty && (
                   <div className="multi-scenario__export-actions">
-                    <button
-                      type="button"
+                    <Button
+                      variant="primary"
+                      size="sm"
                       onClick={() => handleReportExport('json')}
                       disabled={isExportingReport}
-                      className="multi-scenario__export-btn multi-scenario__export-btn--primary"
                     >
                       {isExportingReport ? 'Preparing JSON…' : 'Download JSON'}
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => handleReportExport('pdf')}
                       disabled={isExportingReport}
-                      className="multi-scenario__export-btn multi-scenario__export-btn--secondary"
                     >
                       {isExportingReport ? 'Preparing PDF…' : 'Download PDF'}
-                    </button>
+                    </Button>
                     {reportExportMessage && (
                       <span
                         className={`multi-scenario__export-message ${reportExportMessage.toLowerCase().includes('unable') ? 'multi-scenario__export-message--error' : 'multi-scenario__export-message--success'}`}

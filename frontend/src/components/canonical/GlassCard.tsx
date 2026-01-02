@@ -1,7 +1,10 @@
 import { Paper, type PaperProps, useTheme, SxProps, Theme } from '@mui/material'
 import type { ReactNode } from 'react'
 
-export interface GlassCardProps extends Omit<PaperProps, 'children' | 'sx'> {
+export interface GlassCardProps extends Omit<
+  PaperProps,
+  'children' | 'sx' | 'variant'
+> {
   children: ReactNode
   className?: string
   elevation?: number

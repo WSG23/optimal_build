@@ -52,7 +52,7 @@ const StyledButton = styled(MuiButton, {
     borderRadius: 'var(--ob-radius-xs)', // 2px - ENFORCED
     textTransform: 'none' as const,
     fontWeight: 'var(--ob-font-weight-semibold)',
-    letterSpacing: '0.02em',
+    letterSpacing: '0.05em', // Increased from 0.02em for wider tracking (AI Studio recommendation)
     padding: '0 var(--ob-space-150)', // 24px horizontal
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     position: 'relative' as const,

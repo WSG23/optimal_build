@@ -457,6 +457,71 @@ Apply blur and transparency effects that adapt to content importance:
 
 ---
 
+## Seamless Panel Pattern (Zero-Card Architecture)
+
+**Goal:** Reduce visual noise by using transparent containers that provide layout structure without visible card surfaces.
+
+### When to Use Seamless Panels
+
+| Scenario | Use Seamless | Use Visible Card |
+|----------|--------------|------------------|
+| Section wrapper grouping related content | ✅ | ❌ |
+| Nested component inside existing card | ✅ | ❌ |
+| High information density areas | ✅ | ❌ |
+| Actionable data (tables, forms, metrics) | ❌ | ✅ |
+| Standalone visualization (chart) | ❌ | ✅ |
+
+### CSS Classes
+
+| Class | Purpose |
+|-------|---------|
+| `ob-seamless-panel` | Base transparent container with padding |
+| `ob-seamless-panel--glass` | Adds subtle backdrop blur effect |
+| `ob-seamless-panel__surface` | Inner surface area for content |
+
+### GlassCard Variant Prop
+
+The canonical `GlassCard` component supports variants:
+
+```tsx
+// Transparent container - no visible surface
+<GlassCard variant="seamless">
+  <SectionContent />
+</GlassCard>
+
+// Original visible card surface (default)
+<GlassCard variant="default">
+  <DataTable />
+</GlassCard>
+```
+
+### Migration Pattern
+
+When refactoring from heavy card wrapping to seamless architecture:
+
+```tsx
+// ❌ BEFORE - Visible wrapper adding visual noise
+<Box className="ob-card-module">
+  <SectionHeader />
+  <InnerContent />
+</Box>
+
+// ✅ AFTER - Seamless panel for structure only
+<Box className="ob-seamless-panel ob-seamless-panel--glass">
+  <SectionHeader />
+  <InnerContent />
+</Box>
+```
+
+### Signals of When to Convert
+
+- Multiple nested card borders competing for attention
+- Section wrappers that don't contain actionable data
+- Low information density due to excessive padding/borders
+- "Nesting fatigue" - cards inside cards inside cards
+
+---
+
 ## Content vs Context Separation
 
 This is the foundational layout principle for data-heavy pages.
@@ -851,6 +916,141 @@ For displaying KPIs, financial metrics, or summary statistics.
 
 ---
 
+## Interaction Protocol Architecture
+
+This section defines the "Cyber High-end Ultra Premium" design philosophy for interactive elements, derived from the AI Studio "Ultra-Premium Command Surface" analysis.
+
+### Core Philosophy: Materiality and Precision
+
+Ultra-Premium design focuses on **materiality and precision** - making every necessary element look expensive, deliberate, and high-fidelity. Think: Luxury private jet cockpit, not high-tech lab.
+
+### Machined Edge Architecture (2px Radius)
+
+The 2px radius (`--ob-radius-xs`) mimics the "break" on CNC-machined metal - sharp but finished.
+
+**Cognitive Rule:**
+- **Pill shapes (9999px)** = "friendly/social/consumer" - WRONG for our brand
+- **Sharp corners (2-4px)** = "industrial/elite/professional" - CORRECT
+
+**Application:**
+- All action buttons use 2px radius
+- Pill radius is ONLY for read-only chips, status badges, and avatars
+- Never use pill radius on interactive elements (buttons, toggles, selectable items)
+
+### Three Interaction Protocols
+
+All interactive buttons must follow one of these standardized protocols:
+
+| Protocol | Name | Use Case | Canonical Button Variant |
+|----------|------|----------|-------------------------|
+| **Alpha** | Command | Primary actions: "Save", "Execute", "Commit", "Create", "Log" | `variant="primary"` |
+| **Beta** | System | Secondary/supporting actions: "Refresh", "Edit", "Cancel", "New" | `variant="secondary"` |
+| **Gamma** | Sub-Routine | Tertiary/escape actions: "Cancel", "Reset", "Close" | `variant="ghost"` |
+
+**Protocol Decision Tree:**
+
+```
+Is this the PRIMARY action the user came to perform?
+├─ YES → Protocol Alpha (primary)
+│        • "Save inspection", "Create Finance Project", "Execute"
+│
+└─ NO → Is this a SYSTEM-LEVEL supporting action?
+        ├─ YES → Protocol Beta (secondary)
+        │        • "New Capture", "Refresh Render", "Edit latest", "View timeline"
+        │
+        └─ NO → Protocol Gamma (ghost)
+                • "Cancel", "Reset draft", "Close"
+```
+
+### Button Implementation Standards
+
+**Always use the canonical Button component:**
+
+```tsx
+// ✅ CORRECT - Canonical Button
+import { Button } from '@/components/canonical/Button'
+
+<Button variant="primary" size="sm">Save inspection</Button>
+<Button variant="secondary" size="sm">Edit latest</Button>
+<Button variant="ghost" size="sm">Cancel</Button>
+
+// ❌ WRONG - Native button with inline styles
+<button style={{ borderRadius: 'var(--ob-radius-pill)', ... }}>Save</button>
+
+// ❌ WRONG - MUI Button with custom sx
+<MuiButton variant="contained" sx={{ bgcolor: '...' }}>Save</MuiButton>
+```
+
+**Close buttons in modals:**
+
+```tsx
+// ✅ CORRECT - IconButton with Close icon
+import { IconButton } from '@mui/material'
+import { Close } from '@mui/icons-material'
+
+<IconButton onClick={onClose} aria-label="Close">
+  <Close />
+</IconButton>
+
+// ❌ WRONG - Text × character
+<button>×</button>
+```
+
+### Button Sizes
+
+| Size | Height | Use Case |
+|------|--------|----------|
+| `sm` | 32px | Inline actions, table rows, compact UI |
+| `md` | 40px | Standard page actions (default) |
+| `lg` | 48px | Hero CTAs, prominent actions |
+
+### Filter Chips vs Action Buttons
+
+**Filter chips** (scenario selectors, tab-like toggles) may retain pill radius as they function as read-only state indicators, not action commands. However, they should still use design tokens.
+
+```tsx
+// Filter toggle (pill OK - read-only state indicator)
+<span style={{
+  borderRadius: 'var(--ob-radius-pill)',
+  padding: 'var(--ob-space-025) var(--ob-space-085)',
+  background: isActive ? 'var(--ob-brand-100)' : 'var(--ob-color-bg-surface)',
+  border: `1px solid ${isActive ? 'var(--ob-brand-700)' : 'var(--ob-color-border-subtle)'}`,
+}}>
+  {label}
+</span>
+
+// Action button (must use 2px radius via canonical Button)
+<Button variant="secondary" size="sm">Save</Button>
+```
+
+### Icon Placement with Canonical Button
+
+The canonical Button accepts children, so icons are placed inline:
+
+```tsx
+<Button variant="secondary" size="sm">
+  <RefreshIcon sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }} />
+  Refresh Render
+</Button>
+```
+
+### Protocol Summary Table
+
+| Button Text | Protocol | Variant | Rationale |
+|-------------|----------|---------|-----------|
+| Save inspection | Alpha | `primary` | Primary user intent |
+| Create Finance Project | Alpha | `primary` | Primary creation action |
+| View timeline | Alpha | `primary` | Primary navigation to content |
+| Log inspection | Beta | `secondary` | Supporting action (alternative path) |
+| Edit latest | Beta | `secondary` | Modification of existing data |
+| New Capture | Beta | `secondary` | Alternative creation flow |
+| Refresh Render | Beta | `secondary` | System operation |
+| Cancel | Gamma | `ghost` | Escape/dismiss action |
+| Reset draft | Gamma | `ghost` | Undo/reset action |
+| Close (icon) | N/A | `IconButton` | Modal dismissal |
+
+---
+
 ## Architecture Checklist
 
 Before submitting UI code changes, verify:
@@ -869,6 +1069,8 @@ Before submitting UI code changes, verify:
 - [ ] Descriptions are on background (not inside data cards)
 - [ ] Only actionable content is in card surfaces
 - [ ] No nested card surfaces (cards inside cards)
+- [ ] Section wrappers use `ob-seamless-panel` (not `ob-card-module`)
+- [ ] `GlassCard variant="seamless"` used for transparent containers
 
 **Color Usage (follow decision tree):**
 
@@ -911,6 +1113,17 @@ Before submitting UI code changes, verify:
 - [ ] Complex pages use L-shaped navigation (vertical sidebar + horizontal tabs)
 - [ ] Quantitative data shown as charts, NOT text lists
 - [ ] AI insights styled with indigo left border and "AI INSIGHT" label
+
+**Interaction Protocols (Machined Edge Architecture):**
+
+- [ ] Action buttons use canonical `Button` component (not native/MUI)
+- [ ] No pill radius (`--ob-radius-pill`) on interactive elements
+- [ ] Primary actions use `variant="primary"` (Protocol Alpha)
+- [ ] Supporting actions use `variant="secondary"` (Protocol Beta)
+- [ ] Escape/cancel actions use `variant="ghost"` (Protocol Gamma)
+- [ ] Modal close buttons use `IconButton` with `<Close />` icon (not text ×)
+- [ ] Filter chips (read-only state indicators) may keep pill radius
+- [ ] Buttons include icons as children with proper spacing
 
 ---
 

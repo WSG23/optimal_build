@@ -12,10 +12,12 @@
 
 import type React from 'react'
 import { useMemo } from 'react'
+
 import type {
   DevelopmentScenario,
   SiteAcquisitionResult,
 } from '../../../../../api/siteAcquisition'
+import { Button } from '../../../../../components/canonical/Button'
 import { SCENARIO_OPTIONS } from '../../constants'
 import {
   PropertyLocationMap,
@@ -174,26 +176,26 @@ export function PropertyCaptureForm({
       <div className="property-capture-form__header">
         <div className="property-capture-form__header-actions">
           {onSaveDraft && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={onSaveDraft}
               disabled={!canSaveDraft}
-              className="property-capture-form__btn property-capture-form__btn--secondary"
             >
               {isSavingDraft ? 'Saving…' : 'Save Draft'}
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            size="sm"
             onClick={(e) => {
               e.preventDefault()
               onCapture(e as unknown as React.FormEvent)
             }}
             disabled={!canSubmit}
-            className="property-capture-form__btn property-capture-form__btn--primary"
           >
             {isCapturing ? 'Capturing…' : 'Capture Property'}
-          </button>
+          </Button>
         </div>
       </div>
 

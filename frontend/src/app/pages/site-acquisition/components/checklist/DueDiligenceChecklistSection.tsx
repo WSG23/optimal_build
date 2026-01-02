@@ -11,11 +11,12 @@
  * @see ScenarioFocusSection - Global scenario filter
  */
 
-import { Link } from '../../../../../router'
 import type {
   ChecklistItem,
   DevelopmentScenario,
 } from '../../../../../api/siteAcquisition'
+import { Button } from '../../../../../components/canonical/Button'
+import { Link } from '../../../../../router'
 import type { ScenarioOption } from '../../constants'
 import { formatCategoryName } from '../../utils'
 
@@ -88,9 +89,11 @@ export function DueDiligenceChecklistSection({
         <div className="due-diligence__header-actions">
           <Link
             to="/app/site-acquisition/checklist-templates"
-            className="due-diligence__link-btn"
+            style={{ textDecoration: 'none' }}
           >
-            Manage templates
+            <Button variant="secondary" size="sm">
+              Manage templates
+            </Button>
           </Link>
         </div>
       </div>

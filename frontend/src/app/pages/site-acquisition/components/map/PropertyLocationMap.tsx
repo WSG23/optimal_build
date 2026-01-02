@@ -14,6 +14,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { IconButton } from '@mui/material'
+import { MyLocation } from '@mui/icons-material'
 
 // ============================================================================
 // Types
@@ -339,30 +341,29 @@ export function PropertyLocationMap({
       <div
         style={{
           position: 'absolute',
-          bottom: '1rem',
-          right: '1rem',
+          bottom: 'var(--ob-space-100)',
+          right: 'var(--ob-space-100)',
           display: 'flex',
-          gap: '0.5rem',
+          gap: 'var(--ob-space-050)',
           zIndex: 1000,
         }}
       >
-        <button
-          type="button"
+        <IconButton
           onClick={handleRecenter}
-          style={{
-            padding: '0.5rem 0.75rem',
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            background: 'white',
-            border: '1px solid #d2d2d7',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          aria-label="Recenter map on property"
+          size="small"
+          sx={{
+            bgcolor: 'white',
+            border: '1px solid var(--ob-color-border-default)',
+            borderRadius: 'var(--ob-radius-xs)',
+            boxShadow: 'var(--ob-shadow-sm)',
+            '&:hover': {
+              bgcolor: 'var(--ob-color-surface-hover)',
+            },
           }}
-          title="Recenter map on property"
         >
-          ⊕ Recenter
-        </button>
+          <MyLocation sx={{ fontSize: 18 }} />
+        </IconButton>
       </div>
 
       {/* Legend */}

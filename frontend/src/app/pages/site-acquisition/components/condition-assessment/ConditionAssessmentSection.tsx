@@ -16,6 +16,7 @@ import type {
   ConditionAssessment,
   DevelopmentScenario,
 } from '../../../../../api/siteAcquisition'
+import { Button } from '../../../../../components/canonical/Button'
 import type { ScenarioOption } from '../../constants'
 import { formatDeltaValue } from '../../utils'
 import {
@@ -252,21 +253,21 @@ export function ConditionAssessmentSection({
                       mt: 'auto',
                     }}
                   >
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => openAssessmentEditor('edit')}
                       disabled={!latestAssessmentEntry}
-                      className="condition-assessment__cta-btn condition-assessment__cta-btn--ghost"
                     >
                       Manual Inspection Capture
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
                       onClick={() => openAssessmentEditor('new')}
-                      className="condition-assessment__cta-btn condition-assessment__cta-btn--primary"
                     >
                       Log Full Inspection →
-                    </button>
+                    </Button>
                   </Box>
                 </Box>
               </Grid>
@@ -436,22 +437,22 @@ export function ConditionAssessmentSection({
                         gap: 'var(--ob-space-075)',
                       }}
                     >
-                      <button
-                        type="button"
+                      <Button
+                        variant="primary"
+                        size="sm"
                         onClick={() => handleReportExport('json')}
                         disabled={!capturedProperty || isExportingReport}
-                        className="condition-assessment__export-btn condition-assessment__export-btn--primary"
                       >
                         {isExportingReport ? 'Exporting…' : 'JSON'}
-                      </button>
-                      <button
-                        type="button"
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => handleReportExport('pdf')}
                         disabled={!capturedProperty || isExportingReport}
-                        className="condition-assessment__export-btn condition-assessment__export-btn--secondary"
                       >
                         {isExportingReport ? 'Exporting…' : 'PDF'}
-                      </button>
+                      </Button>
                     </Box>
                   </Box>
 

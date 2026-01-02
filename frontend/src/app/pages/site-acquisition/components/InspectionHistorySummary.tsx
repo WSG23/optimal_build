@@ -13,6 +13,7 @@
 
 import { Box, Typography } from '@mui/material'
 
+import { Button } from '../../../../components/canonical/Button'
 import type { ConditionAssessmentEntry } from '../../../../api/siteAcquisition'
 
 // ============================================================================
@@ -101,21 +102,17 @@ export function InspectionHistorySummary({
         <Box
           sx={{ display: 'flex', gap: 'var(--ob-space-075)', flexWrap: 'wrap' }}
         >
-          <button
-            type="button"
-            onClick={onViewTimeline}
-            className="condition-assessment__export-btn condition-assessment__export-btn--primary"
-          >
+          <Button variant="primary" size="sm" onClick={onViewTimeline}>
             View timeline
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={onLogInspection}
             disabled={!hasProperty}
-            className="condition-assessment__export-btn condition-assessment__export-btn--secondary"
           >
             Log inspection
-          </button>
+          </Button>
         </Box>
       </Box>
 

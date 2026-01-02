@@ -59,13 +59,13 @@ import {
   Grid,
   Stack,
   Typography,
-  Button,
   Select,
   MenuItem,
   FormControl,
   InputLabel,
 } from '@mui/material'
 import { Refresh } from '@mui/icons-material'
+import { Button } from '../../../components/canonical/Button'
 import { useRouterController } from '../../../router'
 
 // Storage keys for property persistence
@@ -790,8 +790,8 @@ export function SiteAcquisitionPage() {
             />
             <OptimalIntelligenceCard
               insight={
-                capturedProperty?.developmentScenarios?.[0]?.quickAnalysis
-                  ?.summary ?? null
+                capturedProperty?.quickAnalysis?.scenarios?.[0]?.headline ??
+                null
               }
               hasProperty={!!capturedProperty}
             />
@@ -829,38 +829,17 @@ export function SiteAcquisitionPage() {
                   }}
                 >
                   <Button
-                    variant="outlined"
+                    variant="secondary"
+                    size="md"
                     onClick={handleNewCapture}
-                    sx={{
-                      borderColor: 'var(--ob-color-border-subtle)',
-                      color: 'var(--ob-text-secondary)',
-                      '&:hover': {
-                        borderColor: 'var(--ob-color-neon-cyan)',
-                        color: 'var(--ob-color-neon-cyan)',
-                        bgcolor: 'transparent',
-                      },
-                    }}
                   >
                     New Capture
                   </Button>
                   <Button
-                    variant="contained"
+                    variant="primary"
+                    size="md"
                     onClick={handleCreateFinanceProject}
                     disabled={isCreatingFinanceProject}
-                    sx={{
-                      bgcolor: 'var(--ob-color-neon-cyan)',
-                      color: 'var(--ob-neutral-900)',
-                      fontWeight: 600,
-                      '&:hover': {
-                        bgcolor:
-                          'color-mix(in srgb, var(--ob-color-neon-cyan) 85%, black)',
-                      },
-                      '&.Mui-disabled': {
-                        bgcolor:
-                          'color-mix(in srgb, var(--ob-color-neon-cyan) 40%, transparent)',
-                        color: 'var(--ob-neutral-600)',
-                      },
-                    }}
                   >
                     {isCreatingFinanceProject
                       ? 'Creating finance project…'
@@ -978,15 +957,15 @@ export function SiteAcquisitionPage() {
                         </FormControl>
 
                         <Button
-                          variant="outlined"
-                          startIcon={
-                            <Refresh
-                              className={isRefreshingPreview ? 'fa-spin' : ''}
-                            />
-                          }
+                          variant="secondary"
+                          size="sm"
                           onClick={handleRefreshPreview}
                           disabled={isRefreshingPreview}
                         >
+                          <Refresh
+                            className={isRefreshingPreview ? 'fa-spin' : ''}
+                            sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }}
+                          />
                           {isRefreshingPreview
                             ? 'Refreshing...'
                             : 'Refresh Render'}

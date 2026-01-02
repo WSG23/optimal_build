@@ -6,6 +6,9 @@
  */
 
 import { createPortal } from 'react-dom'
+import { IconButton } from '@mui/material'
+import { Close } from '@mui/icons-material'
+import { Button } from '@/components/canonical/Button'
 import type { DevelopmentScenario } from '../../../../../api/siteAcquisition'
 import type {
   AssessmentDraftSystem,
@@ -85,11 +88,11 @@ export function ConditionAssessmentEditor({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.45)',
+        background: 'var(--ob-overlay-dark)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '2rem',
+        padding: 'var(--ob-space-200)',
         zIndex: 1000,
       }}
     >
@@ -99,34 +102,29 @@ export function ConditionAssessmentEditor({
         aria-label="Manual inspection editor"
         onClick={(event) => event.stopPropagation()}
         style={{
-          background: 'white',
-          borderRadius: '4px',
+          background: 'var(--ob-color-bg-surface)',
+          borderRadius: 'var(--ob-radius-lg)',
           maxWidth: '900px',
           width: '100%',
           maxHeight: '85vh',
           overflowY: 'auto',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
-          padding: '2rem',
+          boxShadow: 'var(--ob-shadow-lg)',
+          padding: 'var(--ob-space-200)',
           position: 'relative',
         }}
       >
-        <button
-          type="button"
+        <IconButton
           onClick={onClose}
           aria-label="Close inspection editor"
-          style={{
+          sx={{
             position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            border: 'none',
-            background: 'transparent',
-            fontSize: '1.5rem',
-            cursor: 'pointer',
-            color: '#6e6e73',
+            top: 'var(--ob-space-100)',
+            right: 'var(--ob-space-100)',
+            color: 'var(--ob-color-text-muted)',
           }}
         >
-          ×
-        </button>
+          <Close />
+        </IconButton>
 
         <div
           style={{
@@ -134,8 +132,8 @@ export function ConditionAssessmentEditor({
             justifyContent: 'space-between',
             alignItems: 'flex-start',
             flexWrap: 'wrap',
-            gap: '1rem',
-            marginBottom: '1.5rem',
+            gap: 'var(--ob-space-100)',
+            marginBottom: 'var(--ob-space-150)',
           }}
         >
           <div
@@ -143,15 +141,15 @@ export function ConditionAssessmentEditor({
               maxWidth: '540px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.35rem',
+              gap: 'var(--ob-space-035)',
             }}
           >
             <h2
               style={{
                 margin: 0,
-                fontSize: '1.5rem',
+                fontSize: 'var(--ob-font-size-2xl)',
                 fontWeight: 600,
-                letterSpacing: '-0.01em',
+                letterSpacing: 'var(--ob-letter-spacing-tight)',
               }}
             >
               {mode === 'new'
@@ -161,9 +159,9 @@ export function ConditionAssessmentEditor({
             <p
               style={{
                 margin: 0,
-                fontSize: '0.95rem',
-                color: '#4b5563',
-                lineHeight: 1.6,
+                fontSize: 'var(--ob-font-size-md)',
+                color: 'var(--ob-color-text-secondary)',
+                lineHeight: 'var(--ob-line-height-relaxed)',
               }}
             >
               {mode === 'new'
@@ -175,7 +173,7 @@ export function ConditionAssessmentEditor({
                 style={{
                   display: 'flex',
                   flexWrap: 'wrap',
-                  gap: '0.55rem',
+                  gap: 'var(--ob-space-050)',
                 }}
               >
                 {scenarioFocusOptions.map((option) => {
@@ -191,12 +189,16 @@ export function ConditionAssessmentEditor({
                       type="button"
                       onClick={() => setActiveScenario(option)}
                       style={{
-                        borderRadius: '9999px',
-                        border: `1px solid ${isActive ? '#1d4ed8' : '#d2d2d7'}`,
-                        background: isActive ? '#dbeafe' : 'white',
-                        color: isActive ? '#1d4ed8' : '#1d1d1f',
-                        padding: '0.3rem 0.9rem',
-                        fontSize: '0.78rem',
+                        borderRadius: 'var(--ob-radius-pill)',
+                        border: `1px solid ${isActive ? 'var(--ob-brand-700)' : 'var(--ob-color-border-subtle)'}`,
+                        background: isActive
+                          ? 'var(--ob-brand-100)'
+                          : 'var(--ob-color-bg-surface)',
+                        color: isActive
+                          ? 'var(--ob-brand-700)'
+                          : 'var(--ob-color-text-primary)',
+                        padding: 'var(--ob-space-025) var(--ob-space-085)',
+                        fontSize: 'var(--ob-font-size-xs)',
                         fontWeight: 600,
                         cursor: 'pointer',
                       }}
@@ -208,30 +210,24 @@ export function ConditionAssessmentEditor({
               </div>
             )}
           </div>
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onReset}
             disabled={isSaving}
-            style={{
-              border: '1px solid #d2d2d7',
-              background: 'white',
-              color: '#1d1d1f',
-              borderRadius: '9999px',
-              padding: '0.45rem 1rem',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              cursor: isSaving ? 'not-allowed' : 'pointer',
-            }}
           >
             Reset draft
-          </button>
+          </Button>
         </div>
 
-        <form onSubmit={onSubmit} style={{ display: 'grid', gap: '1.25rem' }}>
+        <form
+          onSubmit={onSubmit}
+          style={{ display: 'grid', gap: 'var(--ob-space-125)' }}
+        >
           <div
             style={{
               display: 'grid',
-              gap: '1rem',
+              gap: 'var(--ob-space-100)',
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             }}
           >
@@ -239,10 +235,15 @@ export function ConditionAssessmentEditor({
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.4rem',
+                gap: 'var(--ob-space-035)',
               }}
             >
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+              <span
+                style={{
+                  fontSize: 'var(--ob-font-size-sm-minus)',
+                  fontWeight: 600,
+                }}
+              >
                 Scenario
               </span>
               <select
@@ -254,10 +255,12 @@ export function ConditionAssessmentEditor({
                   )
                 }
                 style={{
-                  borderRadius: '6px',
-                  border: '1px solid #d2d2d7',
-                  padding: '0.55rem 0.75rem',
-                  fontSize: '0.9rem',
+                  borderRadius: 'var(--ob-radius-md)',
+                  border: '1px solid var(--ob-color-border-subtle)',
+                  padding: 'var(--ob-space-050) var(--ob-space-075)',
+                  fontSize: 'var(--ob-font-size-sm)',
+                  background: 'var(--ob-color-bg-surface)',
+                  color: 'var(--ob-color-text-primary)',
                 }}
               >
                 <option value="all">All scenarios</option>
@@ -272,20 +275,27 @@ export function ConditionAssessmentEditor({
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.4rem',
+                gap: 'var(--ob-space-035)',
               }}
             >
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+              <span
+                style={{
+                  fontSize: 'var(--ob-font-size-sm-minus)',
+                  fontWeight: 600,
+                }}
+              >
                 Overall rating
               </span>
               <select
                 value={draft.overallRating}
                 onChange={(e) => onFieldChange('overallRating', e.target.value)}
                 style={{
-                  borderRadius: '6px',
-                  border: '1px solid #d2d2d7',
-                  padding: '0.55rem 0.75rem',
-                  fontSize: '0.9rem',
+                  borderRadius: 'var(--ob-radius-md)',
+                  border: '1px solid var(--ob-color-border-subtle)',
+                  padding: 'var(--ob-space-050) var(--ob-space-075)',
+                  fontSize: 'var(--ob-font-size-sm)',
+                  background: 'var(--ob-color-bg-surface)',
+                  color: 'var(--ob-color-text-primary)',
                 }}
               >
                 {CONDITION_RATINGS.map((rating) => (
@@ -299,10 +309,15 @@ export function ConditionAssessmentEditor({
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.4rem',
+                gap: 'var(--ob-space-035)',
               }}
             >
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+              <span
+                style={{
+                  fontSize: 'var(--ob-font-size-sm-minus)',
+                  fontWeight: 600,
+                }}
+              >
                 Overall score
               </span>
               <input
@@ -312,10 +327,12 @@ export function ConditionAssessmentEditor({
                 value={draft.overallScore}
                 onChange={(e) => onFieldChange('overallScore', e.target.value)}
                 style={{
-                  borderRadius: '6px',
-                  border: '1px solid #d2d2d7',
-                  padding: '0.55rem 0.75rem',
-                  fontSize: '0.9rem',
+                  borderRadius: 'var(--ob-radius-md)',
+                  border: '1px solid var(--ob-color-border-subtle)',
+                  padding: 'var(--ob-space-050) var(--ob-space-075)',
+                  fontSize: 'var(--ob-font-size-sm)',
+                  background: 'var(--ob-color-bg-surface)',
+                  color: 'var(--ob-color-text-primary)',
                 }}
               />
             </label>
@@ -323,20 +340,27 @@ export function ConditionAssessmentEditor({
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.4rem',
+                gap: 'var(--ob-space-035)',
               }}
             >
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+              <span
+                style={{
+                  fontSize: 'var(--ob-font-size-sm-minus)',
+                  fontWeight: 600,
+                }}
+              >
                 Risk level
               </span>
               <select
                 value={draft.riskLevel}
                 onChange={(e) => onFieldChange('riskLevel', e.target.value)}
                 style={{
-                  borderRadius: '6px',
-                  border: '1px solid #d2d2d7',
-                  padding: '0.55rem 0.75rem',
-                  fontSize: '0.9rem',
+                  borderRadius: 'var(--ob-radius-md)',
+                  border: '1px solid var(--ob-color-border-subtle)',
+                  padding: 'var(--ob-space-050) var(--ob-space-075)',
+                  fontSize: 'var(--ob-font-size-sm)',
+                  background: 'var(--ob-color-bg-surface)',
+                  color: 'var(--ob-color-text-primary)',
                 }}
               >
                 {CONDITION_RISK_LEVELS.map((risk) => (
@@ -350,10 +374,15 @@ export function ConditionAssessmentEditor({
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.4rem',
+                gap: 'var(--ob-space-035)',
               }}
             >
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+              <span
+                style={{
+                  fontSize: 'var(--ob-font-size-sm-minus)',
+                  fontWeight: 600,
+                }}
+              >
                 Inspector name
               </span>
               <input
@@ -362,10 +391,12 @@ export function ConditionAssessmentEditor({
                 onChange={(e) => onFieldChange('inspectorName', e.target.value)}
                 placeholder="e.g. Jane Tan"
                 style={{
-                  borderRadius: '6px',
-                  border: '1px solid #d2d2d7',
-                  padding: '0.55rem 0.75rem',
-                  fontSize: '0.9rem',
+                  borderRadius: 'var(--ob-radius-md)',
+                  border: '1px solid var(--ob-color-border-subtle)',
+                  padding: 'var(--ob-space-050) var(--ob-space-075)',
+                  fontSize: 'var(--ob-font-size-sm)',
+                  background: 'var(--ob-color-bg-surface)',
+                  color: 'var(--ob-color-text-primary)',
                 }}
               />
             </label>
@@ -373,10 +404,15 @@ export function ConditionAssessmentEditor({
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.4rem',
+                gap: 'var(--ob-space-035)',
               }}
             >
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+              <span
+                style={{
+                  fontSize: 'var(--ob-font-size-sm-minus)',
+                  fontWeight: 600,
+                }}
+              >
                 Inspection date &amp; time
               </span>
               <input
@@ -386,19 +422,30 @@ export function ConditionAssessmentEditor({
                   onFieldChange('recordedAtLocal', e.target.value)
                 }
                 style={{
-                  borderRadius: '6px',
-                  border: '1px solid #d2d2d7',
-                  padding: '0.55rem 0.75rem',
-                  fontSize: '0.9rem',
+                  borderRadius: 'var(--ob-radius-md)',
+                  border: '1px solid var(--ob-color-border-subtle)',
+                  padding: 'var(--ob-space-050) var(--ob-space-075)',
+                  fontSize: 'var(--ob-font-size-sm)',
+                  background: 'var(--ob-color-bg-surface)',
+                  color: 'var(--ob-color-text-primary)',
                 }}
               />
             </label>
           </div>
 
           <label
-            style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-035)',
+            }}
           >
-            <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+            <span
+              style={{
+                fontSize: 'var(--ob-font-size-sm-minus)',
+                fontWeight: 600,
+              }}
+            >
               Summary
             </span>
             <textarea
@@ -406,18 +453,29 @@ export function ConditionAssessmentEditor({
               onChange={(e) => onFieldChange('summary', e.target.value)}
               rows={3}
               style={{
-                borderRadius: '6px',
-                border: '1px solid #d2d2d7',
-                padding: '0.75rem',
-                fontSize: '0.9rem',
+                borderRadius: 'var(--ob-radius-md)',
+                border: '1px solid var(--ob-color-border-subtle)',
+                padding: 'var(--ob-space-075)',
+                fontSize: 'var(--ob-font-size-sm)',
+                background: 'var(--ob-color-bg-surface)',
+                color: 'var(--ob-color-text-primary)',
               }}
             />
           </label>
 
           <label
-            style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-035)',
+            }}
           >
-            <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+            <span
+              style={{
+                fontSize: 'var(--ob-font-size-sm-minus)',
+                fontWeight: 600,
+              }}
+            >
               Scenario context
             </span>
             <textarea
@@ -425,18 +483,29 @@ export function ConditionAssessmentEditor({
               onChange={(e) => onFieldChange('scenarioContext', e.target.value)}
               rows={2}
               style={{
-                borderRadius: '6px',
-                border: '1px solid #d2d2d7',
-                padding: '0.75rem',
-                fontSize: '0.9rem',
+                borderRadius: 'var(--ob-radius-md)',
+                border: '1px solid var(--ob-color-border-subtle)',
+                padding: 'var(--ob-space-075)',
+                fontSize: 'var(--ob-font-size-sm)',
+                background: 'var(--ob-color-bg-surface)',
+                color: 'var(--ob-color-text-primary)',
               }}
             />
           </label>
 
           <label
-            style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-035)',
+            }}
           >
-            <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+            <span
+              style={{
+                fontSize: 'var(--ob-font-size-sm-minus)',
+                fontWeight: 600,
+              }}
+            >
               Attachments (one per line as &quot;Label | URL&quot;)
             </span>
             <textarea
@@ -445,24 +514,27 @@ export function ConditionAssessmentEditor({
               rows={3}
               placeholder="Site photo | https://example.com/photo.jpg"
               style={{
-                borderRadius: '6px',
-                border: '1px solid #d2d2d7',
-                padding: '0.75rem',
-                fontSize: '0.9rem',
+                borderRadius: 'var(--ob-radius-md)',
+                border: '1px solid var(--ob-color-border-subtle)',
+                padding: 'var(--ob-space-075)',
+                fontSize: 'var(--ob-font-size-sm)',
+                background: 'var(--ob-color-bg-surface)',
+                color: 'var(--ob-color-text-primary)',
               }}
             />
           </label>
 
-          <div style={{ display: 'grid', gap: '1rem' }}>
+          <div style={{ display: 'grid', gap: 'var(--ob-space-100)' }}>
             {draft.systems.map((system, index) => (
               <div
                 key={`${system.name}-${index}`}
                 style={{
-                  border: '1px solid #e5e5e7',
-                  borderRadius: '4px',
-                  padding: '1rem',
+                  border: '1px solid var(--ob-color-border-subtle)',
+                  borderRadius: 'var(--ob-radius-sm)',
+                  padding: 'var(--ob-space-100)',
                   display: 'grid',
-                  gap: '0.75rem',
+                  gap: 'var(--ob-space-075)',
+                  background: 'var(--ob-color-bg-surface)',
                 }}
               >
                 <div
@@ -471,17 +543,22 @@ export function ConditionAssessmentEditor({
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    gap: '0.5rem',
+                    gap: 'var(--ob-space-050)',
                   }}
                 >
                   <label
                     style={{
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '0.4rem',
+                      gap: 'var(--ob-space-035)',
                     }}
                   >
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                    <span
+                      style={{
+                        fontSize: 'var(--ob-font-size-xs)',
+                        fontWeight: 600,
+                      }}
+                    >
                       System
                     </span>
                     <input
@@ -491,25 +568,36 @@ export function ConditionAssessmentEditor({
                         onSystemChange(index, 'name', e.target.value)
                       }
                       style={{
-                        borderRadius: '6px',
-                        border: '1px solid #d2d2d7',
-                        padding: '0.55rem 0.75rem',
-                        fontSize: '0.9rem',
+                        borderRadius: 'var(--ob-radius-md)',
+                        border: '1px solid var(--ob-color-border-subtle)',
+                        padding: 'var(--ob-space-050) var(--ob-space-075)',
+                        fontSize: 'var(--ob-font-size-sm)',
                         minWidth: '12rem',
+                        background: 'var(--ob-color-bg-surface)',
+                        color: 'var(--ob-color-text-primary)',
                       }}
                     />
                   </label>
                   <div
-                    style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}
+                    style={{
+                      display: 'flex',
+                      gap: 'var(--ob-space-050)',
+                      flexWrap: 'wrap',
+                    }}
                   >
                     <label
                       style={{
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '0.35rem',
+                        gap: 'var(--ob-space-035)',
                       }}
                     >
-                      <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                      <span
+                        style={{
+                          fontSize: 'var(--ob-font-size-xs)',
+                          fontWeight: 600,
+                        }}
+                      >
                         Rating
                       </span>
                       <input
@@ -519,11 +607,13 @@ export function ConditionAssessmentEditor({
                           onSystemChange(index, 'rating', e.target.value)
                         }
                         style={{
-                          borderRadius: '6px',
-                          border: '1px solid #d2d2d7',
-                          padding: '0.55rem 0.75rem',
-                          fontSize: '0.9rem',
+                          borderRadius: 'var(--ob-radius-md)',
+                          border: '1px solid var(--ob-color-border-subtle)',
+                          padding: 'var(--ob-space-050) var(--ob-space-075)',
+                          fontSize: 'var(--ob-font-size-sm)',
                           width: '6rem',
+                          background: 'var(--ob-color-bg-surface)',
+                          color: 'var(--ob-color-text-primary)',
                         }}
                       />
                     </label>
@@ -531,10 +621,15 @@ export function ConditionAssessmentEditor({
                       style={{
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '0.35rem',
+                        gap: 'var(--ob-space-035)',
                       }}
                     >
-                      <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                      <span
+                        style={{
+                          fontSize: 'var(--ob-font-size-xs)',
+                          fontWeight: 600,
+                        }}
+                      >
                         Score
                       </span>
                       <input
@@ -546,11 +641,13 @@ export function ConditionAssessmentEditor({
                           onSystemChange(index, 'score', e.target.value)
                         }
                         style={{
-                          borderRadius: '6px',
-                          border: '1px solid #d2d2d7',
-                          padding: '0.55rem 0.75rem',
-                          fontSize: '0.9rem',
+                          borderRadius: 'var(--ob-radius-md)',
+                          border: '1px solid var(--ob-color-border-subtle)',
+                          padding: 'var(--ob-space-050) var(--ob-space-075)',
+                          fontSize: 'var(--ob-font-size-sm)',
                           width: '6rem',
+                          background: 'var(--ob-color-bg-surface)',
+                          color: 'var(--ob-color-text-primary)',
                         }}
                       />
                     </label>
@@ -561,10 +658,15 @@ export function ConditionAssessmentEditor({
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.35rem',
+                    gap: 'var(--ob-space-035)',
                   }}
                 >
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                  <span
+                    style={{
+                      fontSize: 'var(--ob-font-size-xs)',
+                      fontWeight: 600,
+                    }}
+                  >
                     Notes
                   </span>
                   <textarea
@@ -574,10 +676,12 @@ export function ConditionAssessmentEditor({
                     }
                     rows={2}
                     style={{
-                      borderRadius: '6px',
-                      border: '1px solid #d2d2d7',
-                      padding: '0.7rem',
-                      fontSize: '0.9rem',
+                      borderRadius: 'var(--ob-radius-md)',
+                      border: '1px solid var(--ob-color-border-subtle)',
+                      padding: 'var(--ob-space-075)',
+                      fontSize: 'var(--ob-font-size-sm)',
+                      background: 'var(--ob-color-bg-surface)',
+                      color: 'var(--ob-color-text-primary)',
                     }}
                   />
                 </label>
@@ -586,10 +690,15 @@ export function ConditionAssessmentEditor({
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.35rem',
+                    gap: 'var(--ob-space-035)',
                   }}
                 >
-                  <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                  <span
+                    style={{
+                      fontSize: 'var(--ob-font-size-xs)',
+                      fontWeight: 600,
+                    }}
+                  >
                     Recommended actions (one per line)
                   </span>
                   <textarea
@@ -603,10 +712,12 @@ export function ConditionAssessmentEditor({
                     }
                     rows={2}
                     style={{
-                      borderRadius: '6px',
-                      border: '1px solid #d2d2d7',
-                      padding: '0.7rem',
-                      fontSize: '0.9rem',
+                      borderRadius: 'var(--ob-radius-md)',
+                      border: '1px solid var(--ob-color-border-subtle)',
+                      padding: 'var(--ob-space-075)',
+                      fontSize: 'var(--ob-font-size-sm)',
+                      background: 'var(--ob-color-bg-surface)',
+                      color: 'var(--ob-color-text-primary)',
                     }}
                   />
                 </label>
@@ -615,9 +726,18 @@ export function ConditionAssessmentEditor({
           </div>
 
           <label
-            style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-035)',
+            }}
           >
-            <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+            <span
+              style={{
+                fontSize: 'var(--ob-font-size-sm-minus)',
+                fontWeight: 600,
+              }}
+            >
               Additional recommended actions
             </span>
             <textarea
@@ -627,10 +747,12 @@ export function ConditionAssessmentEditor({
               }
               rows={3}
               style={{
-                borderRadius: '6px',
-                border: '1px solid #d2d2d7',
-                padding: '0.75rem',
-                fontSize: '0.9rem',
+                borderRadius: 'var(--ob-radius-md)',
+                border: '1px solid var(--ob-color-border-subtle)',
+                padding: 'var(--ob-space-075)',
+                fontSize: 'var(--ob-font-size-sm)',
+                background: 'var(--ob-color-bg-surface)',
+                color: 'var(--ob-color-text-primary)',
               }}
             />
           </label>
@@ -639,43 +761,26 @@ export function ConditionAssessmentEditor({
             style={{
               display: 'flex',
               justifyContent: 'flex-end',
-              gap: '0.75rem',
+              gap: 'var(--ob-space-075)',
               flexWrap: 'wrap',
             }}
           >
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={onClose}
               disabled={isSaving}
-              style={{
-                border: '1px solid #d2d2d7',
-                background: 'white',
-                color: '#1d1d1f',
-                borderRadius: '9999px',
-                padding: '0.55rem 1.25rem',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                cursor: isSaving ? 'not-allowed' : 'pointer',
-              }}
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
               type="submit"
               disabled={isSaving}
-              style={{
-                border: 'none',
-                background: '#1d1d1f',
-                color: 'white',
-                borderRadius: '9999px',
-                padding: '0.55rem 1.5rem',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                cursor: isSaving ? 'not-allowed' : 'pointer',
-              }}
             >
               {isSaving ? 'Saving…' : 'Save inspection'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

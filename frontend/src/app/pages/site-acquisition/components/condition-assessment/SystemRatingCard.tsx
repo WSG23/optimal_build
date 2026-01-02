@@ -56,12 +56,13 @@ export function SystemRatingCard({
   return (
     <div
       style={{
-        border: '1px solid #e5e5e7',
-        borderRadius: '4px',
-        padding: '1.25rem',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
+        padding: 'var(--ob-space-125)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.75rem',
+        gap: 'var(--ob-space-075)',
+        background: 'var(--ob-color-bg-surface)',
       }}
     >
       <div
@@ -70,27 +71,32 @@ export function SystemRatingCard({
           justifyContent: 'space-between',
           alignItems: 'flex-start',
           flexWrap: 'wrap',
-          gap: '0.6rem',
+          gap: 'var(--ob-space-065)',
         }}
       >
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.35rem',
+            gap: 'var(--ob-space-035)',
           }}
         >
           <h3
             style={{
               margin: 0,
-              fontSize: '1.0625rem',
+              fontSize: 'var(--ob-font-size-lg)',
               fontWeight: 600,
             }}
           >
             {systemName}
           </h3>
           {previousRating && previousScore !== null && (
-            <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+            <span
+              style={{
+                fontSize: 'var(--ob-font-size-xs)',
+                color: 'var(--ob-color-text-muted)',
+              }}
+            >
               Previous {previousRating} · {previousScore}/100
             </span>
           )}
@@ -100,20 +106,20 @@ export function SystemRatingCard({
             display: 'flex',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: '0.45rem',
+            gap: 'var(--ob-space-050)',
           }}
         >
           <span
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.35rem',
-              padding: '0.3rem 0.65rem',
-              borderRadius: '9999px',
-              fontSize: '0.75rem',
+              gap: 'var(--ob-space-035)',
+              padding: 'var(--ob-space-025) var(--ob-space-065)',
+              borderRadius: 'var(--ob-radius-pill)',
+              fontSize: 'var(--ob-font-size-xs)',
               fontWeight: 700,
               textTransform: 'uppercase',
-              letterSpacing: '0.05em',
+              letterSpacing: 'var(--ob-letter-spacing-widest)',
               border: `1px solid ${badgeVisuals.border}`,
               background: badgeVisuals.background,
               color: badgeVisuals.text,
@@ -121,9 +127,9 @@ export function SystemRatingCard({
           >
             <span
               style={{
-                width: '0.35rem',
-                height: '0.35rem',
-                borderRadius: '9999px',
+                width: 'var(--ob-space-035)',
+                height: 'var(--ob-space-035)',
+                borderRadius: 'var(--ob-radius-pill)',
                 background: badgeVisuals.indicator,
               }}
             />
@@ -134,10 +140,10 @@ export function SystemRatingCard({
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.25rem',
-                padding: '0.25rem 0.55rem',
-                borderRadius: '9999px',
-                fontSize: '0.75rem',
+                gap: 'var(--ob-space-025)',
+                padding: 'var(--ob-space-025) var(--ob-space-050)',
+                borderRadius: 'var(--ob-radius-pill)',
+                fontSize: 'var(--ob-font-size-xs)',
                 fontWeight: 600,
                 background: deltaVisuals.background,
                 color: deltaVisuals.text,
@@ -152,9 +158,9 @@ export function SystemRatingCard({
       <p
         style={{
           margin: 0,
-          fontSize: '0.9rem',
-          color: '#3a3a3c',
-          lineHeight: 1.5,
+          fontSize: 'var(--ob-font-size-sm)',
+          color: 'var(--ob-color-text-secondary)',
+          lineHeight: 'var(--ob-line-height-normal)',
         }}
       >
         {notes}
@@ -162,10 +168,10 @@ export function SystemRatingCard({
       <ul
         style={{
           margin: 0,
-          paddingLeft: '1.1rem',
-          fontSize: '0.875rem',
-          color: '#3a3a3c',
-          lineHeight: 1.4,
+          paddingLeft: 'var(--ob-space-100)',
+          fontSize: 'var(--ob-font-size-sm)',
+          color: 'var(--ob-color-text-secondary)',
+          lineHeight: 'var(--ob-line-height-snug)',
         }}
       >
         {recommendedActions.map((action) => (

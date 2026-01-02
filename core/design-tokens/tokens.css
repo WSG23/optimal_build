@@ -217,6 +217,9 @@
     --ob-color-error-strong-rgb: 185 28 28;
     --ob-color-error-muted: var(--ob-error-600);
     --ob-color-error-muted-rgb: 220 38 38;
+    --ob-color-error-subtle: rgba(220, 38, 38, 0.05); /* Very subtle error bg */
+    --ob-color-error-bg-muted: rgba(220, 38, 38, 0.1); /* Muted error bg */
+    --ob-border-error-muted: rgba(220, 38, 38, 0.3); /* Muted error border */
     --ob-color-danger-strong: var(--ob-error-600);
     --ob-color-status-error-bg: var(--ob-error-bg);
     --ob-color-status-error-text: var(--ob-error-text);
@@ -370,10 +373,19 @@
     --ob-color-neon-cyan: #00f3ff;
     --ob-color-neon-cyan-rgb: 0 243 255;
     --ob-color-neon-cyan-dim: rgba(0, 243, 255, 0.15);
+    --ob-color-neon-cyan-dark: #0096cc; /* Darker cyan for gradients */
+    --ob-color-neon-cyan-subtle: rgba(0, 243, 255, 0.05); /* Very subtle cyan bg */
+    --ob-color-neon-cyan-muted: rgba(0, 243, 255, 0.1); /* Subtle cyan background */
+    --ob-color-neon-cyan-soft: rgba(0, 243, 255, 0.2); /* Soft cyan for hover */
+    --ob-border-neon-cyan-muted: rgba(0, 243, 255, 0.3); /* Muted cyan border */
 
     /* Neon Glow Effects */
     --ob-glow-neon-cyan: 0 0 15px rgba(0, 243, 255, 0.4);
     --ob-glow-neon-cyan-strong: 0 0 20px rgba(0, 243, 255, 0.5);
+    --ob-glow-neon-cyan-soft: 0 2px 8px rgba(0, 243, 255, 0.25);
+    --ob-glow-neon-cyan-hover: 0 4px 12px rgba(0, 243, 255, 0.35);
+    --ob-glow-neon-cyan-focus: 0 0 0 3px rgba(0, 243, 255, 0.15);
+    --ob-glow-neon-cyan-card: 0 4px 16px rgba(0, 243, 255, 0.25);
     --ob-glow-neon-text: 0 0 8px rgba(0, 243, 255, 0.4);
 
     /* Status Glows (pulsing indicators) */
@@ -391,6 +403,7 @@
     --ob-overlay-light: rgba(0, 0, 0, 0.1);
     --ob-overlay-medium: rgba(0, 0, 0, 0.2);
     --ob-overlay-strong: rgba(0, 0, 0, 0.3);
+    --ob-overlay-dark: rgba(0, 0, 0, 0.45); /* Modal backdrop */
 
     /* Background grid pattern - subtle cyan tint for "electrified" feel */
     --ob-bg-grid-color: rgba(0, 243, 255, 0.03); /* Cyan-tinted grid */
@@ -441,6 +454,7 @@
     --ob-blur-md: 12px;
     --ob-blur-xl: 16px;
     --ob-blur-lg: 24px;
+    --ob-blur-2xl: 40px; /* Deep glass effects, premium overlays */
 
     /* ===========================================================================
      13. SIZE TOKENS

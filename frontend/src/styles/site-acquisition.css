@@ -121,10 +121,10 @@
     border: none;
     background: linear-gradient(
         135deg,
-        #0096cc 0%,
+        var(--ob-color-neon-cyan-dark) 0%,
         var(--ob-color-neon-cyan) 100%
     );
-    color: #0a1628;
+    color: var(--ob-color-bg-root);
     font-size: var(--ob-font-size-sm);
     font-weight: 600;
     cursor: pointer;
@@ -136,7 +136,7 @@
     background: linear-gradient(
         135deg,
         var(--ob-color-neon-cyan) 0%,
-        #0096cc 100%
+        var(--ob-color-neon-cyan-dark) 100%
     );
     box-shadow: var(--ob-glow-neon-cyan-strong);
     transform: translateY(-1px);
@@ -256,12 +256,12 @@
 .property-capture-form__btn--primary {
     background: var(--ob-color-neon-cyan);
     color: var(--ob-neutral-900);
-    box-shadow: 0 2px 8px rgba(0, 243, 255, 0.25);
+    box-shadow: var(--ob-glow-neon-cyan-soft);
 }
 
 .property-capture-form__btn--primary:hover:not(:disabled) {
     background: color-mix(in srgb, var(--ob-color-neon-cyan) 90%, white);
-    box-shadow: 0 4px 12px rgba(0, 243, 255, 0.35);
+    box-shadow: var(--ob-glow-neon-cyan-hover);
 }
 
 .property-capture-form__btn--primary:disabled {
@@ -307,7 +307,7 @@
 .property-capture-form__select:focus,
 .property-capture-form__input:focus {
     border-color: var(--ob-color-neon-cyan);
-    box-shadow: 0 0 0 3px rgba(0, 243, 255, 0.15);
+    box-shadow: var(--ob-glow-neon-cyan-focus);
 }
 
 .property-capture-form__input--mono {
@@ -571,7 +571,7 @@
 
 .property-capture-form__scenario-card--selected {
     border-color: var(--ob-color-neon-cyan);
-    background: rgba(0, 243, 255, 0.05);
+    background: var(--ob-color-neon-cyan-subtle);
 }
 
 .property-capture-form__scenario-check {
@@ -803,7 +803,7 @@
 
 .scenario-focus__option--active {
     border-color: var(--ob-color-neon-cyan);
-    background: rgba(0, 243, 255, 0.1);
+    background: var(--ob-color-neon-cyan-muted);
     color: var(--ob-color-neon-cyan);
 }
 
@@ -884,19 +884,19 @@
     display: inline-flex;
     align-items: center;
     gap: var(--ob-space-050);
-    background: rgba(0, 243, 255, 0.1);
+    background: var(--ob-color-neon-cyan-muted);
     border-radius: var(--ob-radius-full);
     padding: var(--ob-space-075) var(--ob-space-150);
     font-weight: 600;
     font-size: var(--ob-font-size-sm);
     color: var(--ob-color-neon-cyan);
     text-decoration: none;
-    border: 1px solid rgba(0, 243, 255, 0.3);
+    border: 1px solid var(--ob-border-neon-cyan-muted);
     transition: all 0.2s ease;
 }
 
 .due-diligence__link-btn:hover {
-    background: rgba(0, 243, 255, 0.2);
+    background: var(--ob-color-neon-cyan-soft);
     border-color: var(--ob-color-neon-cyan);
 }
 
@@ -938,7 +938,7 @@
 
 .due-diligence__scenario-tab--active {
     border-color: var(--ob-color-neon-cyan);
-    background: rgba(0, 243, 255, 0.1);
+    background: var(--ob-color-neon-cyan-muted);
     color: var(--ob-color-neon-cyan);
 }
 
@@ -1311,12 +1311,12 @@
 }
 
 .multi-scenario__source-badge--manual {
-    background: rgba(16, 185, 129, 0.15);
+    background: var(--ob-color-success-soft);
     color: var(--ob-success-600);
 }
 
 .multi-scenario__source-badge--auto {
-    background: rgba(0, 243, 255, 0.1);
+    background: var(--ob-color-neon-cyan-muted);
     color: var(--ob-color-neon-cyan);
 }
 
@@ -1643,9 +1643,9 @@
 
 .multi-scenario__focus-notice {
     padding: var(--ob-space-175);
-    background: rgba(0, 243, 255, 0.1);
+    background: var(--ob-color-neon-cyan-muted);
     border-radius: var(--ob-radius-sm);
-    border: 1px solid rgba(0, 243, 255, 0.3);
+    border: 1px solid var(--ob-border-neon-cyan-muted);
     font-size: var(--ob-font-size-base);
     color: var(--ob-color-text-primary);
 }
@@ -1676,7 +1676,7 @@
 
 .multi-scenario__insight-toggle:hover {
     border-color: var(--ob-color-neon-cyan);
-    background: rgba(0, 243, 255, 0.05);
+    background: var(--ob-color-neon-cyan-subtle);
 }
 
 .multi-scenario__insight-toggle-label {
@@ -1779,7 +1779,7 @@
     border-color: var(--ob-color-neon-cyan);
     box-shadow:
         0 0 0 1px var(--ob-color-neon-cyan),
-        0 4px 12px rgba(0, 243, 255, 0.1);
+        0 4px 12px var(--ob-color-neon-cyan-muted);
 }
 
 .multi-scenario__workspace-focus-badge {
@@ -2275,7 +2275,10 @@ html[data-theme='light'] .condition-assessment__overall-card {
     align-items: center;
     padding: var(--ob-space-025) var(--ob-space-075);
     border-radius: 999px;
-    background: var(--ob-color-neon-cyan-muted, rgba(0, 243, 255, 0.1));
+    background: var(
+        --ob-color-neon-cyan-muted,
+        var(--ob-color-neon-cyan-muted)
+    );
     color: var(--ob-color-neon-cyan);
     font-size: var(--ob-font-size-xs);
     font-weight: 600;
@@ -2326,7 +2329,7 @@ html[data-theme='light'] .condition-assessment__overall-card {
 
 .voice-observations-panel__record-zone--recording {
     border-color: var(--ob-error-500);
-    background: rgba(220, 38, 38, 0.05);
+    background: var(--ob-color-error-subtle);
 }
 
 .voice-observations-panel__record-btn,
@@ -2395,8 +2398,8 @@ html[data-theme='light'] .condition-assessment__overall-card {
 .voice-observations-panel__error {
     margin: var(--ob-space-100);
     padding: var(--ob-space-075);
-    background: rgba(220, 38, 38, 0.1);
-    border: 1px solid rgba(220, 38, 38, 0.3);
+    background: var(--ob-color-error-bg-muted);
+    border: 1px solid var(--ob-border-error-muted);
     border-radius: var(--ob-radius-xs);
     font-size: var(--ob-font-size-xs);
     color: var(--ob-error-500);
@@ -2494,7 +2497,7 @@ html[data-theme='light'] .condition-assessment__overall-card {
 
 .voice-observations-panel__delete-btn:hover {
     color: var(--ob-error-500);
-    background: rgba(220, 38, 38, 0.1);
+    background: var(--ob-color-error-bg-muted);
 }
 
 .voice-observations-panel__instructions {
@@ -2517,7 +2520,7 @@ html[data-theme='light'] .condition-assessment__overall-card {
     );
     border-radius: var(--ob-radius-sm);
     overflow: hidden;
-    box-shadow: 0 4px 16px rgba(0, 243, 255, 0.25);
+    box-shadow: var(--ob-glow-neon-cyan-card);
 }
 
 .optimal-intelligence-card__header {

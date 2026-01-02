@@ -153,13 +153,14 @@ NEVER use hardcoded pixel/rem values. Prefer design tokens.
 
 ## Blur/Backdrop Standards
 
-| Token          | Value | Use Cases             |
-| -------------- | ----- | --------------------- |
-| `--ob-blur-sm` | 4px   | Subtle blur           |
-| `--ob-blur-xs` | 8px   | Light glass surfaces  |
-| `--ob-blur-md` | 12px  | Standard glass effect |
-| `--ob-blur-xl` | 16px  | Strong glass surfaces |
-| `--ob-blur-lg` | 24px  | Heavy blur            |
+| Token           | Value | Use Cases                          |
+| --------------- | ----- | ---------------------------------- |
+| `--ob-blur-sm`  | 4px   | Subtle blur                        |
+| `--ob-blur-xs`  | 8px   | Light glass surfaces               |
+| `--ob-blur-md`  | 12px  | Standard glass effect              |
+| `--ob-blur-xl`  | 16px  | Strong glass surfaces              |
+| `--ob-blur-lg`  | 24px  | Heavy blur                         |
+| `--ob-blur-2xl` | 40px  | Deep glass, premium overlays       |
 
 ### Examples
 

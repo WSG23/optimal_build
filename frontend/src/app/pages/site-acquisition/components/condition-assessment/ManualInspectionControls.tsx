@@ -3,7 +3,12 @@
  *
  * Button group for logging/editing manual inspections with status display.
  * Pure presentational component - receives only labels, flags, and stable handlers.
+ *
+ * Uses Protocol Alpha (primary) for "Log inspection" command
+ * Uses Protocol Beta (secondary) for "Edit latest" system action
  */
+
+import { Button } from '@/components/canonical/Button'
 
 // ============================================================================
 // Types
@@ -44,12 +49,13 @@ export function ManualInspectionControls({
   return (
     <div
       style={{
-        border: '1px solid #e5e5e7',
-        borderRadius: '4px',
-        padding: '1.5rem',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
+        padding: 'var(--ob-space-150)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '1rem',
+        gap: 'var(--ob-space-100)',
+        background: 'var(--ob-color-bg-surface)',
       }}
     >
       <div
@@ -58,7 +64,7 @@ export function ManualInspectionControls({
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: '0.75rem',
+          gap: 'var(--ob-space-075)',
         }}
       >
         <div
@@ -66,13 +72,13 @@ export function ManualInspectionControls({
             maxWidth: '520px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.35rem',
+            gap: 'var(--ob-space-035)',
           }}
         >
           <h3
             style={{
               margin: 0,
-              fontSize: '1.0625rem',
+              fontSize: 'var(--ob-font-size-lg)',
               fontWeight: 600,
             }}
           >
@@ -81,51 +87,39 @@ export function ManualInspectionControls({
           <p
             style={{
               margin: 0,
-              fontSize: '0.9rem',
-              color: '#4b5563',
-              lineHeight: 1.5,
+              fontSize: 'var(--ob-font-size-sm)',
+              color: 'var(--ob-color-text-secondary)',
+              lineHeight: 'var(--ob-line-height-normal)',
             }}
           >
             Log a fresh site visit or update the latest inspection without
             waiting for automated sync.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button
-            type="button"
+        <div
+          style={{
+            display: 'flex',
+            gap: 'var(--ob-space-075)',
+            flexWrap: 'wrap',
+          }}
+        >
+          <Button
+            variant="primary"
+            size="sm"
             onClick={onLogNew}
             disabled={!hasProperty}
-            style={{
-              border: '1px solid #1d1d1f',
-              background: hasProperty ? '#1d1d1f' : '#f5f5f7',
-              color: hasProperty ? 'white' : '#1d1d1f88',
-              borderRadius: '9999px',
-              padding: '0.45rem 1.1rem',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              cursor: hasProperty ? 'pointer' : 'not-allowed',
-            }}
           >
             Log inspection
-          </button>
+          </Button>
           {hasExistingAssessment && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={onEditLatest}
               disabled={!hasProperty}
-              style={{
-                border: '1px solid #1d1d1f',
-                background: 'white',
-                color: '#1d1d1f',
-                borderRadius: '9999px',
-                padding: '0.45rem 1.1rem',
-                fontSize: '0.8125rem',
-                fontWeight: 600,
-                cursor: hasProperty ? 'pointer' : 'not-allowed',
-              }}
             >
               Edit latest
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -133,8 +127,10 @@ export function ManualInspectionControls({
         <p
           style={{
             margin: 0,
-            fontSize: '0.85rem',
-            color: saveMessage.includes('success') ? '#15803d' : '#c53030',
+            fontSize: 'var(--ob-font-size-sm)',
+            color: saveMessage.includes('success')
+              ? 'var(--ob-success-600)'
+              : 'var(--ob-error-600)',
           }}
         >
           {saveMessage}
@@ -145,9 +141,9 @@ export function ManualInspectionControls({
           style={{
             display: 'flex',
             flexWrap: 'wrap',
-            gap: '0.6rem',
-            fontSize: '0.85rem',
-            color: '#4b5563',
+            gap: 'var(--ob-space-065)',
+            fontSize: 'var(--ob-font-size-sm)',
+            color: 'var(--ob-color-text-secondary)',
           }}
         >
           {statusItems && statusItems.length > 0 ? (
@@ -156,7 +152,7 @@ export function ManualInspectionControls({
                 <span key={item.label}>
                   {item.label}: <strong>{item.value}</strong>
                   {index < statusItems.length - 1 && (
-                    <span style={{ margin: '0 0.25rem' }}>•</span>
+                    <span style={{ margin: '0 var(--ob-space-025)' }}>•</span>
                   )}
                 </span>
               ))}
@@ -169,7 +165,13 @@ export function ManualInspectionControls({
           )}
         </div>
       ) : (
-        <p style={{ margin: 0, fontSize: '0.85rem', color: '#6b7280' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 'var(--ob-font-size-sm)',
+            color: 'var(--ob-color-text-muted)',
+          }}
+        >
           Capture a property to enable manual inspection logging.
         </p>
       )}

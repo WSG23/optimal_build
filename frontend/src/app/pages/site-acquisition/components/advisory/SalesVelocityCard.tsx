@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+
 import {
   computeSalesVelocity,
   type SalesVelocityResponse,
 } from '../../../../../api/advisory'
+import { Button } from '../../../../../components/canonical/Button'
 import '../../../../../styles/advisory.css'
 
 type Props = {
@@ -88,14 +90,14 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
               Updated {formatLastCalculated(lastCalculated)}
             </span>
           )}
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            size="sm"
             onClick={handleCompute}
             disabled={disabled}
-            className="sales-velocity__cta"
           >
             {disabled ? 'Computing…' : 'Run forecast'}
-          </button>
+          </Button>
         </div>
       </div>
 

@@ -42,14 +42,14 @@ export function InsightCard({
   const chipStyle: CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '0.35rem',
-    padding: '0.3rem 0.6rem',
-    borderRadius: '9999px',
-    fontSize: '0.75rem',
+    gap: 'var(--ob-space-035)',
+    padding: 'var(--ob-space-025) var(--ob-space-065)',
+    borderRadius: 'var(--ob-radius-pill)',
+    fontSize: 'var(--ob-font-size-xs)',
     fontWeight: 600,
-    background: 'rgba(15, 23, 42, 0.08)',
-    color: '#0f172a',
-    border: '1px solid rgba(15, 23, 42, 0.12)',
+    background: 'var(--ob-color-bg-muted)',
+    color: 'var(--ob-color-text-primary)',
+    border: '1px solid var(--ob-color-border-subtle)',
   }
 
   return (
@@ -59,40 +59,47 @@ export function InsightCard({
         border: `1px solid ${visuals.border}`,
         background: visuals.background,
         color: visuals.text,
-        borderRadius: '4px',
-        padding: '1.2rem',
+        borderRadius: 'var(--ob-radius-sm)',
+        padding: 'var(--ob-space-120)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.65rem',
+        gap: 'var(--ob-space-065)',
       }}
     >
       <span
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '0.4rem',
-          fontSize: '0.75rem',
+          gap: 'var(--ob-space-035)',
+          fontSize: 'var(--ob-font-size-xs)',
           fontWeight: 700,
           textTransform: 'uppercase',
-          letterSpacing: '0.08em',
+          letterSpacing: 'var(--ob-letter-spacing-widest)',
         }}
       >
         <span
           style={{
-            width: '0.35rem',
-            height: '0.35rem',
-            borderRadius: '9999px',
+            width: 'var(--ob-space-035)',
+            height: 'var(--ob-space-035)',
+            borderRadius: 'var(--ob-radius-pill)',
             background: visuals.indicator,
           }}
         />
         {visuals.label}
       </span>
-      <strong style={{ fontSize: '0.95rem', lineHeight: 1.4 }}>{title}</strong>
+      <strong
+        style={{
+          fontSize: 'var(--ob-font-size-md)',
+          lineHeight: 'var(--ob-line-height-snug)',
+        }}
+      >
+        {title}
+      </strong>
       <p
         style={{
           margin: 0,
-          fontSize: '0.85rem',
-          lineHeight: 1.4,
+          fontSize: 'var(--ob-font-size-sm)',
+          lineHeight: 'var(--ob-line-height-snug)',
         }}
       >
         {detail}
@@ -102,16 +109,16 @@ export function InsightCard({
           style={{
             display: 'flex',
             flexWrap: 'wrap',
-            gap: '0.5rem',
+            gap: 'var(--ob-space-050)',
           }}
         >
           {isChecklistInsight && (
             <span
               style={{
                 ...chipStyle,
-                background: 'rgba(29, 78, 216, 0.08)',
-                color: '#1d4ed8',
-                border: '1px solid rgba(29, 78, 216, 0.15)',
+                background: 'var(--ob-color-brand-muted)',
+                color: 'var(--ob-brand-700)',
+                border: '1px solid var(--ob-color-brand-soft)',
               }}
             >
               Checklist follow-up

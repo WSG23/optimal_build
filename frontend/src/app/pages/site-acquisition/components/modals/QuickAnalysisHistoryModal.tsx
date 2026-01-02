@@ -6,6 +6,8 @@
  */
 
 import { createPortal } from 'react-dom'
+import { IconButton } from '@mui/material'
+import { Close } from '@mui/icons-material'
 import type { DevelopmentScenario } from '../../../../../api/siteAcquisition'
 import type {
   QuickAnalysisSnapshot,
@@ -58,11 +60,11 @@ export function QuickAnalysisHistoryModal({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.45)',
+        background: 'var(--ob-overlay-dark)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '2rem',
+        padding: 'var(--ob-space-200)',
         zIndex: 1000,
       }}
     >
@@ -72,57 +74,72 @@ export function QuickAnalysisHistoryModal({
         aria-label="Quick analysis history"
         onClick={(event) => event.stopPropagation()}
         style={{
-          background: 'white',
-          borderRadius: '8px',
+          background: 'var(--ob-color-bg-surface)',
+          borderRadius: 'var(--ob-radius-lg)',
           maxWidth: '900px',
           width: '100%',
           maxHeight: '85vh',
           overflowY: 'auto',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
-          padding: '2rem',
+          boxShadow: 'var(--ob-shadow-lg)',
+          padding: 'var(--ob-space-200)',
           position: 'relative',
         }}
       >
-        <button
-          type="button"
+        <IconButton
           onClick={onClose}
           aria-label="Close quick analysis history"
-          style={{
+          sx={{
             position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            border: 'none',
-            background: 'transparent',
-            fontSize: '1.5rem',
-            cursor: 'pointer',
-            color: '#6e6e73',
+            top: 'var(--ob-space-100)',
+            right: 'var(--ob-space-100)',
+            color: 'var(--ob-color-text-muted)',
           }}
         >
-          ×
-        </button>
+          <Close />
+        </IconButton>
         <div
-          style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--ob-space-150)',
+          }}
         >
           <div
-            style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-025)',
+            }}
           >
             <h2
               style={{
                 margin: 0,
-                fontSize: '1.4rem',
+                fontSize: 'var(--ob-font-size-xl)',
                 fontWeight: 600,
-                letterSpacing: '-0.01em',
+                letterSpacing: 'var(--ob-letter-spacing-tight)',
               }}
             >
               Quick analysis history
             </h2>
-            <p style={{ margin: 0, fontSize: '0.9rem', color: '#4b5563' }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 'var(--ob-font-size-sm)',
+                color: 'var(--ob-color-text-secondary)',
+              }}
+            >
               Review the last {quickAnalysisHistory.length} generated snapshots
               of multi-scenario feasibility metrics.
             </p>
           </div>
           {quickAnalysisHistory.length === 0 ? (
-            <p style={{ margin: 0, fontSize: '0.9rem', color: '#6b7280' }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 'var(--ob-font-size-sm)',
+                color: 'var(--ob-color-text-muted)',
+              }}
+            >
               Capture a property to build the quick analysis history timeline.
             </p>
           ) : (
@@ -130,13 +147,13 @@ export function QuickAnalysisHistoryModal({
               <article
                 key={`${snapshot.propertyId}-${snapshot.generatedAt}`}
                 style={{
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '4px',
-                  padding: '1.5rem',
+                  border: '1px solid var(--ob-color-border-subtle)',
+                  borderRadius: 'var(--ob-radius-sm)',
+                  padding: 'var(--ob-space-150)',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '1rem',
-                  background: '#f9fafb',
+                  gap: 'var(--ob-space-100)',
+                  background: 'var(--ob-color-bg-muted)',
                 }}
               >
                 <div
@@ -145,27 +162,32 @@ export function QuickAnalysisHistoryModal({
                     justifyContent: 'space-between',
                     alignItems: 'baseline',
                     flexWrap: 'wrap',
-                    gap: '0.5rem',
+                    gap: 'var(--ob-space-050)',
                   }}
                 >
                   <h3
                     style={{
                       margin: 0,
-                      fontSize: '1.05rem',
+                      fontSize: 'var(--ob-font-size-lg)',
                       fontWeight: 600,
-                      letterSpacing: '-0.01em',
+                      letterSpacing: 'var(--ob-letter-spacing-tight)',
                     }}
                   >
                     Generated {formatTimestamp(snapshot.generatedAt)}
                   </h3>
-                  <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                  <span
+                    style={{
+                      fontSize: 'var(--ob-font-size-xs)',
+                      color: 'var(--ob-color-text-muted)',
+                    }}
+                  >
                     Property ID: {snapshot.propertyId}
                   </span>
                 </div>
                 <div
                   style={{
                     display: 'grid',
-                    gap: '1rem',
+                    gap: 'var(--ob-space-100)',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
                   }}
                 >
@@ -184,26 +206,26 @@ export function QuickAnalysisHistoryModal({
                       <section
                         key={`${snapshot.generatedAt}-${scenarioKey}`}
                         style={{
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '4px',
-                          padding: '1rem',
-                          background: 'white',
+                          border: '1px solid var(--ob-color-border-subtle)',
+                          borderRadius: 'var(--ob-radius-sm)',
+                          padding: 'var(--ob-space-100)',
+                          background: 'var(--ob-color-bg-surface)',
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: '0.6rem',
+                          gap: 'var(--ob-space-065)',
                         }}
                       >
                         <div
                           style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '0.25rem',
+                            gap: 'var(--ob-space-025)',
                           }}
                         >
                           <span
                             style={{
-                              fontSize: '0.75rem',
-                              color: '#6b7280',
+                              fontSize: 'var(--ob-font-size-xs)',
+                              color: 'var(--ob-color-text-muted)',
                               textTransform: 'uppercase',
                             }}
                           >
@@ -211,9 +233,9 @@ export function QuickAnalysisHistoryModal({
                           </span>
                           <span
                             style={{
-                              fontSize: '1rem',
+                              fontSize: 'var(--ob-font-size-base)',
                               fontWeight: 600,
-                              color: '#111827',
+                              color: 'var(--ob-color-text-primary)',
                             }}
                           >
                             {label}
@@ -223,8 +245,8 @@ export function QuickAnalysisHistoryModal({
                           <p
                             style={{
                               margin: 0,
-                              fontSize: '0.85rem',
-                              color: '#374151',
+                              fontSize: 'var(--ob-font-size-sm)',
+                              color: 'var(--ob-color-text-secondary)',
                             }}
                           >
                             {scenario.headline}
@@ -238,7 +260,7 @@ export function QuickAnalysisHistoryModal({
                               listStyle: 'none',
                               display: 'flex',
                               flexDirection: 'column',
-                              gap: '0.35rem',
+                              gap: 'var(--ob-space-035)',
                             }}
                           >
                             {metrics.map((metric) => (
@@ -246,19 +268,20 @@ export function QuickAnalysisHistoryModal({
                                 <span
                                   style={{
                                     display: 'block',
-                                    fontSize: '0.75rem',
-                                    letterSpacing: '0.06em',
+                                    fontSize: 'var(--ob-font-size-xs)',
+                                    letterSpacing:
+                                      'var(--ob-letter-spacing-widest)',
                                     textTransform: 'uppercase',
-                                    color: '#9ca3af',
+                                    color: 'var(--ob-color-text-muted)',
                                   }}
                                 >
                                   {metric.label}
                                 </span>
                                 <span
                                   style={{
-                                    fontSize: '0.9rem',
+                                    fontSize: 'var(--ob-font-size-sm)',
                                     fontWeight: 600,
-                                    color: '#1f2937',
+                                    color: 'var(--ob-color-text-primary)',
                                   }}
                                 >
                                   {formatScenarioMetricValue(
@@ -273,8 +296,8 @@ export function QuickAnalysisHistoryModal({
                           <p
                             style={{
                               margin: 0,
-                              fontSize: '0.8rem',
-                              color: '#6b7280',
+                              fontSize: 'var(--ob-font-size-xs)',
+                              color: 'var(--ob-color-text-muted)',
                             }}
                           >
                             No quantitative metrics captured for this scenario

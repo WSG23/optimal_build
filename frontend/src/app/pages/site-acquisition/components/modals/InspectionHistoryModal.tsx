@@ -8,6 +8,8 @@
 import type React from 'react'
 import { createPortal } from 'react-dom'
 import type { RefObject } from 'react'
+import { IconButton } from '@mui/material'
+import { Close } from '@mui/icons-material'
 import type {
   ConditionAssessment,
   DevelopmentScenario,
@@ -90,11 +92,11 @@ export function InspectionHistoryModal({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.45)',
+        background: 'var(--ob-overlay-dark)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '2rem',
+        padding: 'var(--ob-space-200)',
         zIndex: 1000,
       }}
     >
@@ -104,33 +106,28 @@ export function InspectionHistoryModal({
         aria-label="Inspection history"
         onClick={(event) => event.stopPropagation()}
         style={{
-          background: 'white',
-          borderRadius: '8px',
+          background: 'var(--ob-color-bg-surface)',
+          borderRadius: 'var(--ob-radius-lg)',
           width: 'min(1200px, 95vw)',
           maxHeight: '85vh',
           overflowY: 'auto',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
-          padding: '2rem',
+          boxShadow: 'var(--ob-shadow-lg)',
+          padding: 'var(--ob-space-200)',
           position: 'relative',
         }}
       >
-        <button
-          type="button"
+        <IconButton
           onClick={onClose}
           aria-label="Close inspection history"
-          style={{
+          sx={{
             position: 'absolute',
-            top: '1rem',
-            right: '1rem',
-            border: 'none',
-            background: 'transparent',
-            fontSize: '1.5rem',
-            cursor: 'pointer',
-            color: '#6e6e73',
+            top: 'var(--ob-space-100)',
+            right: 'var(--ob-space-100)',
+            color: 'var(--ob-color-text-muted)',
           }}
         >
-          ×
-        </button>
+          <Close />
+        </IconButton>
         <InspectionHistoryContent
           historyViewMode={historyViewMode}
           setHistoryViewMode={setHistoryViewMode}
