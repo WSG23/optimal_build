@@ -226,8 +226,13 @@ export function AppShell({
             },
             mt: showLegacyAppBar ? TOOLBAR_HEIGHT : 0,
             minHeight: '100vh',
+            overflowY: 'auto',
+            overflowX: 'hidden',
             display: 'flex',
             flexDirection: 'column',
+            // Ensure content is painted above fixed background elements
+            position: 'relative',
+            zIndex: 1,
           }}
         >
           {/* Page Header (recreating what seemed to be there in the 'residue') */}

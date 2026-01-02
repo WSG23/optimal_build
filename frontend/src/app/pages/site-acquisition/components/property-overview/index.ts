@@ -4,14 +4,21 @@ export type {
   OverviewCard,
 } from './PropertyOverviewSection'
 
+// Master Table - Single Source of Truth for layer data, controls, and legend editing
+export { PreviewLayersTable } from './PreviewLayersTable'
+export type { PreviewLayersTableProps, LayerAction } from './PreviewLayersTable'
+
+// DEPRECATED: These components are no longer used in SiteAcquisitionPage
+// Their functionality has been consolidated into PreviewLayersTable
+// Keeping exports for backwards compatibility
+
+/** @deprecated Use PreviewLayersTable with inline accordion instead */
 export { LayerBreakdownCards } from './LayerBreakdownCards'
 export type { LayerBreakdownCardsProps } from './LayerBreakdownCards'
 
+/** @deprecated Use PreviewLayersTable with legendEntries/onLegendChange props instead */
 export { ColorLegendEditor } from './ColorLegendEditor'
 export type { ColorLegendEditorProps } from './ColorLegendEditor'
-
-export { PreviewLayersTable } from './PreviewLayersTable'
-export type { PreviewLayersTableProps, LayerAction } from './PreviewLayersTable'
 
 // UX Friction Solution Components
 export { StatCard } from './StatCard'

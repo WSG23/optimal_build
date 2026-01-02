@@ -2,16 +2,15 @@
  * Condition Assessment Section Component
  *
  * Displays the property condition assessment with:
- * - Overall rating and score display
- * - Immediate actions
- * - Condition insights
- * - Systems grid with ratings
- * - Manual inspection capture controls
- * - Inspection history summary
- * - Scenario overrides comparison
+ * - 12-column grid layout (4:8 split) - AI Studio pattern
+ * - Left: Overall rating gauge (4 cols)
+ * - Right: Immediate actions + AI insight + CTAs (8 cols)
+ * - Below: Systems grid, Inspection history, Scenario overrides
  *
  * Receives all data and handlers via props (no internal state).
  */
+
+import { Grid, Box, Typography } from '@mui/material'
 
 import type {
   ConditionAssessment,
@@ -23,13 +22,15 @@ import {
   classifySystemSeverity,
   getSeverityVisuals,
   getDeltaVisuals,
-  type ToneType,
 } from '../../utils/insights'
 import { InsightCard } from './InsightCard'
 import { SystemRatingCard } from './SystemRatingCard'
-import { ScenarioComparisonCard } from './ScenarioComparisonCard'
-import { ManualInspectionControls } from './ManualInspectionControls'
 import { OverallAssessmentCard } from './OverallAssessmentCard'
+import {
+  ImmediateActionsGrid,
+  type ImmediateAction,
+} from './ImmediateActionsGrid'
+import { AIInsightPanel } from './AIInsightPanel'
 
 // ============================================================================
 // Types
@@ -117,7 +118,7 @@ export function ConditionAssessmentSection({
   previousAssessmentEntry: _previousAssessmentEntry,
   assessmentHistoryError: _assessmentHistoryError,
   isLoadingAssessmentHistory: _isLoadingAssessmentHistory,
-  assessmentSaveMessage,
+  assessmentSaveMessage: _assessmentSaveMessage,
   scenarioAssessments: _scenarioAssessments,
   isLoadingScenarioAssessments,
   scenarioAssessmentsError,
@@ -131,8 +132,8 @@ export function ConditionAssessmentSection({
   scenarioLookup: _scenarioLookup,
   formatRecordedTimestamp,
   formatScenarioLabel,
-  describeRatingChange,
-  describeRiskChange,
+  describeRatingChange: _describeRatingChange,
+  describeRiskChange: _describeRiskChange,
   openAssessmentEditor,
   setScenarioComparisonBase,
   handleReportExport,
@@ -145,8 +146,8 @@ export function ConditionAssessmentSection({
       <h2 className="condition-assessment__title">
         Property Condition Assessment
       </h2>
-      {/* Content in card - Content vs Context pattern */}
-      <div className="ob-card-module condition-assessment__card">
+      {/* Seamless Command Surface - glass background, hairline border, no opaque card */}
+      <div className="condition-assessment__surface">
         {isLoadingCondition ? (
           <div className="condition-assessment__empty-state">
             <p>Analysing building condition...</p>
@@ -175,105 +176,147 @@ export function ConditionAssessmentSection({
           </div>
         ) : (
           <div className="condition-assessment__content">
-            {/* Overall Rating and Actions */}
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '1.5rem',
-                alignItems: 'flex-start',
-              }}
-            >
-              <OverallAssessmentCard
-                rating={conditionAssessment.overallRating}
-                score={conditionAssessment.overallScore}
-                riskLevel={conditionAssessment.riskLevel}
-                summary={conditionAssessment.summary}
-                scenarioContext={conditionAssessment.scenarioContext ?? null}
-                inspectorName={conditionAssessment.inspectorName ?? null}
-                recordedAtLabel={
-                  conditionAssessment.recordedAt
-                    ? formatRecordedTimestamp(conditionAssessment.recordedAt)
-                    : null
-                }
-                attachments={conditionAssessment.attachments.map((a) => ({
-                  label: a.label,
-                  url: a.url ?? null,
-                }))}
-              />
-              <div
-                style={{
-                  flex: '1 1 280px',
-                  background: '#f5f5f7',
-                  borderRadius: '4px',
-                  padding: '1.5rem',
-                }}
-              >
-                <h3
-                  style={{
-                    margin: '0 0 0.75rem',
-                    fontSize: '1.0625rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  Immediate Actions
-                </h3>
-                <ul
-                  style={{
-                    margin: 0,
-                    paddingLeft: '1.2rem',
-                    color: '#3a3a3c',
-                    fontSize: '0.9375rem',
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {conditionAssessment.recommendedActions.map((action) => (
-                    <li key={action}>{action}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+            {/* 12-column grid layout: 4 cols (gauge) + 8 cols (actions) */}
+            <Grid container spacing={2}>
+              {/* Left column: Overall Rating Gauge */}
+              <Grid item xs={12} lg={4}>
+                <OverallAssessmentCard
+                  rating={conditionAssessment.overallRating}
+                  score={conditionAssessment.overallScore}
+                  riskLevel={conditionAssessment.riskLevel}
+                  summary={conditionAssessment.summary}
+                  scenarioContext={conditionAssessment.scenarioContext ?? null}
+                  inspectorName={conditionAssessment.inspectorName ?? null}
+                  recordedAtLabel={
+                    conditionAssessment.recordedAt
+                      ? formatRecordedTimestamp(conditionAssessment.recordedAt)
+                      : null
+                  }
+                  attachments={conditionAssessment.attachments.map((a) => ({
+                    label: a.label,
+                    url: a.url ?? null,
+                  }))}
+                />
+              </Grid>
 
-            {/* Condition Insights */}
+              {/* Right column: Immediate Actions + AI Insight + CTAs */}
+              <Grid item xs={12} lg={8}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 'var(--ob-space-150)',
+                    height: '100%',
+                  }}
+                >
+                  {/* Immediate Actions Grid (2x2) */}
+                  <ImmediateActionsGrid
+                    actions={conditionAssessment.recommendedActions
+                      .slice(0, 4)
+                      .map(
+                        (action, index): ImmediateAction => ({
+                          id: `action-${index}`,
+                          title: action.split(':')[0] || action.slice(0, 30),
+                          description: action.includes(':')
+                            ? action.split(':').slice(1).join(':').trim()
+                            : action,
+                          priority:
+                            index === 0
+                              ? 'critical'
+                              : index === 1
+                                ? 'high'
+                                : 'medium',
+                        }),
+                      )}
+                  />
+
+                  {/* AI Insight Panel */}
+                  {conditionAssessment.summary && (
+                    <AIInsightPanel
+                      insight={`${conditionAssessment.summary} Focus remediation on ${
+                        conditionAssessment.systems
+                          .filter((s) => s.rating === 'D' || s.rating === 'F')
+                          .map((s) => s.name)
+                          .join(', ') ||
+                        'structural integrity and ageing M&E plant'
+                      } to maintain operational efficiency.`}
+                    />
+                  )}
+
+                  {/* Consolidated CTAs */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: 'var(--ob-space-100)',
+                      mt: 'auto',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => openAssessmentEditor('edit')}
+                      disabled={!latestAssessmentEntry}
+                      className="condition-assessment__cta-btn condition-assessment__cta-btn--ghost"
+                    >
+                      Manual Inspection Capture
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openAssessmentEditor('new')}
+                      className="condition-assessment__cta-btn condition-assessment__cta-btn--primary"
+                    >
+                      Log Full Inspection →
+                    </button>
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+
+            {/* Condition Insights - Seamless panel */}
             {combinedConditionInsights.length > 0 && (
-              <div
-                style={{
-                  border: '1px solid #e5e5e7',
-                  borderRadius: '4px',
-                  padding: '1.5rem',
-                  background: '#f8fafc',
+              <Box
+                className="ob-seamless-panel ob-seamless-panel--glass"
+                sx={{
+                  p: 'var(--ob-space-150)',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '1rem',
+                  gap: 'var(--ob-space-100)',
                 }}
               >
-                <div
-                  style={{
+                <Box
+                  sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    gap: '0.75rem',
+                    gap: 'var(--ob-space-075)',
                   }}
                 >
-                  <h3
-                    style={{
-                      margin: 0,
-                      fontSize: '1.125rem',
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      m: 0,
+                      fontSize: 'var(--ob-font-size-base)',
                       fontWeight: 600,
                       letterSpacing: '-0.01em',
+                      color: 'text.primary',
                     }}
                   >
                     Condition insights
-                  </h3>
-                  <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 'var(--ob-font-size-sm)',
+                      color: 'text.secondary',
+                    }}
+                  >
                     {insightSubtitle}
-                  </span>
-                </div>
-                <div
-                  style={{
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
                     display: 'grid',
-                    gap: '1rem',
+                    gap: 'var(--ob-space-100)',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
                   }}
                 >
@@ -288,15 +331,15 @@ export function ConditionAssessmentSection({
                       specialist={insight.specialist ?? null}
                     />
                   ))}
-                </div>
-              </div>
+                </Box>
+              </Box>
             )}
 
             {/* Systems Grid */}
-            <div
-              style={{
+            <Box
+              sx={{
                 display: 'grid',
-                gap: '1rem',
+                gap: 'var(--ob-space-100)',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
               }}
             >
@@ -333,435 +376,266 @@ export function ConditionAssessmentSection({
                   />
                 )
               })}
-            </div>
+            </Box>
 
-            {/* Manual Inspection Capture */}
-            <ManualInspectionControls
-              hasProperty={!!capturedProperty}
-              hasExistingAssessment={!!conditionAssessment}
-              saveMessage={assessmentSaveMessage}
-              statusItems={
-                latestAssessmentEntry
-                  ? [
-                      {
-                        label: 'Last recorded',
-                        value: formatRecordedTimestamp(
-                          latestAssessmentEntry.recordedAt,
-                        ),
-                      },
-                      {
-                        label: 'Scenario',
-                        value: formatScenarioLabel(
-                          latestAssessmentEntry.scenario,
-                        ),
-                      },
-                      {
-                        label: 'Rating',
-                        value: `${latestAssessmentEntry.overallRating} · ${latestAssessmentEntry.overallScore}/100`,
-                      },
-                    ]
-                  : null
-              }
-              onLogNew={() => openAssessmentEditor('new')}
-              onEditLatest={() => openAssessmentEditor('edit')}
-            />
+            {/* Consolidated Bottom Row: Inspection History + Scenario Overrides (6:6 grid) */}
+            <Grid container spacing={2}>
+              {/* Left: Inspection History */}
+              <Grid item xs={12} md={6}>
+                <InlineInspectionHistorySummary />
+              </Grid>
 
-            {/* Inspection History Summary */}
-            <InlineInspectionHistorySummary />
-
-            {/* Scenario Overrides */}
-            <div
-              style={{
-                border: '1px solid #e5e5e7',
-                borderRadius: '4px',
-                padding: '1.5rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1rem',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '0.75rem',
-                }}
-              >
-                <h3
-                  style={{
-                    margin: 0,
-                    fontSize: '1.0625rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  Scenario Overrides
-                </h3>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '0.5rem',
-                    alignItems: 'center',
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleReportExport('json')}
-                    disabled={!capturedProperty || isExportingReport}
-                    style={{
-                      border: '1px solid #1d1d1f',
-                      background: '#1d1d1f',
-                      color: 'white',
-                      borderRadius: '9999px',
-                      padding: '0.4rem 0.9rem',
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      cursor: isExportingReport ? 'not-allowed' : 'pointer',
-                    }}
-                  >
-                    {isExportingReport ? 'Preparing JSON…' : 'Download JSON'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleReportExport('pdf')}
-                    disabled={!capturedProperty || isExportingReport}
-                    style={{
-                      border: '1px solid #1d1d1f',
-                      background: 'white',
-                      color: '#1d1d1f',
-                      borderRadius: '9999px',
-                      padding: '0.4rem 0.9rem',
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      cursor: isExportingReport ? 'not-allowed' : 'pointer',
-                    }}
-                  >
-                    {isExportingReport ? 'Preparing PDF…' : 'Download PDF'}
-                  </button>
-                  {scenarioOverrideEntries.length > 1 &&
-                    baseScenarioAssessment && (
-                      <label
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          fontSize: '0.85rem',
-                          color: '#3a3a3c',
-                        }}
-                      >
-                        <span style={{ fontWeight: 600 }}>
-                          Baseline scenario
-                        </span>
-                        <select
-                          value={baseScenarioAssessment.scenario ?? ''}
-                          onChange={(event) =>
-                            setScenarioComparisonBase(
-                              event.target.value as DevelopmentScenario,
-                            )
-                          }
-                          style={{
-                            borderRadius: '6px',
-                            border: '1px solid #d2d2d7',
-                            padding: '0.4rem 0.6rem',
-                            fontSize: '0.85rem',
-                          }}
-                        >
-                          {scenarioOverrideEntries.map((entry) => (
-                            <option
-                              key={entry.scenario ?? 'all'}
-                              value={entry.scenario ?? ''}
-                            >
-                              {formatScenarioLabel(entry.scenario)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    )}
-                </div>
-              </div>
-              {scenarioAssessmentsError ? (
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: '0.85rem',
-                    color: '#c53030',
-                  }}
-                >
-                  {scenarioAssessmentsError}
-                </p>
-              ) : isLoadingScenarioAssessments ? (
-                <div
-                  style={{
-                    padding: '1.5rem',
-                    textAlign: 'center',
-                    color: '#6e6e73',
-                    background: '#f5f5f7',
-                    borderRadius: '4px',
-                  }}
-                >
-                  <p style={{ margin: 0, fontSize: '0.9rem' }}>
-                    Loading scenario overrides...
-                  </p>
-                </div>
-              ) : scenarioOverrideEntries.length === 0 ? (
-                <div
-                  style={{
-                    padding: '1.5rem',
-                    textAlign: 'center',
-                    color: '#6e6e73',
-                    background: '#f5f5f7',
-                    borderRadius: '4px',
-                  }}
-                >
-                  <p style={{ margin: 0, fontSize: '0.9rem' }}>
-                    No scenario-specific overrides recorded yet. Save an
-                    inspection for a specific scenario to compare outcomes.
-                  </p>
-                </div>
-              ) : (
-                <div
-                  style={{
+              {/* Right: Scenario Overrides - Seamless panel */}
+              <Grid item xs={12} md={6}>
+                <Box
+                  className="ob-seamless-panel ob-seamless-panel--glass"
+                  sx={{
+                    p: 'var(--ob-space-125)',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '1.25rem',
+                    gap: 'var(--ob-space-100)',
+                    height: '100%',
                   }}
                 >
-                  {scenarioOverrideEntries.length > 0 && (
-                    <div
-                      style={{
+                  {/* Header */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      gap: 'var(--ob-space-075)',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <Box>
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          m: 0,
+                          fontSize: 'var(--ob-font-size-base)',
+                          fontWeight: 600,
+                          color: 'text.primary',
+                        }}
+                      >
+                        Scenario Overrides
+                      </Typography>
+                      <Typography
+                        sx={{
+                          mt: 'var(--ob-space-025)',
+                          fontSize: 'var(--ob-font-size-xs)',
+                          color: 'text.secondary',
+                        }}
+                      >
+                        Compare assessments across scenarios.
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
                         display: 'flex',
                         flexWrap: 'wrap',
-                        gap: '0.75rem',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: '1rem',
+                        gap: 'var(--ob-space-075)',
                       }}
                     >
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '0.25rem',
-                        }}
+                      <button
+                        type="button"
+                        onClick={() => handleReportExport('json')}
+                        disabled={!capturedProperty || isExportingReport}
+                        className="condition-assessment__export-btn condition-assessment__export-btn--primary"
                       >
-                        <span
-                          style={{
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            letterSpacing: '0.06em',
-                            textTransform: 'uppercase',
-                            color: '#6e6e73',
-                          }}
-                        >
-                          Compare against
-                        </span>
-                        <span style={{ fontSize: '0.95rem', color: '#1d1d1f' }}>
-                          Choose the baseline inspection to benchmark other
-                          scenarios.
-                        </span>
-                      </div>
-                      <label
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          fontSize: '0.9rem',
-                          color: '#3a3a3c',
-                        }}
+                        {isExportingReport ? 'Exporting…' : 'JSON'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleReportExport('pdf')}
+                        disabled={!capturedProperty || isExportingReport}
+                        className="condition-assessment__export-btn condition-assessment__export-btn--secondary"
                       >
-                        <span style={{ fontWeight: 600 }}>
-                          Baseline scenario
-                        </span>
-                        <select
-                          value={baseScenarioAssessment?.scenario ?? ''}
-                          onChange={(event) => {
-                            const selected = event.target
-                              .value as DevelopmentScenario
-                            if (selected) {
-                              setScenarioComparisonBase(selected)
-                            }
-                          }}
-                          style={{
-                            borderRadius: '9999px',
-                            border: '1px solid #d2d2d7',
-                            padding: '0.4rem 0.9rem',
-                            background: 'white',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {scenarioOverrideEntries.map((assessment) => (
-                            <option
-                              key={assessment.scenario ?? 'all'}
-                              value={assessment.scenario ?? ''}
-                            >
-                              {formatScenarioLabel(assessment.scenario)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </div>
-                  )}
+                        {isExportingReport ? 'Exporting…' : 'PDF'}
+                      </button>
+                    </Box>
+                  </Box>
 
-                  {baseScenarioAssessment && (
-                    <div
-                      style={{
-                        border: '1px solid #d2d2d7',
-                        borderRadius: '4px',
-                        padding: '1.25rem',
-                        background: '#f5f5f7',
+                  {/* Content */}
+                  {scenarioAssessmentsError ? (
+                    <Typography
+                      sx={{
+                        m: 0,
+                        fontSize: 'var(--ob-font-size-sm)',
+                        color: 'error.main',
+                      }}
+                    >
+                      {scenarioAssessmentsError}
+                    </Typography>
+                  ) : isLoadingScenarioAssessments ? (
+                    <Typography
+                      sx={{
+                        m: 0,
+                        fontSize: 'var(--ob-font-size-sm)',
+                        color: 'text.secondary',
+                      }}
+                    >
+                      Loading scenario overrides...
+                    </Typography>
+                  ) : scenarioOverrideEntries.length === 0 ? (
+                    <Box
+                      className="ob-seamless-panel"
+                      sx={{
+                        p: 'var(--ob-space-100)',
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          m: 0,
+                          fontSize: 'var(--ob-font-size-sm)',
+                          color: 'text.secondary',
+                        }}
+                      >
+                        No scenario-specific overrides recorded yet. Save an
+                        inspection for a specific scenario to compare outcomes.
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box
+                      sx={{
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '0.6rem',
+                        gap: 'var(--ob-space-075)',
                       }}
                     >
-                      <span
-                        style={{
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
-                          color: '#6e6e73',
-                        }}
-                      >
-                        Baseline scenario
-                      </span>
-                      <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
-                        {formatScenarioLabel(baseScenarioAssessment.scenario)}
-                      </strong>
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '0.75rem',
-                          alignItems: 'center',
-                          color: '#3a3a3c',
-                          fontSize: '0.9rem',
-                        }}
-                      >
-                        <span>
-                          Rating {baseScenarioAssessment.overallRating}
-                        </span>
-                        <span>
-                          {baseScenarioAssessment.overallScore}/100 score
-                        </span>
-                        <span style={{ textTransform: 'capitalize' }}>
-                          {baseScenarioAssessment.riskLevel} risk
-                        </span>
-                      </div>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: '0.9rem',
-                          color: '#3a3a3c',
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {baseScenarioAssessment.summary}
-                      </p>
-                      {baseScenarioAssessment.scenarioContext && (
-                        <p
-                          style={{
-                            margin: 0,
-                            fontSize: '0.85rem',
-                            color: '#0071e3',
-                          }}
-                        >
-                          {baseScenarioAssessment.scenarioContext}
-                        </p>
-                      )}
-                      {baseScenarioAssessment.recommendedActions.length > 0 && (
-                        <div style={{ display: 'grid', gap: '0.4rem' }}>
-                          <strong style={{ fontSize: '0.85rem' }}>
-                            Actions
-                          </strong>
-                          <ul
-                            style={{
-                              margin: 0,
-                              paddingLeft: '1.1rem',
-                              fontSize: '0.85rem',
-                              color: '#3a3a3c',
-                              lineHeight: 1.4,
+                      {/* Baseline selector */}
+                      {scenarioOverrideEntries.length > 1 &&
+                        baseScenarioAssessment && (
+                          <Box
+                            component="label"
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 'var(--ob-space-050)',
+                              fontSize: 'var(--ob-font-size-xs)',
+                              color: 'text.secondary',
                             }}
                           >
-                            {baseScenarioAssessment.recommendedActions.map(
-                              (action) => (
-                                <li key={action}>{action}</li>
-                              ),
-                            )}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {scenarioComparisonEntries.length === 0 ? (
-                    <div
-                      style={{
-                        padding: '1.25rem',
-                        border: '1px solid #d2d2d7',
-                        borderRadius: '4px',
-                        background: '#ffffff',
-                        color: '#6e6e73',
-                        fontSize: '0.9rem',
-                      }}
-                    >
-                      Capture another scenario-specific override to compare with
-                      the baseline.
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        display: 'grid',
-                        gap: '1rem',
-                        gridTemplateColumns:
-                          'repeat(auto-fit, minmax(260px, 1fr))',
-                      }}
-                    >
-                      {scenarioComparisonEntries.map((assessment) => {
-                        if (!baseScenarioAssessment) {
-                          return null
-                        }
-                        const scoreDelta =
-                          assessment.overallScore -
-                          baseScenarioAssessment.overallScore
-                        const ratingInfo = describeRatingChange(
-                          assessment.overallRating,
-                          baseScenarioAssessment.overallRating,
-                        )
-                        const riskInfo = describeRiskChange(
-                          assessment.riskLevel,
-                          baseScenarioAssessment.riskLevel,
-                        )
+                            <Typography
+                              component="span"
+                              sx={{ fontWeight: 600, fontSize: 'inherit' }}
+                            >
+                              Baseline:
+                            </Typography>
+                            <select
+                              value={baseScenarioAssessment.scenario ?? ''}
+                              onChange={(event) =>
+                                setScenarioComparisonBase(
+                                  event.target.value as DevelopmentScenario,
+                                )
+                              }
+                              className="condition-assessment__scenario-select"
+                            >
+                              {scenarioOverrideEntries.map((entry) => (
+                                <option
+                                  key={entry.scenario ?? 'all'}
+                                  value={entry.scenario ?? ''}
+                                >
+                                  {formatScenarioLabel(entry.scenario)}
+                                </option>
+                              ))}
+                            </select>
+                          </Box>
+                        )}
 
-                        return (
-                          <ScenarioComparisonCard
-                            key={assessment.scenario ?? 'default'}
-                            scenarioKey={assessment.scenario ?? 'default'}
-                            scenarioLabel={formatScenarioLabel(
-                              assessment.scenario,
+                      {/* Compact baseline summary - Seamless panel */}
+                      {baseScenarioAssessment && (
+                        <Box
+                          className="ob-seamless-panel"
+                          sx={{
+                            p: 'var(--ob-space-100)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 'var(--ob-space-050)',
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              fontSize: 'var(--ob-font-size-2xs)',
+                              fontWeight: 600,
+                              letterSpacing: '0.08em',
+                              textTransform: 'uppercase',
+                              color: 'text.secondary',
+                            }}
+                          >
+                            Baseline:{' '}
+                            {formatScenarioLabel(
+                              baseScenarioAssessment.scenario,
                             )}
-                            score={assessment.overallScore}
-                            scoreDelta={scoreDelta}
-                            ratingChange={
-                              ratingInfo as { text: string; tone: ToneType }
-                            }
-                            riskChange={
-                              riskInfo as { text: string; tone: ToneType }
-                            }
-                            summary={assessment.summary}
-                            scenarioContext={assessment.scenarioContext ?? null}
-                            recommendedActions={assessment.recommendedActions}
-                          />
-                        )
-                      })}
-                    </div>
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: 'var(--ob-space-075)',
+                              alignItems: 'center',
+                              fontSize: 'var(--ob-font-size-xs)',
+                            }}
+                          >
+                            <Typography
+                              component="span"
+                              sx={{
+                                fontSize: 'inherit',
+                                color: 'text.primary',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {baseScenarioAssessment.overallRating}
+                            </Typography>
+                            <Typography
+                              component="span"
+                              sx={{
+                                fontSize: 'inherit',
+                                color: 'text.secondary',
+                              }}
+                            >
+                              {baseScenarioAssessment.overallScore}/100
+                            </Typography>
+                            <Typography
+                              component="span"
+                              sx={{
+                                fontSize: 'inherit',
+                                color: 'text.secondary',
+                                textTransform: 'capitalize',
+                              }}
+                            >
+                              {baseScenarioAssessment.riskLevel} risk
+                            </Typography>
+                          </Box>
+                        </Box>
+                      )}
+
+                      {/* Comparison count */}
+                      {scenarioComparisonEntries.length > 0 ? (
+                        <Typography
+                          sx={{
+                            fontSize: 'var(--ob-font-size-xs)',
+                            color: 'text.secondary',
+                          }}
+                        >
+                          {scenarioComparisonEntries.length} scenario
+                          {scenarioComparisonEntries.length !== 1 ? 's' : ''} to
+                          compare
+                        </Typography>
+                      ) : (
+                        <Typography
+                          sx={{
+                            fontSize: 'var(--ob-font-size-xs)',
+                            color: 'text.secondary',
+                          }}
+                        >
+                          Capture another scenario to compare.
+                        </Typography>
+                      )}
+                    </Box>
                   )}
-                </div>
-              )}
-            </div>
+                </Box>
+              </Grid>
+            </Grid>
           </div>
         )}
       </div>

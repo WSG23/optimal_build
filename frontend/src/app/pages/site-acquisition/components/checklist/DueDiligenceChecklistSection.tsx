@@ -3,6 +3,12 @@
  *
  * Displays the checklist grouped by category with progress tracking.
  * Receives all data and handlers via props (no internal state).
+ *
+ * NOTE: Scenario tabs have been REMOVED from this component.
+ * The global ScenarioFocusSection is the single source of truth for scenario filtering.
+ * This eliminates UI redundancy where scenario selection appeared in multiple places.
+ *
+ * @see ScenarioFocusSection - Global scenario filter
  */
 
 import { Link } from '../../../../../router'
@@ -28,8 +34,6 @@ export interface DueDiligenceChecklistSectionProps {
   capturedProperty: unknown | null
   checklistItems: ChecklistItem[]
   filteredChecklistItems: ChecklistItem[]
-  availableChecklistScenarios: DevelopmentScenario[]
-  scenarioLookup: Map<DevelopmentScenario, ScenarioOption>
   displaySummary: ChecklistSummary | null
   activeScenario: 'all' | DevelopmentScenario
   activeScenarioDetails: ScenarioOption | null | undefined
@@ -37,7 +41,6 @@ export interface DueDiligenceChecklistSectionProps {
   isLoadingChecklist: boolean
 
   // Handlers (stable callbacks from parent hook)
-  setActiveScenario: (scenario: 'all' | DevelopmentScenario) => void
   setSelectedCategory: (category: string | null) => void
   handleChecklistUpdate: (
     itemId: string,
@@ -53,14 +56,11 @@ export function DueDiligenceChecklistSection({
   capturedProperty,
   checklistItems,
   filteredChecklistItems,
-  availableChecklistScenarios,
-  scenarioLookup,
   displaySummary,
   activeScenario,
   activeScenarioDetails,
   selectedCategory,
   isLoadingChecklist,
-  setActiveScenario,
   setSelectedCategory,
   handleChecklistUpdate,
 }: DueDiligenceChecklistSectionProps) {
@@ -95,40 +95,9 @@ export function DueDiligenceChecklistSection({
         </div>
       </div>
 
-      {/* Content in card - Content vs Context pattern */}
-      <div className="ob-card-module due-diligence__card">
-        {/* Scenario filter tabs */}
-        {availableChecklistScenarios.length > 0 && (
-          <div className="due-diligence__scenario-tabs">
-            <button
-              type="button"
-              onClick={() => setActiveScenario('all')}
-              className={`due-diligence__scenario-tab ${activeScenario === 'all' ? 'due-diligence__scenario-tab--active' : ''}`}
-            >
-              All scenarios
-            </button>
-            {availableChecklistScenarios.map((scenario) => {
-              const option = scenarioLookup.get(scenario)
-              const isActive = activeScenario === scenario
-              return (
-                <button
-                  key={scenario}
-                  type="button"
-                  onClick={() => setActiveScenario(scenario)}
-                  className={`due-diligence__scenario-tab ${isActive ? 'due-diligence__scenario-tab--active' : ''}`}
-                >
-                  {option?.icon ? (
-                    <span className="due-diligence__scenario-icon">
-                      {option.icon}
-                    </span>
-                  ) : null}
-                  <span>{option?.label ?? formatCategoryName(scenario)}</span>
-                </button>
-              )
-            })}
-          </div>
-        )}
-
+      {/* Content - seamless glass surface */}
+      {/* NOTE: Scenario tabs REMOVED - use ScenarioFocusSection for global filtering */}
+      <div className="ob-seamless-panel ob-seamless-panel--glass due-diligence__surface">
         {/* Content states */}
         {isLoadingChecklist ? (
           <div className="due-diligence__empty-state">

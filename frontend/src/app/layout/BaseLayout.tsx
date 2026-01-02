@@ -34,7 +34,7 @@ export function BaseLayout({ children }: { children: ReactNode }) {
           position: 'relative',
         }}
       >
-        {/* Background Grid Pattern */}
+        {/* Background Grid Pattern - promoted to own layer to prevent paint blocking */}
         <Box
           aria-hidden
           sx={{
@@ -48,6 +48,9 @@ export function BaseLayout({ children }: { children: ReactNode }) {
             `,
             backgroundSize: 'var(--ob-bg-grid-size) var(--ob-bg-grid-size)',
             zIndex: 0,
+            // Promote to compositing layer to prevent blocking main content paint
+            transform: 'translateZ(0)',
+            willChange: 'opacity',
           }}
         />
 
@@ -65,7 +68,8 @@ export function BaseLayout({ children }: { children: ReactNode }) {
             display: 'flex',
             flexDirection: 'column',
             minHeight: 0,
-            overflow: 'hidden',
+            // Allow child components (AppShell, YosaiShell) to handle their own scrolling
+            overflow: 'visible',
             position: 'relative',
             zIndex: 1,
           }}

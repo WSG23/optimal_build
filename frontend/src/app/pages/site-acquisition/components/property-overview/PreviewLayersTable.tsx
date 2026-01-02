@@ -1,11 +1,33 @@
 /**
- * Preview Layers Table Component
+ * Preview Layers Table - Master Table (Single Source of Truth)
  *
- * Displays and controls preview massing layers with visibility,
- * solo, and zoom actions. Provides a unified onLayerAction callback.
+ * Consolidated component that provides ALL layer data and controls:
+ * - Visibility toggle (Eye icon)
+ * - Layer metrics (Allocation, GFA, NIA, Height, Floors)
+ * - Risk level indicator
+ * - Solo and Focus actions
+ * - Inline accordion editor for legend entries (color, label, description)
+ *
+ * Eliminates redundancy from:
+ * - LayerBreakdownCards (removed)
+ * - MassingLayersPanel (removed)
+ * - ColorLegendEditor (integrated inline)
+ *
+ * @see frontend/UX_ARCHITECTURE.md - Single Source of Truth pattern
  */
 
-import type { PreviewLayerMetadata } from '../../previewMetadata'
+import { useState, Fragment } from 'react'
+import {
+  Visibility,
+  VisibilityOff,
+  Edit,
+  ExpandMore,
+  ExpandLess,
+} from '@mui/icons-material'
+import type {
+  PreviewLayerMetadata,
+  PreviewLegendEntry,
+} from '../../previewMetadata'
 import { toTitleCase } from '../../utils/formatters'
 
 // ============================================================================
@@ -35,6 +57,78 @@ export interface PreviewLayersTableProps {
   onResetFocus: () => void
   /** Number formatter function */
   formatNumber: (value: number, options?: Intl.NumberFormatOptions) => string
+
+  // Legend editor props (integrated from ColorLegendEditor)
+  /** Legend entries for inline editing */
+  legendEntries?: PreviewLegendEntry[]
+  /** Called when a legend field changes */
+  onLegendChange?: (
+    assetType: string,
+    field: 'label' | 'color' | 'description',
+    value: string,
+  ) => void
+  /** Whether there are pending legend changes */
+  legendHasPendingChanges?: boolean
+  /** Called to reset legend to defaults */
+  onLegendReset?: () => void
+}
+
+// ============================================================================
+// Risk Level Helper
+// ============================================================================
+
+function getRiskLevel(
+  layer: PreviewLayerMetadata,
+): 'low' | 'medium' | 'high' | null {
+  // Infer risk from allocation percentage
+  const pct = layer.metrics.allocationPct
+  if (pct == null) return null
+  if (pct >= 40) return 'high'
+  if (pct >= 20) return 'medium'
+  return 'low'
+}
+
+function getRiskBadgeStyle(
+  risk: 'low' | 'medium' | 'high' | null,
+): React.CSSProperties {
+  const baseStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 'var(--ob-space-025)',
+    padding: '2px 8px',
+    borderRadius: 'var(--ob-radius-xs)',
+    fontSize: 'var(--ob-font-size-2xs)',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  }
+
+  switch (risk) {
+    case 'low':
+      return {
+        ...baseStyle,
+        background: 'var(--ob-success-100)',
+        color: 'var(--ob-success-700)',
+      }
+    case 'medium':
+      return {
+        ...baseStyle,
+        background: 'var(--ob-warning-100)',
+        color: 'var(--ob-warning-700)',
+      }
+    case 'high':
+      return {
+        ...baseStyle,
+        background: 'var(--ob-error-100)',
+        color: 'var(--ob-error-700)',
+      }
+    default:
+      return {
+        ...baseStyle,
+        background: 'var(--ob-neutral-100)',
+        color: 'var(--ob-neutral-500)',
+      }
+  }
 }
 
 // ============================================================================
@@ -52,61 +146,72 @@ export function PreviewLayersTable({
   onShowAll,
   onResetFocus,
   formatNumber,
+  // Legend editor props
+  legendEntries = [],
+  onLegendChange,
+  legendHasPendingChanges = false,
+  onLegendReset,
 }: PreviewLayersTableProps) {
+  // Track which row's accordion is expanded
+  const [expandedLayerId, setExpandedLayerId] = useState<string | null>(null)
+
+  const toggleAccordion = (layerId: string) => {
+    setExpandedLayerId((prev) => (prev === layerId ? null : layerId))
+  }
+
+  // Find legend entry for a layer
+  const getLegendEntry = (
+    layerName: string,
+  ): PreviewLegendEntry | undefined => {
+    return legendEntries.find(
+      (e) =>
+        e.assetType.toLowerCase() === layerName.toLowerCase() ||
+        e.label.toLowerCase() === layerName.toLowerCase(),
+    )
+  }
+
+  const hasLegendEditor = legendEntries.length > 0 && onLegendChange
+
   return (
-    <section
-      style={{
-        marginTop: '1.5rem',
-        border: '1px solid #e5e7eb',
-        borderRadius: '4px',
-        padding: '1.2rem',
-        background: '#ffffff',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1rem',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '0.75rem',
-          alignItems: 'center',
-        }}
-      >
-        <div>
-          <h4
-            style={{
-              margin: 0,
-              fontSize: '1rem',
-              fontWeight: 600,
-              letterSpacing: '-0.01em',
-              color: '#111827',
-            }}
-          >
-            Rendered layers
+    <section className="preview-layers-master-table">
+      {/* Header */}
+      <div className="preview-layers-master-table__header">
+        <div className="preview-layers-master-table__header-text">
+          <h4 className="preview-layers-master-table__title">
+            Development Preview Layers
           </h4>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#4b5563' }}>
-            Hide, solo, and zoom specific massing layers directly from the Site
-            Acquisition workspace while reviewing the Phase 2B preview.
+          <p className="preview-layers-master-table__subtitle">
+            Single source of truth for layer visibility, metrics, and legend
+            customization
           </p>
         </div>
-        <div
-          style={{
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            color: error ? '#b45309' : '#4b5563',
-          }}
-        >
-          {isLoading
-            ? 'Loading preview metadata…'
-            : error
-              ? `Metadata error: ${error}`
-              : `${layers.length} layers${hiddenLayerCount ? ` · ${hiddenLayerCount} hidden` : ''}`}
+        <div className="preview-layers-master-table__header-status">
+          {isLoading ? (
+            <span className="preview-layers-master-table__status preview-layers-master-table__status--loading">
+              Loading preview metadata...
+            </span>
+          ) : error ? (
+            <span className="preview-layers-master-table__status preview-layers-master-table__status--error">
+              Metadata error: {error}
+            </span>
+          ) : (
+            <>
+              <span className="preview-layers-master-table__status">
+                {layers.length} layers
+                {hiddenLayerCount > 0 && ` · ${hiddenLayerCount} hidden`}
+              </span>
+              {legendHasPendingChanges && (
+                <span className="preview-layers-master-table__status preview-layers-master-table__status--pending">
+                  Palette edits pending
+                </span>
+              )}
+            </>
+          )}
         </div>
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+
+      {/* Action Bar */}
+      <div className="preview-layers-master-table__actions">
         <button
           type="button"
           onClick={onShowAll}
@@ -115,247 +220,277 @@ export function PreviewLayersTable({
             !layers.length ||
             (hiddenLayerCount === 0 && !focusLayerId)
           }
-          style={{
-            padding: '0.35rem 0.8rem',
-            borderRadius: '9999px',
-            border: '1px solid #d1d5db',
-            background: '#f9fafb',
-            fontWeight: 600,
-            color: '#111827',
-            fontSize: '0.85rem',
-          }}
+          className="preview-layers-master-table__btn"
         >
-          Show all layers
+          Show All
         </button>
         <button
           type="button"
           onClick={onResetFocus}
           disabled={!focusLayerId}
-          style={{
-            padding: '0.35rem 0.8rem',
-            borderRadius: '9999px',
-            border: '1px solid #d1d5db',
-            background: '#f9fafb',
-            fontWeight: 600,
-            color: focusLayerId ? '#111827' : '#9ca3af',
-            fontSize: '0.85rem',
-          }}
+          className="preview-layers-master-table__btn"
         >
-          Reset view
+          Reset View
         </button>
+        {onLegendReset && (
+          <button
+            type="button"
+            onClick={onLegendReset}
+            disabled={legendEntries.length === 0}
+            className="preview-layers-master-table__btn"
+          >
+            Reset Legend
+          </button>
+        )}
       </div>
+
+      {/* Empty State */}
       {!isLoading && !error && layers.length === 0 && (
-        <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563' }}>
+        <p className="preview-layers-master-table__empty">
           Layer metrics will populate once the preview metadata asset is ready.
           Refresh the render if the queue has expired.
         </p>
       )}
+
+      {/* Master Table */}
       {layers.length > 0 && (
-        <div style={{ overflowX: 'auto' }}>
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              minWidth: '640px',
-            }}
-          >
+        <div className="preview-layers-master-table__table-wrapper">
+          <table className="preview-layers-master-table__table">
             <thead>
-              <tr
-                style={{ textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}
-              >
-                <th
-                  style={{
-                    padding: '0.5rem',
-                    fontSize: '0.8rem',
-                    color: '#6b7280',
-                  }}
-                >
-                  Layer
+              <tr>
+                <th className="preview-layers-master-table__th preview-layers-master-table__th--visibility">
+                  <Visibility sx={{ fontSize: 16, opacity: 0.6 }} />
                 </th>
-                <th
-                  style={{
-                    padding: '0.5rem',
-                    fontSize: '0.8rem',
-                    color: '#6b7280',
-                  }}
-                >
-                  Allocation
+                <th className="preview-layers-master-table__th">Layer</th>
+                <th className="preview-layers-master-table__th preview-layers-master-table__th--numeric">
+                  Mix %
                 </th>
-                <th
-                  style={{
-                    padding: '0.5rem',
-                    fontSize: '0.8rem',
-                    color: '#6b7280',
-                  }}
-                >
-                  GFA (sqm)
+                <th className="preview-layers-master-table__th preview-layers-master-table__th--numeric">
+                  GFA
                 </th>
-                <th
-                  style={{
-                    padding: '0.5rem',
-                    fontSize: '0.8rem',
-                    color: '#6b7280',
-                  }}
-                >
-                  NIA (sqm)
+                <th className="preview-layers-master-table__th preview-layers-master-table__th--numeric">
+                  NIA
                 </th>
-                <th
-                  style={{
-                    padding: '0.5rem',
-                    fontSize: '0.8rem',
-                    color: '#6b7280',
-                  }}
-                >
-                  Est. height (m)
+                <th className="preview-layers-master-table__th preview-layers-master-table__th--numeric">
+                  Height
                 </th>
-                <th
-                  style={{
-                    padding: '0.5rem',
-                    fontSize: '0.8rem',
-                    color: '#6b7280',
-                  }}
-                >
-                  Est. floors
+                <th className="preview-layers-master-table__th preview-layers-master-table__th--numeric">
+                  Floors
                 </th>
-                <th
-                  style={{
-                    padding: '0.5rem',
-                    fontSize: '0.8rem',
-                    color: '#6b7280',
-                  }}
-                >
-                  Controls
+                <th className="preview-layers-master-table__th">Risk</th>
+                <th className="preview-layers-master-table__th preview-layers-master-table__th--actions">
+                  Actions
                 </th>
               </tr>
             </thead>
             <tbody>
-              {layers.map((layer) => {
+              {layers.map((layer, index) => {
                 const isVisible = visibility[layer.id] !== false
+                const isFocused = focusLayerId === layer.id
+                const isExpanded = expandedLayerId === layer.id
+                const risk = getRiskLevel(layer)
+                const legendEntry = getLegendEntry(layer.name)
+                const isZebra = index % 2 === 1
+
                 return (
-                  <tr
-                    key={layer.id}
-                    style={{ borderBottom: '1px solid #f3f4f6' }}
-                  >
-                    <th
-                      scope="row"
-                      style={{
-                        padding: '0.65rem 0.5rem',
-                        fontSize: '0.9rem',
-                        fontWeight: 600,
-                        color: '#111827',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                      }}
+                  <Fragment key={layer.id}>
+                    {/* Main Row */}
+                    <tr
+                      className={`preview-layers-master-table__row ${isZebra ? 'preview-layers-master-table__row--zebra' : ''} ${isFocused ? 'preview-layers-master-table__row--focused' : ''}`}
                     >
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          width: '14px',
-                          height: '14px',
-                          borderRadius: '9999px',
-                          background: layer.color,
-                          boxShadow: '0 0 0 1px rgb(255 255 255 / 0.5)',
-                        }}
-                        aria-hidden="true"
-                      />
-                      {toTitleCase(layer.name)}
-                    </th>
-                    <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
-                      {layer.metrics.allocationPct != null
-                        ? `${formatNumber(layer.metrics.allocationPct, {
-                            maximumFractionDigits:
-                              layer.metrics.allocationPct >= 10 ? 0 : 1,
-                          })}%`
-                        : '—'}
-                    </td>
-                    <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
-                      {layer.metrics.gfaSqm != null
-                        ? `${formatNumber(layer.metrics.gfaSqm, {
-                            maximumFractionDigits:
-                              layer.metrics.gfaSqm >= 1000 ? 0 : 1,
-                          })}`
-                        : '—'}
-                    </td>
-                    <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
-                      {layer.metrics.niaSqm != null
-                        ? `${formatNumber(layer.metrics.niaSqm, {
-                            maximumFractionDigits:
-                              layer.metrics.niaSqm >= 1000 ? 0 : 1,
-                          })}`
-                        : '—'}
-                    </td>
-                    <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
-                      {layer.metrics.heightM != null
-                        ? `${formatNumber(layer.metrics.heightM, {
-                            maximumFractionDigits: 1,
-                          })}`
-                        : '—'}
-                    </td>
-                    <td style={{ padding: '0.65rem 0.5rem', color: '#374151' }}>
-                      {layer.metrics.floors != null
-                        ? formatNumber(layer.metrics.floors, {
-                            maximumFractionDigits: 0,
-                          })
-                        : '—'}
-                    </td>
-                    <td
-                      style={{
-                        padding: '0.65rem 0.5rem',
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: '0.4rem',
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => onLayerAction(layer.id, 'toggle')}
-                        style={{
-                          padding: '0.25rem 0.6rem',
-                          borderRadius: '9999px',
-                          border: '1px solid #d1d5db',
-                          background: isVisible ? '#f9fafb' : '#fee2e2',
-                          color: isVisible ? '#111827' : '#991b1b',
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {isVisible ? 'Hide' : 'Show'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onLayerAction(layer.id, 'solo')}
-                        style={{
-                          padding: '0.25rem 0.6rem',
-                          borderRadius: '9999px',
-                          border: '1px solid #d1d5db',
-                          background: '#f9fafb',
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                          color: '#111827',
-                        }}
-                      >
-                        Solo
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onLayerAction(layer.id, 'focus')}
-                        style={{
-                          padding: '0.25rem 0.6rem',
-                          borderRadius: '9999px',
-                          border: '1px solid #d1d5db',
-                          background:
-                            focusLayerId === layer.id ? '#e0e7ff' : '#f9fafb',
-                          color:
-                            focusLayerId === layer.id ? '#312e81' : '#111827',
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {focusLayerId === layer.id ? 'Focused' : 'Zoom'}
-                      </button>
-                    </td>
-                  </tr>
+                      {/* Visibility Toggle */}
+                      <td className="preview-layers-master-table__td preview-layers-master-table__td--visibility">
+                        <button
+                          type="button"
+                          onClick={() => onLayerAction(layer.id, 'toggle')}
+                          className={`preview-layers-master-table__visibility-btn ${isVisible ? '' : 'preview-layers-master-table__visibility-btn--hidden'}`}
+                          aria-label={isVisible ? 'Hide layer' : 'Show layer'}
+                        >
+                          {isVisible ? (
+                            <Visibility sx={{ fontSize: 18 }} />
+                          ) : (
+                            <VisibilityOff sx={{ fontSize: 18 }} />
+                          )}
+                        </button>
+                      </td>
+
+                      {/* Layer Name with Color Swatch */}
+                      <td className="preview-layers-master-table__td preview-layers-master-table__td--name">
+                        <span
+                          className="preview-layers-master-table__color-swatch"
+                          style={{
+                            background: legendEntry?.color ?? layer.color,
+                          }}
+                          aria-hidden="true"
+                        />
+                        <span className="preview-layers-master-table__layer-name">
+                          {toTitleCase(legendEntry?.label ?? layer.name)}
+                        </span>
+                      </td>
+
+                      {/* Allocation % */}
+                      <td className="preview-layers-master-table__td preview-layers-master-table__td--numeric">
+                        {layer.metrics.allocationPct != null
+                          ? `${formatNumber(layer.metrics.allocationPct, {
+                              maximumFractionDigits:
+                                layer.metrics.allocationPct >= 10 ? 0 : 1,
+                            })}%`
+                          : '—'}
+                      </td>
+
+                      {/* GFA */}
+                      <td className="preview-layers-master-table__td preview-layers-master-table__td--numeric">
+                        {layer.metrics.gfaSqm != null
+                          ? formatNumber(layer.metrics.gfaSqm, {
+                              maximumFractionDigits:
+                                layer.metrics.gfaSqm >= 1000 ? 0 : 1,
+                            })
+                          : '—'}
+                      </td>
+
+                      {/* NIA */}
+                      <td className="preview-layers-master-table__td preview-layers-master-table__td--numeric">
+                        {layer.metrics.niaSqm != null
+                          ? formatNumber(layer.metrics.niaSqm, {
+                              maximumFractionDigits:
+                                layer.metrics.niaSqm >= 1000 ? 0 : 1,
+                            })
+                          : '—'}
+                      </td>
+
+                      {/* Height */}
+                      <td className="preview-layers-master-table__td preview-layers-master-table__td--numeric">
+                        {layer.metrics.heightM != null
+                          ? `${formatNumber(layer.metrics.heightM, { maximumFractionDigits: 1 })}m`
+                          : '—'}
+                      </td>
+
+                      {/* Floors */}
+                      <td className="preview-layers-master-table__td preview-layers-master-table__td--numeric">
+                        {layer.metrics.floors != null
+                          ? formatNumber(layer.metrics.floors, {
+                              maximumFractionDigits: 0,
+                            })
+                          : '—'}
+                      </td>
+
+                      {/* Risk Badge */}
+                      <td className="preview-layers-master-table__td">
+                        <span style={getRiskBadgeStyle(risk)}>
+                          {risk ?? 'N/A'}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="preview-layers-master-table__td preview-layers-master-table__td--actions">
+                        <button
+                          type="button"
+                          onClick={() => onLayerAction(layer.id, 'solo')}
+                          className="preview-layers-master-table__action-btn"
+                          title="Solo this layer"
+                        >
+                          Solo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onLayerAction(layer.id, 'focus')}
+                          className={`preview-layers-master-table__action-btn ${isFocused ? 'preview-layers-master-table__action-btn--active' : ''}`}
+                          title={
+                            isFocused
+                              ? 'Currently focused'
+                              : 'Focus on this layer'
+                          }
+                        >
+                          {isFocused ? 'Focused' : 'Focus'}
+                        </button>
+                        {hasLegendEditor && legendEntry && (
+                          <button
+                            type="button"
+                            onClick={() => toggleAccordion(layer.id)}
+                            className={`preview-layers-master-table__action-btn preview-layers-master-table__action-btn--edit ${isExpanded ? 'preview-layers-master-table__action-btn--active' : ''}`}
+                            aria-expanded={isExpanded}
+                            title="Edit legend details"
+                          >
+                            <Edit sx={{ fontSize: 14 }} />
+                            {isExpanded ? (
+                              <ExpandLess sx={{ fontSize: 14 }} />
+                            ) : (
+                              <ExpandMore sx={{ fontSize: 14 }} />
+                            )}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+
+                    {/* Accordion Row - Inline Legend Editor */}
+                    {isExpanded && legendEntry && onLegendChange && (
+                      <tr className="preview-layers-master-table__accordion-row">
+                        <td colSpan={9}>
+                          <div className="preview-layers-master-table__accordion-content">
+                            {/* Color Picker */}
+                            <div className="preview-layers-master-table__editor-field">
+                              <label className="preview-layers-master-table__editor-label">
+                                Color
+                              </label>
+                              <input
+                                type="color"
+                                value={legendEntry.color}
+                                onChange={(e) =>
+                                  onLegendChange(
+                                    legendEntry.assetType,
+                                    'color',
+                                    e.target.value,
+                                  )
+                                }
+                                className="preview-layers-master-table__color-input"
+                                aria-label={`Color for ${legendEntry.label}`}
+                              />
+                            </div>
+
+                            {/* Label Input */}
+                            <div className="preview-layers-master-table__editor-field preview-layers-master-table__editor-field--grow">
+                              <label className="preview-layers-master-table__editor-label">
+                                Label
+                              </label>
+                              <input
+                                type="text"
+                                value={legendEntry.label}
+                                onChange={(e) =>
+                                  onLegendChange(
+                                    legendEntry.assetType,
+                                    'label',
+                                    e.target.value,
+                                  )
+                                }
+                                className="preview-layers-master-table__text-input"
+                                placeholder="Layer label"
+                              />
+                            </div>
+
+                            {/* Description Input */}
+                            <div className="preview-layers-master-table__editor-field preview-layers-master-table__editor-field--wide">
+                              <label className="preview-layers-master-table__editor-label">
+                                Description
+                              </label>
+                              <textarea
+                                value={legendEntry.description ?? ''}
+                                onChange={(e) =>
+                                  onLegendChange(
+                                    legendEntry.assetType,
+                                    'description',
+                                    e.target.value,
+                                  )
+                                }
+                                className="preview-layers-master-table__textarea"
+                                placeholder="Optional description for reports and decks"
+                                rows={2}
+                              />
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 )
               })}
             </tbody>

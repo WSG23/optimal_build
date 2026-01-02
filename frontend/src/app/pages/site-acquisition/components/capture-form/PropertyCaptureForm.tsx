@@ -11,14 +11,12 @@
  */
 
 import type React from 'react'
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import type {
   DevelopmentScenario,
   SiteAcquisitionResult,
 } from '../../../../../api/siteAcquisition'
 import { SCENARIO_OPTIONS } from '../../constants'
-import { VoiceNoteRecorder } from './VoiceNoteRecorder'
-import { VoiceNoteList } from './VoiceNoteList'
 import {
   PropertyLocationMap,
   type HeritageFeature,
@@ -51,6 +49,10 @@ export interface PropertyCaptureFormProps {
   onCoordinatesChange?: (lat: string, lon: string) => void
   /** Optional callback when address field loses focus (for auto-geocoding) */
   onAddressBlur?: () => void
+  /** Optional callback for saving draft (work in progress) */
+  onSaveDraft?: () => void
+  /** Whether draft is being saved */
+  isSavingDraft?: boolean
 }
 
 // ============================================================================
@@ -73,14 +75,9 @@ export function PropertyCaptureForm({
   onToggleScenario,
   onCoordinatesChange,
   onAddressBlur,
+  onSaveDraft,
+  isSavingDraft,
 }: PropertyCaptureFormProps) {
-  // Track when a new voice note is uploaded to refresh the list
-  const [voiceNoteRefreshTrigger, setVoiceNoteRefreshTrigger] = useState(0)
-
-  const handleVoiceNoteUploaded = () => {
-    setVoiceNoteRefreshTrigger((prev) => prev + 1)
-  }
-
   // Handle coordinate changes from map - update form fields and call parent callback
   const handleMapCoordinatesChange = (lat: string, lon: string) => {
     setLatitude(lat)
@@ -167,9 +164,41 @@ export function PropertyCaptureForm({
     return undefined
   }, [capturedProperty?.heritageContext, latitude, longitude])
 
+  // Determine if form can be submitted
+  const canSubmit = selectedScenarios.length > 0 && !isCapturing
+  const canSaveDraft = !!onSaveDraft && !isSavingDraft && !isCapturing
+
   return (
-    <section>
-      <div className="ob-card-module">
+    <section className="property-capture-form">
+      {/* Action buttons (header text is provided by AppShell) */}
+      <div className="property-capture-form__header">
+        <div className="property-capture-form__header-actions">
+          {onSaveDraft && (
+            <button
+              type="button"
+              onClick={onSaveDraft}
+              disabled={!canSaveDraft}
+              className="property-capture-form__btn property-capture-form__btn--secondary"
+            >
+              {isSavingDraft ? 'Saving…' : 'Save Draft'}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              onCapture(e as unknown as React.FormEvent)
+            }}
+            disabled={!canSubmit}
+            className="property-capture-form__btn property-capture-form__btn--primary"
+          >
+            {isCapturing ? 'Capturing…' : 'Capture Property'}
+          </button>
+        </div>
+      </div>
+
+      {/* Form content - seamless glass surface */}
+      <div className="ob-seamless-panel ob-seamless-panel--glass property-capture-form__surface">
         <form onSubmit={onCapture}>
           {/* Location inputs - Address and Coordinates on one row */}
           <div className="property-capture-form__location-row">
@@ -259,15 +288,6 @@ export function PropertyCaptureForm({
             })}
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isCapturing || selectedScenarios.length === 0}
-            className="property-capture-form__submit-btn"
-          >
-            {isCapturing ? 'Capturing Property...' : 'Capture Property'}
-          </button>
-
           {/* Error Message */}
           {error && (
             <div className="property-capture-form__error-message">{error}</div>
@@ -284,22 +304,6 @@ export function PropertyCaptureForm({
             </div>
           )}
         </form>
-      </div>
-
-      {/* Voice Notes - separate section */}
-      <div className="property-capture-form__voice-notes">
-        <VoiceNoteRecorder
-          propertyId={capturedProperty?.propertyId ?? null}
-          latitude={latitude ? parseFloat(latitude) : undefined}
-          longitude={longitude ? parseFloat(longitude) : undefined}
-          disabled={isCapturing}
-          onUploadComplete={handleVoiceNoteUploaded}
-        />
-
-        <VoiceNoteList
-          propertyId={capturedProperty?.propertyId ?? null}
-          refreshTrigger={voiceNoteRefreshTrigger}
-        />
       </div>
     </section>
   )

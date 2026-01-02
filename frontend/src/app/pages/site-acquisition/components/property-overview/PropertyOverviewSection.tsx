@@ -36,7 +36,7 @@ import {
 } from '@mui/icons-material'
 import { useMemo, ComponentType, ReactNode } from 'react'
 import { ProcessingStatusCard, ProcessingStatus } from './ProcessingStatusCard'
-import { AssetMixChart, AssetMixItem } from './AssetMixChart'
+// AssetMixChart is now rendered in SiteAcquisitionPage Development Preview section
 import { GlassCard } from '../../../../../components/canonical/GlassCard'
 import '../../../../../styles/site-acquisition.css'
 
@@ -138,81 +138,8 @@ function extractProcessingStatus(card: OverviewCard): ProcessingStatus {
   return 'pending'
 }
 
-/**
- * Extract asset mix data from card items
- */
-function extractAssetMixData(card: OverviewCard): AssetMixItem[] {
-  return card.items.map((item) => {
-    // Parse percentage from value string (e.g., "40% • 2,000 sqm • ...")
-    const percentMatch = item.value.match(/^(\d+(?:\.\d+)?)\s*%/)
-    const percentage = percentMatch ? parseFloat(percentMatch[1]) : 0
-
-    // Parse GFA if present
-    const gfaMatch = item.value.match(
-      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:k\s*)?sqm/i,
-    )
-    const gfa = gfaMatch
-      ? parseFloat(gfaMatch[1].replace(/,/g, '')) *
-        (gfaMatch[0].includes('k') ? 1000 : 1)
-      : undefined
-
-    // Parse revenue if present
-    const revenueMatch = item.value.match(
-      /Rev\s*[≈~]?\s*\$?(\d+(?:\.\d+)?)\s*M/i,
-    )
-    const revenue = revenueMatch
-      ? parseFloat(revenueMatch[1]) * 1_000_000
-      : undefined
-
-    // Parse risk level if present
-    const riskMatch = item.value.match(/(low|medium|high)\s*risk/i)
-    const riskLevel = riskMatch
-      ? (riskMatch[1].toLowerCase() as 'low' | 'medium' | 'high')
-      : undefined
-
-    return {
-      label: item.label,
-      value: percentage,
-      allocatedGfa: gfa,
-      estimatedRevenue: revenue,
-      riskLevel,
-    }
-  })
-}
-
-/**
- * Generate AI insight for asset mix based on data
- */
-function generateAssetMixInsight(data: AssetMixItem[]): string | undefined {
-  if (data.length === 0) return undefined
-
-  // Find dominant asset type
-  const sorted = [...data].sort((a, b) => b.value - a.value)
-  const dominant = sorted[0]
-
-  if (!dominant || dominant.value === 0) return undefined
-
-  const insights: string[] = []
-
-  // Dominant allocation insight
-  insights.push(
-    `${dominant.label} represents the largest allocation at ${dominant.value.toFixed(0)}%.`,
-  )
-
-  // Risk-based insight if available
-  const lowRiskAssets = data.filter((d) => d.riskLevel === 'low')
-  const highRiskAssets = data.filter((d) => d.riskLevel === 'high')
-
-  if (lowRiskAssets.length > 0 && highRiskAssets.length === 0) {
-    insights.push('Portfolio weighted toward lower-risk asset classes.')
-  } else if (highRiskAssets.length > 0) {
-    insights.push(
-      `Consider de-risking: ${highRiskAssets.map((a) => a.label).join(', ')} flagged as high risk.`,
-    )
-  }
-
-  return insights.join(' ')
-}
+// Note: Asset mix parsing functions moved to SiteAcquisitionPage.tsx
+// AssetMixChart is now rendered in Development Preview section next to 3D viewer
 
 // ============================================================================
 // Sub-Components - Card-Type-Specific Layouts (AI Studio Pattern)
@@ -1044,14 +971,16 @@ export function PropertyOverviewSection({
   cards,
 }: PropertyOverviewSectionProps) {
   // Categorize cards for rendering
-  const { processingCards, assetMixCards, standardCards } = useMemo(() => {
+  // Note: Asset mix cards are filtered out here - they're rendered in SiteAcquisitionPage
+  // Development Preview section next to the 3D viewer
+  const { processingCards, standardCards } = useMemo(() => {
     const processing: OverviewCard[] = []
-    const assetMix: OverviewCard[] = []
     const standard: OverviewCard[] = []
 
     for (const card of cards) {
       if (isAssetMixCard(card)) {
-        assetMix.push(card)
+        // Skip - rendered in Development Preview section
+        continue
       } else if (isProcessingCard(card)) {
         processing.push(card)
       } else {
@@ -1061,7 +990,6 @@ export function PropertyOverviewSection({
 
     return {
       processingCards: processing,
-      assetMixCards: assetMix,
       standardCards: standard,
     }
   }, [cards])
@@ -1146,24 +1074,8 @@ export function PropertyOverviewSection({
         )
       })}
 
-      {/* Asset Mix Charts - span 2 columns on desktop */}
-      {assetMixCards.map((card) => {
-        const data = extractAssetMixData(card)
-        const insight = generateAssetMixInsight(data)
-
-        return (
-          <Box
-            key={card.title}
-            sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}
-          >
-            <AssetMixChart
-              title={card.title}
-              data={data}
-              aiInsight={insight ?? card.note ?? undefined}
-            />
-          </Box>
-        )
-      })}
+      {/* Asset Mix Charts are now rendered in Development Preview section next to 3D viewer */}
+      {/* See SiteAcquisitionPage.tsx - assetMixData is extracted from overview cards */}
     </Box>
   )
 }

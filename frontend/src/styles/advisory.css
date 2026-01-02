@@ -443,11 +443,19 @@
     }
 }
 
-/* Content: Card container */
+/* Content: Card container (legacy) */
 .sales-velocity__card {
     display: flex;
     flex-direction: column;
     gap: var(--ob-space-150);
+}
+
+/* Seamless surface - glass background with internal padding */
+.sales-velocity__surface {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-150);
+    padding: var(--ob-space-200);
 }
 
 .sales-velocity__cta {

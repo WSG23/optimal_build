@@ -28,3 +28,13 @@ export type {
   OverallAssessmentCardProps,
   AttachmentItem,
 } from './OverallAssessmentCard'
+
+export { ImmediateActionsGrid } from './ImmediateActionsGrid'
+export type {
+  ImmediateActionsGridProps,
+  ImmediateAction,
+  ActionPriority,
+} from './ImmediateActionsGrid'
+
+export { AIInsightPanel } from './AIInsightPanel'
+export type { AIInsightPanelProps } from './AIInsightPanel'

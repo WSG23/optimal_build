@@ -74,8 +74,8 @@ export function ScenarioFocusSection({
         selected development path.
       </p>
 
-      {/* Content in card */}
-      <div className="ob-card-module scenario-focus__card">
+      {/* Content - seamless glass surface */}
+      <div className="ob-seamless-panel ob-seamless-panel--glass scenario-focus__surface">
         <div className="scenario-focus__summary">
           <div className="scenario-focus__summary-info">
             <span className="scenario-focus__summary-label">

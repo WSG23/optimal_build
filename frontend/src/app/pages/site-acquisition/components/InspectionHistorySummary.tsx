@@ -1,9 +1,17 @@
 /**
  * Inspection History Summary Component
  *
- * Displays a summary of developer inspections for a property,
- * with actions to view timeline or log new inspections.
+ * Seamless panel for displaying inspection history summary.
+ * Uses Zero-Card architecture with glass background and hairline border.
+ * Designed for 6-column grid placement (AI Studio pattern).
+ *
+ * Design tokens:
+ * - Padding: --ob-space-125 (20px)
+ * - Glass surface: --ob-surface-glass-1
+ * - Typography: --ob-font-size-* tokens
  */
+
+import { Box, Typography } from '@mui/material'
 
 import type { ConditionAssessmentEntry } from '../../../../api/siteAcquisition'
 
@@ -48,171 +56,196 @@ export function InspectionHistorySummary({
   onLogInspection,
 }: InspectionHistorySummaryProps) {
   return (
-    <div
-      style={{
-        border: '1px solid #e5e5e7',
-        borderRadius: '4px',
-        padding: '1.5rem',
+    <Box
+      className="ob-seamless-panel ob-seamless-panel--glass"
+      sx={{
+        p: 'var(--ob-space-125)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '1rem',
+        gap: 'var(--ob-space-100)',
+        height: '100%',
       }}
     >
-      <div
-        style={{
+      {/* Header row */}
+      <Box
+        sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          gap: '0.75rem',
+          gap: 'var(--ob-space-075)',
           flexWrap: 'wrap',
         }}
       >
-        <div>
-          <h3
-            style={{
-              margin: 0,
-              fontSize: '1.0625rem',
+        <Box>
+          <Typography
+            variant="h4"
+            sx={{
+              m: 0,
+              fontSize: 'var(--ob-font-size-base)',
               fontWeight: 600,
+              color: 'text.primary',
             }}
           >
             Inspection History
-          </h3>
-          <p
-            style={{
-              margin: '0.2rem 0 0',
-              fontSize: '0.85rem',
-              color: '#6e6e73',
+          </Typography>
+          <Typography
+            sx={{
+              mt: 'var(--ob-space-025)',
+              fontSize: 'var(--ob-font-size-xs)',
+              color: 'text.secondary',
             }}
           >
             Track developer inspections saved for this property.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onViewTimeline}
-          style={{
-            borderRadius: '9999px',
-            border: '1px solid #1d1d1f',
-            background: '#1d1d1f',
-            color: 'white',
-            padding: '0.45rem 1rem',
-            fontSize: '0.8rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
+          </Typography>
+        </Box>
+        <Box
+          sx={{ display: 'flex', gap: 'var(--ob-space-075)', flexWrap: 'wrap' }}
         >
-          View timeline
-        </button>
-        <button
-          type="button"
-          onClick={onLogInspection}
-          disabled={!hasProperty}
-          style={{
-            borderRadius: '9999px',
-            border: '1px solid #1d1d1f',
-            background: 'white',
-            color: '#1d1d1f',
-            padding: '0.45rem 1rem',
-            fontSize: '0.8rem',
-            fontWeight: 600,
-            cursor: hasProperty ? 'pointer' : 'not-allowed',
-            opacity: hasProperty ? 1 : 0.6,
-          }}
-        >
-          Log inspection
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={onViewTimeline}
+            className="condition-assessment__export-btn condition-assessment__export-btn--primary"
+          >
+            View timeline
+          </button>
+          <button
+            type="button"
+            onClick={onLogInspection}
+            disabled={!hasProperty}
+            className="condition-assessment__export-btn condition-assessment__export-btn--secondary"
+          >
+            Log inspection
+          </button>
+        </Box>
+      </Box>
 
+      {/* Content */}
       {error ? (
-        <p
-          style={{
-            margin: 0,
-            fontSize: '0.85rem',
-            color: '#c53030',
+        <Typography
+          sx={{
+            m: 0,
+            fontSize: 'var(--ob-font-size-sm)',
+            color: 'error.main',
           }}
         >
           {error}
-        </p>
+        </Typography>
       ) : isLoading ? (
-        <p style={{ margin: 0, fontSize: '0.9rem', color: '#6e6e73' }}>
-          Loading inspection history...
-        </p>
-      ) : latestEntry ? (
-        <div
-          style={{
-            border: '1px solid #e5e5e7',
-            borderRadius: '4px',
-            padding: '1rem 1.1rem',
-            background: '#f5f5f7',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.4rem',
+        <Typography
+          sx={{
+            m: 0,
+            fontSize: 'var(--ob-font-size-sm)',
+            color: 'text.secondary',
           }}
         >
-          <span
-            style={{
-              fontSize: '0.75rem',
+          Loading inspection history...
+        </Typography>
+      ) : latestEntry ? (
+        <Box
+          className="ob-seamless-panel"
+          sx={{
+            p: 'var(--ob-space-100)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--ob-space-050)',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: 'var(--ob-font-size-2xs)',
               fontWeight: 600,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              color: '#6e6e73',
+              color: 'text.secondary',
             }}
           >
             Most recent inspection
-          </span>
-          <div
-            style={{
+          </Typography>
+          <Box
+            sx={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-start',
-              gap: '0.5rem',
+              gap: 'var(--ob-space-075)',
               flexWrap: 'wrap',
             }}
           >
-            <div
-              style={{
+            <Box
+              sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.25rem',
+                gap: 'var(--ob-space-025)',
               }}
             >
-              <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-sm)',
+                  fontWeight: 600,
+                  color: 'text.primary',
+                }}
+              >
                 {formatScenario(latestEntry.scenario)}
-              </span>
-              <span style={{ fontSize: '0.85rem', color: '#6e6e73' }}>
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                }}
+              >
                 {formatTimestamp(latestEntry.recordedAt)}
-              </span>
-            </div>
-            <div
-              style={{
+              </Typography>
+            </Box>
+            <Box
+              sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.25rem',
+                gap: 'var(--ob-space-025)',
               }}
             >
-              <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                }}
+              >
                 Rating: <strong>{latestEntry.overallRating}</strong>
-              </span>
-              <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                }}
+              >
                 Score: <strong>{latestEntry.overallScore}/100</strong>
-              </span>
-              <span style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
-                Risk:{' '}
-                <strong style={{ textTransform: 'capitalize' }}>
-                  {latestEntry.riskLevel}
-                </strong>
-              </span>
-            </div>
-          </div>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: '#3a3a3c' }}>
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                  textTransform: 'capitalize',
+                }}
+              >
+                Risk: <strong>{latestEntry.riskLevel}</strong>
+              </Typography>
+            </Box>
+          </Box>
+          <Typography
+            sx={{
+              m: 0,
+              fontSize: 'var(--ob-font-size-xs)',
+              color: 'text.secondary',
+              lineHeight: 1.4,
+            }}
+          >
             {latestEntry.summary || 'No summary recorded.'}
-          </p>
+          </Typography>
           {previousEntry && (
-            <p
-              style={{
-                margin: '0.35rem 0 0',
-                fontSize: '0.75rem',
-                color: '#6e6e73',
+            <Typography
+              sx={{
+                m: 0,
+                mt: 'var(--ob-space-050)',
+                fontSize: 'var(--ob-font-size-2xs)',
+                color: 'text.secondary',
               }}
             >
               Last change:{' '}
@@ -220,15 +253,28 @@ export function InspectionHistorySummary({
                 {formatScenario(previousEntry.scenario)} —{' '}
                 {formatTimestamp(previousEntry.recordedAt)}
               </strong>
-            </p>
+            </Typography>
           )}
-        </div>
+        </Box>
       ) : (
-        <p style={{ margin: 0, fontSize: '0.9rem', color: '#6e6e73' }}>
-          No developer inspections recorded yet. Save an inspection to begin the
-          audit trail.
-        </p>
+        <Box
+          className="ob-seamless-panel"
+          sx={{
+            p: 'var(--ob-space-100)',
+          }}
+        >
+          <Typography
+            sx={{
+              m: 0,
+              fontSize: 'var(--ob-font-size-sm)',
+              color: 'text.secondary',
+            }}
+          >
+            No developer inspections recorded yet. Save an inspection to begin
+            the audit trail.
+          </Typography>
+        </Box>
       )}
-    </div>
+    </Box>
   )
 }

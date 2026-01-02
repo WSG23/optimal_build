@@ -37,13 +37,18 @@ import { SalesVelocityCard } from './components/advisory/SalesVelocityCard'
 // InspectionHistoryContent is used by InspectionHistoryModal component
 import {
   PropertyOverviewSection,
-  LayerBreakdownCards,
-  ColorLegendEditor,
   PreviewLayersTable,
+  AssetMixChart,
   type LayerAction,
 } from './components/property-overview'
 import { ScenarioFocusSection } from './components/scenario-focus'
 import { MultiScenarioComparisonSection } from './components/multi-scenario-comparison'
+// Removed redundant components (consolidated into PreviewLayersTable):
+// - LayerBreakdownCards (data shown in table)
+// - ColorLegendEditor (integrated as inline accordion in table)
+// - MassingLayersPanel (visibility controls integrated in table)
+import { VoiceObservationsPanel } from './components/VoiceObservationsPanel'
+import { OptimalIntelligenceCard } from './components/OptimalIntelligenceCard'
 // Modals not yet used but planned for future integration
 // import { QuickAnalysisHistoryModal, InspectionHistoryModal } from './components/modals'
 import { PropertyCaptureForm } from './components/capture-form'
@@ -51,6 +56,7 @@ import { PropertyCaptureForm } from './components/capture-form'
 // MUI & Canonical Components
 import {
   Box,
+  Grid,
   Stack,
   Typography,
   Button,
@@ -61,6 +67,48 @@ import {
 } from '@mui/material'
 import { Refresh } from '@mui/icons-material'
 import { useRouterController } from '../../../router'
+
+// Storage keys for property persistence
+const CAPTURED_PROPERTY_STORAGE_KEY = 'site-acquisition:captured-property'
+
+/**
+ * Get captured property from sessionStorage
+ */
+function getStoredCapturedProperty(): SiteAcquisitionResult | null {
+  try {
+    const stored = sessionStorage.getItem(CAPTURED_PROPERTY_STORAGE_KEY)
+    if (!stored) return null
+    return JSON.parse(stored) as SiteAcquisitionResult
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Store captured property in sessionStorage for navigation persistence
+ */
+function storeCapturedProperty(property: SiteAcquisitionResult): void {
+  try {
+    sessionStorage.setItem(
+      CAPTURED_PROPERTY_STORAGE_KEY,
+      JSON.stringify(property),
+    )
+  } catch (err) {
+    console.warn('Unable to persist captured property:', err)
+  }
+}
+
+/**
+ * Clear captured property from sessionStorage
+ * Called when user wants to start a new capture
+ */
+function clearStoredCapturedProperty(): void {
+  try {
+    sessionStorage.removeItem(CAPTURED_PROPERTY_STORAGE_KEY)
+  } catch {
+    // Silently ignore storage errors
+  }
+}
 
 export function SiteAcquisitionPage() {
   const router = useRouterController()
@@ -126,7 +174,7 @@ export function SiteAcquisitionPage() {
     colorLegendEntries,
     legendHasPendingChanges,
     previewViewerMetadataUrl,
-    layerBreakdown,
+    // layerBreakdown removed - no longer needed after consolidation
     handleRefreshPreview,
     handleToggleLayerVisibility,
     handleSoloPreviewLayer,
@@ -136,6 +184,27 @@ export function SiteAcquisitionPage() {
     handleLegendEntryChange,
     handleLegendReset,
   } = usePreviewJob({ capturedProperty })
+
+  // Restore captured property from sessionStorage on mount
+  // This enables navigation persistence - data survives page changes
+  useEffect(() => {
+    // Only restore if we don't already have a captured property
+    if (capturedProperty) return
+
+    const storedProperty = getStoredCapturedProperty()
+    if (storedProperty) {
+      setCapturedProperty(storedProperty)
+      // Also restore coordinates and address from stored property
+      if (storedProperty.address?.fullAddress) {
+        setAddress(storedProperty.address.fullAddress)
+      }
+      // Restore preview job if available
+      if (storedProperty.previewJobs?.[0]) {
+        setPreviewJob(storedProperty.previewJobs[0])
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run on mount
 
   // Checklist state - managed by useChecklist hook
   // Note: scenarioFilterOptions is computed locally (includes scenarioOverrideEntries)
@@ -233,6 +302,8 @@ export function SiteAcquisitionPage() {
   }, [quickAnalysisHistory.length, isQuickAnalysisHistoryOpen])
 
   // Escape key handling for modals (useConditionAssessment handles history view mode reset)
+  // NOTE: Removed overflow manipulation - it was causing scroll lock issues.
+  // The modals themselves should handle their own overflow via their own useEffect.
   useEffect(() => {
     if (!isHistoryModalOpen && !isEditingAssessment) {
       return
@@ -249,13 +320,10 @@ export function SiteAcquisitionPage() {
       }
     }
 
-    const originalOverflow = document.body.style.overflow
     window.addEventListener('keydown', handleKeyDown)
-    document.body.style.overflow = 'hidden'
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = originalOverflow
     }
   }, [isHistoryModalOpen, isEditingAssessment, closeAssessmentEditor])
 
@@ -355,7 +423,37 @@ export function SiteAcquisitionPage() {
     formatTimestamp,
   ])
 
-  // Note: layerBreakdown is now provided by usePreviewJob hook
+  // Asset mix data for the donut chart in Development Preview sidebar
+  // Extract from propertyOverviewCards (the "Recommended asset mix" card)
+  const assetMixData = useMemo(() => {
+    // Find the asset mix card from overview cards
+    const assetMixCard = propertyOverviewCards.find((card) =>
+      card.title.toLowerCase().includes('asset mix'),
+    )
+    if (!assetMixCard) return []
+
+    // Parse asset mix data from card items
+    return assetMixCard.items.map((item) => {
+      // Parse percentage from value string (e.g., "54% • 7,560 sqm • ...")
+      const percentMatch = item.value.match(/^(\d+(?:\.\d+)?)\s*%/)
+      const percentage = percentMatch ? parseFloat(percentMatch[1]) : 0
+
+      // Parse GFA if present
+      const gfaMatch = item.value.match(
+        /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:k\s*)?sqm/i,
+      )
+      const gfa = gfaMatch
+        ? parseFloat(gfaMatch[1].replace(/,/g, '')) *
+          (gfaMatch[0].includes('k') ? 1000 : 1)
+        : undefined
+
+      return {
+        label: item.label,
+        value: percentage,
+        allocatedGfa: gfa,
+      }
+    })
+  }, [propertyOverviewCards])
 
   // Unified layer action handler for PreviewLayersTable
   const handleLayerAction = useCallback(
@@ -530,6 +628,10 @@ export function SiteAcquisitionPage() {
 
       setCapturedProperty(result)
       setPreviewJob(result.previewJobs?.[0] ?? null)
+
+      // Store full captured property for navigation persistence
+      storeCapturedProperty(result)
+
       if (result.propertyId) {
         try {
           const propertyLabel =
@@ -564,6 +666,22 @@ export function SiteAcquisitionPage() {
       setIsCapturing(false)
     }
   }
+
+  /**
+   * Clear captured property and reset form for a new capture
+   * Clears sessionStorage and resets all capture-related state
+   */
+  const handleNewCapture = useCallback(() => {
+    clearStoredCapturedProperty()
+    setCapturedProperty(null)
+    setPreviewJob(null)
+    setError(null)
+    // Reset coordinates to defaults
+    setLatitude('1.3000')
+    setLongitude('103.8500')
+    setAddress('')
+    setSelectedScenarios([])
+  }, [setPreviewJob])
 
   const handleCreateFinanceProject = useCallback(async () => {
     if (!capturedProperty?.propertyId) {
@@ -642,23 +760,43 @@ export function SiteAcquisitionPage() {
       sx={{ width: '100%', pb: 'var(--ob-space-300)' }}
     >
       <Stack spacing="var(--ob-space-200)">
-        {/* Property Capture Form - Component provides its own surface */}
-        <PropertyCaptureForm
-          address={address}
-          setAddress={setAddress}
-          latitude={latitude}
-          setLatitude={setLatitude}
-          longitude={longitude}
-          setLongitude={setLongitude}
-          selectedScenarios={selectedScenarios}
-          isCapturing={isCapturing}
-          isGeocoding={isGeocoding}
-          error={error}
-          capturedProperty={capturedProperty}
-          onCapture={handleCapture}
-          onToggleScenario={toggleScenario}
-          onAddressBlur={handleAddressBlur}
-        />
+        {/* Property Capture Form with Sidebar - Grid Layout */}
+        <div className="site-acquisition__sidebar-layout">
+          {/* Main Form Area */}
+          <PropertyCaptureForm
+            address={address}
+            setAddress={setAddress}
+            latitude={latitude}
+            setLatitude={setLatitude}
+            longitude={longitude}
+            setLongitude={setLongitude}
+            selectedScenarios={selectedScenarios}
+            isCapturing={isCapturing}
+            isGeocoding={isGeocoding}
+            error={error}
+            capturedProperty={capturedProperty}
+            onCapture={handleCapture}
+            onToggleScenario={toggleScenario}
+            onAddressBlur={handleAddressBlur}
+          />
+
+          {/* Sidebar: Voice Observations + AI Intelligence */}
+          <div className="site-acquisition__sidebar">
+            <VoiceObservationsPanel
+              propertyId={capturedProperty?.propertyId ?? null}
+              latitude={latitude ? parseFloat(latitude) : undefined}
+              longitude={longitude ? parseFloat(longitude) : undefined}
+              disabled={isCapturing}
+            />
+            <OptimalIntelligenceCard
+              insight={
+                capturedProperty?.developmentScenarios?.[0]?.quickAnalysis
+                  ?.summary ?? null
+              }
+              hasProperty={!!capturedProperty}
+            />
+          </div>
+        </div>
 
         {capturedProperty && (
           <>
@@ -687,9 +825,24 @@ export function SiteAcquisitionPage() {
                   sx={{
                     flexShrink: 0,
                     display: 'flex',
-                    gap: 'var(--ob-space-050)',
+                    gap: 'var(--ob-space-100)',
                   }}
                 >
+                  <Button
+                    variant="outlined"
+                    onClick={handleNewCapture}
+                    sx={{
+                      borderColor: 'var(--ob-color-border-subtle)',
+                      color: 'var(--ob-text-secondary)',
+                      '&:hover': {
+                        borderColor: 'var(--ob-color-neon-cyan)',
+                        color: 'var(--ob-color-neon-cyan)',
+                        bgcolor: 'transparent',
+                      },
+                    }}
+                  >
+                    New Capture
+                  </Button>
                   <Button
                     variant="contained"
                     onClick={handleCreateFinanceProject}
@@ -729,6 +882,7 @@ export function SiteAcquisitionPage() {
                       overflow: 'hidden',
                     }}
                   >
+                    {/* Header */}
                     <Box
                       sx={{
                         p: 'var(--ob-space-200)',
@@ -753,22 +907,44 @@ export function SiteAcquisitionPage() {
                       </Typography>
                     </Box>
 
-                    <Box
-                      sx={{
-                        height: 'var(--ob-max-height-table)',
-                        bgcolor: 'var(--ob-neutral-950)',
-                      }}
-                    >
-                      <Preview3DViewer
-                        previewUrl={previewJob.previewUrl}
-                        metadataUrl={previewViewerMetadataUrl}
-                        status={previewJob.status}
-                        thumbnailUrl={previewJob.thumbnailUrl}
-                        layerVisibility={previewLayerVisibility}
-                        focusLayerId={previewFocusLayerId}
-                      />
-                    </Box>
+                    {/* 12-column grid: 3D Viewer (8 cols) + Asset Mix Chart (4 cols) */}
+                    <Grid container spacing={2} sx={{ alignItems: 'stretch' }}>
+                      {/* 3D Viewer - 8 columns on large screens */}
+                      <Grid item xs={12} lg={8} sx={{ display: 'flex' }}>
+                        <Box
+                          sx={{
+                            flex: 1,
+                            minHeight: 400,
+                            bgcolor: 'var(--ob-neutral-950)',
+                            borderRadius: 'var(--ob-radius-sm)',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <Preview3DViewer
+                            previewUrl={previewJob.previewUrl}
+                            metadataUrl={previewViewerMetadataUrl}
+                            status={previewJob.status}
+                            thumbnailUrl={previewJob.thumbnailUrl}
+                            layerVisibility={previewLayerVisibility}
+                            focusLayerId={previewFocusLayerId}
+                          />
+                        </Box>
+                      </Grid>
 
+                      {/* Asset Mix Chart - 4 columns on large screens */}
+                      <Grid item xs={12} lg={4} sx={{ display: 'flex' }}>
+                        <AssetMixChart
+                          data={assetMixData}
+                          title="Asset Allocation"
+                          sx={{
+                            flex: 1,
+                            minHeight: 400,
+                          }}
+                        />
+                      </Grid>
+                    </Grid>
+
+                    {/* Controls bar - full width below */}
                     <Box
                       sx={{
                         p: 'var(--ob-space-200)',
@@ -829,35 +1005,31 @@ export function SiteAcquisitionPage() {
                   </Box>
                 )}
 
+                {/* Master Table - Single Source of Truth for all layer data and controls */}
                 {previewJob && (
-                  <Box sx={{ mt: 'var(--ob-space-200)' }}>
-                    <PreviewLayersTable
-                      layers={previewLayerMetadata}
-                      visibility={previewLayerVisibility}
-                      focusLayerId={previewFocusLayerId}
-                      hiddenLayerCount={hiddenLayerCount}
-                      isLoading={isPreviewMetadataLoading}
-                      error={previewMetadataError}
-                      onLayerAction={handleLayerAction}
-                      onShowAll={handleShowAllLayers}
-                      onResetFocus={handleResetLayerFocus}
-                      formatNumber={formatNumberMetric}
-                    />
-                  </Box>
-                )}
-
-                <Box sx={{ mt: 'var(--ob-space-200)' }}>
-                  <ColorLegendEditor
-                    entries={colorLegendEntries}
-                    hasPendingChanges={legendHasPendingChanges}
-                    onChange={handleLegendEntryChange}
-                    onReset={handleLegendReset}
+                  <PreviewLayersTable
+                    layers={previewLayerMetadata}
+                    visibility={previewLayerVisibility}
+                    focusLayerId={previewFocusLayerId}
+                    hiddenLayerCount={hiddenLayerCount}
+                    isLoading={isPreviewMetadataLoading}
+                    error={previewMetadataError}
+                    onLayerAction={handleLayerAction}
+                    onShowAll={handleShowAllLayers}
+                    onResetFocus={handleResetLayerFocus}
+                    formatNumber={formatNumberMetric}
+                    // Integrated legend editor props (replaces standalone ColorLegendEditor)
+                    legendEntries={colorLegendEntries}
+                    onLegendChange={handleLegendEntryChange}
+                    legendHasPendingChanges={legendHasPendingChanges}
+                    onLegendReset={handleLegendReset}
                   />
-                </Box>
-
-                <Box sx={{ mt: 'var(--ob-space-200)' }}>
-                  <LayerBreakdownCards layers={layerBreakdown} />
-                </Box>
+                )}
+                {/* Removed redundant components:
+                    - ColorLegendEditor (now inline in table accordion)
+                    - MassingLayersPanel (visibility controls now in table)
+                    - LayerBreakdownCards (data shown in table columns)
+                */}
               </Box>
             </Box>
 
@@ -885,18 +1057,16 @@ export function SiteAcquisitionPage() {
             <SalesVelocityCard jurisdictionCode={jurisdictionCode} />
 
             {/* Due Diligence Checklist - Depth 1 */}
+            {/* NOTE: Scenario filtering now handled by ScenarioFocusSection above */}
             <DueDiligenceChecklistSection
               capturedProperty={capturedProperty}
               checklistItems={checklistItems}
               filteredChecklistItems={filteredChecklistItems}
-              availableChecklistScenarios={availableChecklistScenarios}
-              scenarioLookup={scenarioLookup}
               displaySummary={displaySummary}
               activeScenario={activeScenario}
               activeScenarioDetails={activeScenarioDetails}
               selectedCategory={selectedCategory}
               isLoadingChecklist={isLoadingChecklist}
-              setActiveScenario={setActiveScenario}
               setSelectedCategory={setSelectedCategory}
               handleChecklistUpdate={handleChecklistUpdate}
             />

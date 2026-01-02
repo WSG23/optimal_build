@@ -10,10 +10,17 @@
  * - Functional Color Language: Cyan (Primary), Red (Critical), Indigo (AI Intelligence), Slate (Neutral)
  * - Progressive Disclosure: AI insights behind expandable buttons
  * - Summary Footer: Aggregate stats at bottom
+ *
+ * Updated: Workspace-style cards with simplified layout
+ * - "SCENARIO PATH" label, title, Est. Revenue (cyan), Risk Profile
+ * - Diligence Progress bar with percentage
+ * - "Enter Workspace" CTA button
+ * - Focus card has cyan border + badge
  */
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Link } from '../../../../../router'
+import { ArrowForward as ArrowRight } from '@mui/icons-material'
 import type {
   DevelopmentScenario,
   CapturedProperty,
@@ -23,7 +30,6 @@ import type {
   FeasibilitySignalEntry,
   ScenarioOption,
 } from '../../types'
-import { getSeverityVisuals } from '../../utils/insights'
 import { formatCategoryName } from '../../utils/formatters'
 
 // ============================================================================
@@ -75,25 +81,8 @@ export function MultiScenarioComparisonSection({
   reportExportMessage,
   setActiveScenario,
   handleReportExport,
-  formatRecordedTimestamp,
+  formatRecordedTimestamp: _formatRecordedTimestamp,
 }: MultiScenarioComparisonSectionProps) {
-  // Progressive disclosure state for AI insights
-  const [expandedInsights, setExpandedInsights] = useState<Set<string>>(
-    new Set(),
-  )
-
-  const toggleInsight = (key: string) => {
-    setExpandedInsights((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) {
-        next.delete(key)
-      } else {
-        next.add(key)
-      }
-      return next
-    })
-  }
-
   // Calculate summary stats for footer (AI Studio: Summary Footer pattern)
   const summaryStats = useMemo((): SummaryStats => {
     const scenarioData = scenarioComparisonData.filter(
@@ -130,8 +119,8 @@ export function MultiScenarioComparisonSection({
     <section className="multi-scenario">
       {/* Header on background - Content vs Context pattern */}
       <h2 className="multi-scenario__title">Multi-Scenario Comparison</h2>
-      {/* Content container - individual cards have their own styling */}
-      <div className="multi-scenario__card">
+      {/* Content - seamless glass surface */}
+      <div className="ob-seamless-panel ob-seamless-panel--glass multi-scenario__surface">
         {!capturedProperty ? (
           <div className="multi-scenario__empty-state multi-scenario__empty-state--prominent">
             <div className="multi-scenario__empty-icon">📊</div>
@@ -153,212 +142,110 @@ export function MultiScenarioComparisonSection({
           </div>
         ) : (
           <div className="multi-scenario__content">
-            {/* Scenario Comparison Cards */}
-            <div className="multi-scenario__cards-grid">
-              {scenarioComparisonData.map((row) => {
-                const isActive =
-                  row.key === 'all'
-                    ? activeScenario === 'all'
-                    : activeScenario === row.key
-                const progressLabel =
-                  row.checklistCompleted !== null && row.checklistTotal !== null
-                    ? `${row.checklistCompleted}/${row.checklistTotal}`
-                    : null
-                const progressPercent = row.checklistPercent ?? null
-                const focusable = row.key !== 'all'
-                const primaryVisuals = row.primaryInsight
-                  ? getSeverityVisuals(row.primaryInsight.severity)
-                  : null
+            {/* Workspace-Style Scenario Cards */}
+            <div className="multi-scenario__workspace-grid">
+              {scenarioComparisonData
+                .filter((row) => row.key !== 'all') // Skip aggregate row for workspace cards
+                .map((row) => {
+                  const isActive = activeScenario === row.key
+                  const progressPercent = row.checklistPercent ?? 0
 
-                return (
-                  <article
-                    key={row.key}
-                    className={`multi-scenario__card-item ${isActive ? 'multi-scenario__card-item--active' : ''}`}
-                  >
-                    {/* Card Header */}
-                    <div className="multi-scenario__card-header">
-                      <div className="multi-scenario__card-identity">
-                        <span className="multi-scenario__card-icon">
-                          {row.icon}
+                  // Extract revenue from quickMetrics or use placeholder
+                  const revenueMetric = row.quickMetrics.find(
+                    (m) =>
+                      m.label.toLowerCase().includes('revenue') ||
+                      m.label.toLowerCase().includes('rev'),
+                  )
+                  const revenueDisplay = revenueMetric?.value ?? '—'
+
+                  // Risk profile from riskLevel
+                  const riskDisplay = row.riskLevel
+                    ? `${row.riskLevel.charAt(0).toUpperCase()}${row.riskLevel.slice(1)}`
+                    : '—'
+
+                  return (
+                    <article
+                      key={row.key}
+                      className={`multi-scenario__workspace-card ${isActive ? 'multi-scenario__workspace-card--focus' : ''}`}
+                    >
+                      {/* Focus Badge */}
+                      {isActive && (
+                        <span className="multi-scenario__workspace-focus-badge">
+                          Focus
                         </span>
-                        <div className="multi-scenario__card-labels">
-                          <span className="multi-scenario__card-type">
-                            {row.key === 'all' ? 'Aggregate' : 'Scenario'}
+                      )}
+
+                      {/* Card Content */}
+                      <div className="multi-scenario__workspace-content">
+                        {/* Header: Label + Title */}
+                        <div className="multi-scenario__workspace-header">
+                          <span className="multi-scenario__workspace-label">
+                            Scenario Path
                           </span>
-                          <span className="multi-scenario__card-name">
+                          <h4 className="multi-scenario__workspace-title">
                             {row.label}
-                          </span>
+                          </h4>
                         </div>
-                      </div>
-                      {focusable ? (
-                        isActive ? (
-                          <span className="multi-scenario__badge multi-scenario__badge--focus">
-                            Focus
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setActiveScenario(row.key as DevelopmentScenario)
-                            }
-                            className="multi-scenario__focus-btn"
-                          >
-                            Focus scenario
-                          </button>
-                        )
-                      ) : (
-                        <span className="multi-scenario__badge multi-scenario__badge--summary">
-                          Summary
-                        </span>
-                      )}
-                    </div>
 
-                    {/* Inspector / Timestamp / Source */}
-                    <div className="multi-scenario__card-meta">
-                      <span>
-                        Inspector:{' '}
-                        <strong>
-                          {row.inspectorName?.trim() || 'Not recorded'}
-                        </strong>
-                      </span>
-                      {row.recordedAt && (
-                        <span>
-                          Logged {formatRecordedTimestamp(row.recordedAt)}
-                        </span>
-                      )}
-                      <span
-                        className={`multi-scenario__source-badge ${row.source === 'manual' ? 'multi-scenario__source-badge--manual' : 'multi-scenario__source-badge--auto'}`}
-                      >
-                        {row.source === 'manual'
-                          ? 'Manual inspection'
-                          : 'Automated baseline'}
-                      </span>
-                    </div>
-
-                    {/* Quick Headline */}
-                    {row.quickHeadline && (
-                      <p className="multi-scenario__card-headline">
-                        {row.quickHeadline}
-                      </p>
-                    )}
-
-                    {/* Quick Metrics */}
-                    {row.quickMetrics.length > 0 && (
-                      <ul className="multi-scenario__metrics-list">
-                        {row.quickMetrics.map((metric) => (
-                          <li
-                            key={`${row.key}-${metric.label}`}
-                            className="multi-scenario__metric"
-                          >
-                            <span className="multi-scenario__metric-label">
-                              {metric.label}
+                        {/* Metrics Grid: Revenue + Risk */}
+                        <div className="multi-scenario__workspace-metrics">
+                          <div className="multi-scenario__workspace-metric">
+                            <span className="multi-scenario__workspace-metric-label">
+                              Est. Revenue
                             </span>
-                            <strong className="multi-scenario__metric-value">
-                              {metric.value}
-                            </strong>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    {/* Condition / Checklist Progress */}
-                    <div className="multi-scenario__status-grid">
-                      <div className="multi-scenario__status-item">
-                        <span className="multi-scenario__status-label">
-                          Condition
-                        </span>
-                        <span className="multi-scenario__status-value">
-                          {row.conditionRating ? row.conditionRating : '—'}
-                        </span>
-                        <span className="multi-scenario__status-detail">
-                          {row.conditionScore !== null
-                            ? `${row.conditionScore}/100`
-                            : '—'}{' '}
-                          {row.riskLevel ? `· ${row.riskLevel} risk` : ''}
-                        </span>
-                      </div>
-                      <div className="multi-scenario__status-item">
-                        <span className="multi-scenario__status-label">
-                          Checklist progress
-                        </span>
-                        {progressLabel ? (
-                          <>
-                            <div className="multi-scenario__progress-bar">
-                              <div
-                                className="multi-scenario__progress-fill"
-                                style={{ width: `${progressPercent ?? 0}%` }}
-                              />
-                            </div>
-                            <span className="multi-scenario__progress-text">
-                              {progressLabel}
-                              {progressPercent !== null
-                                ? ` (${progressPercent}%)`
-                                : ''}
+                            <span className="multi-scenario__workspace-metric-value multi-scenario__workspace-metric-value--cyan">
+                              {revenueDisplay}
                             </span>
-                          </>
-                        ) : (
-                          <span className="multi-scenario__status-empty">
-                            No checklist items yet.
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                          </div>
+                          <div className="multi-scenario__workspace-metric">
+                            <span className="multi-scenario__workspace-metric-label">
+                              Risk Profile
+                            </span>
+                            <span className="multi-scenario__workspace-metric-value">
+                              {riskDisplay}
+                            </span>
+                          </div>
+                        </div>
 
-                    {/* Primary Insight - Progressive Disclosure Pattern */}
-                    {row.primaryInsight && primaryVisuals && (
-                      <div className="multi-scenario__insight-container">
-                        {/* Always visible: AI insight toggle button */}
+                        {/* Diligence Progress */}
+                        <div className="multi-scenario__workspace-progress">
+                          <div className="multi-scenario__workspace-progress-header">
+                            <span className="multi-scenario__workspace-progress-label">
+                              Diligence Progress
+                            </span>
+                            <span className="multi-scenario__workspace-progress-value">
+                              {progressPercent}%
+                            </span>
+                          </div>
+                          <div className="multi-scenario__workspace-progress-bar">
+                            <div
+                              className="multi-scenario__workspace-progress-fill"
+                              style={{ width: `${progressPercent}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Enter Workspace CTA */}
                         <button
                           type="button"
-                          className="multi-scenario__insight-toggle"
-                          onClick={() => toggleInsight(row.key)}
-                          aria-expanded={expandedInsights.has(row.key)}
+                          onClick={() =>
+                            setActiveScenario(row.key as DevelopmentScenario)
+                          }
+                          className="multi-scenario__workspace-cta"
                         >
-                          <span
-                            className="multi-scenario__insight-dot"
-                            style={{ background: primaryVisuals.indicator }}
-                          />
-                          <span className="multi-scenario__insight-toggle-label">
-                            {primaryVisuals.label}: {row.primaryInsight.title}
-                          </span>
-                          <span className="multi-scenario__insight-chevron">
-                            {expandedInsights.has(row.key) ? '▲' : '▼'}
-                          </span>
-                        </button>
-
-                        {/* Expandable content */}
-                        {expandedInsights.has(row.key) && (
-                          <div
-                            className="multi-scenario__insight"
-                            style={{
-                              borderColor: primaryVisuals.border,
-                              background: primaryVisuals.background,
-                              color: primaryVisuals.text,
+                          {isActive ? 'Viewing Workspace' : 'Enter Workspace'}
+                          <ArrowRight
+                            sx={{
+                              width: 16,
+                              height: 16,
+                              ml: 'var(--ob-space-050)',
                             }}
-                          >
-                            <p className="multi-scenario__insight-detail">
-                              {row.primaryInsight.detail}
-                            </p>
-                            {row.primaryInsight.specialist && (
-                              <span className="multi-scenario__insight-specialist">
-                                Specialist:{' '}
-                                <strong>{row.primaryInsight.specialist}</strong>
-                              </span>
-                            )}
-                          </div>
-                        )}
+                          />
+                        </button>
                       </div>
-                    )}
-
-                    {/* Recommended Action */}
-                    {row.recommendedAction && (
-                      <p className="multi-scenario__next-action">
-                        <strong>Next action:</strong> {row.recommendedAction}
-                      </p>
-                    )}
-                  </article>
-                )
-              })}
+                    </article>
+                  )
+                })}
             </div>
 
             {/* Feasibility Signals */}

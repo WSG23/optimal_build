@@ -99,8 +99,8 @@ export function SalesVelocityCard({ jurisdictionCode }: Props) {
         </div>
       </div>
 
-      {/* Content: Inputs inside card */}
-      <div className="sales-velocity__card ob-card-module">
+      {/* Content: Inputs - seamless glass surface */}
+      <div className="sales-velocity__surface ob-seamless-panel ob-seamless-panel--glass">
         <div className="sales-velocity__grid">
           <SelectField
             label="Asset type"
