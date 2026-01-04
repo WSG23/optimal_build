@@ -68,12 +68,16 @@ export function ImmediateActionsGrid({
         display: 'flex',
         flexDirection: 'column',
         gap: 'var(--ob-space-100)',
+        // Add top margin per UX_ARCHITECTURE section header spacing
+        mt: 'var(--ob-space-200)',
       }}
     >
       <Typography
         variant="h4"
         sx={{
           m: 0,
+          // Additional bottom margin for visual separation from cards
+          mb: 'var(--ob-space-050)',
           fontSize: 'var(--ob-font-size-sm)',
           fontWeight: 700,
           color: 'text.primary',
@@ -88,26 +92,29 @@ export function ImmediateActionsGrid({
         {actions.slice(0, 4).map((action) => (
           <Grid item xs={12} sm={6} key={action.id}>
             <Box
+              className="immediate-action-card"
               onClick={
                 onActionClick ? () => onActionClick(action.id) : undefined
               }
               sx={{
                 p: 'var(--ob-space-125)',
-                bgcolor: 'var(--ob-color-bg-muted)',
+                // Glass surface per Sibling Card Surface Standard
+                background: 'var(--ob-surface-glass-1)',
+                backdropFilter: 'blur(var(--ob-blur-md))',
+                WebkitBackdropFilter: 'blur(var(--ob-blur-md))',
                 borderRadius: 'var(--ob-radius-sm)',
                 border: '1px solid var(--ob-color-border-subtle)',
                 cursor: onActionClick ? 'pointer' : 'default',
-                transition: 'all 0.15s ease',
+                transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 'var(--ob-space-050)',
                 minHeight: '72px',
-                '&:hover': onActionClick
-                  ? {
-                      borderColor: 'var(--ob-color-border-default)',
-                      bgcolor: 'var(--ob-color-surface-hover)',
-                    }
-                  : {},
+                // Cyan hover state per Card Interaction States
+                '&:hover': {
+                  borderColor: 'var(--ob-color-neon-cyan)',
+                  boxShadow: '0 0 8px var(--ob-color-neon-cyan-muted)',
+                },
               }}
             >
               <Box
@@ -136,19 +143,22 @@ export function ImmediateActionsGrid({
                   {priorityLabels[action.priority]}
                 </StatusChip>
               </Box>
-              <Typography
-                sx={{
-                  fontSize: 'var(--ob-font-size-2xs)',
-                  color: 'text.secondary',
-                  lineHeight: 1.4,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                }}
-              >
-                {action.description}
-              </Typography>
+              {/* Only render description if it exists and differs from title */}
+              {action.description && (
+                <Typography
+                  sx={{
+                    fontSize: 'var(--ob-font-size-2xs)',
+                    color: 'text.secondary',
+                    lineHeight: 1.4,
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {action.description}
+                </Typography>
+              )}
             </Box>
           </Grid>
         ))}

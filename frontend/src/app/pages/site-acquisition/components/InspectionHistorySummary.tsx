@@ -67,7 +67,7 @@ export function InspectionHistorySummary({
         height: '100%',
       }}
     >
-      {/* Header row */}
+      {/* Header row - title + buttons on same line (matches Scenario Overrides pattern) */}
       <Box
         sx={{
           display: 'flex',
@@ -77,33 +77,27 @@ export function InspectionHistorySummary({
           flexWrap: 'wrap',
         }}
       >
-        <Box>
-          <Typography
-            variant="h4"
-            sx={{
-              m: 0,
-              fontSize: 'var(--ob-font-size-base)',
-              fontWeight: 600,
-              color: 'text.primary',
-            }}
-          >
-            Inspection History
-          </Typography>
-          <Typography
-            sx={{
-              mt: 'var(--ob-space-025)',
-              fontSize: 'var(--ob-font-size-xs)',
-              color: 'text.secondary',
-            }}
-          >
-            Track developer inspections saved for this property.
-          </Typography>
-        </Box>
+        <Typography
+          variant="h4"
+          sx={{
+            m: 0,
+            fontSize: 'var(--ob-font-size-base)',
+            fontWeight: 600,
+            color: 'text.primary',
+          }}
+        >
+          Inspection History
+        </Typography>
         <Box
-          sx={{ display: 'flex', gap: 'var(--ob-space-075)', flexWrap: 'wrap' }}
+          sx={{
+            display: 'flex',
+            gap: 'var(--ob-space-075)',
+            flexWrap: 'wrap',
+            flexShrink: 0,
+          }}
         >
           <Button variant="primary" size="sm" onClick={onViewTimeline}>
-            View timeline
+            Timeline
           </Button>
           <Button
             variant="secondary"
@@ -111,10 +105,20 @@ export function InspectionHistorySummary({
             onClick={onLogInspection}
             disabled={!hasProperty}
           >
-            Log inspection
+            Log
           </Button>
         </Box>
       </Box>
+
+      {/* Description below header */}
+      <Typography
+        sx={{
+          fontSize: 'var(--ob-font-size-xs)',
+          color: 'text.secondary',
+        }}
+      >
+        Track developer inspections saved for this property.
+      </Typography>
 
       {/* Content */}
       {error ? (

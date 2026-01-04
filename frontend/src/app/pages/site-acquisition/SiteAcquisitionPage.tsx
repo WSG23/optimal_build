@@ -14,7 +14,7 @@ import { useFeaturePreferences } from '../../../hooks/useFeaturePreferences'
 // Extracted types, constants, utils, and hooks
 import type { QuickAnalysisEntry } from './types'
 import {
-  // SCENARIO_OPTIONS and JURISDICTION_OPTIONS are used by PropertyCaptureForm
+  SCENARIO_OPTIONS,
   CONDITION_RATINGS,
   CONDITION_RISK_LEVELS,
   PREVIEW_DETAIL_OPTIONS,
@@ -51,7 +51,13 @@ import { VoiceObservationsPanel } from './components/VoiceObservationsPanel'
 import { OptimalIntelligenceCard } from './components/OptimalIntelligenceCard'
 // Modals not yet used but planned for future integration
 // import { QuickAnalysisHistoryModal, InspectionHistoryModal } from './components/modals'
-import { PropertyCaptureForm } from './components/capture-form'
+// PropertyCaptureForm replaced by CommandBar + inline components for map-dominant layout
+import { CommandBar } from './components/CommandBar'
+import {
+  PropertyLocationMap,
+  type HeritageFeature,
+  type NearbyAmenity,
+} from './components/map'
 
 // MUI & Canonical Components
 import {
@@ -423,6 +429,84 @@ export function SiteAcquisitionPage() {
     formatTimestamp,
   ])
 
+  // Transform nearby amenities for the map component (copied from PropertyCaptureForm)
+  const mapAmenities = useMemo(() => {
+    if (!capturedProperty?.nearbyAmenities) return undefined
+
+    const amenities = capturedProperty.nearbyAmenities
+    const hasCoordinates = (item: { latitude?: number; longitude?: number }) =>
+      typeof item.latitude === 'number' && typeof item.longitude === 'number'
+
+    return {
+      mrtStations: amenities.mrtStations
+        ?.filter(hasCoordinates)
+        .map((station) => ({
+          name: station.name,
+          type: 'mrt' as const,
+          latitude: station.latitude!,
+          longitude: station.longitude!,
+          distance_m: station.distanceM ?? undefined,
+        })) as NearbyAmenity[] | undefined,
+      busStops: amenities.busStops?.filter(hasCoordinates).map((stop) => ({
+        name: stop.name,
+        type: 'bus' as const,
+        latitude: stop.latitude!,
+        longitude: stop.longitude!,
+        distance_m: stop.distanceM ?? undefined,
+      })) as NearbyAmenity[] | undefined,
+      schools: amenities.schools?.filter(hasCoordinates).map((school) => ({
+        name: school.name,
+        type: 'school' as const,
+        latitude: school.latitude!,
+        longitude: school.longitude!,
+        distance_m: school.distanceM ?? undefined,
+      })) as NearbyAmenity[] | undefined,
+      malls: amenities.shoppingMalls?.filter(hasCoordinates).map((mall) => ({
+        name: mall.name,
+        type: 'mall' as const,
+        latitude: mall.latitude!,
+        longitude: mall.longitude!,
+        distance_m: mall.distanceM ?? undefined,
+      })) as NearbyAmenity[] | undefined,
+      parks: amenities.parks?.filter(hasCoordinates).map((park) => ({
+        name: park.name,
+        type: 'park' as const,
+        latitude: park.latitude!,
+        longitude: park.longitude!,
+        distance_m: park.distanceM ?? undefined,
+      })) as NearbyAmenity[] | undefined,
+    }
+  }, [capturedProperty?.nearbyAmenities])
+
+  // Check if any amenities have coordinates
+  const hasAmenityCoordinates = useMemo(() => {
+    if (!mapAmenities) return false
+    return Object.values(mapAmenities).some((arr) => arr && arr.length > 0)
+  }, [mapAmenities])
+
+  // Transform heritage context for the map
+  const heritageFeatures = useMemo((): HeritageFeature[] | undefined => {
+    if (!capturedProperty?.heritageContext?.flag) return undefined
+    const heritage = capturedProperty.heritageContext
+    if (heritage.overlay?.name) {
+      return [
+        {
+          name: heritage.overlay.name,
+          status: heritage.risk ?? undefined,
+          risk_level:
+            heritage.risk === 'high'
+              ? 'high'
+              : heritage.risk === 'low'
+                ? 'low'
+                : 'medium',
+          latitude: parseFloat(latitude) || 1.3,
+          longitude: parseFloat(longitude) || 103.85,
+        },
+      ]
+    }
+    return undefined
+  }, [capturedProperty?.heritageContext, latitude, longitude])
+
   // Asset mix data for the donut chart in Development Preview sidebar
   // Extract from propertyOverviewCards (the "Recommended asset mix" card)
   const assetMixData = useMemo(() => {
@@ -759,35 +843,115 @@ export function SiteAcquisitionPage() {
       className="page site-acquisition"
       sx={{ width: '100%', pb: 'var(--ob-space-300)' }}
     >
-      <Stack spacing="var(--ob-space-200)">
-        {/* Property Capture Form with Sidebar - Grid Layout */}
-        <div className="site-acquisition__sidebar-layout">
-          {/* Main Form Area */}
-          <PropertyCaptureForm
-            address={address}
-            setAddress={setAddress}
-            latitude={latitude}
-            setLatitude={setLatitude}
-            longitude={longitude}
-            setLongitude={setLongitude}
-            selectedScenarios={selectedScenarios}
-            isCapturing={isCapturing}
-            isGeocoding={isGeocoding}
-            error={error}
-            capturedProperty={capturedProperty}
-            onCapture={handleCapture}
-            onToggleScenario={toggleScenario}
-            onAddressBlur={handleAddressBlur}
-          />
+      {/* ========== MAP-DOMINANT CAPTURE SECTION ========== */}
+      <div className="site-acquisition__map-dominant">
+        {/* Floating Command Bar */}
+        <CommandBar
+          address={address}
+          setAddress={setAddress}
+          latitude={latitude}
+          setLatitude={setLatitude}
+          longitude={longitude}
+          setLongitude={setLongitude}
+          selectedScenarios={selectedScenarios}
+          isCapturing={isCapturing}
+          isGeocoding={isGeocoding}
+          onCapture={handleCapture}
+          onAddressBlur={handleAddressBlur}
+        />
 
-          {/* Sidebar: Voice Observations + AI Intelligence */}
-          <div className="site-acquisition__sidebar">
+        {/* Main Content: Map + Sidebar */}
+        <div className="site-acquisition__map-content">
+          {/* Map Viewport - Hero Element */}
+          <div className="site-acquisition__map-viewport">
+            <PropertyLocationMap
+              latitude={latitude}
+              longitude={longitude}
+              onCoordinatesChange={(lat, lon) => {
+                setLatitude(lat)
+                setLongitude(lon)
+              }}
+              address={capturedProperty?.address?.fullAddress}
+              district={capturedProperty?.address?.district}
+              zoningCode={capturedProperty?.uraZoning?.zoneCode ?? undefined}
+              nearbyAmenities={mapAmenities}
+              heritageFeatures={heritageFeatures}
+              interactive={!isCapturing}
+              height={500}
+              showAmenities={hasAmenityCoordinates}
+              showHeritage={!!capturedProperty?.heritageContext?.flag}
+              propertyId={capturedProperty?.propertyId}
+              status={
+                isCapturing ? 'capturing' : capturedProperty ? 'live' : 'idle'
+              }
+              showHud={true}
+            />
+
+            {/* Error Message Overlay */}
+            {error && (
+              <div className="site-acquisition__error-overlay">{error}</div>
+            )}
+
+            {/* Success Message Overlay */}
+            {capturedProperty && (
+              <div className="site-acquisition__success-overlay">
+                <strong>Property captured</strong>
+                <span>
+                  {capturedProperty.address.fullAddress} •{' '}
+                  {capturedProperty.address.district}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Condensed Sidebar - Heuristic Instrument Panel */}
+          <div className="site-acquisition__sidebar--condensed">
+            {/* Scenario Selection - Compact Grid (placed near Capture button per UX feedback) */}
+            <div className="site-acquisition__scenario-selector">
+              <div className="site-acquisition__scenario-header">
+                <span className="site-acquisition__scenario-label">
+                  DEVELOPMENT SCENARIOS
+                </span>
+                <span className="site-acquisition__scenario-count">
+                  {selectedScenarios.length} selected
+                </span>
+              </div>
+              <div className="site-acquisition__scenario-grid">
+                {SCENARIO_OPTIONS.map((scenario) => {
+                  const isSelected = selectedScenarios.includes(scenario.value)
+                  return (
+                    <button
+                      key={scenario.value}
+                      type="button"
+                      onClick={() => toggleScenario(scenario.value)}
+                      className={`site-acquisition__scenario-chip ${isSelected ? 'site-acquisition__scenario-chip--selected' : ''}`}
+                    >
+                      <span className="site-acquisition__scenario-chip-icon">
+                        {scenario.icon}
+                      </span>
+                      <span className="site-acquisition__scenario-chip-label">
+                        {scenario.label}
+                      </span>
+                      {isSelected && (
+                        <span className="site-acquisition__scenario-chip-check">
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Voice Capture Module */}
             <VoiceObservationsPanel
               propertyId={capturedProperty?.propertyId ?? null}
               latitude={latitude ? parseFloat(latitude) : undefined}
               longitude={longitude ? parseFloat(longitude) : undefined}
               disabled={isCapturing}
             />
+
+            {/* AI Intelligence Card */}
             <OptimalIntelligenceCard
               insight={
                 capturedProperty?.quickAnalysis?.scenarios?.[0]?.headline ??
@@ -795,57 +959,48 @@ export function SiteAcquisitionPage() {
               }
               hasProperty={!!capturedProperty}
             />
+
+            {/* Quick Actions - New Capture / Finance (appears after capture) */}
+            {capturedProperty && (
+              <div className="site-acquisition__quick-actions">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleNewCapture}
+                  className="site-acquisition__action-btn"
+                >
+                  New Capture
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleCreateFinanceProject}
+                  disabled={isCreatingFinanceProject}
+                  className="site-acquisition__action-btn"
+                >
+                  {isCreatingFinanceProject ? 'Creating...' : 'Finance →'}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
+      </div>
 
+      {/* ========== POST-CAPTURE CONTENT ========== */}
+      {/* Section-to-section gap: 48px per Spacing Hierarchy */}
+      <Stack spacing="var(--ob-space-300)" sx={{ mt: 'var(--ob-space-200)' }}>
         {capturedProperty && (
           <>
             {/* Property Overview - Content vs Context pattern */}
             <Box>
               {/* Header on background */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: 'var(--ob-space-150)',
-                  justifyContent: 'space-between',
-                  alignItems: { xs: 'stretch', sm: 'flex-start' },
-                  flexDirection: { xs: 'column', sm: 'row' },
-                  mb: 'var(--ob-space-200)',
-                }}
-              >
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography variant="h5" fontWeight={600} gutterBottom>
-                    Property Overview
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Captured property data and development metrics
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    flexShrink: 0,
-                    display: 'flex',
-                    gap: 'var(--ob-space-100)',
-                  }}
-                >
-                  <Button
-                    variant="secondary"
-                    size="md"
-                    onClick={handleNewCapture}
-                  >
-                    New Capture
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="md"
-                    onClick={handleCreateFinanceProject}
-                    disabled={isCreatingFinanceProject}
-                  >
-                    {isCreatingFinanceProject
-                      ? 'Creating finance project…'
-                      : 'Create Finance Project'}
-                  </Button>
-                </Box>
+              <Box sx={{ mb: 'var(--ob-space-200)' }}>
+                <Typography variant="h5" fontWeight={600} gutterBottom>
+                  Property Overview
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Captured property data and development metrics
+                </Typography>
               </Box>
 
               {/* Data cards - no wrapper needed, cards have their own styling */}

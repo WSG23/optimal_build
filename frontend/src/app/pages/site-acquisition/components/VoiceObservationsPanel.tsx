@@ -213,42 +213,46 @@ export function VoiceObservationsPanel({
         </span>
       </div>
 
-      {/* Recording Zone */}
-      <div
-        className={`voice-observations-panel__record-zone ${isRecording ? 'voice-observations-panel__record-zone--recording' : ''}`}
-      >
-        {isRecording ? (
-          <>
-            <button
-              type="button"
-              onClick={stopRecording}
-              className="voice-observations-panel__stop-btn"
-              aria-label="Stop recording"
-            >
-              <Stop sx={{ fontSize: 32 }} />
-            </button>
-            <div className="voice-observations-panel__recording-indicator">
-              <span className="voice-observations-panel__recording-dot" />
-              <span className="voice-observations-panel__recording-time">
-                {formatDuration(duration)}
-              </span>
-            </div>
-          </>
-        ) : (
-          <>
-            <button
-              type="button"
-              onClick={startRecording}
-              disabled={!canRecord}
-              className="voice-observations-panel__record-btn"
-              aria-label="Start recording"
-            >
-              <Mic sx={{ fontSize: 32 }} />
-            </button>
-            <span className="voice-observations-panel__hint">
-              Click to start voice note
+      {/* Capture Sequence Module - Machined Edge Style */}
+      <div className="voice-capture-module">
+        <div className="voice-capture-module__header">
+          <span className="voice-capture-module__label">CAPTURE SEQUENCE</span>
+          <span
+            className={`voice-capture-module__status voice-capture-module__status--${isRecording ? 'active' : 'idle'}`}
+          >
+            <span className="voice-capture-module__status-dot" />
+            {isRecording ? 'RECORDING' : 'STANDBY'}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={isRecording ? stopRecording : startRecording}
+          disabled={!canRecord && !isRecording}
+          className={`voice-capture-module__trigger ${isRecording ? 'voice-capture-module__trigger--active' : ''}`}
+          aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+        >
+          <div className="voice-capture-module__trigger-icon">
+            {isRecording ? (
+              <Stop sx={{ fontSize: 24 }} />
+            ) : (
+              <Mic sx={{ fontSize: 24 }} />
+            )}
+          </div>
+          <div className="voice-capture-module__trigger-text">
+            {isRecording ? 'TERMINATE' : 'INITIATE'}
+          </div>
+        </button>
+
+        {isRecording && (
+          <div className="voice-capture-module__telemetry">
+            <span className="voice-capture-module__duration">
+              {formatDuration(duration)}
             </span>
-          </>
+            <span className="voice-capture-module__duration-label">
+              ELAPSED
+            </span>
+          </div>
         )}
       </div>
 

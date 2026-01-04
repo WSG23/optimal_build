@@ -251,6 +251,11 @@ export function PropertyCaptureForm({
               height={350}
               showAmenities={hasAmenityCoordinates}
               showHeritage={!!capturedProperty?.heritageContext?.flag}
+              propertyId={capturedProperty?.propertyId}
+              status={
+                isCapturing ? 'capturing' : capturedProperty ? 'live' : 'idle'
+              }
+              showHud={true}
             />
           </div>
 

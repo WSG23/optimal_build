@@ -163,6 +163,26 @@
 }
 
 /* -------------------------------------------------------------------------- */
+/* Unified Empty State - Sibling Card Surface Standard                         */
+/* Phase 4: Consistent glass treatment for all empty states on Site Acquisition */
+/* -------------------------------------------------------------------------- */
+
+.site-acquisition__empty-state {
+    padding: var(--ob-space-200);
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-sm);
+    text-align: center;
+    color: var(--ob-color-text-secondary);
+}
+
+.site-acquisition__empty-state--prominent {
+    padding: var(--ob-space-300);
+}
+
+/* -------------------------------------------------------------------------- */
 /* Photo Documentation                                                         */
 /* -------------------------------------------------------------------------- */
 
@@ -836,6 +856,9 @@
 .due-diligence {
     display: flex;
     flex-direction: column;
+    gap: var(
+        --ob-space-150
+    ); /* Flat Section Pattern: gap between direct children */
     margin-bottom: var(--ob-space-250);
 }
 
@@ -845,7 +868,7 @@
     align-items: flex-start;
     flex-wrap: wrap;
     gap: var(--ob-space-150);
-    margin-bottom: var(--ob-space-200);
+    /* margin-bottom removed - parent .due-diligence uses gap for uniform spacing */
 }
 
 .due-diligence__header-content {
@@ -905,7 +928,9 @@
     padding: var(--ob-space-250);
 }
 
-/* Seamless surface - glass background with internal padding */
+/* DEPRECATED: __surface removed in Flat Section Pattern refactor.
+   Categories are now direct children of .due-diligence section.
+   Kept for backwards compatibility - no longer used in component. */
 .due-diligence__surface {
     padding: var(--ob-space-200);
 }
@@ -914,7 +939,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--ob-space-100);
-    margin-bottom: var(--ob-space-200);
+    /* margin-bottom removed - parent .due-diligence uses gap for uniform spacing */
 }
 
 .due-diligence__scenario-tab {
@@ -973,7 +998,7 @@
 }
 
 .due-diligence__progress-track {
-    margin-bottom: var(--ob-space-200);
+    /* margin-bottom removed - parent .due-diligence uses gap for uniform spacing */
     background: var(--ob-color-bg-muted);
     border-radius: var(--ob-radius-sm);
     height: 8px;
@@ -991,7 +1016,10 @@
 }
 
 .due-diligence__category {
-    margin-bottom: var(--ob-space-200);
+    /* margin-bottom removed - parent .due-diligence uses gap for uniform spacing */
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
     overflow: hidden;
@@ -1115,16 +1143,20 @@
 .multi-scenario {
     display: flex;
     flex-direction: column;
+    gap: var(
+        --ob-space-150
+    ); /* Flat Section Pattern: gap between direct children */
     margin-bottom: var(--ob-space-250);
 }
 
 .multi-scenario__title {
-    margin: 0 0 var(--ob-space-150);
+    margin: 0;
     font-size: var(--ob-font-size-lg);
     font-weight: 700;
     color: var(--ob-color-text-primary);
     letter-spacing: -0.02em;
     /* Visual Hierarchy: Section titles use lg size with tighter letter-spacing */
+    /* margin-bottom removed - parent .multi-scenario uses gap for uniform spacing */
 }
 
 /* Responsive: Compact header on small screens */
@@ -1139,7 +1171,9 @@
     /* No padding - cards extend to full width */
 }
 
-/* Seamless surface - glass background with internal padding */
+/* DEPRECATED: __surface removed in Flat Section Pattern refactor.
+   Content is now direct children of .multi-scenario section.
+   Kept for backwards compatibility - no longer used in component. */
 .multi-scenario__surface {
     padding: var(--ob-space-200);
 }
@@ -1457,7 +1491,9 @@
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
     padding: var(--ob-space-200);
-    background: var(--ob-color-bg-muted);
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
     display: flex;
     flex-direction: column;
     gap: var(--ob-space-175);
@@ -1699,7 +1735,9 @@
     margin-top: var(--ob-space-200);
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
-    background: var(--ob-color-bg-muted);
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
 }
 
 @media (max-width: 640px) {
@@ -1762,7 +1800,9 @@
 .multi-scenario__workspace-card {
     position: relative;
     padding: var(--ob-space-200);
-    background: var(--ob-color-surface-elevated);
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
     transition:
@@ -1925,6 +1965,453 @@
 }
 
 /* -------------------------------------------------------------------------- */
+/* Phase 5: Differential Analysis Matrix - Asset Path Modules                  */
+/* -------------------------------------------------------------------------- */
+/* Scenario cards with vertical glow-bar, system markers, segmented gauge      */
+
+.multi-scenario__path-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--ob-space-150);
+    /* margin removed - section's flex gap handles subsection spacing uniformly */
+}
+
+@media (min-width: 768px) {
+    .multi-scenario__path-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.multi-scenario__path-module {
+    position: relative;
+    display: flex;
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-sm);
+    overflow: hidden;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.multi-scenario__path-module:hover {
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: 0 0 8px var(--ob-color-neon-cyan-muted);
+}
+
+/* Vertical Glow-Bar - left edge focus indicator */
+.multi-scenario__path-glow-bar {
+    width: var(--ob-space-025);
+    background: transparent;
+    transition:
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+    flex-shrink: 0;
+}
+
+/* Hover previews the glow-bar */
+.multi-scenario__path-module:hover .multi-scenario__path-glow-bar {
+    background: var(--ob-color-neon-cyan-muted);
+}
+
+/* Active/focus shows full glow */
+.multi-scenario__path-module--focus .multi-scenario__path-glow-bar {
+    background: var(--ob-color-neon-cyan);
+    box-shadow:
+        0 0 8px var(--ob-color-neon-cyan),
+        0 0 16px var(--ob-color-neon-cyan-muted);
+}
+
+.multi-scenario__path-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-150);
+    padding: var(--ob-space-200);
+}
+
+/* Header: System Marker + Title */
+.multi-scenario__path-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-050);
+}
+
+.multi-scenario__path-marker {
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-xs);
+    font-weight: 700;
+    color: var(--ob-color-text-tertiary);
+    letter-spacing: 0.05em;
+}
+
+.multi-scenario__path-module--focus .multi-scenario__path-marker {
+    color: var(--ob-color-neon-cyan);
+}
+
+.multi-scenario__path-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--ob-color-border-subtle);
+    margin: var(--ob-space-025) 0;
+}
+
+.multi-scenario__path-title {
+    margin: 0;
+    font-size: var(--ob-font-size-lg);
+    font-weight: 700;
+    color: var(--ob-color-text-primary);
+}
+
+/* Metrics Grid */
+.multi-scenario__path-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ob-space-100);
+}
+
+.multi-scenario__path-metric {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-025);
+}
+
+.multi-scenario__path-metric-label {
+    font-size: var(--ob-font-size-2xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ob-color-text-tertiary);
+}
+
+.multi-scenario__path-metric-value {
+    font-size: var(--ob-font-size-lg);
+    font-weight: 700;
+    color: var(--ob-color-text-primary);
+}
+
+.multi-scenario__path-metric-value--cyan {
+    color: var(--ob-color-neon-cyan);
+}
+
+/* Diligence Gauge - Segmented */
+.multi-scenario__diligence-gauge {
+    padding: var(--ob-space-100);
+    background: var(--ob-color-surface-default);
+    border-radius: var(--ob-radius-xs);
+}
+
+.multi-scenario__diligence-gauge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ob-space-075);
+}
+
+.multi-scenario__diligence-gauge-label {
+    font-size: var(--ob-font-size-2xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ob-color-text-tertiary);
+}
+
+.multi-scenario__diligence-gauge-value {
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-xs);
+    font-weight: 700;
+    color: var(--ob-color-text-primary);
+}
+
+.multi-scenario__diligence-gauge-segments {
+    display: flex;
+    gap: var(--ob-space-025);
+}
+
+.multi-scenario__diligence-gauge-segment {
+    flex: 1;
+    height: var(--ob-space-050);
+    background: var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-xs);
+    transition: background 0.2s ease;
+}
+
+.multi-scenario__diligence-gauge-segment--active {
+    background: var(--ob-color-neon-cyan);
+}
+
+/* Enter Matrix CTA */
+.multi-scenario__path-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: var(--ob-space-075) var(--ob-space-100);
+    margin-top: auto;
+    background: var(--ob-neutral-900);
+    color: var(--ob-neutral-50);
+    border: none;
+    border-radius: var(--ob-radius-xs);
+    font-size: var(--ob-font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        gap 0.2s ease;
+}
+
+.multi-scenario__path-cta:hover {
+    background: var(--ob-neutral-800);
+}
+
+.multi-scenario__path-module--focus .multi-scenario__path-cta {
+    background: var(--ob-color-neon-cyan);
+    color: var(--ob-neutral-900);
+}
+
+.multi-scenario__path-module--focus .multi-scenario__path-cta:hover {
+    background: color-mix(in srgb, var(--ob-color-neon-cyan) 85%, black);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Phase 5: Intel Tapes - Feasibility Signal Cards                             */
+/* -------------------------------------------------------------------------- */
+
+/* FEASIBILITY_HIGHLIGHTS - Glass card container (same treatment as PATH grid and footer) */
+.multi-scenario__intel-feed {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-150);
+    padding: var(--ob-space-200);
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-sm);
+}
+
+.multi-scenario__intel-feed-header {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-100);
+}
+
+.multi-scenario__intel-feed-label {
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-sm);
+    font-weight: 700;
+    color: var(--ob-color-text-secondary);
+    letter-spacing: 0.05em;
+}
+
+/* Intel tapes are direct children - no opaque background (nested inside glass card) */
+.multi-scenario__intel-tape {
+    padding: var(--ob-space-150);
+    border-top: 1px solid var(--ob-color-border-subtle);
+}
+
+.multi-scenario__intel-tape-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-100);
+    margin-bottom: var(--ob-space-100);
+}
+
+@media (min-width: 640px) {
+    .multi-scenario__intel-tape-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+}
+
+.multi-scenario__intel-tape-signal {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-050);
+}
+
+.multi-scenario__intel-tape-strength-bar {
+    display: flex;
+    gap: var(--ob-space-025);
+}
+
+.multi-scenario__intel-tape-strength-segment {
+    width: var(--ob-space-075);
+    height: var(--ob-space-050);
+    background: var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-xs);
+}
+
+.multi-scenario__intel-tape-strength-segment--active {
+    background: var(--ob-color-neon-cyan);
+}
+
+.multi-scenario__intel-tape-strength-value {
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-2xs);
+    font-weight: 600;
+    color: var(--ob-color-text-tertiary);
+    letter-spacing: 0.05em;
+}
+
+.multi-scenario__intel-tape-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ob-space-100);
+}
+
+.multi-scenario__intel-tape-id,
+.multi-scenario__intel-tape-path,
+.multi-scenario__intel-tape-ts {
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-2xs);
+    color: var(--ob-color-text-tertiary);
+    letter-spacing: 0.02em;
+}
+
+.multi-scenario__intel-tape-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--ob-color-border-subtle);
+    margin: var(--ob-space-100) 0;
+}
+
+.multi-scenario__intel-tape-section {
+    margin-bottom: var(--ob-space-100);
+}
+
+.multi-scenario__intel-tape-section:last-child {
+    margin-bottom: 0;
+}
+
+.multi-scenario__intel-tape-type {
+    display: block;
+    font-size: var(--ob-font-size-xs);
+    font-weight: 700;
+    margin-bottom: var(--ob-space-050);
+}
+
+.multi-scenario__intel-tape-type--opportunity {
+    color: var(--ob-color-status-success);
+}
+
+.multi-scenario__intel-tape-type--risk {
+    color: var(--ob-color-status-error);
+}
+
+.multi-scenario__intel-tape-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    padding-left: var(--ob-space-100);
+}
+
+.multi-scenario__intel-tape-list li {
+    display: flex;
+    gap: var(--ob-space-050);
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-secondary);
+    line-height: 1.5;
+    margin-bottom: var(--ob-space-025);
+}
+
+.multi-scenario__intel-tape-tree {
+    font-family: var(--ob-font-family-mono);
+    color: var(--ob-color-text-tertiary);
+    flex-shrink: 0;
+}
+
+.multi-scenario__intel-tape-empty {
+    margin: 0;
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-tertiary);
+    font-style: italic;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Phase 5: Matrix Summary Footer (includes export actions)                     */
+/* -------------------------------------------------------------------------- */
+
+.multi-scenario__matrix-summary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-100);
+    padding: var(--ob-space-150);
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-sm);
+}
+
+/* Stats row: 4-column grid */
+.multi-scenario__matrix-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--ob-space-100);
+}
+
+@media (max-width: 640px) {
+    .multi-scenario__matrix-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Export actions row: right-aligned buttons */
+.multi-scenario__matrix-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--ob-space-100);
+    padding-top: var(--ob-space-100);
+    border-top: 1px solid var(--ob-color-border-subtle);
+}
+
+/* Status message (left-aligned, pushes buttons right) */
+.multi-scenario__matrix-status {
+    margin-right: auto;
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-secondary);
+}
+
+.multi-scenario__matrix-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--ob-space-025);
+}
+
+.multi-scenario__matrix-value {
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-xl);
+    font-weight: 700;
+    color: var(--ob-color-text-primary);
+}
+
+.multi-scenario__matrix-label {
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-2xs);
+    font-weight: 600;
+    color: var(--ob-color-text-tertiary);
+    letter-spacing: 0.05em;
+}
+
+.multi-scenario__matrix-stat--opportunity .multi-scenario__matrix-value {
+    color: var(--ob-color-status-success);
+}
+
+.multi-scenario__matrix-stat--risk .multi-scenario__matrix-value {
+    color: var(--ob-color-status-error);
+}
+
+/* -------------------------------------------------------------------------- */
 /* Condition Assessment Section - Seamless Command Surface Architecture        */
 /* -------------------------------------------------------------------------- */
 /* Zero-Card pattern: semi-transparent panels, hairline borders, edge-to-edge */
@@ -1932,17 +2419,23 @@
 .condition-assessment {
     display: flex;
     flex-direction: column;
+    gap: var(
+        --ob-space-150
+    ); /* Flat Section Pattern: gap between direct children */
 }
 
 .condition-assessment__title {
-    margin: 0 0 var(--ob-space-150);
+    margin: 0;
     font-size: var(--ob-font-size-xl);
     font-weight: 600;
     color: var(--ob-color-text-primary);
     letter-spacing: -0.01em;
+    /* margin-bottom removed - parent .condition-assessment uses gap for uniform spacing */
 }
 
-/* Seamless surface - glass background with hairline border.
+/* DEPRECATED: __surface removed in Flat Section Pattern refactor.
+   Content is now direct children of .condition-assessment section.
+   Kept for backwards compatibility - no longer used in component.
    NOTE: No backdrop-filter - causes scroll lock on this page. */
 .condition-assessment__surface {
     background: var(--ob-surface-glass-1);
@@ -1950,8 +2443,19 @@
     padding: var(--ob-space-200);
 }
 
-/* Light mode surface */
+/* Light mode surface (deprecated) */
 html[data-theme='light'] .condition-assessment__surface {
+    background: rgba(255, 255, 255, 0.5);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Empty state panel styling - used when content is not available */
+.condition-assessment__empty-panel {
+    background: var(--ob-surface-glass-1);
+    border: 1px solid var(--ob-color-border-subtle);
+}
+
+html[data-theme='light'] .condition-assessment__empty-panel {
     background: rgba(255, 255, 255, 0.5);
     border-color: rgba(0, 0, 0, 0.08);
 }
@@ -2007,7 +2511,7 @@ html[data-theme='light'] .condition-assessment__card {
 }
 
 /* Overall Assessment Card - Seamless Panel with Gauge
-   NOTE: No backdrop-filter - causes scroll lock on this page. */
+   Phase 4: Re-enabled backdrop-filter (scroll lock was from nested panels, now fixed) */
 .condition-assessment__overall-card {
     display: flex;
     flex-direction: column;
@@ -2015,14 +2519,12 @@ html[data-theme='light'] .condition-assessment__card {
     text-align: center;
     padding: var(--ob-space-150);
     background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
     border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-sm);
     gap: var(--ob-space-100);
     height: 100%;
-}
-
-html[data-theme='light'] .condition-assessment__overall-card {
-    background: rgba(255, 255, 255, 0.5);
-    border-color: rgba(0, 0, 0, 0.08);
 }
 
 .condition-assessment__overall-label {
@@ -2191,6 +2693,29 @@ html[data-theme='light'] .condition-assessment__overall-card {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Condition Assessment Card Hover States                                      */
+/* Per Card Interaction States: Cyan border glow on hover                      */
+/* -------------------------------------------------------------------------- */
+
+/* Insight Card - glass surface with left border accent */
+.condition-insight-card:hover {
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: 0 0 8px var(--ob-color-neon-cyan-muted);
+}
+
+/* System Rating Card - glass surface with semantic badge */
+.system-rating-card:hover {
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: 0 0 8px var(--ob-color-neon-cyan-muted);
+}
+
+/* Immediate Action Card - glass surface with priority badge */
+.immediate-action-card:hover {
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: 0 0 8px var(--ob-color-neon-cyan-muted);
+}
+
+/* -------------------------------------------------------------------------- */
 /* Property Overview Cards                                                     */
 /* -------------------------------------------------------------------------- */
 
@@ -2298,7 +2823,8 @@ html[data-theme='light'] .condition-assessment__overall-card {
     background: var(--ob-color-surface-elevated);
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
-    overflow: hidden;
+    overflow: visible; /* Allow content to show */
+    max-height: none; /* No max-height restriction */
 }
 
 .voice-observations-panel__header {
@@ -2957,4 +3483,721 @@ html[data-theme='light'] .condition-assessment__overall-card {
 .preview-layers-master-table__textarea:focus {
     outline: none;
     border-color: var(--ob-color-neon-cyan);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Map HUD Overlay - Tactical Viewport                                        */
+/* AI Studio: "Live Sensor Feed" aesthetic with corner telemetry display      */
+/* -------------------------------------------------------------------------- */
+
+.map-hud {
+    position: relative;
+}
+
+.map-hud__viewport {
+    /* Applied via inline styles in component */
+}
+
+/* HUD Corner Panels */
+.map-hud__corner {
+    position: absolute;
+    z-index: 1000;
+    padding: var(--ob-space-050) var(--ob-space-075);
+    background: var(--ob-surface-premium);
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-xs);
+    backdrop-filter: blur(var(--ob-blur-xl));
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.map-hud__corner--top-left {
+    top: var(--ob-space-075);
+    left: var(--ob-space-075);
+}
+
+.map-hud__corner--top-right {
+    top: var(--ob-space-075);
+    right: var(--ob-space-075);
+    text-align: right;
+}
+
+.map-hud__corner--bottom-left {
+    bottom: var(--ob-space-200);
+    left: var(--ob-space-075);
+}
+
+.map-hud__corner--bottom-right {
+    bottom: var(--ob-space-200);
+    right: var(--ob-space-300);
+    text-align: right;
+}
+
+/* HUD Labels - Uppercase technical style */
+.map-hud__label {
+    font-size: var(--ob-font-size-2xs);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ob-color-text-muted);
+}
+
+/* HUD Values - Monospace for coordinates/timestamps */
+.map-hud__value {
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-neon-cyan);
+    letter-spacing: 0.02em;
+}
+
+/* Status Indicator with pulsing dot */
+.map-hud__status {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-050);
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-xs);
+    letter-spacing: 0.05em;
+}
+
+.map-hud__status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--ob-radius-pill);
+    background: currentColor;
+}
+
+/* Status States */
+.map-hud__status--idle {
+    color: var(--ob-color-text-secondary);
+}
+
+.map-hud__status--idle .map-hud__status-dot {
+    background: var(--ob-color-text-muted);
+}
+
+.map-hud__status--live {
+    color: var(--ob-color-neon-cyan);
+}
+
+.map-hud__status--live .map-hud__status-dot {
+    background: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-status-live);
+    animation: map-hud-pulse 2s ease-in-out infinite;
+}
+
+.map-hud__status--capturing {
+    color: var(--ob-color-warning);
+}
+
+.map-hud__status--capturing .map-hud__status-dot {
+    background: var(--ob-color-warning);
+    box-shadow: var(--ob-glow-status-warning);
+    animation: map-hud-pulse 1s ease-in-out infinite;
+}
+
+@keyframes map-hud-pulse {
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.2);
+    }
+}
+
+/* Legend Panel - Machined edge style */
+.map-hud__legend {
+    position: absolute;
+    top: var(--ob-space-250);
+    left: var(--ob-space-075);
+    z-index: 1000;
+    padding: var(--ob-space-075);
+    background: var(--ob-surface-premium);
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-xs);
+    backdrop-filter: blur(var(--ob-blur-xl));
+    max-width: 120px;
+}
+
+.map-hud__legend-title {
+    font-size: var(--ob-font-size-2xs);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ob-color-text-muted);
+    margin-bottom: var(--ob-space-050);
+    padding-bottom: var(--ob-space-025);
+    border-bottom: var(--ob-divider);
+}
+
+.map-hud__legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-050);
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-secondary);
+    padding: 2px 0;
+}
+
+/* Map Hint Text */
+.map-hud__hint {
+    margin: var(--ob-space-075) 0 0;
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-muted);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Voice Capture Module - Machined Edge Style                                  */
+/* AI Studio: "Capture Sequence" module with tactical aesthetic               */
+/* -------------------------------------------------------------------------- */
+
+.voice-capture-module {
+    margin: var(--ob-space-100);
+    padding: var(--ob-space-100);
+    background: var(--ob-surface-premium);
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-xs);
+    backdrop-filter: blur(var(--ob-blur-xl));
+}
+
+.voice-capture-module__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--ob-space-100);
+    padding-bottom: var(--ob-space-075);
+    border-bottom: var(--ob-divider);
+}
+
+.voice-capture-module__label {
+    font-size: var(--ob-font-size-2xs);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ob-color-text-muted);
+}
+
+.voice-capture-module__status {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-050);
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-2xs);
+    letter-spacing: 0.05em;
+}
+
+.voice-capture-module__status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--ob-radius-pill);
+}
+
+.voice-capture-module__status--idle {
+    color: var(--ob-color-text-secondary);
+}
+
+.voice-capture-module__status--idle .voice-capture-module__status-dot {
+    background: var(--ob-color-text-muted);
+}
+
+.voice-capture-module__status--active {
+    color: var(--ob-color-neon-cyan);
+}
+
+.voice-capture-module__status--active .voice-capture-module__status-dot {
+    background: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-status-live);
+    animation: voice-capture-pulse 1s ease-in-out infinite;
+}
+
+@keyframes voice-capture-pulse {
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.3);
+    }
+}
+
+/* Trigger Button - Machined Edge */
+.voice-capture-module__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ob-space-075);
+    width: 100%;
+    padding: var(--ob-space-100) var(--ob-space-150);
+    background: var(--ob-color-bg-surface);
+    border: var(--ob-border-fine-strong);
+    border-radius: var(--ob-radius-xs);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.voice-capture-module__trigger:hover:not(:disabled) {
+    border-color: var(--ob-color-neon-cyan);
+    background: var(--ob-color-neon-cyan-subtle);
+}
+
+.voice-capture-module__trigger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.voice-capture-module__trigger--active {
+    border-color: var(--ob-color-neon-cyan);
+    background: var(--ob-color-neon-cyan-muted);
+    box-shadow: var(--ob-glow-neon-cyan);
+}
+
+.voice-capture-module__trigger--active:hover {
+    background: var(--ob-color-neon-cyan-soft);
+}
+
+.voice-capture-module__trigger-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ob-color-text-primary);
+}
+
+.voice-capture-module__trigger--active .voice-capture-module__trigger-icon {
+    color: var(--ob-color-neon-cyan);
+}
+
+.voice-capture-module__trigger-text {
+    font-size: var(--ob-font-size-xs);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ob-color-text-primary);
+}
+
+.voice-capture-module__trigger--active .voice-capture-module__trigger-text {
+    color: var(--ob-color-neon-cyan);
+}
+
+/* Telemetry Display */
+.voice-capture-module__telemetry {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: var(--ob-space-100);
+    padding-top: var(--ob-space-075);
+    border-top: var(--ob-divider);
+}
+
+.voice-capture-module__duration {
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-xl);
+    font-weight: 600;
+    color: var(--ob-color-neon-cyan);
+    letter-spacing: 0.05em;
+    text-shadow: var(--ob-glow-neon-text);
+}
+
+.voice-capture-module__duration-label {
+    font-size: var(--ob-font-size-2xs);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ob-color-text-muted);
+    margin-top: 2px;
+}
+
+/* ============================================================================
+   MAP-DOMINANT LAYOUT - AI Studio Space-Efficient Design
+   ============================================================================ */
+
+/**
+ * Map-Dominant Layout Structure:
+ * ┌─────────────────────────────────────────────────────────────────────┐
+ * │  [Command Bar - full width]                                        │
+ * ├───────────────────────────────────────────────┬─────────────────────┤
+ * │                                               │                     │
+ * │              MAP VIEWPORT                     │  CONDENSED SIDEBAR  │
+ * │            (Hero Element)                     │  - Voice Capture    │
+ * │                                               │  - AI Intelligence  │
+ * │                                               │  - Scenario Select  │
+ * │                                               │                     │
+ * └───────────────────────────────────────────────┴─────────────────────┘
+ */
+
+.site-acquisition__map-dominant {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-100);
+    min-height: calc(100vh - 180px); /* Account for header */
+}
+
+.site-acquisition__map-content {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: var(--ob-space-100);
+    flex: 1;
+    min-height: 500px;
+}
+
+/* Responsive: Stack on mobile */
+@media (max-width: 1024px) {
+    .site-acquisition__map-content {
+        grid-template-columns: 1fr;
+    }
+
+    .site-acquisition__sidebar--condensed {
+        order: -1; /* Move sidebar above map on mobile */
+    }
+}
+
+/* Map Viewport - Hero Element */
+.site-acquisition__map-viewport {
+    position: relative;
+    border-radius: var(--ob-radius-sm);
+    overflow: hidden;
+    background: var(--ob-neutral-950);
+    min-height: 500px;
+}
+
+/* Error/Success Overlays on Map */
+.site-acquisition__error-overlay {
+    position: absolute;
+    bottom: var(--ob-space-100);
+    left: var(--ob-space-100);
+    right: var(--ob-space-100);
+    padding: var(--ob-space-075) var(--ob-space-100);
+    background: rgba(var(--ob-error-500-rgb), 0.9);
+    border: 1px solid var(--ob-error-500);
+    border-radius: var(--ob-radius-xs);
+    color: white;
+    font-size: var(--ob-font-size-sm);
+    backdrop-filter: blur(var(--ob-blur-xs));
+    z-index: 1001;
+}
+
+.site-acquisition__success-overlay {
+    position: absolute;
+    bottom: var(--ob-space-100);
+    left: var(--ob-space-100);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--ob-space-075) var(--ob-space-100);
+    background: var(--ob-surface-premium);
+    border: var(--ob-border-fine);
+    border-left: 3px solid var(--ob-color-neon-cyan);
+    border-radius: var(--ob-radius-xs);
+    backdrop-filter: blur(var(--ob-blur-xl));
+    z-index: 1001;
+}
+
+.site-acquisition__success-overlay strong {
+    font-size: var(--ob-font-size-xs);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ob-color-neon-cyan);
+}
+
+.site-acquisition__success-overlay span {
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-secondary);
+}
+
+/* Condensed Sidebar - Heuristic Instrument Panel */
+.site-acquisition__sidebar--condensed {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-100);
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    overflow-x: visible; /* Allow scenario chips to be visible */
+    padding-right: var(--ob-space-050); /* Scrollbar padding */
+}
+
+/* Hide scrollbar but keep functionality */
+.site-acquisition__sidebar--condensed::-webkit-scrollbar {
+    width: 4px;
+}
+
+.site-acquisition__sidebar--condensed::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.site-acquisition__sidebar--condensed::-webkit-scrollbar-thumb {
+    background: var(--ob-color-border-subtle);
+    border-radius: 2px;
+}
+
+/* Scenario Selector in Sidebar */
+.site-acquisition__scenario-selector {
+    background: var(--ob-surface-premium);
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-sm);
+    padding: var(--ob-space-100);
+}
+
+.site-acquisition__scenario-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--ob-space-075);
+}
+
+.site-acquisition__scenario-label {
+    font-size: var(--ob-font-size-2xs);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ob-color-text-muted);
+}
+
+.site-acquisition__scenario-count {
+    font-size: var(--ob-font-size-2xs);
+    font-family: var(--ob-font-family-mono);
+    color: var(--ob-color-neon-cyan);
+}
+
+.site-acquisition__scenario-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Single column to prevent overflow */
+    gap: var(--ob-space-050);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Scenario Chips - Compact Selection */
+.site-acquisition__scenario-chip {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-050);
+    padding: var(--ob-space-050) var(--ob-space-075);
+    background: var(--ob-color-bg-surface);
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-xs);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+}
+
+.site-acquisition__scenario-chip:hover {
+    border-color: var(--ob-color-border-hover);
+    background: var(--ob-color-action-hover);
+}
+
+.site-acquisition__scenario-chip--selected {
+    border-color: var(--ob-color-neon-cyan);
+    background: var(--ob-color-neon-cyan-muted);
+}
+
+.site-acquisition__scenario-chip-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.site-acquisition__scenario-chip-label {
+    font-size: var(--ob-font-size-2xs);
+    font-weight: 500;
+    color: var(--ob-color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.site-acquisition__scenario-chip-check {
+    font-size: 10px;
+    color: var(--ob-color-neon-cyan);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* Quick Actions in Sidebar */
+.site-acquisition__quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-050);
+    padding: var(--ob-space-100);
+    background: var(--ob-surface-premium);
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-sm);
+}
+
+.site-acquisition__action-btn {
+    width: 100%;
+    justify-content: center;
+}
+
+/* ============================================================================
+   COMMAND BAR - Floating Target Acquisition Strip
+   ============================================================================ */
+
+/**
+ * Command Bar Design:
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │ [TARGET] │ Address Input ────────────────│ LAT, LON │ [⊕] │ 3 SCENARIOS │ [CAPTURE] │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ */
+
+.command-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-100);
+    padding: var(--ob-space-075) var(--ob-space-100);
+    background: var(--ob-surface-premium);
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-xs);
+    backdrop-filter: blur(var(--ob-blur-xl));
+}
+
+/* Target Label */
+.command-bar__label {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-025);
+    padding: 0 var(--ob-space-075);
+    font-size: var(--ob-font-size-2xs);
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ob-color-text-muted);
+    border-right: var(--ob-border-fine);
+    padding-right: var(--ob-space-100);
+}
+
+.command-bar__label svg {
+    color: var(--ob-color-neon-cyan);
+}
+
+/* Input Groups */
+.command-bar__input-group {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-050);
+}
+
+.command-bar__input-group--address {
+    flex: 1;
+    min-width: 200px;
+}
+
+.command-bar__input-group--coords {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-025);
+}
+
+/* Inputs */
+.command-bar__input {
+    background: var(--ob-color-bg-surface);
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-xs);
+    padding: var(--ob-space-050) var(--ob-space-075);
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-primary);
+    outline: none;
+    transition: all 0.15s ease;
+}
+
+.command-bar__input:focus {
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-brand-subtle);
+}
+
+.command-bar__input::placeholder {
+    color: var(--ob-color-text-muted);
+}
+
+.command-bar__input-group--address .command-bar__input {
+    width: 100%;
+}
+
+.command-bar__input--coord {
+    width: 80px;
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-xs);
+    text-align: center;
+}
+
+.command-bar__coord-separator {
+    color: var(--ob-color-text-muted);
+    font-family: var(--ob-font-family-mono);
+}
+
+/* Recenter Button */
+.command-bar__recenter {
+    padding: var(--ob-space-050);
+    background: var(--ob-color-bg-surface);
+    border: 1px solid var(--ob-color-border-default);
+    border-radius: var(--ob-radius-xs);
+    color: var(--ob-color-text-primary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.command-bar__recenter:hover {
+    color: var(--ob-color-neon-cyan);
+    border-color: var(--ob-color-neon-cyan);
+    background: var(--ob-color-neon-cyan-muted);
+}
+
+/* Scenario Badge */
+.command-bar__scenario-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-025);
+    padding: var(--ob-space-050) var(--ob-space-075);
+    background: var(--ob-color-bg-surface);
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-xs);
+}
+
+.command-bar__scenario-count {
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-sm);
+    font-weight: 600;
+    color: var(--ob-color-neon-cyan);
+}
+
+.command-bar__scenario-label {
+    font-size: var(--ob-font-size-2xs);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ob-color-text-muted);
+}
+
+/* Capture Button */
+.command-bar__capture-btn {
+    flex-shrink: 0;
+}
+
+/* Responsive Command Bar */
+@media (max-width: 768px) {
+    .command-bar {
+        flex-wrap: wrap;
+    }
+
+    .command-bar__label {
+        display: none;
+    }
+
+    .command-bar__input-group--address {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .command-bar__input-group--coords {
+        flex: 1;
+    }
+
+    .command-bar__scenario-badge {
+        display: none;
+    }
 }

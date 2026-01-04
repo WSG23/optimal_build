@@ -98,144 +98,138 @@ export function DueDiligenceChecklistSection({
         </div>
       </div>
 
-      {/* Content - seamless glass surface */}
+      {/* Content - categories are direct children (Flat Section Pattern) */}
       {/* NOTE: Scenario tabs REMOVED - use ScenarioFocusSection for global filtering */}
-      <div className="ob-seamless-panel ob-seamless-panel--glass due-diligence__surface">
-        {/* Content states */}
-        {isLoadingChecklist ? (
-          <div className="due-diligence__empty-state">
-            <p>Loading checklist...</p>
-          </div>
-        ) : !capturedProperty ? (
-          <div className="due-diligence__empty-state due-diligence__empty-state--prominent">
-            <div className="due-diligence__empty-icon">📋</div>
-            <p className="due-diligence__empty-title">
-              Capture a property to view the comprehensive due diligence
-              checklist
-            </p>
-            <p className="due-diligence__empty-subtitle">
-              Automatically generated based on selected development scenarios
-            </p>
-          </div>
-        ) : checklistItems.length === 0 ? (
-          <div className="due-diligence__empty-state">
-            <p>No checklist items found for this property.</p>
-          </div>
-        ) : filteredChecklistItems.length === 0 ? (
-          <div className="due-diligence__empty-state">
-            <p>
-              No checklist items for{' '}
-              {activeScenarioDetails?.label ?? 'this scenario'} yet.
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Progress bar */}
-            {displaySummary && (
-              <div className="due-diligence__progress-track">
-                <div
-                  className="due-diligence__progress-fill"
-                  style={{ width: `${displaySummary.completionPercentage}%` }}
-                />
-              </div>
-            )}
+      {isLoadingChecklist ? (
+        <div className="site-acquisition__empty-state">
+          <p>Loading checklist...</p>
+        </div>
+      ) : !capturedProperty ? (
+        <div className="site-acquisition__empty-state site-acquisition__empty-state--prominent">
+          <div className="due-diligence__empty-icon">📋</div>
+          <p className="due-diligence__empty-title">
+            Capture a property to view the comprehensive due diligence checklist
+          </p>
+          <p className="due-diligence__empty-subtitle">
+            Automatically generated based on selected development scenarios
+          </p>
+        </div>
+      ) : checklistItems.length === 0 ? (
+        <div className="site-acquisition__empty-state">
+          <p>No checklist items found for this property.</p>
+        </div>
+      ) : filteredChecklistItems.length === 0 ? (
+        <div className="site-acquisition__empty-state">
+          <p>
+            No checklist items for{' '}
+            {activeScenarioDetails?.label ?? 'this scenario'} yet.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Progress bar */}
+          {displaySummary && (
+            <div className="due-diligence__progress-track">
+              <div
+                className="due-diligence__progress-fill"
+                style={{ width: `${displaySummary.completionPercentage}%` }}
+              />
+            </div>
+          )}
 
-            {/* Group by category */}
-            {Object.entries(
-              filteredChecklistItems.reduce(
-                (acc, item) => {
-                  const category = item.category
-                  if (!acc[category]) {
-                    acc[category] = []
-                  }
-                  acc[category].push(item)
-                  return acc
-                },
-                {} as Record<string, ChecklistItem[]>,
-              ),
-            ).map(([category, items]: [string, ChecklistItem[]]) => (
-              <div key={category} className="due-diligence__category">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSelectedCategory(
-                      selectedCategory === category ? null : category,
-                    )
-                  }
-                  className="due-diligence__category-header"
-                >
-                  <span>{formatCategoryName(category)}</span>
-                  <span className="due-diligence__category-count">
-                    {items.filter((item) => item.status === 'completed').length}
-                    /{items.length}
-                  </span>
-                </button>
-                {(selectedCategory === category ||
-                  selectedCategory === null) && (
-                  <div className="due-diligence__category-items">
-                    {items.map((item) => (
-                      <div key={item.id} className="due-diligence__item">
-                        <select
-                          value={item.status}
-                          onChange={(e) =>
-                            handleChecklistUpdate(
-                              item.id,
-                              e.target.value as
-                                | 'pending'
-                                | 'in_progress'
-                                | 'completed'
-                                | 'not_applicable',
-                            )
-                          }
-                          className="due-diligence__item-select"
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="in_progress">In Progress</option>
-                          <option value="completed">Completed</option>
-                          <option value="not_applicable">Not Applicable</option>
-                        </select>
-                        <div className="due-diligence__item-content">
-                          <div className="due-diligence__item-header">
-                            <h4 className="due-diligence__item-title">
-                              {item.itemTitle}
-                            </h4>
-                            {item.priority === 'critical' && (
-                              <span className="due-diligence__priority due-diligence__priority--critical">
-                                CRITICAL
-                              </span>
-                            )}
-                            {item.priority === 'high' && (
-                              <span className="due-diligence__priority due-diligence__priority--high">
-                                HIGH
-                              </span>
-                            )}
-                          </div>
-                          {item.itemDescription && (
-                            <p className="due-diligence__item-description">
-                              {item.itemDescription}
-                            </p>
+          {/* Group by category - categories are direct children */}
+          {Object.entries(
+            filteredChecklistItems.reduce(
+              (acc, item) => {
+                const category = item.category
+                if (!acc[category]) {
+                  acc[category] = []
+                }
+                acc[category].push(item)
+                return acc
+              },
+              {} as Record<string, ChecklistItem[]>,
+            ),
+          ).map(([category, items]: [string, ChecklistItem[]]) => (
+            <div key={category} className="due-diligence__category">
+              <button
+                type="button"
+                onClick={() =>
+                  setSelectedCategory(
+                    selectedCategory === category ? null : category,
+                  )
+                }
+                className="due-diligence__category-header"
+              >
+                <span>{formatCategoryName(category)}</span>
+                <span className="due-diligence__category-count">
+                  {items.filter((item) => item.status === 'completed').length}/
+                  {items.length}
+                </span>
+              </button>
+              {(selectedCategory === category || selectedCategory === null) && (
+                <div className="due-diligence__category-items">
+                  {items.map((item) => (
+                    <div key={item.id} className="due-diligence__item">
+                      <select
+                        value={item.status}
+                        onChange={(e) =>
+                          handleChecklistUpdate(
+                            item.id,
+                            e.target.value as
+                              | 'pending'
+                              | 'in_progress'
+                              | 'completed'
+                              | 'not_applicable',
+                          )
+                        }
+                        className="due-diligence__item-select"
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="not_applicable">Not Applicable</option>
+                      </select>
+                      <div className="due-diligence__item-content">
+                        <div className="due-diligence__item-header">
+                          <h4 className="due-diligence__item-title">
+                            {item.itemTitle}
+                          </h4>
+                          {item.priority === 'critical' && (
+                            <span className="due-diligence__priority due-diligence__priority--critical">
+                              CRITICAL
+                            </span>
                           )}
-                          {item.requiresProfessional &&
-                            item.professionalType && (
-                              <p className="due-diligence__item-professional">
-                                Requires: {item.professionalType}
-                              </p>
-                            )}
-                          {item.dueDate && (
-                            <p className="due-diligence__item-due">
-                              Due: {new Date(item.dueDate).toLocaleDateString()}
-                            </p>
+                          {item.priority === 'high' && (
+                            <span className="due-diligence__priority due-diligence__priority--high">
+                              HIGH
+                            </span>
                           )}
                         </div>
+                        {item.itemDescription && (
+                          <p className="due-diligence__item-description">
+                            {item.itemDescription}
+                          </p>
+                        )}
+                        {item.requiresProfessional && item.professionalType && (
+                          <p className="due-diligence__item-professional">
+                            Requires: {item.professionalType}
+                          </p>
+                        )}
+                        {item.dueDate && (
+                          <p className="due-diligence__item-due">
+                            Due: {new Date(item.dueDate).toLocaleDateString()}
+                          </p>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </>
-        )}
-      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </>
+      )}
     </section>
   )
 }

@@ -3,6 +3,14 @@
  *
  * Displays a single condition insight with severity badge, title, detail, and optional chips.
  * Pure presentational component - receives display-ready props.
+ *
+ * Design Pattern: Left-border accent with glass surface
+ * - Glass background (--ob-surface-glass-1)
+ * - Colored left border indicates severity (3px accent)
+ * - Severity badge with subtle semantic colors
+ *
+ * @see frontend/UI_STANDARDS.md - Card Interaction States
+ * @see frontend/UX_ARCHITECTURE.md - Insight/Callout Box Pattern
  */
 
 import type { CSSProperties } from 'react'
@@ -55,32 +63,45 @@ export function InsightCard({
   return (
     <div
       key={id}
+      className="condition-insight-card"
       style={{
-        border: `1px solid ${visuals.border}`,
-        background: visuals.background,
-        color: visuals.text,
+        // Glass surface with left-border accent pattern
+        background: 'var(--ob-surface-glass-1)',
+        backdropFilter: 'blur(var(--ob-blur-md))',
+        WebkitBackdropFilter: 'blur(var(--ob-blur-md))',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderLeft: `3px solid ${visuals.indicator}`,
         borderRadius: 'var(--ob-radius-sm)',
         padding: 'var(--ob-space-120)',
         display: 'flex',
         flexDirection: 'column',
         gap: 'var(--ob-space-065)',
+        color: 'var(--ob-color-text-primary)',
+        transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
       }}
     >
+      {/* Severity badge with semantic colors */}
       <span
         style={{
           display: 'inline-flex',
           alignItems: 'center',
+          alignSelf: 'flex-start',
           gap: 'var(--ob-space-035)',
+          padding: 'var(--ob-space-025) var(--ob-space-065)',
+          borderRadius: 'var(--ob-radius-xs)',
           fontSize: 'var(--ob-font-size-xs)',
           fontWeight: 700,
           textTransform: 'uppercase',
           letterSpacing: 'var(--ob-letter-spacing-widest)',
+          background: visuals.badgeBg,
+          color: visuals.badgeText,
+          border: `1px solid ${visuals.badgeBorder}`,
         }}
       >
         <span
           style={{
-            width: 'var(--ob-space-035)',
-            height: 'var(--ob-space-035)',
+            width: '6px',
+            height: '6px',
             borderRadius: 'var(--ob-radius-pill)',
             background: visuals.indicator,
           }}

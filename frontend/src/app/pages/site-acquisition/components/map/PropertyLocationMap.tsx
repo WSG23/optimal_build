@@ -68,6 +68,12 @@ export interface PropertyLocationMapProps {
   showAmenities?: boolean
   /** Show heritage overlay */
   showHeritage?: boolean
+  /** Property/Asset ID for HUD display */
+  propertyId?: string
+  /** Status indicator for HUD (e.g., 'capturing', 'idle', 'live') */
+  status?: 'capturing' | 'idle' | 'live'
+  /** Show tactical HUD overlay with telemetry */
+  showHud?: boolean
 }
 
 // ============================================================================
@@ -120,6 +126,9 @@ export function PropertyLocationMap({
   height = 400,
   showAmenities = true,
   showHeritage = true,
+  propertyId,
+  status = 'idle',
+  showHud = true,
 }: PropertyLocationMapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<L.Map | null>(null)
@@ -323,25 +332,66 @@ export function PropertyLocationMap({
     }
   }, [lat, lon])
 
+  // Generate current timestamp for HUD
+  const currentTimestamp = new Date()
+    .toISOString()
+    .slice(0, 19)
+    .replace('T', ' ')
+
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="map-hud" style={{ position: 'relative' }}>
       <div
         ref={mapContainerRef}
+        className="map-hud__viewport"
         style={{
           width: '100%',
           height: `${height}px`,
-          borderRadius: '4px',
+          borderRadius: 'var(--ob-radius-sm)',
           overflow: 'hidden',
           background: '#f5f5f7',
         }}
         aria-label="Property location map"
       />
 
+      {/* Tactical HUD Overlay */}
+      {showHud && (
+        <>
+          {/* Top-Left: Coordinates */}
+          <div className="map-hud__corner map-hud__corner--top-left">
+            <span className="map-hud__label">LAT/LON</span>
+            <span className="map-hud__value">
+              {lat.toFixed(6)}, {lon.toFixed(6)}
+            </span>
+          </div>
+
+          {/* Top-Right: Timestamp */}
+          <div className="map-hud__corner map-hud__corner--top-right">
+            <span className="map-hud__label">SYS TIME</span>
+            <span className="map-hud__value">{currentTimestamp}</span>
+          </div>
+
+          {/* Bottom-Left: Asset ID */}
+          <div className="map-hud__corner map-hud__corner--bottom-left">
+            <span className="map-hud__label">ASSET ID</span>
+            <span className="map-hud__value">{propertyId || '—'}</span>
+          </div>
+
+          {/* Bottom-Right: Status Indicator */}
+          <div className="map-hud__corner map-hud__corner--bottom-right">
+            <span className="map-hud__label">STATUS</span>
+            <span className={`map-hud__status map-hud__status--${status}`}>
+              <span className="map-hud__status-dot" />
+              {status.toUpperCase()}
+            </span>
+          </div>
+        </>
+      )}
+
       {/* Map controls overlay */}
       <div
         style={{
           position: 'absolute',
-          bottom: 'var(--ob-space-100)',
+          bottom: 'var(--ob-space-300)',
           right: 'var(--ob-space-100)',
           display: 'flex',
           gap: 'var(--ob-space-050)',
@@ -354,11 +404,14 @@ export function PropertyLocationMap({
           size="small"
           sx={{
             bgcolor: 'white',
-            border: '1px solid var(--ob-color-border-default)',
+            border: '1px solid rgba(0, 0, 0, 0.2)',
             borderRadius: 'var(--ob-radius-xs)',
-            boxShadow: 'var(--ob-shadow-sm)',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+            color: '#333',
             '&:hover': {
-              bgcolor: 'var(--ob-color-surface-hover)',
+              bgcolor: 'var(--ob-color-neon-cyan-muted)',
+              color: 'var(--ob-color-neon-cyan)',
+              borderColor: 'var(--ob-color-neon-cyan)',
             },
           }}
         >
@@ -366,76 +419,34 @@ export function PropertyLocationMap({
         </IconButton>
       </div>
 
-      {/* Legend */}
+      {/* Legend - repositioned to avoid HUD overlap */}
       {(showAmenities || showHeritage) && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '0.5rem',
-            left: '0.5rem',
-            background: 'white',
-            borderRadius: '4px',
-            padding: '0.5rem 0.75rem',
-            fontSize: '0.7rem',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            maxWidth: '150px',
-            zIndex: 1000,
-          }}
-        >
-          <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Legend</div>
+        <div className="map-hud__legend">
+          <div className="map-hud__legend-title">LEGEND</div>
           {showAmenities && (
             <>
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-              >
+              <div className="map-hud__legend-item">
                 <span>🚇</span> MRT
               </div>
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-              >
+              <div className="map-hud__legend-item">
                 <span>🚌</span> Bus
               </div>
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-              >
+              <div className="map-hud__legend-item">
                 <span>🏫</span> School
               </div>
             </>
           )}
           {showHeritage && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <div className="map-hud__legend-item">
               <span>🏛️</span> Heritage
             </div>
           )}
         </div>
       )}
 
-      {/* Map provider indicator */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '0.5rem',
-          left: '0.5rem',
-          background: 'rgba(255,255,255,0.9)',
-          borderRadius: '4px',
-          padding: '2px 6px',
-          fontSize: '0.6rem',
-          color: '#666',
-          zIndex: 1000,
-        }}
-      >
-        CartoDB Positron
-      </div>
-
       {/* Instructions hint */}
       {interactive && (
-        <p
-          style={{
-            margin: '0.5rem 0 0',
-            fontSize: '0.8rem',
-            color: '#6e6e73',
-          }}
-        >
+        <p className="map-hud__hint">
           Click on the map or drag the marker to adjust coordinates.
         </p>
       )}

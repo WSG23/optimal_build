@@ -3,6 +3,13 @@
  *
  * Displays a single system's condition rating with score, delta badge, notes, and actions.
  * Pure presentational component - receives display-ready props.
+ *
+ * Design Pattern: Glass surface with semantic badge
+ * - Glass background (--ob-surface-glass-1) with backdrop blur
+ * - Semantic rating badge with subtle background
+ * - Cyan hover state per Card Interaction States
+ *
+ * @see frontend/UI_STANDARDS.md - Sibling Card Surface Standard
  */
 
 import type { SeverityVisuals, DeltaVisuals } from '../../utils/insights'
@@ -55,14 +62,19 @@ export function SystemRatingCard({
 }: SystemRatingCardProps) {
   return (
     <div
+      className="system-rating-card"
       style={{
+        // Glass surface per Sibling Card Surface Standard
+        background: 'var(--ob-surface-glass-1)',
+        backdropFilter: 'blur(var(--ob-blur-md))',
+        WebkitBackdropFilter: 'blur(var(--ob-blur-md))',
         border: '1px solid var(--ob-color-border-subtle)',
         borderRadius: 'var(--ob-radius-sm)',
         padding: 'var(--ob-space-125)',
         display: 'flex',
         flexDirection: 'column',
         gap: 'var(--ob-space-075)',
-        background: 'var(--ob-color-bg-surface)',
+        transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
       }}
     >
       <div
@@ -115,20 +127,20 @@ export function SystemRatingCard({
               alignItems: 'center',
               gap: 'var(--ob-space-035)',
               padding: 'var(--ob-space-025) var(--ob-space-065)',
-              borderRadius: 'var(--ob-radius-pill)',
+              borderRadius: 'var(--ob-radius-xs)',
               fontSize: 'var(--ob-font-size-xs)',
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: 'var(--ob-letter-spacing-widest)',
-              border: `1px solid ${badgeVisuals.border}`,
-              background: badgeVisuals.background,
-              color: badgeVisuals.text,
+              border: `1px solid ${badgeVisuals.badgeBorder}`,
+              background: badgeVisuals.badgeBg,
+              color: badgeVisuals.badgeText,
             }}
           >
             <span
               style={{
-                width: 'var(--ob-space-035)',
-                height: 'var(--ob-space-035)',
+                width: '6px',
+                height: '6px',
                 borderRadius: 'var(--ob-radius-pill)',
                 background: badgeVisuals.indicator,
               }}
@@ -142,7 +154,7 @@ export function SystemRatingCard({
                 alignItems: 'center',
                 gap: 'var(--ob-space-025)',
                 padding: 'var(--ob-space-025) var(--ob-space-050)',
-                borderRadius: 'var(--ob-radius-pill)',
+                borderRadius: 'var(--ob-radius-xs)',
                 fontSize: 'var(--ob-font-size-xs)',
                 fontWeight: 600,
                 background: deltaVisuals.background,
