@@ -15,6 +15,45 @@
 
 ---
 
+## Quick Start: Common Lookups
+
+**Most common decisions - jump directly to what you need:**
+
+### 1. Which component should I use?
+
+| I need...            | Use                          | Jump to                                                           |
+| -------------------- | ---------------------------- | ----------------------------------------------------------------- |
+| Container on page bg | `GlassCard`                  | [Component Selection Matrix](#component-selection-matrix)         |
+| Nested container     | `Card` (opaque, no blur)     | [Quick Decision Tree](#quick-decision-card-vs-glasscard-vs-panel) |
+| Metric display       | `HeroMetric` or `MetricCard` | [Component Selection Matrix](#component-selection-matrix)         |
+| Status indicator     | `StatusChip`                 | [Component Selection Matrix](#component-selection-matrix)         |
+| Button               | `Button`                     | [Component Selection Matrix](#component-selection-matrix)         |
+
+### 2. What token should I use?
+
+| For...               | Token                  | Value    |
+| -------------------- | ---------------------- | -------- |
+| Card border radius   | `--ob-radius-sm`       | 4px      |
+| Button border radius | `--ob-radius-xs`       | 2px      |
+| Modal border radius  | `--ob-radius-lg`       | 8px      |
+| Default padding      | `--ob-space-100`       | 16px     |
+| Section gap          | `--ob-space-150`       | 24px     |
+| Glass blur           | `--ob-blur-md`         | 12px     |
+| Glass background     | `--ob-surface-glass-1` | 3% white |
+
+### 3. Quick validation checklist
+
+Before submitting UI code, verify:
+
+- [ ] No hardcoded `px` values (use `--ob-space-*`, `--ob-radius-*`)
+- [ ] No MUI `spacing={N}` (use `spacing="var(--ob-space-*)"`)
+- [ ] Cards use `--ob-radius-sm` (4px), NOT larger
+- [ ] Buttons use `--ob-radius-xs` (2px)
+- [ ] Using canonical components from `src/components/canonical/`
+- [ ] No nested glass surfaces with blur (causes scroll lock)
+
+---
+
 ## Design Philosophy: Square Cyber-Minimalism
 
 This project uses a **Square Cyber-Minimalism** aesthetic with sharp, minimal border-radii.
@@ -89,6 +128,113 @@ NEVER use hardcoded pixel/rem values. Prefer design tokens.
 <Box sx={{ gap: 16 }}>     // Hardcoded number
 ```
 
+### Spacing Hierarchy (MANDATORY)
+
+Use different spacing values to communicate information hierarchy **without wrappers**. Larger gaps = higher-level separation.
+
+| Context                     | Token            | Value | Purpose                                      |
+| --------------------------- | ---------------- | ----- | -------------------------------------------- |
+| Between top-level sections  | `--ob-space-300` | 48px  | Property Overview → Condition Assessment     |
+| Between sibling containers  | `--ob-space-150` | 24px  | PATH grid → INTEL_FEED → Footer (same level) |
+| Between cards within a grid | `--ob-space-150` | 24px  | Card to card in same grid                    |
+| Within card content         | `--ob-space-100` | 16px  | Internal padding, tight groupings            |
+
+**Key Rule: Use section's `gap` property, NOT child `margin`**
+
+When sibling containers (PATH grid, INTEL_FEED, Footer) are at the same hierarchy level within a section, they should have **equal gaps**. Never add `margin-bottom` to individual children - this creates unequal spacing.
+
+```css
+/* ✅ CORRECT - Single gap property on parent */
+.my-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-150); /* All children spaced equally */
+}
+
+/* ❌ WRONG - Margin on child creates double spacing */
+.my-section__first-child {
+    margin-bottom: var(--ob-space-200); /* 32px + 24px gap = 56px total! */
+}
+```
+
+**Visual Hierarchy Example:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ SECTION A (e.g., Multi-Scenario Comparison)                     │
+│                                                                 │
+│   ┌─ PATH Grid ─────────────────────────────────────────────┐   │
+│   │  [Card] [Card] [Card]  ← 24px gap between cards         │   │
+│   └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│   ↕ 24px (section gap - same for all siblings)                  │
+│                                                                 │
+│   ┌─ INTEL_FEED ────────────────────────────────────────────┐   │
+│   │  [Intel Tape] [Intel Tape]  ← 24px gap                  │   │
+│   └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│   ↕ 24px (section gap - equal to above)                         │
+│                                                                 │
+│   ┌─ Subsection: EXPORT_PROTOCOL ──────────────────────────┐   │
+│   └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+↕ 48px (section gap)
+
+┌─────────────────────────────────────────────────────────────────┐
+│ SECTION B (e.g., Property Condition Assessment)                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**CSS Implementation:**
+
+```css
+/* Top-level sections use 48px gap */
+.page-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-300); /* 48px between sections */
+}
+
+/* Section container uses 24px gap for ALL sibling children */
+.my-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-150); /* 24px - uniform for all siblings */
+}
+
+/* Grid uses same 24px gap for cards within */
+.my-section__grid {
+    display: grid;
+    gap: var(--ob-space-150); /* 24px between cards */
+    /* NO margin-bottom here! Let parent's gap handle spacing */
+}
+```
+
+**TSX Example:**
+
+```tsx
+// ✅ CORRECT - Hierarchy via spacing tokens
+<Stack spacing="var(--ob-space-300)">
+    {' '}
+    {/* 48px between sections */}
+    <section className="multi-scenario">
+        {' '}
+        {/* 24px gap via CSS */}
+        <div className="multi-scenario__path-grid">
+            <PathCard />
+            <PathCard />
+        </div>
+        {/* 24px gap (from section) - equal to all siblings */}
+        <div className="multi-scenario__intel-feed">...</div>
+        {/* 24px gap - same as above (no special treatment) */}
+        <div className="multi-scenario__export-console">...</div>
+    </section>
+    <section className="condition-assessment">...</section>
+</Stack>
+```
+
 ---
 
 ## Size Standards (MANDATORY)
@@ -153,14 +299,14 @@ NEVER use hardcoded pixel/rem values. Prefer design tokens.
 
 ## Blur/Backdrop Standards
 
-| Token           | Value | Use Cases                          |
-| --------------- | ----- | ---------------------------------- |
-| `--ob-blur-sm`  | 4px   | Subtle blur                        |
-| `--ob-blur-xs`  | 8px   | Light glass surfaces               |
-| `--ob-blur-md`  | 12px  | Standard glass effect              |
-| `--ob-blur-xl`  | 16px  | Strong glass surfaces              |
-| `--ob-blur-lg`  | 24px  | Heavy blur                         |
-| `--ob-blur-2xl` | 40px  | Deep glass, premium overlays       |
+| Token           | Value | Use Cases                    |
+| --------------- | ----- | ---------------------------- |
+| `--ob-blur-sm`  | 4px   | Subtle blur                  |
+| `--ob-blur-xs`  | 8px   | Light glass surfaces         |
+| `--ob-blur-md`  | 12px  | Standard glass effect        |
+| `--ob-blur-xl`  | 16px  | Strong glass surfaces        |
+| `--ob-blur-lg`  | 24px  | Heavy blur                   |
+| `--ob-blur-2xl` | 40px  | Deep glass, premium overlays |
 
 ### Examples
 
@@ -247,6 +393,495 @@ Always prefer canonical components from `src/components/canonical/`:
 | `StatusChip`  | MUI Chip (for status indicators) |
 | `Input`       | MUI TextField                    |
 | `HeroMetric`  | Custom metric displays           |
+
+### Component Selection Matrix
+
+Use this matrix to quickly identify which canonical component to use for your UI need:
+
+| I need to...                          | Use this component       | Import from                               |
+| ------------------------------------- | ------------------------ | ----------------------------------------- |
+| Wrap content in a glass surface       | `GlassCard`              | `components/canonical/GlassCard`          |
+| Display a single key metric           | `HeroMetric`             | `components/canonical/HeroMetric`         |
+| Display metric with trend/sparkline   | `PremiumMetricCard`      | `components/canonical/PremiumMetricCard`  |
+| Display a compact metric tile         | `MetricTile`             | `components/canonical/MetricTile`         |
+| Display a metric with description     | `MetricCard`             | `components/canonical/MetricCard`         |
+| Show status indicator (success/error) | `StatusChip`             | `components/canonical/StatusChip`         |
+| Show a small label tag                | `Tag`                    | `components/canonical/Tag`                |
+| Create a primary/secondary button     | `Button`                 | `components/canonical/Button`             |
+| Create a glass-effect button          | `GlassButton`            | `components/canonical/GlassButton`        |
+| Create a text input field             | `Input`                  | `components/canonical/Input`              |
+| Create a page section header          | `SectionHeader`          | `components/canonical/SectionHeader`      |
+| Create an animated page header        | `AnimatedPageHeader`     | `components/canonical/AnimatedPageHeader` |
+| Display glowing/neon text             | `NeonText`               | `components/canonical/NeonText`           |
+| Show a pulsing status dot             | `PulsingStatusDot`       | `components/canonical/PulsingStatusDot`   |
+| Create tab navigation                 | `Tabs`                   | `components/canonical/Tabs`               |
+| Display an alert/notification         | `AlertBlock`             | `components/canonical/AlertBlock`         |
+| Show empty state message              | `EmptyState`             | `components/canonical/EmptyState`         |
+| Display a data block with label       | `DataBlock`              | `components/canonical/DataBlock`          |
+| Show loading skeleton                 | `Skeleton`               | `components/canonical/Skeleton`           |
+| Create a panel container              | `Panel`                  | `components/canonical/Panel`              |
+| Create a window-like container        | `Window` / `GlassWindow` | `components/canonical/Window`             |
+| Create a basic card container         | `Card`                   | `components/canonical/Card`               |
+
+### Component → Token Mapping
+
+Each canonical component uses specific design tokens. Reference this when customizing:
+
+| Component            | Background Token       | Border Radius Token | Blur Token     | Other Tokens               |
+| -------------------- | ---------------------- | ------------------- | -------------- | -------------------------- |
+| `GlassCard`          | `--ob-surface-glass-1` | `--ob-radius-sm`    | `--ob-blur-md` | `--ob-color-border-subtle` |
+| `Card`               | `--ob-color-bg-muted`  | `--ob-radius-sm`    | —              | `--ob-color-border-subtle` |
+| `Panel`              | `--ob-surface-glass-1` | `--ob-radius-sm`    | `--ob-blur-md` | —                          |
+| `Button` (primary)   | cyan gradient          | `--ob-radius-xs`    | —              | `--ob-glow-neon-cyan`      |
+| `Button` (secondary) | transparent            | `--ob-radius-xs`    | —              | `--ob-color-border-subtle` |
+| `GlassButton`        | `--ob-surface-glass-1` | `--ob-radius-xs`    | `--ob-blur-sm` | —                          |
+| `Input`              | `--ob-color-bg-muted`  | `--ob-radius-md`    | —              | `--ob-color-border-subtle` |
+| `StatusChip`         | semantic color based   | `--ob-radius-xs`    | —              | status prop → color        |
+| `Tag`                | `--ob-color-bg-muted`  | `--ob-radius-xs`    | —              | —                          |
+| `HeroMetric`         | transparent            | —                   | —              | `--ob-font-size-3xl`       |
+| `PremiumMetricCard`  | `--ob-surface-glass-1` | `--ob-radius-sm`    | `--ob-blur-md` | `--ob-glow-neon-cyan`      |
+| `MetricCard`         | `--ob-surface-glass-1` | `--ob-radius-sm`    | —              | —                          |
+| `MetricTile`         | `--ob-color-bg-muted`  | `--ob-radius-sm`    | —              | —                          |
+| `AlertBlock`         | semantic color based   | `--ob-radius-sm`    | —              | severity prop → color      |
+| `EmptyState`         | transparent            | —                   | —              | `--ob-color-text-tertiary` |
+| `Tabs`               | transparent            | `--ob-radius-xs`    | —              | `--ob-color-neon-cyan`     |
+| `NeonText`           | —                      | —                   | —              | `--ob-glow-neon-cyan`      |
+| `PulsingStatusDot`   | semantic color based   | `--ob-radius-pill`  | —              | `--ob-glow-status-*`       |
+| `Skeleton`           | `--ob-color-bg-muted`  | `--ob-radius-sm`    | —              | animation built-in         |
+
+### Quick Decision: Card vs GlassCard vs Panel
+
+```
+Need a container?
+│
+├─ On page background (Level 0 floor)?
+│   └─ Use GlassCard (glass-1 with blur)
+│
+├─ Inside another card (nested)?
+│   └─ Use Card (opaque, no blur - prevents scroll lock)
+│
+├─ Floating/modal overlay?
+│   └─ Use Panel or GlassWindow
+│
+└─ Simple content grouping?
+    └─ Use Card (minimal styling)
+```
+
+---
+
+## Disabled Button States (MANDATORY)
+
+When a button is disabled due to missing prerequisites, users need clear feedback about what's required.
+
+**Problem:** Disabled buttons without explanation cause confusion ("Why can't I click this?")
+
+**Solution:** Communicate prerequisites through button text, tooltips, and visible status indicators.
+
+### Implementation Pattern
+
+```tsx
+// ✅ CORRECT - Disabled state with explanation
+<Button
+  variant="primary"
+  disabled={!canSubmit}
+  title={prerequisites.length === 0 ? 'Select at least one scenario first' : undefined}
+>
+  {prerequisites.length === 0 ? 'SELECT SCENARIO' : 'CAPTURE'}
+</Button>
+
+// Also show prerequisite status nearby
+<div className="scenario-badge">
+  <span className="count">{selectedScenarios.length}</span>
+  <span className="label">SCENARIOS</span>
+</div>
+
+// ❌ WRONG - Just gray out with no explanation
+<Button disabled={!canSubmit}>
+  Capture
+</Button>
+```
+
+### Key Rules
+
+| Rule             | Requirement                                                                   |
+| ---------------- | ----------------------------------------------------------------------------- |
+| Button Text      | Change to show required action (e.g., "SELECT SCENARIO" instead of "CAPTURE") |
+| Tooltip          | Add `title` attribute explaining what's needed                                |
+| Status Indicator | Show count/badge of prerequisites nearby                                      |
+| Visual Feedback  | Disabled styling (grayed out) + text change                                   |
+
+### Common Patterns
+
+| State                 | Button Text       | Tooltip                                   |
+| --------------------- | ----------------- | ----------------------------------------- |
+| No scenarios selected | "SELECT SCENARIO" | "Select at least one scenario to capture" |
+| No files selected     | "SELECT FILES"    | "Choose files to upload first"            |
+| Form incomplete       | "COMPLETE FORM"   | "Fill required fields to continue"        |
+| Loading               | "LOADING..."      | N/A (show spinner)                        |
+
+---
+
+## Theme-Agnostic Button/Control Styling (MANDATORY)
+
+For controls that must work in both light and dark modes, especially map controls and floating UI elements.
+
+**Problem:** Buttons styled with dark theme tokens become invisible in light mode:
+
+- `--ob-neutral-900` appears as near-black background
+- Dark icons on dark background = invisible
+- Users can't identify or interact with controls
+
+**Solution:** Use explicit light-on-dark or dark-on-light styling that works in both modes.
+
+### Map Control Pattern (Recommended)
+
+```tsx
+// ✅ CORRECT - Theme-agnostic map control
+<IconButton
+  sx={{
+    bgcolor: 'white',                              // Explicit white background
+    border: '1px solid rgba(0, 0, 0, 0.2)',       // Visible border
+    borderRadius: 'var(--ob-radius-xs)',          // Machined edge
+    boxShadow: '0 2px 6px rgba(0,0,0,0.2)',       // Depth
+    color: '#333',                                 // Dark icon color
+    '&:hover': {
+      bgcolor: 'var(--ob-color-neon-cyan-muted)', // Brand color on hover
+      color: 'var(--ob-color-neon-cyan)',
+      borderColor: 'var(--ob-color-neon-cyan)',
+    },
+  }}
+>
+  <MyLocationIcon />
+</IconButton>
+
+// ❌ WRONG - Dark theme only
+<IconButton
+  sx={{
+    bgcolor: 'var(--ob-neutral-900)',   // Black - invisible in light mode
+    color: 'var(--ob-color-text-primary)',
+  }}
+>
+  <MyLocationIcon />
+</IconButton>
+```
+
+### Key Rules
+
+| Rule       | Light Mode                    | Dark Mode                 |
+| ---------- | ----------------------------- | ------------------------- |
+| Background | `white` or `background.paper` | Works (appears as white)  |
+| Border     | `rgba(0, 0, 0, 0.2)`          | Works (subtle on dark)    |
+| Icon Color | `#333` or `text.primary`      | Works (inverts via theme) |
+| Shadow     | `rgba(0,0,0,0.2)`             | Works (provides depth)    |
+
+### When to Use Theme-Agnostic Styling
+
+| Context                       | Use Theme-Agnostic | Use Theme Tokens        |
+| ----------------------------- | ------------------ | ----------------------- |
+| Map controls (zoom, recenter) | ✅ Always          | ❌                      |
+| Floating action buttons       | ✅ Always          | ❌                      |
+| Overlay controls              | ✅ Always          | ❌                      |
+| Standard page buttons         | ❌                 | ✅ Use canonical Button |
+| Cards and panels              | ❌                 | ✅ Use GlassCard        |
+
+### Standard Map Control CSS
+
+```css
+.map-control {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: var(--ob-radius-xs);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    color: #333;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.map-control:hover {
+    background: var(--ob-color-neon-cyan-muted);
+    color: var(--ob-color-neon-cyan);
+    border-color: var(--ob-color-neon-cyan);
+}
+```
+
+---
+
+## Section Wrapper Anti-Pattern (AVOID)
+
+**Problem:** Adding outer glass/seamless wrappers around sections that already contain cards creates:
+
+- Wasted screen space (32px+ extra padding)
+- Visual nesting fatigue ("cards inside cards")
+- Inconsistent depth perception
+
+### Visual Comparison
+
+```
+❌ WRONG: Nested wrappers (56px from edge to content)
+┌─ Section ─────────────────────────────────────────┐
+│ ┌─ Outer Glass Panel (32px padding) ────────────┐ │
+│ │ ┌─ Card (24px padding) ─────────────────────┐ │ │
+│ │ │ Content                                   │ │ │
+│ │ └───────────────────────────────────────────┘ │ │
+│ └───────────────────────────────────────────────┘ │
+└───────────────────────────────────────────────────┘
+
+✅ CORRECT: Flat structure (24px from edge to content)
+┌─ Section (gap: 24px) ─────────────────────────────┐
+│ Title (on background)                              │
+│ ┌─ Card (24px padding) ─────────────────────────┐ │
+│ │ Content                                        │ │
+│ └────────────────────────────────────────────────┘ │
+│ ┌─ Sibling Card ────────────────────────────────┐ │
+│ │ Content                                        │ │
+│ └────────────────────────────────────────────────┘ │
+└───────────────────────────────────────────────────┘
+```
+
+### CSS Classes to Avoid at Section Level
+
+- `ob-seamless-panel ob-seamless-panel--glass` as outer wrapper
+- `__surface` classes containing multiple cards
+
+### Correct Approach
+
+```css
+/* Section uses gap, not wrapper padding */
+.my-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-150); /* 24px between children */
+}
+
+/* Cards are direct children */
+.my-section__card {
+    padding: var(--ob-space-150); /* 24px internal */
+    background: var(--ob-surface-glass-1);
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-sm);
+}
+```
+
+### Signals of Violation
+
+- `__surface` wrapper class with `padding: var(--ob-space-200)` around cards
+- Nested `.ob-seamless-panel` elements
+- Total edge-to-content padding > 32px
+- Visible "card inside card" borders
+
+> **For detailed implementation examples and refactored components, see the Flat Section Pattern in [UX_ARCHITECTURE.md](./UX_ARCHITECTURE.md#flat-section-pattern-avoid-nested-wrappers)**
+
+---
+
+## Sibling Card Surface Standard (MANDATORY)
+
+When multiple cards appear as siblings on a section background (Flat Section Pattern), they MUST use consistent surface treatment to avoid visual chaos.
+
+### Standard Token Set (MANDATORY)
+
+| Property        | Token                      | Value (Dark)             | Value (Light)           |
+| --------------- | -------------------------- | ------------------------ | ----------------------- |
+| Background      | `--ob-surface-glass-1`     | `rgba(255,255,255,0.03)` | `rgba(255,255,255,0.4)` |
+| Backdrop Filter | `blur(var(--ob-blur-md))`  | 12px                     | 12px                    |
+| Border          | `--ob-color-border-subtle` | `rgba(255,255,255,0.08)` | `rgba(0,0,0,0.12)`      |
+| Border Radius   | `--ob-radius-sm`           | 4px                      | 4px                     |
+
+### Glass vs Opaque Decision Tree
+
+```
+Is the card NESTED inside another card/panel?
+├── YES → Use OPAQUE (--ob-color-bg-muted), NO blur
+│         Nested blur causes scroll lock
+│
+└── NO (top-level sibling) → Use GLASS with blur
+                             --ob-surface-glass-1 + backdrop-filter
+```
+
+### Example CSS
+
+```css
+/* ✅ CORRECT - Top-level sibling card with glass + blur */
+.my-section__card {
+    background: var(--ob-surface-glass-1);
+    backdrop-filter: blur(var(--ob-blur-md));
+    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-sm);
+    padding: var(--ob-space-150);
+}
+
+/* ❌ WRONG - Inconsistent: some cards opaque, some glass */
+.card-a {
+    background: var(--ob-color-bg-muted);
+} /* Opaque */
+.card-b {
+    background: var(--ob-surface-glass-1);
+} /* Glass */
+.card-c {
+    /* no background */
+} /* Transparent */
+```
+
+### Fallback for Scroll Performance Issues
+
+If blur causes scroll jank on a specific page:
+
+1. Remove `backdrop-filter` and `-webkit-backdrop-filter`
+2. Change background to `--ob-color-bg-muted` (opaque)
+3. Document in CSS comment why blur is disabled
+
+---
+
+## Card Interaction States (MANDATORY)
+
+Cards should provide clear visual feedback on interaction. Use **cyan** for hover/focus states to preview the active state and maintain Functional Color Language consistency.
+
+### State Definitions
+
+| State    | Border Color               | Additional Effects                            |
+| -------- | -------------------------- | --------------------------------------------- |
+| Default  | `--ob-color-border-subtle` | No glow, transparent edge                     |
+| Hover    | `--ob-color-neon-cyan`     | Subtle cyan glow (`--ob-glow-neon-cyan-soft`) |
+| Focus    | `--ob-color-neon-cyan`     | Glow-bar or border highlight                  |
+| Active   | `--ob-color-neon-cyan`     | Full glow-bar + cyan border                   |
+| Disabled | `--ob-color-border-subtle` | Reduced opacity (0.5)                         |
+
+### CSS Implementation
+
+```css
+/* ✅ CORRECT - Cyan hover for cards */
+.my-card {
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-sm);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.my-card:hover {
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: 0 0 8px var(--ob-color-neon-cyan-muted);
+}
+
+.my-card--active,
+.my-card:focus-visible {
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: 0 0 12px var(--ob-color-neon-cyan-muted);
+}
+
+/* ❌ WRONG - Gray/black hover (doesn't preview active state) */
+.my-card:hover {
+    border-color: var(
+        --ob-color-border-default
+    ); /* Gray - not aligned with active state */
+}
+```
+
+### Glow-Bar Pattern (for selection cards)
+
+For cards that represent selectable options (like scenario PATH cards), use a vertical glow-bar on the left edge:
+
+```css
+/* Glow-bar container */
+.path-card {
+    display: flex;
+    border: 1px solid var(--ob-color-border-subtle);
+}
+
+/* Glow-bar element */
+.path-card__glow-bar {
+    width: 4px;
+    background: transparent;
+    transition:
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+/* Hover previews glow */
+.path-card:hover .path-card__glow-bar {
+    background: var(--ob-color-neon-cyan-muted);
+}
+
+/* Active/selected shows full glow */
+.path-card--active .path-card__glow-bar {
+    background: var(--ob-color-neon-cyan);
+    box-shadow:
+        0 0 8px var(--ob-color-neon-cyan),
+        0 0 16px var(--ob-color-neon-cyan-muted);
+}
+```
+
+### Key Rules
+
+| Rule            | Requirement                                          |
+| --------------- | ---------------------------------------------------- |
+| Hover color     | MUST use cyan (`--ob-color-neon-cyan`), NOT gray     |
+| Hover = preview | Hover state should preview the active/selected state |
+| Transition      | Use `transition: 0.2s ease` for smooth feedback      |
+| Glow-bar        | Use for selection cards (4px width, left edge)       |
+| Focus visible   | Match hover styling for keyboard navigation          |
+
+---
+
+## Tactical Viewport Pattern (Map HUD)
+
+For map-based interfaces, use the **Tactical Viewport** pattern with a HUD overlay displaying real-time telemetry data. This creates a "Live Sensor Feed" aesthetic.
+
+### HUD Corner Layout
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ [LAT/LON]                                      [SYS TIME]       │
+│ 1.352083, 103.819836                      2024-01-15 14:32:17  │
+│                                                                 │
+│                         MAP CONTENT                             │
+│                                                                 │
+│ [ASSET ID]                                        [STATUS]      │
+│ PROP-2024-001                                    ● LIVE         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Token Usage
+
+| Element        | Token                   | Value                 |
+| -------------- | ----------------------- | --------------------- |
+| Corner BG      | `--ob-surface-premium`  | Semi-transparent dark |
+| Corner Border  | `--ob-border-fine`      | 1px hairline          |
+| Corner Radius  | `--ob-radius-xs`        | 2px machined edge     |
+| Label Font     | `--ob-font-size-2xs`    | 11px                  |
+| Label Tracking | `letter-spacing: 0.1em` | Wide uppercase        |
+| Value Font     | `--ob-font-family-mono` | JetBrains Mono        |
+| Value Color    | `--ob-color-neon-cyan`  | Cyan telemetry        |
+| Status Glow    | `--ob-glow-status-live` | Pulsing indicator     |
+
+### CSS Classes
+
+```css
+.map-hud                        /* Container */
+.map-hud__corner                /* Corner panel positioning */
+.map-hud__corner--top-left      /* Coordinates display */
+.map-hud__corner--top-right     /* Timestamp display */
+.map-hud__corner--bottom-left   /* Asset ID display */
+.map-hud__corner--bottom-right  /* Status indicator */
+.map-hud__label                 /* Uppercase label */
+.map-hud__value                 /* Monospace value */
+.map-hud__status                /* Status with dot */
+.map-hud__status--live          /* Cyan pulsing */
+.map-hud__status--capturing     /* Amber pulsing */
+.map-hud__status--idle          /* Gray static */
+```
+
+### Example
+
+```tsx
+<PropertyLocationMap
+    latitude="1.352083"
+    longitude="103.819836"
+    propertyId="PROP-2024-001"
+    status="live"
+    showHud={true}
+/>
+```
 
 ---
 

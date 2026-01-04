@@ -463,21 +463,21 @@ Apply blur and transparency effects that adapt to content importance:
 
 ### When to Use Seamless Panels
 
-| Scenario | Use Seamless | Use Visible Card |
-|----------|--------------|------------------|
-| Section wrapper grouping related content | ✅ | ❌ |
-| Nested component inside existing card | ✅ | ❌ |
-| High information density areas | ✅ | ❌ |
-| Actionable data (tables, forms, metrics) | ❌ | ✅ |
-| Standalone visualization (chart) | ❌ | ✅ |
+| Scenario                                 | Use Seamless | Use Visible Card |
+| ---------------------------------------- | ------------ | ---------------- |
+| Section wrapper grouping related content | ✅           | ❌               |
+| Nested component inside existing card    | ✅           | ❌               |
+| High information density areas           | ✅           | ❌               |
+| Actionable data (tables, forms, metrics) | ❌           | ✅               |
+| Standalone visualization (chart)         | ❌           | ✅               |
 
 ### CSS Classes
 
-| Class | Purpose |
-|-------|---------|
-| `ob-seamless-panel` | Base transparent container with padding |
-| `ob-seamless-panel--glass` | Adds subtle backdrop blur effect |
-| `ob-seamless-panel__surface` | Inner surface area for content |
+| Class                        | Purpose                                 |
+| ---------------------------- | --------------------------------------- |
+| `ob-seamless-panel`          | Base transparent container with padding |
+| `ob-seamless-panel--glass`   | Adds subtle backdrop blur effect        |
+| `ob-seamless-panel__surface` | Inner surface area for content          |
 
 ### GlassCard Variant Prop
 
@@ -519,6 +519,146 @@ When refactoring from heavy card wrapping to seamless architecture:
 - Section wrappers that don't contain actionable data
 - Low information density due to excessive padding/borders
 - "Nesting fatigue" - cards inside cards inside cards
+
+---
+
+## Flat Section Pattern (Avoid Nested Wrappers)
+
+**Problem:** Sections wrapped in glass panels containing inner cards waste space and create visual nesting fatigue.
+
+This pattern was identified during the Site Acquisition page refactoring where sections like Due Diligence Checklist, Multi-Scenario Comparison, and Condition Assessment had `__surface` wrappers with `ob-seamless-panel ob-seamless-panel--glass` classes containing inner cards. This created 32px outer padding + 24-28px inner padding = 56-60px wasted space per section.
+
+### Anti-Pattern (DON'T DO THIS)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Section Title (on background)                                    │
+│                                                                   │
+│ ┌─ OUTER GLASS PANEL (32px padding) ─────────────────────────┐  │
+│ │  ┌─ INNER CARD (24px padding) ──────────────────────────┐  │  │
+│ │  │  [Actual content here]                               │  │  │
+│ │  └──────────────────────────────────────────────────────┘  │  │
+│ │  ┌─ ANOTHER INNER CARD ─────────────────────────────────┐  │  │
+│ │  │  ...                                                 │  │  │
+│ │  └──────────────────────────────────────────────────────┘  │  │
+│ └─────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+
+WASTED: 32px outer + 24px inner = 56px from edge to content
+```
+
+**TSX Anti-Pattern:**
+
+```tsx
+// ❌ WRONG - Outer wrapper around inner cards
+<section className="due-diligence">
+    <h2>Title</h2>
+    <div className="ob-seamless-panel ob-seamless-panel--glass __surface">
+        {' '}
+        {/* REMOVE THIS */}
+        <Card>Content A</Card>
+        <Card>Content B</Card>
+    </div>
+</section>
+```
+
+### Correct Pattern (Flat Structure)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ Section Title (on background)                                    │
+│ Section description (on background)                              │
+│                                                                   │
+│ ┌─ CARD (24px padding) ───────────────────────────────────────┐ │
+│ │  [Actual content here]                                       │ │
+│ └──────────────────────────────────────────────────────────────┘ │
+│                                                                   │ ← Gap (24px via CSS)
+│ ┌─ SIBLING CARD ───────────────────────────────────────────────┐ │
+│ │  ...                                                          │ │
+│ └──────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+
+SAVED: 32px outer padding eliminated = ~96px+ reclaimed across 3 sections
+```
+
+**TSX Correct Pattern:**
+
+```tsx
+// ✅ CORRECT - Direct children with CSS gap
+<section className="my-section">
+    {' '}
+    {/* Uses gap for spacing */}
+    <h2>Title</h2>
+    <p>Description (on background)</p>
+    <Card>Content A</Card> {/* Direct child */}
+    <Card>Content B</Card> {/* Sibling, not nested */}
+</section>
+```
+
+### Key Rules
+
+| Rule                 | Requirement                                                          |
+| -------------------- | -------------------------------------------------------------------- |
+| Section headers      | On background (no card wrapper)                                      |
+| Section descriptions | On background (no card wrapper)                                      |
+| Content cards        | Direct children of section, NOT inside outer wrapper                 |
+| Spacing              | Use `gap` on section container, NOT padding on wrapper               |
+| Card borders         | One level only - inner cards should not be inside outer glass panels |
+
+### CSS Implementation
+
+```css
+/* Section uses gap, not wrapper padding */
+.my-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-150); /* 24px between children */
+}
+
+/* Cards are direct children with their own styling */
+.my-section__card {
+    padding: var(--ob-space-150); /* 24px internal */
+    background: var(--ob-surface-glass-1);
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-sm);
+}
+```
+
+### Empty State Handling
+
+When the section shows empty/loading states, apply glass panel styling directly to the empty state element:
+
+```tsx
+// ✅ CORRECT - Empty state has panel styling
+{
+    isLoading ? (
+        <div className="my-section__empty-state ob-seamless-panel ob-seamless-panel--glass">
+            <p>Loading...</p>
+        </div>
+    ) : (
+        <>
+            <Card>Content A</Card>
+            <Card>Content B</Card>
+        </>
+    )
+}
+```
+
+### Signals of Violation
+
+- `__surface` class wrapping multiple cards
+- Nested `.ob-seamless-panel` elements
+- Total padding > 32px from section edge to content
+- Visible "card inside card" borders
+- CSS rules like `.section__surface { padding: var(--ob-space-200); }` wrapping content
+
+### Sections Refactored to Flat Pattern
+
+| Section                   | File                                 | Change Made                                     |
+| ------------------------- | ------------------------------------ | ----------------------------------------------- |
+| Due Diligence Checklist   | `DueDiligenceChecklistSection.tsx`   | Removed `due-diligence__surface` wrapper        |
+| Multi-Scenario Comparison | `MultiScenarioComparisonSection.tsx` | Removed `multi-scenario__surface` wrapper       |
+| Condition Assessment      | `ConditionAssessmentSection.tsx`     | Removed `condition-assessment__surface` wrapper |
 
 ---
 
@@ -773,6 +913,339 @@ For complex workspace pages (Finance, CAD, Feasibility):
 </AppLayout>
 ```
 
+### Map-Centric Layout Pattern
+
+For pages where geospatial context is the primary user interface (Site Acquisition, Property Search, Asset Tracking).
+
+**Problem:** The default tendency is to treat maps as secondary content below forms/inputs, causing:
+
+- Map buried under form sections requiring scrolling
+- Key actions (Capture, Create Finance) far from map context
+- Inefficient viewport usage with forms dominating
+
+**Solution:** Make the map the hero element with floating command bar and condensed sidebar.
+
+**Layout Structure:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ [Command Bar - inputs float above content]                  │
+├────────────────────────────────────────────┬────────────────┤
+│                                            │ Sidebar        │
+│              MAP (Hero)                    │ - Voice        │
+│            70%+ viewport                   │ - Intelligence │
+│                                            │ - Quick Actions│
+│  [HUD Corners: LAT/LON, TIME, STATUS]      │                │
+└────────────────────────────────────────────┴────────────────┘
+
+Post-capture content (Property Overview, etc.) appears BELOW this section.
+```
+
+**Key Implementation Rules:**
+
+| Rule                 | Requirement                                                   |
+| -------------------- | ------------------------------------------------------------- |
+| Map Minimum Height   | 500px (fills available viewport minus command bar)            |
+| Map Width            | 70%+ of available space on desktop                            |
+| Command Bar          | Floats above/on map, contains address + coordinates + capture |
+| Sidebar Width        | ≤300px, condensed to essential controls only                  |
+| Sidebar Components   | ≤4 components (Voice, Intelligence, Quick Actions, Scenarios) |
+| Post-Capture Content | Appears in new section BELOW the map section                  |
+
+**CSS Structure:**
+
+```css
+.site-acquisition__map-dominant {
+    display: grid;
+    grid-template-columns: 1fr 280px; /* Map | Sidebar */
+    grid-template-rows: auto 1fr; /* Command bar | Content */
+    min-height: 600px;
+    gap: var(--ob-space-100);
+}
+
+.command-bar {
+    grid-column: 1 / -1; /* Spans full width */
+    position: sticky;
+    top: var(--ob-topnav-height);
+    z-index: var(--ob-z-sticky);
+}
+```
+
+**Signals of Violation:**
+
+- Map is NOT the largest element on the page
+- Users must scroll to reach capture/action buttons
+- Form inputs in a separate section above the map
+- Sidebar contains more than 4 panels
+
+---
+
+### Scrollable Sidebar Pattern
+
+For sidebars with multiple stacked components where content may exceed viewport height.
+
+**Problem:** When sidebars contain multiple panels (Voice, Intelligence, Scenarios, Actions), content gets cut off without clear scrolling or causes overflow issues.
+
+**Solution:** Implement proper scroll containment with thin scrollbar styling.
+
+**CSS Requirements:**
+
+```css
+.sidebar--condensed {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-100);
+    max-height: calc(100vh - 200px); /* Account for header/margins */
+    overflow-y: auto;
+    overflow-x: visible; /* Prevent horizontal clipping of tooltips */
+    padding-right: var(--ob-space-050); /* Space for scrollbar */
+}
+
+/* Thin, subtle scrollbar */
+.sidebar--condensed::-webkit-scrollbar {
+    width: 4px;
+}
+.sidebar--condensed::-webkit-scrollbar-thumb {
+    background: var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-pill);
+}
+```
+
+**Component Stacking Order (top to bottom):**
+
+1. **Input/Capture Controls** - Most frequently used (Command Bar, Voice Capture)
+2. **Status/Intelligence Panels** - AI insights, system status
+3. **Selection Grids** - Scenario selection, filter options (scrollable)
+4. **Quick Actions** - Context-dependent action buttons
+
+**Key Rules:**
+
+| Rule              | Requirement                            |
+| ----------------- | -------------------------------------- |
+| Max Height        | `calc(100vh - headerOffset)`           |
+| Overflow          | `overflow-y: auto`, NOT `hidden`       |
+| Scrollbar Width   | 4px thin scrollbar                     |
+| Individual Panels | Should NOT have `overflow: hidden`     |
+| Horizontal        | `overflow-x: visible` to show tooltips |
+
+**Signals of Violation:**
+
+- Sidebar content cut off at bottom
+- No visible scrollbar when content overflows
+- Individual panels hiding their children with `overflow: hidden`
+- Thick browser scrollbar instead of thin styled scrollbar
+
+---
+
+### Contextual Action Placement Pattern
+
+For placing action buttons where they're contextually relevant to the user's current workflow.
+
+**Problem:** Action buttons placed outside their relevant context require scrolling and break user flow:
+
+- "New Capture" only in Property Overview section (requires scrolling down)
+- User must scroll away from map to find next action after capture
+- Actions hidden until user discovers them
+
+**Solution:** Place actions in the same viewport as their relevant context.
+
+**Implementation:**
+
+```tsx
+{
+    /* In sidebar, immediately after relevant state change */
+}
+{
+    capturedProperty && (
+        <div className="quick-actions">
+            <Button variant="secondary" onClick={handleNewCapture}>
+                New Capture
+            </Button>
+            <Button variant="primary" onClick={handleCreateFinance}>
+                Finance →
+            </Button>
+        </div>
+    )
+}
+```
+
+**Key Rules:**
+
+| Rule               | Requirement                                                   |
+| ------------------ | ------------------------------------------------------------- |
+| Primary Actions    | Visible in same viewport as primary context (map, form, etc.) |
+| Post-State Actions | Appear immediately when state changes (e.g., after capture)   |
+| Duplicate Actions  | Acceptable for discoverability (sidebar + overview section)   |
+| Action Proximity   | ≤1 scroll action from relevant content                        |
+
+**Action Placement Matrix:**
+
+| Action          | Primary Location      | Duplicate Location       |
+| --------------- | --------------------- | ------------------------ |
+| New Capture     | Sidebar Quick Actions | Property Overview header |
+| Create Finance  | Sidebar Quick Actions | Property Overview        |
+| Save Draft      | Command Bar           | Form header              |
+| Delete Property | Property Overview     | N/A (destructive)        |
+
+**Signals of Violation:**
+
+- User says "where do I click to..." after completing an action
+- Primary actions only visible after scrolling
+- No actions in sidebar for the current workflow step
+
+---
+
+### Responsive Grid Patterns for Narrow Containers
+
+For grids inside sidebars or narrow panels (≤320px width).
+
+**Problem:** Multi-column grids overflow in narrow containers, causing:
+
+- Horizontal scrolling
+- Content clipping
+- Broken layouts on mobile
+
+**Solution:** Use single-column grids with vertical scrolling for narrow containers.
+
+**Breakpoint Decision Tree:**
+
+```
+Container Width?
+├─ < 320px → Single column ALWAYS
+│            grid-template-columns: 1fr;
+│            max-height: 200px;
+│            overflow-y: auto;
+│
+├─ 320-600px → 2 columns IF items are compact (< 120px each)
+│              Otherwise single column
+│
+└─ > 600px → Auto-fit with minmax
+             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+```
+
+**CSS Pattern:**
+
+```css
+/* Sidebar scenario grid - narrow container */
+.sidebar__scenario-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Single column */
+    gap: var(--ob-space-050);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Wide container - auto-fit allowed */
+.form__scenario-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--ob-space-100);
+}
+```
+
+**Key Rules:**
+
+| Container Width | Columns  | Scroll Direction |
+| --------------- | -------- | ---------------- |
+| < 320px         | 1        | Vertical         |
+| 320-600px       | 1-2      | Vertical         |
+| > 600px         | Auto-fit | None (wraps)     |
+
+**Signals of Violation:**
+
+- 2+ column grid in a 300px sidebar
+- Horizontal scrollbar appears in sidebar/panel
+- Grid items truncated or clipped
+- Grid with more than 2 columns in any container < 600px
+
+---
+
+### Tactical Viewport Pattern (Map HUD)
+
+For map-based interfaces requiring real-time telemetry display. Creates a "Live Sensor Feed" aesthetic aligned with Technical Authority Branding.
+
+**Use Cases:** Site acquisition maps, property location views, asset tracking, geographic analysis.
+
+**Design Principles Applied:**
+
+- **Technical Authority Branding:** Monospace fonts, cyan telemetry values, HUD-style overlays
+- **Information Density:** Four corners show critical data without obscuring map content
+- **Functional Color Language:** Cyan for live data, amber for capturing, gray for idle
+
+**HUD Corner Layout:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ [LAT/LON]                                      [SYS TIME]       │
+│ 1.352083, 103.819836                      2024-01-15 14:32:17  │
+│                                                                 │
+│                    MAP / VIEWPORT CONTENT                       │
+│                                                                 │
+│ [ASSET ID]                                        [STATUS]      │
+│ PROP-2024-001                                    ● LIVE         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Corner Panel Styling:**
+
+| Element    | Token/Value                            |
+| ---------- | -------------------------------------- |
+| Background | `var(--ob-surface-premium)`            |
+| Border     | `var(--ob-border-fine)` (1px hairline) |
+| Radius     | `var(--ob-radius-xs)` (2px machined)   |
+| Backdrop   | `blur(var(--ob-blur-xl))`              |
+
+**Label/Value Typography:**
+
+| Element | Font             | Size                 | Style                     |
+| ------- | ---------------- | -------------------- | ------------------------- |
+| Label   | Base (Inter)     | `--ob-font-size-2xs` | Uppercase, 0.1em tracking |
+| Value   | Mono (JetBrains) | `--ob-font-size-xs`  | Cyan color                |
+
+**Status States:**
+
+| State       | Color | Indicator Animation |
+| ----------- | ----- | ------------------- |
+| `idle`      | Gray  | Static dot          |
+| `live`      | Cyan  | Pulsing glow        |
+| `capturing` | Amber | Fast pulsing glow   |
+
+**Implementation:**
+
+```tsx
+<PropertyLocationMap
+    latitude="1.352083"
+    longitude="103.819836"
+    propertyId="PROP-2024-001"
+    status="live" // 'idle' | 'live' | 'capturing'
+    showHud={true} // Enable tactical HUD overlay
+/>
+```
+
+**CSS Classes (BEM):**
+
+```css
+.map-hud                        /* Container */
+.map-hud__viewport              /* Map element */
+.map-hud__corner                /* Corner panel base */
+.map-hud__corner--top-left      /* Coordinates */
+.map-hud__corner--top-right     /* Timestamp */
+.map-hud__corner--bottom-left   /* Asset ID */
+.map-hud__corner--bottom-right  /* Status */
+.map-hud__label                 /* Uppercase label */
+.map-hud__value                 /* Monospace value */
+.map-hud__status--live          /* Cyan pulsing */
+.map-hud__status--capturing     /* Amber pulsing */
+.map-hud__status--idle          /* Gray static */
+```
+
+**Signals of Violation:**
+
+- HUD panels using rounded corners (> 2px)
+- Non-monospace fonts for coordinates/timestamps
+- Colored status indicators without glow effects
+- HUD panels larger than necessary (should be minimal)
+
 ---
 
 ## Data Table Pattern
@@ -929,10 +1402,12 @@ Ultra-Premium design focuses on **materiality and precision** - making every nec
 The 2px radius (`--ob-radius-xs`) mimics the "break" on CNC-machined metal - sharp but finished.
 
 **Cognitive Rule:**
+
 - **Pill shapes (9999px)** = "friendly/social/consumer" - WRONG for our brand
 - **Sharp corners (2-4px)** = "industrial/elite/professional" - CORRECT
 
 **Application:**
+
 - All action buttons use 2px radius
 - Pill radius is ONLY for read-only chips, status badges, and avatars
 - Never use pill radius on interactive elements (buttons, toggles, selectable items)
@@ -941,11 +1416,11 @@ The 2px radius (`--ob-radius-xs`) mimics the "break" on CNC-machined metal - sha
 
 All interactive buttons must follow one of these standardized protocols:
 
-| Protocol | Name | Use Case | Canonical Button Variant |
-|----------|------|----------|-------------------------|
-| **Alpha** | Command | Primary actions: "Save", "Execute", "Commit", "Create", "Log" | `variant="primary"` |
-| **Beta** | System | Secondary/supporting actions: "Refresh", "Edit", "Cancel", "New" | `variant="secondary"` |
-| **Gamma** | Sub-Routine | Tertiary/escape actions: "Cancel", "Reset", "Close" | `variant="ghost"` |
+| Protocol  | Name        | Use Case                                                         | Canonical Button Variant |
+| --------- | ----------- | ---------------------------------------------------------------- | ------------------------ |
+| **Alpha** | Command     | Primary actions: "Save", "Execute", "Commit", "Create", "Log"    | `variant="primary"`      |
+| **Beta**  | System      | Secondary/supporting actions: "Refresh", "Edit", "Cancel", "New" | `variant="secondary"`    |
+| **Gamma** | Sub-Routine | Tertiary/escape actions: "Cancel", "Reset", "Close"              | `variant="ghost"`        |
 
 **Protocol Decision Tree:**
 
@@ -998,11 +1473,11 @@ import { Close } from '@mui/icons-material'
 
 ### Button Sizes
 
-| Size | Height | Use Case |
-|------|--------|----------|
-| `sm` | 32px | Inline actions, table rows, compact UI |
-| `md` | 40px | Standard page actions (default) |
-| `lg` | 48px | Hero CTAs, prominent actions |
+| Size | Height | Use Case                               |
+| ---- | ------ | -------------------------------------- |
+| `sm` | 32px   | Inline actions, table rows, compact UI |
+| `md` | 40px   | Standard page actions (default)        |
+| `lg` | 48px   | Hero CTAs, prominent actions           |
 
 ### Filter Chips vs Action Buttons
 
@@ -1029,25 +1504,25 @@ The canonical Button accepts children, so icons are placed inline:
 
 ```tsx
 <Button variant="secondary" size="sm">
-  <RefreshIcon sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }} />
-  Refresh Render
+    <RefreshIcon sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }} />
+    Refresh Render
 </Button>
 ```
 
 ### Protocol Summary Table
 
-| Button Text | Protocol | Variant | Rationale |
-|-------------|----------|---------|-----------|
-| Save inspection | Alpha | `primary` | Primary user intent |
-| Create Finance Project | Alpha | `primary` | Primary creation action |
-| View timeline | Alpha | `primary` | Primary navigation to content |
-| Log inspection | Beta | `secondary` | Supporting action (alternative path) |
-| Edit latest | Beta | `secondary` | Modification of existing data |
-| New Capture | Beta | `secondary` | Alternative creation flow |
-| Refresh Render | Beta | `secondary` | System operation |
-| Cancel | Gamma | `ghost` | Escape/dismiss action |
-| Reset draft | Gamma | `ghost` | Undo/reset action |
-| Close (icon) | N/A | `IconButton` | Modal dismissal |
+| Button Text            | Protocol | Variant      | Rationale                            |
+| ---------------------- | -------- | ------------ | ------------------------------------ |
+| Save inspection        | Alpha    | `primary`    | Primary user intent                  |
+| Create Finance Project | Alpha    | `primary`    | Primary creation action              |
+| View timeline          | Alpha    | `primary`    | Primary navigation to content        |
+| Log inspection         | Beta     | `secondary`  | Supporting action (alternative path) |
+| Edit latest            | Beta     | `secondary`  | Modification of existing data        |
+| New Capture            | Beta     | `secondary`  | Alternative creation flow            |
+| Refresh Render         | Beta     | `secondary`  | System operation                     |
+| Cancel                 | Gamma    | `ghost`      | Escape/dismiss action                |
+| Reset draft            | Gamma    | `ghost`      | Undo/reset action                    |
+| Close (icon)           | N/A      | `IconButton` | Modal dismissal                      |
 
 ---
 
