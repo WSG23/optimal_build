@@ -20,6 +20,8 @@ exceptions:
     - backend/migrations/versions/20251028_000020_add_foreign_key_indexes.py
     # Jurisdiction code column - simple drop operations without guards (acceptable for single column)
     - backend/migrations/versions/20251118_000025_add_property_jurisdiction.py
+    # Property-Project link - standard downgrade with drop operations (project_id, owner_email columns)
+    - backend/migrations/versions/20251230_000039_add_property_project_link.py
     # Regstack migrations - different schema
     - db/versions/20250216000000_init_regstack.py
     - db/versions/20250217000100_add_provenance_checksum.py
