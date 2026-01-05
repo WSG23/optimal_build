@@ -382,6 +382,133 @@ This project uses a **"Mission Control" aesthetic** with Cyan as primary brand a
 
 ---
 
+## Dark Mode vs Light Mode Standards
+
+This project defaults to **dark mode** (fullscreen professional app convention). Both modes are fully supported via CSS custom properties that automatically switch based on `data-theme` attribute.
+
+### Key Principles
+
+| Aspect              | Dark Mode Strategy                            | Light Mode Strategy                       |
+| ------------------- | --------------------------------------------- | ----------------------------------------- |
+| **Elevation**       | Lighter surface = more elevated               | Shadow depth = more elevated              |
+| **Text**            | Off-white (`#f1f5f9`), NOT pure white         | Near-black (`#0f172a`)                    |
+| **Hover states**    | White overlay to "lift" (`rgba(255,255,255)`) | Black overlay to "dim" (`rgba(0,0,0)`)    |
+| **Borders**         | Low opacity white (8%)                        | Higher opacity black (12%)                |
+| **Glass effects**   | Very transparent (3-5%)                       | More opaque (40-55%) "frosted ice"        |
+| **Shadows**         | Minimal, near-black                           | More prominent, gray tones                |
+| **Status colors**   | Lighter shades (400) for text                 | Darker shades (600-700) for text          |
+| **Selected items**  | Cyan tint (`--ob-color-action-selected`)      | Blue tint (`--ob-color-action-selected`)  |
+
+### Interactive State Tokens
+
+Use these tokens for consistent hover/active/selected feedback across both modes:
+
+| Token                            | Dark Mode Value             | Light Mode Value            | Use Case                      |
+| -------------------------------- | --------------------------- | --------------------------- | ----------------------------- |
+| `--ob-color-action-hover`        | `rgba(255,255,255,0.08)`    | `rgba(0,0,0,0.05)`          | Hoverable elements            |
+| `--ob-color-action-active`       | `rgba(255,255,255,0.12)`    | `rgba(0,0,0,0.1)`           | Pressed/active state          |
+| `--ob-color-action-selected`     | `rgba(0,243,255,0.1)`       | `rgba(59,130,246,0.1)`      | Selected items (cyan/blue)    |
+| `--ob-color-action-selected-strong` | `rgba(0,243,255,0.15)`   | `rgba(59,130,246,0.15)`     | Emphasized selection          |
+| `--ob-color-action-focus-ring`   | `rgba(59,130,246,0.5)`      | `rgba(59,130,246,0.4)`      | Focus indicators              |
+
+### Input Surface Tokens
+
+Form inputs need distinct surfaces from their container cards:
+
+| Token                            | Dark Mode Value             | Light Mode Value            | Use Case                      |
+| -------------------------------- | --------------------------- | --------------------------- | ----------------------------- |
+| `--ob-color-surface-input`       | `rgba(255,255,255,0.04)`    | `#ffffff`                   | Input field background        |
+| `--ob-color-surface-input-hover` | `rgba(255,255,255,0.06)`    | `#f8fafc`                   | Input hover state             |
+| `--ob-color-surface-input-focus` | `rgba(255,255,255,0.08)`    | `#ffffff`                   | Input focus state             |
+| `--ob-color-surface-input-disabled` | `rgba(255,255,255,0.02)` | `#f1f5f9`                   | Disabled input                |
+
+### Table/List Surface Tokens
+
+For data-dense views with row alternation:
+
+| Token                            | Dark Mode Value             | Light Mode Value            | Use Case                      |
+| -------------------------------- | --------------------------- | --------------------------- | ----------------------------- |
+| `--ob-color-table-row-alt`       | `rgba(255,255,255,0.02)`    | `rgba(0,0,0,0.02)`          | Alternating row background    |
+| `--ob-color-table-row-hover`     | `rgba(0,243,255,0.05)`      | `rgba(59,130,246,0.05)`     | Row hover (brand tint)        |
+| `--ob-color-table-row-selected`  | `rgba(0,243,255,0.08)`      | `rgba(59,130,246,0.1)`      | Selected row                  |
+| `--ob-color-table-header`        | `rgba(255,255,255,0.03)`    | `rgba(0,0,0,0.03)`          | Table header background       |
+
+### CSS Usage Examples
+
+```css
+/* ✅ CORRECT - Interactive list item */
+.list-item {
+    background: transparent;
+    transition: background 0.15s ease;
+}
+.list-item:hover {
+    background: var(--ob-color-action-hover);
+}
+.list-item:active {
+    background: var(--ob-color-action-active);
+}
+.list-item--selected {
+    background: var(--ob-color-action-selected);
+}
+
+/* ✅ CORRECT - Form input */
+.form-input {
+    background: var(--ob-color-surface-input);
+    border: 1px solid var(--ob-color-border-subtle);
+}
+.form-input:hover {
+    background: var(--ob-color-surface-input-hover);
+}
+.form-input:focus {
+    background: var(--ob-color-surface-input-focus);
+    border-color: var(--ob-color-border-focus);
+}
+
+/* ✅ CORRECT - Data table */
+.table-row:nth-child(even) {
+    background: var(--ob-color-table-row-alt);
+}
+.table-row:hover {
+    background: var(--ob-color-table-row-hover);
+}
+.table-row--selected {
+    background: var(--ob-color-table-row-selected);
+}
+```
+
+### Dark Mode Anti-Patterns
+
+```css
+/* ❌ WRONG - Pure white text causes eye strain */
+color: #ffffff;
+
+/* ✅ CORRECT - Off-white */
+color: var(--ob-color-text-primary); /* #f1f5f9 */
+
+/* ❌ WRONG - Hardcoded dark mode value won't switch in light mode */
+background: rgba(255, 255, 255, 0.05);
+
+/* ✅ CORRECT - Token automatically switches */
+background: var(--ob-color-action-hover);
+
+/* ❌ WRONG - Same status color intensity for both modes */
+color: #ef4444; /* Too harsh on dark bg */
+
+/* ✅ CORRECT - Use -text variant for dark mode */
+color: var(--ob-error-text); /* #f87171 - lighter for dark bg */
+```
+
+### Testing Both Modes
+
+Before submitting UI changes:
+
+1. Toggle theme via UI (click moon/sun icon in navbar)
+2. Verify all interactive states are visible in both modes
+3. Check text contrast meets WCAG AA (4.5:1 for normal text)
+4. Ensure status colors are distinguishable in both modes
+
+---
+
 ## Canonical Components
 
 Always prefer canonical components from `src/components/canonical/`:

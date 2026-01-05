@@ -137,6 +137,9 @@
     --ob-color-text-secondary-rgb: 148 163 184;
     --ob-color-text-muted: var(--ob-neutral-500); /* Slate-500 for captions */
     --ob-color-text-muted-rgb: 100 116 139;
+    /* Back-compat: some modules reference "tertiary" explicitly */
+    --ob-color-text-tertiary: var(--ob-color-text-muted);
+    --ob-color-text-tertiary-rgb: var(--ob-color-text-muted-rgb);
     --ob-color-text-subtle: var(--ob-neutral-600); /* Slate-600 for ghost UI */
     --ob-color-text-subtle-rgb: 71 85 105;
     --ob-color-text-strong: #ffffff; /* Pure white for emphasis */
@@ -155,6 +158,8 @@
     /* Border colors - Fine lines for sophistication (AI Studio protocol) */
     --ob-color-border-subtle: rgba(255, 255, 255, 0.08); /* Low opacity white for elegance */
     --ob-color-border-subtle-rgb: 255 255 255;
+    /* Back-compat: legacy "default" naming */
+    --ob-color-border-default: var(--ob-color-border-subtle);
     --ob-color-border-faint: rgba(255, 255, 255, 0.04);
     --ob-color-border-neutral: rgba(148, 163, 184, 0.3);
     --ob-color-border-neutral-rgb: 148 163 184;
@@ -184,7 +189,26 @@
     --ob-color-brand-soft-rgb: 37 99 235;
     --ob-color-brand-muted: rgba(59, 130, 246, 0.15);
     --ob-color-brand-strong: var(--ob-brand-600);
-    --ob-color-action-hover: rgba(255, 255, 255, 0.05);
+
+    /* Interactive States - Dark mode uses white overlays to "lift" elements
+       These provide clearer feedback than the base action-hover alone */
+    --ob-color-action-hover: rgba(255, 255, 255, 0.08); /* Increased from 0.05 for visibility */
+    --ob-color-action-active: rgba(255, 255, 255, 0.12); /* Pressed/active state */
+    --ob-color-action-selected: rgba(0, 243, 255, 0.1); /* Cyan tint for selected items */
+    --ob-color-action-selected-strong: rgba(0, 243, 255, 0.15); /* Stronger selection */
+    --ob-color-action-focus-ring: rgba(59, 130, 246, 0.5); /* Focus ring color */
+
+    /* Input Surfaces - Slightly lighter than card surface for distinguishability */
+    --ob-color-surface-input: rgba(255, 255, 255, 0.04); /* Form input backgrounds */
+    --ob-color-surface-input-hover: rgba(255, 255, 255, 0.06); /* Input hover state */
+    --ob-color-surface-input-focus: rgba(255, 255, 255, 0.08); /* Input focus state */
+    --ob-color-surface-input-disabled: rgba(255, 255, 255, 0.02); /* Disabled inputs */
+
+    /* Table/List Surfaces - For data-dense views */
+    --ob-color-table-row-alt: rgba(255, 255, 255, 0.02); /* Alternating row background */
+    --ob-color-table-row-hover: rgba(0, 243, 255, 0.05); /* Cyan hint on row hover */
+    --ob-color-table-row-selected: rgba(0, 243, 255, 0.08); /* Selected row */
+    --ob-color-table-header: rgba(255, 255, 255, 0.03); /* Table header background */
 
     /* ===========================================================================
      6. SEMANTIC COLORS - Status (Soft/Strong variants)
@@ -560,7 +584,25 @@ html[data-theme='light'] {
     --ob-color-brand-soft: rgba(37, 99, 235, 0.1);
     --ob-color-brand-soft-rgb: 37 99 235;
     --ob-color-brand-muted: rgba(59, 130, 246, 0.1);
+
+    /* Interactive States - Light mode uses black overlays to "dim" elements */
     --ob-color-action-hover: rgba(0, 0, 0, 0.05);
+    --ob-color-action-active: rgba(0, 0, 0, 0.1); /* Pressed/active state */
+    --ob-color-action-selected: rgba(59, 130, 246, 0.1); /* Blue tint for selected items */
+    --ob-color-action-selected-strong: rgba(59, 130, 246, 0.15); /* Stronger selection */
+    --ob-color-action-focus-ring: rgba(59, 130, 246, 0.4); /* Focus ring color */
+
+    /* Input Surfaces - White with subtle distinction from card */
+    --ob-color-surface-input: #ffffff; /* Form input backgrounds */
+    --ob-color-surface-input-hover: #f8fafc; /* Input hover state - slight gray */
+    --ob-color-surface-input-focus: #ffffff; /* Input focus state - pure white */
+    --ob-color-surface-input-disabled: #f1f5f9; /* Disabled inputs - gray tint */
+
+    /* Table/List Surfaces - For data-dense views */
+    --ob-color-table-row-alt: rgba(0, 0, 0, 0.02); /* Alternating row background */
+    --ob-color-table-row-hover: rgba(59, 130, 246, 0.05); /* Blue hint on row hover */
+    --ob-color-table-row-selected: rgba(59, 130, 246, 0.1); /* Selected row */
+    --ob-color-table-header: rgba(0, 0, 0, 0.03); /* Table header background */
 
     /* Status soft backgrounds for light mode */
     --ob-color-success-soft: #dcfce7;
