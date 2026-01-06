@@ -428,6 +428,63 @@
     height: 14px;
 }
 
+/* Developer Mode Toggle */
+.gps-developer-mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-100);
+    padding: var(--ob-space-100);
+    background: rgba(0, 243, 255, 0.05);
+    border: 1px solid rgba(0, 243, 255, 0.2);
+    border-radius: var(--ob-radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.gps-developer-mode-toggle:hover {
+    background: rgba(0, 243, 255, 0.1);
+    border-color: var(--ob-color-neon-cyan);
+}
+
+.gps-developer-mode-toggle input[type='checkbox'] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--ob-color-neon-cyan);
+    cursor: pointer;
+}
+
+.gps-developer-mode-toggle span {
+    color: #fff;
+    font-size: var(--ob-font-size-sm);
+}
+
+.gps-developer-mode-hint {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: var(--ob-font-size-xs);
+    margin-left: auto;
+}
+
+/* Upsell Card */
+.gps-hud-card--upsell {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.gps-hud-upsell-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: var(--ob-font-size-sm);
+    margin: var(--ob-space-100) 0;
+}
+
+.gps-hud-upsell-btn {
+    width: 100%;
+}
+
+/* Developer Workspace Section */
+.gps-page__developer-workspace {
+    padding: var(--ob-space-200);
+}
+
 /* Mobile Responsive */
 @media (max-width: 1024px) {
     .gps-page__summary {

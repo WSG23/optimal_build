@@ -62,15 +62,15 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
           { path: '/finance', label: t('nav.finance') },
         ],
       },
+      // Unified capture - single entry point for both agents and developers
       {
-        items: [{ path: '/agents/site-capture', label: t('nav.agentCapture') }],
+        items: [{ path: '/app/capture', label: t('nav.capture') }],
       },
     ]
 
     if (isDeveloperMode) {
       groups.push({
         items: [
-          { path: '/app/site-acquisition', label: t('nav.siteAcquisition') },
           {
             path: '/app/asset-feasibility',
             label: t('nav.assetFeasibility'),

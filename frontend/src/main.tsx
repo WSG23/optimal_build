@@ -56,9 +56,9 @@ const BusinessPerformancePage = React.lazy(async () => {
     await import('./app/pages/business-performance/BusinessPerformancePage')
   return { default: module.BusinessPerformancePage }
 })
-const GpsCapturePage = React.lazy(async () => {
-  const module = await import('./app/pages/gps-capture/GpsCapturePage')
-  return { default: module.GpsCapturePage }
+const UnifiedCapturePage = React.lazy(async () => {
+  const module = await import('./app/pages/capture/UnifiedCapturePage')
+  return { default: module.UnifiedCapturePage }
 })
 const MarketingPage = React.lazy(async () => {
   const module = await import('./app/pages/marketing/MarketingPage')
@@ -71,11 +71,6 @@ const AdvisoryPage = React.lazy(async () => {
 const IntegrationsPage = React.lazy(async () => {
   const module = await import('./app/pages/integrations/IntegrationsPage')
   return { default: module.IntegrationsPage }
-})
-const SiteAcquisitionPage = React.lazy(async () => {
-  const module =
-    await import('./app/pages/site-acquisition/SiteAcquisitionPage')
-  return { default: module.SiteAcquisitionPage }
 })
 const ChecklistTemplateManager = React.lazy(async () => {
   const module =
@@ -110,9 +105,10 @@ const businessPerformanceElement = (
   </AppShell>
 )
 
-const gpsCaptureElement = (
-  <AppShell activeItem="gpsCapture" hideSidebar hideHeader>
-    {suspense(<GpsCapturePage />)}
+// Unified capture page - consolidates GPS Capture and Site Acquisition
+const unifiedCaptureElement = (
+  <AppShell activeItem="capture" hideSidebar hideHeader>
+    {suspense(<UnifiedCapturePage />)}
   </AppShell>
 )
 
@@ -146,17 +142,6 @@ const integrationsElement = (
     hideSidebar
   >
     {suspense(<IntegrationsPage />)}
-  </AppShell>
-)
-
-const siteAcquisitionElement = (
-  <AppShell
-    activeItem="siteAcquisition"
-    hideSidebar
-    title="Site Acquisition"
-    description="Capture and analyze development potential for properties"
-  >
-    {suspense(<SiteAcquisitionPage />)}
   </AppShell>
 )
 
@@ -236,13 +221,18 @@ const router = createBrowserRouter([
     path: '/agents/performance',
     element: businessPerformanceElement,
   },
+  // Unified capture page - all capture routes point to the same unified experience
+  {
+    path: '/app/capture',
+    element: unifiedCaptureElement,
+  },
   {
     path: '/app/gps-capture',
-    element: gpsCaptureElement,
+    element: unifiedCaptureElement,
   },
   {
     path: '/agents/site-capture',
-    element: gpsCaptureElement,
+    element: unifiedCaptureElement,
   },
   {
     path: '/app/marketing',
@@ -270,11 +260,11 @@ const router = createBrowserRouter([
   },
   {
     path: '/app/site-acquisition',
-    element: siteAcquisitionElement,
+    element: unifiedCaptureElement,
   },
   {
     path: '/developers/site-acquisition',
-    element: siteAcquisitionElement,
+    element: unifiedCaptureElement,
   },
   {
     path: '/agents/developers/:propertyId/preview',

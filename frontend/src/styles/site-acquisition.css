@@ -331,7 +331,7 @@
 }
 
 .property-capture-form__input--mono {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+    font-family: var(--ob-font-family-mono);
 }
 
 .property-capture-form__row {
@@ -518,7 +518,7 @@
     border: var(--ob-border-fine-strong);
     border-radius: var(--ob-radius-md);
     outline: none;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+    font-family: var(--ob-font-family-mono);
     background: transparent;
     color: var(--ob-color-text-primary);
     transition: all 0.2s ease;
@@ -1308,7 +1308,7 @@
 }
 
 .multi-scenario__focus-btn {
-    border: 1px solid var(--ob-color-border-default);
+    border: 1px solid var(--ob-color-border-subtle);
     background: var(--ob-color-bg-surface);
     color: var(--ob-color-text-primary);
     border-radius: var(--ob-radius-full);
@@ -1572,7 +1572,7 @@
 }
 
 .multi-scenario__export-btn--secondary {
-    border: 1px solid var(--ob-color-border-default);
+    border: 1px solid var(--ob-color-border-subtle);
     background: transparent;
     color: var(--ob-color-text-primary);
 }
@@ -1812,7 +1812,8 @@
 }
 
 .multi-scenario__workspace-card:hover {
-    border-color: var(--ob-color-border-default);
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: 0 0 8px var(--ob-color-neon-cyan-muted);
 }
 
 .multi-scenario__workspace-card--focus {
@@ -1854,7 +1855,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--ob-color-text-tertiary);
+    color: var(--ob-text-tertiary);
 }
 
 .multi-scenario__workspace-title {
@@ -1880,7 +1881,7 @@
     font-size: var(--ob-font-size-2xs);
     font-weight: 600;
     text-transform: uppercase;
-    color: var(--ob-color-text-tertiary);
+    color: var(--ob-text-tertiary);
 }
 
 .multi-scenario__workspace-metric-value {
@@ -1909,7 +1910,7 @@
 .multi-scenario__workspace-progress-label {
     font-size: var(--ob-font-size-xs);
     font-weight: 600;
-    color: var(--ob-color-text-tertiary);
+    color: var(--ob-text-tertiary);
 }
 
 .multi-scenario__workspace-progress-value {
@@ -1961,7 +1962,11 @@
 }
 
 .multi-scenario__workspace-card--focus .multi-scenario__workspace-cta:hover {
-    background: color-mix(in srgb, var(--ob-color-neon-cyan) 85%, black);
+    background: color-mix(
+        in srgb,
+        var(--ob-color-neon-cyan) 85%,
+        var(--ob-neutral-950)
+    );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2043,7 +2048,7 @@
     font-family: var(--ob-font-family-mono);
     font-size: var(--ob-font-size-xs);
     font-weight: 700;
-    color: var(--ob-color-text-tertiary);
+    color: var(--ob-text-tertiary);
     letter-spacing: 0.05em;
 }
 
@@ -2079,11 +2084,12 @@
 }
 
 .multi-scenario__path-metric-label {
+    font-family: var(--ob-font-family-base);
     font-size: var(--ob-font-size-2xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--ob-color-text-tertiary);
+    color: var(--ob-text-tertiary);
 }
 
 .multi-scenario__path-metric-value {
@@ -2111,11 +2117,12 @@
 }
 
 .multi-scenario__diligence-gauge-label {
+    font-family: var(--ob-font-family-base);
     font-size: var(--ob-font-size-2xs);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--ob-color-text-tertiary);
+    color: var(--ob-text-tertiary);
 }
 
 .multi-scenario__diligence-gauge-value {
@@ -2174,12 +2181,23 @@
 }
 
 .multi-scenario__path-module--focus .multi-scenario__path-cta:hover {
-    background: color-mix(in srgb, var(--ob-color-neon-cyan) 85%, black);
+    background: color-mix(
+        in srgb,
+        var(--ob-color-neon-cyan) 85%,
+        var(--ob-neutral-950)
+    );
 }
 
 /* -------------------------------------------------------------------------- */
 /* Phase 5: Intel Tapes - Feasibility Signal Cards                             */
 /* -------------------------------------------------------------------------- */
+
+/* Feasibility Highlights wrapper: header on background, surfaces as children */
+.multi-scenario__feasibility {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-150);
+}
 
 /* FEASIBILITY_HIGHLIGHTS - Glass card container (same treatment as PATH grid and footer) */
 .multi-scenario__intel-feed {
@@ -2201,11 +2219,41 @@
 }
 
 .multi-scenario__intel-feed-label {
-    font-family: var(--ob-font-family-mono);
+    font-family: var(--ob-font-family-base);
     font-size: var(--ob-font-size-sm);
     font-weight: 700;
     color: var(--ob-color-text-secondary);
-    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* Detailed insights header inside the intel feed surface */
+.multi-scenario__intel-feed-subheader {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-100);
+}
+
+.multi-scenario__intel-feed-subtitle {
+    font-family: var(--ob-font-family-base);
+    font-size: var(--ob-font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--ob-text-tertiary);
+}
+
+.multi-scenario__intel-feed-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-100);
+    margin-left: auto;
+}
+
+.multi-scenario__intel-feed-empty {
+    margin: 0;
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-text-tertiary);
+    font-style: italic;
 }
 
 /* Intel tapes are direct children - no opaque background (nested inside glass card) */
@@ -2255,8 +2303,8 @@
     font-family: var(--ob-font-family-mono);
     font-size: var(--ob-font-size-2xs);
     font-weight: 600;
-    color: var(--ob-color-text-tertiary);
-    letter-spacing: 0.05em;
+    color: var(--ob-text-tertiary);
+    letter-spacing: var(--ob-letter-spacing-widest);
 }
 
 .multi-scenario__intel-tape-meta {
@@ -2266,12 +2314,41 @@
 }
 
 .multi-scenario__intel-tape-id,
-.multi-scenario__intel-tape-path,
-.multi-scenario__intel-tape-ts {
+.multi-scenario__intel-tape-path {
     font-family: var(--ob-font-family-mono);
     font-size: var(--ob-font-size-2xs);
-    color: var(--ob-color-text-tertiary);
-    letter-spacing: 0.02em;
+    color: var(--ob-text-tertiary);
+    letter-spacing: var(--ob-letter-spacing-wider);
+}
+
+.multi-scenario__intel-tape-updated {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--ob-space-025);
+}
+
+@media (min-width: 640px) {
+    .multi-scenario__intel-tape-updated {
+        align-items: flex-end;
+        text-align: right;
+    }
+}
+
+.multi-scenario__intel-tape-updated-label {
+    font-family: var(--ob-font-family-base);
+    font-size: var(--ob-font-size-2xs);
+    font-weight: var(--ob-font-weight-bold);
+    letter-spacing: var(--ob-letter-spacing-caps);
+    text-transform: uppercase;
+    color: var(--ob-text-tertiary);
+}
+
+.multi-scenario__intel-tape-updated-value {
+    font-family: var(--ob-font-family-mono);
+    font-size: var(--ob-font-size-xs);
+    font-weight: var(--ob-font-weight-semibold);
+    color: var(--ob-color-text-primary);
 }
 
 .multi-scenario__intel-tape-divider {
@@ -2297,11 +2374,11 @@
 }
 
 .multi-scenario__intel-tape-type--opportunity {
-    color: var(--ob-color-status-success);
+    color: var(--ob-color-status-success-text);
 }
 
 .multi-scenario__intel-tape-type--risk {
-    color: var(--ob-color-status-error);
+    color: var(--ob-color-status-error-text);
 }
 
 .multi-scenario__intel-tape-list {
@@ -2322,14 +2399,14 @@
 
 .multi-scenario__intel-tape-tree {
     font-family: var(--ob-font-family-mono);
-    color: var(--ob-color-text-tertiary);
+    color: var(--ob-text-tertiary);
     flex-shrink: 0;
 }
 
 .multi-scenario__intel-tape-empty {
     margin: 0;
     font-size: var(--ob-font-size-sm);
-    color: var(--ob-color-text-tertiary);
+    color: var(--ob-text-tertiary);
     font-style: italic;
 }
 
@@ -2374,7 +2451,6 @@
 
 /* Status message (left-aligned, pushes buttons right) */
 .multi-scenario__matrix-status {
-    margin-right: auto;
     font-family: var(--ob-font-family-mono);
     font-size: var(--ob-font-size-xs);
     color: var(--ob-color-text-secondary);
@@ -2396,19 +2472,19 @@
 }
 
 .multi-scenario__matrix-label {
-    font-family: var(--ob-font-family-mono);
+    font-family: var(--ob-font-family-base);
     font-size: var(--ob-font-size-2xs);
     font-weight: 600;
-    color: var(--ob-color-text-tertiary);
+    color: var(--ob-text-tertiary);
     letter-spacing: 0.05em;
 }
 
 .multi-scenario__matrix-stat--opportunity .multi-scenario__matrix-value {
-    color: var(--ob-color-status-success);
+    color: var(--ob-color-status-success-text);
 }
 
 .multi-scenario__matrix-stat--risk .multi-scenario__matrix-value {
-    color: var(--ob-color-status-error);
+    color: var(--ob-color-status-error-text);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -2532,7 +2608,7 @@ html[data-theme='light'] .condition-assessment__card {
     font-weight: 700;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: var(--ob-color-text-tertiary);
+    color: var(--ob-text-tertiary);
 }
 
 .condition-assessment__gauge-container {
@@ -2595,7 +2671,7 @@ html[data-theme='light'] .condition-assessment__card {
     gap: var(--ob-space-100);
     justify-content: center;
     font-size: var(--ob-font-size-xs);
-    color: var(--ob-color-text-tertiary);
+    color: var(--ob-text-tertiary);
 }
 
 /* CTA Buttons */
@@ -2611,7 +2687,7 @@ html[data-theme='light'] .condition-assessment__card {
 
 .condition-assessment__cta-btn--ghost {
     background: transparent;
-    border: 1px solid var(--ob-color-border-default);
+    border: 1px solid var(--ob-color-border-subtle);
     color: var(--ob-color-text-primary);
 }
 
@@ -2915,7 +2991,7 @@ html[data-theme='light'] .condition-assessment__card {
 }
 
 .voice-observations-panel__recording-time {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+    font-family: var(--ob-font-family-mono);
     font-size: var(--ob-font-size-lg);
     font-weight: 600;
     color: var(--ob-color-text-primary);
