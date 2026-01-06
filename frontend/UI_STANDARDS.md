@@ -388,50 +388,50 @@ This project defaults to **dark mode** (fullscreen professional app convention).
 
 ### Key Principles
 
-| Aspect              | Dark Mode Strategy                            | Light Mode Strategy                       |
-| ------------------- | --------------------------------------------- | ----------------------------------------- |
-| **Elevation**       | Lighter surface = more elevated               | Shadow depth = more elevated              |
-| **Text**            | Off-white (`#f1f5f9`), NOT pure white         | Near-black (`#0f172a`)                    |
-| **Hover states**    | White overlay to "lift" (`rgba(255,255,255)`) | Black overlay to "dim" (`rgba(0,0,0)`)    |
-| **Borders**         | Low opacity white (8%)                        | Higher opacity black (12%)                |
-| **Glass effects**   | Very transparent (3-5%)                       | More opaque (40-55%) "frosted ice"        |
-| **Shadows**         | Minimal, near-black                           | More prominent, gray tones                |
-| **Status colors**   | Lighter shades (400) for text                 | Darker shades (600-700) for text          |
-| **Selected items**  | Cyan tint (`--ob-color-action-selected`)      | Blue tint (`--ob-color-action-selected`)  |
+| Aspect             | Dark Mode Strategy                            | Light Mode Strategy                      |
+| ------------------ | --------------------------------------------- | ---------------------------------------- |
+| **Elevation**      | Lighter surface = more elevated               | Shadow depth = more elevated             |
+| **Text**           | Off-white (`#f1f5f9`), NOT pure white         | Near-black (`#0f172a`)                   |
+| **Hover states**   | White overlay to "lift" (`rgba(255,255,255)`) | Black overlay to "dim" (`rgba(0,0,0)`)   |
+| **Borders**        | Low opacity white (8%)                        | Higher opacity black (12%)               |
+| **Glass effects**  | Very transparent (3-5%)                       | More opaque (40-55%) "frosted ice"       |
+| **Shadows**        | Minimal, near-black                           | More prominent, gray tones               |
+| **Status colors**  | Lighter shades (400) for text                 | Darker shades (600-700) for text         |
+| **Selected items** | Cyan tint (`--ob-color-action-selected`)      | Blue tint (`--ob-color-action-selected`) |
 
 ### Interactive State Tokens
 
 Use these tokens for consistent hover/active/selected feedback across both modes:
 
-| Token                            | Dark Mode Value             | Light Mode Value            | Use Case                      |
-| -------------------------------- | --------------------------- | --------------------------- | ----------------------------- |
-| `--ob-color-action-hover`        | `rgba(255,255,255,0.08)`    | `rgba(0,0,0,0.05)`          | Hoverable elements            |
-| `--ob-color-action-active`       | `rgba(255,255,255,0.12)`    | `rgba(0,0,0,0.1)`           | Pressed/active state          |
-| `--ob-color-action-selected`     | `rgba(0,243,255,0.1)`       | `rgba(59,130,246,0.1)`      | Selected items (cyan/blue)    |
-| `--ob-color-action-selected-strong` | `rgba(0,243,255,0.15)`   | `rgba(59,130,246,0.15)`     | Emphasized selection          |
-| `--ob-color-action-focus-ring`   | `rgba(59,130,246,0.5)`      | `rgba(59,130,246,0.4)`      | Focus indicators              |
+| Token                               | Dark Mode Value          | Light Mode Value        | Use Case                   |
+| ----------------------------------- | ------------------------ | ----------------------- | -------------------------- |
+| `--ob-color-action-hover`           | `rgba(255,255,255,0.08)` | `rgba(0,0,0,0.05)`      | Hoverable elements         |
+| `--ob-color-action-active`          | `rgba(255,255,255,0.12)` | `rgba(0,0,0,0.1)`       | Pressed/active state       |
+| `--ob-color-action-selected`        | `rgba(0,243,255,0.1)`    | `rgba(59,130,246,0.1)`  | Selected items (cyan/blue) |
+| `--ob-color-action-selected-strong` | `rgba(0,243,255,0.15)`   | `rgba(59,130,246,0.15)` | Emphasized selection       |
+| `--ob-color-action-focus-ring`      | `rgba(59,130,246,0.5)`   | `rgba(59,130,246,0.4)`  | Focus indicators           |
 
 ### Input Surface Tokens
 
 Form inputs need distinct surfaces from their container cards:
 
-| Token                            | Dark Mode Value             | Light Mode Value            | Use Case                      |
-| -------------------------------- | --------------------------- | --------------------------- | ----------------------------- |
-| `--ob-color-surface-input`       | `rgba(255,255,255,0.04)`    | `#ffffff`                   | Input field background        |
-| `--ob-color-surface-input-hover` | `rgba(255,255,255,0.06)`    | `#f8fafc`                   | Input hover state             |
-| `--ob-color-surface-input-focus` | `rgba(255,255,255,0.08)`    | `#ffffff`                   | Input focus state             |
-| `--ob-color-surface-input-disabled` | `rgba(255,255,255,0.02)` | `#f1f5f9`                   | Disabled input                |
+| Token                               | Dark Mode Value          | Light Mode Value | Use Case               |
+| ----------------------------------- | ------------------------ | ---------------- | ---------------------- |
+| `--ob-color-surface-input`          | `rgba(255,255,255,0.04)` | `#ffffff`        | Input field background |
+| `--ob-color-surface-input-hover`    | `rgba(255,255,255,0.06)` | `#f8fafc`        | Input hover state      |
+| `--ob-color-surface-input-focus`    | `rgba(255,255,255,0.08)` | `#ffffff`        | Input focus state      |
+| `--ob-color-surface-input-disabled` | `rgba(255,255,255,0.02)` | `#f1f5f9`        | Disabled input         |
 
 ### Table/List Surface Tokens
 
 For data-dense views with row alternation:
 
-| Token                            | Dark Mode Value             | Light Mode Value            | Use Case                      |
-| -------------------------------- | --------------------------- | --------------------------- | ----------------------------- |
-| `--ob-color-table-row-alt`       | `rgba(255,255,255,0.02)`    | `rgba(0,0,0,0.02)`          | Alternating row background    |
-| `--ob-color-table-row-hover`     | `rgba(0,243,255,0.05)`      | `rgba(59,130,246,0.05)`     | Row hover (brand tint)        |
-| `--ob-color-table-row-selected`  | `rgba(0,243,255,0.08)`      | `rgba(59,130,246,0.1)`      | Selected row                  |
-| `--ob-color-table-header`        | `rgba(255,255,255,0.03)`    | `rgba(0,0,0,0.03)`          | Table header background       |
+| Token                           | Dark Mode Value          | Light Mode Value        | Use Case                   |
+| ------------------------------- | ------------------------ | ----------------------- | -------------------------- |
+| `--ob-color-table-row-alt`      | `rgba(255,255,255,0.02)` | `rgba(0,0,0,0.02)`      | Alternating row background |
+| `--ob-color-table-row-hover`    | `rgba(0,243,255,0.05)`   | `rgba(59,130,246,0.05)` | Row hover (brand tint)     |
+| `--ob-color-table-row-selected` | `rgba(0,243,255,0.08)`   | `rgba(59,130,246,0.1)`  | Selected row               |
+| `--ob-color-table-header`       | `rgba(255,255,255,0.03)` | `rgba(0,0,0,0.03)`      | Table header background    |
 
 ### CSS Usage Examples
 
@@ -1035,6 +1035,86 @@ The project includes ESLint rules to catch violations. Run before committing:
 ```bash
 cd frontend && npm run lint
 ```
+
+---
+
+## Immersive Map Styling Standards
+
+The Unified Capture Page (`/app/capture`) uses an immersive dark map experience that **overrides system theme**.
+
+### Dark Map Configuration (MANDATORY)
+
+| Setting      | Value                             | Rationale                              |
+| ------------ | --------------------------------- | -------------------------------------- |
+| Mapbox Style | `mapbox://styles/mapbox/dark-v11` | Always dark regardless of system theme |
+| Pitch        | `45` degrees                      | 3D perspective for immersion           |
+| Zoom         | `16`                              | Street-level detail                    |
+| Marker Color | `#3b82f6` (blue-500)              | Visible against dark map               |
+
+### Radar Sweep Animation
+
+During capture/scanning, display a radar sweep animation:
+
+| Token                       | Value                       | Use                    |
+| --------------------------- | --------------------------- | ---------------------- |
+| `--ob-radar-sweep-color`    | `var(--ob-color-neon-cyan)` | Sweep gradient color   |
+| `--ob-radar-sweep-duration` | `4s`                        | Full rotation duration |
+
+```css
+/* Radar sweep animation */
+.gps-background-map.scanning::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        var(--ob-color-neon-cyan) 20deg,
+        transparent 40deg
+    );
+    opacity: 0.3;
+    animation: radar-sweep 4s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+}
+
+@keyframes radar-sweep {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+```
+
+### Glass Card Overlay
+
+Capture form uses glass morphism over the dark map:
+
+| Token      | Value                                | Use                         |
+| ---------- | ------------------------------------ | --------------------------- |
+| Background | `rgba(20, 20, 20, 0.75)`             | Dark glass surface          |
+| Blur       | `var(--ob-blur-xl)` (16px)           | Strong blur for readability |
+| Border     | `1px solid rgba(255, 255, 255, 0.1)` | Subtle edge definition      |
+
+### When to Use Immersive vs Standard Map
+
+| Scenario                         | Map Style           | Why                              |
+| -------------------------------- | ------------------- | -------------------------------- |
+| Capture page (pre-capture)       | Always dark-v11     | Immersive "mission control" feel |
+| Property overview (post-capture) | Follow system theme | Standard content context         |
+| Finance/analysis pages           | No map needed       | Data-focused                     |
+
+### CSS Classes Reference
+
+| Class                          | Purpose                           |
+| ------------------------------ | --------------------------------- |
+| `.gps-background-map`          | Full-screen dark Mapbox container |
+| `.gps-background-map.scanning` | Activates radar sweep animation   |
+| `.capture-card-glass`          | Glass card for capture form       |
+| `.gps-hud-card`                | Floating HUD widget cards         |
+| `.gps-content-overlay`         | Content layer above map           |
 
 ---
 

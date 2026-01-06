@@ -1729,9 +1729,319 @@ gridTemplateColumns: {
 
 ---
 
+## Unified Capture Page Pattern (Agent + Developer Modes)
+
+This pattern governs the consolidated capture experience at `/app/capture`, unifying GPS Capture (Agent) and Site Acquisition (Developer) workflows.
+
+### Core Philosophy: One Page, Role-Based Results
+
+The unified capture page provides identical **pre-capture UI** for all users, with **role-based post-capture rendering** that adapts to user subscription level.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        PRE-CAPTURE (Same for ALL users)                      │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                      DARK MAPBOX 3D MAP (dark-v11)                     │ │
+│  │                         pitch: 45° | zoom: 16                          │ │
+│  │                                                                        │ │
+│  │   ┌─────────────────┐                                                  │ │
+│  │   │ Glass Card Form │                      [Radar Sweep Animation]     │ │
+│  │   │ ─────────────── │                       during scanning            │ │
+│  │   │ Address input   │                                                  │ │
+│  │   │ Lat/Lng (ghost) │                                                  │ │
+│  │   │ Jurisdiction    │                                                  │ │
+│  │   │ Scenario tiles  │                                                  │ │
+│  │   │ [SCAN] button   │                                                  │ │
+│  │   └─────────────────┘                                                  │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                      POST-CAPTURE (Role-Based)                               │
+│                                                                              │
+│  ┌──── Agent Mode ────────────────┐  ┌──── Developer Mode ────────────────┐ │
+│  │ HUD Widgets (right panel)      │  │ Full Workspace Sections            │ │
+│  │ • Quick Analysis Card          │  │ • Property Overview Section        │ │
+│  │ • Market Intelligence Card     │  │ • Development Preview (3D)         │ │
+│  │ • Marketing Packs Card         │  │ • Preview Layers Table             │ │
+│  │                                │  │ • Scenario Focus Section           │ │
+│  │ Mission Log (bottom)           │  │ • Due Diligence Checklist          │ │
+│  │ • Capture history table        │  │ • Multi-Scenario Comparison        │ │
+│  │                                │  │ • Condition Assessment             │ │
+│  │ Upsell Card                    │  │ • Finance Project CTA              │ │
+│  │ • "Unlock Developer Features"  │  │                                    │ │
+│  └────────────────────────────────┘  └────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Dark Map Requirement (MANDATORY)
+
+**The map MUST always use Mapbox `dark-v11` style, regardless of system theme.**
+
+| Attribute        | Value                             | Rationale                            |
+| ---------------- | --------------------------------- | ------------------------------------ |
+| Style            | `mapbox://styles/mapbox/dark-v11` | Immersive, mission-control aesthetic |
+| Pitch            | `45°`                             | 3D perspective for depth             |
+| Zoom             | `16`                              | Building-level detail visible        |
+| Marker Color     | `#3b82f6` (blue)                  | Visible on dark background           |
+| Marker Draggable | `true`                            | Interactive coordinate adjustment    |
+
+**Why Always Dark?**
+
+1. **Technical Authority Branding**: Dark maps evoke mission control, not consumer mapping
+2. **Radar Animation Visibility**: Cyan radar sweep requires dark background for contrast
+3. **Glass Card Legibility**: Frosted glass overlays look correct on dark surfaces
+4. **Immersion**: Consistent darkness maintains focused capture experience
+
+### Radar Sweep Animation (Scanning State)
+
+During the capture operation (`isScanning === true`), display a radar sweep animation over the map.
+
+**Animation Specification:**
+
+| Property | Token/Value                           |
+| -------- | ------------------------------------- |
+| Type     | Conic gradient sweep                  |
+| Color    | `var(--ob-color-neon-cyan)` (#00f3ff) |
+| Duration | `4s` rotation                         |
+| Timing   | `linear`, `infinite`                  |
+| Opacity  | Start at 0.4, fade to 0               |
+
+**CSS Implementation:**
+
+```css
+.capture-map__radar-sweep {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    background: conic-gradient(
+        from 0deg at 50% 50%,
+        transparent 0deg,
+        var(--ob-color-neon-cyan-40) 30deg,
+        transparent 60deg
+    );
+    animation: radar-rotate 4s linear infinite;
+}
+
+@keyframes radar-rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+```
+
+### Role Detection and Mode Toggle
+
+**Detection:** Use `useDeveloperMode()` hook from `DeveloperContext`:
+
+```tsx
+import { useDeveloperMode } from '@/contexts/useDeveloperMode'
+
+function UnifiedCapturePage() {
+    const { isDeveloperMode, toggleDeveloperMode } = useDeveloperMode()
+
+    // Renders different post-capture UI based on isDeveloperMode
+}
+```
+
+**Mode Toggle UI:** For entitled users, show a toggle switch in the form area:
+
+```tsx
+{
+    canAccessDeveloperMode && (
+        <FormControlLabel
+            control={
+                <Switch
+                    checked={isDeveloperMode}
+                    onChange={toggleDeveloperMode}
+                />
+            }
+            label="Developer Mode"
+        />
+    )
+}
+```
+
+**Persistence:** Developer mode state is stored in `localStorage` and persists across sessions.
+
+### HUD Widgets (Agent Mode Results)
+
+Agent mode renders lightweight "Heads-Up Display" cards in a sidebar:
+
+| Widget                   | Content                               |
+| ------------------------ | ------------------------------------- |
+| Quick Analysis Card      | Scenario recommendations, constraints |
+| Market Intelligence Card | Price benchmarks, market trends       |
+| Marketing Packs Card     | Available marketing templates         |
+
+**Styling:**
+
+- Use `GlassCard` with cyan accents
+- Monospace font for numeric data
+- Compact padding (`--ob-space-100`)
+- HUD-style labels (uppercase, 2xs font size)
+
+### Mission Log (Agent Mode)
+
+A capture history table showing previous capture operations:
+
+| Column   | Content                            |
+| -------- | ---------------------------------- |
+| Target   | Address or coordinates             |
+| District | Administrative district            |
+| Scenario | Primary development scenario       |
+| Time     | Capture timestamp (formatted date) |
+
+**Implementation:**
+
+```tsx
+<table className="mission-log">
+    <thead>
+        <tr>
+            <th>Target</th>
+            <th>District</th>
+            <th>Scenario</th>
+            <th>Time</th>
+        </tr>
+    </thead>
+    <tbody>
+        {capturedSites.map((site) => (
+            <tr key={site.propertyId}>
+                <td>{site.address}</td>
+                <td>{site.district ?? '-'}</td>
+                <td>{formatScenario(site.scenario)}</td>
+                <td>{formatDate(site.capturedAt)}</td>
+            </tr>
+        ))}
+    </tbody>
+</table>
+```
+
+### Upsell Card (Agent Mode)
+
+When Agent mode results are shown, include an upsell card encouraging upgrade to Developer features:
+
+```tsx
+<GlassCard className="upsell-card">
+    <Typography variant="h6">Unlock Developer Features</Typography>
+    <Typography variant="body2" color="text.secondary">
+        Get 3D previews, condition assessments, financial modeling, and more.
+    </Typography>
+    <Button variant="primary" onClick={handleUpgrade}>
+        Upgrade Now
+    </Button>
+</GlassCard>
+```
+
+### Developer Results (Developer Mode)
+
+Developer mode renders the full Site Acquisition workspace sections:
+
+1. **PropertyOverviewSection** - Property summary with 4-column metric cards
+2. **Preview3DViewer** - 3D building visualization
+3. **PreviewLayersTable** - Layer controls for preview
+4. **ScenarioFocusSection** - Detailed scenario analysis
+5. **DueDiligenceChecklistSection** - Compliance checklist
+6. **MultiScenarioComparisonSection** - Side-by-side comparison
+7. **ConditionAssessmentSection** - Building condition data
+
+**Lazy Loading (MANDATORY):**
+
+Developer components MUST be lazy-loaded to avoid bundle bloat for Agent users:
+
+```tsx
+const DeveloperResults = React.lazy(
+    () => import('./components/DeveloperResults'),
+)
+
+// In render:
+{
+    isDeveloperMode && siteAcquisitionResult && (
+        <Suspense fallback={<Skeleton variant="rectangular" height={400} />}>
+            <DeveloperResults result={siteAcquisitionResult} />
+        </Suspense>
+    )
+}
+```
+
+### URL Routing (Direct Render)
+
+All legacy capture routes render the unified page directly (no redirects):
+
+```tsx
+const unifiedCaptureElement = (
+  <AppShell>
+    <UnifiedCapturePage />
+  </AppShell>
+)
+
+// All routes point to same element
+{ path: '/app/capture', element: unifiedCaptureElement },
+{ path: '/app/gps-capture', element: unifiedCaptureElement },
+{ path: '/app/site-acquisition', element: unifiedCaptureElement },
+{ path: '/agents/site-capture', element: unifiedCaptureElement },
+{ path: '/developers/site-acquisition', element: unifiedCaptureElement },
+```
+
+**Why Direct Render (Not Redirects):**
+
+- Preserves user bookmarks without URL changes
+- Internal app - SEO doesn't matter
+- Simpler implementation
+- All URLs are valid entry points
+
+### Navigation
+
+Show a single "Capture" item in navigation:
+
+```tsx
+// YosaiTopNav.tsx
+{
+  items: [{ path: '/app/capture', label: t('nav.capture') }],
+}
+```
+
+### Transition UX (Mode Switching)
+
+When a user enables Developer Mode (upgrades subscription):
+
+1. Toggle switch immediately updates UI
+2. Post-capture section changes from HUD widgets to full workspace
+3. No page reload required
+4. Previous capture data (if any) is preserved
+5. New captures will use Developer API flow
+
+### Signals of Violation
+
+- Map using light style instead of `dark-v11`
+- No radar animation during scanning state
+- HUD widgets appearing for Developer mode users
+- Full workspace appearing for Agent mode users
+- Separate pages for GPS Capture and Site Acquisition
+- Redirect URLs instead of direct rendering
+- Developer components not lazy-loaded
+
+### Files Reference
+
+| File                                                 | Purpose                              |
+| ---------------------------------------------------- | ------------------------------------ |
+| `app/pages/capture/UnifiedCapturePage.tsx`           | Main page component                  |
+| `app/pages/capture/hooks/useUnifiedCapture.ts`       | Combined capture logic               |
+| `app/pages/capture/components/AgentResultsPanel.tsx` | HUD widgets for Agent mode           |
+| `app/pages/capture/components/DeveloperResults.tsx`  | Workspace wrapper for Developer mode |
+| `app/pages/capture/components/MissionLog.tsx`        | Capture history table                |
+| `styles/gps-capture/core.css`                        | Map, glass cards, HUD styling        |
+| `styles/site-acquisition.css`                        | Developer section styling            |
+
+---
+
 ## Reference Implementations
 
 - **Content vs Context**: [RulePackExplanationPanel.tsx](src/modules/cad/RulePackExplanationPanel.tsx)
 - **AI Studio Principles**: [MultiScenarioComparisonSection.tsx](src/app/pages/site-acquisition/components/multi-scenario-comparison/MultiScenarioComparisonSection.tsx)
 - **Master-Detail Layout**: [FinanceWorkspace.tsx](src/modules/finance/FinanceWorkspace.tsx)
 - **UX Friction Solutions**: [PropertyOverviewSection.tsx](src/app/pages/site-acquisition/components/property-overview/PropertyOverviewSection.tsx) (implements 4-column grid + card-type-specific layouts)
+- **Unified Capture Pattern**: [UnifiedCapturePage.tsx](src/app/pages/capture/UnifiedCapturePage.tsx) (role-based post-capture rendering)
