@@ -6,8 +6,9 @@ import httpx
 class AsyncClientService:
     """Provides shared HTTPX client shutdown logic."""
 
-    client: httpx.AsyncClient
+    client: httpx.AsyncClient | None
 
     async def close(self) -> None:
         """Close the HTTP client."""
-        await self.client.aclose()
+        if self.client is not None:
+            await self.client.aclose()

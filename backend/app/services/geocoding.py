@@ -35,7 +35,7 @@ class GeocodingService(AsyncClientService):
             logger.info(
                 "Geocoding service running in offline mode; using mock address/amenity data"
             )
-            self.client = None  # type: ignore[assignment]
+            self.client = None
         else:
             try:
                 self.client = httpx.AsyncClient(timeout=30.0)
@@ -43,7 +43,7 @@ class GeocodingService(AsyncClientService):
                 logger.warning(
                     "httpx AsyncClient unavailable; geocoding service will operate in mock mode"
                 )
-                self.client = None  # type: ignore[assignment]
+                self.client = None
 
     @staticmethod
     def _build_mock_address(latitude: float, longitude: float) -> Address:

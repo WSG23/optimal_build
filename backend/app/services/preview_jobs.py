@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, Mapping, Protocol, Sequence
+from typing import Any, Mapping, Protocol, Sequence, cast
 
 
 class _HasModelDump(Protocol):
@@ -37,9 +37,8 @@ def _serialise_layers(
     serialised: list[dict[str, object]] = []
     for entry in layers:
         if hasattr(entry, "model_dump"):
-            # Cast to protocol type for type-safe method call
-            model_entry: _HasModelDump = entry  # type: ignore[assignment]
-            serialised.append(model_entry.model_dump())
+            # Runtime check confirms entry has model_dump, cast for type safety
+            serialised.append(cast(_HasModelDump, entry).model_dump())
         else:
             serialised.append(dict(entry))
     return serialised
