@@ -337,3 +337,243 @@ class TestSignHash:
 
         assert isinstance(result, str)
         assert len(result) == 64
+
+
+class TestSerialiseLog:
+    """Tests for serialise_log function."""
+
+    def test_serialise_log_produces_dict(self):
+        """Test serialising audit log to dictionary."""
+        from app.core.audit.ledger import serialise_log
+
+        log = AuditLog(
+            id=1,
+            project_id=123,
+            version=1,
+            event_type="test_event",
+            baseline_seconds=100.5,
+            actual_seconds=95.3,
+            context={"key": "value"},
+            recorded_at=datetime(2023, 1, 15, 12, 0, 0, tzinfo=UTC),
+            hash="abc123",
+            prev_hash="prev456",
+            signature="sig789",
+        )
+
+        result = serialise_log(log)
+
+        assert result["id"] == 1
+        assert result["project_id"] == 123
+        assert result["version"] == 1
+        assert result["event_type"] == "test_event"
+        assert result["baseline_seconds"] == 100.5
+        assert result["actual_seconds"] == 95.3
+        assert result["context"] == {"key": "value"}
+        assert result["recorded_at"] == "2023-01-15T12:00:00+00:00"
+        assert result["hash"] == "abc123"
+        assert result["prev_hash"] == "prev456"
+        assert result["signature"] == "sig789"
+
+    def test_serialise_log_with_none_recorded_at(self):
+        """Test serialising log with no recorded_at."""
+        from app.core.audit.ledger import serialise_log
+
+        log = AuditLog(
+            id=1,
+            project_id=123,
+            version=1,
+            event_type="test_event",
+            recorded_at=None,
+        )
+
+        result = serialise_log(log)
+
+        assert result["recorded_at"] is None
+
+    def test_serialise_log_with_minimal_log(self):
+        """Test serialising minimal audit log."""
+        from app.core.audit.ledger import serialise_log
+
+        log = AuditLog(
+            project_id=123,
+            version=1,
+            event_type="minimal_event",
+        )
+
+        result = serialise_log(log)
+
+        assert result["project_id"] == 123
+        assert result["version"] == 1
+        assert result["event_type"] == "minimal_event"
+        assert result["baseline_seconds"] is None
+        assert result["actual_seconds"] is None
+        assert result["context"] == {}
+
+
+class TestDiffValue:
+    """Tests for _diff_value helper function."""
+
+    def test_diff_value_returns_none_when_equal(self):
+        """Test that equal values return None."""
+        from app.core.audit.ledger import _diff_value
+
+        result = _diff_value("same", "same")
+        assert result is None
+
+    def test_diff_value_returns_none_for_equal_numbers(self):
+        """Test that equal numbers return None."""
+        from app.core.audit.ledger import _diff_value
+
+        result = _diff_value(42, 42)
+        assert result is None
+
+    def test_diff_value_returns_diff_for_different_values(self):
+        """Test that different values return diff structure."""
+        from app.core.audit.ledger import _diff_value
+
+        result = _diff_value("old", "new")
+
+        assert result is not None
+        assert result["from"] == "old"
+        assert result["to"] == "new"
+
+    def test_diff_value_with_none_values(self):
+        """Test diffing None values."""
+        from app.core.audit.ledger import _diff_value
+
+        # None to value
+        result = _diff_value(None, "value")
+        assert result == {"from": None, "to": "value"}
+
+        # Value to None
+        result = _diff_value("value", None)
+        assert result == {"from": "value", "to": None}
+
+        # None to None
+        result = _diff_value(None, None)
+        assert result is None
+
+
+class TestDiffContext:
+    """Tests for _diff_context helper function."""
+
+    def test_diff_context_empty_contexts(self):
+        """Test diffing empty contexts."""
+        from app.core.audit.ledger import _diff_context
+
+        result = _diff_context({}, {})
+
+        assert result["added"] == {}
+        assert result["removed"] == {}
+        assert result["changed"] == {}
+
+    def test_diff_context_detects_added_keys(self):
+        """Test detecting added keys."""
+        from app.core.audit.ledger import _diff_context
+
+        result = _diff_context(
+            {"existing": "value"}, {"existing": "value", "new": "key"}
+        )
+
+        assert result["added"] == {"new": "key"}
+        assert result["removed"] == {}
+        assert result["changed"] == {}
+
+    def test_diff_context_detects_removed_keys(self):
+        """Test detecting removed keys."""
+        from app.core.audit.ledger import _diff_context
+
+        result = _diff_context({"old": "value", "keep": "this"}, {"keep": "this"})
+
+        assert result["added"] == {}
+        assert result["removed"] == {"old": "value"}
+        assert result["changed"] == {}
+
+    def test_diff_context_detects_changed_values(self):
+        """Test detecting changed values."""
+        from app.core.audit.ledger import _diff_context
+
+        result = _diff_context({"key": "old_value"}, {"key": "new_value"})
+
+        assert result["added"] == {}
+        assert result["removed"] == {}
+        assert result["changed"] == {"key": {"from": "old_value", "to": "new_value"}}
+
+    def test_diff_context_detects_all_changes(self):
+        """Test detecting multiple types of changes."""
+        from app.core.audit.ledger import _diff_context
+
+        context_a = {"removed_key": 1, "changed_key": "old", "unchanged": "same"}
+        context_b = {"added_key": 2, "changed_key": "new", "unchanged": "same"}
+
+        result = _diff_context(context_a, context_b)
+
+        assert result["added"] == {"added_key": 2}
+        assert result["removed"] == {"removed_key": 1}
+        assert result["changed"] == {"changed_key": {"from": "old", "to": "new"}}
+
+
+class TestDiffLogs:
+    """Tests for diff_logs function."""
+
+    def test_diff_logs_returns_diff_structure(self):
+        """Test diffing two audit logs."""
+        from app.core.audit.ledger import diff_logs
+
+        log_a = AuditLog(
+            project_id=123,
+            version=1,
+            event_type="event_a",
+            baseline_seconds=100.0,
+            actual_seconds=90.0,
+            context={"key": "value_a"},
+        )
+
+        log_b = AuditLog(
+            project_id=123,
+            version=2,
+            event_type="event_b",
+            baseline_seconds=100.0,
+            actual_seconds=95.0,
+            context={"key": "value_b"},
+        )
+
+        result = diff_logs(log_a, log_b)
+
+        assert result["event_type"] == {"from": "event_a", "to": "event_b"}
+        assert result["baseline_seconds"] is None  # Unchanged
+        assert result["actual_seconds"] == {"from": 90.0, "to": 95.0}
+        assert result["context"]["changed"] == {
+            "key": {"from": "value_a", "to": "value_b"}
+        }
+
+    def test_diff_logs_with_identical_logs(self):
+        """Test diffing identical logs."""
+        from app.core.audit.ledger import diff_logs
+
+        log_a = AuditLog(
+            project_id=123,
+            version=1,
+            event_type="same_event",
+            baseline_seconds=100.0,
+            actual_seconds=90.0,
+            context={"key": "same"},
+        )
+
+        log_b = AuditLog(
+            project_id=123,
+            version=2,
+            event_type="same_event",
+            baseline_seconds=100.0,
+            actual_seconds=90.0,
+            context={"key": "same"},
+        )
+
+        result = diff_logs(log_a, log_b)
+
+        assert result["event_type"] is None
+        assert result["baseline_seconds"] is None
+        assert result["actual_seconds"] is None
+        assert result["context"]["added"] == {}
+        assert result["context"]["removed"] == {}
+        assert result["context"]["changed"] == {}
