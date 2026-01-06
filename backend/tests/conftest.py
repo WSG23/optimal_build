@@ -27,6 +27,7 @@ import pytest
 
 
 AsyncClient: type[Any]
+ASGITransport: type[Any] | None = None
 
 try:
     from fastapi.testclient import AsyncTestClient as _FastAPIAsyncClient
@@ -35,6 +36,9 @@ try:
 except ImportError:
     try:
         from httpx import AsyncClient as _HTTPXAsyncClient
+        from httpx import ASGITransport as _ASGITransport
+
+        ASGITransport = _ASGITransport
     except ImportError:
 
         class _HTTPXAsyncClientStub:  # pragma: no cover - runtime fallback
@@ -773,12 +777,23 @@ if _SQLALCHEMY_AVAILABLE:
 
         assert app is not None
         app.dependency_overrides[get_session] = _override_get_session
-        async with AsyncClient(
-            app=app,
-            base_url="http://testserver",
-            headers={"X-Role": "admin"},
-        ) as client:
-            yield client
+        # httpx 0.28+ requires ASGITransport instead of app= parameter
+        if ASGITransport is not None:
+            transport = ASGITransport(app=app)
+            async with AsyncClient(
+                transport=transport,
+                base_url="http://testserver",
+                headers={"X-Role": "admin"},
+            ) as client:
+                yield client
+        else:
+            # Fallback for older httpx or FastAPI's AsyncTestClient
+            async with AsyncClient(
+                app=app,
+                base_url="http://testserver",
+                headers={"X-Role": "admin"},
+            ) as client:
+                yield client
 
         app.dependency_overrides.pop(get_session, None)
         await _reset_database(async_session_factory)

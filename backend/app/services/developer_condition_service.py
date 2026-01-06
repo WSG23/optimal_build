@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 from uuid import UUID
 
 from app.models.developer_checklists import ChecklistPriority, ChecklistStatus
@@ -380,7 +380,8 @@ class DeveloperConditionService:
         actions = [str(item) for item in record.recommended_actions or []]
         attachments_payload: List[dict[str, Any]] = []
         if isinstance(record.attachments, list):
-            for raw in record.attachments:  # type: ignore[assignment]
+            attachments_list = cast(List[Any], record.attachments)
+            for raw in attachments_list:
                 if not isinstance(raw, dict):
                     continue
                 label = str(raw.get("label", "")).strip()
