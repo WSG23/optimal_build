@@ -363,7 +363,7 @@ async def test_finance_export_bundle_includes_artifacts(
         )
         asset_rows = db_rows.scalars().all()
     office_row = next(row for row in asset_rows if row.asset_type == "office")
-    assert str(office_row.noi_annual_sgd) not in (None, "")
+    assert str(office_row.annual_noi_sgd) not in (None, "")
     assert office_row.notes_json, "Notes should round-trip to the database"
 
     export_response = await app_client.get(

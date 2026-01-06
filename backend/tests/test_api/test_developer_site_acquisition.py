@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 import pytest
 from backend._compat.datetime import utcnow
 
-from app.api.v1 import developers as developers_api
+from app.api.v1 import developers_gps as developers_api
 from app.models.finance import FinCapitalStack, FinProject, FinScenario
 from app.models.preview import PreviewJob
 from app.models.projects import Project

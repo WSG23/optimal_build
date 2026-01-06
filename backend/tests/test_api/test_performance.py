@@ -24,7 +24,7 @@ from app.models.business_performance import CommissionType, DealAssetType, DealT
 from app.models.users import User
 from app.services.deals import AgentCommissionService, AgentDealService
 from app.services.deals.performance import AgentPerformanceService
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 
 @pytest_asyncio.fixture
@@ -62,7 +62,8 @@ async def performance_client(async_session_factory):
     app.dependency_overrides[require_viewer] = _override_require_viewer
     app.include_router(router, prefix="/api/v1")
 
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         yield client
 
     app.dependency_overrides.clear()

@@ -12,7 +12,7 @@ pytest.importorskip("sqlalchemy")
 
 import pytest_asyncio
 from app.models.users import User
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 
 @pytest_asyncio.fixture
@@ -66,8 +66,9 @@ async def deals_client(async_session_factory):
     app.dependency_overrides[get_optional_user] = _override_get_optional_user
     app.include_router(router, prefix="/api/v1")
 
+    transport = ASGITransport(app=app)
     async with AsyncClient(
-        app=app, base_url="http://testserver", headers={"X-Role": "admin"}
+        transport=transport, base_url="http://testserver", headers={"X-Role": "admin"}
     ) as client:
         yield client
 

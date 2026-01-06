@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+import pytest_asyncio
 
 from app.models.rkp import RefMaterialStandard
 from app.utils import metrics as prometheus_metrics
@@ -13,8 +14,8 @@ def reset_metrics():
     prometheus_metrics.reset_metrics()
 
 
-@pytest.fixture
-async def standards_seed(session):
+@pytest_asyncio.fixture
+async def standards_seed(db_session):
     first = RefMaterialStandard(
         jurisdiction="SG",
         standard_code="SS EN 206",
@@ -33,8 +34,8 @@ async def standards_seed(session):
         value="275",
         section="5.1",
     )
-    session.add_all([first, second])
-    await session.commit()
+    db_session.add_all([first, second])
+    await db_session.commit()
     return {"first": first, "second": second}
 
 

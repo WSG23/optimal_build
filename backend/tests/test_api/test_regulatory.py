@@ -34,14 +34,23 @@ async def override_require_reviewer():
 
 
 @pytest.fixture(autouse=True)
-def override_auth():
+def override_auth(async_session_factory):
+    async def _override_get_db():
+        async with async_session_factory() as session:
+            yield session
+
     app.dependency_overrides[deps.get_identity] = override_get_identity
     app.dependency_overrides[deps.require_viewer] = (
         override_get_identity  # Dev has viewer access
     )
     app.dependency_overrides[deps.require_reviewer] = override_require_reviewer
+    app.dependency_overrides[deps.get_db] = _override_get_db
     yield
-    app.dependency_overrides = {}
+    # Only remove overrides we added
+    app.dependency_overrides.pop(deps.get_identity, None)
+    app.dependency_overrides.pop(deps.require_viewer, None)
+    app.dependency_overrides.pop(deps.require_reviewer, None)
+    app.dependency_overrides.pop(deps.get_db, None)
 
 
 async def test_read_agencies(client: AsyncClient, db_session):

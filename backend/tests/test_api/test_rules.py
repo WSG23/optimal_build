@@ -14,7 +14,7 @@ from app.core.database import get_session
 from app.main import app
 from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
 from app.utils import metrics
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from scripts.seed_screening import seed_screening_sample_data
 from sqlalchemy import select
 
@@ -125,8 +125,9 @@ async def rules_app_client(async_session_factory):
             yield session
 
     app.dependency_overrides[get_session] = _override_get_session
+    transport = ASGITransport(app=app)
     async with AsyncClient(
-        app=app,
+        transport=transport,
         base_url="http://test",
         headers={"X-Role": "admin"},
     ) as test_client:

@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import pytest
+import pytest_asyncio
 
 from app.models.rkp import RefProduct
 
 
-@pytest.fixture
-async def products_seed(session):
+@pytest_asyncio.fixture
+async def products_seed(db_session):
     first = RefProduct(
         vendor="Acme",
         category="fixtures",
@@ -29,8 +30,8 @@ async def products_seed(session):
         specifications={"material": "steel"},
         sku="SKU-2",
     )
-    session.add_all([first, second])
-    await session.commit()
+    db_session.add_all([first, second])
+    await db_session.commit()
     return {
         "first": first,
         "second": second,

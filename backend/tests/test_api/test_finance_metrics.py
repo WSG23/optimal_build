@@ -90,7 +90,7 @@ async def test_finance_metrics_surface_in_health(
         headers=ADMIN_HEADERS,
     )
     assert export_response.status_code == 200
-    assert export_response.headers["content-type"].startswith("text/csv")
+    assert export_response.headers["content-type"].startswith("application/zip")
     assert metrics.counter_value(metrics.FINANCE_EXPORT_TOTAL, {}) == 1.0
 
     metrics_output = metrics.render_latest_metrics().decode()

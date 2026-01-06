@@ -15,7 +15,7 @@ from app.models.singapore_property import (
     SingaporeProperty,
 )
 from app.services import compliance as compliance_service
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 
 async def _create_property(async_session_factory, **overrides):
@@ -40,7 +40,8 @@ async def compliance_client(async_session_factory):
     compliance_api._service_factory.cache_clear()
     service = compliance_service.ComplianceService(async_session_factory)
     app.dependency_overrides[compliance_api.get_compliance_service] = lambda: service
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         yield client
     app.dependency_overrides.pop(compliance_api.get_compliance_service, None)
 

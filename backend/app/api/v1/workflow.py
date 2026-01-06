@@ -1,4 +1,3 @@
-from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -20,7 +19,7 @@ async def create_workflow(
     workflow_in: ApprovalWorkflowCreate,
     db=Depends(deps.get_db),
     identity: deps.RequestIdentity = Depends(deps.require_reviewer),
-) -> Any:
+) -> ApprovalWorkflowRead:
     """
     Create a new approval workflow (e.g. for a design phase).
     """
@@ -37,7 +36,9 @@ async def create_workflow(
         steps_data=steps_data,
         description=workflow_in.description,
     )
-    return workflow
+    # Reload workflow with steps eagerly loaded
+    workflow = await service.get_workflow(workflow.id)
+    return ApprovalWorkflowRead.from_orm_workflow(workflow)
 
 
 @router.get("/{workflow_id}", response_model=ApprovalWorkflowRead)
@@ -45,7 +46,7 @@ async def get_workflow(
     workflow_id: UUID,
     db=Depends(deps.get_db),
     identity: deps.RequestIdentity = Depends(deps.require_viewer),
-) -> Any:
+) -> ApprovalWorkflowRead:
     """
     Get workflow details including steps and status.
     """
@@ -53,7 +54,7 @@ async def get_workflow(
     workflow = await service.get_workflow(workflow_id)
     if not workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
-    return workflow
+    return ApprovalWorkflowRead.from_orm_workflow(workflow)
 
 
 @router.post("/steps/{step_id}/approve", response_model=ApprovalWorkflowRead)
@@ -62,7 +63,7 @@ async def approve_step(
     approval_in: ApprovalStepUpdate,
     db=Depends(deps.get_db),
     identity: deps.RequestIdentity = Depends(deps.get_identity),
-) -> Any:
+) -> ApprovalWorkflowRead:
     """
     Approve (or reject) a specific step in the workflow.
     Validates if the current user has the required role.
@@ -78,6 +79,6 @@ async def approve_step(
         workflow = await service.get_workflow(step.workflow_id)
         if not workflow:
             raise HTTPException(status_code=400, detail="Unable to approve step")
-        return workflow
+        return ApprovalWorkflowRead.from_orm_workflow(workflow)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e

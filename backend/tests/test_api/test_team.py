@@ -58,7 +58,10 @@ def override_auth():
     app.dependency_overrides[deps.require_reviewer] = mock_reviewer_identity
     app.dependency_overrides[deps.get_identity] = mock_user_identity
     yield
-    app.dependency_overrides = {}
+    # Only remove auth-related overrides, preserve session overrides
+    app.dependency_overrides.pop(deps.require_viewer, None)
+    app.dependency_overrides.pop(deps.require_reviewer, None)
+    app.dependency_overrides.pop(deps.get_identity, None)
 
 
 async def test_list_team_members_empty(client: AsyncClient, db_session) -> None:
