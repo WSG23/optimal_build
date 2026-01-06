@@ -76,6 +76,14 @@ TAGS_METADATA: Final[list[dict[str, str]]] = [
             "critical path analysis, heritage preservation tracking, and tenant coordination."
         ),
     },
+    {
+        "name": "AI Services",
+        "description": (
+            "AI-powered services including natural language queries, deal scoring, "
+            "market predictions, report generation, conversational assistant, "
+            "portfolio optimization, and competitive intelligence."
+        ),
+    },
 ]
 
 _ROUTER_MODULES: Final[tuple[str, ...]] = (
@@ -118,6 +126,7 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "workflow",  # Approval workflow endpoints (Phase 2E)
     "regulatory",  # Regulatory navigation endpoints (Phase 2F)
     "development_phases",  # Multi-phase development management (Phase 2D)
+    "ai",  # AI services endpoints (Phase 1-4 AI rollout)
 )
 
 
