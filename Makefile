@@ -232,6 +232,10 @@ lint: ## Run linting (all Python files)
 	@$(MYPY) || true
 	@cd frontend && npm run lint || true
 
+lint-ui-standards: ## Enforce scoped UI standards (tokens + typography)
+	@npm run --prefix frontend lint:tokens
+	@npm run --prefix frontend lint:ui-standards
+
 hooks: ## Run pre-commit hooks across the repository
 	@if command -v $(PRE_COMMIT) >/dev/null 2>&1; then \
 		$(PRE_COMMIT) run --all-files; \
@@ -324,6 +328,7 @@ test-aec: ## Run sample import, overlay, export flows and regression tests
 verify: ## Run formatting checks, linting, type checking, coding rules, roadmap/work queue validation, and tests
 	$(MAKE) format-check
 	$(MAKE) lint
+	$(MAKE) lint-ui-standards
 	$(MAKE) typecheck-backend
 	$(MAKE) check-coding-rules
 	$(MAKE) validate-delivery-plan
@@ -334,6 +339,7 @@ quick-check: ## Fast pre-commit checks (format + typecheck + lint)
 	@$(MAKE) format-check
 	@npm run --prefix frontend typecheck
 	@$(MAKE) lint
+	@$(MAKE) lint-ui-standards
 	@echo "✅ Quick checks completed"
 
 pre-commit-full: ## Comprehensive pre-commit checks
