@@ -39,7 +39,7 @@ class ListingIntegrationAccountService:
             if isinstance(row, ListingIntegrationAccount):
                 accounts.append(row)
                 continue
-            if isinstance(row, tuple | list):  # type: ignore[arg-type]
+            if isinstance(row, (tuple, list)):
                 if row:
                     candidate = row[0]
                     if isinstance(candidate, ListingIntegrationAccount):

@@ -4,10 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import TYPE_CHECKING, Any, Mapping, Protocol, Sequence
-
-if TYPE_CHECKING:
-    from typing_extensions import Self
+from typing import Any, Mapping, Protocol, Sequence
 
 
 class _HasModelDump(Protocol):

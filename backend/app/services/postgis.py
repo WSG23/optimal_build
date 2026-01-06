@@ -75,7 +75,7 @@ async def load_layers_for_zone(
             if isinstance(row, RefZoningLayer):
                 cleaned.append(row)
                 continue
-            if isinstance(row, tuple | list):  # type: ignore[arg-type]
+            if isinstance(row, (tuple, list)):
                 candidate = row[0] if row else None
             else:
                 mapping = getattr(row, "_mapping", None)

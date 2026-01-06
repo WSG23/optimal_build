@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, AsyncGenerator
+from typing import Literal, AsyncGenerator, cast
 
 from dataclasses import dataclass
 from fastapi import Depends, Header, HTTPException, status
@@ -43,7 +43,8 @@ class RequestIdentity:
             )
         user_id = (x_user_id or "").strip() or None
         email = (x_user_email or "").strip() or None
-        return cls(role=role, user_id=user_id, email=email)  # type: ignore[arg-type]
+        # role is validated against _VIEWER_ROLES above, safe to cast
+        return cls(role=cast(Role, role), user_id=user_id, email=email)
 
 
 async def get_identity(

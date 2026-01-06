@@ -342,9 +342,10 @@ def _apply_scoring_adjustments(
         notes = list(plan.notes)
         if note_delta not in notes:
             notes.append(note_delta)
-        updated.append(
-            replace(plan, allocation_pct=plan.allocation_pct + delta, notes=notes)  # type: ignore[type-var]
+        updated_plan: AssetOptimizationPlan = replace(
+            plan, allocation_pct=plan.allocation_pct + delta, notes=notes
         )
+        updated.append(updated_plan)
 
     return updated, raw_scores, normalized_scores
 

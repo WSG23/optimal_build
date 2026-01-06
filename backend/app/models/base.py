@@ -5,13 +5,10 @@ from __future__ import annotations
 import uuid as uuid_module
 from datetime import date, datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, overload
+from typing import Any, overload
 
 from sqlalchemy import Dialect
 from sqlalchemy import MetaData as SAMetaData
-
-if TYPE_CHECKING:
-    from typing_extensions import Self
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.types import CHAR, TypeDecorator, TypeEngine
