@@ -1,14 +1,20 @@
 """Shared user-facing schemas."""
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-try:  # pragma: no cover - optional email validation dependency
-    import email_validator  # type: ignore  # noqa: F401
-    from pydantic import EmailStr  # type: ignore
-except ImportError:  # pragma: no cover - fallback when validator missing
-    EmailStr = str  # type: ignore
+if TYPE_CHECKING:
+    from pydantic import EmailStr as _EmailStr
+
+    EmailStr = _EmailStr
+else:
+    try:  # pragma: no cover - optional email validation dependency
+        import email_validator  # noqa: F401
+
+        from pydantic import EmailStr
+    except ImportError:  # pragma: no cover - fallback when validator missing
+        EmailStr = str  # type: ignore[misc]
 
 from app.utils import validators as user_validators
 

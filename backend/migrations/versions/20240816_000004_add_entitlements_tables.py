@@ -16,103 +16,10 @@ depends_on = None
 JSONB_TYPE = postgresql.JSONB(astext_type=sa.Text())
 
 
-APPROVAL_CATEGORY_ENUM = postgresql.ENUM(
-    "planning",
-    "building",
-    "environmental",
-    "transport",
-    "utilities",
-    name="ent_approval_category",
-    create_type=False,
-)
-
-ROADMAP_STATUS_ENUM = postgresql.ENUM(
-    "planned",
-    "in_progress",
-    "submitted",
-    "approved",
-    "rejected",
-    "blocked",
-    "complete",
-    name="ent_roadmap_status",
-    create_type=False,
-)
-
-STUDY_TYPE_ENUM = postgresql.ENUM(
-    "traffic",
-    "environmental",
-    "heritage",
-    "utilities",
-    "community",
-    name="ent_study_type",
-    create_type=False,
-)
-
-STUDY_STATUS_ENUM = postgresql.ENUM(
-    "draft",
-    "scope_defined",
-    "in_progress",
-    "submitted",
-    "accepted",
-    "rejected",
-    name="ent_study_status",
-    create_type=False,
-)
-
-ENGAGEMENT_TYPE_ENUM = postgresql.ENUM(
-    "agency",
-    "community",
-    "political",
-    "private_partner",
-    "regulator",
-    name="ent_engagement_type",
-    create_type=False,
-)
-
-ENGAGEMENT_STATUS_ENUM = postgresql.ENUM(
-    "planned",
-    "active",
-    "completed",
-    "blocked",
-    name="ent_engagement_status",
-    create_type=False,
-)
-
-LEGAL_INSTRUMENT_TYPE_ENUM = postgresql.ENUM(
-    "agreement",
-    "licence",
-    "memorandum",
-    "waiver",
-    "variation",
-    name="ent_legal_instrument_type",
-    create_type=False,
-)
-
-LEGAL_INSTRUMENT_STATUS_ENUM = postgresql.ENUM(
-    "draft",
-    "in_review",
-    "executed",
-    "expired",
-    name="ent_legal_instrument_status",
-    create_type=False,
-)
-
-
-def _create_enum(enum: sa.Enum) -> None:
-    bind = op.get_bind()
-    if bind.dialect.name != "sqlite":  # SQLite does not create dedicated enum types
-        enum.create(bind, checkfirst=True)
-
-
-def _drop_enum(enum: sa.Enum) -> None:
-    bind = op.get_bind()
-    if bind.dialect.name != "sqlite":
-        enum.drop(bind, checkfirst=True)
-
-
 def upgrade() -> None:
     """Apply the migration."""
 
+    # Create ENUM types with raw SQL per CODING_RULES.md Rule 1.2
     op.execute(
         """
         DO $$
@@ -120,21 +27,30 @@ def upgrade() -> None:
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ent_approval_category') THEN
                 CREATE TYPE ent_approval_category AS ENUM ('planning','building','environmental','transport','utilities');
             END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ent_roadmap_status') THEN
+                CREATE TYPE ent_roadmap_status AS ENUM ('planned','in_progress','submitted','approved','rejected','blocked','complete');
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ent_study_type') THEN
+                CREATE TYPE ent_study_type AS ENUM ('traffic','environmental','heritage','utilities','community');
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ent_study_status') THEN
+                CREATE TYPE ent_study_status AS ENUM ('draft','scope_defined','in_progress','submitted','accepted','rejected');
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ent_engagement_type') THEN
+                CREATE TYPE ent_engagement_type AS ENUM ('agency','community','political','private_partner','regulator');
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ent_engagement_status') THEN
+                CREATE TYPE ent_engagement_status AS ENUM ('planned','active','completed','blocked');
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ent_legal_instrument_type') THEN
+                CREATE TYPE ent_legal_instrument_type AS ENUM ('agreement','licence','memorandum','waiver','variation');
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ent_legal_instrument_status') THEN
+                CREATE TYPE ent_legal_instrument_status AS ENUM ('draft','in_review','executed','expired');
+            END IF;
         END$$;
         """
     )
-
-    for enum in (
-        APPROVAL_CATEGORY_ENUM,
-        ROADMAP_STATUS_ENUM,
-        STUDY_TYPE_ENUM,
-        STUDY_STATUS_ENUM,
-        ENGAGEMENT_TYPE_ENUM,
-        ENGAGEMENT_STATUS_ENUM,
-        LEGAL_INSTRUMENT_TYPE_ENUM,
-        LEGAL_INSTRUMENT_STATUS_ENUM,
-    ):
-        _create_enum(enum)
 
     op.create_table(
         "ent_authorities",
@@ -186,7 +102,7 @@ def upgrade() -> None:
         ),
         sa.Column("code", sa.String(length=60), nullable=False),
         sa.Column("name", sa.String(length=150), nullable=False),
-        sa.Column("category", APPROVAL_CATEGORY_ENUM, nullable=False),
+        sa.Column("category", sa.String(length=50), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column(
             "requirements",
@@ -247,7 +163,7 @@ def upgrade() -> None:
             nullable=True,
         ),
         sa.Column("sequence_order", sa.Integer(), nullable=False),
-        sa.Column("status", ROADMAP_STATUS_ENUM, nullable=False),
+        sa.Column("status", sa.String(length=50), nullable=False),
         sa.Column("status_changed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("target_submission_date", sa.Date(), nullable=True),
         sa.Column("target_decision_date", sa.Date(), nullable=True),
@@ -299,8 +215,8 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column("project_id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(length=150), nullable=False),
-        sa.Column("study_type", STUDY_TYPE_ENUM, nullable=False),
-        sa.Column("status", STUDY_STATUS_ENUM, nullable=False),
+        sa.Column("study_type", sa.String(length=50), nullable=False),
+        sa.Column("status", sa.String(length=50), nullable=False),
         sa.Column("summary", sa.Text(), nullable=True),
         sa.Column("consultant", sa.String(length=120), nullable=True),
         sa.Column("due_date", sa.Date(), nullable=True),
@@ -339,8 +255,8 @@ def upgrade() -> None:
         sa.Column("project_id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(length=150), nullable=False),
         sa.Column("organisation", sa.String(length=150), nullable=True),
-        sa.Column("engagement_type", ENGAGEMENT_TYPE_ENUM, nullable=False),
-        sa.Column("status", ENGAGEMENT_STATUS_ENUM, nullable=False),
+        sa.Column("engagement_type", sa.String(length=50), nullable=False),
+        sa.Column("status", sa.String(length=50), nullable=False),
         sa.Column("contact_email", sa.String(length=120), nullable=True),
         sa.Column("contact_phone", sa.String(length=40), nullable=True),
         sa.Column(
@@ -377,8 +293,8 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column("project_id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(length=150), nullable=False),
-        sa.Column("instrument_type", LEGAL_INSTRUMENT_TYPE_ENUM, nullable=False),
-        sa.Column("status", LEGAL_INSTRUMENT_STATUS_ENUM, nullable=False),
+        sa.Column("instrument_type", sa.String(length=50), nullable=False),
+        sa.Column("status", sa.String(length=50), nullable=False),
         sa.Column("reference_code", sa.String(length=80), nullable=True),
         sa.Column("effective_date", sa.Date(), nullable=True),
         sa.Column("expiry_date", sa.Date(), nullable=True),
@@ -418,6 +334,32 @@ def upgrade() -> None:
         ["created_at"],
     )
 
+    # Cast String columns to ENUM types per CODING_RULES.md Rule 1.2
+    op.execute(
+        "ALTER TABLE ent_approval_types ALTER COLUMN category TYPE ent_approval_category USING category::ent_approval_category"
+    )
+    op.execute(
+        "ALTER TABLE ent_roadmap_items ALTER COLUMN status TYPE ent_roadmap_status USING status::ent_roadmap_status"
+    )
+    op.execute(
+        "ALTER TABLE ent_studies ALTER COLUMN study_type TYPE ent_study_type USING study_type::ent_study_type"
+    )
+    op.execute(
+        "ALTER TABLE ent_studies ALTER COLUMN status TYPE ent_study_status USING status::ent_study_status"
+    )
+    op.execute(
+        "ALTER TABLE ent_engagements ALTER COLUMN engagement_type TYPE ent_engagement_type USING engagement_type::ent_engagement_type"
+    )
+    op.execute(
+        "ALTER TABLE ent_engagements ALTER COLUMN status TYPE ent_engagement_status USING status::ent_engagement_status"
+    )
+    op.execute(
+        "ALTER TABLE ent_legal_instruments ALTER COLUMN instrument_type TYPE ent_legal_instrument_type USING instrument_type::ent_legal_instrument_type"
+    )
+    op.execute(
+        "ALTER TABLE ent_legal_instruments ALTER COLUMN status TYPE ent_legal_instrument_status USING status::ent_legal_instrument_status"
+    )
+
 
 def downgrade() -> None:
     """Rollback the migration."""
@@ -447,14 +389,12 @@ def downgrade() -> None:
     op.execute("DROP INDEX IF EXISTS ix_ent_authorities_jurisdiction")
     op.execute("DROP TABLE IF EXISTS ent_authorities CASCADE")
 
-    for enum in (
-        LEGAL_INSTRUMENT_STATUS_ENUM,
-        LEGAL_INSTRUMENT_TYPE_ENUM,
-        ENGAGEMENT_STATUS_ENUM,
-        ENGAGEMENT_TYPE_ENUM,
-        STUDY_STATUS_ENUM,
-        STUDY_TYPE_ENUM,
-        ROADMAP_STATUS_ENUM,
-        APPROVAL_CATEGORY_ENUM,
-    ):
-        _drop_enum(enum)
+    # Drop ENUM types
+    op.execute("DROP TYPE IF EXISTS ent_legal_instrument_status")
+    op.execute("DROP TYPE IF EXISTS ent_legal_instrument_type")
+    op.execute("DROP TYPE IF EXISTS ent_engagement_status")
+    op.execute("DROP TYPE IF EXISTS ent_engagement_type")
+    op.execute("DROP TYPE IF EXISTS ent_study_status")
+    op.execute("DROP TYPE IF EXISTS ent_study_type")
+    op.execute("DROP TYPE IF EXISTS ent_roadmap_status")
+    op.execute("DROP TYPE IF EXISTS ent_approval_category")

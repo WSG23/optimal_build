@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy import inspect
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -96,23 +95,16 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    bind = op.get_bind()
-    inspector = inspect(bind)
-
-    if "developer_condition_assessments" in inspector.get_table_names():
-        op.drop_index(
-            "ix_developer_condition_assessments_recorded_at",
-            table_name="developer_condition_assessments",
-            if_exists=True,
-        )
-        op.drop_index(
-            "ix_developer_condition_assessments_scenario",
-            table_name="developer_condition_assessments",
-            if_exists=True,
-        )
-        op.drop_index(
-            "ix_developer_condition_assessments_property",
-            table_name="developer_condition_assessments",
-            if_exists=True,
-        )
-        op.drop_table("developer_condition_assessments", if_exists=True)
+    op.drop_index(
+        "ix_developer_condition_assessments_recorded_at",
+        table_name="developer_condition_assessments",
+    )
+    op.drop_index(
+        "ix_developer_condition_assessments_scenario",
+        table_name="developer_condition_assessments",
+    )
+    op.drop_index(
+        "ix_developer_condition_assessments_property",
+        table_name="developer_condition_assessments",
+    )
+    op.drop_table("developer_condition_assessments")

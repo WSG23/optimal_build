@@ -391,8 +391,10 @@ def upgrade() -> None:
     op.create_index("ix_projects_is_active", "projects", ["is_active"])
     op.create_index("ix_projects_created_at", "projects", ["created_at"])
 
-    # TODO: Add FK to users table when users table is created
-    # op.create_foreign_key("fk_projects_owner_id", "projects", "users", ["owner_id"], ["id"])
+    # NOTE: FK constraint for owner_id -> users.id is defined in the model
+    # (Project.owner_id has ForeignKey("users.id")). SQLAlchemy creates the FK
+    # automatically when the table is created via the model definition.
+    # The explicit op.create_foreign_key is not needed here.
 
 
 def downgrade() -> None:

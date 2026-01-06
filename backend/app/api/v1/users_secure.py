@@ -1,15 +1,21 @@
 """Secure user API with validation and password hashing."""
 
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, field_validator
 
-try:  # pragma: no cover - optional dependency
-    import email_validator  # type: ignore  # noqa: F401
-    from pydantic import EmailStr  # type: ignore
-except ImportError:  # pragma: no cover - fallback when validator missing
-    EmailStr = str  # type: ignore
+if TYPE_CHECKING:
+    from pydantic import EmailStr as _EmailStr
+
+    EmailStr = _EmailStr
+else:
+    try:  # pragma: no cover - optional dependency
+        import email_validator  # noqa: F401
+
+        from pydantic import EmailStr
+    except ImportError:  # pragma: no cover - fallback when validator missing
+        EmailStr = str  # type: ignore[misc]
 
 from app.core.auth import (
     AuthService,

@@ -286,9 +286,92 @@ class DevelopmentPotentialScanner:
         # Get base template
         base_mix = use_mix_templates.get(zoning_info.zone_description, {"mixed": 1.0})
 
-        # TODO: Adjust based on market conditions and location factors
+        # Adjust based on market conditions and location factors
+        adjusted_mix = self._apply_market_adjustments(base_mix, zoning_info, location)
 
-        return base_mix
+        return adjusted_mix
+
+    def _apply_market_adjustments(
+        self,
+        base_mix: Dict[str, float],
+        zoning_info: Any,
+        location: Any,
+    ) -> Dict[str, float]:
+        """Apply market-based adjustments to the use mix.
+
+        Adjusts allocations based on:
+        - Proximity to transit (increases residential/commercial appeal)
+        - Nearby amenities (affects retail allocation)
+        - District characteristics (CBD vs suburban)
+        - Market demand indicators
+
+        Args:
+            base_mix: Base use mix from zoning template
+            zoning_info: Zoning information for the property
+            location: Location data including coordinates
+
+        Returns:
+            Adjusted use mix dictionary
+        """
+        adjusted = dict(base_mix)
+
+        # Extract location attributes if available
+        zone_desc = getattr(zoning_info, "zone_description", "").lower()
+
+        # Transit-oriented development adjustments
+        # If near MRT/transit, increase density-friendly uses
+        if hasattr(location, "transit_proximity_m"):
+            transit_dist = getattr(location, "transit_proximity_m", float("inf"))
+            if transit_dist < 400:  # Within 400m of transit
+                # Increase residential and office for TOD
+                if "residential" in adjusted:
+                    adjusted["residential"] = min(adjusted["residential"] * 1.15, 0.85)
+                if "office" in adjusted:
+                    adjusted["office"] = min(adjusted["office"] * 1.1, 0.75)
+                if "retail" in adjusted:
+                    adjusted["retail"] = min(adjusted["retail"] * 1.05, 0.35)
+
+        # Central business district adjustments
+        if any(term in zone_desc for term in ["cbd", "central", "downtown", "core"]):
+            # CBD favors commercial over residential
+            if "office" in adjusted:
+                adjusted["office"] = min(adjusted["office"] * 1.2, 0.8)
+            if "retail" in adjusted:
+                adjusted["retail"] = min(adjusted["retail"] * 1.1, 0.4)
+            if "residential" in adjusted:
+                adjusted["residential"] = max(adjusted["residential"] * 0.85, 0.1)
+
+        # Suburban/fringe adjustments
+        if any(term in zone_desc for term in ["suburban", "fringe", "outer"]):
+            # Suburban favors residential and retail
+            if "residential" in adjusted:
+                adjusted["residential"] = min(adjusted["residential"] * 1.15, 0.9)
+            if "retail" in adjusted:
+                adjusted["retail"] = min(adjusted["retail"] * 1.1, 0.3)
+            if "office" in adjusted:
+                adjusted["office"] = max(adjusted["office"] * 0.8, 0.05)
+
+        # Industrial zone adjustments
+        if any(
+            term in zone_desc for term in ["industrial", "business park", "tech park"]
+        ):
+            # Industrial zones favor light industrial and office
+            if "light_industrial" in adjusted:
+                adjusted["light_industrial"] = min(
+                    adjusted["light_industrial"] * 1.2, 0.7
+                )
+            if "office" in adjusted:
+                adjusted["office"] = min(adjusted["office"] * 1.1, 0.5)
+            # Reduce residential in industrial zones
+            if "residential" in adjusted:
+                adjusted["residential"] = max(adjusted["residential"] * 0.5, 0.0)
+
+        # Normalize to ensure allocations sum to 1.0
+        total = sum(adjusted.values())
+        if total > 0:
+            adjusted = {k: v / total for k, v in adjusted.items()}
+
+        return adjusted
 
     async def _generate_development_scenarios(
         self,
@@ -479,7 +562,116 @@ class DevelopmentPotentialScanner:
         if len(use_mix) > 1:
             opportunities.append("Mixed-use development potential")
 
-        # TODO: Add market-based opportunities
+        # Add market-based opportunities
+        market_opportunities = self._identify_market_opportunities(
+            property_data, zoning_info, use_mix
+        )
+        opportunities.extend(market_opportunities)
+
+        return opportunities
+
+    def _identify_market_opportunities(
+        self,
+        property_data: Property,
+        zoning_info: Any,
+        use_mix: Dict[str, float],
+    ) -> List[str]:
+        """Identify market-based development opportunities.
+
+        Analyzes property and market conditions to identify:
+        - Transit-oriented development potential
+        - Emerging neighborhood trends
+        - Infrastructure-driven opportunities
+        - Demographic-driven demand
+
+        Args:
+            property_data: Property information
+            zoning_info: Zoning rules and constraints
+            use_mix: Proposed use allocation
+
+        Returns:
+            List of market-based opportunity descriptions
+        """
+        opportunities = []
+        zone_desc = getattr(zoning_info, "zone_description", "").lower()
+        district = getattr(property_data, "district", "") or ""
+
+        # Transit-Oriented Development (TOD) opportunities
+        # Check proximity to transit if available
+        transit_proximity = getattr(property_data, "transit_proximity_m", None)
+        if transit_proximity and transit_proximity < 500:
+            opportunities.append(
+                f"Transit-oriented development (TOD) - within {int(transit_proximity)}m of station"
+            )
+            if "residential" in use_mix and use_mix.get("residential", 0) > 0.3:
+                opportunities.append("Strong rental demand from transit accessibility")
+
+        # Emerging neighborhood trends
+        emerging_areas = [
+            "jurong",
+            "paya lebar",
+            "woodlands",
+            "punggol",
+            "tengah",
+            "tuas",
+            "one-north",
+            "mediapolis",
+        ]
+        if any(area in district.lower() for area in emerging_areas):
+            opportunities.append(
+                "Emerging growth corridor with infrastructure investment"
+            )
+
+        # Tech/Innovation hub proximity
+        tech_hubs = ["one-north", "science park", "changi business park", "mediapolis"]
+        if any(hub in district.lower() for hub in tech_hubs):
+            opportunities.append(
+                "Technology hub location - growing demand for tech-enabled spaces"
+            )
+
+        # CBD fringe/decentralization trend
+        if any(term in zone_desc for term in ["regional centre", "sub-regional"]):
+            opportunities.append("Benefiting from CBD decentralization trend")
+
+        # Healthcare/Education proximity (stable demand drivers)
+        institutional_areas = ["hospital", "university", "polytechnic", "medical"]
+        if any(inst in district.lower() for inst in institutional_areas):
+            opportunities.append("Institutional anchor nearby - stable demand driver")
+
+        # Industrial transformation opportunities
+        if any(term in zone_desc for term in ["industrial", "business"]):
+            opportunities.append(
+                "Potential for industrial-to-business park transformation"
+            )
+            if "light_industrial" in use_mix or "office" in use_mix:
+                opportunities.append(
+                    "Growing demand for flexible industrial/office hybrid spaces"
+                )
+
+        # Waterfront/amenity premium
+        waterfront_terms = ["marina", "bay", "waterfront", "reservoir", "river"]
+        if any(term in district.lower() for term in waterfront_terms):
+            opportunities.append("Waterfront premium potential")
+
+        # Green/sustainability premium
+        if hasattr(zoning_info, "green_mark_requirement"):
+            opportunities.append(
+                "Green building certification could command rental premium"
+            )
+
+        # Age-related opportunities (silver economy)
+        if "residential" in use_mix:
+            opportunities.append(
+                "Senior-friendly design could tap aging population demand"
+            )
+
+        # Co-living/co-working trends
+        if "residential" in use_mix and use_mix.get("residential", 0) > 0.5:
+            opportunities.append(
+                "Co-living format opportunity for young professional segment"
+            )
+        if "office" in use_mix and use_mix.get("office", 0) > 0.3:
+            opportunities.append("Flexible/co-working space demand remains strong")
 
         return opportunities
 

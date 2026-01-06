@@ -49,14 +49,7 @@ class MetricOverridePayload(BaseModel):
     front_setback_m: float | None = Field(default=None, gt=0)
 
     def normalized(self) -> dict[str, float]:
-        try:
-            values = self.model_dump(exclude_none=True)  # type: ignore[attr-defined]
-        except (AttributeError, TypeError):  # pragma: no cover - Pydantic v1 fallback
-            values = {
-                key: value
-                for key, value in self.model_dump().items()  # type: ignore[call-arg]
-                if value is not None
-            }
+        values = self.model_dump(exclude_none=True)
         return {key: float(value) for key, value in values.items()}
 
 

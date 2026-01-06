@@ -51,6 +51,5 @@ def downgrade() -> None:
     op.drop_index(
         "ix_agent_advisory_feedback_property_id",
         table_name="agent_advisory_feedback",
-        if_exists=True,
     )
-    op.drop_table("agent_advisory_feedback", if_exists=True)
+    op.drop_table("agent_advisory_feedback")

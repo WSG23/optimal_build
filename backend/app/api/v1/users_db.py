@@ -1,18 +1,24 @@
 """User API with real database support using SQLAlchemy."""
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-try:  # pragma: no cover - optional dependency
-    import email_validator  # type: ignore  # noqa: F401
-    from pydantic import EmailStr  # type: ignore
-except ImportError:  # pragma: no cover - fallback when validator missing
-    EmailStr = str  # type: ignore
+if TYPE_CHECKING:
+    from pydantic import EmailStr as _EmailStr
+
+    EmailStr = _EmailStr
+else:
+    try:  # pragma: no cover - optional dependency
+        import email_validator  # noqa: F401
+
+        from pydantic import EmailStr
+    except ImportError:  # pragma: no cover - fallback when validator missing
+        EmailStr = str  # type: ignore[misc]
 
 from app.core.auth import (
     AuthService,

@@ -457,7 +457,9 @@ async def calculate_property_gfa(
 
 @router.post("/calculate/buildable")
 async def calculate_buildable_metrics(
-    request: dict[str, Any], current_user: TokenData = Depends(get_current_user)
+    request: dict[str, Any],
+    current_user: TokenData = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session),
 ) -> Dict[str, Any]:
     """
     Calculate buildable metrics using jurisdiction-agnostic system.
@@ -474,7 +476,6 @@ async def calculate_buildable_metrics(
     Returns:
         Buildable metrics including plot ratio, max height, GFA, NSA, etc.
     """
-    from app.core.database import AsyncSessionLocal
     from app.schemas.buildable import BuildableDefaults
     from app.services.buildable import ResolvedZone, calculate_buildable
 
@@ -504,122 +505,123 @@ async def calculate_buildable_metrics(
         geometry_properties={"street_width_m": street_width} if street_width else None,
     )
 
-    # Use jurisdiction-agnostic buildable service
-    async with AsyncSessionLocal() as session:
-        try:
-            buildable_calc = await calculate_buildable(
-                session=session,
-                resolved=resolved,
-                defaults=defaults,
-                typ_floor_to_floor_m=4.0,
-                efficiency_ratio=0.82,
+    # Use jurisdiction-agnostic buildable service with injected session
+    try:
+        buildable_calc = await calculate_buildable(
+            session=db,
+            resolved=resolved,
+            defaults=defaults,
+            typ_floor_to_floor_m=4.0,
+            efficiency_ratio=0.82,
+        )
+
+        # Extract metrics
+        metrics = buildable_calc.metrics
+
+        # Extract actual rule values from applied rules
+        plot_ratio = None
+        max_height = None
+        site_coverage_pct = None
+
+        for rule in buildable_calc.rules:
+            if rule.parameter_key == "zoning.max_far":
+                plot_ratio = float(rule.value)
+            elif rule.parameter_key == "zoning.max_building_height_m":
+                max_height = float(rule.value)
+            elif rule.parameter_key == "zoning.site_coverage.max_percent":
+                site_coverage_pct = float(rule.value)
+
+        # Fallback to derived values if rules not found
+        if plot_ratio is None:
+            plot_ratio = metrics.gfa_cap_m2 / land_area if land_area > 0 else 0
+        if max_height is None:
+            max_height = metrics.floors_max * 4.0 if metrics.floors_max > 0 else 0
+        if site_coverage_pct is None:
+            site_coverage_pct = (
+                (metrics.footprint_m2 / land_area * 100) if land_area > 0 else 0
             )
 
-            # Extract metrics
-            metrics = buildable_calc.metrics
+        # Site coverage as fraction for calculations
+        site_coverage_fraction = site_coverage_pct / 100.0
 
-            # Extract actual rule values from applied rules
-            plot_ratio = None
-            max_height = None
-            site_coverage_pct = None
+        return {
+            "plot_ratio": plot_ratio,
+            "max_height_m": max_height,
+            "site_coverage": site_coverage_fraction,
+            "site_coverage_pct": site_coverage_pct,
+            "max_floors": metrics.floors_max,
+            "footprint_sqm": metrics.footprint_m2,
+            "max_gfa_sqm": metrics.gfa_cap_m2,
+            "nsa_sqm": metrics.nsa_est_m2,
+            "efficiency_ratio": 0.82,
+            "floor_to_floor_m": 4.0,
+            "rules_applied": len(buildable_calc.rules),
+            "jurisdiction": jurisdiction,
+            "zone_code": zoning,
+        }
+    except Exception:
+        # Fallback: Use simple calculation if RefRule database is empty
+        # This allows MVP to work before rules are populated
+        # Fallback default values (will be replaced by RefRule data)
+        fallback_rules = {
+            "residential": {
+                "plot_ratio": 2.8,
+                "max_height": 36,
+                "site_coverage": 0.4,
+            },
+            "commercial": {
+                "plot_ratio": 10.0,
+                "max_height": 280,
+                "site_coverage": 0.5,
+            },
+            "industrial": {
+                "plot_ratio": 2.5,
+                "max_height": 50,
+                "site_coverage": 0.6,
+            },
+            "mixed_use": {
+                "plot_ratio": 3.0,
+                "max_height": 80,
+                "site_coverage": 0.45,
+            },
+            "business_park": {
+                "plot_ratio": 2.5,
+                "max_height": 50,
+                "site_coverage": 0.45,
+            },
+        }
 
-            for rule in buildable_calc.rules:
-                if rule.parameter_key == "zoning.max_far":
-                    plot_ratio = float(rule.value)
-                elif rule.parameter_key == "zoning.max_building_height_m":
-                    max_height = float(rule.value)
-                elif rule.parameter_key == "zoning.site_coverage.max_percent":
-                    site_coverage_pct = float(rule.value)
+        rules = fallback_rules.get(
+            zoning, {"plot_ratio": 2.8, "max_height": 36, "site_coverage": 0.4}
+        )
 
-            # Fallback to derived values if rules not found
-            if plot_ratio is None:
-                plot_ratio = metrics.gfa_cap_m2 / land_area if land_area > 0 else 0
-            if max_height is None:
-                max_height = metrics.floors_max * 4.0 if metrics.floors_max > 0 else 0
-            if site_coverage_pct is None:
-                site_coverage_pct = (
-                    (metrics.footprint_m2 / land_area * 100) if land_area > 0 else 0
-                )
+        max_gfa = land_area * rules["plot_ratio"]
+        max_floors = int(rules["max_height"] / 4.0)
+        footprint = land_area * rules["site_coverage"]
+        nsa = max_gfa * 0.82
 
-            # Site coverage as fraction for calculations
-            site_coverage_fraction = site_coverage_pct / 100.0
-
-            return {
-                "plot_ratio": plot_ratio,
-                "max_height_m": max_height,
-                "site_coverage": site_coverage_fraction,
-                "site_coverage_pct": site_coverage_pct,
-                "max_floors": metrics.floors_max,
-                "footprint_sqm": metrics.footprint_m2,
-                "max_gfa_sqm": metrics.gfa_cap_m2,
-                "nsa_sqm": metrics.nsa_est_m2,
-                "efficiency_ratio": 0.82,
-                "floor_to_floor_m": 4.0,
-                "rules_applied": len(buildable_calc.rules),
-                "jurisdiction": jurisdiction,
-                "zone_code": zoning,
-            }
-        except Exception:
-            # Fallback: Use simple calculation if RefRule database is empty
-            # This allows MVP to work before rules are populated
-            # Fallback default values (will be replaced by RefRule data)
-            fallback_rules = {
-                "residential": {
-                    "plot_ratio": 2.8,
-                    "max_height": 36,
-                    "site_coverage": 0.4,
-                },
-                "commercial": {
-                    "plot_ratio": 10.0,
-                    "max_height": 280,
-                    "site_coverage": 0.5,
-                },
-                "industrial": {
-                    "plot_ratio": 2.5,
-                    "max_height": 50,
-                    "site_coverage": 0.6,
-                },
-                "mixed_use": {
-                    "plot_ratio": 3.0,
-                    "max_height": 80,
-                    "site_coverage": 0.45,
-                },
-                "business_park": {
-                    "plot_ratio": 2.5,
-                    "max_height": 50,
-                    "site_coverage": 0.45,
-                },
-            }
-
-            rules = fallback_rules.get(
-                zoning, {"plot_ratio": 2.8, "max_height": 36, "site_coverage": 0.4}
-            )
-
-            max_gfa = land_area * rules["plot_ratio"]
-            max_floors = int(rules["max_height"] / 4.0)
-            footprint = land_area * rules["site_coverage"]
-            nsa = max_gfa * 0.82
-
-            return {
-                "plot_ratio": rules["plot_ratio"],
-                "max_height_m": rules["max_height"],
-                "site_coverage": rules["site_coverage"],
-                "max_floors": max_floors,
-                "footprint_sqm": footprint,
-                "max_gfa_sqm": max_gfa,
-                "nsa_sqm": nsa,
-                "efficiency_ratio": 0.82,
-                "floor_to_floor_m": 4.0,
-                "rules_applied": 0,
-                "jurisdiction": jurisdiction,
-                "zone_code": zoning,
-                "fallback_used": True,
-            }
+        return {
+            "plot_ratio": rules["plot_ratio"],
+            "max_height_m": rules["max_height"],
+            "site_coverage": rules["site_coverage"],
+            "max_floors": max_floors,
+            "footprint_sqm": footprint,
+            "max_gfa_sqm": max_gfa,
+            "nsa_sqm": nsa,
+            "efficiency_ratio": 0.82,
+            "floor_to_floor_m": 4.0,
+            "rules_applied": 0,
+            "jurisdiction": jurisdiction,
+            "zone_code": zoning,
+            "fallback_used": True,
+        }
 
 
 @router.post("/check-compliance")
 async def check_compliance(
-    request: dict[str, Any], current_user: TokenData = Depends(get_current_user)
+    request: dict[str, Any],
+    current_user: TokenData = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session),
 ) -> Dict[str, Any]:
     """
     Check building code compliance for proposed design against Singapore URA/BCA rules.
@@ -627,7 +629,6 @@ async def check_compliance(
     Compares proposed design parameters against maximum allowed values from RefRule database.
     Returns pass/fail status with detailed violations list.
     """
-    from app.core.database import AsyncSessionLocal
     from app.utils.singapore_compliance import (
         check_bca_compliance,
         check_ura_compliance,
@@ -666,71 +667,68 @@ async def check_compliance(
         updated_at=utcnow(),
     )
 
-    async with AsyncSessionLocal() as session:
-        try:
-            # Run URA and BCA compliance checks
-            ura_result = await check_ura_compliance(temp_property, session)
-            bca_result = await check_bca_compliance(temp_property, session)
+    try:
+        # Run URA and BCA compliance checks using injected session
+        ura_result = await check_ura_compliance(temp_property, db)
+        bca_result = await check_bca_compliance(temp_property, db)
 
-            # Compile all violations and warnings
-            all_violations = ura_result.get("violations", []) + bca_result.get(
-                "violations", []
-            )
-            all_warnings = ura_result.get("warnings", []) + bca_result.get(
-                "warnings", []
-            )
-            all_recommendations = bca_result.get("recommendations", [])
+        # Compile all violations and warnings
+        all_violations = ura_result.get("violations", []) + bca_result.get(
+            "violations", []
+        )
+        all_warnings = ura_result.get("warnings", []) + bca_result.get("warnings", [])
+        all_recommendations = bca_result.get("recommendations", [])
 
-            # Determine overall status
-            if all_violations:
-                overall_status = "FAILED"
-            elif all_warnings:
-                overall_status = "WARNING"
-            else:
-                overall_status = "PASSED"
+        # Determine overall status
+        if all_violations:
+            overall_status = "FAILED"
+        elif all_warnings:
+            overall_status = "WARNING"
+        else:
+            overall_status = "PASSED"
 
-            return {
-                "status": overall_status,
-                "violations": all_violations,
-                "warnings": all_warnings,
-                "recommendations": all_recommendations,
-                "ura_check": {
-                    "status": (
-                        ura_result["status"].value
-                        if hasattr(ura_result["status"], "value")
-                        else ura_result["status"]
-                    ),
-                    "violations": ura_result.get("violations", []),
-                    "rules_applied": ura_result.get("rules_applied", {}),
-                },
-                "bca_check": {
-                    "status": (
-                        bca_result["status"].value
-                        if hasattr(bca_result["status"], "value")
-                        else bca_result["status"]
-                    ),
-                    "violations": bca_result.get("violations", []),
-                    "requirements_applied": bca_result.get("requirements_applied", {}),
-                },
-                "proposed_design": {
-                    "land_area_sqm": float(land_area),
-                    "zoning": zoning,
-                    "proposed_gfa_sqm": float(proposed_gfa) if proposed_gfa else None,
-                    "proposed_height_m": (
-                        float(proposed_height) if proposed_height else None
-                    ),
-                    "proposed_storeys": proposed_storeys,
-                    "calculated_plot_ratio": (
-                        float(proposed_gfa / land_area)
-                        if proposed_gfa and land_area
-                        else None
-                    ),
-                },
-            }
-        except Exception as e:
-            raise HTTPException(
-                status_code=500, detail=f"Compliance check failed: {str(e)}"
-            ) from e
+        return {
+            "status": overall_status,
+            "violations": all_violations,
+            "warnings": all_warnings,
+            "recommendations": all_recommendations,
+            "ura_check": {
+                "status": (
+                    ura_result["status"].value
+                    if hasattr(ura_result["status"], "value")
+                    else ura_result["status"]
+                ),
+                "violations": ura_result.get("violations", []),
+                "rules_applied": ura_result.get("rules_applied", {}),
+            },
+            "bca_check": {
+                "status": (
+                    bca_result["status"].value
+                    if hasattr(bca_result["status"], "value")
+                    else bca_result["status"]
+                ),
+                "violations": bca_result.get("violations", []),
+                "requirements_applied": bca_result.get("requirements_applied", {}),
+            },
+            "proposed_design": {
+                "land_area_sqm": float(land_area),
+                "zoning": zoning,
+                "proposed_gfa_sqm": float(proposed_gfa) if proposed_gfa else None,
+                "proposed_height_m": (
+                    float(proposed_height) if proposed_height else None
+                ),
+                "proposed_storeys": proposed_storeys,
+                "calculated_plot_ratio": (
+                    float(proposed_gfa / land_area)
+                    if proposed_gfa and land_area
+                    else None
+                ),
+            },
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Compliance check failed: {str(e)}"
+        ) from e
 
 
 @router.delete("/{property_id}")

@@ -104,19 +104,19 @@ def _serialise_roadmap(records: Iterable[Any]) -> list[dict[str, object]]:
 
 
 def _serialise_simple(
-    records: Iterable, fields: tuple[str, ...]
-) -> list[dict[str, object]]:
-    serialised: list[dict[str, object]] = []
+    records: Iterable[Any], fields: tuple[str, ...]
+) -> list[dict[str, Any]]:
+    serialised: list[dict[str, Any]] = []
     for record in records:
-        payload: dict[str, object] = {}
+        payload: dict[str, Any] = {}
         for field in fields:
             value = getattr(record, field, None)
             if hasattr(value, "isoformat"):
-                payload[field] = value.isoformat()  # type: ignore[assignment]
+                payload[field] = value.isoformat()
             elif hasattr(value, "value"):
-                payload[field] = value.value  # type: ignore[assignment]
+                payload[field] = value.value
             else:
-                payload[field] = value  # type: ignore[assignment]
+                payload[field] = value
         serialised.append(payload)
     return serialised
 

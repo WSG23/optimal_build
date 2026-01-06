@@ -4,6 +4,7 @@ from uuid import UUID
 
 from backend._compat.datetime import utcnow
 
+from app.models.team import TeamMember
 from app.models.workflow import (
     ApprovalStep,
     ApprovalWorkflow,
@@ -11,7 +12,6 @@ from app.models.workflow import (
     WorkflowStatus,
 )
 
-# from app.services.base import BaseService # Removed
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
@@ -21,6 +21,59 @@ class WorkflowService:
 
     def __init__(self, db_session):
         self.db = db_session
+
+    async def _check_step_permission(self, step: ApprovalStep, user_id: UUID) -> bool:
+        """Check if user has permission to approve/reject a step.
+
+        Permission is granted if:
+        1. The step requires a specific user and user_id matches, OR
+        2. The step requires a role and the user has that role in the project, OR
+        3. No specific user or role is required (any team member can approve)
+
+        Args:
+            step: The approval step to check
+            user_id: The ID of the user attempting to approve
+
+        Returns:
+            True if user has permission, False otherwise
+        """
+        # If step requires a specific user, check for exact match
+        if step.required_user_id is not None:
+            return step.required_user_id == user_id
+
+        # If step requires a specific role, check user's role in the project
+        if step.required_role is not None:
+            # Get the workflow to find the project_id
+            workflow = await self.get_workflow(step.workflow_id)
+            if not workflow:
+                return False
+
+            # Check if user is a team member with the required role
+            query = select(TeamMember).where(
+                TeamMember.project_id == workflow.project_id,
+                TeamMember.user_id == user_id,
+                TeamMember.is_active.is_(True),
+            )
+            result = await self.db.execute(query)
+            member = result.scalar_one_or_none()
+
+            if not member:
+                return False
+
+            # Check if member's role matches required role
+            # Handle both enum and string comparisons
+            member_role = (
+                member.role.value if hasattr(member.role, "value") else member.role
+            )
+            required_role = (
+                step.required_role.value
+                if hasattr(step.required_role, "value")
+                else step.required_role
+            )
+            return member_role == required_role
+
+        # No specific user or role required - any authenticated user can approve
+        return True
 
     async def create_workflow(
         self,
@@ -86,7 +139,13 @@ class WorkflowService:
         if step.status != StepStatus.IN_REVIEW:
             raise ValueError("Step is not in review")
 
-        # TODO: Check permission (user_id matches required_user_id or role)
+        # Check permission (user_id matches required_user_id or has required role)
+        has_permission = await self._check_step_permission(step, user_id)
+        if not has_permission:
+            raise PermissionError(
+                "User does not have permission to approve this step. "
+                "Required: specific user or role assignment."
+            )
 
         step.status = StepStatus.APPROVED
         step.approved_by_id = user_id

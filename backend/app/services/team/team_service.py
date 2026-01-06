@@ -1,5 +1,6 @@
 """Service for managing project teams and invitations."""
 
+import logging
 import secrets
 from datetime import timedelta
 from uuid import UUID
@@ -8,17 +9,20 @@ from backend._compat.datetime import utcnow
 
 from app.models.team import InvitationStatus, TeamInvitation, TeamMember
 from app.models.users import UserRole
+from app.services.notification.email_service import EmailService
 
-# from app.services.base import BaseService # Removed
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
+
+logger = logging.getLogger(__name__)
 
 
 class TeamService:
     """Service for managing team members and invitations."""
 
-    def __init__(self, db_session):
+    def __init__(self, db_session, email_service: EmailService | None = None):
         self.db = db_session
+        self.email_service = email_service or EmailService()
 
     async def get_team_members(self, project_id: UUID) -> list[TeamMember]:
         """List all members of a project team."""
@@ -63,8 +67,36 @@ class TeamService:
         await self.db.commit()
         await self.db.refresh(invitation)
 
-        # TODO: Send email
-        # email_service.send_invite(email, token, project_id)
+        # Send invitation email
+        try:
+            # Get project name for the email
+            from app.models.projects import Project
+
+            project_result = await self.db.execute(
+                select(Project).where(Project.id == project_id)
+            )
+            project = project_result.scalar_one_or_none()
+            project_name = project.project_name if project else f"Project {project_id}"
+
+            # Get inviter name
+            from app.models.users import User
+
+            inviter_result = await self.db.execute(
+                select(User).where(User.id == invited_by_id)
+            )
+            inviter = inviter_result.scalar_one_or_none()
+            inviter_name = inviter.full_name if inviter else "A team member"
+
+            self.email_service.send_team_invitation(
+                to_email=email,
+                inviter_name=inviter_name,
+                project_name=project_name,
+                role=role.value if hasattr(role, "value") else str(role),
+                invitation_token=token,
+            )
+        except Exception as e:
+            # Log but don't fail the invitation if email fails
+            logger.warning(f"Failed to send invitation email to {email}: {e}")
 
         return invitation
 
