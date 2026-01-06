@@ -48,6 +48,13 @@ export type { TagProps } from './Tag'
 export { StatusChip } from './StatusChip'
 export type { StatusChipProps } from './StatusChip'
 
+// Telemetry / indicators
+export { SystemMarker } from './SystemMarker'
+export type { SystemMarkerProps } from './SystemMarker'
+
+export { SegmentedGauge } from './SegmentedGauge'
+export type { SegmentedGaugeProps } from './SegmentedGauge'
+
 // Navigation
 export { Tabs, TabPanel } from './Tabs'
 export type { TabsProps, TabItem, TabPanelProps } from './Tabs'

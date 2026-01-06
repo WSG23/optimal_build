@@ -163,7 +163,7 @@ export function Tag({
             '&::before': {
               content: '"×"',
               fontSize: size === 'sm' ? 12 : 14,
-              fontWeight: 'bold',
+              fontWeight: 'var(--ob-font-weight-bold)',
             },
           }}
         />

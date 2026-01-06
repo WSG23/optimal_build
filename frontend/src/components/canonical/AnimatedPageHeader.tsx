@@ -43,7 +43,9 @@ export function AnimatedPageHeader({
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  fontWeight: isLast ? 600 : 400,
+                  fontWeight: isLast
+                    ? 'var(--ob-font-weight-semibold)'
+                    : 'var(--ob-font-weight-regular)',
                   cursor: isLast ? 'default' : 'pointer',
                 }}
               >
@@ -63,8 +65,8 @@ export function AnimatedPageHeader({
           <Typography
             variant="h3"
             sx={{
-              fontWeight: 700,
-              letterSpacing: '-0.02em',
+              fontWeight: 'var(--ob-font-weight-bold)',
+              letterSpacing: 'var(--ob-letter-spacing-tighter)',
               background:
                 'linear-gradient(45deg, var(--ob-color-text-primary), var(--ob-color-text-secondary))',
               WebkitBackgroundClip: 'text',

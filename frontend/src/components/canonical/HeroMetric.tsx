@@ -93,8 +93,8 @@ export function HeroMetric({
           variant="caption"
           sx={{
             textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            fontWeight: 600,
+            letterSpacing: 'var(--ob-letter-spacing-widest)',
+            fontWeight: 'var(--ob-font-weight-semibold)',
             color:
               variant === 'primary'
                 ? alpha('#fff', 0.7)
@@ -122,10 +122,10 @@ export function HeroMetric({
         <Typography
           variant="h3"
           sx={{
-            fontWeight: 700,
+            fontWeight: 'var(--ob-font-weight-bold)',
             lineHeight: 1,
             color: getTextColor(),
-            letterSpacing: '-0.02em',
+            letterSpacing: 'var(--ob-letter-spacing-tighter)',
           }}
         >
           {value}
@@ -135,7 +135,7 @@ export function HeroMetric({
             variant="h6"
             sx={{
               ml: 0.5,
-              fontWeight: 400,
+              fontWeight: 'var(--ob-font-weight-regular)',
               color:
                 variant === 'primary'
                   ? alpha('#fff', 0.6)
@@ -161,7 +161,7 @@ export function HeroMetric({
           <Typography
             variant="body2"
             sx={{
-              fontWeight: 600,
+              fontWeight: 'var(--ob-font-weight-semibold)',
               color:
                 trend.direction === 'up'
                   ? theme.palette.success.main
