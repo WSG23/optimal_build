@@ -68,8 +68,6 @@ export function ImmediateActionsGrid({
         display: 'flex',
         flexDirection: 'column',
         gap: 'var(--ob-space-100)',
-        // Add top margin per UX_ARCHITECTURE section header spacing
-        mt: 'var(--ob-space-200)',
       }}
     >
       <Typography

@@ -28,6 +28,8 @@ import type {
   CapturedProperty,
 } from '../../../../../api/siteAcquisition'
 import { Button } from '../../../../../components/canonical/Button'
+import { SegmentedGauge } from '../../../../../components/canonical/SegmentedGauge'
+import { SystemMarker } from '../../../../../components/canonical/SystemMarker'
 import { Link } from '../../../../../router'
 import type {
   ScenarioComparisonDatum,
@@ -35,52 +37,12 @@ import type {
   ScenarioOption,
 } from '../../types'
 import { formatCategoryName } from '../../utils/formatters'
-
-// ============================================================================
-// Constants - Scenario-Coded System Markers
-// ============================================================================
-
-const SCENARIO_MARKERS: Record<string, string> = {
-  raw_land: 'PATH_GROUND-UP',
-  en_bloc: 'PATH_ENBLOC',
-  condo_redevelopment: 'PATH_CONDO',
-  mixed_use: 'PATH_MIXED',
-  residential: 'PATH_RESI',
-  commercial: 'PATH_COMM',
-  industrial: 'PATH_INDUS',
-  hospitality: 'PATH_HOSP',
-  retail: 'PATH_RETAIL',
-  office: 'PATH_OFFICE',
-  all: 'PATH_ALL',
-}
-
-/**
- * Get scenario-coded system marker for display
- */
-function getScenarioMarker(scenario: string): string {
-  return (
-    SCENARIO_MARKERS[scenario] ??
-    `PATH_${scenario.toUpperCase().replace(/_/g, '')}`
-  )
-}
-
-/**
- * Get signal ID for Intel Tape header
- */
-function getSignalId(scenario: string): string {
-  const marker = SCENARIO_MARKERS[scenario]
-  if (marker) {
-    return `FSG-${marker.replace('PATH_', '')}`
-  }
-  return `FSG-${scenario.toUpperCase().replace(/_/g, '').slice(0, 6)}`
-}
-
-/**
- * Calculate signal strength based on count of opportunities + risks (max 10)
- */
-function calculateSignalStrength(opportunities: number, risks: number): number {
-  return Math.min(opportunities + risks, 10)
-}
+import { FeasibilityIntelTape } from './FeasibilityIntelTape'
+import {
+  calculateSignalStrength,
+  getScenarioMarker,
+  getSignalId,
+} from './telemetry'
 
 // ============================================================================
 // Types
@@ -131,7 +93,7 @@ export function MultiScenarioComparisonSection({
   reportExportMessage,
   setActiveScenario,
   handleReportExport,
-  formatRecordedTimestamp: _formatRecordedTimestamp,
+  formatRecordedTimestamp,
 }: MultiScenarioComparisonSectionProps) {
   // Calculate summary stats for footer (AI Studio: Summary Footer pattern)
   const summaryStats = useMemo((): SummaryStats => {
@@ -164,6 +126,13 @@ export function MultiScenarioComparisonSection({
       scenariosTracked: scenarioData.length,
     }
   }, [scenarioComparisonData, feasibilitySignals])
+
+  const quickAnalysisTimestamp = useMemo(() => {
+    if (!capturedProperty) {
+      return null
+    }
+    return formatRecordedTimestamp(capturedProperty.quickAnalysis?.generatedAt)
+  }, [capturedProperty, formatRecordedTimestamp])
 
   return (
     <section className="multi-scenario">
@@ -198,7 +167,6 @@ export function MultiScenarioComparisonSection({
               .map((row) => {
                 const isActive = activeScenario === row.key
                 const progressPercent = row.checklistPercent ?? 0
-                const activeSegments = Math.round((progressPercent / 100) * 8)
 
                 // Extract revenue from quickMetrics or use placeholder
                 const revenueMetric = row.quickMetrics.find(
@@ -225,9 +193,9 @@ export function MultiScenarioComparisonSection({
                     <div className="multi-scenario__path-content">
                       {/* Header: System Marker */}
                       <div className="multi-scenario__path-header">
-                        <span className="multi-scenario__path-marker">
+                        <SystemMarker active={isActive}>
                           {getScenarioMarker(row.key)}
-                        </span>
+                        </SystemMarker>
                       </div>
 
                       {/* Metrics Grid: Yield + Risk Vector */}
@@ -251,28 +219,12 @@ export function MultiScenarioComparisonSection({
                       </div>
 
                       {/* Diligence Gauge - Segmented */}
-                      <div className="multi-scenario__diligence-gauge">
-                        <div className="multi-scenario__diligence-gauge-header">
-                          <span className="multi-scenario__diligence-gauge-label">
-                            DILIGENCE GAUGE
-                          </span>
-                          <span className="multi-scenario__diligence-gauge-value">
-                            {progressPercent}%
-                          </span>
-                        </div>
-                        <div className="multi-scenario__diligence-gauge-segments">
-                          {[...Array(8)].map((_, i) => (
-                            <div
-                              key={i}
-                              className={`multi-scenario__diligence-gauge-segment ${
-                                i < activeSegments
-                                  ? 'multi-scenario__diligence-gauge-segment--active'
-                                  : ''
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
+                      <SegmentedGauge
+                        label="DILIGENCE GAUGE"
+                        value={progressPercent}
+                        valueLabel={`${progressPercent}%`}
+                        segments={8}
+                      />
 
                       {/* Enter Matrix CTA */}
                       <button
@@ -285,8 +237,8 @@ export function MultiScenarioComparisonSection({
                         {isActive ? 'VIEWING MATRIX' : 'ENTER MATRIX'}
                         <ArrowRight
                           sx={{
-                            width: 16,
-                            height: 16,
+                            width: 'var(--ob-space-100)',
+                            height: 'var(--ob-space-100)',
                             ml: 'var(--ob-space-050)',
                           }}
                         />
@@ -297,123 +249,121 @@ export function MultiScenarioComparisonSection({
               })}
           </div>
 
-          {/* Feasibility Highlights - Flat structure (no nested card wrapper) */}
-          {feasibilitySignals.length > 0 && (
-            <div className="multi-scenario__intel-feed">
-              <div className="multi-scenario__intel-feed-header">
-                <span className="multi-scenario__intel-feed-label">
-                  FEASIBILITY_HIGHLIGHTS
-                </span>
-                {propertyId && (
-                  <Link
-                    to={`/app/asset-feasibility?propertyId=${encodeURIComponent(propertyId)}`}
-                    style={{ textDecoration: 'none', marginLeft: 'auto' }}
-                  >
-                    <Button variant="primary" size="sm">
-                      FEASIBILITY →
-                    </Button>
-                  </Link>
-                )}
-              </div>
-              {/* Intel tapes are direct siblings of header (Flat Section Pattern) */}
-              {feasibilitySignals.map((entry) => {
-                const signalStrength = calculateSignalStrength(
-                  entry.opportunities.length,
-                  entry.risks.length,
-                )
-                const signalId = getSignalId(entry.scenario)
-                const timestamp = new Date()
-                  .toISOString()
-                  .slice(0, 19)
-                  .replace('T', ' ')
-
-                return (
-                  <div
-                    key={entry.scenario}
-                    className="multi-scenario__intel-tape"
-                  >
-                    {/* Telemetry Header */}
-                    <div className="multi-scenario__intel-tape-header">
-                      <div className="multi-scenario__intel-tape-signal">
-                        {/* Signal Strength Bar */}
-                        <div className="multi-scenario__intel-tape-strength-bar">
-                          {[...Array(10)].map((_, i) => (
-                            <div
-                              key={i}
-                              className={`multi-scenario__intel-tape-strength-segment ${
-                                i < signalStrength
-                                  ? 'multi-scenario__intel-tape-strength-segment--active'
-                                  : ''
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="multi-scenario__intel-tape-strength-value">
-                          STRENGTH: {signalStrength}/10
-                        </span>
-                      </div>
-                      <div className="multi-scenario__intel-tape-meta">
-                        <span className="multi-scenario__intel-tape-id">
-                          SIGNAL_ID: {signalId}
-                        </span>
-                        <span className="multi-scenario__intel-tape-path">
-                          PATH: {entry.label}
-                        </span>
-                        <span className="multi-scenario__intel-tape-ts">
-                          TS: {timestamp}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="multi-scenario__intel-tape-divider" />
-                    {/* Signal Content */}
-                    {entry.opportunities.length > 0 && (
-                      <div className="multi-scenario__intel-tape-section">
-                        <span className="multi-scenario__intel-tape-type multi-scenario__intel-tape-type--opportunity">
-                          ● OPPORTUNITY
-                        </span>
-                        <ul className="multi-scenario__intel-tape-list">
-                          {entry.opportunities.map((message, idx) => (
-                            <li key={message}>
-                              <span className="multi-scenario__intel-tape-tree">
-                                {idx === entry.opportunities.length - 1
-                                  ? '└─'
-                                  : '├─'}
-                              </span>
-                              {message}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {entry.risks.length > 0 && (
-                      <div className="multi-scenario__intel-tape-section">
-                        <span className="multi-scenario__intel-tape-type multi-scenario__intel-tape-type--risk">
-                          ● RISK
-                        </span>
-                        <ul className="multi-scenario__intel-tape-list">
-                          {entry.risks.map((message, idx) => (
-                            <li key={message}>
-                              <span className="multi-scenario__intel-tape-tree">
-                                {idx === entry.risks.length - 1 ? '└─' : '├─'}
-                              </span>
-                              {message}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {entry.opportunities.length === 0 &&
-                      entry.risks.length === 0 && (
-                        <p className="multi-scenario__intel-tape-empty">
-                          No automated guidance produced. Review the scenario
-                          notes for additional context.
-                        </p>
-                      )}
-                  </div>
-                )
-              })}
+          {/* Feasibility Highlights - Header on background, surfaces below */}
+          <div className="multi-scenario__feasibility">
+            <div className="multi-scenario__intel-feed-header">
+              <span className="multi-scenario__intel-feed-label">
+                FEASIBILITY_HIGHLIGHTS
+              </span>
+              {propertyId && (
+                <Link
+                  to={`/app/asset-feasibility?propertyId=${encodeURIComponent(propertyId)}`}
+                  style={{ textDecoration: 'none', marginLeft: 'auto' }}
+                >
+                  <Button variant="primary" size="sm">
+                    FULL FEASIBILITY →
+                  </Button>
+                </Link>
+              )}
             </div>
-          )}
+
+            {/* Summary stats moved above intel feed */}
+            <div className="multi-scenario__matrix-summary">
+              <div className="multi-scenario__matrix-stats">
+                <div className="multi-scenario__matrix-stat">
+                  <span className="multi-scenario__matrix-value">
+                    {summaryStats.scenariosTracked}
+                  </span>
+                  <span className="multi-scenario__matrix-label">
+                    PATHS_TRACKED
+                  </span>
+                </div>
+                <div className="multi-scenario__matrix-stat">
+                  <span className="multi-scenario__matrix-value">
+                    {summaryStats.avgCondition !== null
+                      ? `${summaryStats.avgCondition}/100`
+                      : '—'}
+                  </span>
+                  <span className="multi-scenario__matrix-label">
+                    AVG_CONDITION
+                  </span>
+                </div>
+                <div className="multi-scenario__matrix-stat multi-scenario__matrix-stat--opportunity">
+                  <span className="multi-scenario__matrix-value">
+                    {summaryStats.totalOpportunities}
+                  </span>
+                  <span className="multi-scenario__matrix-label">
+                    OPPORTUNITIES
+                  </span>
+                </div>
+                <div className="multi-scenario__matrix-stat multi-scenario__matrix-stat--risk">
+                  <span className="multi-scenario__matrix-value">
+                    {summaryStats.totalRisks}
+                  </span>
+                  <span className="multi-scenario__matrix-label">
+                    RISKS_FLAGGED
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="multi-scenario__intel-feed">
+              <div className="multi-scenario__intel-feed-subheader">
+                <span className="multi-scenario__intel-feed-subtitle">
+                  DETAILED_INSIGHTS ({feasibilitySignals.length})
+                </span>
+                <div className="multi-scenario__intel-feed-actions">
+                  {reportExportMessage && (
+                    <span className="multi-scenario__matrix-status">
+                      {reportExportMessage}
+                    </span>
+                  )}
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleReportExport('json')}
+                    disabled={isExportingReport}
+                  >
+                    {isExportingReport ? 'PREPARING…' : 'JSON'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleReportExport('pdf')}
+                    disabled={isExportingReport}
+                  >
+                    {isExportingReport ? 'PREPARING…' : 'PDF'}
+                  </Button>
+                </div>
+              </div>
+
+              {feasibilitySignals.length > 0 ? (
+                feasibilitySignals.map((entry) => {
+                  const signalStrength = calculateSignalStrength(
+                    entry.opportunities.length,
+                    entry.risks.length,
+                  )
+                  const signalId = getSignalId(entry.scenario)
+
+                  return (
+                    <FeasibilityIntelTape
+                      key={entry.scenario}
+                      signalStrength={signalStrength}
+                      signalId={signalId}
+                      pathLabel={entry.label}
+                      timestamp={quickAnalysisTimestamp ?? '—'}
+                      opportunities={entry.opportunities}
+                      risks={entry.risks}
+                    />
+                  )
+                })
+              ) : (
+                <p className="multi-scenario__intel-feed-empty">
+                  No automated feasibility highlights available yet.
+                </p>
+              )}
+            </div>
+          </div>
 
           {/* Path Focus Notice */}
           {activeScenario !== 'all' && comparisonScenariosCount > 0 && (
@@ -425,74 +375,6 @@ export function MultiScenarioComparisonSection({
               ). Switch back to "All scenarios" to compare paths side-by-side.
             </div>
           )}
-
-          {/* Matrix Summary Footer - Stats + Export Actions consolidated */}
-          <footer className="multi-scenario__matrix-summary">
-            {/* Stats Row */}
-            <div className="multi-scenario__matrix-stats">
-              <div className="multi-scenario__matrix-stat">
-                <span className="multi-scenario__matrix-value">
-                  {summaryStats.scenariosTracked}
-                </span>
-                <span className="multi-scenario__matrix-label">
-                  PATHS_TRACKED
-                </span>
-              </div>
-              <div className="multi-scenario__matrix-stat">
-                <span className="multi-scenario__matrix-value">
-                  {summaryStats.avgCondition !== null
-                    ? `${summaryStats.avgCondition}/100`
-                    : '—'}
-                </span>
-                <span className="multi-scenario__matrix-label">
-                  AVG_CONDITION
-                </span>
-              </div>
-              <div className="multi-scenario__matrix-stat multi-scenario__matrix-stat--opportunity">
-                <span className="multi-scenario__matrix-value">
-                  {summaryStats.totalOpportunities}
-                </span>
-                <span className="multi-scenario__matrix-label">
-                  OPPORTUNITIES
-                </span>
-              </div>
-              <div className="multi-scenario__matrix-stat multi-scenario__matrix-stat--risk">
-                <span className="multi-scenario__matrix-value">
-                  {summaryStats.totalRisks}
-                </span>
-                <span className="multi-scenario__matrix-label">
-                  RISKS_FLAGGED
-                </span>
-              </div>
-            </div>
-
-            {/* Export Actions Row */}
-            {capturedProperty && (
-              <div className="multi-scenario__matrix-actions">
-                {reportExportMessage && (
-                  <span className="multi-scenario__matrix-status">
-                    {reportExportMessage}
-                  </span>
-                )}
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleReportExport('json')}
-                  disabled={isExportingReport}
-                >
-                  {isExportingReport ? 'PREPARING…' : 'JSON'}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleReportExport('pdf')}
-                  disabled={isExportingReport}
-                >
-                  {isExportingReport ? 'PREPARING…' : 'PDF'}
-                </Button>
-              </div>
-            )}
-          </footer>
         </>
       )}
     </section>

@@ -2,15 +2,15 @@
  * Condition Assessment Section Component
  *
  * Displays the property condition assessment with:
- * - 12-column grid layout (4:8 split) - AI Studio pattern
- * - Left: Overall rating gauge (4 cols)
- * - Right: Immediate actions + AI insight + CTAs (8 cols)
+ * - CSS Grid layout (1:2 ratio) using design tokens - UI_STANDARDS compliant
+ * - Left: Overall rating gauge
+ * - Right: Immediate actions + AI insight + CTAs
  * - Below: Systems grid, Inspection history, Scenario overrides
  *
  * Receives all data and handlers via props (no internal state).
  */
 
-import { Grid, Box, Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 
 import type {
   ConditionAssessment,
@@ -176,108 +176,108 @@ export function ConditionAssessmentSection({
         </div>
       ) : (
         <>
-          {/* 12-column grid layout: 4 cols (gauge) + 8 cols (actions) */}
-          <Grid container spacing={2}>
+          {/* 4:8 grid layout using CSS Grid with design tokens */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', lg: '1fr 2fr' },
+              gap: 'var(--ob-space-150)',
+            }}
+          >
             {/* Left column: Overall Rating Gauge */}
-            <Grid item xs={12} lg={4}>
-              <OverallAssessmentCard
-                rating={conditionAssessment.overallRating}
-                score={conditionAssessment.overallScore}
-                riskLevel={conditionAssessment.riskLevel}
-                summary={conditionAssessment.summary}
-                scenarioContext={conditionAssessment.scenarioContext ?? null}
-                inspectorName={conditionAssessment.inspectorName ?? null}
-                recordedAtLabel={
-                  conditionAssessment.recordedAt
-                    ? formatRecordedTimestamp(conditionAssessment.recordedAt)
-                    : null
-                }
-                attachments={conditionAssessment.attachments.map((a) => ({
-                  label: a.label,
-                  url: a.url ?? null,
-                }))}
-              />
-            </Grid>
+            <OverallAssessmentCard
+              rating={conditionAssessment.overallRating}
+              score={conditionAssessment.overallScore}
+              riskLevel={conditionAssessment.riskLevel}
+              summary={conditionAssessment.summary}
+              scenarioContext={conditionAssessment.scenarioContext ?? null}
+              inspectorName={conditionAssessment.inspectorName ?? null}
+              recordedAtLabel={
+                conditionAssessment.recordedAt
+                  ? formatRecordedTimestamp(conditionAssessment.recordedAt)
+                  : null
+              }
+              attachments={conditionAssessment.attachments.map((a) => ({
+                label: a.label,
+                url: a.url ?? null,
+              }))}
+            />
 
             {/* Right column: Immediate Actions + AI Insight + CTAs */}
-            <Grid item xs={12} lg={8}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--ob-space-150)',
+              }}
+            >
+              {/* Immediate Actions Grid (2x2) */}
+              <ImmediateActionsGrid
+                actions={conditionAssessment.recommendedActions
+                  .slice(0, 4)
+                  .map((action, index): ImmediateAction => {
+                    // Parse "Title: Description" format, or use action as title-only
+                    const hasColon = action.includes(':')
+                    const title = hasColon
+                      ? action.split(':')[0].trim()
+                      : action.trim()
+                    // Only show description if different from title
+                    const description = hasColon
+                      ? action.split(':').slice(1).join(':').trim()
+                      : '' // No description for title-only actions
+                    return {
+                      id: `action-${index}`,
+                      title,
+                      description,
+                      priority:
+                        index === 0
+                          ? 'critical'
+                          : index === 1
+                            ? 'high'
+                            : 'medium',
+                    }
+                  })}
+              />
+
+              {/* AI Insight Panel */}
+              {conditionAssessment.summary && (
+                <AIInsightPanel
+                  insight={`${conditionAssessment.summary} Focus remediation on ${
+                    conditionAssessment.systems
+                      .filter((s) => s.rating === 'D' || s.rating === 'F')
+                      .map((s) => s.name)
+                      .join(', ') || 'structural integrity and ageing M&E plant'
+                  } to maintain operational efficiency.`}
+                />
+              )}
+
+              {/* Consolidated CTAs */}
               <Box
                 sx={{
                   display: 'flex',
-                  flexDirection: 'column',
-                  gap: 'var(--ob-space-150)',
-                  height: '100%',
+                  justifyContent: 'flex-end',
+                  gap: 'var(--ob-space-100)',
+                  mt: 'auto',
                 }}
               >
-                {/* Immediate Actions Grid (2x2) */}
-                <ImmediateActionsGrid
-                  actions={conditionAssessment.recommendedActions
-                    .slice(0, 4)
-                    .map((action, index): ImmediateAction => {
-                      // Parse "Title: Description" format, or use action as title-only
-                      const hasColon = action.includes(':')
-                      const title = hasColon
-                        ? action.split(':')[0].trim()
-                        : action.trim()
-                      // Only show description if different from title
-                      const description = hasColon
-                        ? action.split(':').slice(1).join(':').trim()
-                        : '' // No description for title-only actions
-                      return {
-                        id: `action-${index}`,
-                        title,
-                        description,
-                        priority:
-                          index === 0
-                            ? 'critical'
-                            : index === 1
-                              ? 'high'
-                              : 'medium',
-                      }
-                    })}
-                />
-
-                {/* AI Insight Panel */}
-                {conditionAssessment.summary && (
-                  <AIInsightPanel
-                    insight={`${conditionAssessment.summary} Focus remediation on ${
-                      conditionAssessment.systems
-                        .filter((s) => s.rating === 'D' || s.rating === 'F')
-                        .map((s) => s.name)
-                        .join(', ') ||
-                      'structural integrity and ageing M&E plant'
-                    } to maintain operational efficiency.`}
-                  />
-                )}
-
-                {/* Consolidated CTAs */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    gap: 'var(--ob-space-100)',
-                    mt: 'auto',
-                  }}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => openAssessmentEditor('edit')}
+                  disabled={!latestAssessmentEntry}
                 >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openAssessmentEditor('edit')}
-                    disabled={!latestAssessmentEntry}
-                  >
-                    Manual Inspection Capture
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => openAssessmentEditor('new')}
-                  >
-                    Log Full Inspection →
-                  </Button>
-                </Box>
+                  Manual Inspection Capture
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => openAssessmentEditor('new')}
+                >
+                  Log Full Inspection →
+                </Button>
               </Box>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
 
           {/* Condition Insights - Seamless panel */}
           {combinedConditionInsights.length > 0 && (
