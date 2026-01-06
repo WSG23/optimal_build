@@ -820,7 +820,7 @@ async def run_finance_feasibility(
                     name=result.name,
                     value=result.value,
                     unit=result.unit,
-                    metadata=dict(result.metadata or {}),  # type: ignore[arg-type,has-type]
+                    metadata=dict(result.metadata or {}),
                 )
                 for result in results
             ],

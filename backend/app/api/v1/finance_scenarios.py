@@ -471,7 +471,7 @@ async def summarise_persisted_scenario(
     sensitivity_metadata_rows: list[dict[str, Any]] | None = None
     analytics_overview_result: FinResult | None = None
     for stored in ordered_results:
-        metadata: dict[str, Any] | None = (  # type: ignore[assignment,has-type]
+        metadata: dict[str, Any] | None = (
             stored.metadata if isinstance(stored.metadata, dict) else None
         )
         if stored.name == "asset_financials" and metadata and not asset_processed:

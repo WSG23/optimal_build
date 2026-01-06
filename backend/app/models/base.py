@@ -5,9 +5,13 @@ from __future__ import annotations
 import uuid as uuid_module
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any, overload
 
 from sqlalchemy import Dialect
+from sqlalchemy import MetaData as SAMetaData
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.types import CHAR, TypeDecorator, TypeEngine
@@ -113,9 +117,22 @@ Base = BaseModel
 
 
 class MetadataProxy:
-    """Expose ``metadata_json`` via the conventional ``metadata`` attribute."""
+    """Expose ``metadata_json`` via the conventional ``metadata`` attribute.
 
-    def __get__(self, instance: Any, owner: Any) -> dict[str, Any]:
+    This descriptor provides type-safe access to the metadata_json column
+    as a dict[str, Any]. When accessed on the class (not an instance),
+    it returns SQLAlchemy's MetaData for compatibility.
+    """
+
+    @overload
+    def __get__(self, instance: None, owner: type[Any]) -> SAMetaData: ...
+
+    @overload
+    def __get__(self, instance: object, owner: type[Any]) -> dict[str, Any]: ...
+
+    def __get__(
+        self, instance: object | None, owner: type[Any]
+    ) -> SAMetaData | dict[str, Any]:
         if instance is None:
             return BaseModel.metadata
         value = getattr(instance, "metadata_json", None)
@@ -124,7 +141,7 @@ class MetadataProxy:
             instance.metadata_json = value
         return value
 
-    def __set__(self, instance: Any, value: dict[str, Any] | None) -> None:
+    def __set__(self, instance: object, value: dict[str, Any] | None) -> None:
         instance.metadata_json = value or {}
 
 

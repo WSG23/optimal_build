@@ -174,8 +174,8 @@ class DealWithTimelineSchema(DealSchema):
             audit_log = None
             if audit_logs:
                 audit_id = None
-                if event.metadata:  # type: ignore[has-type]
-                    audit_id = event.metadata.get("audit_log_id")  # type: ignore[union-attr,has-type]
+                if event.metadata:
+                    audit_id = event.metadata.get("audit_log_id")
                 if audit_id:
                     audit_log = audit_logs.get(str(audit_id))
             data["timeline"].append(
@@ -298,8 +298,8 @@ class CommissionResponse(BaseModel):
             "disputed_at": record.disputed_at,
             "resolved_at": record.resolved_at,
             "metadata": (
-                record.metadata  # type: ignore[dict-item,has-type]
-                if isinstance(record.metadata, dict)  # type: ignore[has-type]
+                record.metadata
+                if isinstance(record.metadata, dict)
                 else getattr(record, "metadata_json", {}) or {}
             ),
             "audit_log_id": record.audit_log_id,

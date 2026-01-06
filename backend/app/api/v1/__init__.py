@@ -34,7 +34,10 @@ TAGS_METADATA: Final[list[dict[str, str]]] = [
     },
     {
         "name": "market-intelligence",
-        "description": "Market analytics reports encompassing comparables, supply, yields, and absorption trends.",
+        "description": (
+            "Market analytics reports encompassing comparables, supply, "
+            "yields, and absorption trends."
+        ),
     },
     {
         "name": "listings",

@@ -97,7 +97,7 @@ class EntitlementsService:
             authority.website = website
             authority.contact_email = contact_email
             if metadata is not None:
-                authority.metadata = metadata  # type: ignore[assignment,has-type]
+                authority.metadata = metadata
         await self.session.flush()
         return authority
 
@@ -158,7 +158,7 @@ class EntitlementsService:
             if is_mandatory is not None:
                 approval_type.is_mandatory = is_mandatory
             if metadata is not None:
-                approval_type.metadata = metadata  # type: ignore[assignment,has-type]
+                approval_type.metadata = metadata
         await self.session.flush()
         return approval_type
 
@@ -282,7 +282,7 @@ class EntitlementsService:
         if "notes" in updates:
             target.notes = updates["notes"]
         if "metadata" in updates:
-            target.metadata = updates["metadata"]  # type: ignore[assignment,has-type]
+            target.metadata = updates["metadata"]
         if "target_submission_date" in updates:
             target.target_submission_date = updates["target_submission_date"]
         if "target_decision_date" in updates:

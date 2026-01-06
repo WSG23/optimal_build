@@ -129,7 +129,7 @@ class AgentDealService:
             confidence=confidence,
         )
         if metadata:
-            record.metadata = metadata  # type: ignore[assignment,has-type]
+            record.metadata = metadata
 
         session.add(record)
         await session.flush()
@@ -212,7 +212,7 @@ class AgentDealService:
         if property_id is not None:
             deal.property_id = str(property_id)
         if metadata is not None:
-            deal.metadata = metadata  # type: ignore[assignment,has-type]
+            deal.metadata = metadata
         if status is not None:
             deal.status = status
 
@@ -255,7 +255,7 @@ class AgentDealService:
             recorded_at=occurred_at,
         )
         if metadata:
-            event.metadata = metadata  # type: ignore[assignment,has-type]
+            event.metadata = metadata
 
         session.add(event)
         await session.flush()
@@ -300,8 +300,8 @@ class AgentDealService:
         audit_ids: set[int] = set()
         for event in events:
             audit_id = None
-            if event.metadata:  # type: ignore[has-type]
-                audit_id = event.metadata.get("audit_log_id")  # type: ignore[union-attr,has-type]
+            if event.metadata:
+                audit_id = event.metadata.get("audit_log_id")
             if audit_id:
                 try:
                     audit_ids.add(int(audit_id))
@@ -360,7 +360,7 @@ class AgentDealService:
         else:
             event_metadata = dict(getattr(event, "metadata_json", {}) or {})
         event_metadata["audit_log_id"] = str(log_entry.id)
-        event.metadata = event_metadata  # type: ignore[assignment,has-type]
+        event.metadata = event_metadata
 
     async def add_contact(
         self,

@@ -349,7 +349,10 @@ async def get_property_checklists(
         except ValueError as exc:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid status: {status}. Must be one of: pending, in_progress, completed, not_applicable",
+                detail=(
+                    f"Invalid status: {status}. Must be one of: "
+                    "pending, in_progress, completed, not_applicable"
+                ),
             ) from exc
 
     items = await DeveloperChecklistService.get_property_checklist(
@@ -421,7 +424,10 @@ async def update_checklist_item(
     except ValueError as exc:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid status: {request.status}. Must be one of: pending, in_progress, completed, not_applicable",
+            detail=(
+                f"Invalid status: {request.status}. Must be one of: "
+                "pending, in_progress, completed, not_applicable"
+            ),
         ) from exc
 
     # Get user_id if authenticated

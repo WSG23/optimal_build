@@ -401,7 +401,7 @@ def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes
         if chunk:
             yield chunk
 
-        metadata: dict[str, Any] | None = (  # type: ignore[assignment,has-type]
+        metadata: dict[str, Any] | None = (
             result.metadata if isinstance(result.metadata, dict) else None
         )
         if result.name == "dscr_timeline" and metadata:
@@ -797,8 +797,8 @@ def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes
         (item for item in ordered_results if item.name == "escalated_cost"), None
     )
     cost_meta = None
-    if escalated is not None and isinstance(escalated.metadata, dict):  # type: ignore[has-type]
-        cost_meta = escalated.metadata.get("cost_index")  # type: ignore[union-attr,has-type]
+    if escalated is not None and isinstance(escalated.metadata, dict):
+        cost_meta = escalated.metadata.get("cost_index")
 
     if cost_meta:
         writer.writerow([])

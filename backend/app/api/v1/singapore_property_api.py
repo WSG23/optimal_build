@@ -13,10 +13,12 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any, Dict
 
-from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_current_user
 from app.models.singapore_property import (
     AcquisitionStatus,
@@ -27,14 +29,12 @@ from app.models.singapore_property import (
     PropertyZoning,
     SingaporeProperty,
 )
-from app.core.database import get_session
 from app.utils.singapore_compliance import (
     calculate_gfa_utilization,
     run_full_compliance_check,
     update_property_compliance,
 )
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from backend._compat.datetime import utcnow
 
 router = APIRouter(prefix="/singapore-property", tags=["Singapore Property"])
 

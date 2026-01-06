@@ -4,7 +4,16 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Mapping, Protocol, Sequence
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
+
+class _HasModelDump(Protocol):
+    def model_dump(self) -> dict[str, object]: ...
+
+
 from uuid import UUID
 
 from backend._compat.datetime import utcnow
@@ -26,12 +35,14 @@ from app.utils import metrics
 
 
 def _serialise_layers(
-    layers: Sequence[Mapping[str, object]]
+    layers: Sequence[Mapping[str, object] | _HasModelDump]
 ) -> list[dict[str, object]]:
     serialised: list[dict[str, object]] = []
     for entry in layers:
         if hasattr(entry, "model_dump"):
-            serialised.append(entry.model_dump())  # type: ignore[attr-defined]
+            # Cast to protocol type for type-safe method call
+            model_entry: _HasModelDump = entry  # type: ignore[assignment]
+            serialised.append(model_entry.model_dump())
         else:
             serialised.append(dict(entry))
     return serialised
@@ -154,7 +165,7 @@ class PreviewJobService:
             )
 
             logger.info("[QUEUE_PREVIEW_START] About to update job.metadata")
-            job.metadata["job_backend"] = backend_name  # type: ignore[index,has-type]
+            job.metadata["job_backend"] = backend_name
             logger.info("[QUEUE_PREVIEW_START] Updated metadata, about to flush")
             await self._session.flush()
             logger.info("[QUEUE_PREVIEW_START] Flushed metadata update")
@@ -220,7 +231,7 @@ class PreviewJobService:
     ) -> PreviewJob:
         """Re-enqueue a preview job using stored metadata."""
 
-        metadata_dict: dict[str, Any] = dict(job.metadata or {})  # type: ignore[arg-type,has-type]
+        metadata_dict: dict[str, Any] = dict(job.metadata or {})
         payload_layers = metadata_dict.get("massing_layers")
         if not isinstance(payload_layers, list) or not payload_layers:
             raise ValueError("Preview job missing massing layer metadata")
@@ -261,7 +272,7 @@ class PreviewJobService:
         job.message = None
         metadata_dict.pop("asset_manifest", None)
         metadata_dict["geometry_detail_level"] = detail_level
-        job.metadata = metadata_dict  # type: ignore[assignment,has-type]
+        job.metadata = metadata_dict
 
         registry = getattr(job_queue._backend, "_registry", {})
         if "preview.generate" not in registry:
@@ -270,7 +281,7 @@ class PreviewJobService:
             )
 
         backend_name = getattr(job_queue._backend, "name", "inline")
-        job.metadata["job_backend"] = backend_name  # type: ignore[index,has-type]
+        job.metadata["job_backend"] = backend_name
         await self._session.flush()
         metrics.PREVIEW_JOBS_CREATED_TOTAL.labels(
             scenario=job.scenario,

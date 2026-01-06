@@ -682,7 +682,7 @@ def store_sensitivity_metadata(
 
     from sqlalchemy.orm.attributes import flag_modified
 
-    existing_result.metadata = {"bands": serialised}  # type: ignore[assignment,has-type]
+    existing_result.metadata = {"bands": serialised}
     flag_modified(existing_result, "metadata_json")
 
 
