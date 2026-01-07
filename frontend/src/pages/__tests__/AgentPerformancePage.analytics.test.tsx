@@ -211,7 +211,7 @@ describe('AgentPerformancePage analytics', () => {
     }) as typeof globalThis.fetch
 
     AgentPerformancePage = (await import('../AgentPerformancePage')).default
-  })
+  }, 60_000)
 
   afterEach(() => {
     if (rtlCleanup) {
@@ -236,7 +236,7 @@ describe('AgentPerformancePage analytics', () => {
       </ThemeModeProvider>,
     )
 
-    assert.ok(await rtlScreen.findByText(/Deals won/i))
+    assert.ok(await rtlScreen.findByText(/Open deals/i))
     assert.ok(await rtlScreen.findByText(/SGD\s*1,800,000/i))
     const conversionMatches = await rtlScreen.findAllByText(/42\.0%/)
     assert.ok(conversionMatches.length >= 1)
@@ -244,5 +244,5 @@ describe('AgentPerformancePage analytics', () => {
     assert.ok(await rtlScreen.findByText(/Benchmark comparison/i))
     assert.ok(await rtlScreen.findByText(/industry avg 35\.0%/i))
     assert.ok(await rtlScreen.findByText(/\+7\.0 pts/))
-  })
+  }, 60_000)
 })

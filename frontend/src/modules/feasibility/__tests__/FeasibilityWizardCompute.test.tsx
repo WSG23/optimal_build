@@ -66,8 +66,7 @@ describe('FeasibilityWizard Compute Flow', () => {
     fireEvent.change(siteAreaInput, { target: { value: '1000' } })
 
     // Change Land Use (default is Mixed Use, change to Commercial)
-    const landUseInput = screen.getByTestId('land-use-input')
-    fireEvent.change(landUseInput, { target: { value: 'Commercial' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Commercial' }))
 
     // Submit
     const submitBtn = screen.getByTestId('compute-button')

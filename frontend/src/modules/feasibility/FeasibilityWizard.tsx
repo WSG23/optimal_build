@@ -812,6 +812,7 @@ export function FeasibilityWizard({
             style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
           >
             <button
+              data-testid="compute-button"
               onClick={() => {
                 const syntheticEvent = {
                   preventDefault: () => {},

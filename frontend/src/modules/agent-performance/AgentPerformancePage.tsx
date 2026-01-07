@@ -64,9 +64,9 @@ export default function AgentPerformancePage() {
   const fallbackText = t('agentPerformance.common.fallback')
 
   const {
-    benchmarksLoading: _benchmarksLoading,
-    benchmarksError: _benchmarksError,
-    benchmarkComparisons: _benchmarkComparisons,
+    benchmarksLoading,
+    benchmarksError,
+    benchmarkComparisons,
     benchmarksHasContent,
   } = useBenchmarks({
     selectedDeal,
@@ -368,6 +368,89 @@ export default function AgentPerformancePage() {
                     </Card>
                   </Grid>
                 </Grid>
+              )}
+
+              {benchmarksHasContent && (
+                <Card variant="glass" sx={{ p: 2, mt: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    {t('agentPerformance.analytics.benchmarks.title')}
+                  </Typography>
+
+                  {benchmarksLoading && (
+                    <Typography color="text.secondary">
+                      {t('agentPerformance.analytics.benchmarksLoading')}
+                    </Typography>
+                  )}
+
+                  {benchmarksError && (
+                    <Typography color="error">{benchmarksError}</Typography>
+                  )}
+
+                  {!benchmarksLoading && !benchmarksError && (
+                    <Stack spacing={2}>
+                      {benchmarkComparisons.map((item) => (
+                        <Box
+                          key={item.key}
+                          sx={{
+                            display: 'grid',
+                            gridTemplateColumns: {
+                              xs: '1fr',
+                              sm: '1fr auto',
+                            },
+                            gap: 'var(--ob-space-100)',
+                            alignItems: 'start',
+                            border: '1px solid var(--ob-color-border-subtle)',
+                            borderRadius: 'var(--ob-radius-sm)',
+                            padding: 'var(--ob-space-150)',
+                          }}
+                        >
+                          <Box>
+                            <Typography sx={{ fontWeight: 600 }}>
+                              {item.label}
+                            </Typography>
+                            <Typography color="text.secondary">
+                              {t(
+                                'agentPerformance.analytics.benchmarks.versus',
+                                {
+                                  cohort:
+                                    item.cohort ?? t('common.fallback.dash'),
+                                  value:
+                                    item.benchmark ?? t('common.fallback.dash'),
+                                },
+                              )}
+                            </Typography>
+                          </Box>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 'var(--ob-space-025)',
+                              alignItems: { xs: 'flex-start', sm: 'flex-end' },
+                              textAlign: { xs: 'left', sm: 'right' },
+                            }}
+                          >
+                            <Typography sx={{ fontWeight: 600 }}>
+                              {item.actual}
+                            </Typography>
+                            {item.deltaText && (
+                              <Typography
+                                sx={{
+                                  fontFamily: 'var(--ob-font-family-mono)',
+                                  fontSize: 'var(--ob-font-size-xs)',
+                                  color: item.deltaPositive
+                                    ? 'var(--ob-color-status-success-text)'
+                                    : 'var(--ob-color-status-error-text)',
+                                }}
+                              >
+                                {item.deltaText}
+                              </Typography>
+                            )}
+                          </Box>
+                        </Box>
+                      ))}
+                    </Stack>
+                  )}
+                </Card>
               )}
             </Grid>
           )}
