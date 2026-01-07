@@ -59,6 +59,7 @@ export interface UseUnifiedCaptureReturn {
   isCapturing: boolean
   isScanning: boolean
   captureError: string | null
+  hasResults: boolean
 
   // Agent results
   captureSummary: GpsCaptureSummaryWithFeatures | null
@@ -81,6 +82,7 @@ export interface UseUnifiedCaptureReturn {
 
   // Handlers
   handleCapture: (event: FormEvent<HTMLFormElement>) => Promise<void>
+  handleNewCapture: () => void
 }
 
 export function useUnifiedCapture({
@@ -181,7 +183,7 @@ export function useUnifiedCapture({
 
   // Initialize Mapbox
   useEffect(() => {
-    const token = import.meta.env.VITE_MAPBOX_TOKEN
+    const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
     if (!token) {
       setMapError('Mapbox token not set; map preview disabled.')
       return
@@ -222,7 +224,8 @@ export function useUnifiedCapture({
     return () => {
       map.remove()
     }
-  }, []) // Only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run once on mount - do NOT re-initialize map when lat/lon change
 
   // Capture handler - routes to appropriate API based on mode
   const handleCapture = useCallback(
@@ -347,6 +350,37 @@ export function useUnifiedCapture({
     ],
   )
 
+  // Reset for new capture
+  const handleNewCapture = useCallback(() => {
+    // Clear results
+    setCaptureSummary(null)
+    setDeveloperFeatures(null)
+    setMarketSummary(null)
+    setSiteAcquisitionResult(null)
+    setCaptureError(null)
+    setGeocodeError(null)
+
+    // Reset form to defaults
+    setLatitude('1.3000')
+    setLongitude('103.8500')
+    setAddress('')
+    setSelectedScenarios([...DEFAULT_SCENARIO_ORDER])
+
+    // Clear sessionStorage
+    sessionStorage.removeItem('site-acquisition:captured-property')
+
+    // Reset map marker to default position
+    if (mapInstanceRef.current && mapMarkerRef.current) {
+      mapInstanceRef.current.setCenter([103.85, 1.3])
+      mapMarkerRef.current.setLngLat([103.85, 1.3])
+    }
+  }, [])
+
+  // Compute hasResults
+  const hasResults = isDeveloperMode
+    ? siteAcquisitionResult !== null
+    : captureSummary !== null
+
   return {
     // Form state
     latitude,
@@ -366,6 +400,7 @@ export function useUnifiedCapture({
     isCapturing,
     isScanning,
     captureError,
+    hasResults,
 
     // Agent results
     captureSummary,
@@ -388,5 +423,6 @@ export function useUnifiedCapture({
 
     // Handlers
     handleCapture,
+    handleNewCapture,
   }
 }

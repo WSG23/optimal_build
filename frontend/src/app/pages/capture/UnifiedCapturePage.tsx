@@ -19,11 +19,13 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import MapsHomeWorkIcon from '@mui/icons-material/MapsHomeWork'
 import RadarIcon from '@mui/icons-material/Radar'
+import AddIcon from '@mui/icons-material/Add'
 
 import { useDeveloperMode } from '../../../contexts/useDeveloperMode'
 import { useUnifiedCapture } from './hooks/useUnifiedCapture'
 import { AgentResultsPanel } from './components/AgentResultsPanel'
 import { MissionLog } from './components/MissionLog'
+import { VoiceObservationsPanel } from '../site-acquisition/components/VoiceObservationsPanel'
 import type { DevelopmentScenario } from '../../../api/agents'
 
 import 'mapbox-gl/dist/mapbox-gl.css'
@@ -93,6 +95,7 @@ export function UnifiedCapturePage() {
     isCapturing,
     isScanning,
     captureError,
+    hasResults,
 
     // Agent results
     captureSummary,
@@ -114,11 +117,13 @@ export function UnifiedCapturePage() {
 
     // Handlers
     handleCapture,
+    handleNewCapture,
   } = useUnifiedCapture({ isDeveloperMode })
 
-  const hasResults = isDeveloperMode
-    ? siteAcquisitionResult !== null
-    : captureSummary !== null
+  // Get property ID for voice notes
+  const propertyId = isDeveloperMode
+    ? (siteAcquisitionResult?.propertyId ?? null)
+    : (captureSummary?.propertyId ?? null)
 
   return (
     <div className="gps-page">
@@ -134,9 +139,21 @@ export function UnifiedCapturePage() {
         <section className="gps-page__summary">
           {/* LEFT PANEL: Glass capture form */}
           <div className="capture-card-glass">
-            <h2 className="gps-form__title">
-              <RadarIcon /> Property Capture
-            </h2>
+            <div className="gps-form__header">
+              <h2 className="gps-form__title">
+                <RadarIcon /> Property Capture
+              </h2>
+              {hasResults && (
+                <button
+                  type="button"
+                  className="gps-new-capture-btn"
+                  onClick={handleNewCapture}
+                  title="Start a new capture"
+                >
+                  <AddIcon /> New Capture
+                </button>
+              )}
+            </div>
 
             <form className="gps-form" onSubmit={handleCapture}>
               {/* Address input with geocode buttons */}
@@ -224,7 +241,7 @@ export function UnifiedCapturePage() {
                       type="button"
                       className={`gps-scenario-tile ${
                         selectedScenarios.includes(scenario.value)
-                          ? 'selected'
+                          ? 'gps-scenario-tile--selected'
                           : ''
                       }`}
                       onClick={() => handleScenarioToggle(scenario.value)}
@@ -251,16 +268,26 @@ export function UnifiedCapturePage() {
                 </label>
               </div>
 
-              {/* Scan button */}
+              {/* Scan button with prerequisite feedback */}
               <button
                 type="submit"
                 className="gps-scan-button"
                 disabled={isCapturing || selectedScenarios.length === 0}
+                title={
+                  selectedScenarios.length === 0
+                    ? 'Select at least one scenario to capture'
+                    : undefined
+                }
               >
                 {isCapturing ? (
                   <>
                     <div className="gps-spinner"></div>
                     <span>Scanning...</span>
+                  </>
+                ) : selectedScenarios.length === 0 ? (
+                  <>
+                    <RadarIcon />
+                    <span>Select Scenario</span>
                   </>
                 ) : (
                   <>
@@ -290,6 +317,14 @@ export function UnifiedCapturePage() {
                 </p>
               </div>
             )}
+
+            {/* Voice Observations Panel */}
+            <VoiceObservationsPanel
+              propertyId={propertyId}
+              latitude={parseFloat(latitude) || undefined}
+              longitude={parseFloat(longitude) || undefined}
+              disabled={isCapturing}
+            />
           </div>
 
           {/* RIGHT PANEL: Role-based results */}
