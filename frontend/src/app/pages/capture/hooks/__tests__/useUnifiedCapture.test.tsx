@@ -7,7 +7,51 @@ import {
   type UseUnifiedCaptureReturn,
 } from '../useUnifiedCapture'
 
-vi.mock('mapbox-gl', () => ({ default: {} }))
+const mockMapOn = vi.fn()
+const mockMapRemove = vi.fn()
+const mockMapSetCenter = vi.fn()
+const mockMarkerOn = vi.fn()
+const mockMarkerSetLngLat = vi.fn()
+const mockMarkerAddTo = vi.fn()
+
+vi.mock('mapbox-gl', () => ({
+  default: {
+    accessToken: '',
+    Map: class {
+      constructor() {
+        // noop
+      }
+      on(...args: unknown[]) {
+        mockMapOn(...args)
+      }
+      remove() {
+        mockMapRemove()
+      }
+      setCenter(...args: unknown[]) {
+        mockMapSetCenter(...args)
+      }
+    },
+    Marker: class {
+      constructor() {
+        // noop
+      }
+      on(...args: unknown[]) {
+        mockMarkerOn(...args)
+      }
+      setLngLat(...args: unknown[]) {
+        mockMarkerSetLngLat(...args)
+        return this
+      }
+      addTo(...args: unknown[]) {
+        mockMarkerAddTo(...args)
+        return this
+      }
+      getLngLat() {
+        return { lng: 103.85, lat: 1.3 }
+      }
+    },
+  },
+}))
 
 const mockCapturePropertyForDevelopment = vi.fn()
 vi.mock('../../../../../api/siteAcquisition', () => ({
@@ -34,12 +78,15 @@ vi.mock('../../../../../api/geocoding', () => ({
     mockReverseGeocodeCoords(...args),
 }))
 
-function renderHookHarness(isDeveloperMode: boolean) {
+function renderHookHarness(
+  isDeveloperMode: boolean,
+  options: { mapboxToken?: string } = {},
+) {
   const ref: { current: UseUnifiedCaptureReturn | null } = { current: null }
 
   function Harness() {
-    ref.current = useUnifiedCapture({ isDeveloperMode })
-    return null
+    ref.current = useUnifiedCapture({ isDeveloperMode, ...options })
+    return <div ref={ref.current.mapContainerRef} />
   }
 
   render(<Harness />)
@@ -54,6 +101,135 @@ describe('useUnifiedCapture', () => {
     vi.useRealTimers()
     vi.clearAllMocks()
     sessionStorage.clear()
+  })
+
+  it('sets a map error when Mapbox token is missing', async () => {
+    const hookRef = renderHookHarness(true, { mapboxToken: undefined })
+
+    await act(async () => {
+      // allow effects to run
+    })
+
+    expect(hookRef.current!.mapError).toBe(
+      'Mapbox token not set; map preview disabled.',
+    )
+  })
+
+  it('initializes a map when a Mapbox token is provided', async () => {
+    renderHookHarness(true, { mapboxToken: 'test-token' })
+
+    await act(async () => {
+      // allow effects to run
+    })
+
+    expect(mockMapOn).toHaveBeenCalled()
+    expect(mockMarkerAddTo).toHaveBeenCalled()
+  })
+
+  it('validates forward geocoding requires an address', async () => {
+    const hookRef = renderHookHarness(true)
+
+    await act(async () => {
+      hookRef.current!.setAddress('')
+    })
+
+    await act(async () => {
+      await hookRef.current!.handleForwardGeocode()
+    })
+
+    expect(hookRef.current!.geocodeError).toBe(
+      'Please enter an address to geocode.',
+    )
+    expect(mockForwardGeocodeAddress).not.toHaveBeenCalled()
+  })
+
+  it('updates coordinates when forward geocoding succeeds', async () => {
+    mockForwardGeocodeAddress.mockResolvedValue({
+      latitude: 1.2345,
+      longitude: 103.9876,
+    })
+
+    const hookRef = renderHookHarness(true)
+
+    await act(async () => {
+      hookRef.current!.setAddress('123 Main St')
+    })
+
+    await act(async () => {
+      await hookRef.current!.handleForwardGeocode()
+    })
+
+    expect(hookRef.current!.latitude).toBe('1.2345')
+    expect(hookRef.current!.longitude).toBe('103.9876')
+  })
+
+  it('surfaces an error when forward geocoding fails', async () => {
+    mockForwardGeocodeAddress.mockRejectedValue(new Error('Geocode down'))
+    const hookRef = renderHookHarness(true)
+
+    await act(async () => {
+      hookRef.current!.setAddress('123 Main St')
+    })
+
+    await act(async () => {
+      await hookRef.current!.handleForwardGeocode()
+    })
+
+    expect(hookRef.current!.geocodeError).toBe('Geocode down')
+  })
+
+  it('validates reverse geocoding requires valid coordinates', async () => {
+    const hookRef = renderHookHarness(true)
+
+    await act(async () => {
+      hookRef.current!.setLatitude('not-a-number')
+      hookRef.current!.setLongitude('103.8500')
+    })
+
+    await act(async () => {
+      await hookRef.current!.handleReverseGeocode()
+    })
+
+    expect(hookRef.current!.geocodeError).toBe(
+      'Please provide valid coordinates before reverse geocoding.',
+    )
+    expect(mockReverseGeocodeCoords).not.toHaveBeenCalled()
+  })
+
+  it('updates address when reverse geocoding succeeds', async () => {
+    mockReverseGeocodeCoords.mockResolvedValue({
+      formattedAddress: 'Resolved Address',
+    })
+
+    const hookRef = renderHookHarness(true)
+
+    await act(async () => {
+      hookRef.current!.setLatitude('1.1111')
+      hookRef.current!.setLongitude('103.2222')
+    })
+
+    await act(async () => {
+      await hookRef.current!.handleReverseGeocode()
+    })
+
+    expect(hookRef.current!.address).toBe('Resolved Address')
+  })
+
+  it('surfaces an error when reverse geocoding fails', async () => {
+    mockReverseGeocodeCoords.mockRejectedValue(new Error('Reverse down'))
+
+    const hookRef = renderHookHarness(true)
+
+    await act(async () => {
+      hookRef.current!.setLatitude('1.1111')
+      hookRef.current!.setLongitude('103.2222')
+    })
+
+    await act(async () => {
+      await hookRef.current!.handleReverseGeocode()
+    })
+
+    expect(hookRef.current!.geocodeError).toBe('Reverse down')
   })
 
   it('runs the developer capture flow and persists the capture', async () => {
@@ -91,6 +267,7 @@ describe('useUnifiedCapture', () => {
         jurisdictionCode: 'SG',
         previewDetailLevel: 'medium',
       }),
+      expect.any(AbortSignal),
     )
 
     const persisted = sessionStorage.getItem(
@@ -104,6 +281,69 @@ describe('useUnifiedCapture', () => {
     expect(hookRef.current!.capturedSites[0]?.capturedAt).toBe(
       '2026-01-06T10:00:01.500Z',
     )
+  })
+
+  it('omits developmentScenarios when no scenarios are selected (developer flow)', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-06T10:00:00.000Z'))
+
+    mockCapturePropertyForDevelopment.mockResolvedValue({
+      propertyId: 'prop-555',
+      currencySymbol: 'S$',
+      address: { fullAddress: '1 Cyber Ave', district: 'Downtown' },
+      quickAnalysis: { generatedAt: '2026-01-06T09:58:00Z', scenarios: [] },
+      previewJob: null,
+    })
+
+    const hookRef = renderHookHarness(true)
+
+    await act(async () => {
+      hookRef.current!.handleScenarioToggle('raw_land')
+      hookRef.current!.handleScenarioToggle('en_bloc')
+    })
+    expect(hookRef.current!.selectedScenarios.length).toBe(0)
+
+    await act(async () => {
+      const event = {
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent<HTMLFormElement>
+      const promise = hookRef.current!.handleCapture(event)
+      vi.advanceTimersByTime(1500)
+      await promise
+    })
+
+    expect(mockCapturePropertyForDevelopment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        developmentScenarios: undefined,
+      }),
+      expect.any(AbortSignal),
+    )
+  })
+
+  it('resets state and clears persisted capture when starting a new capture', async () => {
+    const hookRef = renderHookHarness(true)
+
+    sessionStorage.setItem(
+      'site-acquisition:captured-property',
+      JSON.stringify({ propertyId: 'prop-123' }),
+    )
+
+    await act(async () => {
+      hookRef.current!.setLatitude('1.1111')
+      hookRef.current!.setLongitude('103.2222')
+      hookRef.current!.setAddress('Some address')
+    })
+
+    await act(async () => {
+      hookRef.current!.handleNewCapture()
+    })
+
+    expect(hookRef.current!.latitude).toBe('1.3000')
+    expect(hookRef.current!.longitude).toBe('103.8500')
+    expect(hookRef.current!.address).toBe('')
+    expect(
+      sessionStorage.getItem('site-acquisition:captured-property'),
+    ).toBeNull()
   })
 
   it('runs the agent capture flow and fetches market intelligence', async () => {

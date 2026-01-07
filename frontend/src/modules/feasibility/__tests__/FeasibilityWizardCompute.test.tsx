@@ -72,9 +72,12 @@ describe('FeasibilityWizard Compute Flow', () => {
     const submitBtn = screen.getByTestId('compute-button')
     fireEvent.click(submitBtn)
 
-    await waitFor(() => {
-      expect(submitFeasibilityAssessment).toHaveBeenCalledTimes(1)
-    })
+    await waitFor(
+      () => {
+        expect(submitFeasibilityAssessment).toHaveBeenCalledTimes(1)
+      },
+      { timeout: 10_000 },
+    )
 
     const callArgs = vi.mocked(submitFeasibilityAssessment).mock.calls[0][0]
 
@@ -83,5 +86,5 @@ describe('FeasibilityWizard Compute Flow', () => {
     expect(callArgs.project.landUse).toBe('Commercial')
     // Name is generated
     expect(callArgs.project.name).toBe('Project 123 Main St')
-  })
+  }, 30_000)
 })

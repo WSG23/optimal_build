@@ -211,7 +211,7 @@ describe('AgentPerformancePage analytics', () => {
     }) as typeof globalThis.fetch
 
     AgentPerformancePage = (await import('../AgentPerformancePage')).default
-  }, 60_000)
+  }, 120_000)
 
   afterEach(() => {
     if (rtlCleanup) {

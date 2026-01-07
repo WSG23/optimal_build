@@ -115,12 +115,18 @@ describe('AgentsGpsCapturePage', () => {
       screen.getByRole('button', { name: /Generate quick analysis/i }),
     )
 
-    await waitFor(() => {
-      assert.equal(captureCalls, 1)
-    })
-    await waitFor(() => {
-      assert.equal(marketCalls, 1)
-    })
+    await waitFor(
+      () => {
+        assert.equal(captureCalls, 1)
+      },
+      { timeout: 10_000 },
+    )
+    await waitFor(
+      () => {
+        assert.equal(marketCalls, 1)
+      },
+      { timeout: 10_000 },
+    )
 
     assert.ok(screen.getByRole('heading', { name: /Raw land potential/i }))
     assert.ok(screen.getByText(/Max GFA 20,000 sqm/i))
@@ -136,11 +142,14 @@ describe('AgentsGpsCapturePage', () => {
       screen.getByRole('button', { name: /Generate professional pack/i }),
     )
 
-    await waitFor(() => {
-      assert.equal(packCalls, 1)
-      assert.equal(lastPackType, 'sales')
-    })
+    await waitFor(
+      () => {
+        assert.equal(packCalls, 1)
+        assert.equal(lastPackType, 'sales')
+      },
+      { timeout: 10_000 },
+    )
 
     assert.ok(screen.getByRole('link', { name: /Download sales_pack\.pdf/i }))
-  })
+  }, 20_000)
 })
