@@ -20,7 +20,7 @@ from app.models.business_performance import (
     DealStatus,
 )
 from app.models.property import MarketTransaction
-from app.models.regulatory import RegulatorySubmission
+from app.models.regulatory import AuthoritySubmission
 
 logger = logging.getLogger(__name__)
 
@@ -289,10 +289,10 @@ class RegulatoryDelayRule(AlertRule):
         # Get pending submissions older than 60 days
         cutoff_date = datetime.now() - timedelta(days=60)
 
-        submissions_query = select(RegulatorySubmission).where(
+        submissions_query = select(AuthoritySubmission).where(
             and_(
-                RegulatorySubmission.submitted_at < cutoff_date,
-                RegulatorySubmission.status.in_(["submitted", "in_review", "rfi"]),
+                AuthoritySubmission.submitted_at < cutoff_date,
+                AuthoritySubmission.status.in_(["submitted", "in_review", "rfi"]),
             )
         )
 

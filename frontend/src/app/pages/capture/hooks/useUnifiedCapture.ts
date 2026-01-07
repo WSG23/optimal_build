@@ -38,6 +38,11 @@ export interface CapturedSite {
 
 export interface UseUnifiedCaptureOptions {
   isDeveloperMode: boolean
+  /**
+   * Optional Mapbox token override (primarily for tests).
+   * When omitted, falls back to `import.meta.env.VITE_MAPBOX_ACCESS_TOKEN`.
+   */
+  mapboxToken?: string
 }
 
 export interface UseUnifiedCaptureReturn {
@@ -87,6 +92,7 @@ export interface UseUnifiedCaptureReturn {
 
 export function useUnifiedCapture({
   isDeveloperMode,
+  mapboxToken,
 }: UseUnifiedCaptureOptions): UseUnifiedCaptureReturn {
   // Form state
   const [latitude, setLatitude] = useState<string>('1.3000')
@@ -183,7 +189,7 @@ export function useUnifiedCapture({
 
   // Initialize Mapbox
   useEffect(() => {
-    const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
+    const token = mapboxToken ?? import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
     if (!token) {
       setMapError('Mapbox token not set; map preview disabled.')
       return
@@ -252,14 +258,34 @@ export function useUnifiedCapture({
 
         if (isDeveloperMode) {
           // Developer flow - use site acquisition API
-          const result = await capturePropertyForDevelopment({
-            latitude: parsedLat,
-            longitude: parsedLon,
-            developmentScenarios:
-              selectedScenarios.length > 0 ? selectedScenarios : undefined,
-            jurisdictionCode: jurisdictionCode || undefined,
-            previewDetailLevel: 'medium',
-          })
+          // Add timeout to prevent infinite loading if backend is unresponsive
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
+
+          let result: SiteAcquisitionResult
+          try {
+            result = await capturePropertyForDevelopment(
+              {
+                latitude: parsedLat,
+                longitude: parsedLon,
+                developmentScenarios:
+                  selectedScenarios.length > 0 ? selectedScenarios : undefined,
+                jurisdictionCode: jurisdictionCode || undefined,
+                previewDetailLevel: 'medium',
+              },
+              controller.signal,
+            )
+          } catch (err) {
+            clearTimeout(timeoutId)
+            // Re-throw with more descriptive message for timeout
+            if (err instanceof Error && err.name === 'AbortError') {
+              throw new Error(
+                'Request timed out. Please check if the backend server is running.',
+              )
+            }
+            throw err
+          }
+          clearTimeout(timeoutId)
 
           setSiteAcquisitionResult(result)
 

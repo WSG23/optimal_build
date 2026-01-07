@@ -101,15 +101,21 @@ from app.services.ai.scenario_optimizer import scenario_optimizer_service
 from app.services.ai.market_predictor import market_predictor_service
 from app.services.ai.compliance_predictor import compliance_predictor_service
 from app.services.ai.due_diligence_generator import due_diligence_service
-from app.services.ai.report_generator import report_generator_service
+from app.services.ai.report_generator import (
+    ai_report_generator as report_generator_service,
+)
 from app.services.ai.communication_drafter import communication_drafter_service
 from app.services.ai.conversational_assistant import conversational_assistant_service
 from app.services.ai.portfolio_optimizer import portfolio_optimizer_service
 from app.services.ai.multi_modal_analyzer import multi_modal_analyzer_service
 from app.services.ai.competitive_intelligence import competitive_intelligence_service
 from app.services.ai.workflow_engine import workflow_engine_service
-from app.services.ai.anomaly_detector import anomaly_detector_service
-from app.services.ai.document_extractor import document_extractor_service
+from app.services.ai.anomaly_detector import (
+    anomaly_detection_service as anomaly_detector_service,
+)
+from app.services.ai.document_extractor import (
+    document_extraction_service as document_extractor_service,
+)
 
 router = APIRouter(prefix="/ai", tags=["AI Services"])
 

@@ -70,6 +70,10 @@ export function useAssumptions(): UseAssumptionsResult {
         })
       })
       .catch((err: unknown) => {
+        // Ignore AbortError - this is expected when component unmounts during fetch
+        if (err instanceof Error && err.name === 'AbortError') {
+          return
+        }
         console.warn('Failed to load engineering defaults', err)
       })
     return () => controller.abort()

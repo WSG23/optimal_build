@@ -14,7 +14,7 @@ from typing import Any
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.regulatory import RegulatorySubmission
+from app.models.regulatory import AuthoritySubmission
 from app.models.property import Property
 
 logger = logging.getLogger(__name__)
@@ -337,17 +337,17 @@ class CompliancePredictorService:
         two_years_ago = datetime.now() - timedelta(days=730)
 
         query = (
-            select(RegulatorySubmission)
+            select(AuthoritySubmission)
             .where(
                 and_(
-                    RegulatorySubmission.submission_type == submission_type,
-                    RegulatorySubmission.submitted_at >= two_years_ago,
-                    RegulatorySubmission.status.in_(
+                    AuthoritySubmission.submission_type == submission_type,
+                    AuthoritySubmission.submitted_at >= two_years_ago,
+                    AuthoritySubmission.status.in_(
                         ["approved", "rejected", "completed"]
                     ),
                 )
             )
-            .order_by(RegulatorySubmission.submitted_at.desc())
+            .order_by(AuthoritySubmission.submitted_at.desc())
             .limit(5)
         )
 
