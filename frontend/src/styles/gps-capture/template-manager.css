@@ -6,7 +6,7 @@
 .site-acquisition-template-manager {
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-500);
+    gap: var(--ob-space-250);
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
@@ -17,14 +17,14 @@
 
 .template-manager-header {
     display: flex;
-    gap: 1.5rem;
+    gap: var(--ob-space-150);
     align-items: center;
     justify-content: space-between;
 }
 
 .template-manager-header h1 {
-    margin: 0 0 0.25rem;
-    font-size: 1.75rem;
+    margin: 0 0 var(--ob-space-025);
+    font-size: var(--ob-font-size-2xl);
 }
 
 .template-manager-back {
@@ -38,8 +38,8 @@
 }
 
 .template-manager-alert {
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
+    padding: var(--ob-space-075) var(--ob-space-100);
+    border-radius: var(--ob-radius-sm);
     font-weight: 600;
 }
 
@@ -58,34 +58,34 @@
 .template-manager-section {
     background: var(--ob-color-surface-default);
     border: 1px solid var(--ob-color-border-neutral);
-    border-radius: 8px;
-    padding: 1.5rem;
+    border-radius: var(--ob-radius-md);
+    padding: var(--ob-space-150);
 }
 
 .template-manager-controls {
     display: flex;
-    gap: 1rem;
+    gap: var(--ob-space-100);
     align-items: flex-end;
-    margin-bottom: 1rem;
+    margin-bottom: var(--ob-space-100);
 }
 
 .template-manager-controls label {
     display: flex;
     flex-direction: column;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: var(--ob-font-size-md);
 }
 
 .template-manager-controls select,
 .template-manager-controls button {
-    margin-top: 0.25rem;
+    margin-top: var(--ob-space-025);
 }
 
 .template-manager-controls button {
     background: var(--ob-color-surface-alt);
     border: 1px solid var(--ob-color-border-neutral);
-    border-radius: 6px;
-    padding: 0.45rem 0.85rem;
+    border-radius: var(--ob-radius-sm);
+    padding: var(--ob-space-050) var(--ob-space-100);
     cursor: pointer;
 }
 
@@ -96,30 +96,30 @@
 
 .template-manager-table th,
 .template-manager-table td {
-    padding: 0.5rem 0.75rem;
+    padding: var(--ob-space-050) var(--ob-space-075);
     border-bottom: 1px solid var(--ob-color-border-neutral);
     text-align: left;
 }
 
 .template-manager-table th {
     background: var(--ob-color-surface-alt);
-    font-size: 0.85rem;
+    font-size: var(--ob-font-size-sm);
     text-transform: uppercase;
     letter-spacing: 0.03em;
 }
 
 .template-manager-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--ob-space-050);
 }
 
 .template-manager-actions button {
     border: 1px solid var(--ob-color-border-neutral);
     background: var(--ob-color-surface-default);
-    padding: 0.35rem 0.6rem;
-    border-radius: 4px;
+    padding: var(--ob-space-050) var(--ob-space-075);
+    border-radius: var(--ob-radius-xs);
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: var(--ob-font-size-sm);
 }
 
 .template-manager-actions button.danger {
@@ -130,41 +130,41 @@
 .template-manager-form {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--ob-space-100);
 }
 
 .template-manager-form label {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: var(--ob-space-050);
     font-weight: 600;
 }
 
 .template-manager-form input,
 .template-manager-form select,
 .template-manager-form textarea {
-    padding: 0.5rem 0.6rem;
+    padding: var(--ob-space-050) var(--ob-space-075);
     border: 1px solid var(--ob-color-border-neutral);
-    border-radius: 6px;
-    font-size: 0.95rem;
+    border-radius: var(--ob-radius-sm);
+    font-size: var(--ob-font-size-md);
 }
 
 .template-manager-form .checkbox {
     flex-direction: row;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--ob-space-050);
     font-weight: 500;
 }
 
 .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+    gap: var(--ob-space-100);
 }
 
 .template-manager-form-actions {
     display: flex;
-    gap: 0.75rem;
+    gap: var(--ob-space-075);
     align-items: center;
 }
 
@@ -172,8 +172,8 @@
     background: var(--ob-color-brand-primary);
     color: var(--ob-color-text-inverse);
     border: none;
-    padding: 0.5rem 0.9rem;
-    border-radius: 6px;
+    padding: var(--ob-space-050) var(--ob-space-100);
+    border-radius: var(--ob-radius-sm);
     cursor: pointer;
 }
 
@@ -185,7 +185,7 @@
 .template-manager-form-heading {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--ob-space-075);
 }
 
 .template-manager-form-heading h2 {
@@ -195,13 +195,13 @@
 .template-manager-pill {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
+    gap: var(--ob-space-025);
     border-radius: 999px;
     background: var(--ob-color-brand-soft);
     color: var(--ob-color-brand-primary-emphasis);
     font-weight: 600;
-    padding: 0.25rem 0.7rem;
-    font-size: 0.8rem;
+    padding: var(--ob-space-025) var(--ob-space-075);
+    font-size: var(--ob-font-size-xs);
 }
 
 .template-manager-import textarea {
@@ -209,19 +209,19 @@
 }
 
 .template-manager-sample {
-    margin-top: 0.75rem;
+    margin-top: var(--ob-space-075);
 }
 
 .template-manager-sample pre {
     background: var(--ob-color-surface-inverse);
     color: var(--ob-color-border-neutral);
-    padding: 0.75rem;
-    border-radius: 6px;
+    padding: var(--ob-space-075);
+    border-radius: var(--ob-radius-sm);
     overflow-x: auto;
-    font-size: 0.85rem;
+    font-size: var(--ob-font-size-sm);
 }
 
 .template-manager-empty {
     margin: 0;
-    color: #5b6478;
+    color: var(--ob-color-text-muted);
 }

@@ -2,7 +2,7 @@
  * Property Location Map Component
  *
  * Interactive map for site acquisition using Leaflet + OpenStreetMap (free, no token required).
- * Falls back to Mapbox if VITE_MAPBOX_TOKEN is configured.
+ * Falls back to Mapbox if VITE_MAPBOX_ACCESS_TOKEN is configured.
  *
  * Features:
  * - View captured property location

@@ -26,7 +26,7 @@
     margin-top: var(--ob-space-200);
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-200);
+    gap: var(--ob-space-200);
 }
 
 .site-acquisition__preview-header {
@@ -62,17 +62,17 @@
 /* -------------------------------------------------------------------------- */
 
 .site-acquisition__controls {
-    margin-top: var(--ob-spacing-300);
+    margin-top: var(--ob-space-300);
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
-    gap: var(--ob-spacing-300);
+    gap: var(--ob-space-300);
 }
 
 .site-acquisition__control-group {
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-100);
+    gap: var(--ob-space-100);
     font-size: var(--ob-font-size-sm);
     color: var(--ob-color-text-secondary);
 }
@@ -84,7 +84,7 @@
 
 .site-acquisition__control-select {
     min-width: 15rem;
-    padding: var(--ob-spacing-150) var(--ob-spacing-200);
+    padding: var(--ob-space-150) var(--ob-space-200);
     border-radius: var(--ob-radius-md); /* 6px - inputs */
     border: 1px solid var(--ob-color-border-subtle);
     background: var(--ob-color-bg-surface);
@@ -116,7 +116,7 @@
 /* -------------------------------------------------------------------------- */
 
 .site-acquisition__btn-refresh {
-    padding: var(--ob-spacing-150) var(--ob-spacing-300);
+    padding: var(--ob-space-150) var(--ob-space-300);
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     border: none;
     background: linear-gradient(

@@ -188,7 +188,7 @@ export function GpsCapturePage() {
   }, [latitude, longitude])
 
   useEffect(() => {
-    const token = import.meta.env.VITE_MAPBOX_TOKEN
+    const token = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
     if (!token) {
       setMapError('Mapbox token not set; map preview disabled.')
       return

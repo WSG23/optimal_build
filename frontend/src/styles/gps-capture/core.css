@@ -1,5 +1,56 @@
 /* GPS capture workspace ---------------------------------------------------- */
 
+/* Form Header with New Capture Button */
+.gps-form__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--ob-space-100);
+}
+
+.gps-form__title {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-075);
+    margin: 0;
+    font-size: var(--ob-font-size-xl);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.gps-form__title svg {
+    color: var(--ob-color-neon-cyan);
+    -webkit-text-fill-color: var(--ob-color-neon-cyan);
+}
+
+.gps-new-capture-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-050);
+    padding: var(--ob-space-050) var(--ob-space-100);
+    background: rgba(0, 243, 255, 0.1);
+    border: 1px solid var(--ob-color-neon-cyan);
+    border-radius: var(--ob-radius-xs);
+    color: var(--ob-color-neon-cyan);
+    font-size: var(--ob-font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.gps-new-capture-btn:hover {
+    background: rgba(0, 243, 255, 0.2);
+    box-shadow: var(--ob-glow-neon-cyan);
+}
+
+.gps-new-capture-btn svg {
+    font-size: var(--ob-font-size-md);
+}
+
 /* GPS page becomes relative to hold absolute map */
 .gps-page {
     position: relative;
@@ -82,7 +133,7 @@
     /* padding removed - YosaiShell provides canonical 16px layout padding */
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-500);
+    gap: var(--ob-space-250);
     min-height: 100vh;
     box-sizing: border-box;
 }
@@ -97,7 +148,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 2rem;
+    gap: var(--ob-space-200);
     width: 100%;
 }
 
@@ -108,12 +159,12 @@
     background: rgba(20, 20, 20, 0.75); /* Darker, high-contrast cockpit feel */
     backdrop-filter: blur(var(--ob-blur-xl));
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
-    padding: 2rem;
+    border-radius: var(--ob-radius-sm);
+    padding: var(--ob-space-200);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--ob-space-150);
     color: #fff;
     transition:
         opacity 0.5s ease,
@@ -128,7 +179,7 @@
 
 .capture-card-glass h2 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: var(--ob-font-size-2xl);
     font-weight: 700;
     letter-spacing: -0.02em;
     background: linear-gradient(90deg, #fff, #94a3b8);
@@ -140,7 +191,7 @@
 .capture-card-glass p {
     margin: 0;
     color: #94a3b8;
-    font-size: 0.95rem;
+    font-size: var(--ob-font-size-md);
 }
 
 /* Right Panel: HUD Widgets Stack */
@@ -148,7 +199,7 @@
     flex: 0 0 320px;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--ob-space-100);
     align-items: flex-end; /* Align cards to right edge */
 }
 
@@ -158,8 +209,8 @@
     background: rgba(20, 20, 20, 0.6);
     backdrop-filter: blur(var(--ob-blur-md));
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 4px; /* Square Cyber-Minimalism: sm for cards */
-    padding: 1rem 1.25rem;
+    border-radius: var(--ob-radius-sm);
+    padding: var(--ob-space-100) var(--ob-space-125);
     color: #fff;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -172,8 +223,8 @@
 }
 
 .gps-hud-card h3 {
-    margin: 0 0 0.5rem 0;
-    font-size: 0.85rem;
+    margin: 0 0 var(--ob-space-050) 0;
+    font-size: var(--ob-font-size-sm);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: rgba(255, 255, 255, 0.5);
@@ -188,14 +239,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 1rem 0;
-    gap: 0.5rem;
+    padding: var(--ob-space-100) 0;
+    gap: var(--ob-space-050);
     color: rgba(255, 255, 255, 0.4);
 }
 
 .gps-hud-locked-overlay svg {
-    font-size: 1.5rem;
-    margin-bottom: 0.25rem;
+    font-size: var(--ob-font-size-2xl);
+    margin-bottom: var(--ob-space-025);
 }
 
 /* When unlocked, content fades in */
@@ -237,7 +288,7 @@
 .gps-scenarios-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
+    gap: var(--ob-space-075);
 }
 
 .gps-scenario-tile {
@@ -245,11 +296,11 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 1rem 0.5rem;
+    gap: var(--ob-space-050);
+    padding: var(--ob-space-100) var(--ob-space-050);
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 4px; /* Square Cyber-Minimalism: sm for tiles */
+    border-radius: var(--ob-radius-sm);
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: center;
@@ -268,7 +319,7 @@
 }
 
 .gps-scenario-tile span {
-    font-size: 0.75rem;
+    font-size: var(--ob-font-size-xs);
     color: rgba(255, 255, 255, 0.7);
 }
 
@@ -281,7 +332,7 @@
 /* Scan Button - Gamified */
 .gps-scan-button {
     width: 100%;
-    padding: 1.25rem;
+    padding: var(--ob-space-125);
     border: none;
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     background: linear-gradient(
@@ -291,7 +342,7 @@
     );
     color: #0a1628;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: var(--ob-font-size-lg);
     letter-spacing: 0.02em;
     cursor: pointer;
     box-shadow: var(--ob-glow-neon-cyan);
@@ -299,8 +350,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
-    margin-top: 1rem;
+    gap: var(--ob-space-075);
+    margin-top: var(--ob-space-100);
 }
 
 .gps-scan-button:hover:not(:disabled) {
@@ -324,7 +375,7 @@
 .gps-pack-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
+    gap: var(--ob-space-075);
 }
 
 .gps-pack-btn {
@@ -332,13 +383,13 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem;
+    gap: var(--ob-space-050);
+    padding: var(--ob-space-075);
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 2px; /* Square Cyber-Minimalism: xs for buttons */
+    border-radius: var(--ob-radius-xs);
     color: #fff;
-    font-size: 0.8rem;
+    font-size: var(--ob-font-size-sm);
     cursor: pointer;
     transition: all 0.2s;
 }
@@ -464,6 +515,63 @@
     margin-left: auto;
 }
 
+/* HUD Panel List (Quick Analysis scenarios) */
+.gps-panel__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-100);
+}
+
+.gps-panel__list > li {
+    padding: var(--ob-space-075);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--ob-radius-xs);
+    border-left: 2px solid var(--ob-color-neon-cyan);
+}
+
+/* HUD Panel Headline (scenario label) */
+.gps-panel__headline {
+    font-size: var(--ob-font-size-sm);
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: var(--ob-space-050);
+}
+
+.gps-panel__headline strong {
+    color: var(--ob-color-neon-cyan);
+}
+
+/* HUD Panel Metrics (key-value definition list) */
+.gps-panel__metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: var(--ob-space-075);
+    margin: 0;
+}
+
+.gps-panel__metrics > div {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-025);
+}
+
+.gps-panel__metrics dt {
+    font-size: var(--ob-font-size-2xs);
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.gps-panel__metrics dd {
+    margin: 0;
+    font-size: var(--ob-font-size-sm);
+    font-weight: 600;
+    color: #fff;
+}
+
 /* Upsell Card */
 .gps-hud-card--upsell {
     background: rgba(99, 102, 241, 0.1);
@@ -480,9 +588,32 @@
     width: 100%;
 }
 
-/* Developer Workspace Section */
+/* Developer Workspace Section - Full workspace below map */
 .gps-page__developer-workspace {
     padding: var(--ob-space-200);
+    margin-top: var(--ob-space-200);
+    background: var(--ob-color-bg-root);
+    border-radius: var(--ob-radius-lg) var(--ob-radius-lg) 0 0;
+    /* Solid background to separate from map - not glass since it's a full workspace */
+}
+
+/* Developer Results Container */
+.site-acquisition__developer-results {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-250);
+}
+
+/* Scenario Focus Section */
+.site-acquisition__scenario-focus {
+    margin-top: var(--ob-space-150);
+}
+
+/* Finance CTA Section */
+.site-acquisition__finance-cta {
+    margin-top: var(--ob-space-200);
+    padding-top: var(--ob-space-200);
+    border-top: 1px solid var(--ob-color-border-subtle);
 }
 
 /* Mobile Responsive */
