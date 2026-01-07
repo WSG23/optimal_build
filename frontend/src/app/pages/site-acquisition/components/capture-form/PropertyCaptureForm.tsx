@@ -248,7 +248,7 @@ export function PropertyCaptureForm({
               nearbyAmenities={mapAmenities}
               heritageFeatures={heritageFeatures}
               interactive={!isCapturing}
-              height={350}
+              height="calc(var(--ob-size-controls-min) - var(--ob-space-250))"
               showAmenities={hasAmenityCoordinates}
               showHeritage={!!capturedProperty?.heritageContext?.flag}
               propertyId={capturedProperty?.propertyId}

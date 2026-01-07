@@ -15,6 +15,7 @@ import type {
   ChecklistItem,
   DevelopmentScenario,
 } from '../../../../../api/siteAcquisition'
+import { Box } from '@mui/material'
 import { Button } from '../../../../../components/canonical/Button'
 import { Link } from '../../../../../router'
 import type { ScenarioOption } from '../../constants'
@@ -89,7 +90,7 @@ export function DueDiligenceChecklistSection({
         <div className="due-diligence__header-actions">
           <Link
             to="/app/site-acquisition/checklist-templates"
-            style={{ textDecoration: 'none' }}
+            className="due-diligence__manage-templates-link"
           >
             <Button variant="secondary" size="sm">
               Manage templates
@@ -130,9 +131,9 @@ export function DueDiligenceChecklistSection({
           {/* Progress bar */}
           {displaySummary && (
             <div className="due-diligence__progress-track">
-              <div
+              <Box
                 className="due-diligence__progress-fill"
-                style={{ width: `${displaySummary.completionPercentage}%` }}
+                sx={{ width: `${displaySummary.completionPercentage}%` }}
               />
             </div>
           )}

@@ -196,6 +196,16 @@ export function MultiScenarioComparisonSection({
                         <SystemMarker active={isActive}>
                           {getScenarioMarker(row.key)}
                         </SystemMarker>
+                        <div className="multi-scenario__path-timestamp">
+                          <span className="multi-scenario__path-timestamp-label">
+                            RECORDED
+                          </span>
+                          <span className="multi-scenario__path-timestamp-value">
+                            {row.recordedAt
+                              ? formatRecordedTimestamp(row.recordedAt)
+                              : '—'}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Metrics Grid: Yield + Risk Vector */}
@@ -258,7 +268,7 @@ export function MultiScenarioComparisonSection({
               {propertyId && (
                 <Link
                   to={`/app/asset-feasibility?propertyId=${encodeURIComponent(propertyId)}`}
-                  style={{ textDecoration: 'none', marginLeft: 'auto' }}
+                  className="multi-scenario__full-feasibility-link"
                 >
                   <Button variant="primary" size="sm">
                     FULL FEASIBILITY →

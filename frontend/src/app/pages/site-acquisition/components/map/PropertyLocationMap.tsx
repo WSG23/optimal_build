@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import * as L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { IconButton } from '@mui/material'
+import { Box, IconButton } from '@mui/material'
 import { MyLocation } from '@mui/icons-material'
 
 // ============================================================================
@@ -62,8 +62,8 @@ export interface PropertyLocationMapProps {
   heritageFeatures?: HeritageFeature[]
   /** Whether the map is interactive (allows coordinate changes) */
   interactive?: boolean
-  /** Map height in pixels */
-  height?: number
+  /** Map height (CSS value) */
+  height?: string
   /** Show amenity markers */
   showAmenities?: boolean
   /** Show heritage overlay */
@@ -80,26 +80,12 @@ export interface PropertyLocationMapProps {
 // Constants
 // ============================================================================
 
-const AMENITY_COLORS: Record<string, string> = {
-  mrt: '#e74c3c',
-  bus: '#3498db',
-  school: '#f39c12',
-  mall: '#9b59b6',
-  park: '#27ae60',
-}
-
 const AMENITY_ICONS: Record<string, string> = {
   mrt: '🚇',
   bus: '🚌',
   school: '🏫',
   mall: '🛒',
   park: '🌳',
-}
-
-const HERITAGE_COLORS: Record<string, string> = {
-  low: '#27ae60',
-  medium: '#f39c12',
-  high: '#e74c3c',
 }
 
 // Grayscale tile providers (free, no token required)
@@ -123,7 +109,7 @@ export function PropertyLocationMap({
   nearbyAmenities,
   heritageFeatures,
   interactive = true,
-  height = 400,
+  height = 'var(--ob-size-controls-min)',
   showAmenities = true,
   showHeritage = true,
   propertyId,
@@ -164,18 +150,8 @@ export function PropertyLocationMap({
 
     // Create custom marker icon
     const propertyIcon = L.divIcon({
-      className: 'property-marker',
-      html: `<div style="
-        width: 32px;
-        height: 32px;
-        background: #1d1d1f;
-        border: 3px solid white;
-        border-radius: 50%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      "><span style="color: white; font-size: 14px;">📍</span></div>`,
+      className: 'ob-map-marker ob-map-marker--property',
+      html: `<div class="ob-map-marker__inner"><span class="ob-map-marker__icon" aria-hidden="true">📍</span></div>`,
       iconSize: [32, 32],
       iconAnchor: [16, 16],
     })
@@ -188,7 +164,7 @@ export function PropertyLocationMap({
 
     // Add popup with property info
     if (address || district || zoningCode) {
-      marker.bindPopup(buildPopupContent(address, district, zoningCode))
+      marker.bindPopup(buildPropertyPopupContent(address, district, zoningCode))
     }
 
     // Handle marker drag
@@ -239,7 +215,7 @@ export function PropertyLocationMap({
     if (mainMarkerRef.current && (address || district || zoningCode)) {
       mainMarkerRef.current.unbindPopup()
       mainMarkerRef.current.bindPopup(
-        buildPopupContent(address, district, zoningCode),
+        buildPropertyPopupContent(address, district, zoningCode),
       )
     }
   }, [address, district, zoningCode])
@@ -275,12 +251,7 @@ export function PropertyLocationMap({
       const distanceText = amenity.distance_m
         ? `${Math.round(amenity.distance_m)}m away`
         : ''
-      marker.bindPopup(`
-        <div style="font-family: system-ui, sans-serif; padding: 4px;">
-          <div style="font-weight: 600; font-size: 13px;">${AMENITY_ICONS[amenity.type]} ${amenity.name}</div>
-          ${distanceText ? `<div style="font-size: 11px; color: #666; margin-top: 2px;">${distanceText}</div>` : ''}
-        </div>
-      `)
+      marker.bindPopup(buildAmenityPopupContent(amenity, distanceText))
 
       amenityMarkersRef.current.push(marker)
     })
@@ -306,20 +277,7 @@ export function PropertyLocationMap({
         icon,
       }).addTo(mapInstanceRef.current!)
 
-      marker.bindPopup(`
-        <div style="font-family: system-ui, sans-serif; padding: 4px;">
-          <div style="font-weight: 600; font-size: 13px;">🏛️ ${feature.name}</div>
-          ${feature.status ? `<div style="font-size: 11px; color: #666; margin-top: 2px;">Status: ${feature.status}</div>` : ''}
-          ${
-            feature.risk_level
-              ? `<div style="font-size: 11px; margin-top: 2px;">
-            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${HERITAGE_COLORS[feature.risk_level]}; margin-right: 4px;"></span>
-            ${feature.risk_level.charAt(0).toUpperCase() + feature.risk_level.slice(1)} risk
-          </div>`
-              : ''
-          }
-        </div>
-      `)
+      marker.bindPopup(buildHeritagePopupContent(feature))
 
       heritageMarkersRef.current.push(marker)
     })
@@ -339,17 +297,11 @@ export function PropertyLocationMap({
     .replace('T', ' ')
 
   return (
-    <div className="map-hud" style={{ position: 'relative' }}>
-      <div
+    <div className="map-hud">
+      <Box
         ref={mapContainerRef}
         className="map-hud__viewport"
-        style={{
-          width: '100%',
-          height: `${height}px`,
-          borderRadius: 'var(--ob-radius-sm)',
-          overflow: 'hidden',
-          background: '#f5f5f7',
-        }}
+        sx={{ height }}
         aria-label="Property location map"
       />
 
@@ -388,26 +340,18 @@ export function PropertyLocationMap({
       )}
 
       {/* Map controls overlay */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 'var(--ob-space-300)',
-          right: 'var(--ob-space-100)',
-          display: 'flex',
-          gap: 'var(--ob-space-050)',
-          zIndex: 1000,
-        }}
-      >
+      <div className="map-hud__controls">
         <IconButton
           onClick={handleRecenter}
           aria-label="Recenter map on property"
           size="small"
+          className="map-hud__control-btn"
           sx={{
-            bgcolor: 'white',
-            border: '1px solid rgba(0, 0, 0, 0.2)',
+            bgcolor: 'var(--ob-color-bg-surface)',
+            border: '1px solid var(--ob-color-border-subtle)',
             borderRadius: 'var(--ob-radius-xs)',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-            color: '#333',
+            boxShadow: 'var(--ob-shadow-sm)',
+            color: 'var(--ob-color-text-primary)',
             '&:hover': {
               bgcolor: 'var(--ob-color-neon-cyan-muted)',
               color: 'var(--ob-color-neon-cyan)',
@@ -415,7 +359,7 @@ export function PropertyLocationMap({
             },
           }}
         >
-          <MyLocation sx={{ fontSize: 18 }} />
+          <MyLocation sx={{ fontSize: 'var(--ob-font-size-lg)' }} />
         </IconButton>
       </div>
 
@@ -459,71 +403,103 @@ export function PropertyLocationMap({
 // ============================================================================
 
 function createAmenityIcon(type: string): L.DivIcon {
-  const color = AMENITY_COLORS[type] || '#666'
   return L.divIcon({
-    className: 'amenity-marker',
-    html: `<div style="
-      width: 24px;
-      height: 24px;
-      background: ${color};
-      border: 2px solid white;
-      border-radius: 50%;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-    ">${AMENITY_ICONS[type] || '📌'}</div>`,
+    className: `ob-map-marker ob-map-marker--amenity ob-map-marker--amenity-${type}`,
+    html: `<div class="ob-map-marker__inner"><span class="ob-map-marker__icon" aria-hidden="true">${AMENITY_ICONS[type] || '📌'}</span></div>`,
     iconSize: [24, 24],
     iconAnchor: [12, 12],
   })
 }
 
 function createHeritageIcon(riskLevel: string): L.DivIcon {
-  const color = HERITAGE_COLORS[riskLevel] || HERITAGE_COLORS.medium
   return L.divIcon({
-    className: 'heritage-marker',
-    html: `<div style="
-      width: 28px;
-      height: 28px;
-      background: ${color};
-      border: 2px solid white;
-      border-radius: 4px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-    ">🏛️</div>`,
+    className: `ob-map-marker ob-map-marker--heritage ob-map-marker--heritage-${riskLevel}`,
+    html: `<div class="ob-map-marker__inner"><span class="ob-map-marker__icon" aria-hidden="true">🏛️</span></div>`,
     iconSize: [28, 28],
     iconAnchor: [14, 14],
   })
 }
 
-function buildPopupContent(
+function buildPropertyPopupContent(
   address?: string,
   district?: string,
   zoningCode?: string,
 ): string {
-  const parts: string[] = []
-
-  if (address) {
-    parts.push(
-      `<div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">${address}</div>`,
-    )
-  }
+  const safeAddress = address ? escapeHtml(address) : null
+  const safeDistrict = district ? escapeHtml(district) : null
+  const safeZoning = zoningCode ? escapeHtml(zoningCode) : null
 
   const details: string[] = []
-  if (district) details.push(`District: ${district}`)
-  if (zoningCode) details.push(`Zoning: ${zoningCode}`)
+  if (safeDistrict) details.push(`District: ${safeDistrict}`)
+  if (safeZoning) details.push(`Zoning: ${safeZoning}`)
 
-  if (details.length > 0) {
-    parts.push(
-      `<div style="font-size: 11px; color: #666;">${details.join(' • ')}</div>`,
-    )
-  }
+  return `
+    <div class="ob-map-popup">
+      ${safeAddress ? `<div class="ob-map-popup__title">${safeAddress}</div>` : ''}
+      ${
+        details.length > 0
+          ? `<div class="ob-map-popup__subtitle">${details.join(' • ')}</div>`
+          : ''
+      }
+    </div>
+  `
+}
 
-  return `<div style="font-family: system-ui, sans-serif; padding: 4px;">${parts.join('')}</div>`
+function buildAmenityPopupContent(
+  amenity: NearbyAmenity,
+  distanceText: string,
+): string {
+  const safeName = escapeHtml(amenity.name)
+  const safeDistance = distanceText ? escapeHtml(distanceText) : null
+  return `
+    <div class="ob-map-popup">
+      <div class="ob-map-popup__title">${AMENITY_ICONS[amenity.type]} ${safeName}</div>
+      ${
+        safeDistance
+          ? `<div class="ob-map-popup__subtitle">${safeDistance}</div>`
+          : ''
+      }
+    </div>
+  `
+}
+
+function buildHeritagePopupContent(feature: HeritageFeature): string {
+  const safeName = escapeHtml(feature.name)
+  const safeStatus = feature.status ? escapeHtml(feature.status) : null
+  const riskLevel = feature.risk_level
+  const safeRiskLabel = riskLevel
+    ? escapeHtml(
+        `${riskLevel.charAt(0).toUpperCase()}${riskLevel.slice(1)} risk`,
+      )
+    : null
+
+  return `
+    <div class="ob-map-popup">
+      <div class="ob-map-popup__title">🏛️ ${safeName}</div>
+      ${
+        safeStatus
+          ? `<div class="ob-map-popup__subtitle">Status: ${safeStatus}</div>`
+          : ''
+      }
+      ${
+        riskLevel && safeRiskLabel
+          ? `<div class="ob-map-popup__meta">
+              <span class="ob-map-popup__risk-dot ob-map-popup__risk-dot--${escapeHtml(riskLevel)}" aria-hidden="true"></span>
+              ${safeRiskLabel}
+            </div>`
+          : ''
+      }
+    </div>
+  `
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
 }
 
 export default PropertyLocationMap

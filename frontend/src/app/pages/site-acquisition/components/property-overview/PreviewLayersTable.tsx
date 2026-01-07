@@ -25,6 +25,7 @@ import {
   ExpandMore,
   ExpandLess,
 } from '@mui/icons-material'
+import { Box } from '@mui/material'
 
 import { Button } from '../../../../../components/canonical/Button'
 import type {
@@ -89,49 +90,6 @@ function getRiskLevel(
   if (pct >= 40) return 'high'
   if (pct >= 20) return 'medium'
   return 'low'
-}
-
-function getRiskBadgeStyle(
-  risk: 'low' | 'medium' | 'high' | null,
-): React.CSSProperties {
-  const baseStyle: React.CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 'var(--ob-space-025)',
-    padding: '2px 8px',
-    borderRadius: 'var(--ob-radius-xs)',
-    fontSize: 'var(--ob-font-size-2xs)',
-    fontWeight: 600,
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-  }
-
-  switch (risk) {
-    case 'low':
-      return {
-        ...baseStyle,
-        background: 'var(--ob-success-100)',
-        color: 'var(--ob-success-700)',
-      }
-    case 'medium':
-      return {
-        ...baseStyle,
-        background: 'var(--ob-warning-100)',
-        color: 'var(--ob-warning-700)',
-      }
-    case 'high':
-      return {
-        ...baseStyle,
-        background: 'var(--ob-error-100)',
-        color: 'var(--ob-error-700)',
-      }
-    default:
-      return {
-        ...baseStyle,
-        background: 'var(--ob-neutral-100)',
-        color: 'var(--ob-neutral-500)',
-      }
-  }
 }
 
 // ============================================================================
@@ -310,20 +268,23 @@ export function PreviewLayersTable({
                           aria-label={isVisible ? 'Hide layer' : 'Show layer'}
                         >
                           {isVisible ? (
-                            <Visibility sx={{ fontSize: 18 }} />
+                            <Visibility
+                              sx={{ fontSize: 'var(--ob-font-size-lg)' }}
+                            />
                           ) : (
-                            <VisibilityOff sx={{ fontSize: 18 }} />
+                            <VisibilityOff
+                              sx={{ fontSize: 'var(--ob-font-size-lg)' }}
+                            />
                           )}
                         </button>
                       </td>
 
                       {/* Layer Name with Color Swatch */}
                       <td className="preview-layers-master-table__td preview-layers-master-table__td--name">
-                        <span
+                        <Box
+                          component="span"
                           className="preview-layers-master-table__color-swatch"
-                          style={{
-                            background: legendEntry?.color ?? layer.color,
-                          }}
+                          sx={{ background: legendEntry?.color ?? layer.color }}
                           aria-hidden="true"
                         />
                         <span className="preview-layers-master-table__layer-name">
@@ -379,7 +340,9 @@ export function PreviewLayersTable({
 
                       {/* Risk Badge */}
                       <td className="preview-layers-master-table__td">
-                        <span style={getRiskBadgeStyle(risk)}>
+                        <span
+                          className={`preview-layers-master-table__risk-badge preview-layers-master-table__risk-badge--${risk ?? 'na'}`}
+                        >
                           {risk ?? 'N/A'}
                         </span>
                       </td>
@@ -414,11 +377,15 @@ export function PreviewLayersTable({
                             aria-expanded={isExpanded}
                             title="Edit legend details"
                           >
-                            <Edit sx={{ fontSize: 14 }} />
+                            <Edit sx={{ fontSize: 'var(--ob-font-size-sm)' }} />
                             {isExpanded ? (
-                              <ExpandLess sx={{ fontSize: 14 }} />
+                              <ExpandLess
+                                sx={{ fontSize: 'var(--ob-font-size-sm)' }}
+                              />
                             ) : (
-                              <ExpandMore sx={{ fontSize: 14 }} />
+                              <ExpandMore
+                                sx={{ fontSize: 'var(--ob-font-size-sm)' }}
+                              />
                             )}
                           </button>
                         )}

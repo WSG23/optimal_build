@@ -1,3 +1,5 @@
+import { colors } from '@ob/tokens'
+
 export type PreviewLayerMetrics = {
   allocationPct: number | null
   gfaSqm: number | null
@@ -44,7 +46,8 @@ export function normalisePreviewLayer(
   if (!id || !name) {
     return null
   }
-  const color = (typeof raw.color === 'string' && raw.color.trim()) || '#1c7ed6'
+  const color =
+    (typeof raw.color === 'string' && raw.color.trim()) || colors.brand[600]
   const metrics: Record<string, unknown> =
     raw.metrics && typeof raw.metrics === 'object'
       ? (raw.metrics as Record<string, unknown>)
@@ -77,7 +80,8 @@ export function normaliseLegendEntry(
   const label =
     (typeof raw.label === 'string' && raw.label.trim()) ||
     assetType.replace(/[_-]/g, ' ')
-  const color = (typeof raw.color === 'string' && raw.color.trim()) || '#4f46e5'
+  const color =
+    (typeof raw.color === 'string' && raw.color.trim()) || colors.info[600]
   const description =
     (typeof raw.description === 'string' && raw.description.trim()) ||
     (typeof raw.legendDescription === 'string' &&

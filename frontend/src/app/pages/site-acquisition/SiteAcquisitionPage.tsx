@@ -62,7 +62,6 @@ import {
 // MUI & Canonical Components
 import {
   Box,
-  Grid,
   Stack,
   Typography,
   Select,
@@ -877,7 +876,7 @@ export function SiteAcquisitionPage() {
               nearbyAmenities={mapAmenities}
               heritageFeatures={heritageFeatures}
               interactive={!isCapturing}
-              height={500}
+              height="calc(var(--ob-size-controls-min) + var(--ob-space-300) + var(--ob-space-250) + var(--ob-space-075))"
               showAmenities={hasAmenityCoordinates}
               showHeritage={!!capturedProperty?.heritageContext?.flag}
               propertyId={capturedProperty?.propertyId}
@@ -1041,42 +1040,41 @@ export function SiteAcquisitionPage() {
                       </Typography>
                     </Box>
 
-                    {/* 12-column grid: 3D Viewer (8 cols) + Asset Mix Chart (4 cols) */}
-                    <Grid container spacing={2} sx={{ alignItems: 'stretch' }}>
-                      {/* 3D Viewer - 8 columns on large screens */}
-                      <Grid item xs={12} lg={8} sx={{ display: 'flex' }}>
-                        <Box
-                          sx={{
-                            flex: 1,
-                            minHeight: 400,
-                            bgcolor: 'var(--ob-neutral-950)',
-                            borderRadius: 'var(--ob-radius-sm)',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          <Preview3DViewer
-                            previewUrl={previewJob.previewUrl}
-                            metadataUrl={previewViewerMetadataUrl}
-                            status={previewJob.status}
-                            thumbnailUrl={previewJob.thumbnailUrl}
-                            layerVisibility={previewLayerVisibility}
-                            focusLayerId={previewFocusLayerId}
-                          />
-                        </Box>
-                      </Grid>
-
-                      {/* Asset Mix Chart - 4 columns on large screens */}
-                      <Grid item xs={12} lg={4} sx={{ display: 'flex' }}>
-                        <AssetMixChart
-                          data={assetMixData}
-                          title="Asset Allocation"
-                          sx={{
-                            flex: 1,
-                            minHeight: 400,
-                          }}
+                    {/* Split view: 3D Viewer + Asset Mix (tokenized gap, responsive) */}
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' },
+                        gap: 'var(--ob-space-150)',
+                        alignItems: 'stretch',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          minHeight: 'var(--ob-size-controls-min)',
+                          bgcolor: 'var(--ob-color-bg-root)',
+                          borderRadius: 'var(--ob-radius-sm)',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <Preview3DViewer
+                          previewUrl={previewJob.previewUrl}
+                          metadataUrl={previewViewerMetadataUrl}
+                          status={previewJob.status}
+                          thumbnailUrl={previewJob.thumbnailUrl}
+                          layerVisibility={previewLayerVisibility}
+                          focusLayerId={previewFocusLayerId}
                         />
-                      </Grid>
-                    </Grid>
+                      </Box>
+
+                      <AssetMixChart
+                        data={assetMixData}
+                        title="Asset Allocation"
+                        sx={{
+                          minHeight: 'var(--ob-size-controls-min)',
+                        }}
+                      />
+                    </Box>
 
                     {/* Controls bar - full width below */}
                     <Box
@@ -1091,7 +1089,10 @@ export function SiteAcquisitionPage() {
                         spacing="var(--ob-space-300)"
                         alignItems="center"
                       >
-                        <FormControl size="small" sx={{ minWidth: 200 }}>
+                        <FormControl
+                          size="small"
+                          sx={{ minWidth: 'var(--ob-size-input-sm)' }}
+                        >
                           <InputLabel>Geometry Detail</InputLabel>
                           <Select
                             value={previewDetailLevel}
@@ -1119,7 +1120,10 @@ export function SiteAcquisitionPage() {
                         >
                           <Refresh
                             className={isRefreshingPreview ? 'fa-spin' : ''}
-                            sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }}
+                            sx={{
+                              fontSize: 'var(--ob-font-size-base)',
+                              mr: 'var(--ob-space-050)',
+                            }}
                           />
                           {isRefreshingPreview
                             ? 'Refreshing...'

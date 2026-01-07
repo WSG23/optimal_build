@@ -36,7 +36,7 @@ export function ImmersiveMap({
           latitude={latitude.toString()}
           longitude={longitude.toString()}
           interactive={true}
-          height={1200}
+          height="100%"
           showAmenities={false}
           showHeritage={false}
           onCoordinatesChange={(lat, lon) =>
