@@ -8,7 +8,6 @@ from __future__ import annotations
 import re
 
 
-
 class TestNormalizedRule:
     """Test NormalizedRule dataclass."""
 
