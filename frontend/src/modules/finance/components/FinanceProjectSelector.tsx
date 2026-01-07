@@ -103,6 +103,7 @@ export function FinanceProjectSelector({
             value={manualId}
             onChange={(event) => setManualId(event.target.value)}
             placeholder={t('finance.projectSelector.inputPlaceholder')}
+            aria-label={t('finance.projectSelector.inputLabel')}
             autoFocus
             className="finance-project-selector__manual-input"
           />
@@ -144,6 +145,7 @@ export function FinanceProjectSelector({
           className="finance-project-selector__dropdown"
           value={selectedOptionValue}
           onChange={(event) => handleOptionChange(event.target.value)}
+          aria-label={t('finance.projectSelector.recentLabel')}
         >
           <option value="" disabled>
             {t('finance.projectSelector.pickPlaceholder')}

@@ -106,36 +106,33 @@ describe('FinanceScenarioTable', () => {
       </TranslationProvider>,
     )
 
-    expect(
-      screen.getByRole('columnheader', {
-        name: i18n.t('finance.table.headers.scenario'),
-      }),
-    ).toBeVisible()
-    expect(
-      screen.getByRole('columnheader', {
-        name: i18n.t('finance.table.headers.escalatedCost'),
-      }),
-    ).toBeVisible()
-    expect(
-      screen.getByRole('columnheader', {
-        name: i18n.t('finance.table.headers.lastRun'),
-      }),
-    ).toBeVisible()
+    const cards = screen.getAllByRole('article')
+    expect(cards).toHaveLength(2)
 
-    const rows = screen.getAllByRole('row')
-    expect(rows).toHaveLength(3)
+    const labels = [
+      i18n.t('finance.table.headers.escalatedCost'),
+      i18n.t('finance.table.headers.irr'),
+      i18n.t('finance.table.headers.minDscr'),
+      i18n.t('finance.table.headers.npv'),
+    ]
 
-    const firstCells = within(rows[1]).getAllByRole('cell')
-    expect(firstCells[0].textContent).toContain('SGD')
-    expect(firstCells[1].textContent).toContain('SGD')
-    expect(firstCells[2].textContent).toContain('%')
-    expect(firstCells[firstCells.length - 2].textContent).not.toEqual('')
+    for (const label of labels) {
+      expect(screen.getAllByText(label).length).toBeGreaterThan(0)
+    }
 
-    const secondCells = within(rows[2]).getAllByRole('cell')
-    expect(secondCells[0].textContent).toContain('SGD')
-    expect(secondCells[1].textContent).toContain('SGD')
-    expect(secondCells[2].textContent).toContain('%')
-    expect(secondCells[secondCells.length - 2].textContent).not.toEqual('')
+    const firstCard = cards[0]
+    expect(
+      within(firstCard).getByRole('heading', { name: /Base Case/i }),
+    ).toBeVisible()
+    expect(firstCard.textContent).toContain('SGD')
+    expect(firstCard.textContent).toContain('%')
+
+    const secondCard = cards[1]
+    expect(
+      within(secondCard).getByRole('heading', { name: /Alt Case/i }),
+    ).toBeVisible()
+    expect(secondCard.textContent).toContain('SGD')
+    expect(secondCard.textContent).toContain('%')
   })
 
   it('allows marking a scenario as primary', () => {

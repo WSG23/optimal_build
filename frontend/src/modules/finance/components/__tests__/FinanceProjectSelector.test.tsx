@@ -46,6 +46,9 @@ describe('FinanceProjectSelector', () => {
       </TranslationProvider>,
     )
 
+    fireEvent.change(screen.getByLabelText(/Recent captures/i), {
+      target: { value: 'manual' },
+    })
     fireEvent.change(screen.getByLabelText(/Project ID/i), {
       target: { value: 'gamma-project' },
     })

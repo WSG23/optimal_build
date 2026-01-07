@@ -223,9 +223,16 @@ describe('finance API mapping', () => {
 
     try {
       const scenarios = await listFinanceScenarios({ projectId: 777 })
-      expect(scenarios.length).toBe(1)
-      expect(scenarios[0]?.projectId).toBe(777)
-      expect(scenarios[0]?.capitalStack).not.toBeNull()
+      expect(scenarios.length).toBe(3)
+      expect(scenarios.map((scenario) => scenario.scenarioId)).toEqual([
+        0, -1, -2,
+      ])
+      expect(scenarios.every((scenario) => scenario.projectId === 777)).toBe(
+        true,
+      )
+      expect(scenarios.every((scenario) => scenario.capitalStack != null)).toBe(
+        true,
+      )
     } finally {
       globalThis.fetch = originalFetch
     }

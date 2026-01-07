@@ -189,6 +189,9 @@ export function CapitalStackFacilityTable({
                 {t('finance.capitalStack.tranches.headers.periods')}
               </th>
               <th scope="col">
+                {t('finance.capitalStack.tranches.headers.capitalised')}
+              </th>
+              <th scope="col">
                 {t('finance.capitalStack.tranches.headers.upfront')}
               </th>
               <th scope="col">
@@ -223,6 +226,12 @@ export function CapitalStackFacilityTable({
               const periodsPerYear = normaliseNumber(
                 facilityMeta.periods_per_year ?? facilityMeta.periodsPerYear,
               )
+              const capitalisedInterest =
+                typeof facilityMeta.capitalise_interest === 'boolean'
+                  ? facilityMeta.capitalise_interest
+                  : typeof facilityMeta.capitaliseInterest === 'boolean'
+                    ? facilityMeta.capitaliseInterest
+                    : null
 
               const isEquity =
                 slice.category?.toLowerCase() === 'equity' ||
@@ -268,6 +277,19 @@ export function CapitalStackFacilityTable({
                   <td>
                     <Typography sx={{ color: 'text.disabled' }}>
                       {periodsPerYear ?? fallback}
+                    </Typography>
+                  </td>
+                  <td>
+                    <Typography sx={{ color: 'text.disabled' }}>
+                      {capitalisedInterest === null
+                        ? fallback
+                        : capitalisedInterest
+                          ? t(
+                              'finance.capitalStack.tranches.values.capitalised.yes',
+                            )
+                          : t(
+                              'finance.capitalStack.tranches.values.capitalised.no',
+                            )}
                     </Typography>
                   </td>
                   <td>
