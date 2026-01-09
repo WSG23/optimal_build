@@ -232,13 +232,13 @@ export const colors = {
     50: '#ffffff',
   },
   brand: {
-    700: '#1d4ed8',
-    600: '#2563eb',
-    500: '#3b82f6',
-    400: '#60a5fa',
-    300: '#93c5fd',
-    200: '#bfdbfe',
-    100: '#dbeafe',
+    700: '#0891b2',
+    600: '#06b6d4',
+    500: '#22d3ee',
+    400: '#67e8f9',
+    300: '#a5f3fc',
+    200: '#cffafe',
+    100: '#ecfeff',
   },
   accent: {
     600: '#059669',
@@ -266,10 +266,10 @@ export const colors = {
     400: '#f87171',
   },
   info: {
-    700: '#1d4ed8',
-    600: '#2563eb',
-    500: '#3b82f6',
-    400: '#60a5fa',
+    700: '#4338ca',
+    600: '#4f46e5',
+    500: '#6366f1',
+    400: '#818cf8',
   },
 } as const
 
@@ -322,9 +322,9 @@ export const borders = {
  * Glow effects - consistent across components
  */
 export const glows = {
-  brandSubtle: '0 0 8px rgba(59, 130, 246, 0.15)',
-  brandMedium: '0 0 12px rgba(59, 130, 246, 0.25)',
-  brandStrong: '0 0 20px rgba(59, 130, 246, 0.4)',
+  brandSubtle: '0 0 8px rgba(34, 211, 238, 0.15)',
+  brandMedium: '0 0 12px rgba(34, 211, 238, 0.25)',
+  brandStrong: '0 0 20px rgba(34, 211, 238, 0.4)',
   gold: '0 0 12px rgba(245, 158, 11, 0.25)',
   success: '0 0 10px rgba(34, 197, 94, 0.2)',
   error: '0 0 10px rgba(239, 68, 68, 0.2)',

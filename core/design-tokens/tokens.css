@@ -43,15 +43,15 @@
     --ob-neutral-100: #f1f5f9; /* Primary Text */
     --ob-neutral-50: #f8fafc;
 
-    /* Brand: Electric Blue */
-    --ob-brand-700: #1d4ed8;
-    --ob-brand-600: #2563eb;
-    --ob-brand-500: #3b82f6; /* Primary Action */
-    --ob-brand-400: #60a5fa;
-    --ob-brand-300: #93c5fd;
-    --ob-brand-200: #bfdbfe;
-    --ob-brand-100: #dbeafe;
-    --ob-brand-glow: rgba(59, 130, 246, 0.5);
+    /* Brand: Electric Cyan */
+    --ob-brand-700: #0891b2;
+    --ob-brand-600: #06b6d4;
+    --ob-brand-500: #22d3ee; /* Primary Action */
+    --ob-brand-400: #67e8f9;
+    --ob-brand-300: #a5f3fc;
+    --ob-brand-200: #cffafe;
+    --ob-brand-100: #ecfeff;
+    --ob-brand-glow: rgba(34, 211, 238, 0.5);
 
     /* Accent: Emerald Green (Growth/ROI) & Burnt Orange (Alerts) */
     --ob-accent-600: #059669;
@@ -86,13 +86,13 @@
     --ob-error-bg: rgba(239, 68, 68, 0.15);
     --ob-error-text: #f87171;
 
-    /* Info (Electric Blue) */
-    --ob-info-700: #1d4ed8;
-    --ob-info-600: #2563eb;
-    --ob-info-500: #3b82f6;
-    --ob-info-400: #60a5fa;
-    --ob-info-bg: rgba(59, 130, 246, 0.15);
-    --ob-info-text: #60a5fa;
+    /* Info (Electric Indigo) */
+    --ob-info-700: #4338ca;
+    --ob-info-600: #4f46e5;
+    --ob-info-500: #6366f1;
+    --ob-info-400: #818cf8;
+    --ob-info-bg: rgba(99, 102, 241, 0.15);
+    --ob-info-text: #818cf8;
 
     /* ===========================================================================
      2. SEMANTIC COLORS - Surfaces
@@ -176,27 +176,27 @@
      5. SEMANTIC COLORS - Brand & Actions
      =========================================================================== */
 
-    --ob-color-brand-primary: var(--ob-brand-500); /* Fixed to Electric Blue */
+    --ob-color-brand-primary: var(--ob-brand-500); /* Fixed to Electric Cyan */
     --ob-color-brand-primary-emphasis: var(
         --ob-brand-400
     ); /* Lighter on hover for dark mode */
     --ob-color-brand-primary-glow: var(--ob-brand-glow);
-    --ob-color-brand-primary-rgb: 37 99 235;
-    --ob-color-brand-primary-emphasis-rgb: 59 130 246;
+    --ob-color-brand-primary-rgb: 34 211 238;
+    --ob-color-brand-primary-emphasis-rgb: 34 211 238;
     --ob-color-brand-primary-strong: var(--ob-brand-700);
     --ob-color-brand-accent: var(--ob-accent-500);
-    --ob-color-brand-soft: rgba(37, 99, 235, 0.2);
-    --ob-color-brand-soft-rgb: 37 99 235;
-    --ob-color-brand-muted: rgba(59, 130, 246, 0.15);
+    --ob-color-brand-soft: rgba(6, 182, 212, 0.2);
+    --ob-color-brand-soft-rgb: 6 182 212;
+    --ob-color-brand-muted: rgba(34, 211, 238, 0.15);
     --ob-color-brand-strong: var(--ob-brand-600);
 
     /* Interactive States - Dark mode uses white overlays to "lift" elements
        These provide clearer feedback than the base action-hover alone */
     --ob-color-action-hover: rgba(255, 255, 255, 0.08); /* Increased from 0.05 for visibility */
     --ob-color-action-active: rgba(255, 255, 255, 0.12); /* Pressed/active state */
-    --ob-color-action-selected: rgba(0, 243, 255, 0.1); /* Cyan tint for selected items */
-    --ob-color-action-selected-strong: rgba(0, 243, 255, 0.15); /* Stronger selection */
-    --ob-color-action-focus-ring: rgba(59, 130, 246, 0.5); /* Focus ring color */
+    --ob-color-action-selected: rgba(34, 211, 238, 0.1); /* Cyan tint for selected items */
+    --ob-color-action-selected-strong: rgba(34, 211, 238, 0.15); /* Stronger selection */
+    --ob-color-action-focus-ring: rgba(34, 211, 238, 0.5); /* Focus ring color */
 
     /* Input Surfaces - Slightly lighter than card surface for distinguishability */
     --ob-color-surface-input: rgba(255, 255, 255, 0.04); /* Form input backgrounds */
@@ -251,13 +251,13 @@
     --ob-color-critical-muted: var(--ob-error-400);
 
     /* Info */
-    --ob-color-info-soft: rgba(59, 130, 246, 0.15);
+    --ob-color-info-soft: rgba(99, 102, 241, 0.15);
     --ob-color-info-strong: var(--ob-info-700);
-    --ob-color-info-strong-rgb: 29 78 216;
-    --ob-color-info-muted: rgba(59, 130, 246, 0.25);
+    --ob-color-info-strong-rgb: 67 56 202;
+    --ob-color-info-muted: rgba(99, 102, 241, 0.25);
     --ob-color-status-info-bg: var(--ob-info-bg);
     --ob-color-status-info-text: var(--ob-info-text);
-    --ob-color-status-info-text-rgb: 96 165 250;
+    --ob-color-status-info-text-rgb: 129 140 248;
 
     /* ===========================================================================
      7. TYPOGRAPHY
@@ -381,9 +381,9 @@
      9.2 GLOW EFFECTS - Consistent across components
      =========================================================================== */
 
-    --ob-glow-brand-subtle: 0 0 8px rgba(59, 130, 246, 0.15);
-    --ob-glow-brand-medium: 0 0 12px rgba(59, 130, 246, 0.25);
-    --ob-glow-brand-strong: 0 0 20px rgba(59, 130, 246, 0.4);
+    --ob-glow-brand-subtle: 0 0 8px rgba(34, 211, 238, 0.15);
+    --ob-glow-brand-medium: 0 0 12px rgba(34, 211, 238, 0.25);
+    --ob-glow-brand-strong: 0 0 20px rgba(34, 211, 238, 0.4);
     --ob-glow-gold: 0 0 12px rgba(245, 158, 11, 0.25);
     --ob-glow-success: 0 0 10px rgba(34, 197, 94, 0.2);
     --ob-glow-error: 0 0 10px rgba(239, 68, 68, 0.2);
@@ -581,16 +581,16 @@ html[data-theme='light'] {
     --ob-border-glass-strong: rgba(0, 0, 0, 0.1);
 
     /* Brand */
-    --ob-color-brand-soft: rgba(37, 99, 235, 0.1);
-    --ob-color-brand-soft-rgb: 37 99 235;
-    --ob-color-brand-muted: rgba(59, 130, 246, 0.1);
+    --ob-color-brand-soft: rgba(6, 182, 212, 0.1);
+    --ob-color-brand-soft-rgb: 6 182 212;
+    --ob-color-brand-muted: rgba(34, 211, 238, 0.1);
 
     /* Interactive States - Light mode uses black overlays to "dim" elements */
     --ob-color-action-hover: rgba(0, 0, 0, 0.05);
     --ob-color-action-active: rgba(0, 0, 0, 0.1); /* Pressed/active state */
-    --ob-color-action-selected: rgba(59, 130, 246, 0.1); /* Blue tint for selected items */
-    --ob-color-action-selected-strong: rgba(59, 130, 246, 0.15); /* Stronger selection */
-    --ob-color-action-focus-ring: rgba(59, 130, 246, 0.4); /* Focus ring color */
+    --ob-color-action-selected: rgba(34, 211, 238, 0.1); /* Cyan tint for selected items */
+    --ob-color-action-selected-strong: rgba(34, 211, 238, 0.15); /* Stronger selection */
+    --ob-color-action-focus-ring: rgba(34, 211, 238, 0.4); /* Focus ring color */
 
     /* Input Surfaces - White with subtle distinction from card */
     --ob-color-surface-input: #ffffff; /* Form input backgrounds */
@@ -600,8 +600,8 @@ html[data-theme='light'] {
 
     /* Table/List Surfaces - For data-dense views */
     --ob-color-table-row-alt: rgba(0, 0, 0, 0.02); /* Alternating row background */
-    --ob-color-table-row-hover: rgba(59, 130, 246, 0.05); /* Blue hint on row hover */
-    --ob-color-table-row-selected: rgba(59, 130, 246, 0.1); /* Selected row */
+    --ob-color-table-row-hover: rgba(34, 211, 238, 0.05); /* Cyan hint on row hover */
+    --ob-color-table-row-selected: rgba(34, 211, 238, 0.1); /* Selected row */
     --ob-color-table-header: rgba(0, 0, 0, 0.03); /* Table header background */
 
     /* Status soft backgrounds for light mode */
@@ -609,8 +609,8 @@ html[data-theme='light'] {
     --ob-color-warning-soft: #fef3c7;
     --ob-color-error-soft: #fee2e2;
     --ob-color-error-soft-rgb: 254 226 226;
-    --ob-color-info-soft: #dbeafe;
-    --ob-color-info-muted: rgba(59, 130, 246, 0.15);
+    --ob-color-info-soft: #e0e7ff;
+    --ob-color-info-muted: rgba(99, 102, 241, 0.15);
 
     /* Shadows (lighter for light mode) */
     --ob-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
