@@ -1,4 +1,4 @@
-"""Unit tests for the geocoding service fallback logic."""
+"""Unit tests for the geocoding service behavior."""
 
 from __future__ import annotations
 
@@ -31,24 +31,30 @@ class _DummyClient:
 def _make_service_with_responder(responder) -> GeocodingService:
     service = GeocodingService()
     service.client = _DummyClient(responder)
+    service.google_maps_api_key = "test-key"
+    service.offline_mode = False
     return service
 
 
 @pytest.mark.asyncio
-async def test_reverse_geocode_returns_onemap_result(monkeypatch) -> None:
+async def test_reverse_geocode_returns_google_result() -> None:
     def responder(url: str, params: dict[str, Any]) -> _FakeResponse:
-        if "revgeocodexy" in url:
+        if "maps.googleapis.com/maps/api/geocode/json" in url:
             return _FakeResponse(
                 200,
                 {
-                    "GeocodeInfo": [
+                    "status": "OK",
+                    "results": [
                         {
-                            "ROAD": "Main Road",
-                            "BUILDINGNAME": "Test Tower",
-                            "BLOCK": "123",
-                            "POSTALCODE": "238123",
-                        }
-                    ]
+                            "formatted_address": "Main Road, Singapore 238123",
+                            "address_components": [
+                                {"long_name": "123", "types": ["street_number"]},
+                                {"long_name": "Main Road", "types": ["route"]},
+                                {"long_name": "238123", "types": ["postal_code"]},
+                                {"long_name": "Singapore", "types": ["country"]},
+                            ],
+                        },
+                    ],
                 },
             )
         raise AssertionError("unexpected URL in test")
@@ -57,128 +63,49 @@ async def test_reverse_geocode_returns_onemap_result(monkeypatch) -> None:
     address = await service.reverse_geocode(1.3, 103.8)
 
     assert address is not None
-    assert address.full_address == "Main Road"
-    assert address.building_name == "Test Tower"
+    assert address.full_address == "Main Road, Singapore 238123"
     assert address.district == "D09 - Orchard Road, River Valley"
 
 
 @pytest.mark.asyncio
-async def test_reverse_geocode_falls_back_to_mock(monkeypatch) -> None:
+async def test_reverse_geocode_raises_when_client_fails() -> None:
     service = _make_service_with_responder(
         lambda *_: (_ for _ in ()).throw(Exception("boom"))
     )
 
-    address = await service.reverse_geocode(1.3, 103.8)
-
-    assert address is not None
-    assert address.full_address.startswith("Mocked Address")
+    with pytest.raises(Exception, match="boom"):
+        await service.reverse_geocode(1.3, 103.8)
 
 
 @pytest.mark.asyncio
 async def test_reverse_geocode_handles_empty_payload() -> None:
-    """Ensure empty OneMap results fall back to the mock address."""
+    """Ensure empty results return no address."""
 
     def responder(url: str, params: dict[str, Any]) -> _FakeResponse:
-        if "revgeocodexy" in url:
-            return _FakeResponse(200, {"GeocodeInfo": []})
+        if "maps.googleapis.com/maps/api/geocode/json" in url:
+            return _FakeResponse(200, {"status": "ZERO_RESULTS", "results": []})
         raise AssertionError("unexpected URL in test")
 
     service = _make_service_with_responder(responder)
     address = await service.reverse_geocode(1.33, 103.82)
 
-    assert address is not None
-    assert address.full_address.startswith("Mocked Address")
+    assert address is None
 
 
 @pytest.mark.asyncio
-async def test_reverse_geocode_with_google_maps_fallback(monkeypatch) -> None:
-    """Test reverse_geocode attempts Google Maps fallback when OneMap fails."""
-
+async def test_geocode_returns_google_coordinates() -> None:
     def responder(url: str, params: dict[str, Any]) -> _FakeResponse:
-        if "revgeocodexy" in url:
-            return _FakeResponse(404, {})  # OneMap fails
-        raise AssertionError("unexpected URL in test")
-
-    service = _make_service_with_responder(responder)
-    service.google_maps_api_key = "test-key"  # Enable Google Maps fallback
-
-    # Mock the Google fallback to return something
-    async def mock_google_reverse(*args, **kwargs):
-        from app.services.geocoding import Address
-
-        return Address(
-            full_address="Google Address",
-            street_name="Google Street",
-            country="Singapore",
-        )
-
-    monkeypatch.setattr(service, "_google_reverse_geocode", mock_google_reverse)
-
-    address = await service.reverse_geocode(1.3, 103.8)
-
-    assert address is not None
-    assert address.full_address == "Google Address"
-
-
-@pytest.mark.asyncio
-async def test_geocode_with_google_maps_fallback(monkeypatch) -> None:
-    """Test geocode attempts Google Maps fallback when OneMap fails."""
-
-    def responder(url: str, params: dict[str, Any]) -> _FakeResponse:
-        if "elastic/search" in url:
-            return _FakeResponse(404, {})  # OneMap fails
-        raise AssertionError("unexpected URL in test")
-
-    service = _make_service_with_responder(responder)
-    service.google_maps_api_key = "test-key"  # Enable Google Maps fallback
-
-    # Mock the Google fallback to return coordinates
-    async def mock_google_geocode(*args, **kwargs):
-        return (1.2345, 103.6789)
-
-    monkeypatch.setattr(service, "_google_geocode", mock_google_geocode)
-
-    coords = await service.geocode("Test Address")
-
-    assert coords == (1.2345, 103.6789)
-
-
-@pytest.mark.asyncio
-async def test_reverse_geocode_with_none_client() -> None:
-    """Test reverse_geocode when client is None."""
-    service = GeocodingService()
-    service.client = None
-
-    address = await service.reverse_geocode(1.3, 103.8)
-
-    assert address is not None
-    assert address.full_address.startswith("Mocked Address")
-
-
-@pytest.mark.asyncio
-async def test_geocode_with_none_client() -> None:
-    """Test geocode when client is None."""
-    service = GeocodingService()
-    service.client = None
-
-    coords = await service.geocode("Test Address")
-
-    assert coords == (1.3000, 103.8500)
-
-
-@pytest.mark.asyncio
-async def test_geocode_returns_onemap_coordinates(monkeypatch) -> None:
-    def responder(url: str, params: dict[str, Any]) -> _FakeResponse:
-        if "elastic/search" in url:
+        if "maps.googleapis.com/maps/api/geocode/json" in url:
             return _FakeResponse(
                 200,
                 {
+                    "status": "OK",
                     "results": [
                         {
-                            "LATITUDE": "1.3050",
-                            "LONGITUDE": "103.8310",
+                            "formatted_address": "Test Address",
+                            "geometry": {"location": {"lat": 1.3050, "lng": 103.8310}},
                         }
-                    ]
+                    ],
                 },
             )
         raise AssertionError("unexpected URL in test")
@@ -190,35 +117,69 @@ async def test_geocode_returns_onemap_coordinates(monkeypatch) -> None:
 
 
 @pytest.mark.asyncio
+async def test_reverse_geocode_with_none_client() -> None:
+    """Test reverse_geocode when client is None."""
+    service = GeocodingService()
+    service.client = None
+    service.google_maps_api_key = "test-key"
+    service.offline_mode = False
+
+    with pytest.raises(RuntimeError):
+        await service.reverse_geocode(1.3, 103.8)
+
+
+@pytest.mark.asyncio
+async def test_geocode_with_none_client() -> None:
+    """Test geocode when client is None."""
+    service = GeocodingService()
+    service.client = None
+    service.google_maps_api_key = "test-key"
+    service.offline_mode = False
+
+    with pytest.raises(RuntimeError):
+        await service.geocode("Test Address")
+
+
+@pytest.mark.asyncio
 async def test_geocode_returns_fallback_when_onemap_fails() -> None:
     service = _make_service_with_responder(
         lambda *_: (_ for _ in ()).throw(Exception("boom"))
     )
 
-    coords = await service.geocode("Unknown Address")
-    assert coords == (1.3000, 103.8500)
+    with pytest.raises(Exception, match="boom"):
+        await service.geocode("Unknown Address")
 
 
 @pytest.mark.asyncio
 async def test_geocode_returns_fallback_when_coordinates_missing() -> None:
-    """Latitude/longitude of zero should trigger the default CBD fallback."""
+    """Latitude/longitude of zero should trigger a null result."""
 
     def responder(url: str, params: dict[str, Any]) -> _FakeResponse:
-        if "elastic/search" in url:
+        if "maps.googleapis.com/maps/api/geocode/json" in url:
             return _FakeResponse(
-                200, {"results": [{"LATITUDE": "0.0", "LONGITUDE": "0"}]}
+                200,
+                {
+                    "status": "OK",
+                    "results": [
+                        {
+                            "formatted_address": "Zero Coord Address",
+                            "geometry": {"location": {"lat": 0, "lng": 0}},
+                        }
+                    ],
+                },
             )
         raise AssertionError("unexpected URL in test")
 
     service = _make_service_with_responder(responder)
     coords = await service.geocode("Zero Coord Address")
-    assert coords == (1.3000, 103.8500)
+    assert coords is None
 
 
 @pytest.mark.asyncio
 async def test_nearby_amenities_returns_mock_when_client_missing() -> None:
     service = GeocodingService()
     service.client = None
+    service.offline_mode = True
 
     amenities = await service.get_nearby_amenities(1.3, 103.8)
     assert amenities["mrt_stations"][0]["name"] == "Mock MRT"
@@ -259,7 +220,7 @@ async def test_nearby_amenities_returns_results_within_radius() -> None:
 
 @pytest.mark.asyncio
 async def test_nearby_amenities_fallback_when_no_results() -> None:
-    """If OneMap returns empty payloads, the mock amenity set is used."""
+    """If OneMap returns empty payloads, the amenity set remains empty."""
 
     def responder(url: str, params: dict[str, Any]) -> _FakeResponse:
         if "retrieveTheme" in url:
@@ -269,7 +230,7 @@ async def test_nearby_amenities_fallback_when_no_results() -> None:
     service = _make_service_with_responder(responder)
     amenities = await service.get_nearby_amenities(1.3, 103.85, radius_m=300)
 
-    assert amenities["parks"][0]["name"] == "Mock Park"
+    assert all(not items for items in amenities.values())
 
 
 def test_get_district_from_postal_unknown() -> None:

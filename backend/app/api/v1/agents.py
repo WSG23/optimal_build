@@ -16,6 +16,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from app.api.deps import Role, get_request_role, require_reviewer
+from app.core.config import settings
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.property import Property, PropertyType
@@ -494,6 +495,12 @@ async def log_property_by_gps(
             latitude=request.latitude,
             longitude=request.longitude,
         )
+        if not settings.OFFLINE_MODE:
+            raise HTTPException(
+                status_code=503,
+                detail="GPS capture unavailable: geocoding failed",
+            ) from exc
+
         fallback = _build_mock_gps_response(
             latitude=request.latitude,
             longitude=request.longitude,

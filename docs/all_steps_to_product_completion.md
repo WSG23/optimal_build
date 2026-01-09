@@ -789,7 +789,7 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 **Status:** 60% - Core GPS capture works but missing key FEATURES.md requirements (address input, interactive map, real geocoding, photo uploads)
 **Gaps to align with FEATURES.md (backlog - ~2 weeks effort):**
 - [ ] Forward geocoding: add address input (`123 Main St`) → coords via Google Maps Geocoding API (2 days)
-- [ ] Reverse geocoding: replace mocked address with real reverse-geocode from coords (1 day)
+- ✅ Reverse geocoding: server-side Google Maps reverse geocode (no mock fallback unless `OFFLINE_MODE`) — **IMPLEMENTED**
 - [ ] Map/pin-drop: replace placeholder card with interactive map to set coords (3 days)
 - [ ] Zoning lookup on capture: fetch/display zoning for the resolved point (e.g., URA/other jurisdiction overlays) (2 days)
 - [ ] GPS photo/attachment capture: allow photo uploads with capture (2 days)
@@ -803,6 +803,7 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 **What Exists:**
 - ✅ GPS logging backend
+- ✅ Reverse geocoding via Google Maps (server-side)
 - ✅ Quick analysis scenarios
 - ✅ Condition report export (JSON + PDF fallback for environments without WeasyPrint) with docs + tests (Oct 16 2025)
 - ✅ Feasibility signals surfaced in developer UI (Oct 14 2025) with deep link to developer workspace (legacy + `/app/asset-feasibility`)
@@ -2121,12 +2122,36 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
 
 ---
 
+### Phase 5D: Mock Replacement & Data Hardening ❌ NOT STARTED
+**Status:** 0%
+
+**Goal:** Replace remaining mock/stub data flows with production integrations.
+
+**Scope (identified in code review):**
+- Replace mock listing integrations with real provider APIs (PropertyGuru, EdgeProp, Zoho, Zillow, LoopNet, Salesforce, HubSpot).
+- Replace mock market data provider with live feeds (URA REALIS, brokerage data) + scheduled ingestion jobs.
+- Replace advanced intelligence stub analytics endpoints with real data pipelines and persisted analytics.
+- Replace mock CORENET status polling with real integration (ties to Phase 5A).
+- Replace mock GPS/geocoding fallbacks with live providers; fall back to cached/last-known data instead of synthetic payloads.
+- Replace ARGUS export stub property metadata with real project/property data.
+- Remove mock UI fallbacks for team/workflow/regulatory progress where real endpoints exist.
+
+**Acceptance Criteria:**
+- All mock/stub APIs return live data or explicit error states with no synthetic responses.
+- Integrations are monitored, retried, and auditable (logs + metrics).
+- UI indicates live vs unavailable data clearly (no silent mock fallback).
+
+**Estimated Effort:** 4-6 weeks (integration + UI hardening)
+
+---
+
 ### Phase 5 Completion Gate
 
 **Requirements to Exit Phase 5:**
 - ✅ All government APIs integrated
 - ✅ Market platforms connected
 - ✅ Professional credentials verified
+- ✅ Mock/stub replacements complete (Phase 5D)
 - ✅ End-to-end submission tested
 - ✅ Documentation complete
 

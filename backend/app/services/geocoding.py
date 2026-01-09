@@ -25,12 +25,13 @@ class Address(BaseModel):
 
 
 class GeocodingService(AsyncClientService):
-    """Service for geocoding and reverse geocoding using OneMap API (Singapore)."""
+    """Service for geocoding and reverse geocoding using Google Maps."""
 
     def __init__(self) -> None:
         self.onemap_base_url = "https://www.onemap.gov.sg/api"
-        self.google_maps_api_key = getattr(settings, "GOOGLE_MAPS_API_KEY", None)
-        self.offline_mode = getattr(settings, "OFFLINE_MODE", False)
+        self.google_maps_base_url = "https://maps.googleapis.com/maps/api/geocode/json"
+        self.google_maps_api_key = settings.GOOGLE_MAPS_API_KEY
+        self.offline_mode = settings.OFFLINE_MODE
         if self.offline_mode:
             logger.info(
                 "Geocoding service running in offline mode; using mock address/amenity data"
@@ -113,86 +114,51 @@ class GeocodingService(AsyncClientService):
     async def reverse_geocode(
         self, latitude: float, longitude: float
     ) -> Optional[Address]:
-        """Convert coordinates to address using OneMap API."""
+        """Convert coordinates to address using Google Maps."""
+        if self.offline_mode:
+            return self._build_mock_address(latitude, longitude)
+
         try:
-            # Try OneMap first (free for Singapore)
-            if self.client is None:
-                raise RuntimeError("Geocoding client unavailable")
+            address = await self._google_reverse_geocode(latitude, longitude)
+        except Exception as exc:
+            logger.error("reverse_geocode_failed", error=str(exc))
+            raise
 
-            response = await self.client.get(
-                f"{self.onemap_base_url}/public/revgeocodexy",
-                params={
-                    "location": f"{latitude},{longitude}",
-                    "buffer": 50,
-                    "addressType": "all",
-                },
+        if address is None:
+            logger.warning(
+                "reverse_geocode_no_results",
+                latitude=latitude,
+                longitude=longitude,
             )
-
-            if response.status_code == 200:
-                data = response.json()
-                if data.get("GeocodeInfo") and len(data["GeocodeInfo"]) > 0:
-                    geocode_info = data["GeocodeInfo"][0]
-
-                    return Address(
-                        full_address=geocode_info.get("ROAD", "Unknown"),
-                        street_name=geocode_info.get("ROAD"),
-                        building_name=geocode_info.get("BUILDINGNAME"),
-                        block_number=geocode_info.get("BLOCK"),
-                        postal_code=geocode_info.get("POSTALCODE"),
-                        district=self._get_district_from_postal(
-                            geocode_info.get("POSTALCODE", "")
-                        ),
-                        country="Singapore",
-                    )
-
-            # Fallback to Google Maps if available
-            if self.google_maps_api_key:
-                return await self._google_reverse_geocode(latitude, longitude)
-
-            logger.warning(f"Reverse geocoding failed for {latitude}, {longitude}")
-            return self._build_mock_address(latitude, longitude)
-
-        except Exception as e:
-            logger.error(f"Error in reverse geocoding: {str(e)}")
-            return self._build_mock_address(latitude, longitude)
+        return address
 
     async def geocode(self, address: str) -> Optional[Tuple[float, float]]:
-        """Convert address to coordinates using OneMap API."""
+        """Convert address to coordinates using Google Maps."""
+        if self.offline_mode:
+            return (1.3000, 103.8500)
+
         try:
-            if self.client is None:
-                raise RuntimeError("Geocoding client unavailable")
+            result = await self._google_geocode(address)
+        except Exception as exc:
+            logger.error("geocode_failed", error=str(exc), address=address)
+            raise
 
-            response = await self.client.get(
-                f"{self.onemap_base_url}/common/elastic/search",
-                params={
-                    "searchVal": address,
-                    "returnGeom": "Y",
-                    "getAddrDetails": "Y",
-                    "pageNum": 1,
-                },
-            )
+        if result is None:
+            logger.warning("geocode_no_results", address=address)
+            return None
 
-            if response.status_code == 200:
-                data = response.json()
-                if data.get("results") and len(data["results"]) > 0:
-                    result = data["results"][0]
-                    latitude = float(result.get("LATITUDE", 0))
-                    longitude = float(result.get("LONGITUDE", 0))
+        latitude, longitude, _ = result
+        return (latitude, longitude)
 
-                    if latitude and longitude:
-                        return (latitude, longitude)
+    async def geocode_details(self, address: str) -> Optional[Tuple[float, float, str]]:
+        """Return coordinates plus a formatted address for the input."""
+        if self.offline_mode:
+            return (1.3000, 103.8500, address)
 
-            # Fallback to Google Maps if available
-            if self.google_maps_api_key:
-                return await self._google_geocode(address)
-
-            logger.warning(f"Geocoding failed for address: {address}")
-            # Return an approximate location near the Singapore CBD as a fallback.
-            return (1.3000, 103.8500)
-
-        except Exception as e:
-            logger.error(f"Error in geocoding: {str(e)}")
-            return (1.3000, 103.8500)
+        result = await self._google_geocode(address)
+        if result is None:
+            return None
+        return result
 
     async def get_nearby_amenities(
         self, latitude: float, longitude: float, radius_m: int = 1000
@@ -209,9 +175,13 @@ class GeocodingService(AsyncClientService):
             "parks": [],
         }
 
-        if self.client is None:
-            logger.warning("Geocoding client unavailable; returning mock amenity list")
+        if self.offline_mode:
+            logger.warning("Geocoding offline; returning mock amenity list")
             return self._mock_amenities(latitude, longitude)
+
+        if self.client is None:
+            logger.warning("Geocoding client unavailable; returning empty amenity list")
+            return amenities
 
         # OneMap theme queries
         themes = {
@@ -254,9 +224,7 @@ class GeocodingService(AsyncClientService):
             except Exception as e:
                 logger.error(f"Error fetching {amenity_type}: {str(e)}")
 
-        if any(amenities.values()):
-            return amenities
-        return self._mock_amenities(latitude, longitude)
+        return amenities
 
     def _get_district_from_postal(self, postal_code: str) -> Optional[str]:
         """Map Singapore postal code to district."""
@@ -327,13 +295,89 @@ class GeocodingService(AsyncClientService):
     async def _google_reverse_geocode(
         self, latitude: float, longitude: float
     ) -> Optional[Address]:
-        """Fallback to Google Maps for reverse geocoding."""
-        # Implementation for Google Maps API
-        # This is a placeholder - implement if Google Maps API key is provided
-        return None
+        """Lookup an address using Google Maps reverse geocoding."""
+        client = self._require_google_client()
+        response = await client.get(
+            self.google_maps_base_url,
+            params={
+                "latlng": f"{latitude},{longitude}",
+                "key": self.google_maps_api_key,
+            },
+        )
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Google Maps reverse geocoding failed with status {response.status_code}"
+            )
 
-    async def _google_geocode(self, address: str) -> Optional[Tuple[float, float]]:
-        """Fallback to Google Maps for geocoding."""
-        # Implementation for Google Maps API
-        # This is a placeholder - implement if Google Maps API key is provided
-        return None
+        payload = response.json()
+        if payload.get("status") != "OK" or not payload.get("results"):
+            return None
+
+        return self._parse_google_address(payload["results"][0])
+
+    async def _google_geocode(self, address: str) -> Optional[Tuple[float, float, str]]:
+        """Lookup coordinates using Google Maps geocoding."""
+        client = self._require_google_client()
+        response = await client.get(
+            self.google_maps_base_url,
+            params={
+                "address": address,
+                "key": self.google_maps_api_key,
+            },
+        )
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Google Maps geocoding failed with status {response.status_code}"
+            )
+
+        payload = response.json()
+        if payload.get("status") != "OK" or not payload.get("results"):
+            return None
+
+        result = payload["results"][0]
+        location = result.get("geometry", {}).get("location", {})
+        lat = location.get("lat")
+        lng = location.get("lng")
+        if lat is None or lng is None or not lat or not lng:
+            return None
+
+        formatted = result.get("formatted_address") or address
+        return (float(lat), float(lng), formatted)
+
+    def _require_google_client(self) -> httpx.AsyncClient:
+        if not self.google_maps_api_key:
+            raise RuntimeError("GOOGLE_MAPS_API_KEY is required for geocoding")
+        if self.client is None:
+            raise RuntimeError("Geocoding client unavailable")
+        return self.client
+
+    def _parse_google_address(self, result: dict[str, Any]) -> Address:
+        formatted = result.get("formatted_address") or "Unknown"
+        components = result.get("address_components", [])
+
+        def component_value(component_types: set[str]) -> Optional[str]:
+            for component in components:
+                types = set(component.get("types", []))
+                if component_types.intersection(types):
+                    return component.get("long_name") or component.get("short_name")
+            return None
+
+        street_number = component_value({"street_number"})
+        route = component_value({"route"})
+        postal_code = component_value({"postal_code"})
+        country = component_value({"country"}) or "Singapore"
+        district = None
+        if country.lower() == "singapore" and postal_code:
+            district = self._get_district_from_postal(postal_code)
+        if district is None:
+            district = component_value({"administrative_area_level_2", "locality"})
+
+        return Address(
+            full_address=formatted,
+            street_name=route,
+            building_name=None,
+            block_number=street_number,
+            postal_code=postal_code,
+            district=district,
+            country=country,
+        )

@@ -18,9 +18,7 @@ export function ImmersiveMap({
   showCentralCTA = true,
   onAddressSearch,
 }: ImmersiveMapProps) {
-  const hasMapboxToken = !!import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
-  const hasGoogleToken = !!import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-  const showFallback = !hasMapboxToken && !hasGoogleToken
+  const showFallback = false
 
   return (
     <div

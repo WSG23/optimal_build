@@ -1,4 +1,4 @@
-const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
+import { buildUrl } from './shared'
 
 export interface GeocodeResult {
   latitude: number
@@ -9,35 +9,28 @@ export interface GeocodeResult {
 export async function forwardGeocodeAddress(
   address: string,
 ): Promise<GeocodeResult> {
-  if (!GOOGLE_API_KEY) {
-    throw new Error('Missing VITE_GOOGLE_MAPS_API_KEY')
-  }
   const encoded = encodeURIComponent(address)
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encoded}&key=${GOOGLE_API_KEY}`
+  const url = buildUrl(`/api/v1/geocoding/forward?address=${encoded}`)
   const response = await fetch(url)
   if (!response.ok) {
-    throw new Error(`Geocoding failed with status ${response.status}`)
+    const detail = await response.text()
+    throw new Error(detail || `Geocoding failed with status ${response.status}`)
   }
   const payload = (await response.json()) as {
-    results?: Array<{
-      formatted_address?: string
-      geometry?: { location?: { lat?: number; lng?: number } }
-    }>
-    status?: string
-    error_message?: string
+    latitude?: number
+    longitude?: number
+    formattedAddress?: string
+    formatted_address?: string
   }
-  if (payload.status !== 'OK' || !payload.results?.length) {
-    throw new Error(payload.error_message || 'No results for this address')
-  }
-  const first = payload.results[0]
-  const loc = first.geometry?.location
-  if (!loc?.lat || !loc?.lng) {
+  if (payload.latitude == null || payload.longitude == null) {
     throw new Error('Geocode result missing coordinates')
   }
+  const formatted =
+    payload.formattedAddress || payload.formatted_address || address
   return {
-    latitude: loc.lat,
-    longitude: loc.lng,
-    formattedAddress: first.formatted_address || address,
+    latitude: payload.latitude,
+    longitude: payload.longitude,
+    formattedAddress: formatted,
   }
 }
 
@@ -45,30 +38,32 @@ export async function reverseGeocodeCoords(
   latitude: number,
   longitude: number,
 ): Promise<GeocodeResult> {
-  if (!GOOGLE_API_KEY) {
-    throw new Error('Missing VITE_GOOGLE_MAPS_API_KEY')
-  }
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`
+  const url = buildUrl(
+    `/api/v1/geocoding/reverse?latitude=${latitude}&longitude=${longitude}`,
+  )
   const response = await fetch(url)
   if (!response.ok) {
-    throw new Error(`Reverse geocoding failed with status ${response.status}`)
+    const detail = await response.text()
+    throw new Error(
+      detail || `Reverse geocoding failed with status ${response.status}`,
+    )
   }
   const payload = (await response.json()) as {
-    results?: Array<{
-      formatted_address?: string
-      geometry?: { location?: { lat?: number; lng?: number } }
-    }>
-    status?: string
-    error_message?: string
+    latitude?: number
+    longitude?: number
+    formattedAddress?: string
+    formatted_address?: string
   }
-  if (payload.status !== 'OK' || !payload.results?.length) {
-    throw new Error(payload.error_message || 'No results for these coordinates')
+  if (payload.latitude == null || payload.longitude == null) {
+    throw new Error('Reverse geocode result missing coordinates')
   }
-  const first = payload.results[0]
-  const loc = first.geometry?.location
+  const formatted =
+    payload.formattedAddress ||
+    payload.formatted_address ||
+    `${latitude}, ${longitude}`
   return {
-    latitude: loc?.lat ?? latitude,
-    longitude: loc?.lng ?? longitude,
-    formattedAddress: first.formatted_address || `${latitude}, ${longitude}`,
+    latitude: payload.latitude ?? latitude,
+    longitude: payload.longitude ?? longitude,
+    formattedAddress: formatted,
   }
 }

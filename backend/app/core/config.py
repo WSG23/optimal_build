@@ -211,6 +211,7 @@ class Settings:
     NZ_LINZ_API_KEY: str
     SEATTLE_SODA_APP_TOKEN: str
     TORONTO_SODA_APP_TOKEN: str
+    GOOGLE_MAPS_API_KEY: str
 
     BUILDABLE_TYP_FLOOR_TO_FLOOR_M: float
     BUILDABLE_EFFICIENCY_RATIO: float
@@ -311,6 +312,7 @@ class Settings:
         self.NZ_LINZ_API_KEY = os.getenv("NZ_LINZ_API_KEY", "public")
         self.SEATTLE_SODA_APP_TOKEN = os.getenv("SEATTLE_SODA_APP_TOKEN", "public")
         self.TORONTO_SODA_APP_TOKEN = os.getenv("TORONTO_SODA_APP_TOKEN", "public")
+        self.GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
 
         self.BUILDABLE_TYP_FLOOR_TO_FLOOR_M = _load_positive_float(
             "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", 4.0

@@ -1035,14 +1035,20 @@ async def developer_log_property_by_gps(
                 supplied_user_id=token.user_id,
             )
 
-    result = await developer_gps_logger.log_property_from_gps(
-        latitude=request.latitude,
-        longitude=request.longitude,
-        session=session,
-        user_id=user_uuid,
-        scenarios=request.development_scenarios,
-        jurisdiction_code=request.jurisdiction_code,
-    )
+    try:
+        result = await developer_gps_logger.log_property_from_gps(
+            latitude=request.latitude,
+            longitude=request.longitude,
+            session=session,
+            user_id=user_uuid,
+            scenarios=request.development_scenarios,
+            jurisdiction_code=request.jurisdiction_code,
+        )
+    except (RuntimeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="GPS capture unavailable: geocoding failed",
+        ) from exc
 
     quick_analysis_payload = result.quick_analysis or {
         "generated_at": utcnow().isoformat(),

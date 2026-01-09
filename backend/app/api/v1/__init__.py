@@ -84,6 +84,10 @@ TAGS_METADATA: Final[list[dict[str, str]]] = [
             "portfolio optimization, and competitive intelligence."
         ),
     },
+    {
+        "name": "geocoding",
+        "description": "Address lookup and reverse geocoding endpoints.",
+    },
 ]
 
 _ROUTER_MODULES: Final[tuple[str, ...]] = (
@@ -127,6 +131,7 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "regulatory",  # Regulatory navigation endpoints (Phase 2F)
     "development_phases",  # Multi-phase development management (Phase 2D)
     "ai",  # AI services endpoints (Phase 1-4 AI rollout)
+    "geocoding",  # Address lookup endpoints
 )
 
 
