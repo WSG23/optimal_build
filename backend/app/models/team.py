@@ -38,6 +38,7 @@ class TeamMember(BaseModel):
     # Metadata
     is_active = Column(Boolean, default=True, nullable=False)
     joined_at = Column(DateTime, default=utcnow, nullable=False)
+    last_active_at = Column(DateTime, nullable=True)  # Activity tracking
 
     # Relationships
     project = relationship("Project", back_populates="team_members")

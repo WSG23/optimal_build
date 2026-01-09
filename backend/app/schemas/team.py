@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr
@@ -13,10 +14,39 @@ class TeamMemberBase(BaseModel):
 class TeamMemberRead(TeamMemberBase):
     project_id: UUID
     joined_at: datetime
-    # Assuming user details might be joined, but keeping it simple for now
+    last_active_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
+
+
+class TeamMemberActivityRead(BaseModel):
+    """Extended team member info with activity stats."""
+
+    id: UUID
+    user_id: UUID
+    project_id: UUID
+    role: UserRole
+    joined_at: datetime
+    last_active_at: Optional[datetime] = None
+    # User details (joined from User model)
+    name: str
+    email: str
+    # Activity stats (computed)
+    pending_tasks: int = 0
+    completed_tasks: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class TeamActivityStatsResponse(BaseModel):
+    """Response schema for team activity statistics."""
+
+    members: list[TeamMemberActivityRead]
+    total_pending_tasks: int
+    total_completed_tasks: int
+    active_members_count: int
 
 
 class InvitationBase(BaseModel):

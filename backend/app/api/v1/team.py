@@ -6,7 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
 from app.core.database import get_session
-from app.schemas.team import InvitationCreate, InvitationRead, TeamMemberRead
+from app.schemas.team import (
+    InvitationCreate,
+    InvitationRead,
+    TeamActivityStatsResponse,
+    TeamMemberRead,
+)
 from app.services.team.team_service import TeamService
 
 router = APIRouter(prefix="/team", tags=["team"])
@@ -88,3 +93,39 @@ async def remove_member(
     if not success:
         raise HTTPException(status_code=404, detail="Member not found")
     return True
+
+
+@router.get("/activity", response_model=TeamActivityStatsResponse)
+async def get_team_activity(
+    project_id: UUID,
+    db: AsyncSession = Depends(get_session),
+    identity: deps.RequestIdentity = Depends(deps.require_viewer),
+) -> Any:
+    """
+    Get team activity statistics for a project.
+
+    Returns:
+        Team members with their activity stats (pending/completed tasks, last active time).
+    """
+    service = TeamService(db)
+    activity_stats = await service.get_team_activity(project_id)
+    return activity_stats
+
+
+@router.post("/members/{user_id}/activity", response_model=TeamMemberRead)
+async def update_member_activity(
+    project_id: UUID,
+    user_id: UUID,
+    db: AsyncSession = Depends(get_session),
+    identity: deps.RequestIdentity = Depends(deps.require_viewer),
+) -> Any:
+    """
+    Update a team member's last active timestamp.
+
+    Called automatically when a user performs actions on a project.
+    """
+    service = TeamService(db)
+    member = await service.update_member_activity(project_id, user_id)
+    if not member:
+        raise HTTPException(status_code=404, detail="Team member not found")
+    return member

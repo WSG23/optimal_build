@@ -31,162 +31,22 @@ import {
   Timeline as TimelineIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material'
+import {
+  getMockPhases,
+  getMockTeamActivity,
+  getMockPendingApprovals,
+  type ProjectPhase,
+  type TeamMemberActivity,
+  type PendingApproval,
+} from './projectProgressMockData'
 
-interface TeamMemberActivity {
-  id: string
-  name: string
-  email: string
-  role: string
-  lastActive: string
-  pendingTasks: number
-  completedTasks: number
-}
-
-interface ProjectPhase {
-  id: string
-  name: string
-  progress: number
-  status: 'not_started' | 'in_progress' | 'completed' | 'delayed'
-  startDate?: string
-  endDate?: string
-  milestones: {
-    name: string
-    completed: boolean
-  }[]
-}
-
-interface PendingApproval {
-  id: string
-  title: string
-  workflowName: string
-  requiredBy: string
-  dueDate?: string
-  priority: 'low' | 'normal' | 'high' | 'urgent'
-}
+// Types are re-exported from projectProgressMockData.ts for backward compatibility
+// Import types from './projectProgressMockData' directly
 
 interface ProjectProgressDashboardProps {
   projectId: string
   projectName?: string
 }
-
-// Mock data for demonstration
-const getMockPhases = (): ProjectPhase[] => [
-  {
-    id: 'phase-1',
-    name: 'Site Acquisition',
-    progress: 100,
-    status: 'completed',
-    startDate: '2025-01-15',
-    endDate: '2025-03-01',
-    milestones: [
-      { name: 'Site Survey', completed: true },
-      { name: 'Due Diligence', completed: true },
-      { name: 'Purchase Agreement', completed: true },
-    ],
-  },
-  {
-    id: 'phase-2',
-    name: 'Concept Design',
-    progress: 75,
-    status: 'in_progress',
-    startDate: '2025-03-01',
-    milestones: [
-      { name: 'Massing Study', completed: true },
-      { name: 'GFA Optimization', completed: true },
-      { name: 'Financial Feasibility', completed: true },
-      { name: 'Design Review', completed: false },
-    ],
-  },
-  {
-    id: 'phase-3',
-    name: 'Regulatory Submission',
-    progress: 30,
-    status: 'in_progress',
-    startDate: '2025-04-15',
-    milestones: [
-      { name: 'URA Outline Approval', completed: true },
-      { name: 'BCA Structural Plans', completed: false },
-      { name: 'SCDF Fire Safety', completed: false },
-      { name: 'NEA Environmental', completed: false },
-    ],
-  },
-  {
-    id: 'phase-4',
-    name: 'Construction',
-    progress: 0,
-    status: 'not_started',
-    milestones: [
-      { name: 'Foundation', completed: false },
-      { name: 'Superstructure', completed: false },
-      { name: 'M&E Works', completed: false },
-      { name: 'Finishing', completed: false },
-    ],
-  },
-]
-
-const getMockTeamActivity = (): TeamMemberActivity[] => [
-  {
-    id: 'u1',
-    name: 'John Smith',
-    email: 'john.smith@example.com',
-    role: 'Project Manager',
-    lastActive: '2 hours ago',
-    pendingTasks: 3,
-    completedTasks: 12,
-  },
-  {
-    id: 'u2',
-    name: 'Sarah Chen',
-    email: 'sarah.chen@example.com',
-    role: 'Architect',
-    lastActive: '30 mins ago',
-    pendingTasks: 2,
-    completedTasks: 8,
-  },
-  {
-    id: 'u3',
-    name: 'Michael Wong',
-    email: 'michael.wong@example.com',
-    role: 'Structural Engineer',
-    lastActive: '1 hour ago',
-    pendingTasks: 4,
-    completedTasks: 6,
-  },
-  {
-    id: 'u4',
-    name: 'Emily Tan',
-    email: 'emily.tan@example.com',
-    role: 'Quantity Surveyor',
-    lastActive: '3 hours ago',
-    pendingTasks: 1,
-    completedTasks: 5,
-  },
-]
-
-const getMockPendingApprovals = (): PendingApproval[] => [
-  {
-    id: 'a1',
-    title: 'Structural Feasibility Review',
-    workflowName: 'Concept Design Sign-off',
-    requiredBy: 'Michael Wong',
-    dueDate: '2025-12-10',
-    priority: 'high',
-  },
-  {
-    id: 'a2',
-    title: 'Cost Estimate Approval',
-    workflowName: 'Financial Review',
-    requiredBy: 'Emily Tan',
-    priority: 'normal',
-  },
-  {
-    id: 'a3',
-    title: 'Heritage Assessment',
-    workflowName: 'Regulatory Compliance',
-    requiredBy: 'Sarah Chen',
-    priority: 'urgent',
-  },
-]
 
 function getStatusIcon(status: ProjectPhase['status']) {
   switch (status) {
@@ -221,7 +81,7 @@ function getPriorityColor(priority: PendingApproval['priority']) {
     case 'high':
       return 'warning'
     case 'normal':
-      return 'primary'
+      return 'info' // Normal priority = informational, not brand/selection
     default:
       return 'default'
   }
@@ -266,9 +126,11 @@ export const ProjectProgressDashboard: React.FC<
 
   if (loading) {
     return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
+      <Box sx={{ p: 'var(--ob-space-400)', textAlign: 'center' }}>
         <Typography>Loading project progress...</Typography>
-        <LinearProgress sx={{ mt: 2, maxWidth: 300, mx: 'auto' }} />
+        <LinearProgress
+          sx={{ mt: 'var(--ob-space-200)', maxWidth: 300, mx: 'auto' }}
+        />
       </Box>
     )
   }
@@ -276,13 +138,13 @@ export const ProjectProgressDashboard: React.FC<
   return (
     <Box>
       {/* Header with overall progress */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 'var(--ob-space-400)' }}>
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            mb: 2,
+            mb: 'var(--ob-space-200)',
           }}
         >
           <Typography variant="h5" fontWeight="bold">
@@ -301,7 +163,7 @@ export const ProjectProgressDashboard: React.FC<
         </Box>
 
         {/* KPI Cards */}
-        <Grid container spacing={2}>
+        <Grid container spacing="var(--ob-space-200)">
           <Grid item xs={12} sm={6} md={3}>
             <Card
               sx={{
@@ -311,7 +173,13 @@ export const ProjectProgressDashboard: React.FC<
               }}
             >
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--ob-space-100)',
+                  }}
+                >
                   <TrendingUpIcon />
                   <Typography variant="caption">Overall Progress</Typography>
                 </Box>
@@ -322,7 +190,7 @@ export const ProjectProgressDashboard: React.FC<
                   variant="determinate"
                   value={overallProgress}
                   sx={{
-                    mt: 1,
+                    mt: 'var(--ob-space-100)',
                     bgcolor: 'rgba(255,255,255,0.3)',
                     '& .MuiLinearProgress-bar': { bgcolor: 'white' },
                   }}
@@ -340,7 +208,13 @@ export const ProjectProgressDashboard: React.FC<
               }}
             >
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--ob-space-100)',
+                  }}
+                >
                   <CheckCircleIcon />
                   <Typography variant="caption">Completed Tasks</Typography>
                 </Box>
@@ -360,7 +234,13 @@ export const ProjectProgressDashboard: React.FC<
               }}
             >
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--ob-space-100)',
+                  }}
+                >
                   <HourglassIcon />
                   <Typography variant="caption">Pending Tasks</Typography>
                 </Box>
@@ -380,7 +260,13 @@ export const ProjectProgressDashboard: React.FC<
               }}
             >
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--ob-space-100)',
+                  }}
+                >
                   <PeopleIcon />
                   <Typography variant="caption">Team Members</Typography>
                 </Box>
@@ -393,18 +279,25 @@ export const ProjectProgressDashboard: React.FC<
         </Grid>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing="var(--ob-space-300)">
         {/* Phase Progress Timeline */}
         <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Paper sx={{ p: 'var(--ob-space-200)' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-100)',
+                mb: 'var(--ob-space-200)',
+              }}
+            >
               <TimelineIcon color="primary" />
               <Typography variant="h6">Phase Progress</Typography>
             </Box>
-            <Divider sx={{ mb: 2 }} />
+            <Divider sx={{ mb: 'var(--ob-space-200)' }} />
 
             {phases.map((phase) => (
-              <Box key={phase.id} sx={{ mb: 3 }}>
+              <Box key={phase.id} sx={{ mb: 'var(--ob-space-300)' }}>
                 <Box
                   sx={{
                     display: 'flex',
@@ -413,13 +306,25 @@ export const ProjectProgressDashboard: React.FC<
                     mb: 1,
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--ob-space-100)',
+                    }}
+                  >
                     {getStatusIcon(phase.status)}
                     <Typography variant="subtitle1" fontWeight="medium">
                       {phase.name}
                     </Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--ob-space-100)',
+                    }}
+                  >
                     <Chip
                       label={phase.status.replace('_', ' ')}
                       color={
@@ -443,7 +348,11 @@ export const ProjectProgressDashboard: React.FC<
                 <LinearProgress
                   variant="determinate"
                   value={phase.progress}
-                  sx={{ height: 8, borderRadius: 4, mb: 1 }}
+                  sx={{
+                    height: 8,
+                    borderRadius: 'var(--ob-radius-sm)',
+                    mb: 'var(--ob-space-100)',
+                  }}
                   color={
                     getStatusColor(phase.status) as
                       | 'inherit'
@@ -455,7 +364,13 @@ export const ProjectProgressDashboard: React.FC<
                       | 'warning'
                   }
                 />
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 'var(--ob-space-050)',
+                  }}
+                >
                   {phase.milestones.map((m, idx) => (
                     <Chip
                       key={idx}
@@ -463,7 +378,7 @@ export const ProjectProgressDashboard: React.FC<
                       size="small"
                       variant={m.completed ? 'filled' : 'outlined'}
                       color={m.completed ? 'success' : 'default'}
-                      sx={{ fontSize: '0.7rem' }}
+                      sx={{ fontSize: 'var(--ob-font-size-xs)' }}
                     />
                   ))}
                 </Box>
@@ -474,8 +389,15 @@ export const ProjectProgressDashboard: React.FC<
 
         {/* Pending Approvals */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Paper sx={{ p: 'var(--ob-space-200)' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-100)',
+                mb: 'var(--ob-space-200)',
+              }}
+            >
               <AssignmentIcon color="warning" />
               <Typography variant="h6">Pending Approvals</Typography>
               <Chip
@@ -484,7 +406,7 @@ export const ProjectProgressDashboard: React.FC<
                 color="warning"
               />
             </Box>
-            <Divider sx={{ mb: 2 }} />
+            <Divider sx={{ mb: 'var(--ob-space-200)' }} />
 
             <List dense disablePadding>
               {pendingApprovals.map((approval) => (
@@ -519,7 +441,10 @@ export const ProjectProgressDashboard: React.FC<
                               | 'success'
                               | 'warning'
                           }
-                          sx={{ fontSize: '0.65rem', height: 18 }}
+                          sx={{
+                            fontSize: 'var(--ob-font-size-2xs)',
+                            height: 18,
+                          }}
                         />
                       </Box>
                     }
@@ -551,14 +476,21 @@ export const ProjectProgressDashboard: React.FC<
 
         {/* Team Activity */}
         <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Paper sx={{ p: 'var(--ob-space-200)' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-100)',
+                mb: 'var(--ob-space-200)',
+              }}
+            >
               <PeopleIcon color="primary" />
               <Typography variant="h6">Team Activity</Typography>
             </Box>
-            <Divider sx={{ mb: 2 }} />
+            <Divider sx={{ mb: 'var(--ob-space-200)' }} />
 
-            <Grid container spacing={2}>
+            <Grid container spacing="var(--ob-space-200)">
               {teamActivity.map((member) => (
                 <Grid item xs={12} sm={6} md={3} key={member.id}>
                   <Card variant="outlined" sx={{ height: '100%' }}>
@@ -567,7 +499,7 @@ export const ProjectProgressDashboard: React.FC<
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 2,
+                          gap: 'var(--ob-space-200)',
                           mb: 2,
                         }}
                       >

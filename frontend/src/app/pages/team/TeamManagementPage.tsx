@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Box,
   Button,
@@ -43,13 +43,25 @@ interface TeamManagementPageProps {
   projectId?: string
 }
 
+// Demo UUID for development/testing - uses the finance demo project
+const DEMO_PROJECT_UUID = '00000000-0000-0000-0000-000000000191'
+
 export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
   projectId: propProjectId,
 }) => {
   const path = useRouterPath()
   // Attempt to parse projectId from path if it follows /projects/:id pattern
   const derivedProjectId = path.split('/projects/')[1]?.split('/')[0]
-  const projectId = propProjectId || derivedProjectId || 'default-project-id' // Fallback for dev/demo
+
+  // Try to get projectId from URL query params (e.g., ?projectId=...)
+  const queryProjectId =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('projectId')
+      : null
+
+  // Priority: prop > query param > path > demo UUID
+  const projectId =
+    propProjectId || queryProjectId || derivedProjectId || DEMO_PROJECT_UUID
 
   const [activeTab, setActiveTab] = useState(0)
   const [members, setMembers] = useState<TeamMember[]>([])
@@ -61,47 +73,78 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
   const [inviteRole, setInviteRole] = useState('consultant')
   const [inviting, setInviting] = useState(false)
 
-  const fetchMembers = React.useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const data = await teamApi.listMembers(projectId)
-      setMembers(data)
-    } catch (err) {
-      console.error(err)
-      // MOCK FALLBACK for dev if backend unreachable
-      // setError('Failed to load team members')
-      console.warn('Backend failed, using mock data for demo')
-      setMembers([
-        {
-          id: '1',
-          project_id: projectId,
-          user_id: 'u1',
-          role: 'developer',
-          is_active: true,
-          joined_at: new Date().toISOString(),
-          user: { full_name: 'John Doe', email: 'john@example.com' },
-        },
-        {
-          id: '2',
-          project_id: projectId,
-          user_id: 'u2',
-          role: 'consultant',
-          is_active: true,
-          joined_at: new Date().toISOString(),
-          user: { full_name: 'Sarah Architect', email: 'sarah@firm.com' },
-        },
-      ])
-    } finally {
-      setLoading(false)
-    }
-  }, [projectId])
+  // Ref to prevent multiple fetches and track if we've already loaded data
+  const hasFetchedRef = useRef(false)
+  const isFetchingRef = useRef(false)
+
+  // Helper to create mock members - defined inside effect to avoid dependency issues
+  const createMockMembers = React.useCallback(
+    (pid: string): TeamMember[] => [
+      {
+        id: '1',
+        project_id: pid,
+        user_id: 'u1',
+        role: 'developer',
+        is_active: true,
+        joined_at: '2024-01-15T10:00:00.000Z',
+        user: { full_name: 'John Doe', email: 'john@example.com' },
+      },
+      {
+        id: '2',
+        project_id: pid,
+        user_id: 'u2',
+        role: 'consultant',
+        is_active: true,
+        joined_at: '2024-01-20T14:30:00.000Z',
+        user: { full_name: 'Sarah Architect', email: 'sarah@firm.com' },
+      },
+      {
+        id: '3',
+        project_id: pid,
+        user_id: 'u3',
+        role: 'admin',
+        is_active: true,
+        joined_at: '2024-01-10T09:00:00.000Z',
+        user: { full_name: 'Demo Owner', email: 'demo-owner@example.com' },
+      },
+    ],
+    [],
+  )
 
   useEffect(() => {
-    if (activeTab === 0) {
-      void fetchMembers()
+    // Only fetch if we're on the team members tab, haven't fetched yet, and not currently fetching
+    if (activeTab !== 0 || hasFetchedRef.current || isFetchingRef.current) {
+      return
     }
-  }, [activeTab, fetchMembers])
+
+    const fetchMembers = async () => {
+      isFetchingRef.current = true
+      setLoading(true)
+      setError(null)
+      try {
+        const data = await teamApi.listMembers(projectId)
+        // Use mock data if API returns empty (for demo purposes)
+        if (data.length === 0) {
+          console.info('No team members in DB, using mock data for demo')
+          setMembers(createMockMembers(projectId))
+        } else {
+          setMembers(data)
+        }
+        hasFetchedRef.current = true
+      } catch (err) {
+        console.error(err)
+        // MOCK FALLBACK for dev if backend unreachable
+        console.warn('Backend failed, using mock data for demo')
+        setMembers(createMockMembers(projectId))
+        hasFetchedRef.current = true // Mark as fetched even on error to prevent infinite retries
+      } finally {
+        setLoading(false)
+        isFetchingRef.current = false
+      }
+    }
+
+    void fetchMembers()
+  }, [activeTab, projectId, createMockMembers])
 
   const handleInvite = async () => {
     setInviting(true)
@@ -230,7 +273,11 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <TableCell
+                    colSpan={5}
+                    align="center"
+                    sx={{ py: 'var(--ob-space-400)' }}
+                  >
                     <CircularProgress size={24} />
                     <Typography
                       variant="body2"
@@ -242,7 +289,11 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
                 </TableRow>
               ) : members.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                  <TableCell
+                    colSpan={5}
+                    align="center"
+                    sx={{ py: 'var(--ob-space-400)' }}
+                  >
                     <Typography variant="body2" color="text.secondary">
                       No team members found.
                     </Typography>

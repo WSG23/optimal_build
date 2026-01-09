@@ -148,3 +148,105 @@ class TeamService:
             await self.db.commit()
             return True
         return False
+
+    async def get_team_activity(self, project_id: UUID) -> dict:
+        """Get team activity statistics for a project.
+
+        Returns member info with activity stats (pending/completed tasks).
+        """
+        from app.models.users import User
+        from app.models.workflow import ApprovalStep, ApprovalWorkflow
+
+        # Get team members with user info
+        query = (
+            select(TeamMember)
+            .options(joinedload(TeamMember.user))
+            .where(TeamMember.project_id == project_id)
+            .where(TeamMember.is_active.is_(True))
+        )
+        result = await self.db.execute(query)
+        members = list(result.scalars().unique().all())
+
+        # Build activity stats for each member
+        member_activities = []
+        total_pending = 0
+        total_completed = 0
+        active_count = 0
+
+        for member in members:
+            user: User = member.user
+            if not user:
+                continue
+
+            # Count pending and completed workflow steps for this user
+            pending_query = (
+                select(ApprovalStep)
+                .join(ApprovalWorkflow, ApprovalWorkflow.id == ApprovalStep.workflow_id)
+                .where(ApprovalWorkflow.project_id == project_id)
+                .where(ApprovalStep.required_user_id == member.user_id)
+                .where(ApprovalStep.status.in_(["pending", "in_review"]))
+            )
+            pending_result = await self.db.execute(pending_query)
+            pending_tasks = len(list(pending_result.scalars().all()))
+
+            completed_query = (
+                select(ApprovalStep)
+                .join(ApprovalWorkflow, ApprovalWorkflow.id == ApprovalStep.workflow_id)
+                .where(ApprovalWorkflow.project_id == project_id)
+                .where(ApprovalStep.approved_by_id == member.user_id)
+                .where(ApprovalStep.status.in_(["approved", "rejected"]))
+            )
+            completed_result = await self.db.execute(completed_query)
+            completed_tasks = len(list(completed_result.scalars().all()))
+
+            total_pending += pending_tasks
+            total_completed += completed_tasks
+
+            # Consider member active if they have activity in the last 24 hours
+            if member.last_active_at:
+                from datetime import timedelta
+
+                if utcnow() - member.last_active_at < timedelta(hours=24):
+                    active_count += 1
+
+            member_activities.append(
+                {
+                    "id": member.id,
+                    "user_id": member.user_id,
+                    "project_id": member.project_id,
+                    "role": member.role,
+                    "joined_at": member.joined_at,
+                    "last_active_at": member.last_active_at,
+                    "name": user.full_name or user.email.split("@")[0],
+                    "email": user.email,
+                    "pending_tasks": pending_tasks,
+                    "completed_tasks": completed_tasks,
+                }
+            )
+
+        return {
+            "members": member_activities,
+            "total_pending_tasks": total_pending,
+            "total_completed_tasks": total_completed,
+            "active_members_count": active_count,
+        }
+
+    async def update_member_activity(
+        self, project_id: UUID, user_id: UUID
+    ) -> TeamMember | None:
+        """Update a team member's last active timestamp."""
+        query = select(TeamMember).where(
+            TeamMember.project_id == project_id,
+            TeamMember.user_id == user_id,
+            TeamMember.is_active.is_(True),
+        )
+        result = await self.db.execute(query)
+        member = result.scalar_one_or_none()
+
+        if member:
+            member.last_active_at = utcnow()
+            self.db.add(member)
+            await self.db.commit()
+            await self.db.refresh(member)
+            return member
+        return None
