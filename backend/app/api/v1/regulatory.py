@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
+from app.api.v1.finance_common import normalise_project_id
 from app.models.regulatory import (
     AssetCompliancePath,
     AssetType,
@@ -93,14 +94,17 @@ async def create_submission(
     "/project/{project_id}/submissions", response_model=List[AuthoritySubmissionRead]
 )
 async def list_project_submissions(
-    project_id: UUID,
+    project_id: str,
     db: AsyncSession = Depends(deps.get_db),
 ) -> Any:
     """
     List all regulatory submissions for a given project.
+
+    Accepts project_id as UUID string or integer.
     """
+    normalized_id = normalise_project_id(project_id)
     service = RegulatoryService(db)
-    return service.get_project_submissions(project_id)
+    return await service.get_project_submissions(normalized_id)
 
 
 @router.get("/{submission_id}/status", response_model=AuthoritySubmissionRead)
@@ -140,9 +144,10 @@ async def get_compliance_path_for_asset(
     Returns ordered list of required submissions (URA, BCA, SCDF, etc.)
     based on the property type (office, retail, residential, industrial, heritage).
     """
+    # Use .value to compare with VARCHAR column in database
     result = await db.execute(
         select(AssetCompliancePath)
-        .where(AssetCompliancePath.asset_type == asset_type)
+        .where(AssetCompliancePath.asset_type == asset_type.value)
         .order_by(AssetCompliancePath.sequence_order)
     )
     paths = result.scalars().all()
@@ -179,7 +184,9 @@ async def create_change_of_use_application(
     Create a change of use application for adaptive reuse projects.
 
     Automatically determines if DC amendment or planning permission is required.
+    Accepts project_id as UUID string or integer string.
     """
+    normalized_project_id = normalise_project_id(data.project_id)
     requires_dc = data.current_use != data.proposed_use
     requires_planning = data.proposed_use in [
         AssetType.RESIDENTIAL,
@@ -187,7 +194,7 @@ async def create_change_of_use_application(
     ]
 
     application = ChangeOfUseApplication(
-        project_id=data.project_id,
+        project_id=normalized_project_id,
         current_use=data.current_use,
         proposed_use=data.proposed_use,
         justification=data.justification,
@@ -203,15 +210,18 @@ async def create_change_of_use_application(
 
 @router.get("/change-of-use/project/{project_id}", response_model=List[ChangeOfUseRead])
 async def list_change_of_use_applications(
-    project_id: UUID,
+    project_id: str,
     db: AsyncSession = Depends(deps.get_db),
 ) -> Any:
     """
     List all change of use applications for a project.
+
+    Accepts project_id as UUID string or integer.
     """
+    normalized_id = normalise_project_id(project_id)
     result = await db.execute(
         select(ChangeOfUseApplication)
-        .where(ChangeOfUseApplication.project_id == project_id)
+        .where(ChangeOfUseApplication.project_id == normalized_id)
         .order_by(ChangeOfUseApplication.created_at.desc())
     )
     applications = result.scalars().all()
@@ -261,9 +271,11 @@ async def create_heritage_submission(
     Create a heritage submission for STB coordination.
 
     Used for conservation projects requiring heritage authority approval.
+    Accepts project_id as UUID string or integer string.
     """
+    normalized_project_id = normalise_project_id(data.project_id)
     submission = HeritageSubmission(
-        project_id=data.project_id,
+        project_id=normalized_project_id,
         conservation_status=data.conservation_status,
         original_construction_year=data.original_construction_year,
         heritage_elements=data.heritage_elements,
@@ -280,15 +292,18 @@ async def create_heritage_submission(
     "/heritage/project/{project_id}", response_model=List[HeritageSubmissionRead]
 )
 async def list_heritage_submissions(
-    project_id: UUID,
+    project_id: str,
     db: AsyncSession = Depends(deps.get_db),
 ) -> Any:
     """
     List all heritage submissions for a project.
+
+    Accepts project_id as UUID string or integer.
     """
+    normalized_id = normalise_project_id(project_id)
     result = await db.execute(
         select(HeritageSubmission)
-        .where(HeritageSubmission.project_id == project_id)
+        .where(HeritageSubmission.project_id == normalized_id)
         .order_by(HeritageSubmission.created_at.desc())
     )
     submissions = result.scalars().all()

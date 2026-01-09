@@ -136,7 +136,7 @@ export const regulatoryApi = {
     request: CreateSubmissionRequest,
   ): Promise<AuthoritySubmission> => {
     const { data } = await apiClient.post<AuthoritySubmission>(
-      '/regulatory/submit',
+      '/api/v1/regulatory/submit',
       request,
     )
     return data
@@ -146,7 +146,7 @@ export const regulatoryApi = {
     projectId: string | number,
   ): Promise<AuthoritySubmission[]> => {
     const { data } = await apiClient.get<AuthoritySubmission[]>(
-      `/regulatory/project/${projectId}/submissions`,
+      `/api/v1/regulatory/project/${projectId}/submissions`,
     )
     return data
   },
@@ -155,7 +155,7 @@ export const regulatoryApi = {
     submissionId: number | string,
   ): Promise<AuthoritySubmission> => {
     const { data } = await apiClient.get<AuthoritySubmission>(
-      `/regulatory/${submissionId}/status`,
+      `/api/v1/regulatory/${submissionId}/status`,
     )
     return data
   },
@@ -165,14 +165,14 @@ export const regulatoryApi = {
     assetType: AssetType,
   ): Promise<AssetCompliancePath[]> => {
     const { data } = await apiClient.get<AssetCompliancePath[]>(
-      `/regulatory/compliance-paths/${assetType}`,
+      `/api/v1/regulatory/compliance-paths/${assetType}`,
     )
     return data
   },
 
   listAllCompliancePaths: async (): Promise<AssetCompliancePath[]> => {
     const { data } = await apiClient.get<AssetCompliancePath[]>(
-      '/regulatory/compliance-paths',
+      '/api/v1/regulatory/compliance-paths',
     )
     return data
   },
@@ -182,7 +182,7 @@ export const regulatoryApi = {
     request: ChangeOfUseCreateRequest,
   ): Promise<ChangeOfUseApplication> => {
     const { data } = await apiClient.post<ChangeOfUseApplication>(
-      '/regulatory/change-of-use',
+      '/api/v1/regulatory/change-of-use',
       request,
     )
     return data
@@ -192,7 +192,7 @@ export const regulatoryApi = {
     projectId: string,
   ): Promise<ChangeOfUseApplication[]> => {
     const { data } = await apiClient.get<ChangeOfUseApplication[]>(
-      `/regulatory/change-of-use/project/${projectId}`,
+      `/api/v1/regulatory/change-of-use/project/${projectId}`,
     )
     return data
   },
@@ -202,7 +202,7 @@ export const regulatoryApi = {
     request: ChangeOfUseUpdateRequest,
   ): Promise<ChangeOfUseApplication> => {
     const { data } = await apiClient.patch<ChangeOfUseApplication>(
-      `/regulatory/change-of-use/${applicationId}`,
+      `/api/v1/regulatory/change-of-use/${applicationId}`,
       request,
     )
     return data
@@ -213,7 +213,7 @@ export const regulatoryApi = {
     request: HeritageSubmissionCreateRequest,
   ): Promise<HeritageSubmission> => {
     const { data } = await apiClient.post<HeritageSubmission>(
-      '/regulatory/heritage',
+      '/api/v1/regulatory/heritage',
       request,
     )
     return data
@@ -223,7 +223,7 @@ export const regulatoryApi = {
     projectId: string,
   ): Promise<HeritageSubmission[]> => {
     const { data } = await apiClient.get<HeritageSubmission[]>(
-      `/regulatory/heritage/project/${projectId}`,
+      `/api/v1/regulatory/heritage/project/${projectId}`,
     )
     return data
   },
@@ -232,7 +232,7 @@ export const regulatoryApi = {
     submissionId: string,
   ): Promise<HeritageSubmission> => {
     const { data } = await apiClient.get<HeritageSubmission>(
-      `/regulatory/heritage/${submissionId}`,
+      `/api/v1/regulatory/heritage/${submissionId}`,
     )
     return data
   },
@@ -242,7 +242,7 @@ export const regulatoryApi = {
     request: HeritageSubmissionUpdateRequest,
   ): Promise<HeritageSubmission> => {
     const { data } = await apiClient.patch<HeritageSubmission>(
-      `/regulatory/heritage/${submissionId}`,
+      `/api/v1/regulatory/heritage/${submissionId}`,
       request,
     )
     return data
@@ -250,7 +250,7 @@ export const regulatoryApi = {
 
   submitToSTB: async (submissionId: string): Promise<HeritageSubmission> => {
     const { data } = await apiClient.post<HeritageSubmission>(
-      `/regulatory/heritage/${submissionId}/submit`,
+      `/api/v1/regulatory/heritage/${submissionId}/submit`,
       {},
     )
     return data

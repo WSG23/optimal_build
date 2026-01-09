@@ -69,10 +69,10 @@ export const RegulatoryDashboardPage: React.FC = () => {
   const isDarkMode = theme.palette.mode === 'dark'
   const path = useRouterPath()
   // Extract project ID from URL pattern /projects/:id/regulatory
-  // If not found, use '1' as default or handle error
+  // If not found, use '191' as default (existing demo project)
   const pathParts = path.split('/')
   const projectIdx = pathParts.indexOf('projects')
-  const projectId = projectIdx !== -1 ? pathParts[projectIdx + 1] : '1'
+  const projectId = projectIdx !== -1 ? pathParts[projectIdx + 1] : '191'
 
   const [tabValue, setTabValue] = useState(0)
   const [submissions, setSubmissions] = useState<AuthoritySubmission[]>([])

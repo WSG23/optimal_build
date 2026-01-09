@@ -1,7 +1,8 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 from uuid import UUID
 from datetime import datetime
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models.regulatory import (
@@ -15,7 +16,7 @@ from app.services.mock_corenet import MockCorenetService
 
 
 class RegulatoryService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Union[Session, AsyncSession]):
         self.db = db
         self.corenet = MockCorenetService()
 
@@ -122,16 +123,15 @@ class RegulatoryService:
 
         return submission
 
-    def get_project_submissions(self, project_id: UUID) -> List[AuthoritySubmission]:
-        return (
-            self.db.execute(
-                select(AuthoritySubmission)
-                .where(AuthoritySubmission.project_id == project_id)
-                .order_by(AuthoritySubmission.created_at.desc())
-            )
-            .scalars()
-            .all()
+    async def get_project_submissions(
+        self, project_id: UUID
+    ) -> List[AuthoritySubmission]:
+        result = await self.db.execute(
+            select(AuthoritySubmission)
+            .where(AuthoritySubmission.project_id == project_id)
+            .order_by(AuthoritySubmission.created_at.desc())
         )
+        return list(result.scalars().all())
 
     def get_submission(self, submission_id: UUID) -> Optional[AuthoritySubmission]:
         return self.db.get(AuthoritySubmission, submission_id)

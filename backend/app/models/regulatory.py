@@ -57,12 +57,12 @@ class SubmissionType(str, enum.Enum):
 
 
 class SubmissionStatus(str, enum.Enum):
-    DRAFT = "draft"
-    SUBMITTED = "submitted"
-    IN_REVIEW = "in_review"
-    APPROVED = "approved"
-    REJECTED = "rejected"
-    RFI = "rfi"  # Request for Information / Amendment
+    DRAFT = "DRAFT"
+    SUBMITTED = "SUBMITTED"
+    IN_REVIEW = "IN_REVIEW"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    RFI = "RFI"  # Request for Information / Amendment
 
 
 class RegulatoryAgency(Base):
@@ -222,15 +222,17 @@ class AssetCompliancePath(Base):
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), primary_key=True, default=uuid4
     )
-    asset_type: Mapped[AssetType] = mapped_column(
-        Enum(AssetType, values_callable=lambda x: [e.value for e in x]),
+    # Use String instead of Enum to match VARCHAR column in database
+    asset_type: Mapped[str] = mapped_column(
+        String,
         nullable=False,
     )
     agency_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("regulatory_agencies.id"), nullable=False
     )
-    submission_type: Mapped[SubmissionType] = mapped_column(
-        Enum(SubmissionType, values_callable=lambda x: [e.value for e in x]),
+    # Use String instead of Enum to match VARCHAR column in database
+    submission_type: Mapped[str] = mapped_column(
+        String,
         nullable=False,
     )
     sequence_order: Mapped[int] = mapped_column(Integer, nullable=False, default=1)

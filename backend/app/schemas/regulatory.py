@@ -118,7 +118,7 @@ class ChangeOfUseBase(BaseModel):
 class ChangeOfUseCreate(ChangeOfUseBase):
     """Schema for creating a change of use application."""
 
-    project_id: UUID
+    project_id: str  # Accepts UUID string or integer string
 
 
 class ChangeOfUseRead(ChangeOfUseBase):
@@ -160,7 +160,7 @@ class HeritageSubmissionBase(BaseModel):
 class HeritageSubmissionCreate(HeritageSubmissionBase):
     """Schema for creating a heritage submission."""
 
-    project_id: UUID
+    project_id: str  # Accepts UUID string or integer string
 
 
 class HeritageSubmissionRead(HeritageSubmissionBase):
