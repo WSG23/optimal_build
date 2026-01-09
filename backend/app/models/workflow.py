@@ -6,7 +6,6 @@ from enum import Enum
 from backend._compat.datetime import utcnow
 
 from app.models.base import UUID, BaseModel
-from app.models.users import UserRole
 from sqlalchemy import (
     Column,
     DateTime,
@@ -61,9 +60,11 @@ class ApprovalWorkflow(BaseModel):
     )
 
     created_by_id = Column(UUID(), ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=utcnow, nullable=False)
-    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
-    completed_at = Column(DateTime)
+    created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    )
+    completed_at = Column(DateTime(timezone=True))
 
     # Relationships
     project = relationship("Project", back_populates="approval_workflows")
@@ -91,10 +92,8 @@ class ApprovalStep(BaseModel):
 
     # Who is required to approve this step?
     # Can be a specific role (ANY user with this role in the project)
-    required_role = Column(
-        SQLEnum(UserRole, values_callable=lambda x: [e.value for e in x]),
-        nullable=True,
-    )
+    # Note: Using String instead of SQLEnum to avoid enum value case mismatch issues
+    required_role = Column(String(50), nullable=True)
     # OR a specific user
     required_user_id = Column(UUID(), ForeignKey("users.id"), nullable=True)
 
@@ -106,7 +105,7 @@ class ApprovalStep(BaseModel):
 
     # Outcome
     approved_by_id = Column(UUID(), ForeignKey("users.id"), nullable=True)
-    decision_at = Column(DateTime)
+    decision_at = Column(DateTime(timezone=True))
     comments = Column(Text)
 
     # Relationships

@@ -23,9 +23,17 @@ async def create_workflow(
     """
     Create a new approval workflow (e.g. for a design phase).
     """
+    if not identity.user_id:
+        raise HTTPException(
+            status_code=400,
+            detail="User ID is required to create a workflow",
+        )
     service = WorkflowService(db)
     steps_data = [
-        {"name": step.name, "required_role": step.approver_role}
+        {
+            "name": step.name,
+            "required_role": step.approver_role,
+        }
         for step in workflow_in.steps
     ]
     workflow = await service.create_workflow(
@@ -68,6 +76,11 @@ async def approve_step(
     Approve (or reject) a specific step in the workflow.
     Validates if the current user has the required role.
     """
+    if not identity.user_id:
+        raise HTTPException(
+            status_code=400,
+            detail="User ID is required to approve a workflow step",
+        )
     service = WorkflowService(db)
     try:
         step = await service.approve_step(

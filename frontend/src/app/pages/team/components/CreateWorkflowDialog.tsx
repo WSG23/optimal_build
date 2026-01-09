@@ -36,7 +36,10 @@ export const CreateWorkflowDialog: React.FC<CreateWorkflowDialogProps> = ({
   const [creating, setCreating] = useState(false)
 
   const handleAddStep = () => {
-    setSteps([...steps, { name: '', role: 'consultant' }])
+    setSteps([
+      ...steps,
+      { name: `Step ${steps.length + 1}`, role: 'consultant' },
+    ])
   }
 
   const handleRemoveStep = (index: number) => {
@@ -59,12 +62,13 @@ export const CreateWorkflowDialog: React.FC<CreateWorkflowDialogProps> = ({
     setCreating(true)
     try {
       const newWorkflow = await workflowApi.createWorkflow(projectId, {
-        title,
+        name: title, // Backend expects 'name' not 'title'
         description,
         workflow_type: type,
-        steps: steps.map((s) => ({
+        steps: steps.map((s, index) => ({
           name: s.name,
-          required_role: s.role, // Backend expects required_role enum value
+          order: index + 1, // Backend requires 'order'
+          approver_role: s.role, // Backend expects 'approver_role'
         })),
       })
       onSuccess(newWorkflow)
@@ -86,11 +90,18 @@ export const CreateWorkflowDialog: React.FC<CreateWorkflowDialogProps> = ({
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{ sx: { bgcolor: '#1A1D1F' } }}
+      PaperProps={{ sx: { bgcolor: 'background.paper' } }}
     >
       <DialogTitle>Create Approval Workflow</DialogTitle>
       <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--ob-space-300)',
+            mt: 'var(--ob-space-100)',
+          }}
+        >
           <TextField
             label="Workflow Title"
             fullWidth
@@ -120,7 +131,7 @@ export const CreateWorkflowDialog: React.FC<CreateWorkflowDialogProps> = ({
           </TextField>
 
           <Box>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            <Typography variant="subtitle2" sx={{ mb: 'var(--ob-space-100)' }}>
               Approval Steps
             </Typography>
             {steps.map((step, index) => (
@@ -128,13 +139,17 @@ export const CreateWorkflowDialog: React.FC<CreateWorkflowDialogProps> = ({
                 key={index}
                 sx={{
                   display: 'flex',
-                  gap: 2,
-                  mb: 2,
+                  gap: 'var(--ob-space-200)',
+                  mb: 'var(--ob-space-200)',
                   alignItems: 'flex-start',
                 }}
               >
                 <Typography
-                  sx={{ mt: 2, color: 'text.secondary', minWidth: 20 }}
+                  sx={{
+                    mt: 'var(--ob-space-200)',
+                    color: 'text.secondary',
+                    minWidth: 20,
+                  }}
                 >
                   {index + 1}.
                 </Typography>
@@ -176,14 +191,20 @@ export const CreateWorkflowDialog: React.FC<CreateWorkflowDialogProps> = ({
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ p: 2 }}>
+      <DialogActions sx={{ p: 'var(--ob-space-200)' }}>
         <Button onClick={onClose}>Cancel</Button>
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={creating || !title}
+          disabled={
+            creating ||
+            !title ||
+            steps.length === 0 ||
+            steps.some((s) => !s.name.trim())
+          }
           sx={{
-            background: 'linear-gradient(135deg, #FF3366 0%, #FF6B3D 100%)',
+            background:
+              'linear-gradient(135deg, var(--ob-brand-500) 0%, var(--ob-brand-400) 100%)',
           }}
         >
           {creating ? 'Creating...' : 'Create Workflow'}

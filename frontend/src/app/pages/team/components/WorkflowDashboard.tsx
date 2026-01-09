@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Box,
   Button,
@@ -34,70 +34,73 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
   const [loading, setLoading] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
 
-  // Mock data for initial dev - memoized to prevent unnecessary re-renders
-  const mockWorkflows = useMemo<ApprovalWorkflow[]>(
-    () => [
+  // Ref to track if we've initialized
+  const hasInitializedRef = useRef(false)
+
+  // Mock data for initial dev - using stable dates to prevent re-render loops
+  const createMockWorkflows = React.useCallback(
+    (pid: string): ApprovalWorkflow[] => [
       {
-        id: 'w1',
-        project_id: projectId,
-        title: 'Concept Design Sign-off',
+        id: 'mock-w1',
+        project_id: pid,
+        name: 'Concept Design Sign-off',
+        description:
+          'Initial concept design review and approval workflow for the project.',
         workflow_type: 'design_review',
         status: 'in_progress',
-        created_by_id: 'u1',
-        created_at: new Date().toISOString(),
+        current_step_order: 2,
+        created_at: '2024-01-15T10:00:00.000Z', // Stable date
         steps: [
           {
-            id: 's1',
-            workflow_id: 'w1',
+            id: 'mock-s1',
             name: 'Architectural Review',
-            sequence_order: 1,
+            order: 1,
             status: 'approved',
             approved_by_id: 'u2',
-            decision_at: new Date().toISOString(),
+            approved_at: '2024-01-16T14:30:00.000Z', // Stable date
+            approver_role: 'architect',
           },
           {
-            id: 's2',
-            workflow_id: 'w1',
+            id: 'mock-s2',
             name: 'Structural Feasibility',
-            sequence_order: 2,
+            order: 2,
             status: 'in_review',
+            approver_role: 'engineer',
           },
           {
-            id: 's3',
-            workflow_id: 'w1',
+            id: 'mock-s3',
             name: 'Client Approval',
-            sequence_order: 3,
+            order: 3,
             status: 'pending',
+            approver_role: 'developer',
           },
         ],
       },
     ],
-    [projectId],
+    [],
   )
 
-  const fetchWorkflows = useCallback(async () => {
-    setLoading(true)
-    try {
-      // In real backend, we'd list workflows. Current API might only have GET /workflow/{id} or POST /workflow/
-      // If list endpoint missing, I will just show mock data or empty state for now.
-      // Or assumed there is a list endpoint I missed?
-      // Checking `api/v1/workflow.py`: Only `create_workflow` and `get_workflow` (by ID) present.
-      // I need to add a LIST endpoint to backend or mock it here.
-      // For Phase 2E implementation, I will rely on Mock data + newly created workflows pushed to list locally.
-      setWorkflows(mockWorkflows)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [mockWorkflows])
-
+  // Initialize workflows only once on mount
   useEffect(() => {
-    fetchWorkflows()
-  }, [fetchWorkflows])
+    if (hasInitializedRef.current) {
+      return
+    }
+    hasInitializedRef.current = true
+    setLoading(true)
+    // For Phase 2E implementation, we rely on mock data + newly created workflows pushed to list locally.
+    // TODO: Add list endpoint to backend when available
+    setWorkflows(createMockWorkflows(projectId))
+    setLoading(false)
+  }, [projectId, createMockWorkflows])
 
   const handleCreateSuccess = (newWorkflow: ApprovalWorkflow) => {
-    setWorkflows([newWorkflow, ...workflows])
+    // Add new workflow to list, keeping mock data at the end
+    setWorkflows((prev) => {
+      // Filter out mock workflows, add new one at start, then add mock back
+      const realWorkflows = prev.filter((w) => !w.id.startsWith('mock-'))
+      const mockWorkflowsInState = prev.filter((w) => w.id.startsWith('mock-'))
+      return [newWorkflow, ...realWorkflows, ...mockWorkflowsInState]
+    })
     setCreateOpen(false)
   }
 
@@ -126,14 +129,21 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          mb: 'var(--ob-space-300)',
+        }}
+      >
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setCreateOpen(true)}
           sx={{
-            background: 'linear-gradient(135deg, #FF3366 0%, #FF6B3D 100%)',
-            boxShadow: '0px 4px 12px rgba(255, 51, 102, 0.3)',
+            background:
+              'linear-gradient(135deg, var(--ob-brand-500) 0%, var(--ob-brand-400) 100%)',
+            boxShadow: 'var(--ob-shadow-md)',
           }}
         >
           New Workflow
@@ -141,11 +151,17 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
       </Box>
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            p: 'var(--ob-space-400)',
+          }}
+        >
           <CircularProgress />
         </Box>
       ) : (
-        <Grid container spacing={3}>
+        <Grid container spacing="var(--ob-space-300)">
           {workflows.map((workflow) => (
             <Grid item xs={12} key={workflow.id}>
               <WorkflowCard
@@ -187,35 +203,67 @@ const WorkflowCard: React.FC<{
   return (
     <Card
       sx={{
-        background: 'rgba(255, 255, 255, 0.03)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        bgcolor: 'background.paper',
+        border: '1px solid',
+        borderColor: 'divider',
         overflow: 'hidden',
       }}
     >
       <Box
         sx={{
-          p: 2,
+          p: 'var(--ob-space-200)',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'space-between',
           cursor: 'pointer',
         }}
         onClick={() => setExpanded(!expanded)}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="h6">{workflow.title}</Typography>
-          <Chip
-            label={workflow.status.replace('_', ' ')}
-            color={
-              workflow.status === 'approved'
-                ? 'success'
-                : workflow.status === 'in_progress'
-                  ? 'primary'
-                  : 'default'
-            }
-            size="small"
-            sx={{ textTransform: 'capitalize' }}
-          />
+        <Box sx={{ flex: 1 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-200)',
+              mb: workflow.description ? 'var(--ob-space-050)' : 0,
+            }}
+          >
+            <Typography variant="h6">
+              {workflow.name || workflow.title}
+            </Typography>
+            <Chip
+              label={workflow.status.replace('_', ' ')}
+              color={
+                workflow.status === 'approved'
+                  ? 'success'
+                  : workflow.status === 'in_progress'
+                    ? 'primary'
+                    : 'default'
+              }
+              size="small"
+              sx={{ textTransform: 'capitalize' }}
+            />
+          </Box>
+          {workflow.description && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 'var(--ob-space-050)' }}
+            >
+              {workflow.description}
+            </Typography>
+          )}
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 'var(--ob-space-200)',
+              mt: 'var(--ob-space-100)',
+            }}
+          >
+            <Typography variant="caption" color="text.secondary">
+              <strong>Type:</strong> {workflow.workflow_type.replace('_', ' ')}
+            </Typography>
+          </Box>
         </Box>
         <IconButton size="small">
           {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
@@ -223,7 +271,7 @@ const WorkflowCard: React.FC<{
       </Box>
       <Collapse in={expanded}>
         <Divider />
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 'var(--ob-space-300)' }}>
           <Stepper
             activeStep={
               activeStepIndex === -1 ? workflow.steps.length : activeStepIndex
@@ -240,19 +288,36 @@ const WorkflowCard: React.FC<{
                           ? 'success.main'
                           : step.status === 'in_review'
                             ? 'primary.main'
-                            : 'grey.700',
+                            : 'text.disabled',
                     },
                   }}
                 >
-                  {step.name}
+                  <Box>
+                    {step.name}
+                    {step.approver_role && (
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        color="text.secondary"
+                      >
+                        Approver: {step.approver_role}
+                      </Typography>
+                    )}
+                  </Box>
                   {step.status === 'in_review' && (
-                    <Box sx={{ mt: 1 }}>
+                    <Box sx={{ mt: 'var(--ob-space-100)' }}>
                       <Button
                         size="small"
                         variant="outlined"
                         startIcon={<CheckIcon />}
-                        onClick={() => onApproveStep(step.id)}
-                        sx={{ mr: 1, fontSize: '0.7rem' }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onApproveStep(step.id)
+                        }}
+                        sx={{
+                          mr: 'var(--ob-space-100)',
+                          fontSize: 'var(--ob-font-size-xs)',
+                        }}
                       >
                         Approve
                       </Button>

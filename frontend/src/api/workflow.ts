@@ -18,37 +18,43 @@ export type StepStatus =
 
 export interface ApprovalStep {
   id: string
-  workflow_id: string
   name: string
-  sequence_order: number
-  required_role?: string
-  required_user_id?: string
+  order: number // Backend returns 'order' (aliased from sequence_order)
   status: StepStatus
+  approver_role?: string // Backend returns 'approver_role' (aliased from required_role)
   approved_by_id?: string
-  decision_at?: string
+  approved_at?: string // Backend returns 'approved_at' (aliased from decision_at)
   comments?: string
+  // Legacy fields for mock data compatibility
+  workflow_id?: string
+  sequence_order?: number
+  decision_at?: string
 }
 
 export interface ApprovalWorkflow {
   id: string
   project_id: string
-  title: string
+  name: string // Backend returns 'name' (aliased from title in DB)
   description?: string
   workflow_type: string
   status: WorkflowStatus
-  created_by_id: string
+  current_step_order: number
   created_at: string
+  updated_at?: string
   steps: ApprovalStep[]
+  // Legacy fields for mock data compatibility
+  title?: string
+  created_by_id?: string
 }
 
 export interface CreateWorkflowParams {
-  title: string
+  name: string // Backend expects 'name' not 'title'
   description?: string
   workflow_type: string
   steps: {
     name: string
-    required_role?: string
-    required_user_id?: string
+    order: number // Backend requires 'order'
+    approver_role: string // Backend expects 'approver_role' not 'required_role'
   }[]
 }
 
@@ -58,7 +64,7 @@ export const workflowApi = {
     params: CreateWorkflowParams,
   ): Promise<ApprovalWorkflow> => {
     const { data } = await apiClient.post<ApprovalWorkflow>(
-      '/workflow/',
+      'api/v1/workflow/',
       params,
       { params: { project_id: projectId } },
     )
@@ -67,7 +73,7 @@ export const workflowApi = {
 
   getWorkflow: async (workflowId: string): Promise<ApprovalWorkflow> => {
     const { data } = await apiClient.get<ApprovalWorkflow>(
-      `/workflow/${workflowId}`,
+      `api/v1/workflow/${workflowId}`,
     )
     return data
   },
@@ -77,17 +83,8 @@ export const workflowApi = {
     approved: boolean,
     comments?: string,
   ): Promise<ApprovalStep> => {
-    // The backend returns the updated workflow or step?
-    // Checking api/v1/workflow.py: it calls WorkflowService.approve_step which returns Step
-    // But router response_model is ApprovalWorkflowRead (Wait, let me check backend code again internally if needed,
-    // assuming it returns the updated object or the step. Service.approve_step returns Step, Router `response_model=ApprovalWorkflowRead`?
-    // If router model is `ApprovalWorkflowRead` but service returns `Step`, that might be a bug or I misread.
-    // Let's assume for now it returns the updated Workflow based on pydantic model, or I should fix backend if mismatch.
-    // Re-reading `api/v1/workflow.py`: `@router.post(...) response_model=ApprovalWorkflowRead ... return workflow`
-    // Ah, the router variable is named `workflow`, but `WorkflowService.approve_step` returns `step`.
-    // I need to watch out for this. I will assume it returns the whole workflow for now as that's more useful for UI update.
     const { data } = await apiClient.post<ApprovalStep>(
-      `/workflow/steps/${stepId}/approve`,
+      `api/v1/workflow/steps/${stepId}/approve`,
       { approved, comments },
     )
     return data
