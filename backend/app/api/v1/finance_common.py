@@ -88,16 +88,38 @@ class FinanceSensitivityRunPayload(BaseModel):
 
 
 def normalise_project_id(project_id: str | int | UUID) -> UUID:
-    """Convert the externally supplied project identifier into a UUID."""
+    """Convert the externally supplied project identifier into a UUID.
 
+    For integer IDs (like 191), creates a zero-padded UUID string format:
+    191 -> 00000000-0000-0000-0000-000000000191
+
+    This matches the convention used in the database for simple integer IDs.
+    """
     if isinstance(project_id, UUID):
         return project_id
-    if isinstance(project_id, int):
-        if project_id < 0:
+
+    # Helper to create zero-padded UUID from integer
+    def int_to_padded_uuid(val: int) -> UUID:
+        if val < 0:
             raise HTTPException(
                 status_code=422, detail="project_id must be non-negative"
             )
-        return UUID(int=project_id)
+        # Create zero-padded UUID: 00000000-0000-0000-0000-XXXXXXXXXXXX
+        # where X is the zero-padded decimal representation
+        padded = str(val).zfill(12)
+        uuid_str = f"00000000-0000-0000-0000-{padded}"
+        return UUID(uuid_str)
+
+    if isinstance(project_id, int):
+        return int_to_padded_uuid(project_id)
+
+    # For strings, first try to parse as integer
+    try:
+        int_val = int(project_id)
+        return int_to_padded_uuid(int_val)
+    except ValueError:
+        pass  # Not an integer string, try as UUID
+
     try:
         return UUID(project_id)
     except (AttributeError, TypeError, ValueError) as e:

@@ -138,14 +138,18 @@ const MarketIntelligenceDashboard: React.FC = () => {
         </Typography>
         <Box display="flex" gap={2}>
           <Tooltip title="Refresh data">
-            <IconButton onClick={handleRefresh} disabled={loading}>
-              <RefreshIcon />
-            </IconButton>
+            <span>
+              <IconButton onClick={handleRefresh} disabled={loading}>
+                <RefreshIcon />
+              </IconButton>
+            </span>
           </Tooltip>
           <Tooltip title="Export report">
-            <IconButton onClick={handleExportReport} disabled={!marketReport}>
-              <DownloadIcon />
-            </IconButton>
+            <span>
+              <IconButton onClick={handleExportReport} disabled={!marketReport}>
+                <DownloadIcon />
+              </IconButton>
+            </span>
           </Tooltip>
         </Box>
       </Box>

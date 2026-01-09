@@ -59,7 +59,11 @@ export function resolveDefaultUserEmail(): string | null {
 export function resolveDefaultUserId(): string | null {
   return (
     pickIdentityValue(
-      [metaEnv?.VITE_API_USER_ID, getLocalStorageValue('app:api-user-id')],
+      [
+        metaEnv?.VITE_API_USER_ID,
+        getLocalStorageValue('app:api-user-id'),
+        '00000000-0000-0000-0000-000000000001', // Demo user UUID fallback
+      ],
       null,
     ) ?? null
   )

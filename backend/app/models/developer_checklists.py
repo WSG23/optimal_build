@@ -19,7 +19,7 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from app.models.types import FlexibleJSONB
 from sqlalchemy.orm import relationship
 
 
@@ -151,7 +151,9 @@ class DeveloperPropertyChecklist(Base):
         UUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     notes = Column(Text, nullable=True)
-    metadata_json = Column("metadata", JSONB, nullable=False, server_default="{}")
+    metadata_json = Column(
+        "metadata", FlexibleJSONB, nullable=False, server_default="{}"
+    )
     metadata = MetadataProxy()
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

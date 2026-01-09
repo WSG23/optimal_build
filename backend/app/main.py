@@ -88,6 +88,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan manager."""
 
     log_event(logger, "app_starting", environment=settings.ENVIRONMENT)
+
+    # For SQLite dev mode, create all tables on startup
+    if "sqlite" in str(engine.url):
+        from app.models.base import BaseModel
+
+        async with engine.begin() as conn:
+            await conn.run_sync(BaseModel.metadata.create_all)
+        log_event(logger, "sqlite_tables_created")
+
     try:
         yield
     finally:

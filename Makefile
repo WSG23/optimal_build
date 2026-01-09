@@ -548,6 +548,7 @@ _dev-services: ## Internal target to start backend, frontend, and admin UI
 	                : > $(DEV_BACKEND_LOG); \
 	                : "Prefer an externally provided DATABASE_URL; otherwise fall back to local SQLite file."; \
 		( \
+			set -a; [ -f .env ] && . ./.env; set +a; \
 			EFFECTIVE_DB_URL=$${DATABASE_URL:-$(DEV_SQLITE_URL)}; \
 			SECRET_KEY=$${SECRET_KEY:-dev-secret-key-do-not-use-in-production} \
 			DEV_SQLITE_URL="$(DEV_SQLITE_URL)" SQLALCHEMY_DATABASE_URI="$$EFFECTIVE_DB_URL" DATABASE_URL="$$EFFECTIVE_DB_URL" \

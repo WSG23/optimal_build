@@ -413,28 +413,34 @@ export function CadDetectionPreview({
               />
 
               <Tooltip title="Reset Filters">
-                <IconButton
-                  onClick={onResetSeverity}
-                  size="small"
-                  disabled={!isSeverityFiltered}
-                >
-                  <RestartAlt
-                    sx={{
-                      color: isSeverityFiltered
-                        ? 'var(--ob-color-text-inverse)'
-                        : 'var(--ob-neutral-600)',
-                    }}
-                  />
-                </IconButton>
+                <span>
+                  <IconButton
+                    onClick={onResetSeverity}
+                    size="small"
+                    disabled={!isSeverityFiltered}
+                  >
+                    <RestartAlt
+                      sx={{
+                        color: isSeverityFiltered
+                          ? 'var(--ob-color-text-inverse)'
+                          : 'var(--ob-neutral-600)',
+                      }}
+                    />
+                  </IconButton>
+                </span>
               </Tooltip>
               <Tooltip title="Show All Overlays">
-                <IconButton
-                  size="small"
-                  onClick={onResetSeverity}
-                  disabled={!isSeverityFiltered}
-                >
-                  <Visibility sx={{ color: 'var(--ob-color-text-inverse)' }} />
-                </IconButton>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={onResetSeverity}
+                    disabled={!isSeverityFiltered}
+                  >
+                    <Visibility
+                      sx={{ color: 'var(--ob-color-text-inverse)' }}
+                    />
+                  </IconButton>
+                </span>
               </Tooltip>
             </Paper>
           </Box>
