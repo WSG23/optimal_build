@@ -10,7 +10,6 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import type { FormEvent } from 'react'
-import mapboxgl from 'mapbox-gl'
 
 import {
   DEFAULT_SCENARIO_ORDER,
@@ -28,6 +27,33 @@ import {
   reverseGeocodeCoords,
 } from '../../../../api/geocoding'
 
+const GOOGLE_MAPS_API_KEY = import.meta.env?.VITE_GOOGLE_MAPS_API_KEY ?? ''
+
+// Track if Google Maps script is loading/loaded
+let googleMapsPromise: Promise<void> | null = null
+
+function loadGoogleMapsScript(): Promise<void> {
+  if (window.google?.maps) {
+    return Promise.resolve()
+  }
+
+  if (googleMapsPromise) {
+    return googleMapsPromise
+  }
+
+  googleMapsPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}`
+    script.async = true
+    script.defer = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Failed to load Google Maps'))
+    document.head.appendChild(script)
+  })
+
+  return googleMapsPromise
+}
+
 export interface CapturedSite {
   propertyId: string
   address: string
@@ -38,11 +64,6 @@ export interface CapturedSite {
 
 export interface UseUnifiedCaptureOptions {
   isDeveloperMode: boolean
-  /**
-   * Optional Mapbox token override (primarily for tests).
-   * When omitted, falls back to `import.meta.env.VITE_MAPBOX_ACCESS_TOKEN`.
-   */
-  mapboxToken?: string
 }
 
 export interface UseUnifiedCaptureReturn {
@@ -92,7 +113,6 @@ export interface UseUnifiedCaptureReturn {
 
 export function useUnifiedCapture({
   isDeveloperMode,
-  mapboxToken,
 }: UseUnifiedCaptureOptions): UseUnifiedCaptureReturn {
   // Form state
   const [latitude, setLatitude] = useState<string>('1.3000')
@@ -127,9 +147,10 @@ export function useUnifiedCapture({
 
   // Map
   const [mapError, setMapError] = useState<string | null>(null)
+  const [isMapLoaded, setIsMapLoaded] = useState(false)
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
-  const mapInstanceRef = useRef<mapboxgl.Map | null>(null)
-  const mapMarkerRef = useRef<mapboxgl.Marker | null>(null)
+  const mapInstanceRef = useRef<google.maps.Map | null>(null)
+  const mapMarkerRef = useRef<google.maps.Marker | null>(null)
 
   // Scenario toggle handler
   const handleScenarioToggle = useCallback((scenario: DevelopmentScenario) => {
@@ -154,8 +175,14 @@ export function useUnifiedCapture({
       setLongitude(result.longitude.toString())
 
       if (mapInstanceRef.current && mapMarkerRef.current) {
-        mapInstanceRef.current.setCenter([result.longitude, result.latitude])
-        mapMarkerRef.current.setLngLat([result.longitude, result.latitude])
+        mapInstanceRef.current.setCenter({
+          lat: result.latitude,
+          lng: result.longitude,
+        })
+        mapMarkerRef.current.setPosition({
+          lat: result.latitude,
+          lng: result.longitude,
+        })
       }
     } catch (error) {
       console.error('Forward geocode failed', error)
@@ -187,51 +214,128 @@ export function useUnifiedCapture({
     }
   }, [latitude, longitude])
 
-  // Initialize Mapbox
+  // Load Google Maps script
   useEffect(() => {
-    const token = mapboxToken ?? import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
-    if (!token) {
-      setMapError('Mapbox token not set; map preview disabled.')
-      return
-    }
-    if (mapInstanceRef.current || !mapContainerRef.current) {
+    if (!GOOGLE_MAPS_API_KEY) {
+      setMapError('Google Maps API key not set; map preview disabled.')
       return
     }
 
-    mapboxgl.accessToken = token
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/dark-v11', // Always dark for immersion
-      center: [Number(longitude) || 103.85, Number(latitude) || 1.3],
+    loadGoogleMapsScript()
+      .then(() => setIsMapLoaded(true))
+      .catch((err) => setMapError(err.message))
+  }, [])
+
+  // Initialize Google Map
+  useEffect(() => {
+    if (!isMapLoaded || !mapContainerRef.current || mapInstanceRef.current) {
+      return
+    }
+
+    // Dark mode map style
+    const darkMapStyle: google.maps.MapTypeStyle[] = [
+      { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+      { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+      { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+      {
+        featureType: 'administrative.locality',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#d59563' }],
+      },
+      {
+        featureType: 'poi',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#d59563' }],
+      },
+      {
+        featureType: 'poi.park',
+        elementType: 'geometry',
+        stylers: [{ color: '#263c3f' }],
+      },
+      {
+        featureType: 'road',
+        elementType: 'geometry',
+        stylers: [{ color: '#38414e' }],
+      },
+      {
+        featureType: 'road',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#9ca5b3' }],
+      },
+      {
+        featureType: 'road.highway',
+        elementType: 'geometry',
+        stylers: [{ color: '#746855' }],
+      },
+      {
+        featureType: 'water',
+        elementType: 'geometry',
+        stylers: [{ color: '#17263c' }],
+      },
+      {
+        featureType: 'water',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#515c6d' }],
+      },
+    ]
+
+    const initialLat = Number(latitude) || 1.3
+    const initialLng = Number(longitude) || 103.85
+
+    const map = new google.maps.Map(mapContainerRef.current, {
+      center: { lat: initialLat, lng: initialLng },
       zoom: 16,
-      pitch: 45, // 3D feel
+      tilt: 45, // Add tilt for 3D feel
+      styles: darkMapStyle,
+      mapTypeControl: false,
+      streetViewControl: false,
     })
 
-    const marker = new mapboxgl.Marker({ draggable: true, color: '#3b82f6' })
-      .setLngLat([Number(longitude) || 103.85, Number(latitude) || 1.3])
-      .addTo(map)
-
-    marker.on('dragend', () => {
-      const lngLat = marker.getLngLat()
-      setLatitude(lngLat.lat.toFixed(6))
-      setLongitude(lngLat.lng.toFixed(6))
+    // Create draggable marker
+    const marker = new google.maps.Marker({
+      position: { lat: initialLat, lng: initialLng },
+      map,
+      draggable: true,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 12,
+        fillColor: '#3b82f6',
+        fillOpacity: 1,
+        strokeColor: 'white',
+        strokeWeight: 3,
+      },
     })
 
-    map.on('click', (event) => {
-      const { lng, lat } = event.lngLat
-      setLatitude(lat.toFixed(6))
-      setLongitude(lng.toFixed(6))
-      marker.setLngLat([lng, lat])
+    // Handle marker drag
+    marker.addListener('dragend', () => {
+      const position = marker.getPosition()
+      if (position) {
+        setLatitude(position.lat().toFixed(6))
+        setLongitude(position.lng().toFixed(6))
+      }
+    })
+
+    // Handle map click
+    map.addListener('click', (event: google.maps.MapMouseEvent) => {
+      if (event.latLng) {
+        const lat = event.latLng.lat()
+        const lng = event.latLng.lng()
+        setLatitude(lat.toFixed(6))
+        setLongitude(lng.toFixed(6))
+        marker.setPosition({ lat, lng })
+      }
     })
 
     mapInstanceRef.current = map
     mapMarkerRef.current = marker
 
     return () => {
-      map.remove()
+      if (mapMarkerRef.current) {
+        mapMarkerRef.current.setMap(null)
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Only run once on mount - do NOT re-initialize map when lat/lon change
+  }, [isMapLoaded]) // Only run once when map is loaded
 
   // Capture handler - routes to appropriate API based on mode
   const handleCapture = useCallback(
@@ -397,8 +501,8 @@ export function useUnifiedCapture({
 
     // Reset map marker to default position
     if (mapInstanceRef.current && mapMarkerRef.current) {
-      mapInstanceRef.current.setCenter([103.85, 1.3])
-      mapMarkerRef.current.setLngLat([103.85, 1.3])
+      mapInstanceRef.current.setCenter({ lat: 1.3, lng: 103.85 })
+      mapMarkerRef.current.setPosition({ lat: 1.3, lng: 103.85 })
     }
   }, [])
 

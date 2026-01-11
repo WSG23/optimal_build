@@ -1,30 +1,38 @@
-import React, { useEffect, useMemo, useRef } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Box, Paper, Typography } from '@mui/material'
-import mapboxgl from 'mapbox-gl'
-import 'mapbox-gl/dist/mapbox-gl.css'
 import { MarketTransaction } from '../../../types/market'
 import { PropertyType } from '../../../types/property'
-import type { FeatureCollection, Point } from 'geojson'
 
-type TransactionFeatureProperties = {
-  price: number
-  psf?: number | null
-  propertyName: string
-  date: string
-  district?: string | null
-}
-
-const MAPBOX_TOKEN =
-  import.meta.env?.VITE_MAPBOX_ACCESS_TOKEN ??
-  (typeof window !== 'undefined'
-    ? (window.localStorage.getItem('mapbox:access-token') ?? '')
-    : '')
-
-mapboxgl.accessToken = MAPBOX_TOKEN
+const GOOGLE_MAPS_API_KEY = import.meta.env?.VITE_GOOGLE_MAPS_API_KEY ?? ''
 
 interface MarketHeatmapProps {
   transactions: MarketTransaction[]
   propertyType: PropertyType
+}
+
+// Track if Google Maps script is loading/loaded
+let googleMapsPromise: Promise<void> | null = null
+
+function loadGoogleMapsScript(): Promise<void> {
+  if (window.google?.maps) {
+    return Promise.resolve()
+  }
+
+  if (googleMapsPromise) {
+    return googleMapsPromise
+  }
+
+  googleMapsPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=visualization`
+    script.async = true
+    script.defer = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Failed to load Google Maps'))
+    document.head.appendChild(script)
+  })
+
+  return googleMapsPromise
 }
 
 const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
@@ -32,7 +40,12 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
   propertyType,
 }) => {
   const mapContainer = useRef<HTMLDivElement | null>(null)
-  const map = useRef<mapboxgl.Map | null>(null)
+  const mapRef = useRef<google.maps.Map | null>(null)
+  const heatmapRef = useRef<google.maps.visualization.HeatmapLayer | null>(null)
+  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
+  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null)
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const filteredTransactions = useMemo(
     () =>
@@ -42,9 +55,10 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
     [transactions, propertyType],
   )
 
-  const featureCollection = useMemo<
-    FeatureCollection<Point, TransactionFeatureProperties>
-  >(() => {
+  // Generate heatmap data points
+  const heatmapData = useMemo(() => {
+    if (!window.google?.maps) return []
+
     const singaporeBounds = {
       minLng: 103.6,
       maxLng: 104.0,
@@ -52,210 +66,225 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
       maxLat: 1.5,
     }
 
-    return {
-      type: 'FeatureCollection',
-      features: filteredTransactions.map((transaction) => {
-        const lng =
-          singaporeBounds.minLng +
-          Math.random() * (singaporeBounds.maxLng - singaporeBounds.minLng)
-        const lat =
-          singaporeBounds.minLat +
-          Math.random() * (singaporeBounds.maxLat - singaporeBounds.minLat)
+    return filteredTransactions.map((transaction) => {
+      const lng =
+        singaporeBounds.minLng +
+        Math.random() * (singaporeBounds.maxLng - singaporeBounds.minLng)
+      const lat =
+        singaporeBounds.minLat +
+        Math.random() * (singaporeBounds.maxLat - singaporeBounds.minLat)
 
-        return {
-          type: 'Feature' as const,
-          geometry: {
-            type: 'Point',
-            coordinates: [lng, lat],
-          },
-          properties: {
-            price: transaction.sale_price,
-            psf: transaction.psf_price ?? null,
-            propertyName: transaction.property_name,
-            date: new Date(transaction.transaction_date).toLocaleDateString(),
-            district: transaction.district ?? null,
-          },
-        }
-      }),
-    }
-  }, [filteredTransactions])
-
-  const featureCollectionRef = useRef(featureCollection)
-  featureCollectionRef.current = featureCollection
-
-  useEffect(() => {
-    if (!mapContainer.current || !mapboxgl.accessToken) return
-
-    // Initialize map centered on Singapore
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v10',
-      center: [103.8198, 1.3521],
-      zoom: 11,
-    })
-
-    map.current.on('load', () => {
-      if (!map.current) return
-
-      // Add heatmap layer
-      map.current.addSource('transactions', {
-        type: 'geojson',
-        data: featureCollectionRef.current,
-      })
-
-      // Add heatmap layer
-      map.current.addLayer({
-        id: 'transaction-heat',
-        type: 'heatmap',
-        source: 'transactions',
-        paint: {
-          // Increase weight as diameter breast height increases
-          'heatmap-weight': [
-            'interpolate',
-            ['linear'],
-            ['get', 'price'],
-            0,
-            0,
-            1000000,
-            1,
-          ],
-          // Increase intensity as zoom level increases
-          'heatmap-intensity': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            0,
-            1,
-            15,
-            3,
-          ],
-          // Use sequential color palette to paint heat map
-          'heatmap-color': [
-            'interpolate',
-            ['linear'],
-            ['heatmap-density'],
-            0,
-            'rgba(0,0,0,0)',
-            0.2,
-            'rgb(50,100,200)',
-            0.4,
-            'rgb(50,150,200)',
-            0.6,
-            'rgb(50,200,150)',
-            0.8,
-            'rgb(200,200,50)',
-            1,
-            'rgb(200,100,50)',
-          ],
-          // Adjust radius based on zoom
-          'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 2, 15, 20],
-          // Decrease opacity to see through to streets below
-          'heatmap-opacity': 0.7,
-        },
-      })
-
-      // Add points layer for higher zoom levels
-      map.current.addLayer({
-        id: 'transaction-points',
-        type: 'circle',
-        source: 'transactions',
-        minzoom: 14,
-        paint: {
-          'circle-radius': [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            14,
-            ['interpolate', ['linear'], ['get', 'price'], 0, 5, 10000000, 15],
-            22,
-            ['interpolate', ['linear'], ['get', 'price'], 0, 20, 10000000, 50],
-          ],
-          'circle-color': [
-            'interpolate',
-            ['linear'],
-            ['get', 'price'],
-            0,
-            'rgb(50,100,200)',
-            5000000,
-            'rgb(200,200,50)',
-            10000000,
-            'rgb(200,100,50)',
-          ],
-          'circle-stroke-color': 'white',
-          'circle-stroke-width': 1,
-          'circle-opacity': ['interpolate', ['linear'], ['zoom'], 14, 0, 15, 1],
-        },
-      })
-
-      // Add popups
-      map.current.on('click', 'transaction-points', (e) => {
-        if (!map.current || !e.features?.length) return
-
-        const feature = e.features[0]
-        if (feature.geometry?.type !== 'Point') return
-
-        const coordinates = [...feature.geometry.coordinates] as [
-          number,
-          number,
-        ]
-        const properties = feature.properties as
-          | TransactionFeatureProperties
-          | undefined
-        if (!properties) return
-
-        const formattedPsf =
-          properties.psf !== null && properties.psf !== undefined
-            ? new Intl.NumberFormat('en-SG').format(properties.psf)
-            : 'N/A'
-
-        new mapboxgl.Popup()
-          .setLngLat(coordinates)
-          .setHTML(
-            `
-            <div>
-              <strong>${properties.propertyName}</strong><br/>
-              Price: $${new Intl.NumberFormat('en-SG').format(properties.price)}<br/>
-              PSF: $${formattedPsf}<br/>
-              Date: ${properties.date}
-            </div>
-          `,
-          )
-          .addTo(map.current)
-      })
-
-      // Change cursor on hover
-      map.current.on('mouseenter', 'transaction-points', () => {
-        if (map.current) map.current.getCanvas().style.cursor = 'pointer'
-      })
-
-      map.current.on('mouseleave', 'transaction-points', () => {
-        if (map.current) map.current.getCanvas().style.cursor = ''
-      })
-    })
-
-    return () => {
-      if (map.current) {
-        map.current.remove()
-        map.current = null
+      return {
+        location: new google.maps.LatLng(lat, lng),
+        weight: Math.min(transaction.sale_price / 1000000, 10), // Normalize weight
+        transaction,
       }
+    })
+  }, [filteredTransactions, isLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load Google Maps script
+  useEffect(() => {
+    if (!GOOGLE_MAPS_API_KEY) {
+      setLoadError('Google Maps API key not configured')
+      return
     }
+
+    loadGoogleMapsScript()
+      .then(() => setIsLoaded(true))
+      .catch((err) => setLoadError(err.message))
   }, [])
 
+  // Initialize map
   useEffect(() => {
-    if (!map.current || !map.current.isStyleLoaded()) return
+    if (!isLoaded || !mapContainer.current || mapRef.current) return
 
-    const source = map.current.getSource('transactions')
-    if (source && 'setData' in source) {
-      ;(source as mapboxgl.GeoJSONSource).setData(featureCollection)
+    // Dark mode map style
+    const darkMapStyle: google.maps.MapTypeStyle[] = [
+      { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+      { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+      { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+      {
+        featureType: 'administrative.locality',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#d59563' }],
+      },
+      {
+        featureType: 'poi',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#d59563' }],
+      },
+      {
+        featureType: 'poi.park',
+        elementType: 'geometry',
+        stylers: [{ color: '#263c3f' }],
+      },
+      {
+        featureType: 'poi.park',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#6b9a76' }],
+      },
+      {
+        featureType: 'road',
+        elementType: 'geometry',
+        stylers: [{ color: '#38414e' }],
+      },
+      {
+        featureType: 'road',
+        elementType: 'geometry.stroke',
+        stylers: [{ color: '#212a37' }],
+      },
+      {
+        featureType: 'road',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#9ca5b3' }],
+      },
+      {
+        featureType: 'road.highway',
+        elementType: 'geometry',
+        stylers: [{ color: '#746855' }],
+      },
+      {
+        featureType: 'road.highway',
+        elementType: 'geometry.stroke',
+        stylers: [{ color: '#1f2835' }],
+      },
+      {
+        featureType: 'road.highway',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#f3d19c' }],
+      },
+      {
+        featureType: 'transit',
+        elementType: 'geometry',
+        stylers: [{ color: '#2f3948' }],
+      },
+      {
+        featureType: 'transit.station',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#d59563' }],
+      },
+      {
+        featureType: 'water',
+        elementType: 'geometry',
+        stylers: [{ color: '#17263c' }],
+      },
+      {
+        featureType: 'water',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#515c6d' }],
+      },
+      {
+        featureType: 'water',
+        elementType: 'labels.text.stroke',
+        stylers: [{ color: '#17263c' }],
+      },
+    ]
+
+    mapRef.current = new google.maps.Map(mapContainer.current, {
+      center: { lat: 1.3521, lng: 103.8198 },
+      zoom: 11,
+      styles: darkMapStyle,
+      mapTypeControl: false,
+      streetViewControl: false,
+    })
+
+    // Create shared InfoWindow
+    infoWindowRef.current = new google.maps.InfoWindow()
+
+    return () => {
+      if (mapRef.current) {
+        // Cleanup markers
+        markersRef.current.forEach((marker) => (marker.map = null))
+        markersRef.current = []
+        if (heatmapRef.current) {
+          heatmapRef.current.setMap(null)
+        }
+      }
     }
-  }, [featureCollection])
+  }, [isLoaded])
 
-  if (!mapboxgl.accessToken) {
+  // Update heatmap and markers when data changes
+  useEffect(() => {
+    if (!mapRef.current || !isLoaded || heatmapData.length === 0) return
+
+    // Clear existing markers
+    markersRef.current.forEach((marker) => (marker.map = null))
+    markersRef.current = []
+
+    // Create heatmap layer
+    if (heatmapRef.current) {
+      heatmapRef.current.setMap(null)
+    }
+
+    const heatmapPoints = heatmapData.map((point) => ({
+      location: point.location,
+      weight: point.weight,
+    }))
+
+    heatmapRef.current = new google.maps.visualization.HeatmapLayer({
+      data: heatmapPoints,
+      map: mapRef.current,
+      radius: 30,
+      opacity: 0.7,
+      gradient: [
+        'rgba(0, 0, 0, 0)',
+        'rgba(50, 100, 200, 0.6)',
+        'rgba(50, 150, 200, 0.7)',
+        'rgba(50, 200, 150, 0.8)',
+        'rgba(200, 200, 50, 0.9)',
+        'rgba(200, 100, 50, 1)',
+      ],
+    })
+
+    // Add click listeners for each data point (using invisible markers for interaction)
+    heatmapData.forEach((point) => {
+      const marker = new google.maps.marker.AdvancedMarkerElement({
+        position: point.location,
+        map: mapRef.current,
+        content: createMarkerContent(),
+      })
+
+      marker.addListener('click', () => {
+        if (!infoWindowRef.current || !mapRef.current) return
+
+        const { transaction } = point
+        const formattedPsf =
+          transaction.psf_price !== null && transaction.psf_price !== undefined
+            ? new Intl.NumberFormat('en-SG').format(transaction.psf_price)
+            : 'N/A'
+
+        infoWindowRef.current.setContent(`
+          <div style="color: #333; padding: 8px;">
+            <strong>${transaction.property_name}</strong><br/>
+            Price: $${new Intl.NumberFormat('en-SG').format(transaction.sale_price)}<br/>
+            PSF: $${formattedPsf}<br/>
+            Date: ${new Date(transaction.transaction_date).toLocaleDateString()}
+          </div>
+        `)
+        infoWindowRef.current.open(mapRef.current, marker)
+      })
+
+      markersRef.current.push(marker)
+    })
+  }, [heatmapData, isLoaded])
+
+  if (loadError) {
     return (
       <Paper sx={{ p: 3, height: 500 }}>
         <Typography variant="body1" color="textSecondary" align="center">
-          Map requires Mapbox access token. Set REACT_APP_MAPBOX_ACCESS_TOKEN in
-          environment.
+          {loadError === 'Google Maps API key not configured'
+            ? 'Map requires Google Maps API key. Set VITE_GOOGLE_MAPS_API_KEY in environment.'
+            : `Failed to load map: ${loadError}`}
+        </Typography>
+      </Paper>
+    )
+  }
+
+  if (!isLoaded) {
+    return (
+      <Paper sx={{ p: 3, height: 500 }}>
+        <Typography variant="body1" color="textSecondary" align="center">
+          Loading map...
         </Typography>
       </Paper>
     )
@@ -272,6 +301,17 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
       />
     </Paper>
   )
+}
+
+// Create a small invisible marker element for click detection
+function createMarkerContent(): HTMLElement {
+  const div = document.createElement('div')
+  div.style.width = '20px'
+  div.style.height = '20px'
+  div.style.borderRadius = '50%'
+  div.style.cursor = 'pointer'
+  div.style.opacity = '0' // Invisible but clickable
+  return div
 }
 
 export default MarketHeatmap
