@@ -59,15 +59,33 @@ const AGENCIES = [
   },
 ]
 
-const SUBMISSION_TYPES: Record<string, string[]> = {
-  URA: ['Development Control (DC)', 'Change of Use', 'Subdivision'],
-  BCA: [
-    'Building Plan (BP)',
-    'Structural Plan (ST)',
-    'Temporary Occupation Permit (TOP)',
+// Maps agency to available submission types with their backend enum values
+// Backend SubmissionType enum values: DC, BP, TOP, CSC, WAIVER, CONSULTATION, CHANGE_OF_USE, HERITAGE_APPROVAL, INDUSTRIAL_PERMIT
+const SUBMISSION_TYPES: Record<
+  string,
+  Array<{ label: string; value: string }>
+> = {
+  URA: [
+    { label: 'Development Control (DC)', value: 'DC' },
+    { label: 'Change of Use', value: 'CHANGE_OF_USE' },
+    { label: 'Consultation', value: 'CONSULTATION' },
   ],
-  SCDF: ['Fire Safety Plan', 'Minor Alteration'],
-  DEFAULT: ['General Consultation', 'Waiver Request'],
+  BCA: [
+    { label: 'Building Plan (BP)', value: 'BP' },
+    { label: 'Temporary Occupation Permit (TOP)', value: 'TOP' },
+    { label: 'Certificate of Statutory Completion (CSC)', value: 'CSC' },
+  ],
+  SCDF: [
+    { label: 'Fire Safety Consultation', value: 'CONSULTATION' },
+    { label: 'Waiver Request', value: 'WAIVER' },
+  ],
+  NEA: [{ label: 'Environmental Consultation', value: 'CONSULTATION' }],
+  PUB: [{ label: 'Drainage Consultation', value: 'CONSULTATION' }],
+  LTA: [{ label: 'Traffic Consultation', value: 'CONSULTATION' }],
+  DEFAULT: [
+    { label: 'General Consultation', value: 'CONSULTATION' },
+    { label: 'Waiver Request', value: 'WAIVER' },
+  ],
 }
 
 export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
@@ -87,10 +105,9 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
   const handleSubmit = async () => {
     setSubmitting(true)
     try {
-      // In real app, projectId might need parsing if it's not a pure number
-      // We assume prop passed is correct ID for now or we handle connection
+      // Backend accepts project_id as string (UUID or integer string)
       const submission = await regulatoryApi.createSubmission({
-        project_id: Number(projectId), // Assuming backend expects Int/UUID handled
+        project_id: String(projectId),
         agency: selectedAgency,
         submission_type: submissionType,
       })
@@ -112,6 +129,12 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
 
   const getSubmissionTypes = () => {
     return SUBMISSION_TYPES[selectedAgency] || SUBMISSION_TYPES['DEFAULT']
+  }
+
+  const getSubmissionTypeLabel = () => {
+    const types = getSubmissionTypes()
+    const found = types.find((t) => t.value === submissionType)
+    return found ? found.label : submissionType
   }
 
   const renderStepContent = (step: number) => {
@@ -177,8 +200,8 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
                 onChange={(e) => setSubmissionType(e.target.value)}
               >
                 {getSubmissionTypes().map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
+                  <MenuItem key={type.value} value={type.value}>
+                    {type.label}
                   </MenuItem>
                 ))}
               </Select>
@@ -199,8 +222,9 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
               Ready to Submit
             </Typography>
             <Typography variant="body1" color="text.secondary" paragraph>
-              You are about to submit a <strong>{submissionType}</strong>{' '}
-              application to <strong>{selectedAgency}</strong>.
+              You are about to submit a{' '}
+              <strong>{getSubmissionTypeLabel()}</strong> application to{' '}
+              <strong>{selectedAgency}</strong>.
             </Typography>
             <Typography variant="body2" color="warning.main">
               Please ensure all required documents (simulated) are attached.

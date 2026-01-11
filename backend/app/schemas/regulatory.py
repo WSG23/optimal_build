@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -20,37 +20,39 @@ class SubmissionDocumentCreate(SubmissionDocumentBase):
 class SubmissionDocumentRead(SubmissionDocumentBase):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
-    submission_id: int
+    id: UUID
+    submission_id: UUID
     version: int
     uploaded_at: datetime
-    uploaded_by_id: Optional[int] = None
+    uploaded_by_id: Optional[UUID] = None
 
 
 class AuthoritySubmissionBase(BaseModel):
-    agency: str
     submission_type: str
 
 
 class AuthoritySubmissionCreate(AuthoritySubmissionBase):
-    project_id: int
-    # Documents can be uploaded separately or linked here
+    project_id: str  # Accepts UUID string or integer string
+    agency: str  # Agency code (URA, BCA, etc.)
 
 
 class AuthoritySubmissionRead(AuthoritySubmissionBase):
+    """Response schema for authority submission - uses UUIDs matching model."""
+
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
-    project_id: int
+    id: UUID
+    project_id: UUID
+    agency_id: UUID  # Return the agency_id, not the lazy-loaded relationship
     status: str
-    submission_date: Optional[datetime] = None
-    approval_date: Optional[datetime] = None
-    submitted_by_id: Optional[int] = None
-    reference_number: Optional[str] = None
-    agency_remarks: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    submission_no: Optional[str] = None  # External reference number
+    submitted_at: Optional[datetime] = None
+    approved_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
-    documents: List[SubmissionDocumentRead] = []
+    # Note: documents are omitted to avoid lazy loading - fetch separately if needed
 
 
 class AuthoritySubmissionUpdate(BaseModel):

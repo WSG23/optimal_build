@@ -49,8 +49,8 @@ class SubmissionType(str, enum.Enum):
     BP = "BP"  # Building Plan (BCA)
     TOP = "TOP"  # Temporary Occupation Permit
     CSC = "CSC"  # Certificate of Statutory Completion
-    WAIVER = "Waiver"
-    CONSULTATION = "Consultation"
+    WAIVER = "WAIVER"  # Uppercase to match PostgreSQL enum
+    CONSULTATION = "CONSULTATION"  # Uppercase to match PostgreSQL enum
     CHANGE_OF_USE = "CHANGE_OF_USE"  # Change of use application
     HERITAGE_APPROVAL = "HERITAGE_APPROVAL"  # STB heritage conservation
     INDUSTRIAL_PERMIT = "INDUSTRIAL_PERMIT"  # JTC industrial development
@@ -71,8 +71,9 @@ class RegulatoryAgency(Base):
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True), primary_key=True, default=uuid4
     )
-    code: Mapped[AgencyCode] = mapped_column(
-        Enum(AgencyCode, values_callable=lambda x: [e.value for e in x]),
+    # Use String instead of Enum to match VARCHAR column in database
+    code: Mapped[str] = mapped_column(
+        String,
         unique=True,
         nullable=False,
     )

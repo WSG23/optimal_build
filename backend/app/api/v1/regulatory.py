@@ -71,15 +71,14 @@ async def create_submission(
 ) -> Any:
     """
     Submit a regulatory application to a Singapore authority (Mock CORENET).
+
+    Accepts project_id as UUID string or integer string.
     """
     service = RegulatoryService(db)
+    normalized_project_id = normalise_project_id(submission.project_id)
     try:
         result = await service.create_submission(
-            project_id=(
-                UUID(str(submission.project_id))
-                if isinstance(submission.project_id, int)
-                else submission.project_id
-            ),
+            project_id=normalized_project_id,
             submission=submission,
         )
         return result

@@ -174,6 +174,10 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
   const [conservationPlanAttached, setConservationPlanAttached] =
     useState(false)
 
+  // Simulated uploaded files
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([])
+  const [uploadedDrawings, setUploadedDrawings] = useState<string[]>([])
+
   // Initialize form with existing data
   useEffect(() => {
     if (existingSubmission) {
@@ -230,6 +234,50 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
     setInterventions((prev) =>
       prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
     )
+  }
+
+  // Simulated file upload handlers
+  const handlePhotoUpload = () => {
+    if (isSubmitted) return
+    // Create a hidden file input and trigger it
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.multiple = true
+    input.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files
+      if (files) {
+        const fileNames = Array.from(files).map((f) => f.name)
+        setUploadedPhotos((prev) => [...prev, ...fileNames])
+        setSuccessMessage(`${files.length} photo(s) added (simulated)`)
+      }
+    }
+    input.click()
+  }
+
+  const handleDrawingUpload = () => {
+    if (isSubmitted) return
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.pdf,.dwg,.dxf,image/*'
+    input.multiple = true
+    input.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files
+      if (files) {
+        const fileNames = Array.from(files).map((f) => f.name)
+        setUploadedDrawings((prev) => [...prev, ...fileNames])
+        setSuccessMessage(`${files.length} drawing(s) added (simulated)`)
+      }
+    }
+    input.click()
+  }
+
+  const handleRemovePhoto = (index: number) => {
+    setUploadedPhotos((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const handleRemoveDrawing = (index: number) => {
+    setUploadedDrawings((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handleSave = useCallback(async () => {
@@ -306,7 +354,11 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
     selectedElements.length > 0 &&
     interventions.length > 0
 
-  const isSubmitted = existingSubmission?.status !== 'draft'
+  // Only mark as submitted if we have an existing submission AND its status is not DRAFT
+  // When creating a new submission (no existingSubmission), this should be false
+  const isSubmitted = existingSubmission
+    ? existingSubmission.status.toUpperCase() !== 'DRAFT'
+    : false
 
   return (
     <Dialog
@@ -353,11 +405,13 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
             <Chip
               label={existingSubmission.status}
               color={
-                existingSubmission.status === 'approved'
+                existingSubmission.status.toUpperCase() === 'APPROVED'
                   ? 'success'
-                  : existingSubmission.status === 'submitted'
+                  : existingSubmission.status.toUpperCase() === 'SUBMITTED'
                     ? 'info'
-                    : 'default'
+                    : existingSubmission.status.toUpperCase() === 'IN_REVIEW'
+                      ? 'warning'
+                      : 'default'
               }
               size="small"
               sx={{ textTransform: 'capitalize' }}
@@ -766,19 +820,37 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
 
             <Grid item xs={12} sm={6}>
               <Paper
+                onClick={handlePhotoUpload}
                 sx={{
                   p: 3,
                   textAlign: 'center',
-                  border: '2px dashed rgba(255, 255, 255, 0.2)',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    bgcolor: 'rgba(255, 255, 255, 0.05)',
-                    borderColor: 'primary.main',
-                  },
+                  border: '2px dashed',
+                  borderColor:
+                    uploadedPhotos.length > 0
+                      ? 'success.main'
+                      : 'rgba(255, 255, 255, 0.2)',
+                  cursor: isSubmitted ? 'default' : 'pointer',
+                  bgcolor:
+                    uploadedPhotos.length > 0
+                      ? 'rgba(46, 125, 50, 0.1)'
+                      : 'transparent',
+                  '&:hover': isSubmitted
+                    ? {}
+                    : {
+                        bgcolor: 'rgba(255, 255, 255, 0.05)',
+                        borderColor: 'primary.main',
+                      },
                 }}
               >
                 <UploadIcon
-                  sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }}
+                  sx={{
+                    fontSize: 40,
+                    color:
+                      uploadedPhotos.length > 0
+                        ? 'success.main'
+                        : 'text.secondary',
+                    mb: 1,
+                  }}
                 />
                 <Typography variant="body2">
                   Upload Historical Photos
@@ -786,24 +858,57 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
                 <Typography variant="caption" color="text.secondary">
                   Original photographs, archival images
                 </Typography>
+                {uploadedPhotos.length > 0 && (
+                  <Box sx={{ mt: 2, textAlign: 'left' }}>
+                    {uploadedPhotos.map((file, idx) => (
+                      <Chip
+                        key={idx}
+                        label={file}
+                        size="small"
+                        onDelete={
+                          isSubmitted ? undefined : () => handleRemovePhoto(idx)
+                        }
+                        sx={{ m: 0.5 }}
+                      />
+                    ))}
+                  </Box>
+                )}
               </Paper>
             </Grid>
 
             <Grid item xs={12} sm={6}>
               <Paper
+                onClick={handleDrawingUpload}
                 sx={{
                   p: 3,
                   textAlign: 'center',
-                  border: '2px dashed rgba(255, 255, 255, 0.2)',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    bgcolor: 'rgba(255, 255, 255, 0.05)',
-                    borderColor: 'primary.main',
-                  },
+                  border: '2px dashed',
+                  borderColor:
+                    uploadedDrawings.length > 0
+                      ? 'success.main'
+                      : 'rgba(255, 255, 255, 0.2)',
+                  cursor: isSubmitted ? 'default' : 'pointer',
+                  bgcolor:
+                    uploadedDrawings.length > 0
+                      ? 'rgba(46, 125, 50, 0.1)'
+                      : 'transparent',
+                  '&:hover': isSubmitted
+                    ? {}
+                    : {
+                        bgcolor: 'rgba(255, 255, 255, 0.05)',
+                        borderColor: 'primary.main',
+                      },
                 }}
               >
                 <UploadIcon
-                  sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }}
+                  sx={{
+                    fontSize: 40,
+                    color:
+                      uploadedDrawings.length > 0
+                        ? 'success.main'
+                        : 'text.secondary',
+                    mb: 1,
+                  }}
                 />
                 <Typography variant="body2">
                   Upload Architectural Drawings
@@ -811,13 +916,31 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
                 <Typography variant="caption" color="text.secondary">
                   Plans, elevations, sections
                 </Typography>
+                {uploadedDrawings.length > 0 && (
+                  <Box sx={{ mt: 2, textAlign: 'left' }}>
+                    {uploadedDrawings.map((file, idx) => (
+                      <Chip
+                        key={idx}
+                        label={file}
+                        size="small"
+                        onDelete={
+                          isSubmitted
+                            ? undefined
+                            : () => handleRemoveDrawing(idx)
+                        }
+                        sx={{ m: 0.5 }}
+                      />
+                    ))}
+                  </Box>
+                )}
               </Paper>
             </Grid>
           </Grid>
 
           <Alert severity="info" sx={{ mt: 3 }}>
             <Typography variant="body2">
-              Document upload is simulated in this demo. In production, files
+              Document upload is simulated in this demo. Files are tracked
+              locally but not persisted to the server. In production, files
               would be uploaded to secure storage and attached to the
               submission.
             </Typography>

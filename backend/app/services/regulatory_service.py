@@ -1,7 +1,6 @@
-from typing import List, Optional, Union
+from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
-from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -16,7 +15,7 @@ from app.services.mock_corenet import MockCorenetService
 
 
 class RegulatoryService:
-    def __init__(self, db: Union[Session, AsyncSession]):
+    def __init__(self, db: AsyncSession):
         self.db = db
         self.corenet = MockCorenetService()
 
@@ -30,16 +29,16 @@ class RegulatoryService:
         Creates a new submission record and 'sends' it to the external agency via MockCorenet.
         """
         # 1. Validate Project
-        project = self.db.execute(
-            select(Project).filter(Project.id == project_id)
-        ).scalar_one_or_none()
+        result = await self.db.execute(select(Project).filter(Project.id == project_id))
+        project = result.scalar_one_or_none()
         if not project:
             raise ValueError(f"Project {project_id} not found")
 
         # 2. Get or Create Agency (ensure agency exists in DB for FK)
-        agency = self.db.execute(
+        result = await self.db.execute(
             select(RegulatoryAgency).filter(RegulatoryAgency.code == submission.agency)
-        ).scalar_one_or_none()
+        )
+        agency = result.scalar_one_or_none()
 
         if not agency:
             # Auto-create for dev simplicity if not found
@@ -49,7 +48,7 @@ class RegulatoryService:
                 description="Auto-created agency",
             )
             self.db.add(agency)
-            self.db.flush()
+            await self.db.flush()
 
         # 3. Create Draft Submission Record
         db_submission = AuthoritySubmission(
@@ -62,23 +61,23 @@ class RegulatoryService:
             # submitted_by_id=submitted_by_id # User tracking if available
         )
         self.db.add(db_submission)
-        self.db.commit()
-        self.db.refresh(db_submission)
+        await self.db.commit()
+        await self.db.refresh(db_submission)
 
         # 4. Trigger External Submission (Mock)
         external_response = await self.corenet.submit_to_agency(
             agency_code=submission.agency,
             submission_type=submission.submission_type,
             project_ref=project.project_code,
-            payload=submission.dict(),
+            payload=submission.model_dump(),
         )
 
         # 5. Update Record with External Reference
         if external_response.get("success"):
             db_submission.submission_no = external_response.get("transaction_id")
             # db_submission.status = SubmissionStatus.IN_REVIEW # or keep as submitted
-            self.db.commit()
-            self.db.refresh(db_submission)
+            await self.db.commit()
+            await self.db.refresh(db_submission)
 
         return db_submission
 
@@ -88,7 +87,7 @@ class RegulatoryService:
         """
         Polls the mock external service for status updates and persists changes.
         """
-        submission = self.db.get(AuthoritySubmission, submission_id)
+        submission = await self.db.get(AuthoritySubmission, submission_id)
         if not submission:
             raise ValueError("Submission not found")
 
@@ -98,8 +97,11 @@ class RegulatoryService:
         ]:
             return submission  # No Update needed
 
+        # Fetch agency separately to avoid lazy loading issues in async context
+        agency = await self.db.get(RegulatoryAgency, submission.agency_id)
+        agency_code = agency.code if agency else "URA"  # Default to URA
+
         # Poll Mock Service
-        agency_code = submission.agency.code
         status_update = await self.corenet.check_status(
             agency_code, submission.submission_no
         )
@@ -118,8 +120,8 @@ class RegulatoryService:
                     f"{existing_desc}\n\n[System Update]: {remarks}".strip()
                 )
 
-            self.db.commit()
-            self.db.refresh(submission)
+            await self.db.commit()
+            await self.db.refresh(submission)
 
         return submission
 
@@ -133,5 +135,7 @@ class RegulatoryService:
         )
         return list(result.scalars().all())
 
-    def get_submission(self, submission_id: UUID) -> Optional[AuthoritySubmission]:
-        return self.db.get(AuthoritySubmission, submission_id)
+    async def get_submission(
+        self, submission_id: UUID
+    ) -> Optional[AuthoritySubmission]:
+        return await self.db.get(AuthoritySubmission, submission_id)
