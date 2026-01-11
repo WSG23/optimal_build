@@ -216,6 +216,13 @@ export type CssRgbTokenName =
 /**
  * Color palette values - mirrors tokens.css :root values
  * Use cssVar() in CSS contexts, these values for JS/MUI contexts
+ *
+ * Color Purposes:
+ * - brand: Action Cyan - Primary actions, selections, focus states
+ * - info: Contextual Indigo - Informational content, AI insights, metadata
+ * - success: Emerald Green - Completed, approved, positive outcomes
+ * - warning: Burnt Orange - Pending, attention needed, high priority
+ * - error: Soft Red - Failed, rejected, urgent, destructive actions
  */
 export const colors = {
   neutral: {
@@ -231,6 +238,7 @@ export const colors = {
     100: '#f8fafc',
     50: '#ffffff',
   },
+  /** Action Cyan - Interactive affordance, buttons, selections, active states */
   brand: {
     700: '#0891b2',
     600: '#06b6d4',
@@ -247,24 +255,28 @@ export const colors = {
     300: '#6ee7b7',
     200: '#d1fae5',
   },
+  /** Emerald Green - Completed, approved, positive outcomes */
   success: {
     700: '#047857',
     600: '#059669',
     500: '#10b981',
     400: '#34d399',
   },
+  /** Burnt Orange - Pending, attention needed, high priority */
   warning: {
     700: '#b45309',
     600: '#d97706',
     500: '#f59e0b',
     400: '#fbbf24',
   },
+  /** Soft Red - Failed, rejected, urgent, destructive actions */
   error: {
     700: '#b91c1c',
     600: '#dc2626',
     500: '#ef4444',
     400: '#f87171',
   },
+  /** Contextual Indigo - Informational states, AI insights, metadata */
   info: {
     700: '#4338ca',
     600: '#4f46e5',

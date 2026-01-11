@@ -43,7 +43,7 @@
     --ob-neutral-100: #f1f5f9; /* Primary Text */
     --ob-neutral-50: #f8fafc;
 
-    /* Brand: Electric Cyan */
+    /* Brand: Action Cyan - Interactive affordance, buttons, selections, active states */
     --ob-brand-700: #0891b2;
     --ob-brand-600: #06b6d4;
     --ob-brand-500: #22d3ee; /* Primary Action */
@@ -86,7 +86,7 @@
     --ob-error-bg: rgba(239, 68, 68, 0.15);
     --ob-error-text: #f87171;
 
-    /* Info (Electric Indigo) */
+    /* Info: Contextual Indigo - Informational states, AI insights, metadata */
     --ob-info-700: #4338ca;
     --ob-info-600: #4f46e5;
     --ob-info-500: #6366f1;
@@ -176,7 +176,7 @@
      5. SEMANTIC COLORS - Brand & Actions
      =========================================================================== */
 
-    --ob-color-brand-primary: var(--ob-brand-500); /* Fixed to Electric Cyan */
+    --ob-color-brand-primary: var(--ob-brand-500); /* Action Cyan */
     --ob-color-brand-primary-emphasis: var(
         --ob-brand-400
     ); /* Lighter on hover for dark mode */
