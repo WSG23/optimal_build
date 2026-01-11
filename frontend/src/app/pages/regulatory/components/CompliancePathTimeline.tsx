@@ -33,6 +33,7 @@ import {
   regulatoryApi,
   AssetCompliancePath,
   AssetType,
+  AuthoritySubmission,
 } from '../../../../api/regulatory'
 import { colors } from '@ob/tokens'
 
@@ -62,8 +63,19 @@ const _AGENCY_INFO: Record<string, { name: string; color: string }> = {
 }
 void _AGENCY_INFO // Suppress unused warning - available for future tooltip enhancement
 
-// Submission type display names
+// Submission type display names - includes both API values and legacy mock values
 const SUBMISSION_TYPE_LABELS: Record<string, string> = {
+  // Actual API submission types
+  DC: 'Development Control (URA)',
+  BP: 'Building Plan (BCA)',
+  TOP: 'Temporary Occupation Permit',
+  CSC: 'Certificate of Statutory Completion',
+  CONSULTATION: 'Agency Consultation',
+  WAIVER: 'Waiver Application',
+  HERITAGE_APPROVAL: 'Heritage Conservation (STB)',
+  INDUSTRIAL_PERMIT: 'Industrial Permit (JTC)',
+  CHANGE_OF_USE: 'Change of Use',
+  // Legacy mock values (fallback)
   planning_permission: 'Planning Permission',
   development_control: 'Development Control',
   building_plan: 'Building Plan Approval',
@@ -86,21 +98,55 @@ const ASSET_TYPE_OPTIONS: { value: AssetType; label: string }[] = [
   { value: 'heritage', label: 'Heritage / Conservation' },
 ]
 
-// Mock progress data for demonstration
-const getMockProgress = (step: AssetCompliancePath): number => {
-  // In production, this would come from actual submission status
-  if (step.sequence_order <= 2) return 100
-  if (step.sequence_order === 3) return 60
-  return 0
-}
+// Status type for compliance steps
+type StepStatus = 'completed' | 'in_progress' | 'pending' | 'delayed'
 
-const getMockStatus = (
+// Get progress and status from real submissions
+function getStepProgress(
   step: AssetCompliancePath,
-): 'completed' | 'in_progress' | 'pending' | 'delayed' => {
-  const progress = getMockProgress(step)
-  if (progress === 100) return 'completed'
-  if (progress > 0) return 'in_progress'
-  return 'pending'
+  submissions: AuthoritySubmission[],
+): { progress: number; status: StepStatus } {
+  // Find submissions matching this step's submission type
+  const matchingSubmissions = submissions.filter(
+    (s) => s.submission_type === step.submission_type,
+  )
+
+  if (matchingSubmissions.length === 0) {
+    return { progress: 0, status: 'pending' }
+  }
+
+  // Check for approved submissions
+  const approved = matchingSubmissions.find((s) => s.status === 'APPROVED')
+  if (approved) {
+    return { progress: 100, status: 'completed' }
+  }
+
+  // Check for rejected submissions (delayed)
+  const rejected = matchingSubmissions.find((s) => s.status === 'REJECTED')
+  if (rejected) {
+    return { progress: 0, status: 'delayed' }
+  }
+
+  // Check for in-progress submissions (submitted, in_review, rfi)
+  const inProgress = matchingSubmissions.find((s) =>
+    ['SUBMITTED', 'IN_REVIEW', 'RFI'].includes(s.status),
+  )
+  if (inProgress) {
+    // Estimate progress based on status
+    if (inProgress.status === 'RFI')
+      return { progress: 75, status: 'in_progress' }
+    if (inProgress.status === 'IN_REVIEW')
+      return { progress: 50, status: 'in_progress' }
+    return { progress: 25, status: 'in_progress' }
+  }
+
+  // Check for draft submissions
+  const draft = matchingSubmissions.find((s) => s.status === 'DRAFT')
+  if (draft) {
+    return { progress: 10, status: 'in_progress' }
+  }
+
+  return { progress: 0, status: 'pending' }
 }
 
 const STATUS_COLORS = {
@@ -143,6 +189,8 @@ interface TimelineBarProps {
   startOffset: number
   isSelected: boolean
   onClick: () => void
+  progress: number
+  status: StepStatus
 }
 
 function TimelineBar({
@@ -150,12 +198,12 @@ function TimelineBar({
   startOffset,
   isSelected,
   onClick,
+  progress,
+  status,
 }: TimelineBarProps) {
   const duration = step.typical_duration_days || 14
   const width = Math.max(duration * DAY_WIDTH, 60)
   const left = startOffset * DAY_WIDTH
-  const status = getMockStatus(step)
-  const progress = getMockProgress(step)
 
   const tooltipContent = (
     <Box sx={{ p: 1 }}>
@@ -251,6 +299,7 @@ function TimelineBar({
 }
 
 export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
+  projectId,
   initialAssetType = 'office',
   onStepClick,
 }) => {
@@ -258,9 +307,11 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
   const [compliancePaths, setCompliancePaths] = useState<AssetCompliancePath[]>(
     [],
   )
+  const [submissions, setSubmissions] = useState<AuthoritySubmission[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedStep, setSelectedStep] = useState<string | null>(null)
 
+  // Fetch compliance paths when asset type changes
   useEffect(() => {
     const fetchPaths = async () => {
       setLoading(true)
@@ -276,6 +327,23 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
     }
     fetchPaths()
   }, [assetType])
+
+  // Fetch submissions when projectId changes
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      if (!projectId) {
+        setSubmissions([])
+        return
+      }
+      try {
+        const subs = await regulatoryApi.listSubmissions(projectId)
+        setSubmissions(subs)
+      } catch {
+        setSubmissions([])
+      }
+    }
+    fetchSubmissions()
+  }, [projectId])
 
   const handleAssetTypeChange = (event: SelectChangeEvent) => {
     setAssetType(event.target.value as AssetType)
@@ -308,18 +376,27 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
     return offsets
   }, [compliancePaths])
 
+  // Calculate step progress using real submissions
+  const stepProgressMap = useMemo(() => {
+    const map: Record<string, { progress: number; status: StepStatus }> = {}
+    compliancePaths.forEach((step) => {
+      map[step.id] = getStepProgress(step, submissions)
+    })
+    return map
+  }, [compliancePaths, submissions])
+
   // Calculate overall progress
   const overallProgress = useMemo(() => {
     if (compliancePaths.length === 0) return 0
     const totalProgress = compliancePaths.reduce(
-      (acc, step) => acc + getMockProgress(step),
+      (acc, step) => acc + (stepProgressMap[step.id]?.progress || 0),
       0,
     )
     return Math.round(totalProgress / compliancePaths.length)
-  }, [compliancePaths])
+  }, [compliancePaths, stepProgressMap])
 
   const completedSteps = compliancePaths.filter(
-    (s) => getMockStatus(s) === 'completed',
+    (s) => stepProgressMap[s.id]?.status === 'completed',
   ).length
 
   if (loading) {
@@ -500,7 +577,10 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
 
           {/* Rows */}
           {compliancePaths.map((step) => {
-            const status = getMockStatus(step)
+            const { progress, status } = stepProgressMap[step.id] || {
+              progress: 0,
+              status: 'pending' as StepStatus,
+            }
             return (
               <Box
                 key={step.id}
@@ -540,7 +620,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                       variant="body2"
                       sx={{
                         fontWeight: 500,
-                        color: 'var(--ob-neutral-50)',
+                        color: 'text.primary',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -576,6 +656,8 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                     startOffset={stepOffsets[step.id] || 0}
                     isSelected={selectedStep === step.id}
                     onClick={() => handleStepClick(step)}
+                    progress={progress}
+                    status={status}
                   />
                 </Box>
               </Box>

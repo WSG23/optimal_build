@@ -2,8 +2,23 @@ import { ApiClient } from './client'
 
 const apiClient = new ApiClient()
 
+// Project interface for project selector
+export interface Project {
+  id: string
+  name: string
+  description?: string
+  location?: string
+  project_type?: string
+  status: string
+  budget?: number
+  owner_email: string
+  created_at: string
+  updated_at: string
+  is_active: boolean
+}
+
 export interface SubmissionDocument {
-  id: number
+  id: string // UUID
   document_type: string
   file_name: string
   version: number
@@ -11,22 +26,22 @@ export interface SubmissionDocument {
 }
 
 export interface AuthoritySubmission {
-  id: number
-  project_id: number
-  agency: string
+  id: string // UUID
+  project_id: string // UUID
+  agency_id: string // UUID of the regulatory agency
   submission_type: string
-  submission_no?: string
-  status: 'draft' | 'submitted' | 'in_review' | 'approved' | 'rejected' | 'rfi'
+  submission_no?: string // External reference number
+  status: 'DRAFT' | 'SUBMITTED' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'RFI'
   title: string
   description?: string
   submitted_at?: string
   approved_at?: string
-  agency_remarks?: string
-  documents: SubmissionDocument[]
+  created_at: string
+  updated_at: string
 }
 
 export interface CreateSubmissionRequest {
-  project_id: number
+  project_id: string // UUID string or integer string
   agency: string
   submission_type: string
 }
@@ -42,6 +57,17 @@ export type AssetType =
   | 'heritage'
 
 export type SubmissionType =
+  // Actual backend submission types
+  | 'DC'
+  | 'BP'
+  | 'TOP'
+  | 'CSC'
+  | 'WAIVER'
+  | 'CONSULTATION'
+  | 'HERITAGE_APPROVAL'
+  | 'INDUSTRIAL_PERMIT'
+  | 'CHANGE_OF_USE'
+  // Legacy mock values (for backwards compatibility)
   | 'planning_permission'
   | 'development_control'
   | 'building_plan'
@@ -253,6 +279,12 @@ export const regulatoryApi = {
       `/api/v1/regulatory/heritage/${submissionId}/submit`,
       {},
     )
+    return data
+  },
+
+  // Projects API
+  listProjects: async (): Promise<Project[]> => {
+    const { data } = await apiClient.get<Project[]>('/api/v1/projects/list')
     return data
   },
 }

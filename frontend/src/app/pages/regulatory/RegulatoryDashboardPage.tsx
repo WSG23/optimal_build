@@ -15,6 +15,7 @@ import {
   Tab,
   Tabs,
   useTheme,
+  TextField,
 } from '@mui/material'
 import {
   Add as AddIcon,
@@ -29,12 +30,18 @@ import {
   AccountBalance as HeritageIcon,
   Assignment as SubmissionIcon,
 } from '@mui/icons-material'
-import { regulatoryApi, AuthoritySubmission } from '../../../api/regulatory'
+import {
+  regulatoryApi,
+  AuthoritySubmission,
+  ChangeOfUseApplication,
+  HeritageSubmission,
+} from '../../../api/regulatory'
 import { SubmissionWizard } from './components/SubmissionWizard'
 import { CompliancePathTimeline } from './components/CompliancePathTimeline'
 import { ChangeOfUseWizard } from './components/ChangeOfUseWizard'
 import { HeritageSubmissionForm } from './components/HeritageSubmissionForm'
-import { useRouterPath } from '../../../router'
+import { useProject } from '../../../contexts/useProject'
+import { useRouterParams } from '../../../router'
 import { getTableSx, getPrimaryButtonSx } from '../../../utils/themeStyles'
 
 const AGENCIES_INFO = [
@@ -67,21 +74,53 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 export const RegulatoryDashboardPage: React.FC = () => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
-  const path = useRouterPath()
-  // Extract project ID from URL pattern /projects/:id/regulatory
-  // If not found, use '191' as default (existing demo project)
-  const pathParts = path.split('/')
-  const projectIdx = pathParts.indexOf('projects')
-  const projectId = projectIdx !== -1 ? pathParts[projectIdx + 1] : '191'
+  const { currentProject } = useProject()
+  const params = useRouterParams()
 
+  // Derive project ID: context > URL params > fallback to demo '191'
+  const derivedProjectId = currentProject?.id || params.projectId || '191'
+
+  // Project ID input - allows manual override for testing/debugging
+  const [projectIdInput, setProjectIdInput] = useState<string>(derivedProjectId)
+  const [projectId, setProjectId] = useState<string>(derivedProjectId)
+
+  // Sync with context/URL when they change
+  useEffect(() => {
+    if (derivedProjectId !== projectId) {
+      setProjectIdInput(derivedProjectId)
+      setProjectId(derivedProjectId)
+    }
+  }, [derivedProjectId, projectId])
   const [tabValue, setTabValue] = useState(0)
   const [submissions, setSubmissions] = useState<AuthoritySubmission[]>([])
+  const [changeOfUseApps, setChangeOfUseApps] = useState<
+    ChangeOfUseApplication[]
+  >([])
+  const [heritageSubmissions, setHeritageSubmissions] = useState<
+    HeritageSubmission[]
+  >([])
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [wizardOpen, setWizardOpen] = useState(false)
   const [changeOfUseOpen, setChangeOfUseOpen] = useState(false)
   const [heritageFormOpen, setHeritageFormOpen] = useState(false)
+  const [selectedHeritageSubmission, setSelectedHeritageSubmission] = useState<
+    HeritageSubmission | undefined
+  >(undefined)
   const [error, setError] = useState<string | null>(null)
+
+  // Apply project ID when user presses Enter or clicks Load
+  const handleLoadProject = () => {
+    if (projectIdInput.trim()) {
+      setProjectId(projectIdInput.trim())
+    }
+  }
+
+  const handleProjectIdKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleLoadProject()
+    }
+  }
 
   // Theme-aware styles
   const tableSx = getTableSx(isDarkMode)
@@ -93,16 +132,23 @@ export const RegulatoryDashboardPage: React.FC = () => {
       setError(null)
 
       try {
-        if (projectId === '1' && path.includes('/app/regulatory')) {
-          // If accessing global dashboard without project context, we might want to handle differently
-          // For now, defaulting to project 1
-        }
+        // Fetch authority submissions
         const data = await regulatoryApi.listSubmissions(projectId)
         setSubmissions(data)
 
+        // Fetch change of use applications
+        const couApps =
+          await regulatoryApi.listChangeOfUseApplications(projectId)
+        setChangeOfUseApps(couApps)
+
+        // Fetch heritage submissions
+        const heritageData =
+          await regulatoryApi.listHeritageSubmissions(projectId)
+        setHeritageSubmissions(heritageData)
+
         // Poll recent submissions for updates
         const pendingItems = data.filter((s) =>
-          ['submitted', 'in_review'].includes(s.status),
+          ['SUBMITTED', 'IN_REVIEW'].includes(s.status),
         )
         if (pendingItems.length > 0 && isRefresh) {
           for (const item of pendingItems) {
@@ -119,7 +165,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
         else setLoading(false)
       }
     },
-    [projectId, path],
+    [projectId],
   )
 
   useEffect(() => {
@@ -131,34 +177,63 @@ export const RegulatoryDashboardPage: React.FC = () => {
     setWizardOpen(false)
   }
 
+  const handleHeritageSuccess = (submission: HeritageSubmission) => {
+    // Update or add to the list
+    setHeritageSubmissions((prev) => {
+      const existingIndex = prev.findIndex((s) => s.id === submission.id)
+      if (existingIndex >= 0) {
+        const updated = [...prev]
+        updated[existingIndex] = submission
+        return updated
+      }
+      return [submission, ...prev]
+    })
+    // Don't close the form - let user continue editing or submit to STB
+  }
+
+  const openHeritageForm = (submission?: HeritageSubmission) => {
+    setSelectedHeritageSubmission(submission)
+    setHeritageFormOpen(true)
+  }
+
+  const closeHeritageForm = () => {
+    setHeritageFormOpen(false)
+    setSelectedHeritageSubmission(undefined)
+  }
+
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
   }
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved':
+    switch (status.toUpperCase()) {
+      case 'APPROVED':
         return 'success'
-      case 'rejected':
+      case 'REJECTED':
         return 'error'
-      case 'rfi':
+      case 'RFI':
         return 'warning'
-      case 'in_review':
+      case 'IN_REVIEW':
         return 'info'
+      case 'SUBMITTED':
+        return 'primary'
+      case 'DRAFT':
+        return 'default'
       default:
         return 'default'
     }
   }
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'approved':
+    switch (status.toUpperCase()) {
+      case 'APPROVED':
         return <ApprovedIcon fontSize="small" />
-      case 'rejected':
+      case 'REJECTED':
         return <RejectedIcon fontSize="small" />
-      case 'rfi':
+      case 'RFI':
         return <RfiIcon fontSize="small" />
-      case 'in_review':
+      case 'IN_REVIEW':
+      case 'SUBMITTED':
         return <PendingIcon fontSize="small" />
       default:
         return <PendingIcon fontSize="small" />
@@ -181,16 +256,53 @@ export const RegulatoryDashboardPage: React.FC = () => {
             'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
         }}
       >
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-            Regulatory Dashboard
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{ color: 'text.secondary', mt: 'var(--ob-space-025)' }}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--ob-space-300)',
+          }}
+        >
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+              Regulatory Dashboard
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ color: 'text.secondary', mt: 'var(--ob-space-025)' }}
+            >
+              Manage authority submissions and compliance tracking
+            </Typography>
+          </Box>
+          {/* Project ID Input */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-100)',
+            }}
           >
-            Manage authority submissions and compliance tracking
-          </Typography>
+            <TextField
+              size="small"
+              label="Project ID"
+              value={projectIdInput}
+              onChange={(e) => setProjectIdInput(e.target.value)}
+              onKeyDown={handleProjectIdKeyDown}
+              placeholder="e.g., 191"
+              sx={{ width: 150 }}
+              helperText={
+                projectId !== projectIdInput ? 'Press Enter to load' : ''
+              }
+            />
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleLoadProject}
+              disabled={!projectIdInput.trim() || projectIdInput === projectId}
+            >
+              Load
+            </Button>
+          </Box>
         </Box>
         <Box sx={{ display: 'flex', gap: 'var(--ob-space-150)' }}>
           <Button
@@ -266,7 +378,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
           </Grid>
           <Grid item xs={12} sm={4}>
             <Box
-              onClick={() => setHeritageFormOpen(true)}
+              onClick={() => openHeritageForm()}
               sx={{
                 p: 'var(--ob-space-200)',
                 cursor: 'pointer',
@@ -493,6 +605,155 @@ export const RegulatoryDashboardPage: React.FC = () => {
             )}
           </Box>
         )}
+
+        {/* Change of Use Applications Section */}
+        {changeOfUseApps.length > 0 && (
+          <Box
+            className="ob-card-module"
+            sx={{ overflow: 'hidden', mt: 'var(--ob-space-400)' }}
+          >
+            <Typography
+              variant="subtitle2"
+              sx={{
+                color: 'text.secondary',
+                mb: 'var(--ob-space-200)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Change of Use Applications
+            </Typography>
+            <Table sx={tableSx}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Current Use</TableCell>
+                  <TableCell>Proposed Use</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>DC Amendment</TableCell>
+                  <TableCell>Planning Permission</TableCell>
+                  <TableCell>Created</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {changeOfUseApps.map((app) => (
+                  <TableRow key={app.id} hover>
+                    <TableCell sx={{ fontFamily: 'monospace' }}>
+                      {app.id.slice(0, 8)}...
+                    </TableCell>
+                    <TableCell sx={{ textTransform: 'capitalize' }}>
+                      {app.current_use}
+                    </TableCell>
+                    <TableCell sx={{ textTransform: 'capitalize' }}>
+                      {app.proposed_use}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={app.status.replace('_', ' ')}
+                        size="small"
+                        color={
+                          getStatusColor(app.status.toLowerCase()) as
+                            | 'default'
+                            | 'primary'
+                            | 'secondary'
+                            | 'error'
+                            | 'info'
+                            | 'success'
+                            | 'warning'
+                        }
+                        variant="outlined"
+                        sx={{ textTransform: 'capitalize' }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {app.requires_dc_amendment ? 'Yes' : 'No'}
+                    </TableCell>
+                    <TableCell>
+                      {app.requires_planning_permission ? 'Yes' : 'No'}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(app.created_at).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Box>
+        )}
+
+        {/* Heritage Submissions Section */}
+        {heritageSubmissions.length > 0 && (
+          <Box className="ob-card-module" sx={{ mt: 'var(--ob-space-300)' }}>
+            <Typography
+              variant="h6"
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-100)',
+                mb: 'var(--ob-space-200)',
+              }}
+            >
+              <HeritageIcon color="primary" />
+              Heritage Submissions (STB)
+            </Typography>
+            <Table sx={tableSx}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Reference</TableCell>
+                  <TableCell>Conservation Status</TableCell>
+                  <TableCell>Year Built</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Created</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {heritageSubmissions.map((sub) => (
+                  <TableRow key={sub.id} hover>
+                    <TableCell sx={{ fontFamily: 'monospace' }}>
+                      {sub.stb_reference || sub.id.slice(0, 8) + '...'}
+                    </TableCell>
+                    <TableCell sx={{ textTransform: 'capitalize' }}>
+                      {sub.conservation_status.replace(/_/g, ' ')}
+                    </TableCell>
+                    <TableCell>
+                      {sub.original_construction_year || '-'}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={sub.status.replace('_', ' ')}
+                        size="small"
+                        color={
+                          getStatusColor(sub.status) as
+                            | 'default'
+                            | 'primary'
+                            | 'secondary'
+                            | 'error'
+                            | 'info'
+                            | 'success'
+                            | 'warning'
+                        }
+                        variant="outlined"
+                        sx={{ textTransform: 'capitalize' }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {new Date(sub.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Button
+                        size="small"
+                        onClick={() => openHeritageForm(sub)}
+                      >
+                        {sub.status.toUpperCase() === 'DRAFT' ? 'Edit' : 'View'}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Box>
+        )}
       </TabPanel>
 
       {/* Tab 1: Compliance Path - Depth 1 (Glass Card with cyan edge) */}
@@ -522,12 +783,10 @@ export const RegulatoryDashboardPage: React.FC = () => {
 
       <HeritageSubmissionForm
         open={heritageFormOpen}
-        onClose={() => setHeritageFormOpen(false)}
+        onClose={closeHeritageForm}
         projectId={projectId}
-        onSuccess={() => {
-          setHeritageFormOpen(false)
-          fetchSubmissions(true)
-        }}
+        existingSubmission={selectedHeritageSubmission}
+        onSuccess={handleHeritageSuccess}
       />
     </Box>
   )
