@@ -22,6 +22,8 @@ exceptions:
     - backend/migrations/versions/20251118_000025_add_property_jurisdiction.py
     # Property-Project link - standard downgrade with drop operations (project_id, owner_email columns)
     - backend/migrations/versions/20251230_000039_add_property_project_link.py
+    # Team member last_active_at - guarded drop column in downgrade (Phase 2E)
+    - backend/migrations/versions/788e8741fa70_add_last_active_at_to_team_members.py
     # Regstack migrations - different schema
     - db/versions/20250216000000_init_regstack.py
     - db/versions/20250217000100_add_provenance_checksum.py
@@ -73,6 +75,8 @@ exceptions:
     - backend/migrations/versions/20251022_000017_add_preview_jobs.py
     - backend/migrations/versions/20251026_000019_add_projects_table_columns.py
     - backend/migrations/versions/4c8849dec050_add_asset_type_to_agent_deals_manual.py
+    # Converting required_role FROM enum TO string - needs to reference existing enum type (Phase 2E)
+    - backend/migrations/versions/8f91023abcdd_change_required_role_to_string.py
 
   rule_7_code_quality:
     # RESOLVED 2025-11-21: Added isort: skip comments to resolve import ordering

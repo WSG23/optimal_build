@@ -218,6 +218,100 @@ async def test_get_workflow_not_found(client: AsyncClient) -> None:
     assert "Workflow not found" in response.json()["detail"]
 
 
+async def test_list_workflows_success(client: AsyncClient, db_session) -> None:
+    """Test listing workflows for a project."""
+    project = Project(
+        id=uuid4(),
+        project_name="List Workflow Test Project",
+        project_code="WF-LIST-1",
+        project_type=ProjectType.NEW_DEVELOPMENT,
+        current_phase=ProjectPhase.CONCEPT,
+        owner_email="owner@example.com",
+    )
+    db_session.add(project)
+
+    creator = User(
+        id=uuid4(),
+        email="creator@example.com",
+        username="creator_" + str(uuid4())[:8],
+        full_name="Creator User",
+        hashed_password="hashed",
+        is_active=True,
+    )
+    db_session.add(creator)
+    await db_session.commit()
+    await db_session.refresh(project)
+    await db_session.refresh(creator)
+
+    # Create two workflows for the project
+    workflow1 = ApprovalWorkflow(
+        id=uuid4(),
+        project_id=project.id,
+        title="Design Review",
+        description="Design review workflow",
+        workflow_type="design_review",
+        status=WorkflowStatus.IN_PROGRESS,
+        created_by_id=creator.id,
+        created_at=utcnow(),
+        updated_at=utcnow(),
+    )
+    workflow2 = ApprovalWorkflow(
+        id=uuid4(),
+        project_id=project.id,
+        title="Budget Approval",
+        description="Budget approval workflow",
+        workflow_type="budget_approval",
+        status=WorkflowStatus.DRAFT,
+        created_by_id=creator.id,
+        created_at=utcnow(),
+        updated_at=utcnow(),
+    )
+    db_session.add_all([workflow1, workflow2])
+    await db_session.commit()
+
+    # Add steps to workflow1
+    step = ApprovalStep(
+        id=uuid4(),
+        workflow_id=workflow1.id,
+        name="Architect Review",
+        sequence_order=1,
+        required_role="architect",
+        status=StepStatus.IN_REVIEW,
+    )
+    db_session.add(step)
+    await db_session.commit()
+
+    response = await client.get(f"/api/v1/workflow/?project_id={project.id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 2
+    # Workflows should be ordered by created_at desc
+    workflow_names = [w["name"] for w in data]
+    assert "Design Review" in workflow_names
+    assert "Budget Approval" in workflow_names
+
+
+async def test_list_workflows_empty(client: AsyncClient, db_session) -> None:
+    """Test listing workflows for a project with no workflows."""
+    project = Project(
+        id=uuid4(),
+        project_name="Empty Workflow Test Project",
+        project_code="WF-EMPTY-1",
+        project_type=ProjectType.NEW_DEVELOPMENT,
+        current_phase=ProjectPhase.CONCEPT,
+        owner_email="owner@example.com",
+    )
+    db_session.add(project)
+    await db_session.commit()
+
+    response = await client.get(f"/api/v1/workflow/?project_id={project.id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 0
+
+
 async def test_approve_step_success(client: AsyncClient, db_session) -> None:
     """Test approving a workflow step."""
     project = Project(

@@ -59,6 +59,14 @@ export interface CreateWorkflowParams {
 }
 
 export const workflowApi = {
+  listWorkflows: async (projectId: string): Promise<ApprovalWorkflow[]> => {
+    const { data } = await apiClient.get<ApprovalWorkflow[]>(
+      'api/v1/workflow/',
+      { params: { project_id: projectId } },
+    )
+    return data
+  },
+
   createWorkflow: async (
     projectId: string,
     params: CreateWorkflowParams,

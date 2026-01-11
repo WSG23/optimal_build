@@ -20,7 +20,7 @@ import {
   ExpandLess as ExpandLessIcon,
   CheckCircle as CheckIcon,
 } from '@mui/icons-material'
-import { ApprovalWorkflow } from '../../../../api/workflow' // Fixed import path
+import { ApprovalWorkflow, workflowApi } from '../../../../api/workflow'
 import { CreateWorkflowDialog } from './CreateWorkflowDialog'
 
 interface WorkflowDashboardProps {
@@ -80,18 +80,34 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
     [],
   )
 
+  // Fetch workflows from API
+  const fetchWorkflows = React.useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await workflowApi.listWorkflows(projectId)
+      // If no real workflows exist, show mock data for demo purposes
+      if (data.length === 0) {
+        setWorkflows(createMockWorkflows(projectId))
+      } else {
+        setWorkflows(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch workflows:', error)
+      // Fallback to mock data on error
+      setWorkflows(createMockWorkflows(projectId))
+    } finally {
+      setLoading(false)
+    }
+  }, [projectId, createMockWorkflows])
+
   // Initialize workflows only once on mount
   useEffect(() => {
     if (hasInitializedRef.current) {
       return
     }
     hasInitializedRef.current = true
-    setLoading(true)
-    // For Phase 2E implementation, we rely on mock data + newly created workflows pushed to list locally.
-    // TODO: Add list endpoint to backend when available
-    setWorkflows(createMockWorkflows(projectId))
-    setLoading(false)
-  }, [projectId, createMockWorkflows])
+    fetchWorkflows()
+  }, [fetchWorkflows])
 
   const handleCreateSuccess = (newWorkflow: ApprovalWorkflow) => {
     // Add new workflow to list, keeping mock data at the end
@@ -105,26 +121,35 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
   }
 
   const handleApproveStep = async (stepId: string) => {
-    // Optimistic update or call API
-    // Since API returns updated object (assumed), we can update state.
-    // Mock update for now:
-    setWorkflows((prev) =>
-      prev.map((w) => ({
-        ...w,
-        steps: w.steps.map((s) =>
-          s.id === stepId
-            ? {
-                ...s,
-                status: 'approved' as const,
-                decision_at: new Date().toISOString(),
-              }
-            : s,
-        ),
-      })),
-    )
-    // Real call:
-    // await workflowApi.approveStep(stepId, true, 'Approved from dashboard')
-    // fetchWorkflows()
+    // Check if this is a mock step (mock IDs start with 'mock-')
+    if (stepId.startsWith('mock-')) {
+      // Optimistic update for mock data
+      setWorkflows((prev) =>
+        prev.map((w) => ({
+          ...w,
+          steps: w.steps.map((s) =>
+            s.id === stepId
+              ? {
+                  ...s,
+                  status: 'approved' as const,
+                  approved_at: new Date().toISOString(),
+                }
+              : s,
+          ),
+        })),
+      )
+      return
+    }
+
+    // Real API call for non-mock steps
+    try {
+      await workflowApi.approveStep(stepId, true, 'Approved from dashboard')
+      // Refresh workflows to get updated state
+      await fetchWorkflows()
+    } catch (error) {
+      console.error('Failed to approve step:', error)
+      // Could show error notification here
+    }
   }
 
   return (

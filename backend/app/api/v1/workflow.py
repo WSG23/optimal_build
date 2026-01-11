@@ -49,6 +49,20 @@ async def create_workflow(
     return ApprovalWorkflowRead.from_orm_workflow(workflow)
 
 
+@router.get("/", response_model=list[ApprovalWorkflowRead])
+async def list_workflows(
+    project_id: UUID,
+    db=Depends(deps.get_db),
+    identity: deps.RequestIdentity = Depends(deps.require_viewer),
+) -> list[ApprovalWorkflowRead]:
+    """
+    List all workflows for a project.
+    """
+    service = WorkflowService(db)
+    workflows = await service.list_workflows(project_id)
+    return [ApprovalWorkflowRead.from_orm_workflow(w) for w in workflows]
+
+
 @router.get("/{workflow_id}", response_model=ApprovalWorkflowRead)
 async def get_workflow(
     workflow_id: UUID,

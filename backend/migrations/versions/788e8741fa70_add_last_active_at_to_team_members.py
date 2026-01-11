@@ -27,4 +27,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_column("team_members", "last_active_at")
+    # Use inspector to check if column exists before dropping
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    columns = [col["name"] for col in inspector.get_columns("team_members")]
+    if "last_active_at" in columns:
+        op.drop_column("team_members", "last_active_at")

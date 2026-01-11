@@ -124,6 +124,24 @@ class WorkflowService:
         result = await self.db.execute(query)
         return result.scalars().first()
 
+    async def list_workflows(self, project_id: UUID) -> list[ApprovalWorkflow]:
+        """List all workflows for a project with their steps.
+
+        Args:
+            project_id: The project ID to filter workflows by
+
+        Returns:
+            List of workflows with steps eagerly loaded
+        """
+        query = (
+            select(ApprovalWorkflow)
+            .options(joinedload(ApprovalWorkflow.steps))
+            .where(ApprovalWorkflow.project_id == project_id)
+            .order_by(ApprovalWorkflow.created_at.desc())
+        )
+        result = await self.db.execute(query)
+        return result.scalars().unique().all()
+
     async def approve_step(
         self, step_id: UUID, user_id: UUID, comments: str = None
     ) -> ApprovalStep:

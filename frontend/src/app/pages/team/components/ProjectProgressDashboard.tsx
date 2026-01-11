@@ -39,6 +39,7 @@ import {
   type TeamMemberActivity,
   type PendingApproval,
 } from './projectProgressMockData'
+import { workflowApi, type ApprovalWorkflow } from '../../../../api/workflow'
 
 // Types are re-exported from projectProgressMockData.ts for backward compatibility
 // Import types from './projectProgressMockData' directly
@@ -69,8 +70,10 @@ function getStatusColor(status: ProjectPhase['status']) {
       return 'primary'
     case 'delayed':
       return 'error'
+    case 'not_started':
+      return 'info'
     default:
-      return 'default'
+      return 'primary' // Use 'primary' as fallback (works for both Chip and LinearProgress)
   }
 }
 
@@ -97,15 +100,55 @@ export const ProjectProgressDashboard: React.FC<
   )
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    // Simulate loading
+  // Convert workflows to pending approvals format
+  const extractPendingApprovals = (
+    workflows: ApprovalWorkflow[],
+  ): PendingApproval[] => {
+    const approvals: PendingApproval[] = []
+    workflows.forEach((workflow) => {
+      workflow.steps
+        .filter((step) => step.status === 'in_review')
+        .forEach((step) => {
+          approvals.push({
+            id: step.id,
+            title: step.name,
+            workflowName: workflow.name,
+            requiredBy: step.approver_role || 'Any team member',
+            priority: 'normal' as const,
+          })
+        })
+    })
+    return approvals
+  }
+
+  const fetchData = async () => {
     setLoading(true)
-    setTimeout(() => {
-      setPhases(getMockPhases())
-      setTeamActivity(getMockTeamActivity())
+    try {
+      // Fetch real workflows for pending approvals
+      const workflows = await workflowApi.listWorkflows(projectId)
+      const realApprovals = extractPendingApprovals(workflows)
+
+      // Use real pending approvals if available, otherwise fall back to mock
+      if (realApprovals.length > 0) {
+        setPendingApprovals(realApprovals)
+      } else {
+        setPendingApprovals(getMockPendingApprovals())
+      }
+    } catch (error) {
+      console.error('Failed to fetch workflows:', error)
+      // Fallback to mock data on error
       setPendingApprovals(getMockPendingApprovals())
-      setLoading(false)
-    }, 500)
+    }
+
+    // Still use mock data for phases and team activity (would need separate APIs)
+    setPhases(getMockPhases())
+    setTeamActivity(getMockTeamActivity())
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    fetchData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId])
 
   const overallProgress =
@@ -151,12 +194,7 @@ export const ProjectProgressDashboard: React.FC<
             {projectName} - Progress Dashboard
           </Typography>
           <Tooltip title="Refresh">
-            <IconButton
-              onClick={() => {
-                setLoading(true)
-                setTimeout(() => setLoading(false), 500)
-              }}
-            >
+            <IconButton onClick={fetchData}>
               <RefreshIcon />
             </IconButton>
           </Tooltip>

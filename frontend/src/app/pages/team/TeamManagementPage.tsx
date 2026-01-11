@@ -24,9 +24,11 @@ import {
   Add as AddIcon,
   Person as PersonIcon,
   Task as TaskIcon,
+  Dashboard as DashboardIcon,
 } from '@mui/icons-material'
 import { teamApi, TeamMember } from '../../../api/team'
 import { WorkflowDashboard } from './components/WorkflowDashboard'
+import { ProjectProgressDashboard } from './components/ProjectProgressDashboard'
 import { useRouterPath } from '../../../router'
 // If not using react-router params for project ID, we might need to get it from context or props.
 // For now, I'll assume we grab it from URL or a hardcoded one for dev if not available.
@@ -233,6 +235,11 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
             iconPosition="start"
             label="Approvals & Workflows"
           />
+          <Tab
+            icon={<DashboardIcon />}
+            iconPosition="start"
+            label="Progress Dashboard"
+          />
         </Tabs>
       </Box>
 
@@ -345,6 +352,16 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
       {activeTab === 1 && (
         <Box className="ob-card-module">
           <WorkflowDashboard projectId={projectId} />
+        </Box>
+      )}
+
+      {/* Tab 2: Progress Dashboard */}
+      {activeTab === 2 && (
+        <Box className="ob-card-module">
+          <ProjectProgressDashboard
+            projectId={projectId}
+            projectName="Current Project"
+          />
         </Box>
       )}
 
