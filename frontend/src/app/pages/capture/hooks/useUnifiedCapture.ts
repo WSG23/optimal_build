@@ -26,6 +26,7 @@ import {
   forwardGeocodeAddress,
   reverseGeocodeCoords,
 } from '../../../../api/geocoding'
+import { loadCaptureForProject } from '../utils/captureStorage'
 
 const GOOGLE_MAPS_API_KEY = import.meta.env?.VITE_GOOGLE_MAPS_API_KEY ?? ''
 
@@ -64,6 +65,7 @@ export interface CapturedSite {
 
 export interface UseUnifiedCaptureOptions {
   isDeveloperMode: boolean
+  projectId?: string | null
 }
 
 export interface UseUnifiedCaptureReturn {
@@ -113,6 +115,7 @@ export interface UseUnifiedCaptureReturn {
 
 export function useUnifiedCapture({
   isDeveloperMode,
+  projectId,
 }: UseUnifiedCaptureOptions): UseUnifiedCaptureReturn {
   // Form state
   const [latitude, setLatitude] = useState<string>('1.3000')
@@ -151,6 +154,11 @@ export function useUnifiedCapture({
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
   const mapMarkerRef = useRef<google.maps.Marker | null>(null)
+  const hasHydratedRef = useRef(false)
+
+  useEffect(() => {
+    hasHydratedRef.current = false
+  }, [projectId])
 
   // Scenario toggle handler
   const handleScenarioToggle = useCallback((scenario: DevelopmentScenario) => {
@@ -225,6 +233,39 @@ export function useUnifiedCapture({
       .then(() => setIsMapLoaded(true))
       .catch((err) => setMapError(err.message))
   }, [])
+
+  useEffect(() => {
+    if (!isDeveloperMode) {
+      return
+    }
+    if (hasHydratedRef.current) {
+      return
+    }
+    let storedResult: SiteAcquisitionResult | null = null
+    if (projectId) {
+      storedResult = loadCaptureForProject(projectId)
+    }
+    if (!storedResult) {
+      const raw = sessionStorage.getItem('site-acquisition:captured-property')
+      if (raw) {
+        try {
+          storedResult = JSON.parse(raw) as SiteAcquisitionResult
+        } catch {
+          storedResult = null
+        }
+      }
+    }
+    if (storedResult) {
+      setSiteAcquisitionResult(storedResult)
+      setLatitude(storedResult.coordinates.latitude.toString())
+      setLongitude(storedResult.coordinates.longitude.toString())
+      setJurisdictionCode(storedResult.jurisdictionCode ?? 'SG')
+      if (storedResult.address?.fullAddress) {
+        setAddress(storedResult.address.fullAddress)
+      }
+    }
+    hasHydratedRef.current = true
+  }, [isDeveloperMode, projectId])
 
   // Initialize Google Map
   useEffect(() => {
@@ -373,7 +414,7 @@ export function useUnifiedCapture({
                 latitude: parsedLat,
                 longitude: parsedLon,
                 developmentScenarios:
-                  selectedScenarios.length > 0 ? selectedScenarios : undefined,
+                  selectedScenarios.length > 0 ? selectedScenarios : [],
                 jurisdictionCode: jurisdictionCode || undefined,
                 previewDetailLevel: 'medium',
               },
@@ -426,7 +467,6 @@ export function useUnifiedCapture({
               assetOptimization: false,
               financialSummary: false,
               heritageContext: false,
-              photoDocumentation: false,
             },
           })
 

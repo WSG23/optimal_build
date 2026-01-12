@@ -19,6 +19,8 @@ import { Link, useRouterPath } from '../../router'
 import { useTranslation } from '../../i18n'
 import { TopUtilityMenu } from './TopUtilityMenu'
 import { useDeveloperMode } from '../../contexts/useDeveloperMode'
+import { useProject } from '../../contexts/useProject'
+import { ProjectSelector } from './ProjectSelector'
 
 type NavGroup = {
   items: Array<{ path: string; label: string }>
@@ -37,6 +39,11 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
   const path = useRouterPath()
   const theme = useTheme()
   const { isDeveloperMode } = useDeveloperMode()
+  const { currentProject } = useProject()
+
+  const projectBase = currentProject?.id
+    ? `/projects/${currentProject.id}`
+    : null
 
   const hostLabel = useMemo(() => {
     if (typeof window === 'undefined') return 'localhost'
@@ -58,8 +65,14 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
             path: '/visualizations/intelligence',
             label: t('nav.intelligence'),
           },
-          { path: '/feasibility', label: t('nav.feasibility') },
-          { path: '/finance', label: t('nav.finance') },
+          {
+            path: projectBase ? `${projectBase}/feasibility` : '/projects',
+            label: t('nav.feasibility'),
+          },
+          {
+            path: projectBase ? `${projectBase}/finance` : '/projects/finance',
+            label: t('nav.finance'),
+          },
         ],
       },
       // Unified capture - single entry point for both agents and developers
@@ -72,22 +85,37 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
       groups.push({
         items: [
           {
-            path: '/app/asset-feasibility',
+            path: projectBase
+              ? `${projectBase}/feasibility`
+              : '/projects/feasibility',
             label: t('nav.assetFeasibility'),
           },
           {
-            path: '/app/financial-control',
+            path: projectBase
+              ? `${projectBase}/finance`
+              : '/projects/financial',
             label: t('nav.financialControl'),
           },
-          { path: '/app/phase-management', label: t('nav.phaseManagement') },
-          { path: '/app/team-coordination', label: t('nav.teamCoordination') },
-          { path: '/app/regulatory', label: t('nav.regulatoryNavigation') },
+          {
+            path: projectBase ? `${projectBase}/phases` : '/projects/phases',
+            label: t('nav.phaseManagement'),
+          },
+          {
+            path: projectBase ? `${projectBase}/team` : '/projects/team',
+            label: t('nav.teamCoordination'),
+          },
+          {
+            path: projectBase
+              ? `${projectBase}/regulatory`
+              : '/projects/regulatory',
+            label: t('nav.regulatoryNavigation'),
+          },
         ],
       })
     }
 
     return groups
-  }, [isDeveloperMode, t])
+  }, [isDeveloperMode, t, projectBase])
 
   const navRef = useRef<HTMLDivElement | null>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -511,8 +539,10 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
                 pl: 'var(--ob-space-150)',
                 borderLeft: 1,
                 borderColor: alpha(theme.palette.divider, 0.25),
+                gap: 'var(--ob-space-100)',
               }}
             >
+              <ProjectSelector />
               <TopUtilityMenu />
             </Box>
           </Stack>

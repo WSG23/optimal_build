@@ -217,6 +217,11 @@ export interface FinanceProjectCreateResult {
   scenarioId: number
 }
 
+export interface CaptureProjectLinkResult {
+  projectId: string
+  projectName: string
+}
+
 export interface ConditionSystem {
   name: string
   rating: string
@@ -1618,6 +1623,72 @@ export async function createFinanceProjectFromCapture(
     projectName: String(parsed.project_name ?? '').trim() || projectId,
     finProjectId: Number(parsed.fin_project_id ?? 0),
     scenarioId: Number(parsed.scenario_id ?? 0),
+  }
+}
+
+export async function saveProjectFromCapture(
+  propertyId: string,
+  payload: { projectName?: string } = {},
+  signal?: AbortSignal,
+): Promise<CaptureProjectLinkResult> {
+  const response = await fetch(
+    buildUrl(`api/v1/developers/properties/${propertyId}/save-project`),
+    {
+      method: 'POST',
+      headers: applyIdentityHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        projectName: payload.projectName ?? undefined,
+      }),
+      signal,
+    },
+  )
+  if (!response.ok) {
+    const detail = await response.text()
+    throw new Error(detail || `Request failed with status ${response.status}`)
+  }
+  const parsed = (await response.json()) as {
+    project_id?: string
+    project_name?: string
+  }
+  const projectId = String(parsed.project_id ?? '').trim()
+  if (!projectId) {
+    throw new Error('Project creation response missing project_id')
+  }
+  return {
+    projectId,
+    projectName: String(parsed.project_name ?? '').trim() || projectId,
+  }
+}
+
+export async function linkCaptureToProject(
+  propertyId: string,
+  projectId: string,
+  signal?: AbortSignal,
+): Promise<CaptureProjectLinkResult> {
+  const response = await fetch(
+    buildUrl(`api/v1/developers/properties/${propertyId}/link-project`),
+    {
+      method: 'POST',
+      headers: applyIdentityHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ projectId }),
+      signal,
+    },
+  )
+  if (!response.ok) {
+    const detail = await response.text()
+    throw new Error(detail || `Request failed with status ${response.status}`)
+  }
+  const parsed = (await response.json()) as {
+    project_id?: string
+    project_name?: string
+  }
+  const resolvedId = String(parsed.project_id ?? '').trim()
+  if (!resolvedId) {
+    throw new Error('Project link response missing project_id')
+  }
+  return {
+    projectId: resolvedId,
+    projectName: String(parsed.project_name ?? '').trim() || resolvedId,
   }
 }
 

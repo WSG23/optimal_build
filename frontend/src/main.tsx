@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from './router'
 import { HomeOverview } from './App'
 import { TranslationProvider } from './i18n'
 import { DeveloperProvider } from './contexts/DeveloperContext'
+import { ProjectProvider } from './contexts/ProjectContext'
 import { AppThemeProvider } from './theme/YosaiThemeProvider'
 import '@ob/tokens.css'
 import './styles/index.css'
@@ -93,6 +94,14 @@ const TeamManagementPage = React.lazy(async () => {
 const RegulatoryDashboardPage = React.lazy(async () => {
   const module = await import('./app/pages/regulatory/RegulatoryDashboardPage')
   return { default: module.RegulatoryDashboardPage }
+})
+const ProjectListPage = React.lazy(async () => {
+  const module = await import('./app/pages/projects/ProjectListPage')
+  return { default: module.ProjectListPage }
+})
+const ProjectHubPage = React.lazy(async () => {
+  const module = await import('./app/pages/projects/ProjectHubPage')
+  return { default: module.ProjectHubPage }
 })
 const DeveloperControlPanel = React.lazy(async () => {
   const module = await import('./app/pages/developer/DeveloperControlPanel')
@@ -208,6 +217,18 @@ const developerControlPanelElement = (
   </AppShell>
 )
 
+const projectListElement = (
+  <AppShell title="Projects" description="Select or create a project.">
+    {suspense(<ProjectListPage />)}
+  </AppShell>
+)
+
+const projectHubElement = (
+  <AppShell title="Project Overview" description="Project hub and navigation.">
+    {suspense(<ProjectHubPage />)}
+  </AppShell>
+)
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -319,6 +340,34 @@ const router = createBrowserRouter([
     element: regulatoryNavigationElement,
   },
   {
+    path: '/projects',
+    element: projectListElement,
+  },
+  {
+    path: '/projects/:projectId',
+    element: projectHubElement,
+  },
+  {
+    path: '/projects/:projectId/capture',
+    element: unifiedCaptureElement,
+  },
+  {
+    path: '/projects/:projectId/feasibility',
+    element: developerFeasibilityElement,
+  },
+  {
+    path: '/projects/:projectId/finance',
+    element: financialControlElement,
+  },
+  {
+    path: '/projects/:projectId/phases',
+    element: phaseManagementElement,
+  },
+  {
+    path: '/projects/:projectId/team',
+    element: teamCoordinationElement,
+  },
+  {
     path: '/developer',
     element: developerControlPanelElement,
   },
@@ -403,7 +452,9 @@ ReactDOM.createRoot(container).render(
     <TranslationProvider>
       <AppThemeProvider>
         <DeveloperProvider>
-          <RouterProvider router={router} layout={BaseLayout} />
+          <ProjectProvider>
+            <RouterProvider router={router} layout={BaseLayout} />
+          </ProjectProvider>
         </DeveloperProvider>
       </AppThemeProvider>
     </TranslationProvider>

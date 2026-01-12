@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Box,
   Button,
@@ -27,6 +27,36 @@ interface WorkflowDashboardProps {
   projectId: string
 }
 
+const STORAGE_PREFIX = 'ob_team_workflows'
+
+const buildStorageKey = (projectId: string) => `${STORAGE_PREFIX}:${projectId}`
+
+const loadStoredWorkflows = (projectId: string): ApprovalWorkflow[] => {
+  if (typeof window === 'undefined' || !projectId) {
+    return []
+  }
+  const raw = window.localStorage.getItem(buildStorageKey(projectId))
+  if (!raw) {
+    return []
+  }
+  try {
+    const parsed = JSON.parse(raw) as ApprovalWorkflow[]
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+const persistWorkflows = (projectId: string, workflows: ApprovalWorkflow[]) => {
+  if (typeof window === 'undefined' || !projectId) {
+    return
+  }
+  window.localStorage.setItem(
+    buildStorageKey(projectId),
+    JSON.stringify(workflows),
+  )
+}
+
 export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
   projectId,
 }) => {
@@ -34,88 +64,46 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
   const [loading, setLoading] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
 
-  // Ref to track if we've initialized
-  const hasInitializedRef = useRef(false)
-
-  // Mock data for initial dev - using stable dates to prevent re-render loops
-  const createMockWorkflows = React.useCallback(
-    (pid: string): ApprovalWorkflow[] => [
-      {
-        id: 'mock-w1',
-        project_id: pid,
-        name: 'Concept Design Sign-off',
-        description:
-          'Initial concept design review and approval workflow for the project.',
-        workflow_type: 'design_review',
-        status: 'in_progress',
-        current_step_order: 2,
-        created_at: '2024-01-15T10:00:00.000Z', // Stable date
-        steps: [
-          {
-            id: 'mock-s1',
-            name: 'Architectural Review',
-            order: 1,
-            status: 'approved',
-            approved_by_id: 'u2',
-            approved_at: '2024-01-16T14:30:00.000Z', // Stable date
-            approver_role: 'architect',
-          },
-          {
-            id: 'mock-s2',
-            name: 'Structural Feasibility',
-            order: 2,
-            status: 'in_review',
-            approver_role: 'engineer',
-          },
-          {
-            id: 'mock-s3',
-            name: 'Client Approval',
-            order: 3,
-            status: 'pending',
-            approver_role: 'developer',
-          },
-        ],
-      },
-    ],
-    [],
-  )
-
   // Fetch workflows from API
   const fetchWorkflows = React.useCallback(async () => {
     setLoading(true)
+    const stored = loadStoredWorkflows(projectId)
     try {
       const data = await workflowApi.listWorkflows(projectId)
-      // If no real workflows exist, show mock data for demo purposes
-      if (data.length === 0) {
-        setWorkflows(createMockWorkflows(projectId))
-      } else {
+      if (data.length > 0) {
         setWorkflows(data)
+        persistWorkflows(projectId, data)
+        return
       }
+      if (stored.length > 0) {
+        setWorkflows(stored)
+        return
+      }
+      setWorkflows([])
     } catch (error) {
       console.error('Failed to fetch workflows:', error)
-      // Fallback to mock data on error
-      setWorkflows(createMockWorkflows(projectId))
+      if (stored.length > 0) {
+        setWorkflows(stored)
+      } else {
+        setWorkflows([])
+      }
     } finally {
       setLoading(false)
     }
-  }, [projectId, createMockWorkflows])
+  }, [projectId])
 
-  // Initialize workflows only once on mount
   useEffect(() => {
-    if (hasInitializedRef.current) {
-      return
-    }
-    hasInitializedRef.current = true
     fetchWorkflows()
   }, [fetchWorkflows])
 
   const handleCreateSuccess = (newWorkflow: ApprovalWorkflow) => {
-    // Add new workflow to list, keeping mock data at the end
     setWorkflows((prev) => {
-      // Filter out mock workflows, add new one at start, then add mock back
-      const realWorkflows = prev.filter((w) => !w.id.startsWith('mock-'))
-      const mockWorkflowsInState = prev.filter((w) => w.id.startsWith('mock-'))
-      return [newWorkflow, ...realWorkflows, ...mockWorkflowsInState]
+      const next = [
+        newWorkflow,
+        ...prev.filter((workflow) => workflow.id !== newWorkflow.id),
+      ]
+      persistWorkflows(projectId, next)
+      return next
     })
     setCreateOpen(false)
   }

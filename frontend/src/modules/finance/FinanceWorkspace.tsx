@@ -21,7 +21,7 @@ import {
 import { resolveDefaultRole } from '../../api/identity'
 import { AppLayout } from '../../App'
 import { useTranslation } from '../../i18n'
-import { useRouterController } from '../../router'
+import { useRouterController, useRouterParams } from '../../router'
 import { buildSensitivitySummaries } from './components/sensitivitySummary'
 import { FinanceScenarioDeleteDialog } from './components/FinanceScenarioDeleteDialog'
 import {
@@ -55,6 +55,9 @@ import {
 // Canonical Components
 import { Button } from '../../components/canonical/Button'
 import { Card } from '../../components/canonical/Card'
+import { useProject } from '../../contexts/useProject'
+import { createFinanceProjectFromCapture } from '../../api/siteAcquisition'
+import { getCapturePropertyId } from '../../app/pages/capture/utils/captureStorage'
 
 const FinanceAssetBreakdown = lazy(
   () => import('./components/FinanceAssetBreakdown'),
@@ -102,10 +105,6 @@ const FinanceSensitivitySummary = lazy(() =>
   })),
 )
 
-// Demo project ID for fallback when no project is selected (legacy support)
-// Users should navigate here from Site Acquisition with ?projectId=... query param
-const DEMO_PROJECT_ID = '401'
-const DEMO_PROJECT_NAME = 'Finance Demo Development'
 const POLL_INTERVAL_MS = 5000
 const IN_PROGRESS_STATUSES = new Set([
   'queued',
@@ -113,57 +112,7 @@ const IN_PROGRESS_STATUSES = new Set([
   'in_progress',
   'processing',
 ])
-const ASSET_STORAGE_PREFIX = 'developer-asset-mix:'
-const LAST_PROJECT_STORAGE_KEY = 'finance:last-project'
 const ALLOWED_FINANCE_ROLES = new Set(['developer', 'reviewer', 'admin'])
-
-function readCapturedProjectsFromStorage(): FinanceProjectOption[] {
-  if (typeof window === 'undefined' || !window.sessionStorage) {
-    return []
-  }
-  const list: FinanceProjectOption[] = []
-  const seen = new Set<string>()
-  for (let index = 0; index < window.sessionStorage.length; index += 1) {
-    const key = window.sessionStorage.key(index)
-    if (!key || !key.startsWith(ASSET_STORAGE_PREFIX)) {
-      continue
-    }
-    const propertyId = key.slice(ASSET_STORAGE_PREFIX.length)
-    if (!propertyId || seen.has(propertyId)) {
-      continue
-    }
-    seen.add(propertyId)
-    try {
-      const raw = window.sessionStorage.getItem(key)
-      if (!raw) {
-        continue
-      }
-      const parsed = JSON.parse(raw) as {
-        propertyInfo?: { propertyName?: string | null }
-        address?: { fullAddress?: string | null }
-        metadata?: { propertyName?: string | null; capturedAt?: string | null }
-      }
-      const label =
-        parsed.metadata?.propertyName?.trim() ||
-        parsed.propertyInfo?.propertyName?.trim() ||
-        parsed.address?.fullAddress?.trim() ||
-        propertyId
-      list.push({
-        id: propertyId,
-        label,
-        projectName: label,
-        capturedAt: parsed.metadata?.capturedAt ?? null,
-      })
-    } catch (error) {
-      console.warn('[finance] unable to parse stored capture metadata', error)
-    }
-  }
-  return list.sort((a, b) => {
-    const aTime = a.capturedAt ? Date.parse(a.capturedAt) : 0
-    const bTime = b.capturedAt ? Date.parse(b.capturedAt) : 0
-    return bTime - aTime
-  })
-}
 
 function shortenProjectId(value: string): string {
   if (!value) {
@@ -173,75 +122,6 @@ function shortenProjectId(value: string): string {
     return value
   }
   return `${value.slice(0, 6)}…${value.slice(-4)}`
-}
-
-function readLastProjectSelection(): {
-  projectId: string
-  projectName?: string | null
-} | null {
-  if (typeof window === 'undefined') {
-    return null
-  }
-  try {
-    const raw = window.sessionStorage.getItem(LAST_PROJECT_STORAGE_KEY)
-    if (!raw) {
-      return null
-    }
-    const parsed = JSON.parse(raw) as {
-      projectId?: string
-      projectName?: string | null
-    }
-    if (!parsed.projectId) {
-      return null
-    }
-    return {
-      projectId: parsed.projectId,
-      projectName: parsed.projectName ?? null,
-    }
-  } catch {
-    return null
-  }
-}
-
-function persistLastProjectSelection(
-  projectId: string,
-  projectName?: string | null,
-): void {
-  if (typeof window === 'undefined') {
-    return
-  }
-  try {
-    window.sessionStorage.setItem(
-      LAST_PROJECT_STORAGE_KEY,
-      JSON.stringify({ projectId, projectName: projectName ?? null }),
-    )
-  } catch {
-    // Ignore persistence failures
-  }
-}
-
-function parseProjectParams(search: string) {
-  if (!search) {
-    return { projectId: null, projectName: null, finProjectId: null }
-  }
-  try {
-    const params = new URLSearchParams(search)
-    const projectId = params.get('projectId')
-    const projectName = params.get('projectName')
-    const finProjectParam =
-      params.get('finProjectId') ?? params.get('fin_project_id')
-    const parsedFinProject =
-      finProjectParam && !Number.isNaN(Number(finProjectParam))
-        ? Number(finProjectParam)
-        : null
-    return {
-      projectId: projectId?.trim() || null,
-      projectName: projectName?.trim() || null,
-      finProjectId: parsedFinProject,
-    }
-  } catch {
-    return { projectId: null, projectName: null, finProjectId: null }
-  }
 }
 
 function isJobPending(status?: string | null): boolean {
@@ -296,59 +176,32 @@ const DEFAULT_SENSITIVITY_HEADERS = [
 export function FinanceWorkspace() {
   const { t } = useTranslation()
   const router = useRouterController()
-  const { search, path, navigate } = router
-  const projectParams = useMemo(() => parseProjectParams(search), [search])
-  const lastProject = useMemo(() => readLastProjectSelection(), [])
-  // Priority: URL params > session storage > demo fallback (for backwards compatibility)
-  const initialProjectId =
-    projectParams.projectId ?? lastProject?.projectId ?? DEMO_PROJECT_ID
-  const initialProjectName =
-    projectParams.projectName ??
-    lastProject?.projectName ??
-    (initialProjectId === DEMO_PROJECT_ID ? DEMO_PROJECT_NAME : null)
-  const [selectedProjectId, setSelectedProjectId] = useState(initialProjectId)
-  const [selectedProjectName, setSelectedProjectName] = useState<string | null>(
-    initialProjectName,
+  const { path, navigate } = router
+  const { projectId: routeProjectId } = useRouterParams()
+  const {
+    currentProject,
+    projects,
+    setCurrentProject,
+    projectError,
+    isProjectLoading,
+  } = useProject()
+  const projectOptions = useMemo<FinanceProjectOption[]>(
+    () =>
+      projects.map((project) => ({
+        id: project.id,
+        label: project.name,
+        projectName: project.name,
+      })),
+    [projects],
   )
-  const [finProjectFilter, setFinProjectFilter] = useState<number | undefined>(
-    projectParams.finProjectId ?? undefined,
-  )
-  const [storageVersion, setStorageVersion] = useState(0)
-  const [capturedProjects, setCapturedProjects] = useState<
-    FinanceProjectOption[]
-  >(() => readCapturedProjectsFromStorage())
   const [activeTab, setActiveTab] = useState(0)
   const [isHeaderPinned, setIsHeaderPinned] = useState(true)
 
-  useEffect(() => {
-    setCapturedProjects(readCapturedProjectsFromStorage())
-  }, [storageVersion])
-  useEffect(() => {
-    if (
-      projectParams.projectId &&
-      projectParams.projectId !== selectedProjectId
-    ) {
-      setSelectedProjectId(projectParams.projectId)
-    }
-    if (projectParams.projectName !== selectedProjectName) {
-      setSelectedProjectName(projectParams.projectName)
-    }
-    setFinProjectFilter(projectParams.finProjectId ?? undefined)
-  }, [
-    projectParams.projectId,
-    projectParams.projectName,
-    projectParams.finProjectId,
-    selectedProjectId,
-    selectedProjectName,
-  ])
-  const effectiveProjectId = selectedProjectId || DEMO_PROJECT_ID
-  const effectiveProjectName =
-    selectedProjectName ??
-    (selectedProjectId === DEMO_PROJECT_ID ? DEMO_PROJECT_NAME : null)
+  const effectiveProjectId = currentProject?.id ?? ''
+  const effectiveProjectName = currentProject?.name ?? null
   const { scenarios, loading, error, refresh, addScenario } =
     useFinanceScenarios({
-      projectId: effectiveProjectId,
-      finProjectId: finProjectFilter,
+      projectId: effectiveProjectId || undefined,
     })
   const role = resolveDefaultRole()
   const normalizedRole = role ? role.toLowerCase() : null
@@ -357,36 +210,38 @@ export function FinanceWorkspace() {
     : false
   const projectDisplayName =
     effectiveProjectName ?? shortenProjectId(effectiveProjectId)
-  const refreshCapturedProjects = useCallback(() => {
-    setStorageVersion((value) => value + 1)
-  }, [])
+  const hasProject = Boolean(effectiveProjectId)
+  const capturePropertyId = useMemo(
+    () => getCapturePropertyId(effectiveProjectId),
+    [effectiveProjectId],
+  )
+  const showProjectGate = !hasProject && !isProjectLoading
   const handleProjectChange = useCallback(
     (projectId: string, projectName?: string | null) => {
       const trimmed = projectId.trim()
       if (!trimmed) {
         return
       }
-      setSelectedProjectId(trimmed)
-      setSelectedProjectName(projectName ?? null)
-      persistLastProjectSelection(trimmed, projectName ?? null)
-      const params = new URLSearchParams(search)
-      params.set('projectId', trimmed)
-      if (projectName && projectName.trim()) {
-        params.set('projectName', projectName.trim())
+      const match = projects.find((project) => project.id === trimmed)
+      setCurrentProject(
+        match ?? { id: trimmed, name: projectName?.trim() || trimmed },
+      )
+      if (routeProjectId) {
+        navigate(
+          path.replace(`/projects/${routeProjectId}`, `/projects/${trimmed}`),
+        )
       } else {
-        params.delete('projectName')
+        navigate(`/projects/${trimmed}/finance`)
       }
-      params.delete('finProjectId')
-      params.delete('fin_project_id')
-      const querySuffix = params.toString()
-      navigate(querySuffix ? `${path}?${querySuffix}` : path)
     },
-    [navigate, path, search],
+    [navigate, path, projects, routeProjectId, setCurrentProject],
   )
   const [savingLoan, setSavingLoan] = useState(false)
   const [_loanError, setLoanError] = useState<string | null>(null)
   const [scenarioMessage, setScenarioMessage] = useState<string | null>(null)
   const [scenarioError, setScenarioError] = useState<string | null>(null)
+  const [seedError, setSeedError] = useState<string | null>(null)
+  const [seeding, setSeeding] = useState(false)
   const [promotingScenarioId, setPromotingScenarioId] = useState<number | null>(
     null,
   )
@@ -405,6 +260,29 @@ export function FinanceWorkspace() {
     typeof error === 'string' && identityErrorRegex.test(error)
   const needsScenarioCreateIdentity =
     typeof scenarioError === 'string' && identityErrorRegex.test(scenarioError)
+
+  const handleSeedFromCapture = useCallback(async () => {
+    if (!capturePropertyId || seeding) {
+      return
+    }
+    setSeedError(null)
+    setScenarioError(null)
+    setScenarioMessage(null)
+    setSeeding(true)
+    try {
+      const seeded = await createFinanceProjectFromCapture(capturePropertyId, {
+        projectName: effectiveProjectName ?? undefined,
+      })
+      setScenarioMessage(`Seeded finance scenario for ${seeded.projectName}.`)
+      refresh()
+    } catch (err) {
+      setSeedError(
+        err instanceof Error ? err.message : 'Unable to seed finance scenario.',
+      )
+    } finally {
+      setSeeding(false)
+    }
+  }, [capturePropertyId, effectiveProjectName, refresh, seeding])
 
   useEffect(() => {
     if (!scenarioMessage) {
@@ -450,6 +328,22 @@ export function FinanceWorkspace() {
     return analyticsResult.metadata as FinanceAnalyticsMetadata
   }, [primaryScenario])
   const showEmptyState = !loading && !error && scenarios.length === 0
+  const renderEmptyPanel = useCallback(
+    (title: string) => (
+      <Card variant="glass" sx={{ p: 'var(--ob-space-300)' }}>
+        <Stack spacing={1} alignItems="flex-start">
+          <Typography variant="h6">{title}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Create or import a finance scenario to populate this view.
+          </Typography>
+          <Button variant="secondary" size="sm" onClick={() => setActiveTab(0)}>
+            Go to scenario builder
+          </Button>
+        </Stack>
+      </Card>
+    ),
+    [setActiveTab],
+  )
 
   useEffect(() => {
     if (!primaryScenario) {
@@ -768,10 +662,9 @@ export function FinanceWorkspace() {
       <FinanceHeaderControls
         selectedProjectId={effectiveProjectId}
         selectedProjectName={effectiveProjectName ?? null}
-        options={capturedProjects}
+        options={projectOptions}
         onProjectChange={handleProjectChange}
         onRefresh={() => {
-          refreshCapturedProjects()
           refresh()
         }}
         refreshing={loading}
@@ -948,249 +841,363 @@ export function FinanceWorkspace() {
             <FinanceAccessGate role={normalizedRole} />
           ) : (
             <>
-              {error && (
-                <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
-                  <strong>{t('finance.errors.generic')}</strong>
-                  <Box component="span" sx={{ display: 'block' }}>
-                    {error}
-                  </Box>
-                  {needsScenarioIdentity && <FinanceIdentityHelper compact />}
-                </Alert>
-              )}
-
-              {loading && (
-                <Card
-                  variant="glass"
-                  sx={{
-                    p: 'var(--ob-space-200)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <CircularProgress />
+              {showProjectGate && (
+                <Card variant="glass" sx={{ p: 'var(--ob-space-200)' }}>
+                  <Stack spacing={1}>
+                    <Typography variant="h6">
+                      Select a project to continue
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Choose a project from the header or open the project list.
+                    </Typography>
+                    {projectError && (
+                      <Typography variant="body2" color="error">
+                        {projectError.message}
+                      </Typography>
+                    )}
+                    <Box>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => navigate('/projects')}
+                      >
+                        Go to projects
+                      </Button>
+                    </Box>
+                  </Stack>
                 </Card>
               )}
-
-              {scenarioError && (
-                <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
-                  {scenarioError}
-                  {needsScenarioCreateIdentity && (
-                    <FinanceIdentityHelper compact />
+              {hasProject && (
+                <>
+                  {error && (
+                    <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
+                      <strong>{t('finance.errors.generic')}</strong>
+                      <Box component="span" sx={{ display: 'block' }}>
+                        {error}
+                      </Box>
+                      {needsScenarioIdentity && (
+                        <FinanceIdentityHelper compact />
+                      )}
+                    </Alert>
                   )}
-                </Alert>
-              )}
-              {scenarioMessage && (
-                <Alert severity="success" sx={{ mb: 'var(--ob-space-150)' }}>
-                  {scenarioMessage}
-                </Alert>
-              )}
 
-              {/* Tab Panels - Depth 1 (Glass Cards with ob-card-module) */}
-              <div role="tabpanel" hidden={activeTab !== 0}>
-                {activeTab === 0 && (
-                  <Stack spacing="var(--ob-space-200)">
-                    <Box className="ob-card-module">
-                      <Suspense fallback={panelFallback}>
-                        <FinanceScenarioCreator
-                          projectId={effectiveProjectId}
-                          projectName={projectDisplayName}
-                          onCreated={(summary) => {
-                            setScenarioMessage(
-                              t('finance.scenarioCreator.success', {
-                                name: summary.scenarioName,
-                              }),
-                            )
-                            setScenarioError(null)
-                            addScenario(summary)
-                          }}
-                          onError={(message) => {
-                            setScenarioError(message)
-                            setScenarioMessage(null)
-                          }}
-                          onRefresh={() => {
-                            refresh()
-                          }}
-                        />
-                      </Suspense>
-                    </Box>
+                  {loading && (
+                    <Card
+                      variant="glass"
+                      sx={{
+                        p: 'var(--ob-space-200)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <CircularProgress />
+                    </Card>
+                  )}
 
-                    {primaryScenario?.isPrivate ? (
-                      <FinancePrivacyNotice projectName={projectDisplayName} />
-                    ) : null}
+                  {scenarioError && (
+                    <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
+                      {scenarioError}
+                      {needsScenarioCreateIdentity && (
+                        <FinanceIdentityHelper compact />
+                      )}
+                    </Alert>
+                  )}
+                  {seedError && (
+                    <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
+                      {seedError}
+                      {needsScenarioCreateIdentity && (
+                        <FinanceIdentityHelper compact />
+                      )}
+                    </Alert>
+                  )}
+                  {scenarioMessage && (
+                    <Alert
+                      severity="success"
+                      sx={{ mb: 'var(--ob-space-150)' }}
+                    >
+                      {scenarioMessage}
+                    </Alert>
+                  )}
 
-                    {showEmptyState && (
-                      <Card
-                        variant="glass"
-                        sx={{ p: 'var(--ob-space-300)', textAlign: 'center' }}
-                      >
-                        <Typography variant="h5" gutterBottom>
-                          {t('finance.table.empty')}
-                        </Typography>
-                      </Card>
-                    )}
+                  {/* Tab Panels - Depth 1 (Glass Cards with ob-card-module) */}
+                  <div role="tabpanel" hidden={activeTab !== 0}>
+                    {activeTab === 0 && (
+                      <Stack spacing="var(--ob-space-200)">
+                        <Box className="ob-card-module">
+                          <Suspense fallback={panelFallback}>
+                            <FinanceScenarioCreator
+                              projectId={effectiveProjectId}
+                              projectName={projectDisplayName}
+                              onCreated={(summary) => {
+                                setScenarioMessage(
+                                  t('finance.scenarioCreator.success', {
+                                    name: summary.scenarioName,
+                                  }),
+                                )
+                                setScenarioError(null)
+                                addScenario(summary)
+                              }}
+                              onError={(message) => {
+                                setScenarioError(message)
+                                setScenarioMessage(null)
+                              }}
+                              onRefresh={() => {
+                                refresh()
+                              }}
+                            />
+                          </Suspense>
+                        </Box>
 
-                    {primaryScenario?.scenarioId === 0 && (
-                      <Alert
-                        severity="warning"
-                        icon={<Warning />}
-                        sx={{ mb: 'var(--ob-space-050)' }}
-                      >
-                        <strong>{t('finance.warnings.offlineMode')}</strong>
-                        <Typography variant="body2">
-                          {t('finance.warnings.offlineModeDetail') ||
-                            'You are viewing offline demonstration data. Changes cannot be saved correctly until the backend service is available.'}
-                        </Typography>
-                      </Alert>
-                    )}
-
-                    {scenarios.length > 0 && (
-                      <Box className="ob-card-module">
-                        <Suspense fallback={panelFallback}>
-                          <FinanceCapitalStack
-                            scenarios={scenarios}
-                            onMarkPrimary={handleMarkPrimary}
-                            updatingScenarioId={promotingScenarioId}
-                            onRequestDelete={handleRequestDeleteScenario}
-                            deletingScenarioId={deletingScenarioId}
+                        {primaryScenario?.isPrivate ? (
+                          <FinancePrivacyNotice
+                            projectName={projectDisplayName}
                           />
-                        </Suspense>
-                      </Box>
-                    )}
-                  </Stack>
-                )}
-              </div>
+                        ) : null}
 
-              <div role="tabpanel" hidden={activeTab !== 1}>
-                {activeTab === 1 && (
-                  <Box className="ob-card-module">
-                    <Suspense fallback={panelFallback}>
-                      <FinanceDrawdownSchedule scenarios={scenarios} />
-                    </Suspense>
-                  </Box>
-                )}
-              </div>
-              <div role="tabpanel" hidden={activeTab !== 2}>
-                {activeTab === 2 && primaryScenario && (
-                  <Box className="ob-card-module">
-                    <Suspense fallback={panelFallback}>
-                      <FinanceAssetBreakdown
-                        summary={primaryScenario.assetMixSummary ?? null}
-                        breakdowns={primaryScenario.assetBreakdowns ?? []}
-                      />
-                    </Suspense>
-                  </Box>
-                )}
-              </div>
-              <div role="tabpanel" hidden={activeTab !== 3}>
-                {activeTab === 3 && (
-                  <Box className="ob-card-module">
-                    <Suspense fallback={panelFallback}>
-                      <FinanceFacilityEditor
-                        scenario={primaryScenario ?? null}
-                        onSave={handleSaveLoan}
-                        saving={savingLoan}
-                      />
-                    </Suspense>
-                  </Box>
-                )}
-              </div>
-              <div role="tabpanel" hidden={activeTab !== 4}>
-                {activeTab === 4 && (
-                  <Box className="ob-card-module">
-                    <Suspense fallback={panelFallback}>
-                      <FinanceJobTimeline
-                        jobs={timelineJobs}
-                        pendingCount={pendingCount}
-                      />
-                    </Suspense>
-                  </Box>
-                )}
-              </div>
-              <div role="tabpanel" hidden={activeTab !== 5}>
-                {activeTab === 5 && (
-                  <Box className="ob-card-module">
-                    <Suspense fallback={panelFallback}>
-                      <FinanceLoanInterest
-                        schedule={
-                          primaryScenario?.constructionLoanInterest ?? null
-                        }
-                      />
-                    </Suspense>
-                  </Box>
-                )}
-              </div>
-              <div role="tabpanel" hidden={activeTab !== 6}>
-                {activeTab === 6 && analyticsMetadata && (
-                  <Stack spacing="var(--ob-space-200)">
-                    <Box className="ob-card-module">
-                      <Suspense fallback={panelFallback}>
-                        <FinanceAnalyticsPanel
-                          analytics={analyticsMetadata}
-                          currency={primaryScenario?.currency ?? 'SGD'}
-                        />
-                      </Suspense>
-                    </Box>
-                    {primaryScenario && (
-                      <Box className="ob-card-module">
-                        <FinanceSensitivityControls
-                          scenario={primaryScenario}
-                          pendingJobs={pendingCount}
-                          disabled={runningSensitivity}
-                          error={sensitivityError}
-                          onRun={handleRunSensitivity}
-                        />
-                      </Box>
-                    )}
-                  </Stack>
-                )}
-              </div>
-              <div role="tabpanel" hidden={activeTab !== 7}>
-                {activeTab === 7 && (
-                  <Stack spacing="var(--ob-space-200)">
-                    <Box className="ob-card-module">
-                      <Suspense fallback={panelFallback}>
-                        <FinanceSensitivitySummary
-                          summaries={sensitivitySummaries}
-                          currency={primaryScenario?.currency ?? 'SGD'}
-                        />
-                      </Suspense>
-                    </Box>
-                    {primaryScenario && (
-                      <Box className="ob-card-module">
-                        <FinanceSensitivityControls
-                          scenario={primaryScenario}
-                          pendingJobs={pendingCount}
-                          disabled={runningSensitivity}
-                          error={sensitivityError}
-                          onRun={handleRunSensitivity}
-                        />
-                      </Box>
-                    )}
-                    <Box className="ob-card-module">
-                      <FinanceSensitivityTable
-                        outcomes={filteredSensitivity}
-                        currency={primaryScenario?.currency ?? 'SGD'}
-                        parameters={parameters}
-                        selectedParameters={selectedParameters}
-                        onSelectAll={handleSelectAll}
-                        onToggleParameter={handleToggleParameter}
-                        onDownloadCsv={handleDownloadCsv}
-                        onDownloadJson={handleDownloadJson}
-                      />
-                    </Box>
-                  </Stack>
-                )}
-              </div>
+                        {showEmptyState && (
+                          <Card
+                            variant="glass"
+                            sx={{
+                              p: 'var(--ob-space-300)',
+                              textAlign: 'center',
+                            }}
+                          >
+                            <Stack spacing={2} alignItems="center">
+                              <Typography variant="h5">
+                                Start a finance model
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                Enter assumptions in the scenario builder above
+                                or seed a starting point from your capture.
+                              </Typography>
+                              <Stack
+                                direction={{ xs: 'column', sm: 'row' }}
+                                spacing={1}
+                                justifyContent="center"
+                                alignItems="center"
+                              >
+                                {capturePropertyId && (
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={handleSeedFromCapture}
+                                    disabled={seeding}
+                                  >
+                                    {seeding
+                                      ? 'Seeding...'
+                                      : 'Seed from Capture'}
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => setActiveTab(0)}
+                                >
+                                  Build from assumptions
+                                </Button>
+                                <Button variant="ghost" size="sm" disabled>
+                                  Import from Excel/Argus (coming soon)
+                                </Button>
+                              </Stack>
+                            </Stack>
+                          </Card>
+                        )}
 
-              <FinanceScenarioDeleteDialog
-                open={scenarioPendingDelete !== null}
-                scenarioName={scenarioPendingDelete?.scenarioName ?? ''}
-                pending={
-                  deletingScenarioId === scenarioPendingDelete?.scenarioId
-                }
-                onConfirm={handleConfirmDelete}
-                onCancel={handleCancelDelete}
-              />
+                        {primaryScenario?.scenarioId === 0 && (
+                          <Alert
+                            severity="warning"
+                            icon={<Warning />}
+                            sx={{ mb: 'var(--ob-space-050)' }}
+                          >
+                            <strong>{t('finance.warnings.offlineMode')}</strong>
+                            <Typography variant="body2">
+                              {t('finance.warnings.offlineModeDetail') ||
+                                'You are viewing offline demonstration data. Changes cannot be saved correctly until the backend service is available.'}
+                            </Typography>
+                          </Alert>
+                        )}
+
+                        {scenarios.length > 0 && (
+                          <Box className="ob-card-module">
+                            <Suspense fallback={panelFallback}>
+                              <FinanceCapitalStack
+                                scenarios={scenarios}
+                                onMarkPrimary={handleMarkPrimary}
+                                updatingScenarioId={promotingScenarioId}
+                                onRequestDelete={handleRequestDeleteScenario}
+                                deletingScenarioId={deletingScenarioId}
+                              />
+                            </Suspense>
+                          </Box>
+                        )}
+                      </Stack>
+                    )}
+                  </div>
+
+                  <div role="tabpanel" hidden={activeTab !== 1}>
+                    {activeTab === 1 &&
+                      (showEmptyState ? (
+                        renderEmptyPanel('Drawdown schedule')
+                      ) : (
+                        <Box className="ob-card-module">
+                          <Suspense fallback={panelFallback}>
+                            <FinanceDrawdownSchedule scenarios={scenarios} />
+                          </Suspense>
+                        </Box>
+                      ))}
+                  </div>
+                  <div role="tabpanel" hidden={activeTab !== 2}>
+                    {activeTab === 2 &&
+                      (showEmptyState
+                        ? renderEmptyPanel('Asset breakdown')
+                        : primaryScenario && (
+                            <Box className="ob-card-module">
+                              <Suspense fallback={panelFallback}>
+                                <FinanceAssetBreakdown
+                                  summary={
+                                    primaryScenario.assetMixSummary ?? null
+                                  }
+                                  breakdowns={
+                                    primaryScenario.assetBreakdowns ?? []
+                                  }
+                                />
+                              </Suspense>
+                            </Box>
+                          ))}
+                  </div>
+                  <div role="tabpanel" hidden={activeTab !== 3}>
+                    {activeTab === 3 &&
+                      (showEmptyState ? (
+                        renderEmptyPanel('Facility editor')
+                      ) : (
+                        <Box className="ob-card-module">
+                          <Suspense fallback={panelFallback}>
+                            <FinanceFacilityEditor
+                              scenario={primaryScenario ?? null}
+                              onSave={handleSaveLoan}
+                              saving={savingLoan}
+                            />
+                          </Suspense>
+                        </Box>
+                      ))}
+                  </div>
+                  <div role="tabpanel" hidden={activeTab !== 4}>
+                    {activeTab === 4 &&
+                      (showEmptyState ? (
+                        renderEmptyPanel('Job timeline')
+                      ) : (
+                        <Box className="ob-card-module">
+                          <Suspense fallback={panelFallback}>
+                            <FinanceJobTimeline
+                              jobs={timelineJobs}
+                              pendingCount={pendingCount}
+                            />
+                          </Suspense>
+                        </Box>
+                      ))}
+                  </div>
+                  <div role="tabpanel" hidden={activeTab !== 5}>
+                    {activeTab === 5 &&
+                      (showEmptyState ? (
+                        renderEmptyPanel('Loan interest')
+                      ) : (
+                        <Box className="ob-card-module">
+                          <Suspense fallback={panelFallback}>
+                            <FinanceLoanInterest
+                              schedule={
+                                primaryScenario?.constructionLoanInterest ??
+                                null
+                              }
+                            />
+                          </Suspense>
+                        </Box>
+                      ))}
+                  </div>
+                  <div role="tabpanel" hidden={activeTab !== 6}>
+                    {activeTab === 6 &&
+                      (showEmptyState
+                        ? renderEmptyPanel('Analytics')
+                        : analyticsMetadata && (
+                            <Stack spacing="var(--ob-space-200)">
+                              <Box className="ob-card-module">
+                                <Suspense fallback={panelFallback}>
+                                  <FinanceAnalyticsPanel
+                                    analytics={analyticsMetadata}
+                                    currency={
+                                      primaryScenario?.currency ?? 'SGD'
+                                    }
+                                  />
+                                </Suspense>
+                              </Box>
+                              {primaryScenario && (
+                                <Box className="ob-card-module">
+                                  <FinanceSensitivityControls
+                                    scenario={primaryScenario}
+                                    pendingJobs={pendingCount}
+                                    disabled={runningSensitivity}
+                                    error={sensitivityError}
+                                    onRun={handleRunSensitivity}
+                                  />
+                                </Box>
+                              )}
+                            </Stack>
+                          ))}
+                  </div>
+                  <div role="tabpanel" hidden={activeTab !== 7}>
+                    {activeTab === 7 &&
+                      (showEmptyState ? (
+                        renderEmptyPanel('Sensitivity analysis')
+                      ) : (
+                        <Stack spacing="var(--ob-space-200)">
+                          <Box className="ob-card-module">
+                            <Suspense fallback={panelFallback}>
+                              <FinanceSensitivitySummary
+                                summaries={sensitivitySummaries}
+                                currency={primaryScenario?.currency ?? 'SGD'}
+                              />
+                            </Suspense>
+                          </Box>
+                          {primaryScenario && (
+                            <Box className="ob-card-module">
+                              <FinanceSensitivityControls
+                                scenario={primaryScenario}
+                                pendingJobs={pendingCount}
+                                disabled={runningSensitivity}
+                                error={sensitivityError}
+                                onRun={handleRunSensitivity}
+                              />
+                            </Box>
+                          )}
+                          <Box className="ob-card-module">
+                            <FinanceSensitivityTable
+                              outcomes={filteredSensitivity}
+                              currency={primaryScenario?.currency ?? 'SGD'}
+                              parameters={parameters}
+                              selectedParameters={selectedParameters}
+                              onSelectAll={handleSelectAll}
+                              onToggleParameter={handleToggleParameter}
+                              onDownloadCsv={handleDownloadCsv}
+                              onDownloadJson={handleDownloadJson}
+                            />
+                          </Box>
+                        </Stack>
+                      ))}
+                  </div>
+
+                  <FinanceScenarioDeleteDialog
+                    open={scenarioPendingDelete !== null}
+                    scenarioName={scenarioPendingDelete?.scenarioName ?? ''}
+                    pending={
+                      deletingScenarioId === scenarioPendingDelete?.scenarioId
+                    }
+                    onConfirm={handleConfirmDelete}
+                    onCancel={handleCancelDelete}
+                  />
+                </>
+              )}
             </>
           )}
         </Box>

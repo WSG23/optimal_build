@@ -30,7 +30,7 @@ import type {
 interface PhaseEditorProps {
   open: boolean
   phase?: DevelopmentPhase | null
-  projectId: number
+  projectId: string
   onClose: () => void
   onSave: (
     data: CreatePhasePayload | UpdatePhasePayload,

@@ -1,7 +1,12 @@
 import { useState } from 'react'
 import type { NavItem, NavItemKey } from '../navigation'
-import { AGENT_NAV_ITEMS, DEVELOPER_NAV_ITEMS } from '../navigation'
+import {
+  AGENT_NAV_ITEMS,
+  DEVELOPER_NAV_ITEMS,
+  resolveNavPath,
+} from '../navigation'
 import { useDeveloperMode } from '../../contexts/useDeveloperMode'
+import { useProject } from '../../contexts/useProject'
 
 type Workspace = 'agent' | 'developer'
 
@@ -17,6 +22,7 @@ export function AppNavigation({
   currentPath,
 }: AppNavigationProps) {
   const { isDeveloperMode } = useDeveloperMode()
+  const { currentProject } = useProject()
   // Determine initial workspace based on active item
   const initialWorkspace: Workspace = DEVELOPER_NAV_ITEMS.find(
     (item) => item.key === activeItem,
@@ -44,11 +50,12 @@ export function AppNavigation({
     // Navigate to first item of the selected workspace
     const firstItem =
       workspace === 'agent' ? AGENT_NAV_ITEMS[0] : DEVELOPER_NAV_ITEMS[0]
-    onNavigate(firstItem.path)
+    onNavigate(resolveNavPath(firstItem, currentProject?.id))
   }
 
   const renderItem = (item: NavItem) => {
-    const isActive = activeItem === item.key || currentPath === item.path
+    const resolvedPath = resolveNavPath(item, currentProject?.id)
+    const isActive = activeItem === item.key || currentPath === resolvedPath
     const isDisabled = Boolean(item.comingSoon)
     const className = [
       'app-nav__item',
@@ -62,7 +69,7 @@ export function AppNavigation({
       <li key={item.key} className={className}>
         <button
           type="button"
-          onClick={() => handleClick(item.path, isDisabled)}
+          onClick={() => handleClick(resolvedPath, isDisabled)}
           disabled={isDisabled}
         >
           <span className="app-nav__label">{item.label}</span>

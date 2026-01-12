@@ -15,7 +15,6 @@ import {
   Tab,
   Tabs,
   useTheme,
-  TextField,
 } from '@mui/material'
 import {
   Add as AddIcon,
@@ -40,9 +39,8 @@ import { SubmissionWizard } from './components/SubmissionWizard'
 import { CompliancePathTimeline } from './components/CompliancePathTimeline'
 import { ChangeOfUseWizard } from './components/ChangeOfUseWizard'
 import { HeritageSubmissionForm } from './components/HeritageSubmissionForm'
-import { useProject } from '../../../contexts/useProject'
-import { useRouterParams } from '../../../router'
 import { getTableSx, getPrimaryButtonSx } from '../../../utils/themeStyles'
+import { useProject } from '../../../contexts/useProject'
 
 const AGENCIES_INFO = [
   { code: 'URA', name: 'Urban Redevelopment Authority', status: 'Online' },
@@ -50,6 +48,37 @@ const AGENCIES_INFO = [
   { code: 'SCDF', name: 'Singapore Civil Defence Force', status: 'Online' },
   { code: 'NEA', name: 'National Environment Agency', status: 'Online' },
 ]
+
+const STORAGE_PREFIX = 'ob_regulatory'
+
+const buildStorageKey = (projectId: string, suffix: string) =>
+  `${STORAGE_PREFIX}:${projectId}:${suffix}`
+
+const loadStoredList = <T,>(projectId: string, suffix: string): T[] => {
+  if (typeof window === 'undefined' || !projectId) {
+    return []
+  }
+  const raw = window.localStorage.getItem(buildStorageKey(projectId, suffix))
+  if (!raw) {
+    return []
+  }
+  try {
+    const parsed = JSON.parse(raw) as T[]
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+const persistList = <T,>(projectId: string, suffix: string, items: T[]) => {
+  if (typeof window === 'undefined' || !projectId) {
+    return
+  }
+  window.localStorage.setItem(
+    buildStorageKey(projectId, suffix),
+    JSON.stringify(items),
+  )
+}
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -74,23 +103,9 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 export const RegulatoryDashboardPage: React.FC = () => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
-  const { currentProject } = useProject()
-  const params = useRouterParams()
+  const { currentProject, isProjectLoading, projectError } = useProject()
+  const projectId = currentProject?.id ?? ''
 
-  // Derive project ID: context > URL params > fallback to demo '191'
-  const derivedProjectId = currentProject?.id || params.projectId || '191'
-
-  // Project ID input - allows manual override for testing/debugging
-  const [projectIdInput, setProjectIdInput] = useState<string>(derivedProjectId)
-  const [projectId, setProjectId] = useState<string>(derivedProjectId)
-
-  // Sync with context/URL when they change
-  useEffect(() => {
-    if (derivedProjectId !== projectId) {
-      setProjectIdInput(derivedProjectId)
-      setProjectId(derivedProjectId)
-    }
-  }, [derivedProjectId, projectId])
   const [tabValue, setTabValue] = useState(0)
   const [submissions, setSubmissions] = useState<AuthoritySubmission[]>([])
   const [changeOfUseApps, setChangeOfUseApps] = useState<
@@ -109,42 +124,48 @@ export const RegulatoryDashboardPage: React.FC = () => {
   >(undefined)
   const [error, setError] = useState<string | null>(null)
 
-  // Apply project ID when user presses Enter or clicks Load
-  const handleLoadProject = () => {
-    if (projectIdInput.trim()) {
-      setProjectId(projectIdInput.trim())
-    }
-  }
-
-  const handleProjectIdKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleLoadProject()
-    }
-  }
-
   // Theme-aware styles
   const tableSx = getTableSx(isDarkMode)
 
   const fetchSubmissions = useCallback(
     async (isRefresh = false) => {
+      if (!projectId) {
+        return
+      }
       if (isRefresh) setRefreshing(true)
       else setLoading(true)
       setError(null)
+
+      const storedSubmissions = loadStoredList<AuthoritySubmission>(
+        projectId,
+        'submissions',
+      )
+      const storedChangeOfUse = loadStoredList<ChangeOfUseApplication>(
+        projectId,
+        'change-of-use',
+      )
+      const storedHeritage = loadStoredList<HeritageSubmission>(
+        projectId,
+        'heritage',
+      )
 
       try {
         // Fetch authority submissions
         const data = await regulatoryApi.listSubmissions(projectId)
         setSubmissions(data)
+        persistList(projectId, 'submissions', data)
 
         // Fetch change of use applications
         const couApps =
           await regulatoryApi.listChangeOfUseApplications(projectId)
         setChangeOfUseApps(couApps)
+        persistList(projectId, 'change-of-use', couApps)
 
         // Fetch heritage submissions
         const heritageData =
           await regulatoryApi.listHeritageSubmissions(projectId)
         setHeritageSubmissions(heritageData)
+        persistList(projectId, 'heritage', heritageData)
 
         // Poll recent submissions for updates
         const pendingItems = data.filter((s) =>
@@ -159,7 +180,22 @@ export const RegulatoryDashboardPage: React.FC = () => {
         }
       } catch (err) {
         console.error(err)
-        // setError('Failed to load submissions')
+        if (storedSubmissions.length > 0) {
+          setSubmissions(storedSubmissions)
+        }
+        if (storedChangeOfUse.length > 0) {
+          setChangeOfUseApps(storedChangeOfUse)
+        }
+        if (storedHeritage.length > 0) {
+          setHeritageSubmissions(storedHeritage)
+        }
+        if (
+          storedSubmissions.length === 0 &&
+          storedChangeOfUse.length === 0 &&
+          storedHeritage.length === 0
+        ) {
+          setError('Failed to load submissions')
+        }
       } finally {
         if (isRefresh) setRefreshing(false)
         else setLoading(false)
@@ -172,8 +208,30 @@ export const RegulatoryDashboardPage: React.FC = () => {
     fetchSubmissions()
   }, [fetchSubmissions])
 
+  if (!projectId) {
+    return (
+      <Box sx={{ width: '100%' }}>
+        {isProjectLoading ? (
+          <CircularProgress />
+        ) : (
+          <Alert severity={projectError ? 'error' : 'info'}>
+            {projectError?.message ??
+              'Select a project to manage regulatory submissions.'}
+          </Alert>
+        )}
+      </Box>
+    )
+  }
+
   const handleCreateSuccess = (newSubmission: AuthoritySubmission) => {
-    setSubmissions([newSubmission, ...submissions])
+    setSubmissions((prev) => {
+      const next = [
+        newSubmission,
+        ...prev.filter((s) => s.id !== newSubmission.id),
+      ]
+      persistList(projectId, 'submissions', next)
+      return next
+    })
     setWizardOpen(false)
   }
 
@@ -184,9 +242,12 @@ export const RegulatoryDashboardPage: React.FC = () => {
       if (existingIndex >= 0) {
         const updated = [...prev]
         updated[existingIndex] = submission
+        persistList(projectId, 'heritage', updated)
         return updated
       }
-      return [submission, ...prev]
+      const next = [submission, ...prev]
+      persistList(projectId, 'heritage', next)
+      return next
     })
     // Don't close the form - let user continue editing or submit to STB
   }
@@ -274,35 +335,12 @@ export const RegulatoryDashboardPage: React.FC = () => {
               Manage authority submissions and compliance tracking
             </Typography>
           </Box>
-          {/* Project ID Input */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--ob-space-100)',
-            }}
+          <Typography
+            variant="body2"
+            sx={{ color: 'text.secondary', mt: 'var(--ob-space-050)' }}
           >
-            <TextField
-              size="small"
-              label="Project ID"
-              value={projectIdInput}
-              onChange={(e) => setProjectIdInput(e.target.value)}
-              onKeyDown={handleProjectIdKeyDown}
-              placeholder="e.g., 191"
-              sx={{ width: 150 }}
-              helperText={
-                projectId !== projectIdInput ? 'Press Enter to load' : ''
-              }
-            />
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleLoadProject}
-              disabled={!projectIdInput.trim() || projectIdInput === projectId}
-            >
-              Load
-            </Button>
-          </Box>
+            Project: {currentProject?.name ?? projectId}
+          </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 'var(--ob-space-150)' }}>
           <Button
@@ -550,17 +588,17 @@ export const RegulatoryDashboardPage: React.FC = () => {
                       </TableCell>
                       <TableCell sx={{ fontWeight: 500 }}>
                         {row.title}
-                        {row.agency_remarks && (
+                        {row.description && (
                           <Typography
                             variant="caption"
                             display="block"
-                            color="warning.main"
+                            color="text.secondary"
                           >
-                            {row.agency_remarks}
+                            {row.description}
                           </Typography>
                         )}
                       </TableCell>
-                      <TableCell>{row.agency}</TableCell>
+                      <TableCell>{row.agency_id}</TableCell>
                       <TableCell>{row.submission_type}</TableCell>
                       <TableCell>
                         <Chip
@@ -775,9 +813,20 @@ export const RegulatoryDashboardPage: React.FC = () => {
         open={changeOfUseOpen}
         onClose={() => setChangeOfUseOpen(false)}
         projectId={projectId}
-        onSuccess={() => {
+        onSuccess={(application) => {
           setChangeOfUseOpen(false)
-          fetchSubmissions(true)
+          setChangeOfUseApps((prev) => {
+            const existingIndex = prev.findIndex((s) => s.id === application.id)
+            if (existingIndex >= 0) {
+              const updated = [...prev]
+              updated[existingIndex] = application
+              persistList(projectId, 'change-of-use', updated)
+              return updated
+            }
+            const next = [application, ...prev]
+            persistList(projectId, 'change-of-use', next)
+            return next
+          })
         }}
       />
 

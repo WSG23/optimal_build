@@ -289,3 +289,16 @@ export function useRouterLocation() {
   }
   return { path: context.path, search: context.search }
 }
+
+export function useRouterParams(): Record<string, string> {
+  const { path } = useRouterLocation()
+  const segments = path.split('/').filter(Boolean)
+  const params: Record<string, string> = {}
+
+  const projectsIndex = segments.indexOf('projects')
+  if (projectsIndex >= 0 && segments[projectsIndex + 1]) {
+    params.projectId = segments[projectsIndex + 1]
+  }
+
+  return params
+}

@@ -29,7 +29,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, relationship
 
-from app.models.base import BaseModel as Base
+from app.models.base import BaseModel as Base, UUID
 
 if TYPE_CHECKING:
     from app.models.projects import Project
@@ -135,7 +135,7 @@ class DevelopmentPhase(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(
-        Integer,
+        UUID(),
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -362,7 +362,7 @@ class TenantRelocation(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(
-        Integer,
+        UUID(),
         ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

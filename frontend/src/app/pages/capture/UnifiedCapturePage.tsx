@@ -27,6 +27,7 @@ import { AgentResultsPanel } from './components/AgentResultsPanel'
 import { MissionLog } from './components/MissionLog'
 import { VoiceObservationsPanel } from '../site-acquisition/components/VoiceObservationsPanel'
 import type { DevelopmentScenario } from '../../../api/agents'
+import { useRouterParams } from '../../../router'
 
 import 'mapbox-gl/dist/mapbox-gl.css'
 import '../../../styles/gps-capture.css'
@@ -77,6 +78,7 @@ const JURISDICTIONS = [
 
 export function UnifiedCapturePage() {
   const { isDeveloperMode, toggleDeveloperMode } = useDeveloperMode()
+  const { projectId } = useRouterParams()
 
   const {
     // Form state
@@ -118,7 +120,7 @@ export function UnifiedCapturePage() {
     // Handlers
     handleCapture,
     handleNewCapture,
-  } = useUnifiedCapture({ isDeveloperMode })
+  } = useUnifiedCapture({ isDeveloperMode, projectId })
 
   // Get property ID for voice notes
   const propertyId = isDeveloperMode

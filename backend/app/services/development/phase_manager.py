@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
 
 import structlog
 
@@ -57,7 +58,7 @@ class GanttTask:
 class GanttChart:
     """Complete Gantt chart data for a project."""
 
-    project_id: int
+    project_id: UUID
     project_name: str
     tasks: List[GanttTask]
     milestones: List[Dict[str, Any]]
@@ -87,7 +88,7 @@ class CriticalPathResult:
 class HeritageTracker:
     """Heritage preservation tracking summary."""
 
-    project_id: int
+    project_id: UUID
     total_heritage_phases: int
     classifications: Dict[str, int]  # Classification -> count
     phases: List[Dict[str, Any]]
@@ -100,7 +101,7 @@ class HeritageTracker:
 class TenantCoordinationSummary:
     """Tenant coordination summary for occupied renovations."""
 
-    project_id: int
+    project_id: UUID
     total_tenants: int
     relocation_required: int
     relocated: int
@@ -147,7 +148,7 @@ class PhaseManagerService:
 
     def generate_gantt_chart(
         self,
-        project_id: int,
+        project_id: UUID,
         project_name: str,
         phases: List[DevelopmentPhase],
         milestones: Optional[List[PhaseMilestone]] = None,
@@ -444,7 +445,7 @@ class PhaseManagerService:
 
     def track_heritage_preservation(
         self,
-        project_id: int,
+        project_id: UUID,
         phases: List[DevelopmentPhase],
         milestones: Optional[List[PhaseMilestone]] = None,
     ) -> HeritageTracker:
@@ -530,7 +531,7 @@ class PhaseManagerService:
 
     def coordinate_tenant_relocation(
         self,
-        project_id: int,
+        project_id: UUID,
         relocations: List[TenantRelocation],
         phases: Optional[List[DevelopmentPhase]] = None,
     ) -> TenantCoordinationSummary:

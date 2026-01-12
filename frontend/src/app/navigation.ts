@@ -19,6 +19,7 @@ export interface NavItem {
   key: NavItemKey
   label: string
   path: string
+  projectPath?: (projectId: string) => string
   description?: string
   icon?: string
   comingSoon?: boolean
@@ -78,6 +79,7 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
     key: 'assetFeasibility',
     label: 'Asset Feasibility',
     path: '/app/asset-feasibility',
+    projectPath: (projectId: string) => `/projects/${projectId}/feasibility`,
     description: 'Multi-use optimizer and asset-specific modeling.',
     workspace: 'developer',
   },
@@ -85,6 +87,7 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
     key: 'financialControl',
     label: 'Financial Control',
     path: '/app/financial-control',
+    projectPath: (projectId: string) => `/projects/${projectId}/finance`,
     description: 'Development economics and financing architecture.',
     workspace: 'developer',
   },
@@ -92,6 +95,7 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
     key: 'phaseManagement',
     label: 'Phase Management',
     path: '/app/phase-management',
+    projectPath: (projectId: string) => `/projects/${projectId}/phases`,
     description: 'Multi-phase development and renovation sequencing.',
     workspace: 'developer',
   },
@@ -99,6 +103,7 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
     key: 'teamCoordination',
     label: 'Team Coordination',
     path: '/developers/team-coordination', // Path updated
+    projectPath: (projectId: string) => `/projects/${projectId}/team`,
     description: 'Consultant network and approval workflows.',
     workspace: 'developer',
   },
@@ -107,6 +112,7 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
     label: 'Regulatory Navigation',
     icon: 'Gavel',
     path: '/developers/regulatory',
+    projectPath: (projectId: string) => `/projects/${projectId}/regulatory`,
     description: 'Authority submissions (URA, BCA) and compliance.',
     workspace: 'developer',
   },
@@ -147,3 +153,13 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
 // Combined navigation (temporary - will add workspace switcher later)
 // Shows both Agent and Developer tools for now
 export const NAV_ITEMS: NavItem[] = [...AGENT_NAV_ITEMS, ...DEVELOPER_NAV_ITEMS]
+
+export function resolveNavPath(
+  item: NavItem,
+  projectId?: string | null,
+): string {
+  if (projectId && item.projectPath) {
+    return item.projectPath(projectId)
+  }
+  return item.path
+}

@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Dict, Optional, Sequence
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import structlog
 from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import AliasChoices, BaseModel, Field, field_validator
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.agents import CoordinatePair, QuickAnalysisEnvelope
@@ -42,6 +43,7 @@ from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.api.deps import RequestIdentity, require_reviewer
 from app.models.property import Property
+from app.models.projects import Project, ProjectPhase, ProjectType
 from app.schemas.finance import FinanceAssetMixInput
 from app.services.finance_project_creation import (
     create_finance_project_from_capture,
@@ -1009,6 +1011,30 @@ class FinanceProjectCreateResponse(BaseModel):
     project_name: str
 
 
+class CaptureProjectCreateRequest(BaseModel):
+    """Request body for saving a capture as a project."""
+
+    project_name: str | None = Field(
+        default=None, validation_alias=AliasChoices("project_name", "projectName")
+    )
+
+
+class CaptureProjectLinkRequest(BaseModel):
+    """Request body for linking a capture to an existing project."""
+
+    project_id: UUID = Field(
+        ..., validation_alias=AliasChoices("project_id", "projectId")
+    )
+
+
+class CaptureProjectLinkResponse(BaseModel):
+    """Response envelope for capture/project linkage."""
+
+    project_id: UUID
+    project_name: str
+    property_id: UUID
+
+
 # =============================================================================
 # Route Handlers
 # =============================================================================
@@ -1236,6 +1262,110 @@ async def create_finance_project_for_capture(
         fin_project_id=result.fin_project_id,
         scenario_id=result.scenario_id,
         project_name=result.project_name,
+    )
+
+
+@router.post(
+    "/properties/{property_id}/save-project",
+    response_model=CaptureProjectLinkResponse,
+)
+async def save_project_from_capture(
+    property_id: UUID,
+    payload: CaptureProjectCreateRequest | None = None,
+    session: AsyncSession = Depends(get_session),
+    identity: RequestIdentity = Depends(require_reviewer),
+) -> CaptureProjectLinkResponse:
+    """Create a project from a capture and link the property."""
+
+    property_record = await session.get(Property, property_id)
+    if property_record is None:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    if property_record.project_id:
+        project = await session.get(Project, property_record.project_id)
+        if project is not None:
+            return CaptureProjectLinkResponse(
+                project_id=project.id,
+                project_name=project.project_name,
+                property_id=property_id,
+            )
+
+    request_payload = payload or CaptureProjectCreateRequest()
+    cleaned_project_name = (
+        request_payload.project_name or property_record.name or "Capture Project"
+    ).strip()
+    if not cleaned_project_name:
+        cleaned_project_name = "Capture Project"
+
+    project_code = f"gps_{property_id.hex}"
+    existing = await session.execute(
+        select(Project).where(Project.project_code == project_code)
+    )
+    if existing.scalar_one_or_none():
+        project_code = f"{project_code}_{uuid4().hex[:6]}"
+
+    owner_email = (identity.email or "").strip() or None
+    owner_id: UUID | None = None
+    if identity.user_id:
+        try:
+            owner_id = UUID(identity.user_id)
+        except ValueError:
+            owner_id = None
+
+    project = Project(
+        project_name=cleaned_project_name,
+        project_code=project_code,
+        project_type=ProjectType.NEW_DEVELOPMENT,
+        current_phase=ProjectPhase.CONCEPT,
+        owner_id=owner_id,
+        owner_email=owner_email,
+    )
+    session.add(project)
+    await session.flush()
+
+    property_record.project_id = project.id
+    if owner_email and not property_record.owner_email:
+        property_record.owner_email = owner_email
+
+    await session.commit()
+
+    return CaptureProjectLinkResponse(
+        project_id=project.id,
+        project_name=project.project_name,
+        property_id=property_id,
+    )
+
+
+@router.post(
+    "/properties/{property_id}/link-project",
+    response_model=CaptureProjectLinkResponse,
+)
+async def link_capture_to_project(
+    property_id: UUID,
+    payload: CaptureProjectLinkRequest,
+    session: AsyncSession = Depends(get_session),
+    identity: RequestIdentity = Depends(require_reviewer),
+) -> CaptureProjectLinkResponse:
+    """Link a capture to an existing project."""
+
+    property_record = await session.get(Property, property_id)
+    if property_record is None:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    project = await session.get(Project, payload.project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    property_record.project_id = project.id
+    if identity.email and not property_record.owner_email:
+        property_record.owner_email = identity.email
+
+    await session.commit()
+
+    return CaptureProjectLinkResponse(
+        project_id=project.id,
+        project_name=project.project_name,
+        property_id=property_id,
     )
 
 

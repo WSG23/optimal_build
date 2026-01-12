@@ -15,13 +15,31 @@
  */
 
 import { useState, useMemo, useCallback } from 'react'
-import { Box, Typography, Select, MenuItem, FormControl } from '@mui/material'
+import {
+  Box,
+  Typography,
+  Select,
+  MenuItem,
+  FormControl,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+  Stack,
+} from '@mui/material'
 import RefreshIcon from '@mui/icons-material/Refresh'
 
 import type { SiteAcquisitionResult } from '../../../../api/siteAcquisition'
 import type { DevelopmentScenario } from '../../../../api/agents'
 import { Button } from '../../../../components/canonical/Button'
 import { Link } from '../../../../router'
+import { useProject } from '../../../../contexts/useProject'
+import {
+  linkCaptureToProject,
+  saveProjectFromCapture,
+} from '../../../../api/siteAcquisition'
+import { saveCaptureForProject } from '../utils/captureStorage'
 
 // Import Site Acquisition components
 import { PropertyOverviewSection } from '../../site-acquisition/components/property-overview/PropertyOverviewSection'
@@ -66,6 +84,14 @@ export function DeveloperResults({
   const [activeScenario, setActiveScenario] = useState<
     DevelopmentScenario | 'all'
   >(selectedScenarios[0] ?? 'all')
+  const { currentProject, projects, setCurrentProject, refreshProjects } =
+    useProject()
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+  const [saveMode, setSaveMode] = useState<'new' | 'existing'>('new')
+  const [projectNameInput, setProjectNameInput] = useState('')
+  const [existingProjectId, setExistingProjectId] = useState('')
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [savingProject, setSavingProject] = useState(false)
 
   // Scenario lookup map for labels
   const scenarioLookup = useMemo(
@@ -152,6 +178,72 @@ export function DeveloperResults({
 
   // Currency symbol for formatting
   const currencySymbol = result.currencySymbol ?? 'S$'
+  const suggestedProjectName =
+    result.propertyInfo?.propertyName?.trim() ||
+    result.address?.fullAddress?.trim() ||
+    'Capture Project'
+
+  const handleOpenSaveDialog = useCallback(() => {
+    setSaveError(null)
+    void refreshProjects()
+    if (currentProject) {
+      setSaveMode('existing')
+      setExistingProjectId(currentProject.id)
+    } else {
+      setSaveMode('new')
+      setProjectNameInput(suggestedProjectName)
+    }
+    setSaveDialogOpen(true)
+  }, [currentProject, suggestedProjectName, refreshProjects])
+
+  const handleSaveProject = useCallback(async () => {
+    if (savingProject) {
+      return
+    }
+    setSaveError(null)
+    setSavingProject(true)
+    try {
+      if (saveMode === 'existing') {
+        if (!existingProjectId) {
+          setSaveError('Select an existing project.')
+          return
+        }
+        const linked = await linkCaptureToProject(
+          result.propertyId,
+          existingProjectId,
+        )
+        setCurrentProject({ id: linked.projectId, name: linked.projectName })
+        saveCaptureForProject(linked.projectId, result)
+      } else {
+        const name = projectNameInput.trim()
+        if (!name) {
+          setSaveError('Project name is required.')
+          return
+        }
+        const created = await saveProjectFromCapture(result.propertyId, {
+          projectName: name,
+        })
+        setCurrentProject({ id: created.projectId, name: created.projectName })
+        saveCaptureForProject(created.projectId, result)
+      }
+      await refreshProjects()
+      setSaveDialogOpen(false)
+    } catch (error) {
+      setSaveError(
+        error instanceof Error ? error.message : 'Unable to save project.',
+      )
+    } finally {
+      setSavingProject(false)
+    }
+  }, [
+    result,
+    existingProjectId,
+    projectNameInput,
+    refreshProjects,
+    saveMode,
+    savingProject,
+    setCurrentProject,
+  ])
 
   // Scenario comparison state - pass required options object and extract all values
   const {
@@ -188,16 +280,21 @@ export function DeveloperResults({
           ? (entry.scenario as DevelopmentScenario)
           : 'raw_land'
       const label =
-        scenarioLookup.get(scenario)?.label ?? formatScenarioLabel(scenario)
+        scenarioLookup.get(scenario)?.label ??
+        formatScenarioLabel(scenario as DevelopmentScenario | 'all' | null)
       // Extract signals from quick analysis entry
       const opportunities: string[] = []
       const risks: string[] = []
       // Add opportunity/risk signals based on metrics
-      if (entry.estIrr && entry.estIrr > 15) {
-        opportunities.push(`Strong IRR: ${entry.estIrr.toFixed(1)}%`)
+      const estIrr =
+        typeof entry.metrics?.['est_irr'] === 'number'
+          ? entry.metrics['est_irr']
+          : null
+      if (estIrr !== null && estIrr > 15) {
+        opportunities.push(`Strong IRR: ${estIrr.toFixed(1)}%`)
       }
-      if (entry.estIrr && entry.estIrr < 10) {
-        risks.push(`Low IRR: ${entry.estIrr.toFixed(1)}%`)
+      if (estIrr !== null && estIrr < 10) {
+        risks.push(`Low IRR: ${estIrr.toFixed(1)}%`)
       }
       return {
         scenario,
@@ -313,6 +410,16 @@ export function DeveloperResults({
     [],
   )
 
+  // Adapter to match InspectionHistorySummary's expected signature
+  const formatScenarioAdapter = useCallback(
+    (scenario: string | null | undefined): string => {
+      return formatScenarioLabel(
+        scenario as DevelopmentScenario | 'all' | null | undefined,
+      )
+    },
+    [formatScenarioLabel],
+  )
+
   // Inline Inspection History Summary component (rendered inline within section)
   const InlineInspectionHistorySummaryComponent = useCallback(
     () => (
@@ -322,7 +429,7 @@ export function DeveloperResults({
         error={assessmentHistoryError}
         latestEntry={latestAssessmentEntry}
         previousEntry={previousAssessmentEntry}
-        formatScenario={formatScenarioLabel}
+        formatScenario={formatScenarioAdapter}
         formatTimestamp={formatRecordedTimestamp}
         onViewTimeline={() => setHistoryModalOpen(true)}
         onLogInspection={() => openAssessmentEditor('new')}
@@ -334,7 +441,7 @@ export function DeveloperResults({
       assessmentHistoryError,
       latestAssessmentEntry,
       previousAssessmentEntry,
-      formatScenarioLabel,
+      formatScenarioAdapter,
       formatRecordedTimestamp,
       openAssessmentEditor,
     ],
@@ -344,7 +451,7 @@ export function DeveloperResults({
   const overviewCards = useMemo(() => {
     return buildPropertyOverviewCards({
       capturedProperty: result,
-      previewJob: result.previewJob ?? null,
+      previewJob: result.previewJobs?.[0] ?? null,
       colorLegendEntries: colorLegendEntries ?? [],
       formatters: {
         formatNumber,
@@ -437,7 +544,7 @@ export function DeveloperResults({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => handleRefreshPreview(previewDetailLevel)}
+              onClick={() => handleRefreshPreview()}
               disabled={isRefreshingPreview}
             >
               <RefreshIcon
@@ -460,10 +567,10 @@ export function DeveloperResults({
         >
           {/* 3D Viewer */}
           <Preview3DViewer
-            previewUrl={previewJob?.conceptMeshUrl}
-            metadataUrl={previewJob?.previewMetadataUrl}
+            previewUrl={previewJob?.previewUrl ?? null}
+            metadataUrl={previewJob?.metadataUrl ?? null}
             status={previewJob?.status ?? 'pending'}
-            thumbnailUrl={previewJob?.thumbnailUrl}
+            thumbnailUrl={previewJob?.thumbnailUrl ?? null}
           />
 
           {/* Preview Layers Table */}
@@ -597,6 +704,30 @@ export function DeveloperResults({
         InlineInspectionHistorySummary={InlineInspectionHistorySummaryComponent}
       />
 
+      {/* Project Save CTA */}
+      <section className="site-acquisition__finance-cta">
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 'var(--ob-space-150)',
+            flexWrap: 'wrap',
+            py: 'var(--ob-space-200)',
+          }}
+        >
+          <Button variant="secondary" size="lg" onClick={handleOpenSaveDialog}>
+            Save as Project
+          </Button>
+          {currentProject && (
+            <Link to={`/projects/${currentProject.id}`}>
+              <Button variant="ghost" size="lg">
+                View Project Hub →
+              </Button>
+            </Link>
+          )}
+        </Box>
+      </section>
+
       {/* Finance CTA */}
       <section className="site-acquisition__finance-cta">
         <Box
@@ -606,13 +737,98 @@ export function DeveloperResults({
             py: 'var(--ob-space-200)',
           }}
         >
-          <Link to={`/app/financial-control?propertyId=${result.propertyId}`}>
-            <Button variant="primary" size="lg">
-              Create Finance Project →
+          {currentProject ? (
+            <Link to={`/projects/${currentProject.id}/finance`}>
+              <Button variant="primary" size="lg">
+                Open Finance →
+              </Button>
+            </Link>
+          ) : (
+            <Button variant="primary" size="lg" disabled>
+              Save project to open Finance →
             </Button>
-          </Link>
+          )}
         </Box>
       </section>
+
+      <Dialog
+        open={saveDialogOpen}
+        onClose={() => {
+          setSaveDialogOpen(false)
+          setSaveError(null)
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Save Capture as Project</DialogTitle>
+        <DialogContent>
+          <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+            <Button
+              variant={saveMode === 'new' ? 'primary' : 'secondary'}
+              onClick={() => {
+                setSaveMode('new')
+                setProjectNameInput(suggestedProjectName)
+              }}
+            >
+              Create New
+            </Button>
+            <Button
+              variant={saveMode === 'existing' ? 'primary' : 'secondary'}
+              onClick={() => setSaveMode('existing')}
+            >
+              Use Existing
+            </Button>
+          </Stack>
+          {saveMode === 'new' ? (
+            <TextField
+              label="Project name"
+              value={projectNameInput}
+              onChange={(event) => setProjectNameInput(event.target.value)}
+              fullWidth
+            />
+          ) : (
+            <FormControl fullWidth>
+              <Select
+                value={existingProjectId}
+                displayEmpty
+                onChange={(event) =>
+                  setExistingProjectId(String(event.target.value))
+                }
+              >
+                <MenuItem value="">
+                  <em>Select a project</em>
+                </MenuItem>
+                {projects.map((project) => (
+                  <MenuItem key={project.id} value={project.id}>
+                    {project.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+          {saveError && (
+            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+              {saveError}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="ghost"
+            onClick={() => setSaveDialogOpen(false)}
+            disabled={savingProject}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleSaveProject}
+            disabled={savingProject}
+          >
+            {savingProject ? 'Saving...' : 'Save Project'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   )
 }

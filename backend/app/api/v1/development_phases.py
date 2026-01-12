@@ -8,6 +8,7 @@ Phase 2D: Multi-Phase Development Management
 """
 
 from datetime import date
+from uuid import UUID
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -76,7 +77,7 @@ class GanttMilestoneResponse(BaseModel):
 class GanttChartResponse(BaseModel):
     """Complete Gantt chart data."""
 
-    project_id: int
+    project_id: UUID
     project_name: str
     generated_at: str
     tasks: List[GanttTaskResponse]
@@ -114,7 +115,7 @@ class NonCriticalPhaseResponse(BaseModel):
 class CriticalPathResponse(BaseModel):
     """Critical path analysis result."""
 
-    project_id: int
+    project_id: UUID
     critical_path: List[int]
     total_duration: int
     critical_phases: List[CriticalPhaseResponse] = []
@@ -136,7 +137,7 @@ class HeritagePhaseResponse(BaseModel):
 class HeritageTrackerResponse(BaseModel):
     """Heritage preservation tracking summary."""
 
-    project_id: int
+    project_id: UUID
     heritage_classification: str = "none"
     overall_approval_status: str = "not_required"
     total_heritage_phases: int = 0
@@ -178,7 +179,7 @@ class TimelineEventResponse(BaseModel):
 class TenantCoordinationResponse(BaseModel):
     """Tenant coordination summary."""
 
-    project_id: int
+    project_id: UUID
     total_tenants: int = 0
     relocation_required: int = 0
     relocated: int = 0
@@ -199,7 +200,7 @@ class TenantCoordinationResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-async def get_project_or_404(db: AsyncSession, project_id: int) -> Project:
+async def get_project_or_404(db: AsyncSession, project_id: UUID) -> Project:
     """Get a project by ID or raise 404."""
     result = await db.execute(select(Project).where(Project.id == project_id))
     project = result.scalar_one_or_none()
@@ -209,7 +210,7 @@ async def get_project_or_404(db: AsyncSession, project_id: int) -> Project:
 
 
 async def get_project_phases(
-    db: AsyncSession, project_id: int
+    db: AsyncSession, project_id: UUID
 ) -> List[DevelopmentPhase]:
     """Get all phases for a project with dependencies loaded."""
     result = await db.execute(
@@ -222,7 +223,7 @@ async def get_project_phases(
 
 
 async def get_project_milestones(
-    db: AsyncSession, project_id: int
+    db: AsyncSession, project_id: UUID
 ) -> List[PhaseMilestone]:
     """Get all milestones for phases in a project."""
     # Get phase IDs for the project
@@ -241,7 +242,7 @@ async def get_project_milestones(
 
 
 async def get_project_tenant_relocations(
-    db: AsyncSession, project_id: int
+    db: AsyncSession, project_id: UUID
 ) -> List[TenantRelocation]:
     """Get all tenant relocations for phases in a project."""
     # Get phase IDs for the project
@@ -266,7 +267,7 @@ async def get_project_tenant_relocations(
 
 @router.get("/{project_id}/gantt", response_model=GanttChartResponse)
 async def get_gantt_chart(
-    project_id: int,
+    project_id: UUID,
     db: AsyncSession = Depends(get_session),
 ) -> GanttChartResponse:
     """Generate Gantt chart data for a project.
@@ -294,7 +295,7 @@ async def get_gantt_chart(
     service = get_phase_manager_service()
     gantt = service.generate_gantt_chart(
         project_id=project_id,
-        project_name=project.name,
+        project_name=project.project_name,
         phases=phases,
         milestones=milestones if milestones else None,
     )
@@ -374,7 +375,7 @@ async def get_gantt_chart(
 
 @router.get("/{project_id}/critical-path", response_model=CriticalPathResponse)
 async def get_critical_path(
-    project_id: int,
+    project_id: UUID,
     db: AsyncSession = Depends(get_session),
 ) -> CriticalPathResponse:
     """Calculate critical path for a project.
@@ -462,7 +463,7 @@ async def get_critical_path(
 
 @router.get("/{project_id}/heritage", response_model=HeritageTrackerResponse)
 async def get_heritage_tracker(
-    project_id: int,
+    project_id: UUID,
     db: AsyncSession = Depends(get_session),
 ) -> HeritageTrackerResponse:
     """Get heritage preservation tracking for a project.
@@ -549,7 +550,7 @@ async def get_heritage_tracker(
     "/{project_id}/tenant-coordination", response_model=TenantCoordinationResponse
 )
 async def get_tenant_coordination(
-    project_id: int,
+    project_id: UUID,
     db: AsyncSession = Depends(get_session),
 ) -> TenantCoordinationResponse:
     """Get tenant coordination summary for a project.

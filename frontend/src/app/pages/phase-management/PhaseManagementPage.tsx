@@ -35,6 +35,8 @@ import {
   type CreatePhasePayload,
   type UpdatePhasePayload,
 } from '../../../api/development'
+import { useProject } from '../../../contexts/useProject'
+import { Link } from '../../../router'
 
 // Custom Holographic Card Component
 function HolographicCard({
@@ -202,10 +204,9 @@ function TabPanel({ children, value, index }: TabPanelProps) {
   )
 }
 
-// Demo project ID - in production this would come from route params or context
-const DEMO_PROJECT_ID = 1
-
 export function PhaseManagementPage() {
+  const { currentProject, isProjectLoading, projectError } = useProject()
+  const projectId = currentProject?.id ?? ''
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -227,37 +228,44 @@ export function PhaseManagementPage() {
   )
 
   // Load all data
-  const loadData = useCallback(async (controller?: AbortController) => {
-    const signal = controller?.signal
-    setLoading(true)
-    setError(null)
-
-    try {
-      const [gantt, critical, heritage, tenant] = await Promise.all([
-        fetchGanttChart(DEMO_PROJECT_ID, signal).catch(() => null),
-        fetchCriticalPath(DEMO_PROJECT_ID, signal).catch(() => null),
-        fetchHeritageTracker(DEMO_PROJECT_ID, signal).catch(() => null),
-        fetchTenantCoordination(DEMO_PROJECT_ID, signal).catch(() => null),
-      ])
-
-      if (signal?.aborted) return
-
-      setGanttData(gantt)
-      setCriticalPath(critical)
-      setHeritageData(heritage)
-      setTenantData(tenant)
-    } catch (err) {
-      if ((err as { name?: string }).name === 'AbortError') return
-      console.error('Failed to load phase data', err)
-      setError(
-        'Failed to load project phase data. The API may not be available yet.',
-      )
-    } finally {
-      if (!signal?.aborted) {
+  const loadData = useCallback(
+    async (controller?: AbortController) => {
+      if (!projectId) {
         setLoading(false)
+        return
       }
-    }
-  }, [])
+      const signal = controller?.signal
+      setLoading(true)
+      setError(null)
+
+      try {
+        const [gantt, critical, heritage, tenant] = await Promise.all([
+          fetchGanttChart(projectId, signal).catch(() => null),
+          fetchCriticalPath(projectId, signal).catch(() => null),
+          fetchHeritageTracker(projectId, signal).catch(() => null),
+          fetchTenantCoordination(projectId, signal).catch(() => null),
+        ])
+
+        if (signal?.aborted) return
+
+        setGanttData(gantt)
+        setCriticalPath(critical)
+        setHeritageData(heritage)
+        setTenantData(tenant)
+      } catch (err) {
+        if ((err as { name?: string }).name === 'AbortError') return
+        console.error('Failed to load phase data', err)
+        setError(
+          'Failed to load project phase data. The API may not be available yet.',
+        )
+      } finally {
+        if (!signal?.aborted) {
+          setLoading(false)
+        }
+      }
+    },
+    [projectId],
+  )
 
   useEffect(() => {
     const controller = new AbortController()
@@ -283,11 +291,14 @@ export function PhaseManagementPage() {
 
   const handleSavePhase = useCallback(
     async (data: CreatePhasePayload | UpdatePhasePayload, isNew: boolean) => {
+      if (!projectId) {
+        return
+      }
       if (isNew) {
-        await createPhase(DEMO_PROJECT_ID, data as CreatePhasePayload)
+        await createPhase(projectId, data as CreatePhasePayload)
       } else if (editingPhase) {
         await updatePhase(
-          DEMO_PROJECT_ID,
+          projectId,
           editingPhase.id,
           data as UpdatePhasePayload,
         )
@@ -295,7 +306,7 @@ export function PhaseManagementPage() {
       // Reload data after save
       await loadData()
     },
-    [editingPhase, loadData],
+    [editingPhase, loadData, projectId],
   )
 
   const handleCloseEditor = useCallback(() => {
@@ -326,6 +337,21 @@ export function PhaseManagementPage() {
       criticalDuration: ganttData.criticalPathDuration,
     }
   }, [ganttData])
+
+  if (!projectId) {
+    return (
+      <Box sx={{ width: '100%' }}>
+        {isProjectLoading ? (
+          <CircularProgress />
+        ) : (
+          <Alert severity={projectError ? 'error' : 'info'}>
+            {projectError?.message ??
+              'Select a project to manage development phases.'}
+          </Alert>
+        )}
+      </Box>
+    )
+  }
 
   if (loading) {
     return (
@@ -373,15 +399,69 @@ export function PhaseManagementPage() {
           >
             Project timeline, critical path analysis, and coordination tracking
           </Typography>
+          {currentProject && (
+            <Typography
+              variant="body2"
+              sx={{ color: 'text.secondary', mt: 'var(--ob-space-025)' }}
+            >
+              Project: {currentProject.name}
+            </Typography>
+          )}
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleAddPhase}
-          size="small"
-        >
-          Add Phase
-        </Button>
+        <Stack direction="row" spacing={1} flexWrap="wrap">
+          {projectId && (
+            <>
+              <Button
+                component={Link}
+                to={`/projects/${projectId}/capture`}
+                size="small"
+                variant="outlined"
+              >
+                Capture Results
+              </Button>
+              <Button
+                component={Link}
+                to={`/projects/${projectId}/feasibility`}
+                size="small"
+                variant="outlined"
+              >
+                Feasibility
+              </Button>
+              <Button
+                component={Link}
+                to={`/projects/${projectId}/finance`}
+                size="small"
+                variant="outlined"
+              >
+                Finance
+              </Button>
+              <Button
+                component={Link}
+                to={`/projects/${projectId}/team`}
+                size="small"
+                variant="outlined"
+              >
+                Team
+              </Button>
+              <Button
+                component={Link}
+                to={`/projects/${projectId}/regulatory`}
+                size="small"
+                variant="outlined"
+              >
+                Regulatory
+              </Button>
+            </>
+          )}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleAddPhase}
+            size="small"
+          >
+            Add Phase
+          </Button>
+        </Stack>
       </Box>
 
       {error && (
@@ -542,7 +622,7 @@ export function PhaseManagementPage() {
       <PhaseEditor
         open={editorOpen}
         phase={editingPhase}
-        projectId={DEMO_PROJECT_ID}
+        projectId={projectId}
         onClose={handleCloseEditor}
         onSave={handleSavePhase}
       />
@@ -559,7 +639,7 @@ function DemoGanttChart({
   selectedTaskId: string | null
 }) {
   const demoData: GanttChartData = {
-    projectId: 1,
+    projectId: 'demo-project',
     projectName: 'Heritage Mixed-Use Development',
     generatedAt: new Date().toISOString(),
     tasks: [
@@ -764,7 +844,7 @@ function CriticalPathView({ data }: { data: CriticalPathResult }) {
 
 function DemoCriticalPath() {
   const demoData: CriticalPathResult = {
-    projectId: 1,
+    projectId: 'demo-project',
     criticalPath: ['1', '2', '4', '5'],
     totalDuration: 257,
     criticalPhases: [
@@ -951,7 +1031,7 @@ function HeritageView({ data }: { data: HeritageTracker }) {
 
 function DemoHeritageView() {
   const demoData: HeritageTracker = {
-    projectId: 1,
+    projectId: 'demo-project',
     heritageClassification: 'conservation_building',
     overallApprovalStatus: 'pending',
     phases: [
@@ -996,7 +1076,7 @@ function DemoHeritageView() {
 
 function DemoTenantCoordination() {
   const demoData: TenantCoordinationSummary = {
-    projectId: 1,
+    projectId: 'demo-project',
     totalTenants: 8,
     statusBreakdown: {
       pending_notification: 1,

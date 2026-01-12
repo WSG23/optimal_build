@@ -49,7 +49,7 @@ export type OccupancyStatus =
 
 export interface DevelopmentPhase {
   id: number
-  projectId: number
+  projectId: string
   name: string
   phaseType: PhaseType
   status: PhaseStatus
@@ -97,7 +97,7 @@ export interface GanttTask {
 }
 
 export interface GanttChart {
-  projectId: number
+  projectId: string
   projectName: string
   generatedAt: string
   tasks: GanttTask[]
@@ -108,7 +108,7 @@ export interface GanttChart {
 }
 
 export interface CriticalPathResult {
-  projectId: number
+  projectId: string
   criticalPath: string[]
   totalDuration: number
   criticalPhases: Array<{
@@ -128,7 +128,7 @@ export interface CriticalPathResult {
 }
 
 export interface HeritageTracker {
-  projectId: number
+  projectId: string
   heritageClassification: HeritageClassification
   overallApprovalStatus: string
   phases: Array<{
@@ -160,7 +160,7 @@ export interface TenantRelocation {
 }
 
 export interface TenantCoordinationSummary {
-  projectId: number
+  projectId: string
   totalTenants: number
   statusBreakdown: Record<string, number>
   relocations: TenantRelocation[]
@@ -178,7 +178,7 @@ export interface TenantCoordinationSummary {
 function mapPhase(payload: Record<string, unknown>): DevelopmentPhase {
   return {
     id: Number(payload.id ?? 0),
-    projectId: Number(payload.project_id ?? 0),
+    projectId: String(payload.project_id ?? ''),
     name: String(payload.name ?? ''),
     phaseType: String(payload.phase_type ?? 'site_preparation') as PhaseType,
     status: String(payload.status ?? 'not_started') as PhaseStatus,
@@ -248,7 +248,7 @@ function mapGanttChart(payload: Record<string, unknown>): GanttChart {
     : []
 
   return {
-    projectId: Number(payload.project_id ?? 0),
+    projectId: String(payload.project_id ?? ''),
     projectName: String(payload.project_name ?? ''),
     generatedAt: String(payload.generated_at ?? ''),
     tasks,
@@ -316,7 +316,7 @@ function mapTenantCoordinationSummary(
     : []
 
   return {
-    projectId: Number(payload.project_id ?? 0),
+    projectId: String(payload.project_id ?? ''),
     totalTenants: Number(payload.total_tenants ?? 0),
     statusBreakdown:
       typeof payload.status_breakdown === 'object' &&
@@ -342,7 +342,7 @@ function mapTenantCoordinationSummary(
 
 function mapHeritageTracker(payload: Record<string, unknown>): HeritageTracker {
   return {
-    projectId: Number(payload.project_id ?? 0),
+    projectId: String(payload.project_id ?? ''),
     heritageClassification: String(
       payload.heritage_classification ?? 'none',
     ) as HeritageClassification,
@@ -376,7 +376,7 @@ function mapHeritageTracker(payload: Record<string, unknown>): HeritageTracker {
 
 function mapCriticalPath(payload: Record<string, unknown>): CriticalPathResult {
   return {
-    projectId: Number(payload.project_id ?? 0),
+    projectId: String(payload.project_id ?? ''),
     criticalPath: Array.isArray(payload.critical_path)
       ? payload.critical_path.map(String)
       : [],
@@ -404,7 +404,7 @@ function mapCriticalPath(payload: Record<string, unknown>): CriticalPathResult {
 
 // API Functions
 export async function fetchProjectPhases(
-  projectId: number,
+  projectId: string,
   signal?: AbortSignal,
 ): Promise<DevelopmentPhase[]> {
   const response = await fetch(
@@ -419,7 +419,7 @@ export async function fetchProjectPhases(
 }
 
 export async function fetchGanttChart(
-  projectId: number,
+  projectId: string,
   signal?: AbortSignal,
 ): Promise<GanttChart> {
   const response = await fetch(
@@ -434,7 +434,7 @@ export async function fetchGanttChart(
 }
 
 export async function fetchCriticalPath(
-  projectId: number,
+  projectId: string,
   signal?: AbortSignal,
 ): Promise<CriticalPathResult> {
   const response = await fetch(
@@ -449,7 +449,7 @@ export async function fetchCriticalPath(
 }
 
 export async function fetchHeritageTracker(
-  projectId: number,
+  projectId: string,
   signal?: AbortSignal,
 ): Promise<HeritageTracker> {
   const response = await fetch(
@@ -464,7 +464,7 @@ export async function fetchHeritageTracker(
 }
 
 export async function fetchTenantCoordination(
-  projectId: number,
+  projectId: string,
   signal?: AbortSignal,
 ): Promise<TenantCoordinationSummary> {
   const response = await fetch(
@@ -493,7 +493,7 @@ export interface CreatePhasePayload {
 }
 
 export async function createPhase(
-  projectId: number,
+  projectId: string,
   payload: CreatePhasePayload,
   signal?: AbortSignal,
 ): Promise<DevelopmentPhase> {
@@ -543,7 +543,7 @@ export interface UpdatePhasePayload {
 }
 
 export async function updatePhase(
-  projectId: number,
+  projectId: string,
   phaseId: number,
   payload: UpdatePhasePayload,
   signal?: AbortSignal,

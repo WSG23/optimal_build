@@ -79,8 +79,10 @@ export function FinanceHeaderControls({
   }, [recentOptions, selectedProjectId])
 
   const helperLabel =
-    selectedProjectName ??
-    t('finance.projectSelector.defaultLabel', { id: selectedProjectId })
+    selectedProjectName ||
+    (selectedProjectId
+      ? t('finance.projectSelector.defaultLabel', { id: selectedProjectId })
+      : 'Select project')
 
   const selectOptions = useMemo(() => {
     if (!selectedProjectId) return recentOptions

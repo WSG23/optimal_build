@@ -29,7 +29,7 @@ import {
 import { teamApi, TeamMember } from '../../../api/team'
 import { WorkflowDashboard } from './components/WorkflowDashboard'
 import { ProjectProgressDashboard } from './components/ProjectProgressDashboard'
-import { useRouterPath } from '../../../router'
+import { useProject } from '../../../contexts/useProject'
 // If not using react-router params for project ID, we might need to get it from context or props.
 // For now, I'll assume we grab it from URL or a hardcoded one for dev if not available.
 // Actually, let's try to get it from context/store if typical, or just use a placeholder if we can't find it.
@@ -41,29 +41,9 @@ import { useRouterPath } from '../../../router'
 // Let's assume for now we might need to extract it or pass it.
 // I'll add `projectId` as a prop but also try to get it from useParams.
 
-interface TeamManagementPageProps {
-  projectId?: string
-}
-
-// Demo UUID for development/testing - uses the finance demo project
-const DEMO_PROJECT_UUID = '00000000-0000-0000-0000-000000000191'
-
-export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
-  projectId: propProjectId,
-}) => {
-  const path = useRouterPath()
-  // Attempt to parse projectId from path if it follows /projects/:id pattern
-  const derivedProjectId = path.split('/projects/')[1]?.split('/')[0]
-
-  // Try to get projectId from URL query params (e.g., ?projectId=...)
-  const queryProjectId =
-    typeof window !== 'undefined'
-      ? new URLSearchParams(window.location.search).get('projectId')
-      : null
-
-  // Priority: prop > query param > path > demo UUID
-  const projectId =
-    propProjectId || queryProjectId || derivedProjectId || DEMO_PROJECT_UUID
+export const TeamManagementPage: React.FC = () => {
+  const { currentProject, isProjectLoading, projectError } = useProject()
+  const projectId = currentProject?.id ?? ''
 
   const [activeTab, setActiveTab] = useState(0)
   const [members, setMembers] = useState<TeamMember[]>([])
@@ -78,6 +58,12 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
   // Ref to prevent multiple fetches and track if we've already loaded data
   const hasFetchedRef = useRef(false)
   const isFetchingRef = useRef(false)
+
+  useEffect(() => {
+    hasFetchedRef.current = false
+    isFetchingRef.current = false
+    setMembers([])
+  }, [projectId])
 
   // Helper to create mock members - defined inside effect to avoid dependency issues
   const createMockMembers = React.useCallback(
@@ -114,6 +100,9 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
   )
 
   useEffect(() => {
+    if (!projectId) {
+      return
+    }
     // Only fetch if we're on the team members tab, haven't fetched yet, and not currently fetching
     if (activeTab !== 0 || hasFetchedRef.current || isFetchingRef.current) {
       return
@@ -149,6 +138,9 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
   }, [activeTab, projectId, createMockMembers])
 
   const handleInvite = async () => {
+    if (!projectId) {
+      return
+    }
     setInviting(true)
     setError(null)
     try {
@@ -170,6 +162,21 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue)
+  }
+
+  if (!projectId) {
+    return (
+      <Box sx={{ width: '100%' }}>
+        {isProjectLoading ? (
+          <CircularProgress />
+        ) : (
+          <Alert severity={projectError ? 'error' : 'info'}>
+            {projectError?.message ??
+              'Select a project to manage team coordination.'}
+          </Alert>
+        )}
+      </Box>
+    )
   }
 
   return (
@@ -198,6 +205,14 @@ export const TeamManagementPage: React.FC<TeamManagementPageProps> = ({
           >
             Manage project team members and workflow approvals
           </Typography>
+          {currentProject && (
+            <Typography
+              variant="body2"
+              sx={{ color: 'text.secondary', mt: 'var(--ob-space-025)' }}
+            >
+              Project: {currentProject.name}
+            </Typography>
+          )}
         </Box>
         {activeTab === 0 && (
           <Button

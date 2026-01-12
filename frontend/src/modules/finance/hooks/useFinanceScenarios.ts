@@ -28,6 +28,12 @@ export function useFinanceScenarios(
   const controllerRef = useRef<AbortController | null>(null)
 
   const fetchScenarios = useCallback(async () => {
+    if (!projectId && !finProjectId) {
+      setScenarios([])
+      setLoading(false)
+      setError(null)
+      return
+    }
     controllerRef.current?.abort()
     const controller = new AbortController()
     controllerRef.current = controller
