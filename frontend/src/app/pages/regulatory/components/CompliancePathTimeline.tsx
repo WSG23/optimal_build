@@ -6,14 +6,10 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import {
   Box,
-  Card,
-  CardContent,
-  Chip,
   FormControl,
   InputLabel,
   LinearProgress,
   MenuItem,
-  Paper,
   Select,
   SelectChangeEvent,
   Stack,
@@ -37,6 +33,9 @@ import {
 } from '../../../../api/regulatory'
 import { loadCaptureForProject } from '../../capture/utils/captureStorage'
 import { colors } from '@ob/tokens'
+import { GlassCard } from '../../../../components/canonical/GlassCard'
+import { StatusChip } from '../../../../components/canonical/StatusChip'
+import { Tag } from '../../../../components/canonical/Tag'
 
 interface CompliancePathTimelineProps {
   projectId?: string
@@ -334,22 +333,37 @@ function TimelineBar({
   const left = startOffset * DAY_WIDTH
 
   const tooltipContent = (
-    <Box sx={{ p: 1 }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+    <Box sx={{ p: 'var(--ob-space-075)' }}>
+      <Box
+        component="span"
+        sx={{
+          fontWeight: 600,
+          fontSize: 'var(--ob-font-size-sm)',
+          display: 'block',
+        }}
+      >
         {SUBMISSION_TYPE_LABELS[step.submission_type] || step.submission_type}
-      </Typography>
-      <Typography variant="body2" sx={{ mt: 0.5 }}>
+      </Box>
+      <Box
+        component="span"
+        sx={{
+          fontSize: 'var(--ob-font-size-xs)',
+          display: 'block',
+          mt: 'var(--ob-space-025)',
+        }}
+      >
         Duration: {duration} days
-      </Typography>
-      <Typography variant="body2">Progress: {progress}%</Typography>
+      </Box>
+      <Box
+        component="span"
+        sx={{ fontSize: 'var(--ob-font-size-xs)', display: 'block' }}
+      >
+        Progress: {progress}%
+      </Box>
       {step.is_mandatory && (
-        <Chip
-          label="Mandatory"
-          size="small"
-          color="error"
-          variant="outlined"
-          sx={{ mt: 1 }}
-        />
+        <StatusChip status="error" size="sm" sx={{ mt: 'var(--ob-space-075)' }}>
+          Mandatory
+        </StatusChip>
       )}
     </Box>
   )
@@ -588,26 +602,56 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 3,
+          alignItems: 'flex-start',
+          mb: 'var(--ob-space-200)',
         }}
       >
         <Box>
-          <Typography
-            variant="h6"
-            fontWeight="bold"
-            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-075)',
+            }}
           >
-            <RegulatoryIcon color="primary" />
-            Compliance Path Timeline
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+            <RegulatoryIcon
+              sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 24 }}
+            />
+            <Box
+              component="h2"
+              sx={{
+                fontSize: 'var(--ob-font-size-lg)',
+                fontWeight: 700,
+                color: 'var(--ob-color-text-primary)',
+                m: 0,
+              }}
+            >
+              Compliance Path Timeline
+            </Box>
+          </Box>
+          <Box
+            component="p"
+            sx={{
+              fontSize: 'var(--ob-font-size-sm)',
+              color: 'var(--ob-color-text-secondary)',
+              m: 0,
+              mt: 'var(--ob-space-025)',
+            }}
+          >
             Regulatory submission sequence for Singapore developments
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
+          </Box>
+          <Box
+            component="span"
+            sx={{
+              fontSize: 'var(--ob-font-size-xs)',
+              color: 'var(--ob-color-text-tertiary)',
+              display: 'block',
+              mt: 'var(--ob-space-025)',
+            }}
+          >
             Project: {projectName?.trim() || projectId || 'Unknown'} •{' '}
             {submissions.length} submission{submissions.length === 1 ? '' : 's'}
-          </Typography>
+          </Box>
         </Box>
 
         <FormControl size="small" sx={{ minWidth: 200 }}>
@@ -626,76 +670,129 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
         </FormControl>
       </Box>
 
-      {/* Summary Cards */}
-      <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
-        <Card
+      {/* Summary Cards - Using design tokens */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+          gap: 'var(--ob-space-150)',
+          mb: 'var(--ob-space-200)',
+        }}
+      >
+        <GlassCard
+          variant="default"
           sx={{
-            flex: 1,
+            p: 'var(--ob-space-150)',
             background:
               'linear-gradient(135deg, var(--ob-brand-700) 0%, var(--ob-brand-400) 100%)',
-            color: 'var(--ob-neutral-50)',
           }}
         >
-          <CardContent sx={{ py: 2 }}>
-            <Typography variant="caption">Overall Progress</Typography>
-            <Typography variant="h4" fontWeight="bold">
-              {overallProgress}%
-            </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={overallProgress}
-              sx={{
-                mt: 1,
-                bgcolor: 'rgba(255 255 255 / 0.3)',
-                '& .MuiLinearProgress-bar': {
-                  bgcolor: 'var(--ob-neutral-50)',
-                },
-              }}
-            />
-          </CardContent>
-        </Card>
+          <Box
+            component="span"
+            sx={{
+              fontSize: 'var(--ob-font-size-xs)',
+              color: 'var(--ob-neutral-200)',
+              display: 'block',
+            }}
+          >
+            Overall Progress
+          </Box>
+          <Box
+            component="span"
+            sx={{
+              fontSize: 'var(--ob-font-size-3xl)',
+              fontWeight: 700,
+              color: 'var(--ob-neutral-50)',
+              display: 'block',
+            }}
+          >
+            {overallProgress}%
+          </Box>
+          <LinearProgress
+            variant="determinate"
+            value={overallProgress}
+            sx={{
+              mt: 'var(--ob-space-075)',
+              bgcolor: 'rgba(255 255 255 / 0.3)',
+              borderRadius: 'var(--ob-radius-xs)',
+              height: 4,
+              '& .MuiLinearProgress-bar': {
+                bgcolor: 'var(--ob-neutral-50)',
+                borderRadius: 'var(--ob-radius-xs)',
+              },
+            }}
+          />
+        </GlassCard>
 
-        <Card
+        <GlassCard
+          variant="default"
           sx={{
-            flex: 1,
+            p: 'var(--ob-space-150)',
             background:
               'linear-gradient(135deg, var(--ob-success-700) 0%, var(--ob-success-400) 100%)',
-            color: 'var(--ob-neutral-50)',
           }}
         >
-          <CardContent sx={{ py: 2 }}>
-            <Typography variant="caption">Completed Steps</Typography>
-            <Typography variant="h4" fontWeight="bold">
-              {completedSteps}/{compliancePaths.length}
-            </Typography>
-          </CardContent>
-        </Card>
+          <Box
+            component="span"
+            sx={{
+              fontSize: 'var(--ob-font-size-xs)',
+              color: 'var(--ob-neutral-200)',
+              display: 'block',
+            }}
+          >
+            Completed Steps
+          </Box>
+          <Box
+            component="span"
+            sx={{
+              fontSize: 'var(--ob-font-size-3xl)',
+              fontWeight: 700,
+              color: 'var(--ob-neutral-50)',
+              display: 'block',
+            }}
+          >
+            {completedSteps}/{compliancePaths.length}
+          </Box>
+        </GlassCard>
 
-        <Card
+        <GlassCard
+          variant="default"
           sx={{
-            flex: 1,
+            p: 'var(--ob-space-150)',
             background:
               'linear-gradient(135deg, var(--ob-info-700) 0%, var(--ob-info-400) 100%)',
-            color: 'var(--ob-neutral-50)',
           }}
         >
-          <CardContent sx={{ py: 2 }}>
-            <Typography variant="caption">Est. Total Duration</Typography>
-            <Typography variant="h4" fontWeight="bold">
-              {totalDuration - 30} days
-            </Typography>
-          </CardContent>
-        </Card>
-      </Stack>
+          <Box
+            component="span"
+            sx={{
+              fontSize: 'var(--ob-font-size-xs)',
+              color: 'var(--ob-neutral-200)',
+              display: 'block',
+            }}
+          >
+            Est. Total Duration
+          </Box>
+          <Box
+            component="span"
+            sx={{
+              fontSize: 'var(--ob-font-size-3xl)',
+              fontWeight: 700,
+              color: 'var(--ob-neutral-50)',
+              display: 'block',
+            }}
+          >
+            {totalDuration - 30} days
+          </Box>
+        </GlassCard>
+      </Box>
 
       {/* Timeline */}
-      <Paper
-        elevation={1}
+      <GlassCard
+        variant="default"
         sx={{
           overflow: 'auto',
           maxHeight: 'calc(100vh - 450px)',
-          border: '1px solid var(--ob-border-glass)',
-          background: 'transparent',
         }}
       >
         <Box
@@ -814,16 +911,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                       {step.is_mandatory && ' • Mandatory'}
                     </Typography>
                   </Box>
-                  <Chip
-                    label={step.sequence_order}
-                    size="small"
-                    sx={{
-                      bgcolor: 'rgba(var(--ob-color-text-primary-rgb) / 0.12)',
-                      color: 'var(--ob-neutral-50)',
-                      fontWeight: 'var(--ob-font-weight-semibold)',
-                      minWidth: 28,
-                    }}
-                  />
+                  <Tag size="sm">{step.sequence_order}</Tag>
                 </Box>
 
                 {/* Right panel - timeline bars */}
@@ -892,7 +980,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
             </Stack>
           </Box>
         </Box>
-      </Paper>
+      </GlassCard>
     </Box>
   )
 }
