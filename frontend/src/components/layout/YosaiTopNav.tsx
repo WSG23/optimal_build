@@ -85,29 +85,23 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
       groups.push({
         items: [
           {
-            path: projectBase
-              ? `${projectBase}/feasibility`
-              : '/projects/feasibility',
+            path: projectBase ? `${projectBase}/feasibility` : '/projects',
             label: t('nav.assetFeasibility'),
           },
           {
-            path: projectBase
-              ? `${projectBase}/finance`
-              : '/projects/financial',
+            path: projectBase ? `${projectBase}/finance` : '/projects',
             label: t('nav.financialControl'),
           },
           {
-            path: projectBase ? `${projectBase}/phases` : '/projects/phases',
+            path: projectBase ? `${projectBase}/phases` : '/projects',
             label: t('nav.phaseManagement'),
           },
           {
-            path: projectBase ? `${projectBase}/team` : '/projects/team',
+            path: projectBase ? `${projectBase}/team` : '/projects',
             label: t('nav.teamCoordination'),
           },
           {
-            path: projectBase
-              ? `${projectBase}/regulatory`
-              : '/projects/regulatory',
+            path: projectBase ? `${projectBase}/regulatory` : '/projects',
             label: t('nav.regulatoryNavigation'),
           },
         ],
@@ -164,7 +158,7 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
     const isActive = path === item.path || path.startsWith(`${item.path}/`)
     return (
       <Button
-        key={item.path}
+        key={`${item.path}-${item.label}`}
         component={Link}
         to={item.path}
         variant="text"

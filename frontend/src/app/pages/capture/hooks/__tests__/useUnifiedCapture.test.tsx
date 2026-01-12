@@ -7,51 +7,52 @@ import {
   type UseUnifiedCaptureReturn,
 } from '../useUnifiedCapture'
 
-const mockMapOn = vi.fn()
-const mockMapRemove = vi.fn()
+const mockMapConstructor = vi.fn()
+const mockMapAddListener = vi.fn()
 const mockMapSetCenter = vi.fn()
-const mockMarkerOn = vi.fn()
-const mockMarkerSetLngLat = vi.fn()
-const mockMarkerAddTo = vi.fn()
+const mockMarkerConstructor = vi.fn()
+const mockMarkerAddListener = vi.fn()
+const mockMarkerSetPosition = vi.fn()
+const mockMarkerSetMap = vi.fn()
 
-vi.mock('mapbox-gl', () => ({
-  default: {
-    accessToken: '',
-    Map: class {
-      constructor() {
-        // noop
-      }
-      on(...args: unknown[]) {
-        mockMapOn(...args)
-      }
-      remove() {
-        mockMapRemove()
-      }
-      setCenter(...args: unknown[]) {
-        mockMapSetCenter(...args)
-      }
+const installGoogleMapsMocks = () => {
+  Object.defineProperty(window, 'google', {
+    configurable: true,
+    value: {
+      maps: {
+        SymbolPath: { CIRCLE: 'CIRCLE' },
+        Map: class {
+          constructor(...args: unknown[]) {
+            mockMapConstructor(...args)
+          }
+          addListener(...args: unknown[]) {
+            mockMapAddListener(...args)
+          }
+          setCenter(...args: unknown[]) {
+            mockMapSetCenter(...args)
+          }
+        },
+        Marker: class {
+          constructor(...args: unknown[]) {
+            mockMarkerConstructor(...args)
+          }
+          addListener(...args: unknown[]) {
+            mockMarkerAddListener(...args)
+          }
+          setPosition(...args: unknown[]) {
+            mockMarkerSetPosition(...args)
+          }
+          setMap(...args: unknown[]) {
+            mockMarkerSetMap(...args)
+          }
+          getPosition() {
+            return { lat: () => 1.3, lng: () => 103.85 }
+          }
+        },
+      },
     },
-    Marker: class {
-      constructor() {
-        // noop
-      }
-      on(...args: unknown[]) {
-        mockMarkerOn(...args)
-      }
-      setLngLat(...args: unknown[]) {
-        mockMarkerSetLngLat(...args)
-        return this
-      }
-      addTo(...args: unknown[]) {
-        mockMarkerAddTo(...args)
-        return this
-      }
-      getLngLat() {
-        return { lng: 103.85, lat: 1.3 }
-      }
-    },
-  },
-}))
+  })
+}
 
 const mockCapturePropertyForDevelopment = vi.fn()
 vi.mock('../../../../../api/siteAcquisition', () => ({
@@ -80,7 +81,7 @@ vi.mock('../../../../../api/geocoding', () => ({
 
 function renderHookHarness(
   isDeveloperMode: boolean,
-  options: { mapboxToken?: string } = {},
+  options: { googleMapsApiKey?: string } = {},
 ) {
   const ref: { current: UseUnifiedCaptureReturn | null } = { current: null }
 
@@ -101,33 +102,35 @@ describe('useUnifiedCapture', () => {
     vi.useRealTimers()
     vi.clearAllMocks()
     sessionStorage.clear()
+    delete (window as { google?: unknown }).google
   })
 
-  it('sets a map error when Mapbox token is missing', async () => {
-    const hookRef = renderHookHarness(true, { mapboxToken: undefined })
+  it('sets a map error when the Google Maps API key is missing', async () => {
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
     await act(async () => {
       // allow effects to run
     })
 
     expect(hookRef.current!.mapError).toBe(
-      'Mapbox token not set; map preview disabled.',
+      'Google Maps API key not set; map preview disabled.',
     )
   })
 
-  it('initializes a map when a Mapbox token is provided', async () => {
-    renderHookHarness(true, { mapboxToken: 'test-token' })
+  it('initializes a map when a Google Maps API key is provided', async () => {
+    installGoogleMapsMocks()
+    renderHookHarness(true, { googleMapsApiKey: 'test-key' })
 
     await act(async () => {
       // allow effects to run
     })
 
-    expect(mockMapOn).toHaveBeenCalled()
-    expect(mockMarkerAddTo).toHaveBeenCalled()
+    expect(mockMapConstructor).toHaveBeenCalled()
+    expect(mockMarkerConstructor).toHaveBeenCalled()
   })
 
   it('validates forward geocoding requires an address', async () => {
-    const hookRef = renderHookHarness(true)
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
     await act(async () => {
       hookRef.current!.setAddress('')
@@ -149,7 +152,7 @@ describe('useUnifiedCapture', () => {
       longitude: 103.9876,
     })
 
-    const hookRef = renderHookHarness(true)
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
     await act(async () => {
       hookRef.current!.setAddress('123 Main St')
@@ -165,7 +168,7 @@ describe('useUnifiedCapture', () => {
 
   it('surfaces an error when forward geocoding fails', async () => {
     mockForwardGeocodeAddress.mockRejectedValue(new Error('Geocode down'))
-    const hookRef = renderHookHarness(true)
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
     await act(async () => {
       hookRef.current!.setAddress('123 Main St')
@@ -179,7 +182,7 @@ describe('useUnifiedCapture', () => {
   })
 
   it('validates reverse geocoding requires valid coordinates', async () => {
-    const hookRef = renderHookHarness(true)
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
     await act(async () => {
       hookRef.current!.setLatitude('not-a-number')
@@ -201,7 +204,7 @@ describe('useUnifiedCapture', () => {
       formattedAddress: 'Resolved Address',
     })
 
-    const hookRef = renderHookHarness(true)
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
     await act(async () => {
       hookRef.current!.setLatitude('1.1111')
@@ -218,7 +221,7 @@ describe('useUnifiedCapture', () => {
   it('surfaces an error when reverse geocoding fails', async () => {
     mockReverseGeocodeCoords.mockRejectedValue(new Error('Reverse down'))
 
-    const hookRef = renderHookHarness(true)
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
     await act(async () => {
       hookRef.current!.setLatitude('1.1111')
@@ -244,7 +247,7 @@ describe('useUnifiedCapture', () => {
       previewJob: null,
     })
 
-    const hookRef = renderHookHarness(true)
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
     await act(async () => {
       hookRef.current!.setLatitude('1.2345')
@@ -295,7 +298,7 @@ describe('useUnifiedCapture', () => {
       previewJob: null,
     })
 
-    const hookRef = renderHookHarness(true)
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
     await act(async () => {
       hookRef.current!.handleScenarioToggle('raw_land')
@@ -314,7 +317,7 @@ describe('useUnifiedCapture', () => {
 
     expect(mockCapturePropertyForDevelopment).toHaveBeenCalledWith(
       expect.objectContaining({
-        developmentScenarios: undefined,
+        developmentScenarios: [],
       }),
       expect.any(AbortSignal),
     )
@@ -359,7 +362,7 @@ describe('useUnifiedCapture', () => {
     })
     mockFetchPropertyMarketIntelligence.mockResolvedValue({ summary: 'ok' })
 
-    const hookRef = renderHookHarness(false)
+    const hookRef = renderHookHarness(false, { googleMapsApiKey: '' })
 
     await act(async () => {
       hookRef.current!.setAddress('Manual Address Override')
@@ -393,7 +396,7 @@ describe('useUnifiedCapture', () => {
   })
 
   it('sets a validation error when coordinates are invalid', async () => {
-    const hookRef = renderHookHarness(true)
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
     await act(async () => {
       hookRef.current!.setLatitude('not-a-number')

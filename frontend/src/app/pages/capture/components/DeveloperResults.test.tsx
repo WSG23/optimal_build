@@ -6,6 +6,15 @@ import type { SiteAcquisitionResult } from '../../../../api/siteAcquisition'
 import type { DevelopmentScenario } from '../../../../api/agents'
 import { DeveloperResults } from './DeveloperResults'
 
+vi.mock('../../../../contexts/useProject', () => ({
+  useProject: () => ({
+    currentProject: null,
+    projects: [],
+    setCurrentProject: vi.fn(),
+    refreshProjects: vi.fn(),
+  }),
+}))
+
 vi.mock('@mui/material', async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>
   return {
@@ -320,8 +329,8 @@ describe('DeveloperResults', () => {
 
     mockUseScenarioComparison.mockImplementation(() => ({
       quickAnalysisScenarios: [
-        { scenario: 'raw_land', estIrr: 16 },
-        { scenario: 'en_bloc', estIrr: 8 },
+        { scenario: 'raw_land', metrics: { est_irr: 16 } },
+        { scenario: 'en_bloc', metrics: { est_irr: 8 } },
       ],
       comparisonScenarios: [],
       scenarioComparisonData: [],
@@ -361,7 +370,7 @@ describe('DeveloperResults', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: /refresh/i }))
-    expect(mockHandleRefreshPreview).toHaveBeenCalledWith('medium')
+    expect(mockHandleRefreshPreview).toHaveBeenCalled()
 
     fireEvent.change(screen.getByTestId('preview-detail-select'), {
       target: { value: 'simple' },

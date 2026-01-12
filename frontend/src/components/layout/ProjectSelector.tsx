@@ -69,7 +69,7 @@ export function ProjectSelector() {
         feasibility: '/app/asset-feasibility',
         finance: '/app/financial-control',
         phases: '/app/phase-management',
-        team: '/app/team-coordination',
+        team: '/developers/team-coordination',
         regulatory: '/developers/regulatory',
       }
       navigate(moduleFallbacks[moduleSegment] ?? '/projects')

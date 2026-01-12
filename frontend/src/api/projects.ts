@@ -12,6 +12,52 @@ export interface ProjectCreateRequest {
   description?: string
 }
 
+export interface ProjectProgressPhase {
+  id: string
+  name: string
+  progress: number
+  status: string
+  start_date?: string | null
+  end_date?: string | null
+  source?: string
+}
+
+export interface ProjectProgressApproval {
+  id: string
+  title: string
+  workflow_name: string
+  required_by: string
+  status: string
+}
+
+export interface ProjectProgressTeamActivity {
+  id: string
+  name: string
+  email: string
+  role: string
+  last_active_at?: string | null
+  pending_tasks: number
+  completed_tasks: number
+}
+
+export interface ProjectProgressSummary {
+  total_steps: number
+  approved_steps: number
+  pending_steps: number
+}
+
+export interface ProjectProgressResponse {
+  project: {
+    id: string
+    name: string
+    current_phase?: string | null
+  }
+  phases: ProjectProgressPhase[]
+  workflow_summary: ProjectProgressSummary
+  pending_approvals: ProjectProgressApproval[]
+  team_activity: ProjectProgressTeamActivity[]
+}
+
 function mapProject(payload: ProjectResponse): ProjectResponse {
   return {
     id: String(payload.id ?? '').trim(),
@@ -42,4 +88,12 @@ export async function createProject(
     request,
   )
   return mapProject(payload)
+}
+
+export async function getProjectProgress(
+  projectId: string,
+): Promise<ProjectProgressResponse> {
+  return getJson<ProjectProgressResponse>(
+    `/api/v1/projects/${projectId}/progress`,
+  )
 }

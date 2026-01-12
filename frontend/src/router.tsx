@@ -297,7 +297,18 @@ export function useRouterParams(): Record<string, string> {
 
   const projectsIndex = segments.indexOf('projects')
   if (projectsIndex >= 0 && segments[projectsIndex + 1]) {
-    params.projectId = segments[projectsIndex + 1]
+    const candidate = segments[projectsIndex + 1]
+    const reserved = new Set([
+      'capture',
+      'feasibility',
+      'finance',
+      'phases',
+      'team',
+      'regulatory',
+    ])
+    if (!reserved.has(candidate)) {
+      params.projectId = candidate
+    }
   }
 
   return params

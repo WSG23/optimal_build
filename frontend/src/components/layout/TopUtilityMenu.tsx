@@ -341,7 +341,7 @@ export function TopUtilityMenu() {
             </MenuItem>
             <MenuItem
               component={Link}
-              to="/app/team-coordination"
+              to="/developers/team-coordination"
               onClick={() => setAnchorEl(null)}
             >
               <ListItemIcon>

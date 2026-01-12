@@ -7,10 +7,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.api import deps
+from app.api.v1.finance_common import normalise_project_id
 from app.core.database import get_session
+from app.models.development_phase import DevelopmentPhase, PhaseStatus
 from app.models.projects import Project, ProjectPhase, ProjectType
+from app.models.workflow import ApprovalStep, ApprovalWorkflow, StepStatus
+from app.services.team.team_service import TeamService
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -56,6 +61,54 @@ class ProjectResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ProgressProject(BaseModel):
+    id: str
+    name: str
+    current_phase: Optional[str] = None
+
+
+class ProgressPhase(BaseModel):
+    id: str
+    name: str
+    progress: float
+    status: str
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    source: str
+
+
+class PendingApprovalItem(BaseModel):
+    id: str
+    title: str
+    workflow_name: str
+    required_by: str
+    status: str
+
+
+class TeamActivityItem(BaseModel):
+    id: str
+    name: str
+    email: str
+    role: str
+    last_active_at: Optional[str]
+    pending_tasks: int
+    completed_tasks: int
+
+
+class WorkflowSummary(BaseModel):
+    total_steps: int
+    approved_steps: int
+    pending_steps: int
+
+
+class ProjectProgressResponse(BaseModel):
+    project: ProgressProject
+    phases: List[ProgressPhase]
+    workflow_summary: WorkflowSummary
+    pending_approvals: List[PendingApprovalItem]
+    team_activity: List[TeamActivityItem]
+
+
 def _project_to_response(project: Project) -> ProjectResponse:
     """Convert Project model to response."""
     return ProjectResponse(
@@ -78,6 +131,31 @@ def _project_to_response(project: Project) -> ProjectResponse:
 def _generate_project_code() -> str:
     """Generate a unique project code."""
     return f"PROJ-{uuid.uuid4().hex[:8].upper()}"
+
+
+def _phase_display_name(phase: ProjectPhase) -> str:
+    return phase.value.replace("_", " ").title()
+
+
+def _phase_status_from_development(status: PhaseStatus | None) -> str:
+    if status is None:
+        return "not_started"
+    mapping = {
+        PhaseStatus.NOT_STARTED: "not_started",
+        PhaseStatus.PLANNING: "not_started",
+        PhaseStatus.IN_PROGRESS: "in_progress",
+        PhaseStatus.ON_HOLD: "delayed",
+        PhaseStatus.DELAYED: "delayed",
+        PhaseStatus.COMPLETED: "completed",
+        PhaseStatus.CANCELLED: "delayed",
+    }
+    return mapping.get(status, "not_started")
+
+
+def _workflow_step_status(status: str | None) -> str:
+    if not status:
+        return StepStatus.PENDING.value
+    return status.lower()
 
 
 @router.post(
@@ -331,3 +409,174 @@ async def get_project_stats(
             )[:5]
         ],
     }
+
+
+@router.get("/{project_id}/progress", response_model=ProjectProgressResponse)
+async def get_project_progress(
+    project_id: str,
+    db: AsyncSession = Depends(get_session),
+    identity: deps.RequestIdentity = Depends(deps.require_viewer),
+) -> ProjectProgressResponse:
+    """Get progress details for a project."""
+    project_uuid = normalise_project_id(project_id)
+    result = await db.execute(
+        select(Project).where(
+            Project.id == project_uuid,
+            Project.is_active == True,  # noqa: E712
+        )
+    )
+    project = result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+        )
+
+    phases_result = await db.execute(
+        select(DevelopmentPhase)
+        .where(DevelopmentPhase.project_id == project_uuid)
+        .order_by(DevelopmentPhase.planned_start_date.asc().nulls_last())
+    )
+    development_phases = list(phases_result.scalars().all())
+
+    phases: list[ProgressPhase] = []
+    if development_phases:
+        for phase in development_phases:
+            progress_value = (
+                float(phase.completion_percentage)
+                if phase.completion_percentage is not None
+                else 0.0
+            )
+            phases.append(
+                ProgressPhase(
+                    id=str(phase.id),
+                    name=phase.phase_name,
+                    progress=progress_value,
+                    status=_phase_status_from_development(phase.status),
+                    start_date=(
+                        phase.planned_start_date.isoformat()
+                        if phase.planned_start_date
+                        else None
+                    ),
+                    end_date=(
+                        phase.planned_end_date.isoformat()
+                        if phase.planned_end_date
+                        else None
+                    ),
+                    source="development_phase",
+                )
+            )
+    else:
+        phase_order = [
+            ProjectPhase.CONCEPT,
+            ProjectPhase.FEASIBILITY,
+            ProjectPhase.DESIGN,
+            ProjectPhase.APPROVAL,
+            ProjectPhase.TENDER,
+            ProjectPhase.CONSTRUCTION,
+            ProjectPhase.TESTING_COMMISSIONING,
+            ProjectPhase.HANDOVER,
+            ProjectPhase.OPERATION,
+        ]
+        current_phase = project.current_phase or ProjectPhase.CONCEPT
+        try:
+            current_index = phase_order.index(current_phase)
+        except ValueError:
+            current_index = 0
+        for idx, phase in enumerate(phase_order):
+            if idx < current_index:
+                status_label = "completed"
+                progress_value = 100.0
+            elif idx == current_index:
+                status_label = "in_progress"
+                progress_value = 50.0
+            else:
+                status_label = "not_started"
+                progress_value = 0.0
+            phases.append(
+                ProgressPhase(
+                    id=phase.value,
+                    name=_phase_display_name(phase),
+                    progress=progress_value,
+                    status=status_label,
+                    source="project_phase",
+                )
+            )
+
+    workflow_result = await db.execute(
+        select(ApprovalWorkflow)
+        .where(ApprovalWorkflow.project_id == project_uuid)
+        .options(
+            selectinload(ApprovalWorkflow.steps).selectinload(
+                ApprovalStep.required_user
+            )
+        )
+    )
+    workflows = list(workflow_result.scalars().unique().all())
+    total_steps = 0
+    approved_steps = 0
+    pending_steps = 0
+    pending_approvals: list[PendingApprovalItem] = []
+
+    for workflow in workflows:
+        for step in workflow.steps:
+            total_steps += 1
+            status_value = _workflow_step_status(step.status)
+            if status_value == StepStatus.APPROVED.value:
+                approved_steps += 1
+            if status_value in (StepStatus.PENDING.value, StepStatus.IN_REVIEW.value):
+                pending_steps += 1
+                required_by = "Any team member"
+                if step.required_user and step.required_user.full_name:
+                    required_by = step.required_user.full_name
+                elif step.required_role:
+                    required_by = step.required_role
+                pending_approvals.append(
+                    PendingApprovalItem(
+                        id=str(step.id),
+                        title=step.name,
+                        workflow_name=workflow.title,
+                        required_by=required_by,
+                        status=status_value,
+                    )
+                )
+
+    workflow_summary = WorkflowSummary(
+        total_steps=total_steps,
+        approved_steps=approved_steps,
+        pending_steps=pending_steps,
+    )
+
+    team_service = TeamService(db)
+    activity_stats = await team_service.get_team_activity(project_uuid)
+    team_activity: list[TeamActivityItem] = []
+    for member in activity_stats.get("members", []):
+        last_active = member.get("last_active_at")
+        team_activity.append(
+            TeamActivityItem(
+                id=str(member.get("id")),
+                name=str(member.get("name") or ""),
+                email=str(member.get("email") or ""),
+                role=str(member.get("role") or ""),
+                last_active_at=(
+                    last_active.isoformat()
+                    if hasattr(last_active, "isoformat")
+                    else None
+                ),
+                pending_tasks=int(member.get("pending_tasks") or 0),
+                completed_tasks=int(member.get("completed_tasks") or 0),
+            )
+        )
+
+    return ProjectProgressResponse(
+        project=ProgressProject(
+            id=str(project.id),
+            name=project.project_name,
+            current_phase=(
+                project.current_phase.value if project.current_phase else None
+            ),
+        ),
+        phases=phases,
+        workflow_summary=workflow_summary,
+        pending_approvals=pending_approvals,
+        team_activity=team_activity,
+    )

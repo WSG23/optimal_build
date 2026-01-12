@@ -102,7 +102,7 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
   {
     key: 'teamCoordination',
     label: 'Team Coordination',
-    path: '/developers/team-coordination', // Path updated
+    path: '/developers/team-coordination',
     projectPath: (projectId: string) => `/projects/${projectId}/team`,
     description: 'Consultant network and approval workflows.',
     workspace: 'developer',

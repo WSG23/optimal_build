@@ -33,7 +33,7 @@ const GOOGLE_MAPS_API_KEY = import.meta.env?.VITE_GOOGLE_MAPS_API_KEY ?? ''
 // Track if Google Maps script is loading/loaded
 let googleMapsPromise: Promise<void> | null = null
 
-function loadGoogleMapsScript(): Promise<void> {
+function loadGoogleMapsScript(apiKey: string): Promise<void> {
   if (window.google?.maps) {
     return Promise.resolve()
   }
@@ -44,7 +44,7 @@ function loadGoogleMapsScript(): Promise<void> {
 
   googleMapsPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`
     script.async = true
     script.defer = true
     script.onload = () => resolve()
@@ -66,6 +66,7 @@ export interface CapturedSite {
 export interface UseUnifiedCaptureOptions {
   isDeveloperMode: boolean
   projectId?: string | null
+  googleMapsApiKey?: string
 }
 
 export interface UseUnifiedCaptureReturn {
@@ -116,6 +117,7 @@ export interface UseUnifiedCaptureReturn {
 export function useUnifiedCapture({
   isDeveloperMode,
   projectId,
+  googleMapsApiKey,
 }: UseUnifiedCaptureOptions): UseUnifiedCaptureReturn {
   // Form state
   const [latitude, setLatitude] = useState<string>('1.3000')
@@ -224,15 +226,16 @@ export function useUnifiedCapture({
 
   // Load Google Maps script
   useEffect(() => {
-    if (!GOOGLE_MAPS_API_KEY) {
+    const apiKey = googleMapsApiKey ?? GOOGLE_MAPS_API_KEY
+    if (!apiKey) {
       setMapError('Google Maps API key not set; map preview disabled.')
       return
     }
 
-    loadGoogleMapsScript()
+    loadGoogleMapsScript(apiKey)
       .then(() => setIsMapLoaded(true))
       .catch((err) => setMapError(err.message))
-  }, [])
+  }, [googleMapsApiKey])
 
   useEffect(() => {
     if (!isDeveloperMode) {
