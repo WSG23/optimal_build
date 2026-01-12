@@ -5,14 +5,14 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Button,
   Box,
   Typography,
   IconButton,
   MenuItem,
 } from '@mui/material'
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material'
-import { workflowApi, ApprovalWorkflow } from '../../../../api/workflow' // Fixed import
+import { Button } from '../../../../components/canonical/Button'
+import { workflowApi, ApprovalWorkflow } from '../../../../api/workflow'
 
 interface CreateWorkflowDialogProps {
   open: boolean
@@ -185,16 +185,21 @@ export const CreateWorkflowDialog: React.FC<CreateWorkflowDialogProps> = ({
                 </IconButton>
               </Box>
             ))}
-            <Button startIcon={<AddIcon />} onClick={handleAddStep}>
+            <Button variant="ghost" size="sm" onClick={handleAddStep}>
+              <AddIcon sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }} />
               Add Step
             </Button>
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ p: 'var(--ob-space-200)' }}>
-        <Button onClick={onClose}>Cancel</Button>
+      <DialogActions
+        sx={{ p: 'var(--ob-space-200)', gap: 'var(--ob-space-100)' }}
+      >
+        <Button variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
         <Button
-          variant="contained"
+          variant="primary"
           onClick={handleSubmit}
           disabled={
             creating ||
@@ -202,10 +207,6 @@ export const CreateWorkflowDialog: React.FC<CreateWorkflowDialogProps> = ({
             steps.length === 0 ||
             steps.some((s) => !s.name.trim())
           }
-          sx={{
-            background:
-              'linear-gradient(135deg, var(--ob-brand-500) 0%, var(--ob-brand-400) 100%)',
-          }}
         >
           {creating ? 'Creating...' : 'Create Workflow'}
         </Button>

@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import {
   Box,
-  Button,
-  Grid,
-  Card,
   Typography,
   Chip,
   CircularProgress,
@@ -20,6 +17,8 @@ import {
   ExpandLess as ExpandLessIcon,
   CheckCircle as CheckIcon,
 } from '@mui/icons-material'
+import { Button } from '../../../../components/canonical/Button'
+import { GlassCard } from '../../../../components/canonical/GlassCard'
 import { ApprovalWorkflow, workflowApi } from '../../../../api/workflow'
 import { CreateWorkflowDialog } from './CreateWorkflowDialog'
 
@@ -141,24 +140,37 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
   }
 
   return (
-    <Box>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--ob-space-150)',
+      }}
+    >
+      {/* Section header on background with action button */}
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'flex-end',
-          mb: 'var(--ob-space-300)',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setCreateOpen(true)}
+        <Typography
+          variant="subtitle2"
           sx={{
-            background:
-              'linear-gradient(135deg, var(--ob-brand-500) 0%, var(--ob-brand-400) 100%)',
-            boxShadow: 'var(--ob-shadow-md)',
+            color: 'text.secondary',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
           }}
         >
+          Approval Workflows
+        </Typography>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => setCreateOpen(true)}
+        >
+          <AddIcon sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }} />
           New Workflow
         </Button>
       </Box>
@@ -174,23 +186,28 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
           <CircularProgress />
         </Box>
       ) : (
-        <Grid container spacing="var(--ob-space-300)">
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--ob-space-150)',
+          }}
+        >
           {workflows.map((workflow) => (
-            <Grid item xs={12} key={workflow.id}>
-              <WorkflowCard
-                workflow={workflow}
-                onApproveStep={handleApproveStep}
-              />
-            </Grid>
+            <WorkflowCard
+              key={workflow.id}
+              workflow={workflow}
+              onApproveStep={handleApproveStep}
+            />
           ))}
           {workflows.length === 0 && (
-            <Grid item xs={12}>
+            <GlassCard sx={{ p: 'var(--ob-space-300)' }}>
               <Typography variant="body1" color="text.secondary" align="center">
                 No active workflows. Create one to get started.
               </Typography>
-            </Grid>
+            </GlassCard>
           )}
-        </Grid>
+        </Box>
       )}
 
       <CreateWorkflowDialog
@@ -214,14 +231,7 @@ const WorkflowCard: React.FC<{
   )
 
   return (
-    <Card
-      sx={{
-        bgcolor: 'background.paper',
-        border: '1px solid',
-        borderColor: 'divider',
-        overflow: 'hidden',
-      }}
-    >
+    <GlassCard sx={{ overflow: 'hidden' }}>
       <Box
         sx={{
           p: 'var(--ob-space-200)',
@@ -320,18 +330,16 @@ const WorkflowCard: React.FC<{
                   {step.status === 'in_review' && (
                     <Box sx={{ mt: 'var(--ob-space-100)' }}>
                       <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<CheckIcon />}
+                        size="sm"
+                        variant="secondary"
                         onClick={(e) => {
                           e.stopPropagation()
                           onApproveStep(step.id)
                         }}
-                        sx={{
-                          mr: 'var(--ob-space-100)',
-                          fontSize: 'var(--ob-font-size-xs)',
-                        }}
                       >
+                        <CheckIcon
+                          sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }}
+                        />
                         Approve
                       </Button>
                     </Box>
@@ -342,6 +350,6 @@ const WorkflowCard: React.FC<{
           </Stepper>
         </Box>
       </Collapse>
-    </Card>
+    </GlassCard>
   )
 }

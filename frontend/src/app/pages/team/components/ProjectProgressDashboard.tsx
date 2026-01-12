@@ -6,17 +6,13 @@
 import React, { useState, useEffect } from 'react'
 import {
   Box,
-  Card,
-  CardContent,
   Chip,
-  Divider,
   Grid,
   IconButton,
   LinearProgress,
   List,
   ListItem,
   ListItemText,
-  Paper,
   Typography,
   Avatar,
   Tooltip,
@@ -31,6 +27,7 @@ import {
   Timeline as TimelineIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material'
+import { GlassCard } from '../../../../components/canonical/GlassCard'
 import {
   getMockPhases,
   type ProjectPhase,
@@ -306,169 +303,237 @@ export const ProjectProgressDashboard: React.FC<
   }
 
   return (
-    <Box>
-      {/* Header with overall progress */}
-      <Box sx={{ mb: 'var(--ob-space-400)' }}>
-        <Box
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--ob-space-300)',
+      }}
+    >
+      {/* Section header on background (not in card) */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Typography
+          variant="subtitle2"
           sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 'var(--ob-space-200)',
+            color: 'text.secondary',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
           }}
         >
-          <Typography variant="h5" fontWeight="bold">
-            {projectName} - Progress Dashboard
-          </Typography>
-          <Tooltip title="Refresh">
-            <IconButton onClick={fetchData}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
-
-        {/* KPI Cards */}
-        <Grid container spacing="var(--ob-space-200)">
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                background:
-                  'linear-gradient(135deg, var(--ob-brand-700) 0%, var(--ob-brand-400) 100%)',
-                color: 'white',
-              }}
-            >
-              <CardContent>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--ob-space-100)',
-                  }}
-                >
-                  <TrendingUpIcon />
-                  <Typography variant="caption">Overall Progress</Typography>
-                </Box>
-                <Typography variant="h4" fontWeight="bold">
-                  {overallProgress}%
-                </Typography>
-                <LinearProgress
-                  variant="determinate"
-                  value={overallProgress}
-                  sx={{
-                    mt: 'var(--ob-space-100)',
-                    bgcolor: 'rgba(255,255,255,0.3)',
-                    '& .MuiLinearProgress-bar': { bgcolor: 'white' },
-                  }}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                background:
-                  'linear-gradient(135deg, var(--ob-success-700) 0%, var(--ob-success-400) 100%)',
-                color: 'white',
-              }}
-            >
-              <CardContent>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--ob-space-100)',
-                  }}
-                >
-                  <CheckCircleIcon />
-                  <Typography variant="caption">Completed Tasks</Typography>
-                </Box>
-                <Typography variant="h4" fontWeight="bold">
-                  {totalCompletedTasks}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                background:
-                  'linear-gradient(135deg, var(--ob-warning-700) 0%, var(--ob-warning-400) 100%)',
-                color: 'white',
-              }}
-            >
-              <CardContent>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--ob-space-100)',
-                  }}
-                >
-                  <HourglassIcon />
-                  <Typography variant="caption">Pending Tasks</Typography>
-                </Box>
-                <Typography variant="h4" fontWeight="bold">
-                  {totalPendingTasks}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                background:
-                  'linear-gradient(135deg, var(--ob-info-700) 0%, var(--ob-info-400) 100%)',
-                color: 'white',
-              }}
-            >
-              <CardContent>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--ob-space-100)',
-                  }}
-                >
-                  <PeopleIcon />
-                  <Typography variant="caption">Team Members</Typography>
-                </Box>
-                <Typography variant="h4" fontWeight="bold">
-                  {teamActivity.length}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+          {projectName} - Progress Dashboard
+        </Typography>
+        <Tooltip title="Refresh">
+          <IconButton onClick={fetchData} size="small">
+            <RefreshIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
 
-      <Grid container spacing="var(--ob-space-300)">
-        {/* Phase Progress Timeline */}
-        <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 'var(--ob-space-200)' }}>
+      {/* KPI Cards - 4-column grid for metrics (atomic data) */}
+      <Grid container spacing="var(--ob-space-150)">
+        <Grid item xs={12} sm={6} md={3}>
+          <GlassCard
+            sx={{
+              p: 'var(--ob-space-150)',
+              background:
+                'linear-gradient(135deg, var(--ob-brand-700) 0%, var(--ob-brand-400) 100%)',
+              color: 'white',
+            }}
+          >
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 'var(--ob-space-100)',
-                mb: 'var(--ob-space-200)',
               }}
             >
-              <TimelineIcon color="primary" />
-              <Typography variant="h6">Phase Progress</Typography>
+              <TrendingUpIcon />
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-2xs)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                }}
+              >
+                Overall Progress
+              </Typography>
             </Box>
-            <Divider sx={{ mb: 'var(--ob-space-200)' }} />
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-3xl)',
+                fontWeight: 700,
+                mt: 'var(--ob-space-050)',
+              }}
+            >
+              {overallProgress}%
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={overallProgress}
+              sx={{
+                mt: 'var(--ob-space-100)',
+                bgcolor: 'rgba(255,255,255,0.3)',
+                '& .MuiLinearProgress-bar': { bgcolor: 'white' },
+              }}
+            />
+          </GlassCard>
+        </Grid>
 
-            {phases.map((phase) => (
-              <Box key={phase.id} sx={{ mb: 'var(--ob-space-300)' }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <GlassCard
+            sx={{
+              p: 'var(--ob-space-150)',
+              background:
+                'linear-gradient(135deg, var(--ob-success-700) 0%, var(--ob-success-400) 100%)',
+              color: 'white',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-100)',
+              }}
+            >
+              <CheckCircleIcon />
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-2xs)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                }}
+              >
+                Completed Tasks
+              </Typography>
+            </Box>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-3xl)',
+                fontWeight: 700,
+                mt: 'var(--ob-space-050)',
+              }}
+            >
+              {totalCompletedTasks}
+            </Typography>
+          </GlassCard>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <GlassCard
+            sx={{
+              p: 'var(--ob-space-150)',
+              background:
+                'linear-gradient(135deg, var(--ob-warning-700) 0%, var(--ob-warning-400) 100%)',
+              color: 'white',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-100)',
+              }}
+            >
+              <HourglassIcon />
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-2xs)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                }}
+              >
+                Pending Tasks
+              </Typography>
+            </Box>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-3xl)',
+                fontWeight: 700,
+                mt: 'var(--ob-space-050)',
+              }}
+            >
+              {totalPendingTasks}
+            </Typography>
+          </GlassCard>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={3}>
+          <GlassCard
+            sx={{
+              p: 'var(--ob-space-150)',
+              background:
+                'linear-gradient(135deg, var(--ob-info-700) 0%, var(--ob-info-400) 100%)',
+              color: 'white',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-100)',
+              }}
+            >
+              <PeopleIcon />
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-2xs)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                }}
+              >
+                Team Members
+              </Typography>
+            </Box>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-3xl)',
+                fontWeight: 700,
+                mt: 'var(--ob-space-050)',
+              }}
+            >
+              {teamActivity.length}
+            </Typography>
+          </GlassCard>
+        </Grid>
+      </Grid>
+
+      {/* Phase Progress & Pending Approvals - Master-Detail layout */}
+      <Grid container spacing="var(--ob-space-150)">
+        {/* Phase Progress Timeline */}
+        <Grid item xs={12} md={8}>
+          {/* Section header on background */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-100)',
+              mb: 'var(--ob-space-150)',
+            }}
+          >
+            <TimelineIcon color="primary" />
+            <Typography variant="h6">Phase Progress</Typography>
+          </Box>
+          {/* Data in GlassCard */}
+          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
+            {phases.map((phase, index) => (
+              <Box
+                key={phase.id}
+                sx={{
+                  mb: index < phases.length - 1 ? 'var(--ob-space-300)' : 0,
+                }}
+              >
                 <Box
                   sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    mb: 1,
+                    mb: 'var(--ob-space-100)',
                   }}
                 >
                   <Box
@@ -549,37 +614,37 @@ export const ProjectProgressDashboard: React.FC<
                 </Box>
               </Box>
             ))}
-          </Paper>
+          </GlassCard>
         </Grid>
 
         {/* Pending Approvals */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 'var(--ob-space-200)' }}>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--ob-space-100)',
-                mb: 'var(--ob-space-200)',
-              }}
-            >
-              <AssignmentIcon color="warning" />
-              <Typography variant="h6">Pending Approvals</Typography>
-              <Chip
-                label={pendingApprovals.length}
-                size="small"
-                color="warning"
-              />
-            </Box>
-            <Divider sx={{ mb: 'var(--ob-space-200)' }} />
-
+          {/* Section header on background */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-100)',
+              mb: 'var(--ob-space-150)',
+            }}
+          >
+            <AssignmentIcon color="warning" />
+            <Typography variant="h6">Pending Approvals</Typography>
+            <Chip
+              label={pendingApprovals.length}
+              size="small"
+              color="warning"
+            />
+          </Box>
+          {/* Data in GlassCard */}
+          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
             <List dense disablePadding>
               {pendingApprovals.map((approval) => (
                 <ListItem
                   key={approval.id}
                   sx={{
-                    borderRadius: 1,
-                    mb: 1,
+                    borderRadius: 'var(--ob-radius-sm)',
+                    mb: 'var(--ob-space-100)',
                     bgcolor: 'action.hover',
                     cursor: 'pointer',
                     '&:hover': { bgcolor: 'action.selected' },
@@ -588,7 +653,11 @@ export const ProjectProgressDashboard: React.FC<
                   <ListItemText
                     primary={
                       <Box
-                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 'var(--ob-space-100)',
+                        }}
                       >
                         <Typography variant="body2" fontWeight="medium">
                           {approval.title}
@@ -608,7 +677,7 @@ export const ProjectProgressDashboard: React.FC<
                           }
                           sx={{
                             fontSize: 'var(--ob-font-size-2xs)',
-                            height: 18,
+                            height: 'var(--ob-space-200)',
                           }}
                         />
                       </Box>
@@ -636,92 +705,97 @@ export const ProjectProgressDashboard: React.FC<
                 </Typography>
               )}
             </List>
-          </Paper>
-        </Grid>
-
-        {/* Team Activity */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 'var(--ob-space-200)' }}>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--ob-space-100)',
-                mb: 'var(--ob-space-200)',
-              }}
-            >
-              <PeopleIcon color="primary" />
-              <Typography variant="h6">Team Activity</Typography>
-            </Box>
-            <Divider sx={{ mb: 'var(--ob-space-200)' }} />
-
-            <Grid container spacing="var(--ob-space-200)">
-              {teamActivity.map((member) => (
-                <Grid item xs={12} sm={6} md={3} key={member.id}>
-                  <Card variant="outlined" sx={{ height: '100%' }}>
-                    <CardContent>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 'var(--ob-space-200)',
-                          mb: 2,
-                        }}
-                      >
-                        <Avatar sx={{ bgcolor: 'primary.main' }}>
-                          {member.name.charAt(0)}
-                        </Avatar>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant="subtitle2" noWrap>
-                            {member.name}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            noWrap
-                          >
-                            {member.role}
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
-                            Pending
-                          </Typography>
-                          <Typography variant="h6" color="warning.main">
-                            {member.pendingTasks}
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
-                            Completed
-                          </Typography>
-                          <Typography variant="h6" color="success.main">
-                            {member.completedTasks}
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ display: 'block', mt: 1 }}
-                      >
-                        Active {member.lastActive}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Paper>
+          </GlassCard>
         </Grid>
       </Grid>
+
+      {/* Team Activity - Section header on background, data in card */}
+      <Box>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--ob-space-100)',
+            mb: 'var(--ob-space-150)',
+          }}
+        >
+          <PeopleIcon color="primary" />
+          <Typography variant="h6">Team Activity</Typography>
+        </Box>
+        {/* Team member cards as siblings (no nested container) */}
+        <Grid container spacing="var(--ob-space-150)">
+          {teamActivity.map((member) => (
+            <Grid item xs={12} sm={6} md={3} key={member.id}>
+              <GlassCard sx={{ p: 'var(--ob-space-150)', height: '100%' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--ob-space-150)',
+                    mb: 'var(--ob-space-200)',
+                  }}
+                >
+                  <Avatar sx={{ bgcolor: 'primary.main' }}>
+                    {member.name.charAt(0)}
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="subtitle2" noWrap>
+                      {member.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" noWrap>
+                      {member.role}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontSize: 'var(--ob-font-size-2xs)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        color: 'text.secondary',
+                      }}
+                    >
+                      Pending
+                    </Typography>
+                    <Typography variant="h6" color="warning.main">
+                      {member.pendingTasks}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontSize: 'var(--ob-font-size-2xs)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        color: 'text.secondary',
+                      }}
+                    >
+                      Completed
+                    </Typography>
+                    <Typography variant="h6" color="success.main">
+                      {member.completedTasks}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 'var(--ob-space-100)' }}
+                >
+                  Active {member.lastActive}
+                </Typography>
+              </GlassCard>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
     </Box>
   )
 }

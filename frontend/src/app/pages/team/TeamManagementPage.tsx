@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import {
   Box,
-  Button,
   Typography,
   Table,
   TableBody,
@@ -27,6 +26,8 @@ import {
   Task as TaskIcon,
   Dashboard as DashboardIcon,
 } from '@mui/icons-material'
+import { Button } from '../../../components/canonical/Button'
+import { GlassCard } from '../../../components/canonical/GlassCard'
 import { teamApi, TeamMember } from '../../../api/team'
 import { WorkflowDashboard } from './components/WorkflowDashboard'
 import { ProjectProgressDashboard } from './components/ProjectProgressDashboard'
@@ -261,12 +262,11 @@ export const TeamManagementPage: React.FC = () => {
         </Box>
         {activeTab === 0 && (
           <Button
-            variant="contained"
-            startIcon={<AddIcon />}
+            variant="secondary"
+            size="sm"
             onClick={() => setInviteOpen(true)}
-            className="team-invite-btn"
-            size="small"
           >
+            <AddIcon sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }} />
             Invite Member
           </Button>
         )}
@@ -313,142 +313,150 @@ export const TeamManagementPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* Tab 0: Team Members - Depth 1 (Glass Card with cyan edge) */}
+      {/* Tab 0: Team Members - Content vs Context: header on background, data in card */}
       {activeTab === 0 && (
-        <Box className="ob-card-module">
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--ob-space-150)',
+          }}
+        >
+          {/* Section header on background (not in card) */}
           <Typography
             variant="subtitle2"
             sx={{
               color: 'text.secondary',
-              mb: 'var(--ob-space-200)',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
             }}
           >
             Team Members
           </Typography>
-          <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
+          {/* Data table in GlassCard */}
+          <GlassCard sx={{ p: 'var(--ob-space-150)' }}>
+            <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+              <Table>
+                <TableHead>
                   <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      align="center"
-                      sx={{ py: 'var(--ob-space-400)' }}
-                    >
-                      <CircularProgress size={24} />
-                      <Typography
-                        variant="body2"
-                        sx={{ mt: 1, color: 'text.secondary' }}
+                    <TableCell>Name</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        align="center"
+                        sx={{ py: 'var(--ob-space-400)' }}
                       >
-                        Loading team...
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : members.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      align="center"
-                      sx={{ py: 'var(--ob-space-400)' }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        No team members found.
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  members.map((member) => {
-                    const isPendingInvite = member.user_id.startsWith('invite-')
-                    return (
-                      <TableRow key={member.id} hover>
-                        <TableCell sx={{ fontWeight: 500 }}>
-                          {member.user?.full_name || 'Unknown'}
-                        </TableCell>
-                        <TableCell>
-                          {member.user?.email || 'No email'}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={member.role}
-                            size="small"
-                            sx={{
-                              textTransform: 'capitalize',
-                              bgcolor:
-                                member.role === 'developer'
-                                  ? 'primary.main'
-                                  : 'default',
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={
-                              isPendingInvite
-                                ? 'Pending'
-                                : member.is_active
-                                  ? 'Active'
-                                  : 'Inactive'
-                            }
-                            size="small"
-                            color={
-                              isPendingInvite
-                                ? 'warning'
-                                : member.is_active
-                                  ? 'success'
-                                  : 'default'
-                            }
-                            variant="outlined"
-                            sx={{ textTransform: 'capitalize' }}
-                          />
-                        </TableCell>
-                        <TableCell align="right">
-                          <Button
-                            size="small"
-                            color="error"
-                            onClick={() => handleRemoveMember(member)}
-                            disabled={removingMemberId === member.id}
-                          >
-                            {removingMemberId === member.id
-                              ? 'Removing...'
-                              : 'Remove'}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                        <CircularProgress size={24} />
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            mt: 'var(--ob-space-100)',
+                            color: 'text.secondary',
+                          }}
+                        >
+                          Loading team...
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : members.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        align="center"
+                        sx={{ py: 'var(--ob-space-400)' }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          No team members found.
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    members.map((member) => {
+                      const isPendingInvite =
+                        member.user_id.startsWith('invite-')
+                      return (
+                        <TableRow key={member.id} hover>
+                          <TableCell sx={{ fontWeight: 500 }}>
+                            {member.user?.full_name || 'Unknown'}
+                          </TableCell>
+                          <TableCell>
+                            {member.user?.email || 'No email'}
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={member.role}
+                              size="small"
+                              sx={{
+                                textTransform: 'capitalize',
+                                bgcolor:
+                                  member.role === 'developer'
+                                    ? 'primary.main'
+                                    : 'default',
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={
+                                isPendingInvite
+                                  ? 'Pending'
+                                  : member.is_active
+                                    ? 'Active'
+                                    : 'Inactive'
+                              }
+                              size="small"
+                              color={
+                                isPendingInvite
+                                  ? 'warning'
+                                  : member.is_active
+                                    ? 'success'
+                                    : 'default'
+                              }
+                              variant="outlined"
+                              sx={{ textTransform: 'capitalize' }}
+                            />
+                          </TableCell>
+                          <TableCell align="right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveMember(member)}
+                              disabled={removingMemberId === member.id}
+                              sx={{ color: 'error.main' }}
+                            >
+                              {removingMemberId === member.id
+                                ? 'Removing...'
+                                : 'Remove'}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </GlassCard>
         </Box>
       )}
 
-      {/* Tab 1: Approvals & Workflows - Depth 1 (Glass Card with cyan edge) */}
-      {activeTab === 1 && (
-        <Box className="ob-card-module">
-          <WorkflowDashboard projectId={projectId} />
-        </Box>
-      )}
+      {/* Tab 1: Approvals & Workflows - No wrapper, component manages own layout */}
+      {activeTab === 1 && <WorkflowDashboard projectId={projectId} />}
 
-      {/* Tab 2: Progress Dashboard */}
+      {/* Tab 2: Progress Dashboard - No wrapper, component manages own layout */}
       {activeTab === 2 && (
-        <Box className="ob-card-module">
-          <ProjectProgressDashboard
-            projectId={projectId}
-            projectName={currentProject?.name ?? 'Project'}
-          />
-        </Box>
+        <ProjectProgressDashboard
+          projectId={projectId}
+          projectName={currentProject?.name ?? 'Project'}
+        />
       )}
 
       {/* Invite Dialog */}
@@ -489,15 +497,17 @@ export const TeamManagementPage: React.FC = () => {
             </TextField>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 'var(--ob-space-200)' }}>
-          <Button onClick={() => setInviteOpen(false)} disabled={inviting}>
-            Cancel
-          </Button>
+        <DialogActions
+          sx={{ p: 'var(--ob-space-200)', gap: 'var(--ob-space-100)' }}
+        >
           <Button
-            variant="contained"
-            onClick={handleInvite}
+            variant="ghost"
+            onClick={() => setInviteOpen(false)}
             disabled={inviting}
           >
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleInvite} disabled={inviting}>
             {inviting ? 'Sending...' : 'Send Invitation'}
           </Button>
         </DialogActions>
