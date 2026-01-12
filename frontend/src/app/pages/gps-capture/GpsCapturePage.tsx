@@ -62,7 +62,7 @@ function loadGoogleMapsScript(): Promise<void> {
 
   googleMapsPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&loading=async`
     script.async = true
     script.defer = true
     script.onload = () => resolve()
@@ -133,7 +133,9 @@ export function GpsCapturePage() {
   const [isMapLoaded, setIsMapLoaded] = useState(false)
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
-  const mapMarkerRef = useRef<google.maps.Marker | null>(null)
+  const mapMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
+    null,
+  )
 
   const handleScenarioToggle = useCallback((scenario: DevelopmentScenario) => {
     setSelectedScenarios((prev) => {
@@ -174,10 +176,10 @@ export function GpsCapturePage() {
           lat: result.latitude,
           lng: result.longitude,
         })
-        mapMarkerRef.current.setPosition({
+        mapMarkerRef.current.position = {
           lat: result.latitude,
           lng: result.longitude,
-        })
+        }
       }
     } catch (error) {
       console.error('Forward geocode failed', error)
@@ -296,27 +298,36 @@ export function GpsCapturePage() {
       streetViewControl: false,
     })
 
-    // Create draggable marker using standard Marker class
-    const marker = new google.maps.Marker({
+    // Create custom marker pin element
+    const pinElement = document.createElement('div')
+    pinElement.style.width = '24px'
+    pinElement.style.height = '24px'
+    pinElement.style.borderRadius = '50%'
+    pinElement.style.backgroundColor = '#3b82f6'
+    pinElement.style.border = '3px solid white'
+    pinElement.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)'
+    pinElement.style.cursor = 'grab'
+
+    // Create draggable marker using AdvancedMarkerElement
+    const marker = new google.maps.marker.AdvancedMarkerElement({
       position: { lat: initialLat, lng: initialLng },
       map,
-      draggable: true,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 12,
-        fillColor: '#3b82f6',
-        fillOpacity: 1,
-        strokeColor: 'white',
-        strokeWeight: 3,
-      },
+      gmpDraggable: true,
+      content: pinElement,
     })
 
     // Handle marker drag
     marker.addListener('dragend', () => {
-      const position = marker.getPosition()
+      const position = marker.position
       if (position) {
-        setLatitude(position.lat().toFixed(6))
-        setLongitude(position.lng().toFixed(6))
+        const lat =
+          typeof position.lat === 'function' ? position.lat() : position.lat
+        const lng =
+          typeof position.lng === 'function' ? position.lng() : position.lng
+        if (lat !== null && lng !== null) {
+          setLatitude(lat.toFixed(6))
+          setLongitude(lng.toFixed(6))
+        }
       }
     })
 
@@ -327,7 +338,7 @@ export function GpsCapturePage() {
         const lng = event.latLng.lng()
         setLatitude(lat.toFixed(6))
         setLongitude(lng.toFixed(6))
-        marker.setPosition({ lat, lng })
+        marker.position = { lat, lng }
       }
     })
 
@@ -337,7 +348,7 @@ export function GpsCapturePage() {
     return () => {
       // Cleanup
       if (mapMarkerRef.current) {
-        mapMarkerRef.current.setMap(null)
+        mapMarkerRef.current.map = null
       }
     }
   }, [isMapLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
