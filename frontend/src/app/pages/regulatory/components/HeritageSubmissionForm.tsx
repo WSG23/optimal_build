@@ -163,6 +163,9 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [activeSubmission, setActiveSubmission] = useState<
+    HeritageSubmission | undefined
+  >(existingSubmission)
 
   // Form data
   const [conservationStatus, setConservationStatus] = useState('')
@@ -180,17 +183,20 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
 
   // Initialize form with existing data
   useEffect(() => {
-    if (existingSubmission) {
-      setConservationStatus(existingSubmission.conservation_status)
-      setConstructionYear(existingSubmission.original_construction_year || '')
+    setActiveSubmission(existingSubmission)
+  }, [existingSubmission])
+
+  useEffect(() => {
+    if (activeSubmission) {
+      setConservationStatus(activeSubmission.conservation_status)
+      setConstructionYear(activeSubmission.original_construction_year || '')
       setSelectedElements(
-        existingSubmission.heritage_elements?.split(',').filter(Boolean) || [],
+        activeSubmission.heritage_elements?.split(',').filter(Boolean) || [],
       )
-      setConservationPlanAttached(existingSubmission.conservation_plan_attached)
-      // Parse interventions from string if available
-      if (existingSubmission.proposed_interventions) {
+      setConservationPlanAttached(activeSubmission.conservation_plan_attached)
+      if (activeSubmission.proposed_interventions) {
         try {
-          const parsed = JSON.parse(existingSubmission.proposed_interventions)
+          const parsed = JSON.parse(activeSubmission.proposed_interventions)
           if (Array.isArray(parsed)) {
             setInterventions(parsed)
           }
@@ -198,13 +204,25 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
           setInterventions([
             {
               type: 'restoration',
-              description: existingSubmission.proposed_interventions,
+              description: activeSubmission.proposed_interventions,
             },
           ])
         }
+      } else {
+        setInterventions([])
       }
+    } else {
+      setConservationStatus('')
+      setConstructionYear('')
+      setSelectedElements([])
+      setInterventions([])
+      setConservationPlanAttached(false)
+      setUploadedPhotos([])
+      setUploadedDrawings([])
+      setSuccessMessage(null)
+      setError(null)
     }
-  }, [existingSubmission])
+  }, [activeSubmission])
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue)
@@ -294,19 +312,21 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
         conservation_plan_attached: conservationPlanAttached,
       }
 
-      if (existingSubmission) {
+      if (activeSubmission) {
         const updated = await regulatoryApi.updateHeritageSubmission(
-          existingSubmission.id,
+          activeSubmission.id,
           payload as HeritageSubmissionUpdateRequest,
         )
-        setSuccessMessage('Submission saved successfully')
+        setSuccessMessage('Draft updated successfully')
+        setActiveSubmission(updated)
         onSuccess?.(updated)
       } else {
         const created = await regulatoryApi.createHeritageSubmission({
           project_id: projectId,
           ...payload,
         } as HeritageSubmissionCreateRequest)
-        setSuccessMessage('Submission created successfully')
+        setSuccessMessage('Draft saved successfully')
+        setActiveSubmission(created)
         onSuccess?.(created)
       }
     } catch (err) {
@@ -321,13 +341,13 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
     selectedElements,
     interventions,
     conservationPlanAttached,
-    existingSubmission,
+    activeSubmission,
     projectId,
     onSuccess,
   ])
 
   const handleSubmitToSTB = useCallback(async () => {
-    if (!existingSubmission) {
+    if (!activeSubmission) {
       setError('Please save the submission first before submitting to STB')
       return
     }
@@ -336,10 +356,11 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
     setError(null)
 
     try {
-      const submitted = await regulatoryApi.submitToSTB(existingSubmission.id)
+      const submitted = await regulatoryApi.submitToSTB(activeSubmission.id)
       setSuccessMessage(
         `Submitted to STB. Reference: ${submitted.stb_reference}`,
       )
+      setActiveSubmission(submitted)
       onSuccess?.(submitted)
     } catch (err) {
       console.error('Failed to submit to STB:', err)
@@ -347,17 +368,23 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
     } finally {
       setLoading(false)
     }
-  }, [existingSubmission, onSuccess])
+  }, [activeSubmission, onSuccess])
 
+  const hasInterventionDetails =
+    interventions.length > 0 &&
+    interventions.every(
+      (entry) => entry.type.trim() && entry.description.trim(),
+    )
+  const canSaveDraft = Boolean(conservationStatus)
   const canSubmit =
-    conservationStatus &&
+    Boolean(conservationStatus) &&
     selectedElements.length > 0 &&
-    interventions.length > 0
+    hasInterventionDetails
 
   // Only mark as submitted if we have an existing submission AND its status is not DRAFT
   // When creating a new submission (no existingSubmission), this should be false
-  const isSubmitted = existingSubmission
-    ? existingSubmission.status.toUpperCase() !== 'DRAFT'
+  const isSubmitted = activeSubmission
+    ? activeSubmission.status.toUpperCase() !== 'DRAFT'
     : false
 
   return (
@@ -393,23 +420,23 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
           </Box>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {existingSubmission?.stb_reference && (
+          {activeSubmission?.stb_reference && (
             <Chip
-              label={existingSubmission.stb_reference}
+              label={activeSubmission.stb_reference}
               color="primary"
               size="small"
               sx={{ fontFamily: 'monospace' }}
             />
           )}
-          {existingSubmission && (
+          {activeSubmission && (
             <Chip
-              label={existingSubmission.status}
+              label={activeSubmission.status}
               color={
-                existingSubmission.status.toUpperCase() === 'APPROVED'
+                activeSubmission.status.toUpperCase() === 'APPROVED'
                   ? 'success'
-                  : existingSubmission.status.toUpperCase() === 'SUBMITTED'
+                  : activeSubmission.status.toUpperCase() === 'SUBMITTED'
                     ? 'info'
-                    : existingSubmission.status.toUpperCase() === 'IN_REVIEW'
+                    : activeSubmission.status.toUpperCase() === 'IN_REVIEW'
                       ? 'warning'
                       : 'default'
               }
@@ -963,9 +990,20 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
 
         {!isSubmitted && (
           <>
+            {!activeSubmission && (
+              <Typography variant="caption" color="text.secondary">
+                Save a draft to enable submission to STB.
+              </Typography>
+            )}
+            {activeSubmission && !canSubmit && (
+              <Typography variant="caption" color="text.secondary">
+                To submit, select heritage elements and add at least one
+                intervention with details.
+              </Typography>
+            )}
             <Button
               onClick={handleSave}
-              disabled={saving || !canSubmit}
+              disabled={saving || !canSaveDraft}
               startIcon={
                 saving ? (
                   <CircularProgress size={20} color="inherit" />
@@ -980,7 +1018,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
 
             <Button
               onClick={handleSubmitToSTB}
-              disabled={loading || !existingSubmission || !canSubmit}
+              disabled={loading || !activeSubmission || !canSubmit}
               startIcon={
                 loading ? (
                   <CircularProgress size={20} color="inherit" />

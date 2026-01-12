@@ -262,7 +262,28 @@ async def update_change_of_use_application(
             detail="Change of use application not found",
         )
 
-    for field, value in data.model_dump(exclude_unset=True).items():
+    update_data = data.model_dump(exclude_unset=True)
+    status_value = update_data.get("status")
+    if isinstance(status_value, str):
+        normalized = status_value.upper()
+        update_data["status"] = normalized
+        if normalized == SubmissionStatus.SUBMITTED.value:
+            application.submitted_at = datetime.now(timezone.utc)
+        if normalized == SubmissionStatus.APPROVED.value:
+            application.approved_at = datetime.now(timezone.utc)
+
+    updated_current_use = update_data.get("current_use", application.current_use)
+    updated_proposed_use = update_data.get("proposed_use", application.proposed_use)
+    if "current_use" in update_data or "proposed_use" in update_data:
+        update_data["requires_dc_amendment"] = (
+            updated_current_use != updated_proposed_use
+        )
+        update_data["requires_planning_permission"] = updated_proposed_use in [
+            AssetType.RESIDENTIAL,
+            AssetType.HOSPITALITY,
+        ]
+
+    for field, value in update_data.items():
         setattr(application, field, value)
 
     await db.commit()

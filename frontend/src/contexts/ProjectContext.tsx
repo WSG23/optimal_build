@@ -167,6 +167,21 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   }, [refreshProjects])
 
   useEffect(() => {
+    if (!currentProject || isProjectLoading || projectError) {
+      return
+    }
+    const exists = projects.some((project) => project.id === currentProject.id)
+    if (!exists) {
+      setProjectError({
+        type: 'not_found',
+        message: 'Selected project no longer exists.',
+      })
+      setCurrentProjectState(null)
+      persistProject(null)
+    }
+  }, [currentProject, isProjectLoading, projectError, projects])
+
+  useEffect(() => {
     if (!params.projectId) {
       return
     }

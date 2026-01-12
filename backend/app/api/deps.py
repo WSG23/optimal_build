@@ -9,7 +9,7 @@ from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.async_db import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal
 
 Role = Literal["viewer", "developer", "reviewer", "admin"]
 

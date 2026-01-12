@@ -3,7 +3,7 @@
  * Guides users through the URA change of use application process.
  */
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import {
   Alert,
   Box,
@@ -48,6 +48,7 @@ interface ChangeOfUseWizardProps {
   open: boolean
   onClose: () => void
   projectId: string
+  initialApplication?: ChangeOfUseApplication
   onSuccess?: (application: ChangeOfUseApplication) => void
 }
 
@@ -158,11 +159,16 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
   open,
   onClose,
   projectId,
+  initialApplication,
   onSuccess,
 }) => {
   const [activeStep, setActiveStep] = useState(0)
-  const [loading, setLoading] = useState(false)
+  const [savingDraft, setSavingDraft] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isReadOnly =
+    initialApplication?.status?.toUpperCase() !== 'DRAFT' &&
+    Boolean(initialApplication)
 
   // Form data
   const [currentUse, setCurrentUse] = useState<AssetType | ''>('')
@@ -198,6 +204,9 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
   }
 
   const handleCurrentUseChange = (event: SelectChangeEvent) => {
+    if (isReadOnly) {
+      return
+    }
     setCurrentUse(event.target.value as AssetType)
     // Reset proposed use if it would be the same
     if (event.target.value === proposedUse) {
@@ -206,44 +215,144 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
   }
 
   const handleProposedUseChange = (event: SelectChangeEvent) => {
+    if (isReadOnly) {
+      return
+    }
     setProposedUse(event.target.value as AssetType)
   }
 
-  const handleSubmit = useCallback(async () => {
-    if (!currentUse || !proposedUse) return
+  const resetForm = useCallback(() => {
+    setActiveStep(0)
+    setCurrentUse('')
+    setProposedUse('')
+    setJustification('')
+    setAcknowledgements({
+      dcAmendment: false,
+      planningPermission: false,
+      buildingPlan: false,
+      timeline: false,
+    })
+  }, [])
 
-    setLoading(true)
-    setError(null)
-
-    try {
-      const application = await regulatoryApi.createChangeOfUse({
-        project_id: projectId,
-        current_use: currentUse as AssetType,
-        proposed_use: proposedUse as AssetType,
-        justification: justification || undefined,
-      })
-      onSuccess?.(application)
-      onClose()
-      // Reset form
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+    if (initialApplication) {
       setActiveStep(0)
-      setCurrentUse('')
-      setProposedUse('')
-      setJustification('')
+      setCurrentUse(initialApplication.current_use)
+      setProposedUse(initialApplication.proposed_use)
+      setJustification(initialApplication.justification ?? '')
       setAcknowledgements({
         dcAmendment: false,
         planningPermission: false,
         buildingPlan: false,
         timeline: false,
       })
+      return
+    }
+    resetForm()
+  }, [initialApplication, open, resetForm])
+
+  const handleSaveDraft = useCallback(async () => {
+    if (isReadOnly) {
+      return
+    }
+    if (!currentUse || !proposedUse) return
+
+    setSavingDraft(true)
+    setError(null)
+
+    try {
+      const payload = {
+        current_use: currentUse as AssetType,
+        proposed_use: proposedUse as AssetType,
+        justification: justification || undefined,
+      }
+      const application = initialApplication
+        ? await regulatoryApi.updateChangeOfUse(initialApplication.id, {
+            ...payload,
+            status: 'DRAFT',
+          })
+        : await regulatoryApi.createChangeOfUse({
+            project_id: projectId,
+            ...payload,
+          })
+      onSuccess?.(application)
+      onClose()
+      resetForm()
     } catch (err) {
       console.error('Failed to create change of use application:', err)
-      setError('Failed to create application. Please try again.')
+      setError('Failed to save draft. Please try again.')
     } finally {
-      setLoading(false)
+      setSavingDraft(false)
     }
-  }, [currentUse, proposedUse, justification, projectId, onSuccess, onClose])
+  }, [
+    currentUse,
+    proposedUse,
+    justification,
+    projectId,
+    onSuccess,
+    onClose,
+    resetForm,
+    initialApplication,
+    isReadOnly,
+  ])
+
+  const handleSubmit = useCallback(async () => {
+    if (isReadOnly) {
+      return
+    }
+    if (!currentUse || !proposedUse) return
+
+    setSubmitting(true)
+    setError(null)
+
+    try {
+      const payload = {
+        current_use: currentUse as AssetType,
+        proposed_use: proposedUse as AssetType,
+        justification: justification || undefined,
+        status: 'SUBMITTED',
+      }
+      const submitted = initialApplication
+        ? await regulatoryApi.updateChangeOfUse(initialApplication.id, payload)
+        : await regulatoryApi.updateChangeOfUse(
+            (
+              await regulatoryApi.createChangeOfUse({
+                project_id: projectId,
+                current_use: currentUse as AssetType,
+                proposed_use: proposedUse as AssetType,
+                justification: justification || undefined,
+              })
+            ).id,
+            payload,
+          )
+      onSuccess?.(submitted)
+      onClose()
+      resetForm()
+    } catch (err) {
+      console.error('Failed to submit change of use application:', err)
+      setError('Failed to submit application. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }, [
+    currentUse,
+    proposedUse,
+    justification,
+    projectId,
+    onSuccess,
+    onClose,
+    resetForm,
+    initialApplication,
+    isReadOnly,
+  ])
 
   const canProceed = () => {
+    if (isReadOnly) {
+      return true
+    }
     switch (activeStep) {
       case 0:
         return !!currentUse
@@ -263,6 +372,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
         return false
     }
   }
+  const canSaveDraft = Boolean(currentUse && proposedUse)
 
   const renderStepContent = () => {
     switch (activeStep) {
@@ -282,6 +392,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
                 value={currentUse}
                 label="Current Use"
                 onChange={handleCurrentUseChange}
+                disabled={isReadOnly}
               >
                 {ASSET_TYPE_OPTIONS.map((opt) => (
                   <MenuItem key={opt.value} value={opt.value}>
@@ -315,6 +426,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
                 value={proposedUse}
                 label="Proposed Use"
                 onChange={handleProposedUseChange}
+                disabled={isReadOnly}
               >
                 {ASSET_TYPE_OPTIONS.filter(
                   (opt) => opt.value !== currentUse,
@@ -474,9 +586,14 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
 - Alignment with urban planning objectives
 - Impact on existing infrastructure"
               value={justification}
-              onChange={(e) => setJustification(e.target.value)}
+              onChange={(e) => {
+                if (!isReadOnly) {
+                  setJustification(e.target.value)
+                }
+              }}
               helperText={`${justification.length}/50 characters minimum`}
               error={justification.length > 0 && justification.length < 50}
+              disabled={isReadOnly}
             />
 
             <Box sx={{ mt: 3 }}>
@@ -589,6 +706,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
                         dcAmendment: e.target.checked,
                       })
                     }
+                    disabled={isReadOnly}
                   />
                 }
                 label="I understand that a DC amendment application may be required"
@@ -603,6 +721,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
                         buildingPlan: e.target.checked,
                       })
                     }
+                    disabled={isReadOnly}
                   />
                 }
                 label="I will submit building plan amendments as required"
@@ -617,6 +736,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
                         timeline: e.target.checked,
                       })
                     }
+                    disabled={isReadOnly}
                   />
                 }
                 label="I understand the approval process may take 3-6 months"
@@ -686,37 +806,59 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
         <Box sx={{ flex: 1 }} />
         <Button
           onClick={handleBack}
-          disabled={activeStep === 0}
+          disabled={activeStep === 0 || savingDraft || submitting}
           startIcon={<BackIcon />}
         >
           Back
         </Button>
         {activeStep === STEPS.length - 1 ? (
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={!canProceed() || loading}
-            startIcon={
-              loading ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                <CheckIcon />
-              )
-            }
-            sx={{
-              background:
-                'linear-gradient(135deg, var(--ob-brand-600) 0%, var(--ob-brand-400) 100%)',
-              color: 'var(--ob-color-text-inverse)',
-              fontWeight: 'var(--ob-font-weight-bold)',
-            }}
-          >
-            {loading ? 'Submitting...' : 'Submit Application'}
-          </Button>
+          isReadOnly ? (
+            <Typography variant="caption" color="text.secondary">
+              View-only submission
+            </Typography>
+          ) : (
+            <>
+              <Button
+                variant="outlined"
+                onClick={handleSaveDraft}
+                disabled={!canSaveDraft || savingDraft || submitting}
+                startIcon={
+                  savingDraft ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    <CheckIcon />
+                  )
+                }
+              >
+                {savingDraft ? 'Saving...' : 'Save Draft'}
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleSubmit}
+                disabled={!canProceed() || submitting || savingDraft}
+                startIcon={
+                  submitting ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    <CheckIcon />
+                  )
+                }
+                sx={{
+                  background:
+                    'linear-gradient(135deg, var(--ob-brand-600) 0%, var(--ob-brand-400) 100%)',
+                  color: 'var(--ob-color-text-inverse)',
+                  fontWeight: 'var(--ob-font-weight-bold)',
+                }}
+              >
+                {submitting ? 'Submitting...' : 'Submit Application'}
+              </Button>
+            </>
+          )
         ) : (
           <Button
             variant="contained"
             onClick={handleNext}
-            disabled={!canProceed()}
+            disabled={!canProceed() || savingDraft || submitting}
             endIcon={<ForwardIcon />}
           >
             Next

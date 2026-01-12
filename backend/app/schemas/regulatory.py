@@ -144,9 +144,12 @@ class ChangeOfUseUpdate(BaseModel):
     """Schema for updating a change of use application."""
 
     status: Optional[str] = None
+    current_use: Optional[AssetType] = None
+    proposed_use: Optional[AssetType] = None
     justification: Optional[str] = None
     ura_reference: Optional[str] = None
     requires_dc_amendment: Optional[bool] = None
+    requires_planning_permission: Optional[bool] = None
 
 
 # Heritage Submission schemas

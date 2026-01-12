@@ -35,10 +35,13 @@ import {
   AssetType,
   AuthoritySubmission,
 } from '../../../../api/regulatory'
+import { loadCaptureForProject } from '../../capture/utils/captureStorage'
 import { colors } from '@ob/tokens'
 
 interface CompliancePathTimelineProps {
   projectId?: string
+  projectName?: string
+  preferredAssetType?: AssetType
   initialAssetType?: AssetType
   onStepClick?: (step: AssetCompliancePath) => void
 }
@@ -170,6 +173,7 @@ const BAR_GRADIENTS = {
 const DAY_WIDTH = 8
 const ROW_HEIGHT = 56
 const LEFT_PANEL_WIDTH = 320
+const ASSET_TYPE_STORAGE_PREFIX = 'ob_compliance_asset_type'
 
 function getStatusIcon(status: string) {
   switch (status) {
@@ -182,6 +186,130 @@ function getStatusIcon(status: string) {
     default:
       return <ScheduleIcon sx={{ color: STATUS_COLORS.pending }} />
   }
+}
+
+function storageKeyForProject(projectId: string): string {
+  return `${ASSET_TYPE_STORAGE_PREFIX}:${projectId}`
+}
+
+function readStoredAssetType(projectId?: string): AssetType | null {
+  if (typeof window === 'undefined' || !projectId) {
+    return null
+  }
+  const raw = window.localStorage.getItem(storageKeyForProject(projectId))
+  if (!raw) {
+    return null
+  }
+  const candidate = raw.trim().toLowerCase().replace(/[-\s]/g, '_')
+  if (candidate === 'mixed') {
+    return 'mixed_use'
+  }
+  if (candidate === 'conservation') {
+    return 'heritage'
+  }
+  if (candidate === 'hotel') {
+    return 'hospitality'
+  }
+  const allowed: AssetType[] = [
+    'office',
+    'retail',
+    'residential',
+    'industrial',
+    'hospitality',
+    'mixed_use',
+    'heritage',
+  ]
+  return allowed.includes(candidate as AssetType)
+    ? (candidate as AssetType)
+    : null
+}
+
+function persistAssetType(projectId: string, assetType: AssetType) {
+  if (typeof window === 'undefined') {
+    return
+  }
+  window.localStorage.setItem(storageKeyForProject(projectId), assetType)
+}
+
+function normalizeAssetType(value?: string | null): AssetType | null {
+  if (!value) {
+    return null
+  }
+  const candidate = value.trim().toLowerCase().replace(/[-\s]/g, '_')
+  if (candidate.includes('heritage') || candidate.includes('conservation')) {
+    return 'heritage'
+  }
+  if (candidate.includes('mixed')) {
+    return 'mixed_use'
+  }
+  if (candidate.includes('hospitality') || candidate.includes('hotel')) {
+    return 'hospitality'
+  }
+  if (candidate.includes('industrial')) {
+    return 'industrial'
+  }
+  if (candidate.includes('residential')) {
+    return 'residential'
+  }
+  if (candidate.includes('retail')) {
+    return 'retail'
+  }
+  if (candidate.includes('office')) {
+    return 'office'
+  }
+  const allowed: AssetType[] = [
+    'office',
+    'retail',
+    'residential',
+    'industrial',
+    'hospitality',
+    'mixed_use',
+    'heritage',
+  ]
+  return allowed.includes(candidate as AssetType)
+    ? (candidate as AssetType)
+    : null
+}
+
+type AssetTypeWeight = {
+  assetType?: string | null
+  allocationPct?: number | null
+}
+
+function pickDominantAssetType(items: AssetTypeWeight[]): AssetType | null {
+  if (!items.length) {
+    return null
+  }
+  const ranked = [...items].sort((a, b) => {
+    const aWeight = a.allocationPct ?? 0
+    const bWeight = b.allocationPct ?? 0
+    return bWeight - aWeight
+  })
+  return normalizeAssetType(ranked[0]?.assetType ?? null)
+}
+
+function deriveAssetTypeFromCapture(projectId?: string): AssetType | null {
+  if (!projectId) {
+    return null
+  }
+  const capture = loadCaptureForProject(projectId)
+  if (!capture) {
+    return null
+  }
+  if (capture.heritageContext?.flag) {
+    return 'heritage'
+  }
+  const fromOptimizations = pickDominantAssetType(capture.optimizations ?? [])
+  if (fromOptimizations) {
+    return fromOptimizations
+  }
+  const fromLayers = pickDominantAssetType(
+    capture.visualization?.massingLayers ?? [],
+  )
+  if (fromLayers) {
+    return fromLayers
+  }
+  return normalizeAssetType(capture.existingUse)
 }
 
 interface TimelineBarProps {
@@ -300,16 +428,55 @@ function TimelineBar({
 
 export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
   projectId,
+  projectName,
+  preferredAssetType,
   initialAssetType = 'office',
   onStepClick,
 }) => {
   const [assetType, setAssetType] = useState<AssetType>(initialAssetType)
+  const [hasManualSelection, setHasManualSelection] = useState(false)
   const [compliancePaths, setCompliancePaths] = useState<AssetCompliancePath[]>(
     [],
   )
   const [submissions, setSubmissions] = useState<AuthoritySubmission[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedStep, setSelectedStep] = useState<string | null>(null)
+
+  useEffect(() => {
+    setHasManualSelection(false)
+  }, [projectId])
+
+  useEffect(() => {
+    if (!projectId) {
+      setAssetType(initialAssetType)
+      return
+    }
+
+    const stored = readStoredAssetType(projectId)
+    if (stored) {
+      setAssetType(stored)
+      setHasManualSelection(true)
+      return
+    }
+
+    if (hasManualSelection) {
+      return
+    }
+
+    const derived =
+      preferredAssetType ??
+      deriveAssetTypeFromCapture(projectId) ??
+      initialAssetType
+    if (derived && derived !== assetType) {
+      setAssetType(derived)
+    }
+  }, [
+    assetType,
+    hasManualSelection,
+    initialAssetType,
+    preferredAssetType,
+    projectId,
+  ])
 
   // Fetch compliance paths when asset type changes
   useEffect(() => {
@@ -335,6 +502,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
         setSubmissions([])
         return
       }
+      setSelectedStep(null)
       try {
         const subs = await regulatoryApi.listSubmissions(projectId)
         setSubmissions(subs)
@@ -346,7 +514,12 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
   }, [projectId])
 
   const handleAssetTypeChange = (event: SelectChangeEvent) => {
-    setAssetType(event.target.value as AssetType)
+    const nextType = event.target.value as AssetType
+    setAssetType(nextType)
+    setHasManualSelection(true)
+    if (projectId) {
+      persistAssetType(projectId, nextType)
+    }
     setSelectedStep(null)
   }
 
@@ -430,6 +603,10 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Regulatory submission sequence for Singapore developments
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Project: {projectName?.trim() || projectId || 'Unknown'} •{' '}
+            {submissions.length} submission{submissions.length === 1 ? '' : 's'}
           </Typography>
         </Box>
 

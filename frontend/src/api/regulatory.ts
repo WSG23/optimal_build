@@ -118,9 +118,12 @@ export interface ChangeOfUseCreateRequest {
 
 export interface ChangeOfUseUpdateRequest {
   status?: string
+  current_use?: AssetType
+  proposed_use?: AssetType
   justification?: string
   ura_reference?: string
   requires_dc_amendment?: boolean
+  requires_planning_permission?: boolean
 }
 
 // Heritage submission
