@@ -462,13 +462,7 @@ export function FeasibilityWizard({
       <button
         type="button"
         onClick={() => setAiSidebarOpen(true)}
-        className="feasibility-wizard__copy"
-        style={{
-          marginRight: '8px',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px',
-        }}
+        className="feasibility-wizard__copy feasibility-wizard__toolbar-btn"
         title="AI Planner"
       >
         <SmartToy fontSize="small" /> AI Planner
@@ -477,11 +471,10 @@ export function FeasibilityWizard({
       <button
         type="button"
         onClick={() => setHistoryOpen(true)}
-        className="feasibility-wizard__copy"
-        style={{ marginRight: '8px' }} // Add some spacing
+        className="feasibility-wizard__copy feasibility-wizard__toolbar-btn"
         title="View History"
       >
-        <HistoryIcon fontSize="small" style={{ marginRight: '4px' }} /> History
+        <HistoryIcon fontSize="small" /> History
       </button>
 
       <button
@@ -514,15 +507,7 @@ export function FeasibilityWizard({
   const wizardBody = (
     <div className="feasibility-wizard" data-testid="feasibility-wizard">
       <div className="feasibility-wizard__layout">
-        <section
-          className="feasibility-wizard__controls-transparent"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '32px',
-            color: 'rgba(255,255,255,0.9)',
-          }}
-        >
+        <section className="feasibility-wizard__controls-transparent">
           <AddressForm
             addressInput={addressInput}
             addressError={addressError}
@@ -807,10 +792,7 @@ export function FeasibilityWizard({
           visible: !!siteAreaInput && parseFloat(siteAreaInput) > 0,
         }}
         renderFooter={() => (
-          <div
-            className="feasibility-actions"
-            style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
-          >
+          <div className="feasibility-actions">
             <button
               data-testid="compute-button"
               onClick={() => {
@@ -820,74 +802,20 @@ export function FeasibilityWizard({
                 handleSubmit(syntheticEvent)
               }}
               disabled={status === 'loading'}
-              style={{
-                background:
-                  'linear-gradient(135deg, var(--ob-color-brand-primary), var(--ob-color-brand-primary-emphasis))',
-                border: 'none',
-                borderRadius: 'var(--ob-radius-full)',
-                padding: '16px 32px',
-                color: 'white',
-                fontWeight: 700,
-                fontSize: '1.1rem',
-                letterSpacing: '0.02em',
-                cursor: status === 'loading' ? 'wait' : 'pointer',
-                boxShadow: '0 4px 14px 0 rgba(0,118,255,0.39)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                width: '100%',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.transform = 'translateY(-2px)')
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.transform = 'translateY(0)')
-              }
+              className="feasibility-actions__compute-btn"
             >
               {status === 'loading' ? (
                 <>
-                  <span
-                    className="radar-spinner"
-                    style={{
-                      width: '20px',
-                      height: '20px',
-                      border: '2px solid white',
-                      borderTopColor: 'transparent',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite',
-                    }}
-                  />
+                  <span className="feasibility-actions__spinner" />
                   <span>Scanning Site...</span>
                 </>
               ) : (
                 <>
-                  <Radar sx={{ animation: 'pulse 2s infinite' }} />
+                  <Radar className="feasibility-actions__radar-icon" />
                   <span>RUN SIMULATION</span>
                 </>
               )}
-
-              {/* Button Glow Effect */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  background:
-                    'linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)',
-                  transform: 'skewX(-20deg) translateX(-150%)',
-                  animation: 'shimmer 3s infinite',
-                }}
-              />
-              <style>{`
-                        @keyframes shimmer { 0% { transform: translateX(-150%) skewX(-20deg); } 20% { transform: translateX(150%) skewX(-20deg); } 100% { transform: translateX(150%); } }
-                        @keyframes pulse { 0% { opacity: 0.6; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0.6; transform: scale(0.9); } }
-                     `}</style>
+              <div className="feasibility-actions__glow-effect" />
             </button>
           </div>
         )}
@@ -920,10 +848,7 @@ export function FeasibilityWizard({
           </div>
           {/* Section 1: Site Details - Depth 1 Glass Card */}
           <div className="feasibility-section ob-card-module ob-section-gap">
-            <h3
-              className="ob-page-header__subtitle"
-              style={{ margin: 0, marginBottom: 'var(--ob-space-200)' }}
-            >
+            <h3 className="feasibility-section__title">
               {t('wizard.steps.siteDetails')}
             </h3>
             <div className="feasibility-form__field">
@@ -938,17 +863,8 @@ export function FeasibilityWizard({
                 data-testid="site-area-input"
               />
             </div>
-            <div
-              className="feasibility-form__field"
-              style={{ marginTop: 'var(--ob-space-200)' }}
-            >
-              <label
-                className="feasibility-form__label"
-                style={{
-                  marginBottom: 'var(--ob-space-150)',
-                  display: 'block',
-                }}
-              >
+            <div className="feasibility-form__field feasibility-form__field--spaced">
+              <label className="feasibility-form__label feasibility-form__label--block">
                 {t('wizard.form.landUse')}
               </label>
               <ScenarioSelector
@@ -1026,13 +942,7 @@ export function FeasibilityWizard({
                   },
                 ]}
               />
-              <div
-                style={{
-                  marginTop: '1rem',
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                }}
-              >
+              <div className="feasibility-pack__actions">
                 <Button
                   variant="contained"
                   color="primary"
@@ -1040,26 +950,21 @@ export function FeasibilityWizard({
                   disabled={packGenerating}
                   startIcon={
                     packGenerating ? (
-                      <span
-                        className="scenario-fab__spinner"
-                        style={{
-                          width: 16,
-                          height: 16,
-                          border: '2px solid white',
-                          borderTopColor: 'transparent',
-                        }}
-                      />
+                      <span className="feasibility-pack__spinner" />
                     ) : (
                       <PdfIcon />
                     )
                   }
                   sx={{
-                    fontFamily: 'var(--ob-font-family-sans)',
+                    fontFamily: 'var(--ob-font-family-base)',
                     textTransform: 'none',
-                    fontWeight: 600,
+                    fontWeight: 'var(--ob-font-weight-semibold)',
                     boxShadow: 'var(--ob-shadow-md)',
+                    borderRadius: 'var(--ob-radius-xs)',
                     background: 'var(--ob-color-brand-primary)',
-                    '&:hover': { background: 'var(--ob-color-brand-dark)' },
+                    '&:hover': {
+                      background: 'var(--ob-color-brand-primary-strong)',
+                    },
                   }}
                 >
                   {packGenerating
@@ -1080,113 +985,38 @@ export function FeasibilityWizard({
               sx: { borderRadius: 'var(--ob-radius-lg)', overflow: 'hidden' },
             }}
           >
-            <DialogTitle
-              sx={{
-                borderBottom: '1px solid var(--ob-color-border-light)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
+            <DialogTitle className="feasibility-preview__header">
               <span>
                 Pack Preview:{' '}
                 {packType.charAt(0).toUpperCase() + packType.slice(1)}
               </span>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              <Typography variant="caption" color="text.secondary">
                 LIVE GENERATION
               </Typography>
             </DialogTitle>
-            <DialogContent
-              sx={{
-                minHeight: '400px',
-                background: 'var(--ob-color-bg-surface-secondary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 0,
-              }}
-            >
-              <div
-                style={{
-                  width: '300px',
-                  height: '420px',
-                  background: 'white',
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '4px',
-                  position: 'relative',
-                  transition: 'transform 0.3s',
-                }}
-              >
-                <div
-                  style={{
-                    width: '100%',
-                    height: '180px',
-                    background: 'var(--ob-color-bg-surface-secondary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 'auto',
-                  }}
-                >
-                  {/* Placeholder for Cover Image */}
-                  <span style={{ fontSize: '3rem' }}>🏢</span>
+            <DialogContent className="feasibility-preview__content">
+              <div className="feasibility-preview__flipbook">
+                <div className="feasibility-preview__cover">
+                  <span className="feasibility-preview__cover-icon">🏢</span>
                 </div>
-                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                <div className="feasibility-preview__body">
                   <Typography variant="h6" gutterBottom>
                     {addressInput || 'Site Address'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Optimal Build Professional Pack
                   </Typography>
-                  <div
-                    style={{
-                      marginTop: '1rem',
-                      height: '4px',
-                      width: '40px',
-                      background: 'var(--ob-color-brand-primary)',
-                      marginInline: 'auto',
-                    }}
-                  />
+                  <div className="feasibility-preview__accent-bar" />
                 </div>
-                <div
-                  style={{
-                    marginTop: 'auto',
-                    padding: '1rem',
-                    width: '100%',
-                    borderTop: '1px solid var(--ob-color-border-light)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: '0.7rem',
-                      color: 'var(--ob-color-text-muted)',
-                    }}
-                  >
+                <div className="feasibility-preview__footer">
+                  <span className="feasibility-preview__meta">
                     GENERATED: {new Date().toLocaleDateString()}
                   </span>
-                  <span
-                    style={{
-                      fontSize: '0.7rem',
-                      color: 'var(--ob-color-text-muted)',
-                    }}
-                  >
-                    PAGE 1/12
-                  </span>
+                  <span className="feasibility-preview__meta">PAGE 1/12</span>
                 </div>
               </div>
             </DialogContent>
-            <DialogActions
-              sx={{
-                padding: '1rem',
-                borderTop: '1px solid var(--ob-color-border-light)',
-              }}
-            >
+            <DialogActions className="feasibility-preview__actions">
               <Button
                 onClick={() => setIsPreviewOpen(false)}
                 sx={{ color: 'text.secondary' }}
@@ -1202,6 +1032,7 @@ export function FeasibilityWizard({
                     packType as ProfessionalPackType,
                   )
                 }
+                sx={{ borderRadius: 'var(--ob-radius-xs)' }}
               >
                 Download PDF
               </Button>

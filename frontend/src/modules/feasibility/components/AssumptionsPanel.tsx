@@ -68,15 +68,15 @@ export function AssumptionsPanel({
         }}
         sx={{
           boxShadow: 'none',
-          background: '#1A1A1A', // Darker card background as requested
+          background: 'var(--ob-color-bg-surface)',
           '&:before': { display: 'none' },
-          border: '1px solid var(--ob-color-border-premium)',
-          borderRadius: 'var(--ob-radius-lg) !important',
+          border: '1px solid var(--ob-color-border-subtle)',
+          borderRadius: 'var(--ob-radius-sm) !important',
           marginTop: '0 !important',
           overflow: 'hidden',
           transition: 'border-color 0.2s',
           '&:hover': {
-            borderColor: 'rgba(0,0,0,0.12)',
+            borderColor: 'var(--ob-color-border-default)',
           },
         }}
       >
@@ -85,117 +85,54 @@ export function AssumptionsPanel({
             <ExpandMore sx={{ color: 'var(--ob-color-text-muted)' }} />
           }
           sx={{
-            padding: 'var(--ob-space-4)',
+            padding: 'var(--ob-space-100)',
             '& .MuiAccordionSummary-content': { margin: 0 },
           }}
         >
           <header>
-            <h2 className="text-heading" style={{ margin: 0 }}>
+            <h2 className="assumptions-panel__heading">
               {t('wizard.assumptions.title') || 'Design Parameters'}
             </h2>
-            <p
-              style={{
-                margin: '4px 0 0',
-                fontSize: '0.875rem',
-                color: 'var(--ob-color-text-muted)',
-              }}
-            >
-              {/* FIXED: Replaced raw string with concise label */}
-              Design Parameters
-            </p>
+            <p className="assumptions-panel__subtitle">Design Parameters</p>
           </header>
         </AccordionSummary>
 
         <AccordionDetails
-          sx={{ padding: '0 var(--ob-space-4) var(--ob-space-6)' }}
+          sx={{ padding: '0 var(--ob-space-100) var(--ob-space-150)' }}
         >
           <div className="feasibility-assumptions__grid">
             {/* Land Use Dropdown (Moved from AddressForm) */}
             {landUseInput !== undefined && onLandUseChange && (
-              <div
-                className="feasibility-control-group"
-                style={{ marginBottom: 'var(--ob-space-6)' }}
-              >
-                <label
-                  style={{
-                    color: 'rgba(255,255,255,0.9)',
-                    fontWeight: 600,
-                    fontSize: '0.9rem',
-                    marginBottom: '8px',
-                    display: 'block',
-                  }}
-                >
+              <div className="assumptions-panel__control-group assumptions-panel__control-group--mb">
+                <label className="assumptions-panel__label">
                   {t('wizard.form.landUseLabel') || 'Land Use'}
                 </label>
-                <div style={{ position: 'relative' }}>
+                <div className="assumptions-panel__select-wrapper">
                   <select
                     value={landUseInput}
                     onChange={onLandUseChange}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      background: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      borderRadius: '6px',
-                      color: 'white',
-                      fontSize: '0.9rem',
-                      outline: 'none',
-                      appearance: 'none',
-                      cursor: 'pointer',
-                    }}
+                    className="assumptions-panel__select"
                   >
-                    <option value="Residential" style={{ color: 'black' }}>
-                      Residential
-                    </option>
-                    <option value="Commercial" style={{ color: 'black' }}>
-                      Commercial
-                    </option>
-                    <option value="Mixed Use" style={{ color: 'black' }}>
-                      Mixed Use
-                    </option>
-                    <option value="Industrial" style={{ color: 'black' }}>
-                      Industrial
-                    </option>
+                    <option value="Residential">Residential</option>
+                    <option value="Commercial">Commercial</option>
+                    <option value="Mixed Use">Mixed Use</option>
+                    <option value="Industrial">Industrial</option>
                   </select>
-                  <ExpandMore
-                    sx={{
-                      position: 'absolute',
-                      right: '10px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      pointerEvents: 'none',
-                      color: 'rgba(255,255,255,0.5)',
-                    }}
-                  />
+                  <ExpandMore className="assumptions-panel__select-icon" />
                 </div>
               </div>
             )}
 
             {/* Floor to Floor */}
-            <div
-              className="feasibility-control-group"
-              style={{ marginBottom: 'var(--ob-space-6)' }}
-            >
-              <div
-                className="feasibility-control-group-header"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '8px',
-                }}
-              >
+            <div className="assumptions-panel__control-group assumptions-panel__control-group--mb">
+              <div className="assumptions-panel__control-header">
                 <label
                   htmlFor="assumption-floor"
-                  style={{
-                    color: 'rgba(255,255,255,0.9)',
-                    fontWeight: 500,
-                    fontSize: '0.9rem',
-                  }}
+                  className="assumptions-panel__label"
                 >
                   {t('wizard.assumptions.fields.typFloorToFloor.label')}
                 </label>
-                <div style={{ position: 'relative' }}>
+                <div className="assumptions-panel__input-wrapper">
                   <input
                     type="number"
                     value={assumptionInputs.typFloorToFloorM}
@@ -203,33 +140,9 @@ export function AssumptionsPanel({
                     min={2.5}
                     max={6.0}
                     step={0.1}
-                    style={{
-                      width: '60px',
-                      padding: '4px 24px 4px 8px',
-                      background: 'rgba(6, 182, 212, 0.1)',
-                      border: '1px solid rgba(6, 182, 212, 0.3)',
-                      borderRadius: '6px',
-                      color: '#06b6d4',
-                      fontFamily: 'monospace',
-                      fontWeight: 700,
-                      fontSize: '0.875rem',
-                      textAlign: 'right',
-                      outline: 'none',
-                    }}
+                    className="assumptions-panel__input assumptions-panel__input--cyan"
                   />
-                  <span
-                    style={{
-                      position: 'absolute',
-                      right: '8px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'rgba(6, 182, 212, 0.7)',
-                      fontSize: '0.75rem',
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    m
-                  </span>
+                  <span className="assumptions-panel__input-unit">m</span>
                 </div>
               </div>
               <TunerSlider
@@ -239,17 +152,10 @@ export function AssumptionsPanel({
                 max={6.0}
                 step={0.1}
                 sx={{
-                  color: 'var(--ob-color-accent)',
+                  color: 'var(--ob-color-brand-primary)',
                 }}
               />
-              <p
-                className="feasibility-assumptions__hint"
-                style={{
-                  fontSize: '0.75rem',
-                  color: 'var(--ob-color-text-muted)',
-                  marginTop: '4px',
-                }}
-              >
+              <p className="assumptions-panel__hint">
                 {t('wizard.assumptions.fields.typFloorToFloor.hint', {
                   value: decimalFormatter.format(
                     DEFAULT_ASSUMPTIONS.typFloorToFloorM,
@@ -260,26 +166,15 @@ export function AssumptionsPanel({
             </div>
 
             {/* Efficiency */}
-            <div className="feasibility-control-group">
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: 'var(--ob-space-3)',
-                }}
-              >
+            <div className="assumptions-panel__control-group">
+              <div className="assumptions-panel__control-header">
                 <label
                   htmlFor="assumption-efficiency"
-                  style={{
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                    color: 'rgba(255,255,255,0.9)',
-                  }}
+                  className="assumptions-panel__label"
                 >
                   {t('wizard.assumptions.fields.efficiency.label')}
                 </label>
-                <div style={{ position: 'relative' }}>
+                <div className="assumptions-panel__input-wrapper">
                   <input
                     type="number"
                     value={Math.round(
@@ -299,33 +194,9 @@ export function AssumptionsPanel({
                     min={50}
                     max={95}
                     step={1}
-                    style={{
-                      width: '56px',
-                      padding: '4px 20px 4px 8px',
-                      background: 'rgba(6, 182, 212, 0.1)',
-                      border: '1px solid rgba(6, 182, 212, 0.3)',
-                      borderRadius: '6px',
-                      color: '#06b6d4',
-                      fontFamily: 'monospace',
-                      fontWeight: 700,
-                      fontSize: '0.8125rem',
-                      textAlign: 'right',
-                      outline: 'none',
-                    }}
+                    className="assumptions-panel__input assumptions-panel__input--cyan assumptions-panel__input--narrow"
                   />
-                  <span
-                    style={{
-                      position: 'absolute',
-                      right: '8px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'rgba(6, 182, 212, 0.7)',
-                      fontSize: '0.75rem',
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    %
-                  </span>
+                  <span className="assumptions-panel__input-unit">%</span>
                 </div>
               </div>
 
@@ -336,18 +207,11 @@ export function AssumptionsPanel({
                 max={0.95}
                 step={0.01}
                 sx={{
-                  color: 'var(--ob-color-accent)',
+                  color: 'var(--ob-color-brand-primary)',
                 }}
               />
 
-              <p
-                className="feasibility-assumptions__hint"
-                style={{
-                  fontSize: '0.75rem',
-                  color: 'var(--ob-color-text-muted)',
-                  marginTop: '4px',
-                }}
-              >
+              <p className="assumptions-panel__hint">
                 {t('wizard.assumptions.fields.efficiency.hint', {
                   value: decimalFormatter.format(
                     DEFAULT_ASSUMPTIONS.efficiencyRatio,
@@ -358,47 +222,20 @@ export function AssumptionsPanel({
             </div>
 
             {/* Engineering Divider */}
-            <div
-              style={{
-                height: '1px',
-                background: 'var(--ob-color-border-premium)',
-                margin: 'var(--ob-space-8) 0', // Increased spacing as requested
-              }}
-            />
+            <div className="assumptions-panel__divider" />
 
-            <h3
-              className="text-eyebrow"
-              style={{ marginBottom: 'var(--ob-space-4)' }}
-            >
+            <h3 className="assumptions-panel__section-title">
               {t('wizard.assumptions.engineering.title') ||
                 'Engineering Constraints'}
             </h3>
 
             {/* Structure Type */}
-            <div
-              className="feasibility-control-group"
-              style={{ marginBottom: 'var(--ob-space-6)' }}
-            >
-              <label
-                className="text-body"
-                style={{
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  display: 'block',
-                  marginBottom: 'var(--ob-space-3)',
-                  color: 'rgba(255,255,255,0.9)',
-                }}
-              >
+            <div className="assumptions-panel__control-group assumptions-panel__control-group--mb">
+              <label className="assumptions-panel__label">
                 {t('wizard.assumptions.fields.structure.label') ||
                   'Structural Material'}
               </label>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '12px',
-                }}
-              >
+              <div className="assumptions-panel__card-grid">
                 {[
                   {
                     value: 'rc',
@@ -441,30 +278,12 @@ export function AssumptionsPanel({
             </div>
 
             {/* MEP Load */}
-            <div className="feasibility-control-group">
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: 'var(--ob-space-2)',
-                }}
-              >
-                <label
-                  style={{
-                    fontWeight: 600,
-                    fontSize: '0.875rem',
-                    color: 'rgba(255,255,255,0.9)',
-                  }}
-                >
-                  {/* FIXED: Replaced raw string with concise uppercase label */}
-                  MEP LOAD
-                </label>
+            <div className="assumptions-panel__control-group">
+              <div className="assumptions-panel__control-header">
+                <label className="assumptions-panel__label">MEP LOAD</label>
               </div>
 
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '16px' }}
-              >
+              <div className="assumptions-panel__slider-row">
                 <TunerSlider
                   value={Number(assumptionInputs.mepLoadWpsm) || 150}
                   onChange={handleSliderChange('mepLoadWpsm')}
@@ -473,57 +292,17 @@ export function AssumptionsPanel({
                   step={10}
                   sx={{ flex: 1 }}
                 />
-                <div
-                  style={{
-                    position: 'relative',
-                    width: '80px',
-                  }}
-                >
+                <div className="assumptions-panel__input-wrapper assumptions-panel__input-wrapper--fixed">
                   <input
                     type="number"
                     value={assumptionInputs.mepLoadWpsm}
                     onChange={onAssumptionChange('mepLoadWpsm')}
-                    style={{
-                      width: '100%',
-                      padding: '4px 8px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--ob-color-border-premium)',
-                      textAlign: 'right',
-                      fontSize: '0.875rem',
-                      fontWeight: 600,
-                    }}
+                    className="assumptions-panel__input"
                   />
-                  <span
-                    style={{
-                      position: 'absolute',
-                      right: '30px', // Adjust based on input width/padding
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'var(--ob-color-text-muted)',
-                      fontSize: '0.75rem',
-                      pointerEvents: 'none',
-                      display: 'none', // Hidden for now as it overlaps with number
-                    }}
-                  >
-                    W/m²
-                  </span>
                 </div>
               </div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  marginTop: '4px',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    color: 'var(--ob-color-text-muted)',
-                  }}
-                >
-                  W/m²
-                </span>
+              <div className="assumptions-panel__unit-label">
+                <span>W/m²</span>
               </div>
             </div>
           </div>
@@ -532,7 +311,6 @@ export function AssumptionsPanel({
             type="button"
             className="feasibility-assumptions__reset"
             onClick={onResetAssumptions}
-            style={{ marginTop: '1rem' }}
           >
             {t('wizard.assumptions.reset')}
           </button>

@@ -13,19 +13,8 @@ export function MetricsView({ result, numberFormatter, t }: MetricsViewProps) {
   const accuracyPercent = Math.round(accuracy * 100)
 
   // Color coding: <10% = Good (Green), 10-20% = Medium (Blue), >20% = Low (Orange)
-  const accuracyColor =
-    accuracy <= 0.1
-      ? 'var(--ob-color-success-text)'
-      : accuracy <= 0.2
-        ? 'var(--ob-color-accent)'
-        : 'var(--ob-color-warning-text)'
-
-  const accuracyBg =
-    accuracy <= 0.1
-      ? 'var(--ob-color-success-bg)'
-      : accuracy <= 0.2
-        ? 'var(--ob-color-accent-light)'
-        : 'var(--ob-color-warning-bg)'
+  const accuracyVariant =
+    accuracy <= 0.1 ? 'success' : accuracy <= 0.2 ? 'info' : 'warning'
 
   const metrics = useMemo(
     () => [
@@ -67,17 +56,7 @@ export function MetricsView({ result, numberFormatter, t }: MetricsViewProps) {
             {metric.label}
             {metric.showAccuracy && (
               <span
-                style={{
-                  display: 'inline-block',
-                  marginLeft: '8px',
-                  fontSize: '0.6875rem',
-                  fontWeight: 600,
-                  color: accuracyColor,
-                  background: accuracyBg,
-                  padding: '1px 6px',
-                  borderRadius: '999px',
-                  verticalAlign: 'middle',
-                }}
+                className={`feasibility-metrics__accuracy feasibility-metrics__accuracy--${accuracyVariant}`}
               >
                 ±{accuracyPercent}%
               </span>

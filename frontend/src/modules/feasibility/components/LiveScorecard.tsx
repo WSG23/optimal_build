@@ -32,137 +32,62 @@ export function LiveScorecard({
       label: 'Projected GFA',
       value: maxGFA.toLocaleString(),
       unit: 'm²',
-      icon: <SquareFootIcon sx={{ fontSize: 16 }} />,
-      color: '#06b6d4',
+      icon: <SquareFootIcon sx={{ fontSize: 'var(--ob-font-size-base)' }} />,
+      colorClass: 'live-scorecard__icon--cyan',
       change: `+${String(Math.round((efficiencyRatio - 0.8) * 100))}%`,
     },
     {
       label: 'Net Saleable',
       value: netSaleableArea.toLocaleString(),
       unit: 'm²',
-      icon: <TrendingUpIcon sx={{ fontSize: 16 }} />,
-      color: '#10b981',
+      icon: <TrendingUpIcon sx={{ fontSize: 'var(--ob-font-size-base)' }} />,
+      colorClass: 'live-scorecard__icon--green',
     },
     {
       label: 'Est. Floors',
       value: estimatedFloors.toString(),
       unit: 'floors',
-      icon: <AccountBalanceIcon sx={{ fontSize: 16 }} />,
-      color: '#8b5cf6',
+      icon: (
+        <AccountBalanceIcon sx={{ fontSize: 'var(--ob-font-size-base)' }} />
+      ),
+      colorClass: 'live-scorecard__icon--purple',
     },
     {
       label: 'Est. Yield',
       value: estimatedYield,
       unit: 'M SGD',
-      icon: <SpeedIcon sx={{ fontSize: 16 }} />,
-      color: '#f59e0b',
+      icon: <SpeedIcon sx={{ fontSize: 'var(--ob-font-size-base)' }} />,
+      colorClass: 'live-scorecard__icon--amber',
     },
   ]
 
   return (
-    <Box
-      sx={{
-        position: 'absolute',
-        top: '24px',
-        right: '80px', // Offset from layer controls
-        zIndex: 20,
-        background: 'rgba(15, 23, 42, 0.9)',
-        backdropFilter: 'blur(var(--ob-blur-xl))',
-        border: '1px solid rgba(6, 182, 212, 0.2)',
-        borderRadius: '4px',
-        padding: '16px',
-        minWidth: '200px',
-        animation: 'slideInRight 0.4s ease-out',
-      }}
-    >
-      <style>
-        {`
-          @keyframes slideInRight {
-            from { transform: translateX(20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-          }
-          @keyframes pulse-value {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-          }
-        `}
-      </style>
-
+    <Box className="live-scorecard">
       {/* Header */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          marginBottom: '12px',
-          paddingBottom: '8px',
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
-        }}
-      >
-        <Box
-          sx={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            background: '#10b981',
-            animation: 'pulse-value 2s infinite',
-          }}
-        />
-        <Typography
-          sx={{
-            fontSize: '0.7rem',
-            fontWeight: 600,
-            color: 'rgba(255,255,255,0.7)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.1em',
-          }}
-        >
+      <Box className="live-scorecard__header">
+        <Box className="live-scorecard__pulse-dot" />
+        <Typography className="live-scorecard__title">
           Live Feasibility
         </Typography>
       </Box>
 
       {/* Metrics */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <Box className="live-scorecard__metrics">
         {metrics.map((metric) => (
-          <Box
-            key={metric.label}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Box sx={{ color: metric.color, opacity: 0.8 }}>
+          <Box key={metric.label} className="live-scorecard__metric">
+            <Box className="live-scorecard__metric-left">
+              <Box className={`live-scorecard__icon ${metric.colorClass}`}>
                 {metric.icon}
               </Box>
-              <Typography
-                sx={{
-                  fontSize: '0.7rem',
-                  color: 'rgba(255,255,255,0.6)',
-                }}
-              >
+              <Typography className="live-scorecard__label">
                 {metric.label}
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-              <Typography
-                sx={{
-                  fontSize: '0.9rem',
-                  fontWeight: 700,
-                  color: 'white',
-                  fontFamily: 'monospace',
-                }}
-              >
+            <Box className="live-scorecard__metric-right">
+              <Typography className="live-scorecard__value">
                 {metric.value}
               </Typography>
-              <Typography
-                sx={{
-                  fontSize: '0.6rem',
-                  color: 'rgba(255,255,255,0.4)',
-                }}
-              >
+              <Typography className="live-scorecard__unit">
                 {metric.unit}
               </Typography>
             </Box>
@@ -171,47 +96,19 @@ export function LiveScorecard({
       </Box>
 
       {/* Efficiency indicator bar */}
-      <Box
-        sx={{
-          marginTop: '12px',
-          paddingTop: '12px',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            marginBottom: '4px',
-          }}
-        >
-          <Typography
-            sx={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)' }}
-          >
+      <Box className="live-scorecard__efficiency">
+        <Box className="live-scorecard__efficiency-header">
+          <Typography className="live-scorecard__efficiency-label">
             Efficiency Score
           </Typography>
-          <Typography
-            sx={{ fontSize: '0.65rem', color: '#06b6d4', fontWeight: 600 }}
-          >
+          <Typography className="live-scorecard__efficiency-value">
             {Math.round(efficiencyRatio * 100)}%
           </Typography>
         </Box>
-        <Box
-          sx={{
-            height: '4px',
-            borderRadius: '2px',
-            background: 'rgba(255,255,255,0.1)',
-            overflow: 'hidden',
-          }}
-        >
+        <Box className="live-scorecard__progress-track">
           <Box
-            sx={{
-              height: '100%',
-              width: `${String(efficiencyRatio * 100)}%`,
-              background: 'linear-gradient(90deg, #06b6d4, #3b82f6)',
-              borderRadius: '2px',
-              transition: 'width 0.3s ease-out',
-            }}
+            className="live-scorecard__progress-fill"
+            sx={{ width: `${String(efficiencyRatio * 100)}%` }}
           />
         </Box>
       </Box>
