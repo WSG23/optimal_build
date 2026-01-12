@@ -189,6 +189,29 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONRe
     )
 
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Handle uncaught exceptions and return a JSON response with CORS headers.
+
+    This ensures that unhandled exceptions still return proper JSON responses
+    that the CORS middleware can process, preventing CORS errors on 500 responses.
+    """
+    log_event(
+        logger,
+        "unhandled_exception",
+        client_host=request.client.host if request.client else "unknown",
+        path=request.url.path,
+        error=str(exc),
+        error_type=type(exc).__name__,
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal server error",
+        },
+    )
+
+
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 static_root = Path(__file__).resolve().parents[2] / "static"

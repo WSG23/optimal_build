@@ -185,7 +185,21 @@ async def create_change_of_use_application(
     Automatically determines if DC amendment or planning permission is required.
     Accepts project_id as UUID string or integer string.
     """
+    from app.models.projects import Project
+
     normalized_project_id = normalise_project_id(data.project_id)
+
+    # Validate project exists
+    project_result = await db.execute(
+        select(Project).where(Project.id == normalized_project_id)
+    )
+    project = project_result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project with id {data.project_id} not found",
+        )
+
     requires_dc = data.current_use != data.proposed_use
     requires_planning = data.proposed_use in [
         AssetType.RESIDENTIAL,
@@ -272,7 +286,21 @@ async def create_heritage_submission(
     Used for conservation projects requiring heritage authority approval.
     Accepts project_id as UUID string or integer string.
     """
+    from app.models.projects import Project
+
     normalized_project_id = normalise_project_id(data.project_id)
+
+    # Validate project exists
+    project_result = await db.execute(
+        select(Project).where(Project.id == normalized_project_id)
+    )
+    project = project_result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Project with id {data.project_id} not found",
+        )
+
     submission = HeritageSubmission(
         project_id=normalized_project_id,
         conservation_status=data.conservation_status,
