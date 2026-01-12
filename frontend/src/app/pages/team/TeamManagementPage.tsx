@@ -6,6 +6,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   Chip,
@@ -30,6 +31,33 @@ import { teamApi, TeamMember } from '../../../api/team'
 import { WorkflowDashboard } from './components/WorkflowDashboard'
 import { ProjectProgressDashboard } from './components/ProjectProgressDashboard'
 import { useProject } from '../../../contexts/useProject'
+
+const STORAGE_PREFIX = 'ob_team_members'
+
+const buildStorageKey = (pid: string) => `${STORAGE_PREFIX}:${pid}`
+
+const loadStoredMembers = (pid: string): TeamMember[] => {
+  if (typeof window === 'undefined' || !pid) {
+    return []
+  }
+  const raw = window.localStorage.getItem(buildStorageKey(pid))
+  if (!raw) {
+    return []
+  }
+  try {
+    const parsed = JSON.parse(raw) as TeamMember[]
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+const persistMembers = (pid: string, data: TeamMember[]) => {
+  if (typeof window === 'undefined' || !pid) {
+    return
+  }
+  window.localStorage.setItem(buildStorageKey(pid), JSON.stringify(data))
+}
 // If not using react-router params for project ID, we might need to get it from context or props.
 // For now, I'll assume we grab it from URL or a hardcoded one for dev if not available.
 // Actually, let's try to get it from context/store if typical, or just use a placeholder if we can't find it.
@@ -49,6 +77,7 @@ export const TeamManagementPage: React.FC = () => {
   const [members, setMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null)
 
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
@@ -65,40 +94,6 @@ export const TeamManagementPage: React.FC = () => {
     setMembers([])
   }, [projectId])
 
-  // Helper to create mock members - defined inside effect to avoid dependency issues
-  const createMockMembers = React.useCallback(
-    (pid: string): TeamMember[] => [
-      {
-        id: '1',
-        project_id: pid,
-        user_id: 'u1',
-        role: 'developer',
-        is_active: true,
-        joined_at: '2024-01-15T10:00:00.000Z',
-        user: { full_name: 'John Doe', email: 'john@example.com' },
-      },
-      {
-        id: '2',
-        project_id: pid,
-        user_id: 'u2',
-        role: 'consultant',
-        is_active: true,
-        joined_at: '2024-01-20T14:30:00.000Z',
-        user: { full_name: 'Sarah Architect', email: 'sarah@firm.com' },
-      },
-      {
-        id: '3',
-        project_id: pid,
-        user_id: 'u3',
-        role: 'admin',
-        is_active: true,
-        joined_at: '2024-01-10T09:00:00.000Z',
-        user: { full_name: 'Demo Owner', email: 'demo-owner@example.com' },
-      },
-    ],
-    [],
-  )
-
   useEffect(() => {
     if (!projectId) {
       return
@@ -112,21 +107,25 @@ export const TeamManagementPage: React.FC = () => {
       isFetchingRef.current = true
       setLoading(true)
       setError(null)
+      const storedMembers = loadStoredMembers(projectId)
       try {
         const data = await teamApi.listMembers(projectId)
-        // Use mock data if API returns empty (for demo purposes)
-        if (data.length === 0) {
-          console.info('No team members in DB, using mock data for demo')
-          setMembers(createMockMembers(projectId))
-        } else {
+        if (data.length > 0) {
           setMembers(data)
+          persistMembers(projectId, data)
+        } else if (storedMembers.length > 0) {
+          setMembers(storedMembers)
+        } else {
+          setMembers([])
         }
         hasFetchedRef.current = true
       } catch (err) {
         console.error(err)
-        // MOCK FALLBACK for dev if backend unreachable
-        console.warn('Backend failed, using mock data for demo')
-        setMembers(createMockMembers(projectId))
+        if (storedMembers.length > 0) {
+          setMembers(storedMembers)
+        } else {
+          setMembers([])
+        }
         hasFetchedRef.current = true // Mark as fetched even on error to prevent infinite retries
       } finally {
         setLoading(false)
@@ -135,7 +134,7 @@ export const TeamManagementPage: React.FC = () => {
     }
 
     void fetchMembers()
-  }, [activeTab, projectId, createMockMembers])
+  }, [activeTab, projectId])
 
   const handleInvite = async () => {
     if (!projectId) {
@@ -145,6 +144,23 @@ export const TeamManagementPage: React.FC = () => {
     setError(null)
     try {
       await teamApi.inviteMember(projectId, inviteEmail, inviteRole)
+      const pendingMember: TeamMember = {
+        id: `invite-${Date.now()}`,
+        project_id: projectId,
+        user_id: `invite-${Date.now()}`,
+        role: inviteRole,
+        is_active: false,
+        joined_at: new Date().toISOString(),
+        user: {
+          full_name: inviteEmail.split('@')[0] ?? inviteEmail,
+          email: inviteEmail,
+        },
+      }
+      setMembers((prev) => {
+        const next = [pendingMember, ...prev]
+        persistMembers(projectId, next)
+        return next
+      })
       setInviteOpen(false)
       setInviteEmail('')
       // Ideally refresh members list if they show up immediately (pending),
@@ -157,6 +173,35 @@ export const TeamManagementPage: React.FC = () => {
       setError('Failed to send invitation')
     } finally {
       setInviting(false)
+    }
+  }
+
+  const handleRemoveMember = async (member: TeamMember) => {
+    if (!projectId) {
+      return
+    }
+    if (member.user_id.startsWith('invite-')) {
+      setMembers((prev) => {
+        const next = prev.filter((item) => item.id !== member.id)
+        persistMembers(projectId, next)
+        return next
+      })
+      return
+    }
+    setRemovingMemberId(member.id)
+    setError(null)
+    try {
+      await teamApi.removeMember(projectId, member.user_id)
+      setMembers((prev) => {
+        const next = prev.filter((item) => item.id !== member.id)
+        persistMembers(projectId, next)
+        return next
+      })
+    } catch (err) {
+      console.error(err)
+      setError('Failed to remove member')
+    } finally {
+      setRemovingMemberId(null)
     }
   }
 
@@ -270,7 +315,7 @@ export const TeamManagementPage: React.FC = () => {
 
       {/* Tab 0: Team Members - Depth 1 (Glass Card with cyan edge) */}
       {activeTab === 0 && (
-        <Box className="ob-card-module" sx={{ overflow: 'hidden' }}>
+        <Box className="ob-card-module">
           <Typography
             variant="subtitle2"
             sx={{
@@ -282,84 +327,110 @@ export const TeamManagementPage: React.FC = () => {
           >
             Team Members
           </Typography>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Role</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
+          <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+            <Table>
+              <TableHead>
                 <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    align="center"
-                    sx={{ py: 'var(--ob-space-400)' }}
-                  >
-                    <CircularProgress size={24} />
-                    <Typography
-                      variant="body2"
-                      sx={{ mt: 1, color: 'text.secondary' }}
+                  <TableCell>Name</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Role</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      align="center"
+                      sx={{ py: 'var(--ob-space-400)' }}
                     >
-                      Loading team...
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : members.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    align="center"
-                    sx={{ py: 'var(--ob-space-400)' }}
-                  >
-                    <Typography variant="body2" color="text.secondary">
-                      No team members found.
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                members.map((member) => (
-                  <TableRow key={member.id} hover>
-                    <TableCell sx={{ fontWeight: 500 }}>
-                      {member.user?.full_name || 'Unknown'}
-                    </TableCell>
-                    <TableCell>{member.user?.email || 'No email'}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={member.role}
-                        size="small"
-                        sx={{
-                          textTransform: 'capitalize',
-                          bgcolor:
-                            member.role === 'developer'
-                              ? 'primary.main'
-                              : 'default',
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={member.is_active ? 'Active' : 'Inactive'}
-                        size="small"
-                        color={member.is_active ? 'success' : 'default'}
-                        variant="outlined"
-                        sx={{ textTransform: 'capitalize' }}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Button size="small" color="error">
-                        Remove
-                      </Button>
+                      <CircularProgress size={24} />
+                      <Typography
+                        variant="body2"
+                        sx={{ mt: 1, color: 'text.secondary' }}
+                      >
+                        Loading team...
+                      </Typography>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : members.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      align="center"
+                      sx={{ py: 'var(--ob-space-400)' }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        No team members found.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  members.map((member) => {
+                    const isPendingInvite = member.user_id.startsWith('invite-')
+                    return (
+                      <TableRow key={member.id} hover>
+                        <TableCell sx={{ fontWeight: 500 }}>
+                          {member.user?.full_name || 'Unknown'}
+                        </TableCell>
+                        <TableCell>
+                          {member.user?.email || 'No email'}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={member.role}
+                            size="small"
+                            sx={{
+                              textTransform: 'capitalize',
+                              bgcolor:
+                                member.role === 'developer'
+                                  ? 'primary.main'
+                                  : 'default',
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={
+                              isPendingInvite
+                                ? 'Pending'
+                                : member.is_active
+                                  ? 'Active'
+                                  : 'Inactive'
+                            }
+                            size="small"
+                            color={
+                              isPendingInvite
+                                ? 'warning'
+                                : member.is_active
+                                  ? 'success'
+                                  : 'default'
+                            }
+                            variant="outlined"
+                            sx={{ textTransform: 'capitalize' }}
+                          />
+                        </TableCell>
+                        <TableCell align="right">
+                          <Button
+                            size="small"
+                            color="error"
+                            onClick={() => handleRemoveMember(member)}
+                            disabled={removingMemberId === member.id}
+                          >
+                            {removingMemberId === member.id
+                              ? 'Removing...'
+                              : 'Remove'}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Box>
       )}
 
@@ -375,7 +446,7 @@ export const TeamManagementPage: React.FC = () => {
         <Box className="ob-card-module">
           <ProjectProgressDashboard
             projectId={projectId}
-            projectName="Current Project"
+            projectName={currentProject?.name ?? 'Project'}
           />
         </Box>
       )}

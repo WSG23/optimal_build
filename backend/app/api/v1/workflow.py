@@ -109,3 +109,5 @@ async def approve_step(
         return ApprovalWorkflowRead.from_orm_workflow(workflow)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e)) from e

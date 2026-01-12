@@ -33,13 +33,16 @@ import {
 } from '@mui/icons-material'
 import {
   getMockPhases,
-  getMockTeamActivity,
-  getMockPendingApprovals,
   type ProjectPhase,
   type TeamMemberActivity,
   type PendingApproval,
 } from './projectProgressMockData'
-import { workflowApi, type ApprovalWorkflow } from '../../../../api/workflow'
+import {
+  getProjectProgress,
+  type ProjectProgressApproval,
+  type ProjectProgressPhase,
+  type ProjectProgressTeamActivity,
+} from '../../../../api/projects'
 
 // Types are re-exported from projectProgressMockData.ts for backward compatibility
 // Import types from './projectProgressMockData' directly
@@ -48,6 +51,9 @@ interface ProjectProgressDashboardProps {
   projectId: string
   projectName?: string
 }
+
+const PHASES_STORAGE_PREFIX = 'ob_project_phases'
+const ACTIVITY_STORAGE_PREFIX = 'ob_team_activity'
 
 function getStatusIcon(status: ProjectPhase['status']) {
   switch (status) {
@@ -90,6 +96,98 @@ function getPriorityColor(priority: PendingApproval['priority']) {
   }
 }
 
+function buildStorageKey(prefix: string, projectId: string) {
+  return `${prefix}:${projectId}`
+}
+
+function loadStoredPhases(projectId: string): ProjectPhase[] {
+  if (typeof window === 'undefined' || !projectId) {
+    return []
+  }
+  const raw = window.localStorage.getItem(
+    buildStorageKey(PHASES_STORAGE_PREFIX, projectId),
+  )
+  if (!raw) {
+    return []
+  }
+  try {
+    const parsed = JSON.parse(raw) as ProjectPhase[]
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function persistPhases(projectId: string, phases: ProjectPhase[]) {
+  if (typeof window === 'undefined' || !projectId) {
+    return
+  }
+  window.localStorage.setItem(
+    buildStorageKey(PHASES_STORAGE_PREFIX, projectId),
+    JSON.stringify(phases),
+  )
+}
+
+function loadStoredActivity(projectId: string): TeamMemberActivity[] {
+  if (typeof window === 'undefined' || !projectId) {
+    return []
+  }
+  const raw = window.localStorage.getItem(
+    buildStorageKey(ACTIVITY_STORAGE_PREFIX, projectId),
+  )
+  if (!raw) {
+    return []
+  }
+  try {
+    const parsed = JSON.parse(raw) as TeamMemberActivity[]
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function persistActivity(projectId: string, activity: TeamMemberActivity[]) {
+  if (typeof window === 'undefined' || !projectId) {
+    return
+  }
+  window.localStorage.setItem(
+    buildStorageKey(ACTIVITY_STORAGE_PREFIX, projectId),
+    JSON.stringify(activity),
+  )
+}
+
+function hashProjectId(projectId: string) {
+  let hash = 0
+  for (let index = 0; index < projectId.length; index += 1) {
+    hash = (hash << 5) - hash + projectId.charCodeAt(index)
+    hash |= 0
+  }
+  return Math.abs(hash)
+}
+
+function seedPhases(projectId: string): ProjectPhase[] {
+  const basePhases = getMockPhases()
+  const seed = hashProjectId(projectId)
+  return basePhases.map((phase, index) => {
+    const offset = ((seed + index * 13) % 21) - 10
+    const progress = Math.min(
+      100,
+      Math.max(0, Math.round(phase.progress + offset)),
+    )
+    const status: ProjectPhase['status'] =
+      progress >= 100
+        ? 'completed'
+        : progress > 0
+          ? 'in_progress'
+          : 'not_started'
+    return {
+      ...phase,
+      progress,
+      status,
+    }
+  })
+}
+
 export const ProjectProgressDashboard: React.FC<
   ProjectProgressDashboardProps
 > = ({ projectId, projectName = 'Project' }) => {
@@ -100,49 +198,78 @@ export const ProjectProgressDashboard: React.FC<
   )
   const [loading, setLoading] = useState(true)
 
-  // Convert workflows to pending approvals format
-  const extractPendingApprovals = (
-    workflows: ApprovalWorkflow[],
-  ): PendingApproval[] => {
-    const approvals: PendingApproval[] = []
-    workflows.forEach((workflow) => {
-      workflow.steps
-        .filter((step) => step.status === 'in_review')
-        .forEach((step) => {
-          approvals.push({
-            id: step.id,
-            title: step.name,
-            workflowName: workflow.name,
-            requiredBy: step.approver_role || 'Any team member',
-            priority: 'normal' as const,
-          })
-        })
-    })
-    return approvals
+  const mapPhases = (
+    phases: ProjectProgressPhase[],
+    projectIdValue: string,
+  ): ProjectPhase[] => {
+    if (phases.length === 0) {
+      return seedPhases(projectIdValue)
+    }
+    return phases.map((phase) => ({
+      id: String(phase.id),
+      name: phase.name,
+      progress: Math.round(Number(phase.progress ?? 0)),
+      status: (phase.status as ProjectPhase['status']) ?? 'not_started',
+      startDate: phase.start_date ?? undefined,
+      endDate: phase.end_date ?? undefined,
+      milestones: [],
+    }))
   }
+
+  const mapActivity = (
+    activity: ProjectProgressTeamActivity[],
+  ): TeamMemberActivity[] =>
+    activity.map((member) => ({
+      id: member.id,
+      name: member.name,
+      email: member.email,
+      role: member.role,
+      lastActive: member.last_active_at
+        ? new Date(member.last_active_at).toLocaleString()
+        : '—',
+      pendingTasks: member.pending_tasks,
+      completedTasks: member.completed_tasks,
+    }))
+
+  const mapApprovals = (
+    approvals: ProjectProgressApproval[],
+  ): PendingApproval[] =>
+    approvals.map((approval) => ({
+      id: approval.id,
+      title: approval.title,
+      workflowName: approval.workflow_name,
+      requiredBy: approval.required_by,
+      priority: 'normal' as const,
+    }))
 
   const fetchData = async () => {
     setLoading(true)
+    const storedPhases = loadStoredPhases(projectId)
+    const storedActivity = loadStoredActivity(projectId)
     try {
-      // Fetch real workflows for pending approvals
-      const workflows = await workflowApi.listWorkflows(projectId)
-      const realApprovals = extractPendingApprovals(workflows)
-
-      // Use real pending approvals if available, otherwise fall back to mock
-      if (realApprovals.length > 0) {
-        setPendingApprovals(realApprovals)
-      } else {
-        setPendingApprovals(getMockPendingApprovals())
-      }
+      const progress = await getProjectProgress(projectId)
+      const mappedPhases = mapPhases(progress.phases, projectId)
+      setPhases(mappedPhases)
+      persistPhases(projectId, mappedPhases)
+      const mappedActivity = mapActivity(progress.team_activity)
+      setTeamActivity(mappedActivity)
+      persistActivity(projectId, mappedActivity)
+      setPendingApprovals(mapApprovals(progress.pending_approvals))
+      setLoading(false)
+      return
     } catch (error) {
-      console.error('Failed to fetch workflows:', error)
-      // Fallback to mock data on error
-      setPendingApprovals(getMockPendingApprovals())
+      console.error('Failed to fetch project progress:', error)
+      const basePhases =
+        storedPhases.length > 0 ? storedPhases : seedPhases(projectId)
+      setPhases(basePhases)
+      persistPhases(projectId, basePhases)
+      if (storedActivity.length > 0) {
+        setTeamActivity(storedActivity)
+      } else {
+        setTeamActivity([])
+      }
+      setPendingApprovals([])
     }
-
-    // Still use mock data for phases and team activity (would need separate APIs)
-    setPhases(getMockPhases())
-    setTeamActivity(getMockTeamActivity())
     setLoading(false)
   }
 

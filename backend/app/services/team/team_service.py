@@ -168,9 +168,9 @@ class TeamService:
         members = list(result.scalars().unique().all())
 
         # Build activity stats for each member
-        member_activities = []
-        total_pending = 0
-        total_completed = 0
+        member_activities: list[dict] = []
+        member_entries: dict[UUID, dict] = {}
+        role_index: dict[str, list[UUID]] = {}
         active_count = 0
 
         for member in members:
@@ -178,56 +178,178 @@ class TeamService:
             if not user:
                 continue
 
-            # Count pending and completed workflow steps for this user
-            pending_query = (
-                select(ApprovalStep)
-                .join(ApprovalWorkflow, ApprovalWorkflow.id == ApprovalStep.workflow_id)
-                .where(ApprovalWorkflow.project_id == project_id)
-                .where(ApprovalStep.required_user_id == member.user_id)
-                .where(ApprovalStep.status.in_(["pending", "in_review"]))
+            role_value = (
+                member.role.value if hasattr(member.role, "value") else str(member.role)
             )
-            pending_result = await self.db.execute(pending_query)
-            pending_tasks = len(list(pending_result.scalars().all()))
+            role_key = role_value.strip().lower()
+            role_index.setdefault(role_key, []).append(member.user_id)
 
-            completed_query = (
-                select(ApprovalStep)
-                .join(ApprovalWorkflow, ApprovalWorkflow.id == ApprovalStep.workflow_id)
-                .where(ApprovalWorkflow.project_id == project_id)
-                .where(ApprovalStep.approved_by_id == member.user_id)
-                .where(ApprovalStep.status.in_(["approved", "rejected"]))
-            )
-            completed_result = await self.db.execute(completed_query)
-            completed_tasks = len(list(completed_result.scalars().all()))
-
-            total_pending += pending_tasks
-            total_completed += completed_tasks
-
-            # Consider member active if they have activity in the last 24 hours
             if member.last_active_at:
                 from datetime import timedelta
 
                 if utcnow() - member.last_active_at < timedelta(hours=24):
                     active_count += 1
 
-            member_activities.append(
-                {
-                    "id": member.id,
-                    "user_id": member.user_id,
-                    "project_id": member.project_id,
-                    "role": member.role,
-                    "joined_at": member.joined_at,
-                    "last_active_at": member.last_active_at,
-                    "name": user.full_name or user.email.split("@")[0],
-                    "email": user.email,
-                    "pending_tasks": pending_tasks,
-                    "completed_tasks": completed_tasks,
-                }
-            )
+            entry = {
+                "id": member.id,
+                "user_id": member.user_id,
+                "project_id": member.project_id,
+                "role": role_value,
+                "joined_at": member.joined_at,
+                "last_active_at": member.last_active_at,
+                "name": user.full_name or user.email.split("@")[0],
+                "email": user.email,
+                "pending_tasks": 0,
+                "completed_tasks": 0,
+            }
+            member_entries[member.user_id] = entry
+            member_activities.append(entry)
 
+        step_query = (
+            select(ApprovalStep)
+            .join(ApprovalWorkflow, ApprovalWorkflow.id == ApprovalStep.workflow_id)
+            .where(ApprovalWorkflow.project_id == project_id)
+        )
+        steps_result = await self.db.execute(step_query)
+        steps = list(steps_result.scalars().all())
+
+        user_ids: set[UUID] = set()
+        for step in steps:
+            if step.required_user_id and step.required_user_id not in member_entries:
+                user_ids.add(step.required_user_id)
+            if step.approved_by_id and step.approved_by_id not in member_entries:
+                user_ids.add(step.approved_by_id)
+
+        user_lookup: dict[UUID, User] = {}
+        if user_ids:
+            users_result = await self.db.execute(
+                select(User).where(User.id.in_(user_ids))
+            )
+            user_lookup = {user.id: user for user in users_result.scalars().all()}
+
+        ghost_entries: dict[UUID, dict] = {}
+        role_entries: dict[str, dict] = {}
+
+        def normalise_role(value: str | None) -> str:
+            if not value:
+                return ""
+            if hasattr(value, "value"):
+                value = value.value  # type: ignore[assignment]
+            return str(value).strip().lower()
+
+        def role_display(value: str | None) -> str:
+            if not value:
+                return "Unassigned"
+            if hasattr(value, "value"):
+                value = value.value  # type: ignore[assignment]
+            return str(value).replace("_", " ").title()
+
+        def get_user_entry(user_id: UUID, role_hint: str | None) -> dict:
+            if user_id in member_entries:
+                return member_entries[user_id]
+            if user_id in ghost_entries:
+                return ghost_entries[user_id]
+
+            user = user_lookup.get(user_id)
+            role_value = None
+            if user and user.role:
+                role_value = (
+                    user.role.value if hasattr(user.role, "value") else str(user.role)
+                )
+            if not role_value:
+                role_value = (
+                    role_hint.value
+                    if hasattr(role_hint, "value")
+                    else str(role_hint) if role_hint else "viewer"
+                )
+
+            name = None
+            email = ""
+            if user:
+                name = user.full_name or user.email.split("@")[0]
+                email = user.email
+            if not name:
+                name = role_display(role_value)
+
+            entry = {
+                "id": str(user_id),
+                "user_id": user_id,
+                "project_id": project_id,
+                "role": role_value,
+                "joined_at": None,
+                "last_active_at": None,
+                "name": name,
+                "email": email,
+                "pending_tasks": 0,
+                "completed_tasks": 0,
+            }
+            ghost_entries[user_id] = entry
+            return entry
+
+        def get_role_entry(role_value: str | None) -> dict:
+            role_key = normalise_role(role_value)
+            entry = role_entries.get(role_key)
+            if entry:
+                return entry
+            entry = {
+                "id": f"role:{role_key or 'unassigned'}",
+                "user_id": None,
+                "project_id": project_id,
+                "role": role_value or "unassigned",
+                "joined_at": None,
+                "last_active_at": None,
+                "name": role_display(role_value),
+                "email": "",
+                "pending_tasks": 0,
+                "completed_tasks": 0,
+            }
+            role_entries[role_key] = entry
+            return entry
+
+        for step in steps:
+            status_value = (
+                step.status.value if hasattr(step.status, "value") else step.status
+            )
+            status_label = str(status_value or "").lower()
+            role_hint = step.required_role
+            role_key = normalise_role(role_hint)
+            role_members = role_index.get(role_key, [])
+
+            if status_label in ("pending", "in_review"):
+                if step.required_user_id:
+                    entry = get_user_entry(step.required_user_id, role_hint)
+                    entry["pending_tasks"] += 1
+                elif role_hint:
+                    if len(role_members) == 1:
+                        entry = member_entries[role_members[0]]
+                    else:
+                        entry = get_role_entry(role_hint)
+                    entry["pending_tasks"] += 1
+
+            if status_label in ("approved", "rejected"):
+                if step.approved_by_id:
+                    entry = get_user_entry(step.approved_by_id, role_hint)
+                    entry["completed_tasks"] += 1
+                elif role_hint:
+                    if len(role_members) == 1:
+                        entry = member_entries[role_members[0]]
+                    else:
+                        entry = get_role_entry(role_hint)
+                    entry["completed_tasks"] += 1
+
+        all_entries = (
+            member_activities
+            + list(ghost_entries.values())
+            + list(role_entries.values())
+        )
         return {
-            "members": member_activities,
-            "total_pending_tasks": total_pending,
-            "total_completed_tasks": total_completed,
+            "members": all_entries,
+            "total_pending_tasks": sum(
+                entry.get("pending_tasks", 0) for entry in all_entries
+            ),
+            "total_completed_tasks": sum(
+                entry.get("completed_tasks", 0) for entry in all_entries
+            ),
             "active_members_count": active_count,
         }
 
