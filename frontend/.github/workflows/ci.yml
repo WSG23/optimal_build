@@ -2,9 +2,9 @@ name: Frontend CI (lint + smoke)
 
 on:
   pull_request:
-    branches: ["**"]
+    branches: ['**']
   push:
-    branches: ["main"]
+    branches: ['main']
 
 jobs:
   build-and-test:

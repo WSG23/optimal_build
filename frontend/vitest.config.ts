@@ -11,7 +11,10 @@ export default defineConfig({
     minThreads: 1,
     maxThreads: 2,
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/__tests__/**/*.{test,spec}.{js,ts,jsx,tsx}', 'src/**/*.{test,spec}.{js,ts,jsx,tsx}'],
+    include: [
+      'src/**/__tests__/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      'src/**/*.{test,spec}.{js,ts,jsx,tsx}',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
