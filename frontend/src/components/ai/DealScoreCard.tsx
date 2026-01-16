@@ -5,7 +5,13 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Box, Typography, LinearProgress, Skeleton, Tooltip } from '@mui/material'
+import {
+  Box,
+  Typography,
+  LinearProgress,
+  Skeleton,
+  Tooltip,
+} from '@mui/material'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import TrendingDownIcon from '@mui/icons-material/TrendingDown'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
@@ -67,10 +73,7 @@ function FactorScoreBar({ factor }: { factor: FactorScore }) {
         </Typography>
         <Tooltip title={factor.rationale} placement="top">
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Typography
-              variant="caption"
-              sx={{ color, fontWeight: 600 }}
-            >
+            <Typography variant="caption" sx={{ color, fontWeight: 600 }}>
               {factor.score.toFixed(0)}
             </Typography>
             <InfoOutlinedIcon

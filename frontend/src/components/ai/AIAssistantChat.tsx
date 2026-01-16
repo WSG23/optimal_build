@@ -21,10 +21,7 @@ import SmartToyIcon from '@mui/icons-material/SmartToy'
 import PersonIcon from '@mui/icons-material/Person'
 
 import { Card } from '../canonical/Card'
-import {
-  sendChatMessage,
-  ChatMessageResponse,
-} from '../../api/ai'
+import { sendChatMessage, ChatMessageResponse } from '../../api/ai'
 
 interface Message {
   id: string
@@ -160,7 +157,13 @@ export function AIAssistantChat({
               background: 'var(--ob-surface-glass-1)',
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 'var(--ob-space-100)' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-100)',
+              }}
+            >
               <SmartToyIcon
                 sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 24 }}
               />
@@ -209,7 +212,8 @@ export function AIAssistantChat({
               >
                 <SmartToyIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
                 <Typography variant="body2">
-                  Ask me anything about your deals, properties, or market insights.
+                  Ask me anything about your deals, properties, or market
+                  insights.
                 </Typography>
               </Box>
             )}
@@ -255,7 +259,10 @@ export function AIAssistantChat({
                             : 'var(--ob-color-text-primary)',
                       }}
                     >
-                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ whiteSpace: 'pre-wrap' }}
+                      >
                         {message.content}
                       </Typography>
                     </Box>
@@ -317,7 +324,10 @@ export function AIAssistantChat({
                 <SmartToyIcon
                   sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 20 }}
                 />
-                <CircularProgress size={16} sx={{ color: 'var(--ob-color-neon-cyan)' }} />
+                <CircularProgress
+                  size={16}
+                  sx={{ color: 'var(--ob-color-neon-cyan)' }}
+                />
               </Box>
             )}
 

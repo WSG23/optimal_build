@@ -109,7 +109,11 @@ export interface DealScoreResponse {
 // Scenario Optimizer Types
 // ============================================================================
 
-export type FinancingType = 'conventional' | 'construction' | 'bridge' | 'mezzanine'
+export type FinancingType =
+  | 'conventional'
+  | 'construction'
+  | 'bridge'
+  | 'mezzanine'
 
 export interface ScenarioOptimizeRequest {
   project_id: string
@@ -230,7 +234,11 @@ export interface ReportResponse {
 // ============================================================================
 
 export type CommunicationType = 'email' | 'letter' | 'sms' | 'proposal' | 'memo'
-export type CommunicationTone = 'formal' | 'professional' | 'friendly' | 'urgent'
+export type CommunicationTone =
+  | 'formal'
+  | 'professional'
+  | 'friendly'
+  | 'urgent'
 export type CommunicationPurpose =
   | 'introduction'
   | 'follow_up'
@@ -553,10 +561,7 @@ export interface DocumentExtractionResponse {
 // API Functions
 // ============================================================================
 
-async function fetchApi<T>(
-  path: string,
-  options?: RequestInit,
-): Promise<T> {
+async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(buildUrl(path), {
     headers: {
       'Content-Type': 'application/json',
@@ -682,10 +687,13 @@ export async function generatePortfolioReport(
 export async function draftCommunication(
   request: DraftCommunicationRequest,
 ): Promise<CommunicationDraftResponse> {
-  return fetchApi<CommunicationDraftResponse>('/api/v1/ai/communications/draft', {
-    method: 'POST',
-    body: JSON.stringify(request),
-  })
+  return fetchApi<CommunicationDraftResponse>(
+    '/api/v1/ai/communications/draft',
+    {
+      method: 'POST',
+      body: JSON.stringify(request),
+    },
+  )
 }
 
 // Conversational Assistant
@@ -762,10 +770,13 @@ export async function listCompetitors(): Promise<Competitor[]> {
 export async function gatherIntelligence(
   userId: string,
 ): Promise<CompetitiveIntelligenceResponse> {
-  return fetchApi<CompetitiveIntelligenceResponse>('/api/v1/ai/intelligence/gather', {
-    method: 'POST',
-    body: JSON.stringify({ user_id: userId }),
-  })
+  return fetchApi<CompetitiveIntelligenceResponse>(
+    '/api/v1/ai/intelligence/gather',
+    {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId }),
+    },
+  )
 }
 
 // Workflow Engine

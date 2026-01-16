@@ -158,7 +158,13 @@ function MarketInsightItem({
         }}
         onClick={() => setExpanded(!expanded)}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 'var(--ob-space-100)' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--ob-space-100)',
+          }}
+        >
           <TrendingUpIcon
             sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 18 }}
           />
@@ -320,8 +326,7 @@ export function AIInsightsPanel({
     )
   }
 
-  const hasContent =
-    anomalies.length > 0 || marketPrediction !== null
+  const hasContent = anomalies.length > 0 || marketPrediction !== null
 
   if (!hasContent) {
     return (
@@ -353,7 +358,13 @@ export function AIInsightsPanel({
           mb: 'var(--ob-space-200)',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 'var(--ob-space-100)' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--ob-space-100)',
+          }}
+        >
           <LightbulbIcon
             sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 20 }}
           />
@@ -404,9 +415,17 @@ export function AIInsightsPanel({
         </Box>
       )}
 
-      {showAnomalies && anomalies.length > 0 && showMarketInsights && marketPrediction && (
-        <Divider sx={{ my: 'var(--ob-space-200)', borderColor: 'var(--ob-color-border-subtle)' }} />
-      )}
+      {showAnomalies &&
+        anomalies.length > 0 &&
+        showMarketInsights &&
+        marketPrediction && (
+          <Divider
+            sx={{
+              my: 'var(--ob-space-200)',
+              borderColor: 'var(--ob-color-border-subtle)',
+            }}
+          />
+        )}
 
       {/* Market Insights */}
       {showMarketInsights && marketPrediction && (
