@@ -1,263 +1,337 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Optimal Build - Dashboard</title>
-    <style>
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .header {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .section {
-            background: white;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1 { color: #333; margin-bottom: 10px; }
-        h2 { color: #667eea; margin-bottom: 15px; }
-        .status {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .success { background: #d1fae5; color: #065f46; }
-        .warning { background: #fef3c7; color: #92400e; }
-        .info { background: #dbeafe; color: #1e40af; }
-        .links {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .link-card {
-            border: 1px solid #e5e7eb;
-            padding: 15px;
-            border-radius: 8px;
-            transition: all 0.3s;
-        }
-        .link-card:hover {
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-        .link-card a {
-            color: #3b82f6;
-            text-decoration: none;
-            font-weight: 600;
-            display: block;
-            margin-bottom: 5px;
-        }
-        .link-card a:hover { color: #2563eb; }
-        .link-card p {
-            color: #6b7280;
-            font-size: 14px;
-            margin: 0;
-        }
-        .api-endpoint {
-            background: #f3f4f6;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-            font-family: monospace;
-            font-size: 13px;
-        }
-        .method {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-weight: bold;
-            margin-right: 10px;
-        }
-        .get { background: #dbeafe; color: #1e40af; }
-        .post { background: #d1fae5; color: #065f46; }
-        .put { background: #fef3c7; color: #92400e; }
-        .delete { background: #fee2e2; color: #991b1b; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>🏗️ Optimal Build - Development Dashboard</h1>
-        <p>Authentication and Project Management System</p>
-        <div style="margin-top: 15px;">
-            <span class="status success">Backend: Running on :9400</span>
-            <span class="status success">Frontend: Running on :4400</span>
-        </div>
-    </div>
-
-    <div class="section">
-        <h2>📱 Frontend Pages</h2>
-        <div class="links">
-            <div class="link-card">
-                <a href="index.html" target="_blank">Login/Signup Page</a>
-                <p>Main authentication page with login and signup forms</p>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Optimal Build - Dashboard</title>
+        <style>
+            body {
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+                background: #f5f5f5;
+            }
+            .header {
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            .section {
+                background: white;
+                padding: 20px;
+                margin: 20px 0;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            h1 {
+                color: #333;
+                margin-bottom: 10px;
+            }
+            h2 {
+                color: #667eea;
+                margin-bottom: 15px;
+            }
+            .status {
+                display: inline-block;
+                padding: 5px 10px;
+                border-radius: 5px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+            .success {
+                background: #d1fae5;
+                color: #065f46;
+            }
+            .warning {
+                background: #fef3c7;
+                color: #92400e;
+            }
+            .info {
+                background: #dbeafe;
+                color: #1e40af;
+            }
+            .links {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 15px;
+                margin-top: 15px;
+            }
+            .link-card {
+                border: 1px solid #e5e7eb;
+                padding: 15px;
+                border-radius: 8px;
+                transition: all 0.3s;
+            }
+            .link-card:hover {
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                transform: translateY(-2px);
+            }
+            .link-card a {
+                color: #3b82f6;
+                text-decoration: none;
+                font-weight: 600;
+                display: block;
+                margin-bottom: 5px;
+            }
+            .link-card a:hover {
+                color: #2563eb;
+            }
+            .link-card p {
+                color: #6b7280;
+                font-size: 14px;
+                margin: 0;
+            }
+            .api-endpoint {
+                background: #f3f4f6;
+                padding: 10px;
+                border-radius: 5px;
+                margin: 10px 0;
+                font-family: monospace;
+                font-size: 13px;
+            }
+            .method {
+                display: inline-block;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-weight: bold;
+                margin-right: 10px;
+            }
+            .get {
+                background: #dbeafe;
+                color: #1e40af;
+            }
+            .post {
+                background: #d1fae5;
+                color: #065f46;
+            }
+            .put {
+                background: #fef3c7;
+                color: #92400e;
+            }
+            .delete {
+                background: #fee2e2;
+                color: #991b1b;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>🏗️ Optimal Build - Development Dashboard</h1>
+            <p>Authentication and Project Management System</p>
+            <div style="margin-top: 15px">
+                <span class="status success">Backend: Running on :9400</span>
+                <span class="status success">Frontend: Running on :4400</span>
             </div>
-            <div class="link-card">
-                <a href="projects.html" target="_blank">Projects Dashboard</a>
-                <p>Main projects page (requires authentication)</p>
+        </div>
+
+        <div class="section">
+            <h2>📱 Frontend Pages</h2>
+            <div class="links">
+                <div class="link-card">
+                    <a href="index.html" target="_blank">Login/Signup Page</a>
+                    <p>Main authentication page with login and signup forms</p>
+                </div>
+                <div class="link-card">
+                    <a href="projects.html" target="_blank"
+                        >Projects Dashboard</a
+                    >
+                    <p>Main projects page (requires authentication)</p>
+                </div>
+                <div class="link-card">
+                    <a href="test-auth-flow.html" target="_blank"
+                        >Test Authentication</a
+                    >
+                    <p>Test the complete authentication flow</p>
+                </div>
+                <div class="link-card">
+                    <a href="projects-test.html" target="_blank"
+                        >Projects Test</a
+                    >
+                    <p>Test version without authentication</p>
+                </div>
+                <div class="link-card">
+                    <a href="singapore-properties.html" target="_blank"
+                        >Singapore Properties</a
+                    >
+                    <p>BCA & URA compliance management system</p>
+                </div>
             </div>
-            <div class="link-card">
-                <a href="test-auth-flow.html" target="_blank">Test Authentication</a>
-                <p>Test the complete authentication flow</p>
+        </div>
+
+        <div class="section">
+            <h2>🔌 API Endpoints</h2>
+
+            <h3>Authentication APIs</h3>
+            <div class="api-endpoint">
+                <span class="method post">POST</span>
+                <code>http://localhost:9400/api/v1/users-db/signup</code>
+                - Register new user
             </div>
-            <div class="link-card">
-                <a href="projects-test.html" target="_blank">Projects Test</a>
-                <p>Test version without authentication</p>
+            <div class="api-endpoint">
+                <span class="method post">POST</span>
+                <code>http://localhost:9400/api/v1/users-db/login</code>
+                - Login and get JWT token
             </div>
-            <div class="link-card">
-                <a href="singapore-properties.html" target="_blank">Singapore Properties</a>
-                <p>BCA & URA compliance management system</p>
+            <div class="api-endpoint">
+                <span class="method get">GET</span>
+                <code>http://localhost:9400/api/v1/users-db/me</code>
+                - Get current user (requires auth)
+            </div>
+
+            <h3>Projects APIs</h3>
+            <div class="api-endpoint">
+                <span class="method get">GET</span>
+                <code>http://localhost:9400/api/v1/projects/list</code>
+                - List all projects (public)
+            </div>
+            <div class="api-endpoint">
+                <span class="method post">POST</span>
+                <code>http://localhost:9400/api/v1/projects/create</code>
+                - Create project (requires auth)
+            </div>
+            <div class="api-endpoint">
+                <span class="method put">PUT</span>
+                <code>http://localhost:9400/api/v1/projects/{id}</code>
+                - Update project (requires auth, owner only)
+            </div>
+            <div class="api-endpoint">
+                <span class="method delete">DELETE</span>
+                <code>http://localhost:9400/api/v1/projects/{id}</code>
+                - Delete project (requires auth, owner only)
+            </div>
+            <div class="api-endpoint">
+                <span class="method get">GET</span>
+                <code>http://localhost:9400/api/v1/projects/stats/summary</code>
+                - Get project statistics
+            </div>
+
+            <h3>Singapore Property APIs (BCA & URA Compliance)</h3>
+            <div class="api-endpoint">
+                <span class="method get">GET</span>
+                <code
+                    >http://localhost:9400/api/v1/singapore-property/list</code
+                >
+                - List all properties with compliance status
+            </div>
+            <div class="api-endpoint">
+                <span class="method post">POST</span>
+                <code
+                    >http://localhost:9400/api/v1/singapore-property/create</code
+                >
+                - Create property with auto compliance check (requires auth)
+            </div>
+            <div class="api-endpoint">
+                <span class="method post">POST</span>
+                <code
+                    >http://localhost:9400/api/v1/singapore-property/{id}/check-compliance</code
+                >
+                - Run detailed BCA & URA compliance checks
+            </div>
+            <div class="api-endpoint">
+                <span class="method get">GET</span>
+                <code
+                    >http://localhost:9400/api/v1/singapore-property/calculate/gfa-utilization/{id}</code
+                >
+                - Calculate GFA utilization and potential
             </div>
         </div>
-    </div>
 
-    <div class="section">
-        <h2>🔌 API Endpoints</h2>
-
-        <h3>Authentication APIs</h3>
-        <div class="api-endpoint">
-            <span class="method post">POST</span>
-            <code>http://localhost:9400/api/v1/users-db/signup</code>
-            - Register new user
-        </div>
-        <div class="api-endpoint">
-            <span class="method post">POST</span>
-            <code>http://localhost:9400/api/v1/users-db/login</code>
-            - Login and get JWT token
-        </div>
-        <div class="api-endpoint">
-            <span class="method get">GET</span>
-            <code>http://localhost:9400/api/v1/users-db/me</code>
-            - Get current user (requires auth)
-        </div>
-
-        <h3>Projects APIs</h3>
-        <div class="api-endpoint">
-            <span class="method get">GET</span>
-            <code>http://localhost:9400/api/v1/projects/list</code>
-            - List all projects (public)
-        </div>
-        <div class="api-endpoint">
-            <span class="method post">POST</span>
-            <code>http://localhost:9400/api/v1/projects/create</code>
-            - Create project (requires auth)
-        </div>
-        <div class="api-endpoint">
-            <span class="method put">PUT</span>
-            <code>http://localhost:9400/api/v1/projects/{id}</code>
-            - Update project (requires auth, owner only)
-        </div>
-        <div class="api-endpoint">
-            <span class="method delete">DELETE</span>
-            <code>http://localhost:9400/api/v1/projects/{id}</code>
-            - Delete project (requires auth, owner only)
-        </div>
-        <div class="api-endpoint">
-            <span class="method get">GET</span>
-            <code>http://localhost:9400/api/v1/projects/stats/summary</code>
-            - Get project statistics
+        <div class="section">
+            <h2>🧪 Quick Test Instructions</h2>
+            <ol>
+                <li>
+                    <strong>Test Authentication:</strong>
+                    <ul>
+                        <li>
+                            Go to
+                            <a href="test-auth-flow.html"
+                                >Test Authentication Page</a
+                            >
+                        </li>
+                        <li>
+                            Click "Run Full Test Flow" to automatically test
+                            everything
+                        </li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>Manual Testing:</strong>
+                    <ul>
+                        <li>Go to <a href="index.html">Login Page</a></li>
+                        <li>
+                            Sign up with a new account or login with
+                            test@example.com / password123
+                        </li>
+                        <li>
+                            You'll be redirected to the
+                            <a href="projects.html">Projects Dashboard</a>
+                        </li>
+                        <li>Create, edit, and delete projects</li>
+                    </ul>
+                </li>
+            </ol>
         </div>
 
-        <h3>Singapore Property APIs (BCA & URA Compliance)</h3>
-        <div class="api-endpoint">
-            <span class="method get">GET</span>
-            <code>http://localhost:9400/api/v1/singapore-property/list</code>
-            - List all properties with compliance status
+        <div class="section">
+            <h2>✅ Current Status - Phase 3 Complete!</h2>
+
+            <h3>Phase 2 Features (Complete):</h3>
+            <ul>
+                <li>✅ User authentication with JWT tokens</li>
+                <li>✅ Persistent user storage in SQLite database</li>
+                <li>✅ Project CRUD operations</li>
+                <li>✅ Owner-based access control</li>
+                <li>✅ Public project listing</li>
+                <li>✅ CORS properly configured</li>
+            </ul>
+
+            <h3>Phase 3 Features (Complete):</h3>
+            <ul>
+                <li>
+                    ✅ Singapore property data model with compliance tracking
+                </li>
+                <li>
+                    ✅ BCA building compliance validation (site coverage, unit
+                    sizes, parking)
+                </li>
+                <li>
+                    ✅ URA zoning validation (plot ratio, height limits, land
+                    use)
+                </li>
+                <li>✅ GFA utilization calculator with potential analysis</li>
+                <li>✅ Advanced property search and filtering</li>
+                <li>✅ Compliance dashboard with detailed reports</li>
+                <li>✅ Integration with project management system</li>
+            </ul>
+
+            <h3>Key Compliance Features:</h3>
+            <ul>
+                <li>🏛️ Automatic URA zoning compliance checks</li>
+                <li>🏗️ BCA building requirements validation</li>
+                <li>📊 Real-time GFA and plot ratio calculations</li>
+                <li>⚠️ Violation detection and recommendations</li>
+                <li>📋 Detailed compliance reports</li>
+            </ul>
         </div>
-        <div class="api-endpoint">
-            <span class="method post">POST</span>
-            <code>http://localhost:9400/api/v1/singapore-property/create</code>
-            - Create property with auto compliance check (requires auth)
-        </div>
-        <div class="api-endpoint">
-            <span class="method post">POST</span>
-            <code>http://localhost:9400/api/v1/singapore-property/{id}/check-compliance</code>
-            - Run detailed BCA & URA compliance checks
-        </div>
-        <div class="api-endpoint">
-            <span class="method get">GET</span>
-            <code>http://localhost:9400/api/v1/singapore-property/calculate/gfa-utilization/{id}</code>
-            - Calculate GFA utilization and potential
-        </div>
-    </div>
 
-    <div class="section">
-        <h2>🧪 Quick Test Instructions</h2>
-        <ol>
-            <li><strong>Test Authentication:</strong>
-                <ul>
-                    <li>Go to <a href="test-auth-flow.html">Test Authentication Page</a></li>
-                    <li>Click "Run Full Test Flow" to automatically test everything</li>
-                </ul>
-            </li>
-            <li><strong>Manual Testing:</strong>
-                <ul>
-                    <li>Go to <a href="index.html">Login Page</a></li>
-                    <li>Sign up with a new account or login with test@example.com / password123</li>
-                    <li>You'll be redirected to the <a href="projects.html">Projects Dashboard</a></li>
-                    <li>Create, edit, and delete projects</li>
-                </ul>
-            </li>
-        </ol>
-    </div>
-
-    <div class="section">
-        <h2>✅ Current Status - Phase 3 Complete!</h2>
-
-        <h3>Phase 2 Features (Complete):</h3>
-        <ul>
-            <li>✅ User authentication with JWT tokens</li>
-            <li>✅ Persistent user storage in SQLite database</li>
-            <li>✅ Project CRUD operations</li>
-            <li>✅ Owner-based access control</li>
-            <li>✅ Public project listing</li>
-            <li>✅ CORS properly configured</li>
-        </ul>
-
-        <h3>Phase 3 Features (Complete):</h3>
-        <ul>
-            <li>✅ Singapore property data model with compliance tracking</li>
-            <li>✅ BCA building compliance validation (site coverage, unit sizes, parking)</li>
-            <li>✅ URA zoning validation (plot ratio, height limits, land use)</li>
-            <li>✅ GFA utilization calculator with potential analysis</li>
-            <li>✅ Advanced property search and filtering</li>
-            <li>✅ Compliance dashboard with detailed reports</li>
-            <li>✅ Integration with project management system</li>
-        </ul>
-
-        <h3>Key Compliance Features:</h3>
-        <ul>
-            <li>🏛️ Automatic URA zoning compliance checks</li>
-            <li>🏗️ BCA building requirements validation</li>
-            <li>📊 Real-time GFA and plot ratio calculations</li>
-            <li>⚠️ Violation detection and recommendations</li>
-            <li>📋 Detailed compliance reports</li>
-        </ul>
-    </div>
-
-    <script>
-        // Check backend status
-        fetch('http://localhost:9400/api/v1/projects/list')
-            .then(r => r.json())
-            .then(data => {
-                console.log(`✅ Backend is running - Found ${data.length} projects`);
-            })
-            .catch(err => {
-                console.error('❌ Backend may not be running:', err);
-            });
-    </script>
-</body>
+        <script>
+            // Check backend status
+            fetch('http://localhost:9400/api/v1/projects/list')
+                .then((r) => r.json())
+                .then((data) => {
+                    console.log(
+                        `✅ Backend is running - Found ${data.length} projects`,
+                    )
+                })
+                .catch((err) => {
+                    console.error('❌ Backend may not be running:', err)
+                })
+        </script>
+    </body>
 </html>

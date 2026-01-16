@@ -1,524 +1,578 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Projects - Complete Phase 2</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Projects - Complete Phase 2</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: #f3f4f6;
-        }
+            body {
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+                background: #f3f4f6;
+            }
 
-        .header {
-            background: white;
-            padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin-bottom: 2rem;
-        }
+            .header {
+                background: white;
+                padding: 1.5rem;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                margin-bottom: 2rem;
+            }
 
-        .header h1 {
-            font-size: 1.875rem;
-            color: #1f2937;
-            margin-bottom: 1rem;
-        }
+            .header h1 {
+                font-size: 1.875rem;
+                color: #1f2937;
+                margin-bottom: 1rem;
+            }
 
-        .controls {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            align-items: center;
-        }
+            .controls {
+                display: flex;
+                gap: 1rem;
+                flex-wrap: wrap;
+                align-items: center;
+            }
 
-        .search-box {
-            flex: 1;
-            min-width: 200px;
-            position: relative;
-        }
+            .search-box {
+                flex: 1;
+                min-width: 200px;
+                position: relative;
+            }
 
-        .search-box input {
-            width: 100%;
-            padding: 0.75rem 1rem 0.75rem 2.5rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-        }
+            .search-box input {
+                width: 100%;
+                padding: 0.75rem 1rem 0.75rem 2.5rem;
+                border: 1px solid #d1d5db;
+                border-radius: 0.5rem;
+                font-size: 1rem;
+            }
 
-        .search-box::before {
-            content: "🔍";
-            position: absolute;
-            left: 0.75rem;
-            top: 50%;
-            transform: translateY(-50%);
-        }
+            .search-box::before {
+                content: '🔍';
+                position: absolute;
+                left: 0.75rem;
+                top: 50%;
+                transform: translateY(-50%);
+            }
 
-        select, button {
-            padding: 0.75rem 1rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            background: white;
-            cursor: pointer;
-        }
+            select,
+            button {
+                padding: 0.75rem 1rem;
+                border: 1px solid #d1d5db;
+                border-radius: 0.5rem;
+                font-size: 1rem;
+                background: white;
+                cursor: pointer;
+            }
 
-        button {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            font-weight: 500;
-        }
+            button {
+                background: #3b82f6;
+                color: white;
+                border: none;
+                font-weight: 500;
+            }
 
-        button:hover {
-            background: #2563eb;
-        }
+            button:hover {
+                background: #2563eb;
+            }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 1.5rem;
-        }
+            .container {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 0 1.5rem;
+            }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1.5rem;
+                margin-bottom: 2rem;
+            }
 
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
+            .stat-card {
+                background: white;
+                padding: 1.5rem;
+                border-radius: 0.5rem;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
 
-        .stat-label {
-            color: #6b7280;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-        }
+            .stat-label {
+                color: #6b7280;
+                font-size: 0.875rem;
+                margin-bottom: 0.5rem;
+            }
 
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #1f2937;
-        }
+            .stat-value {
+                font-size: 2rem;
+                font-weight: bold;
+                color: #1f2937;
+            }
 
-        .projects-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
+            .projects-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+            }
 
-        .view-toggles {
-            display: flex;
-            gap: 0.5rem;
-        }
+            .view-toggles {
+                display: flex;
+                gap: 0.5rem;
+            }
 
-        .view-btn {
-            padding: 0.5rem;
-            background: white;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            cursor: pointer;
-        }
+            .view-btn {
+                padding: 0.5rem;
+                background: white;
+                border: 1px solid #d1d5db;
+                border-radius: 0.375rem;
+                cursor: pointer;
+            }
 
-        .view-btn.active {
-            background: #3b82f6;
-            color: white;
-        }
+            .view-btn.active {
+                background: #3b82f6;
+                color: white;
+            }
 
-        .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 1.5rem;
-        }
+            .projects-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+                gap: 1.5rem;
+            }
 
-        .projects-list {
-            display: none;
-            background: white;
-            border-radius: 0.5rem;
-            overflow: hidden;
-        }
+            .projects-list {
+                display: none;
+                background: white;
+                border-radius: 0.5rem;
+                overflow: hidden;
+            }
 
-        .projects-list.active {
-            display: block;
-        }
+            .projects-list.active {
+                display: block;
+            }
 
-        .projects-grid.list-view {
-            display: none;
-        }
+            .projects-grid.list-view {
+                display: none;
+            }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
 
-        th {
-            background: #f9fafb;
-            padding: 0.75rem;
-            text-align: left;
-            font-weight: 500;
-            color: #6b7280;
-            border-bottom: 1px solid #e5e7eb;
-        }
+            th {
+                background: #f9fafb;
+                padding: 0.75rem;
+                text-align: left;
+                font-weight: 500;
+                color: #6b7280;
+                border-bottom: 1px solid #e5e7eb;
+            }
 
-        td {
-            padding: 0.75rem;
-            border-bottom: 1px solid #f3f4f6;
-        }
+            td {
+                padding: 0.75rem;
+                border-bottom: 1px solid #f3f4f6;
+            }
 
-        tr:hover {
-            background: #f9fafb;
-        }
+            tr:hover {
+                background: #f9fafb;
+            }
 
-        .project-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
+            .project-card {
+                background: white;
+                padding: 1.5rem;
+                border-radius: 0.5rem;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                transition:
+                    transform 0.2s,
+                    box-shadow 0.2s;
+            }
 
-        .project-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+            .project-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
 
-        .project-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 1rem;
-        }
+            .project-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: start;
+                margin-bottom: 1rem;
+            }
 
-        .project-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #1f2937;
-        }
+            .project-title {
+                font-size: 1.25rem;
+                font-weight: 600;
+                color: #1f2937;
+            }
 
-        .project-status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            text-transform: uppercase;
-        }
+            .project-status {
+                padding: 0.25rem 0.75rem;
+                border-radius: 9999px;
+                font-size: 0.75rem;
+                font-weight: 500;
+                text-transform: uppercase;
+            }
 
-        .status-planning { background: #dbeafe; color: #1e40af; }
-        .status-approval { background: #fef3c7; color: #92400e; }
-        .status-construction { background: #fed7aa; color: #9a3412; }
-        .status-completed { background: #d1fae5; color: #065f46; }
+            .status-planning {
+                background: #dbeafe;
+                color: #1e40af;
+            }
+            .status-approval {
+                background: #fef3c7;
+                color: #92400e;
+            }
+            .status-construction {
+                background: #fed7aa;
+                color: #9a3412;
+            }
+            .status-completed {
+                background: #d1fae5;
+                color: #065f46;
+            }
 
-        .project-details {
-            display: grid;
-            gap: 0.5rem;
-            color: #4b5563;
-            font-size: 0.875rem;
-            margin-bottom: 1rem;
-        }
+            .project-details {
+                display: grid;
+                gap: 0.5rem;
+                color: #4b5563;
+                font-size: 0.875rem;
+                margin-bottom: 1rem;
+            }
 
-        .project-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
+            .project-actions {
+                display: flex;
+                gap: 0.5rem;
+            }
 
-        .btn-edit {
-            background: #10b981;
-            padding: 0.5rem 1rem;
-            color: white;
-            border: none;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
+            .btn-edit {
+                background: #10b981;
+                padding: 0.5rem 1rem;
+                color: white;
+                border: none;
+                border-radius: 0.375rem;
+                cursor: pointer;
+                font-size: 0.875rem;
+            }
 
-        .btn-delete {
-            background: #ef4444;
-            padding: 0.5rem 1rem;
-            color: white;
-            border: none;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
+            .btn-delete {
+                background: #ef4444;
+                padding: 0.5rem 1rem;
+                color: white;
+                border: none;
+                border-radius: 0.375rem;
+                cursor: pointer;
+                font-size: 0.875rem;
+            }
 
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: #6b7280;
-        }
+            .empty-state {
+                text-align: center;
+                padding: 4rem 2rem;
+                color: #6b7280;
+            }
 
-        .empty-state h3 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: #374151;
-        }
+            .empty-state h3 {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+                color: #374151;
+            }
 
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
-        }
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                align-items: center;
+                justify-content: center;
+            }
 
-        .modal.show {
-            display: flex;
-        }
+            .modal.show {
+                display: flex;
+            }
 
-        .modal-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
+            .modal-content {
+                background: white;
+                padding: 2rem;
+                border-radius: 0.5rem;
+                width: 90%;
+                max-width: 500px;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
 
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #374151;
-        }
+            .form-group label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 500;
+                color: #374151;
+            }
 
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            font-size: 1rem;
-        }
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                width: 100%;
+                padding: 0.75rem;
+                border: 1px solid #d1d5db;
+                border-radius: 0.375rem;
+                font-size: 1rem;
+            }
 
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-        }
+            .form-actions {
+                display: flex;
+                gap: 1rem;
+                justify-content: flex-end;
+            }
 
-        .message {
-            padding: 1rem;
-            border-radius: 0.375rem;
-            margin-bottom: 1rem;
-        }
+            .message {
+                padding: 1rem;
+                border-radius: 0.375rem;
+                margin-bottom: 1rem;
+            }
 
-        .success { background: #d1fae5; color: #065f46; }
-        .error { background: #fee2e2; color: #991b1b; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="container">
-            <h1>🏗️ Project Management Dashboard</h1>
-            <div class="controls">
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Search projects..." onkeyup="filterProjects()">
+            .success {
+                background: #d1fae5;
+                color: #065f46;
+            }
+            .error {
+                background: #fee2e2;
+                color: #991b1b;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <div class="container">
+                <h1>🏗️ Project Management Dashboard</h1>
+                <div class="controls">
+                    <div class="search-box">
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="Search projects..."
+                            onkeyup="filterProjects()"
+                        />
+                    </div>
+                    <select id="typeFilter" onchange="filterProjects()">
+                        <option value="">All Types</option>
+                        <option value="residential">Residential</option>
+                        <option value="commercial">Commercial</option>
+                        <option value="industrial">Industrial</option>
+                        <option value="mixed">Mixed Use</option>
+                    </select>
+                    <select id="statusFilter" onchange="filterProjects()">
+                        <option value="">All Status</option>
+                        <option value="planning">Planning</option>
+                        <option value="approval">Approval</option>
+                        <option value="construction">Construction</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                    <select id="sortBy" onchange="sortProjects()">
+                        <option value="name">Sort by Name</option>
+                        <option value="budget">Sort by Budget</option>
+                        <option value="created">Sort by Date</option>
+                        <option value="status">Sort by Status</option>
+                    </select>
+                    <button onclick="showCreateModal()">➕ New Project</button>
                 </div>
-                <select id="typeFilter" onchange="filterProjects()">
-                    <option value="">All Types</option>
-                    <option value="residential">Residential</option>
-                    <option value="commercial">Commercial</option>
-                    <option value="industrial">Industrial</option>
-                    <option value="mixed">Mixed Use</option>
-                </select>
-                <select id="statusFilter" onchange="filterProjects()">
-                    <option value="">All Status</option>
-                    <option value="planning">Planning</option>
-                    <option value="approval">Approval</option>
-                    <option value="construction">Construction</option>
-                    <option value="completed">Completed</option>
-                </select>
-                <select id="sortBy" onchange="sortProjects()">
-                    <option value="name">Sort by Name</option>
-                    <option value="budget">Sort by Budget</option>
-                    <option value="created">Sort by Date</option>
-                    <option value="status">Sort by Status</option>
-                </select>
-                <button onclick="showCreateModal()">➕ New Project</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="container">
-        <div id="message"></div>
-
-        <!-- Statistics -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Total Projects</div>
-                <div class="stat-value" id="totalProjects">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Budget</div>
-                <div class="stat-value" id="totalBudget">$0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Active Projects</div>
-                <div class="stat-value" id="activeProjects">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Completed Projects</div>
-                <div class="stat-value" id="completedProjects">0</div>
             </div>
         </div>
 
-        <!-- Projects Section -->
-        <div class="projects-header">
-            <h2>Projects (<span id="projectCount">0</span>)</h2>
-            <div class="view-toggles">
-                <button class="view-btn active" onclick="setView('grid')" title="Grid View">▦</button>
-                <button class="view-btn" onclick="setView('list')" title="List View">☰</button>
+        <div class="container">
+            <div id="message"></div>
+
+            <!-- Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Projects</div>
+                    <div class="stat-value" id="totalProjects">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Budget</div>
+                    <div class="stat-value" id="totalBudget">$0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Active Projects</div>
+                    <div class="stat-value" id="activeProjects">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Completed Projects</div>
+                    <div class="stat-value" id="completedProjects">0</div>
+                </div>
+            </div>
+
+            <!-- Projects Section -->
+            <div class="projects-header">
+                <h2>Projects (<span id="projectCount">0</span>)</h2>
+                <div class="view-toggles">
+                    <button
+                        class="view-btn active"
+                        onclick="setView('grid')"
+                        title="Grid View"
+                    >
+                        ▦
+                    </button>
+                    <button
+                        class="view-btn"
+                        onclick="setView('list')"
+                        title="List View"
+                    >
+                        ☰
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid View -->
+            <div id="projectsGrid" class="projects-grid">
+                <!-- Projects will be loaded here -->
+            </div>
+
+            <!-- List View -->
+            <div id="projectsList" class="projects-list">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Location</th>
+                            <th>Budget</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="projectsTableBody">
+                        <!-- Projects will be loaded here -->
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <!-- Grid View -->
-        <div id="projectsGrid" class="projects-grid">
-            <!-- Projects will be loaded here -->
-        </div>
+        <!-- Create/Edit Modal -->
+        <div id="projectModal" class="modal">
+            <div class="modal-content">
+                <h2 id="modalTitle">Create Project</h2>
+                <div id="modalMessage"></div>
 
-        <!-- List View -->
-        <div id="projectsList" class="projects-list">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Status</th>
-                        <th>Location</th>
-                        <th>Budget</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="projectsTableBody">
-                    <!-- Projects will be loaded here -->
-                </tbody>
-            </table>
-        </div>
-    </div>
+                <div class="form-group">
+                    <label>Project Name *</label>
+                    <input type="text" id="projectName" required />
+                </div>
 
-    <!-- Create/Edit Modal -->
-    <div id="projectModal" class="modal">
-        <div class="modal-content">
-            <h2 id="modalTitle">Create Project</h2>
-            <div id="modalMessage"></div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="projectDescription" rows="3"></textarea>
+                </div>
 
-            <div class="form-group">
-                <label>Project Name *</label>
-                <input type="text" id="projectName" required>
-            </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="projectLocation" />
+                </div>
 
-            <div class="form-group">
-                <label>Description</label>
-                <textarea id="projectDescription" rows="3"></textarea>
-            </div>
+                <div class="form-group">
+                    <label>Project Type</label>
+                    <select id="projectType">
+                        <option value="residential">Residential</option>
+                        <option value="commercial">Commercial</option>
+                        <option value="industrial">Industrial</option>
+                        <option value="mixed">Mixed Use</option>
+                    </select>
+                </div>
 
-            <div class="form-group">
-                <label>Location</label>
-                <input type="text" id="projectLocation">
-            </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="projectStatus">
+                        <option value="planning">Planning</option>
+                        <option value="approval">Approval</option>
+                        <option value="construction">Construction</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
 
-            <div class="form-group">
-                <label>Project Type</label>
-                <select id="projectType">
-                    <option value="residential">Residential</option>
-                    <option value="commercial">Commercial</option>
-                    <option value="industrial">Industrial</option>
-                    <option value="mixed">Mixed Use</option>
-                </select>
-            </div>
+                <div class="form-group">
+                    <label>Budget</label>
+                    <input
+                        type="number"
+                        id="projectBudget"
+                        min="1"
+                        step="1000"
+                    />
+                </div>
 
-            <div class="form-group">
-                <label>Status</label>
-                <select id="projectStatus">
-                    <option value="planning">Planning</option>
-                    <option value="approval">Approval</option>
-                    <option value="construction">Construction</option>
-                    <option value="completed">Completed</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Budget</label>
-                <input type="number" id="projectBudget" min="1" step="1000">
-            </div>
-
-            <div class="form-actions">
-                <button onclick="hideModal()" style="background: #6b7280;">Cancel</button>
-                <button onclick="saveProject()">Save Project</button>
+                <div class="form-actions">
+                    <button onclick="hideModal()" style="background: #6b7280">
+                        Cancel
+                    </button>
+                    <button onclick="saveProject()">Save Project</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        const API_URL = 'http://localhost:9400/api/v1/projects';
-        let allProjects = [];
-        let filteredProjects = [];
-        let editingId = null;
-        let currentView = 'grid';
+        <script>
+            const API_URL = 'http://localhost:9400/api/v1/projects'
+            let allProjects = []
+            let filteredProjects = []
+            let editingId = null
+            let currentView = 'grid'
 
-        // Load projects on page load
-        window.onload = function() {
-            loadProjects();
-            setInterval(updateStatistics, 5000); // Update stats every 5 seconds
-        };
-
-        async function loadProjects() {
-            try {
-                const response = await fetch(`${API_URL}/list`);
-                if (!response.ok) throw new Error('Failed to load projects');
-
-                allProjects = await response.json();
-                filteredProjects = [...allProjects];
-
-                sortProjects();
-                displayProjects();
-                updateStatistics();
-
-            } catch (error) {
-                console.error('Error:', error);
-                showMessage('Failed to load projects', 'error');
-            }
-        }
-
-        function displayProjects() {
-            document.getElementById('projectCount').textContent = filteredProjects.length;
-
-            if (currentView === 'grid') {
-                displayGridView();
-            } else {
-                displayListView();
+            // Load projects on page load
+            window.onload = function () {
+                loadProjects()
+                setInterval(updateStatistics, 5000) // Update stats every 5 seconds
             }
 
-            if (filteredProjects.length === 0) {
-                document.getElementById('projectsGrid').innerHTML = `
+            async function loadProjects() {
+                try {
+                    const response = await fetch(`${API_URL}/list`)
+                    if (!response.ok) throw new Error('Failed to load projects')
+
+                    allProjects = await response.json()
+                    filteredProjects = [...allProjects]
+
+                    sortProjects()
+                    displayProjects()
+                    updateStatistics()
+                } catch (error) {
+                    console.error('Error:', error)
+                    showMessage('Failed to load projects', 'error')
+                }
+            }
+
+            function displayProjects() {
+                document.getElementById('projectCount').textContent =
+                    filteredProjects.length
+
+                if (currentView === 'grid') {
+                    displayGridView()
+                } else {
+                    displayListView()
+                }
+
+                if (filteredProjects.length === 0) {
+                    document.getElementById('projectsGrid').innerHTML = `
                     <div class="empty-state" style="grid-column: 1/-1;">
                         <h3>No projects found</h3>
                         <p>Try adjusting your filters or create a new project</p>
                     </div>
-                `;
+                `
+                }
             }
-        }
 
-        function displayGridView() {
-            const grid = document.getElementById('projectsGrid');
+            function displayGridView() {
+                const grid = document.getElementById('projectsGrid')
 
-            grid.innerHTML = filteredProjects.map(project => `
+                grid.innerHTML = filteredProjects
+                    .map(
+                        (project) => `
                 <div class="project-card">
                     <div class="project-header">
                         <h3 class="project-title">${project.name}</h3>
@@ -535,13 +589,17 @@
                         <button class="btn-delete" onclick="deleteProject('${project.id}')">Delete</button>
                     </div>
                 </div>
-            `).join('');
-        }
+            `,
+                    )
+                    .join('')
+            }
 
-        function displayListView() {
-            const tbody = document.getElementById('projectsTableBody');
+            function displayListView() {
+                const tbody = document.getElementById('projectsTableBody')
 
-            tbody.innerHTML = filteredProjects.map(project => `
+                tbody.innerHTML = filteredProjects
+                    .map(
+                        (project) => `
                 <tr>
                     <td><strong>${project.name}</strong></td>
                     <td>${project.project_type || '-'}</td>
@@ -553,178 +611,234 @@
                         <button class="btn-delete" onclick="deleteProject('${project.id}')">Delete</button>
                     </td>
                 </tr>
-            `).join('');
-        }
-
-        function setView(view) {
-            currentView = view;
-
-            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-
-            if (view === 'grid') {
-                document.getElementById('projectsGrid').style.display = 'grid';
-                document.getElementById('projectsList').classList.remove('active');
-            } else {
-                document.getElementById('projectsGrid').style.display = 'none';
-                document.getElementById('projectsList').classList.add('active');
+            `,
+                    )
+                    .join('')
             }
 
-            displayProjects();
-        }
+            function setView(view) {
+                currentView = view
 
-        function filterProjects() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const typeFilter = document.getElementById('typeFilter').value;
-            const statusFilter = document.getElementById('statusFilter').value;
+                document
+                    .querySelectorAll('.view-btn')
+                    .forEach((btn) => btn.classList.remove('active'))
+                event.target.classList.add('active')
 
-            filteredProjects = allProjects.filter(project => {
-                const matchesSearch = !searchTerm ||
-                    project.name.toLowerCase().includes(searchTerm) ||
-                    (project.description && project.description.toLowerCase().includes(searchTerm)) ||
-                    (project.location && project.location.toLowerCase().includes(searchTerm));
-
-                const matchesType = !typeFilter || project.project_type === typeFilter;
-                const matchesStatus = !statusFilter || project.status === statusFilter;
-
-                return matchesSearch && matchesType && matchesStatus;
-            });
-
-            displayProjects();
-        }
-
-        function sortProjects() {
-            const sortBy = document.getElementById('sortBy').value;
-
-            filteredProjects.sort((a, b) => {
-                switch(sortBy) {
-                    case 'name':
-                        return a.name.localeCompare(b.name);
-                    case 'budget':
-                        return (b.budget || 0) - (a.budget || 0);
-                    case 'created':
-                        return new Date(b.created_at) - new Date(a.created_at);
-                    case 'status':
-                        return a.status.localeCompare(b.status);
-                    default:
-                        return 0;
+                if (view === 'grid') {
+                    document.getElementById('projectsGrid').style.display =
+                        'grid'
+                    document
+                        .getElementById('projectsList')
+                        .classList.remove('active')
+                } else {
+                    document.getElementById('projectsGrid').style.display =
+                        'none'
+                    document
+                        .getElementById('projectsList')
+                        .classList.add('active')
                 }
-            });
 
-            displayProjects();
-        }
-
-        function updateStatistics() {
-            const stats = {
-                total: allProjects.length,
-                budget: allProjects.reduce((sum, p) => sum + (p.budget || 0), 0),
-                active: allProjects.filter(p => ['planning', 'approval', 'construction'].includes(p.status)).length,
-                completed: allProjects.filter(p => p.status === 'completed').length
-            };
-
-            document.getElementById('totalProjects').textContent = stats.total;
-            document.getElementById('totalBudget').textContent = '$' + stats.budget.toLocaleString();
-            document.getElementById('activeProjects').textContent = stats.active;
-            document.getElementById('completedProjects').textContent = stats.completed;
-        }
-
-        function showCreateModal() {
-            document.getElementById('modalTitle').textContent = 'Create New Project';
-            document.getElementById('modalMessage').innerHTML = '';
-            document.getElementById('projectName').value = '';
-            document.getElementById('projectDescription').value = '';
-            document.getElementById('projectLocation').value = '';
-            document.getElementById('projectType').value = 'residential';
-            document.getElementById('projectStatus').value = 'planning';
-            document.getElementById('projectBudget').value = '';
-            editingId = null;
-            document.getElementById('projectModal').classList.add('show');
-        }
-
-        function editProject(id) {
-            const project = allProjects.find(p => p.id === id);
-            if (!project) return;
-
-            document.getElementById('modalTitle').textContent = 'Edit Project';
-            document.getElementById('modalMessage').innerHTML = '';
-            document.getElementById('projectName').value = project.name;
-            document.getElementById('projectDescription').value = project.description || '';
-            document.getElementById('projectLocation').value = project.location || '';
-            document.getElementById('projectType').value = project.project_type || 'residential';
-            document.getElementById('projectStatus').value = project.status;
-            document.getElementById('projectBudget').value = project.budget || '';
-            editingId = id;
-            document.getElementById('projectModal').classList.add('show');
-        }
-
-        async function saveProject() {
-            const name = document.getElementById('projectName').value.trim();
-            if (!name) {
-                showModalMessage('Project name is required', 'error');
-                return;
+                displayProjects()
             }
 
-            const projectData = {
-                name: name,
-                description: document.getElementById('projectDescription').value.trim() || null,
-                location: document.getElementById('projectLocation').value.trim() || null,
-                project_type: document.getElementById('projectType').value,
-                status: document.getElementById('projectStatus').value,
-                budget: document.getElementById('projectBudget').value ?
-                    parseFloat(document.getElementById('projectBudget').value) : null
-            };
+            function filterProjects() {
+                const searchTerm = document
+                    .getElementById('searchInput')
+                    .value.toLowerCase()
+                const typeFilter = document.getElementById('typeFilter').value
+                const statusFilter =
+                    document.getElementById('statusFilter').value
 
-            try {
-                const url = editingId ? `${API_URL}/${editingId}` : `${API_URL}/create`;
-                const method = editingId ? 'PUT' : 'POST';
+                filteredProjects = allProjects.filter((project) => {
+                    const matchesSearch =
+                        !searchTerm ||
+                        project.name.toLowerCase().includes(searchTerm) ||
+                        (project.description &&
+                            project.description
+                                .toLowerCase()
+                                .includes(searchTerm)) ||
+                        (project.location &&
+                            project.location.toLowerCase().includes(searchTerm))
 
-                const response = await fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(projectData)
-                });
+                    const matchesType =
+                        !typeFilter || project.project_type === typeFilter
+                    const matchesStatus =
+                        !statusFilter || project.status === statusFilter
 
-                if (!response.ok) throw new Error('Failed to save project');
+                    return matchesSearch && matchesType && matchesStatus
+                })
 
-                hideModal();
-                showMessage(editingId ? 'Project updated!' : 'Project created!', 'success');
-                loadProjects();
-
-            } catch (error) {
-                showModalMessage('Error: ' + error.message, 'error');
+                displayProjects()
             }
-        }
 
-        async function deleteProject(id) {
-            if (!confirm('Delete this project?')) return;
+            function sortProjects() {
+                const sortBy = document.getElementById('sortBy').value
 
-            try {
-                const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-                if (!response.ok) throw new Error('Failed to delete');
+                filteredProjects.sort((a, b) => {
+                    switch (sortBy) {
+                        case 'name':
+                            return a.name.localeCompare(b.name)
+                        case 'budget':
+                            return (b.budget || 0) - (a.budget || 0)
+                        case 'created':
+                            return (
+                                new Date(b.created_at) - new Date(a.created_at)
+                            )
+                        case 'status':
+                            return a.status.localeCompare(b.status)
+                        default:
+                            return 0
+                    }
+                })
 
-                showMessage('Project deleted!', 'success');
-                loadProjects();
-            } catch (error) {
-                showMessage('Error: ' + error.message, 'error');
+                displayProjects()
             }
-        }
 
-        function hideModal() {
-            document.getElementById('projectModal').classList.remove('show');
-        }
+            function updateStatistics() {
+                const stats = {
+                    total: allProjects.length,
+                    budget: allProjects.reduce(
+                        (sum, p) => sum + (p.budget || 0),
+                        0,
+                    ),
+                    active: allProjects.filter((p) =>
+                        ['planning', 'approval', 'construction'].includes(
+                            p.status,
+                        ),
+                    ).length,
+                    completed: allProjects.filter(
+                        (p) => p.status === 'completed',
+                    ).length,
+                }
 
-        function showMessage(text, type) {
-            const msg = document.getElementById('message');
-            msg.className = 'message ' + type;
-            msg.textContent = text;
-            setTimeout(() => msg.style.display = 'none', 3000);
-        }
+                document.getElementById('totalProjects').textContent =
+                    stats.total
+                document.getElementById('totalBudget').textContent =
+                    '$' + stats.budget.toLocaleString()
+                document.getElementById('activeProjects').textContent =
+                    stats.active
+                document.getElementById('completedProjects').textContent =
+                    stats.completed
+            }
 
-        function showModalMessage(text, type) {
-            const msg = document.getElementById('modalMessage');
-            msg.className = 'message ' + type;
-            msg.textContent = text;
-        }
-    </script>
-</body>
+            function showCreateModal() {
+                document.getElementById('modalTitle').textContent =
+                    'Create New Project'
+                document.getElementById('modalMessage').innerHTML = ''
+                document.getElementById('projectName').value = ''
+                document.getElementById('projectDescription').value = ''
+                document.getElementById('projectLocation').value = ''
+                document.getElementById('projectType').value = 'residential'
+                document.getElementById('projectStatus').value = 'planning'
+                document.getElementById('projectBudget').value = ''
+                editingId = null
+                document.getElementById('projectModal').classList.add('show')
+            }
+
+            function editProject(id) {
+                const project = allProjects.find((p) => p.id === id)
+                if (!project) return
+
+                document.getElementById('modalTitle').textContent =
+                    'Edit Project'
+                document.getElementById('modalMessage').innerHTML = ''
+                document.getElementById('projectName').value = project.name
+                document.getElementById('projectDescription').value =
+                    project.description || ''
+                document.getElementById('projectLocation').value =
+                    project.location || ''
+                document.getElementById('projectType').value =
+                    project.project_type || 'residential'
+                document.getElementById('projectStatus').value = project.status
+                document.getElementById('projectBudget').value =
+                    project.budget || ''
+                editingId = id
+                document.getElementById('projectModal').classList.add('show')
+            }
+
+            async function saveProject() {
+                const name = document.getElementById('projectName').value.trim()
+                if (!name) {
+                    showModalMessage('Project name is required', 'error')
+                    return
+                }
+
+                const projectData = {
+                    name: name,
+                    description:
+                        document
+                            .getElementById('projectDescription')
+                            .value.trim() || null,
+                    location:
+                        document
+                            .getElementById('projectLocation')
+                            .value.trim() || null,
+                    project_type: document.getElementById('projectType').value,
+                    status: document.getElementById('projectStatus').value,
+                    budget: document.getElementById('projectBudget').value
+                        ? parseFloat(
+                              document.getElementById('projectBudget').value,
+                          )
+                        : null,
+                }
+
+                try {
+                    const url = editingId
+                        ? `${API_URL}/${editingId}`
+                        : `${API_URL}/create`
+                    const method = editingId ? 'PUT' : 'POST'
+
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(projectData),
+                    })
+
+                    if (!response.ok) throw new Error('Failed to save project')
+
+                    hideModal()
+                    showMessage(
+                        editingId ? 'Project updated!' : 'Project created!',
+                        'success',
+                    )
+                    loadProjects()
+                } catch (error) {
+                    showModalMessage('Error: ' + error.message, 'error')
+                }
+            }
+
+            async function deleteProject(id) {
+                if (!confirm('Delete this project?')) return
+
+                try {
+                    const response = await fetch(`${API_URL}/${id}`, {
+                        method: 'DELETE',
+                    })
+                    if (!response.ok) throw new Error('Failed to delete')
+
+                    showMessage('Project deleted!', 'success')
+                    loadProjects()
+                } catch (error) {
+                    showMessage('Error: ' + error.message, 'error')
+                }
+            }
+
+            function hideModal() {
+                document.getElementById('projectModal').classList.remove('show')
+            }
+
+            function showMessage(text, type) {
+                const msg = document.getElementById('message')
+                msg.className = 'message ' + type
+                msg.textContent = text
+                setTimeout(() => (msg.style.display = 'none'), 3000)
+            }
+
+            function showModalMessage(text, type) {
+                const msg = document.getElementById('modalMessage')
+                msg.className = 'message ' + type
+                msg.textContent = text
+            }
+        </script>
+    </body>
 </html>

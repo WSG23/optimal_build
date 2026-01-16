@@ -1,642 +1,709 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Optimal Build - Projects</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Optimal Build - Projects</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: #f0f2f5;
-            min-height: 100vh;
-        }
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                    Oxygen, Ubuntu, sans-serif;
+                background: #f0f2f5;
+                min-height: 100vh;
+            }
 
-        /* Header */
-        .header {
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+            /* Header */
+            .header {
+                background: white;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                padding: 1rem 2rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
 
-        .header h1 {
-            color: #667eea;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+            .header h1 {
+                color: #667eea;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
 
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
+            .user-info {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+            }
 
-        .user-name {
-            color: #374151;
-            font-weight: 500;
-        }
+            .user-name {
+                color: #374151;
+                font-weight: 500;
+            }
 
-        .logout-btn {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+            .logout-btn {
+                background: #ef4444;
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 5px;
+                cursor: pointer;
+            }
 
-        .logout-btn:hover {
-            background: #dc2626;
-        }
+            .logout-btn:hover {
+                background: #dc2626;
+            }
 
-        /* Main Layout */
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
+            /* Main Layout */
+            .container {
+                max-width: 1200px;
+                margin: 2rem auto;
+                padding: 0 2rem;
+            }
 
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
+            /* Stats Cards */
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1rem;
+                margin-bottom: 2rem;
+            }
 
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
+            .stat-card {
+                background: white;
+                padding: 1.5rem;
+                border-radius: 10px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
 
-        .stat-label {
-            color: #6b7280;
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-        }
+            .stat-label {
+                color: #6b7280;
+                font-size: 0.875rem;
+                margin-bottom: 0.5rem;
+            }
 
-        .stat-value {
-            color: #111827;
-            font-size: 2rem;
-            font-weight: 600;
-        }
+            .stat-value {
+                color: #111827;
+                font-size: 2rem;
+                font-weight: 600;
+            }
 
-        /* Action Bar */
-        .action-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
+            /* Action Bar */
+            .action-bar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 2rem;
+            }
 
-        .btn-primary {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+            .btn-primary {
+                background: #667eea;
+                color: white;
+                border: none;
+                padding: 0.75rem 1.5rem;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 1rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
 
-        .btn-primary:hover {
-            background: #5a67d8;
-        }
+            .btn-primary:hover {
+                background: #5a67d8;
+            }
 
-        .search-box {
-            display: flex;
-            gap: 0.5rem;
-        }
+            .search-box {
+                display: flex;
+                gap: 0.5rem;
+            }
 
-        .search-box input {
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 5px;
-            width: 300px;
-        }
+            .search-box input {
+                padding: 0.75rem;
+                border: 1px solid #d1d5db;
+                border-radius: 5px;
+                width: 300px;
+            }
 
-        .filter-select {
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 5px;
-            background: white;
-        }
+            .filter-select {
+                padding: 0.75rem;
+                border: 1px solid #d1d5db;
+                border-radius: 5px;
+                background: white;
+            }
 
-        /* Projects Grid */
-        .projects-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 1.5rem;
-        }
+            /* Projects Grid */
+            .projects-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+                gap: 1.5rem;
+            }
 
-        .project-card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 1.5rem;
-            position: relative;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
+            .project-card {
+                background: white;
+                border-radius: 10px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                padding: 1.5rem;
+                position: relative;
+                transition:
+                    transform 0.2s,
+                    box-shadow 0.2s;
+            }
 
-        .project-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
+            .project-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
 
-        .project-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 1rem;
-        }
+            .project-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: start;
+                margin-bottom: 1rem;
+            }
 
-        .project-title {
-            color: #111827;
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
+            .project-title {
+                color: #111827;
+                font-size: 1.25rem;
+                font-weight: 600;
+            }
 
-        .project-status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
+            .project-status {
+                padding: 0.25rem 0.75rem;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
 
-        .status-planning {
-            background: #dbeafe;
-            color: #1e40af;
-        }
+            .status-planning {
+                background: #dbeafe;
+                color: #1e40af;
+            }
 
-        .status-approval {
-            background: #fef3c7;
-            color: #92400e;
-        }
+            .status-approval {
+                background: #fef3c7;
+                color: #92400e;
+            }
 
-        .status-construction {
-            background: #fed7aa;
-            color: #c2410c;
-        }
+            .status-construction {
+                background: #fed7aa;
+                color: #c2410c;
+            }
 
-        .status-completed {
-            background: #d1fae5;
-            color: #065f46;
-        }
+            .status-completed {
+                background: #d1fae5;
+                color: #065f46;
+            }
 
-        .project-description {
-            color: #6b7280;
-            margin-bottom: 1rem;
-            line-height: 1.5;
-        }
+            .project-description {
+                color: #6b7280;
+                margin-bottom: 1rem;
+                line-height: 1.5;
+            }
 
-        .project-details {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
+            .project-details {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+                margin-bottom: 1rem;
+            }
 
-        .detail-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #4b5563;
-            font-size: 0.875rem;
-        }
+            .detail-item {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: #4b5563;
+                font-size: 0.875rem;
+            }
 
-        .project-actions {
-            display: flex;
-            gap: 0.5rem;
-            padding-top: 1rem;
-            border-top: 1px solid #e5e7eb;
-        }
+            .project-actions {
+                display: flex;
+                gap: 0.5rem;
+                padding-top: 1rem;
+                border-top: 1px solid #e5e7eb;
+            }
 
-        .btn-small {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            transition: opacity 0.2s;
-        }
+            .btn-small {
+                padding: 0.5rem 1rem;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 0.875rem;
+                transition: opacity 0.2s;
+            }
 
-        .btn-edit {
-            background: #3b82f6;
-            color: white;
-        }
+            .btn-edit {
+                background: #3b82f6;
+                color: white;
+            }
 
-        .btn-delete {
-            background: #ef4444;
-            color: white;
-        }
+            .btn-delete {
+                background: #ef4444;
+                color: white;
+            }
 
-        .btn-small:hover {
-            opacity: 0.8;
-        }
+            .btn-small:hover {
+                opacity: 0.8;
+            }
 
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+            /* Modal */
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            }
 
-        .modal-content {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
+            .modal-content {
+                background: white;
+                padding: 2rem;
+                border-radius: 10px;
+                width: 90%;
+                max-width: 500px;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
 
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
+            .modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1.5rem;
+            }
 
-        .modal-title {
-            color: #111827;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
+            .modal-title {
+                color: #111827;
+                font-size: 1.5rem;
+                font-weight: 600;
+            }
 
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #6b7280;
-        }
+            .close-modal {
+                background: none;
+                border: none;
+                font-size: 1.5rem;
+                cursor: pointer;
+                color: #6b7280;
+            }
 
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #374151;
-            font-weight: 500;
-        }
+            .form-group label {
+                display: block;
+                margin-bottom: 0.5rem;
+                color: #374151;
+                font-weight: 500;
+            }
 
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 5px;
-            font-size: 1rem;
-        }
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                width: 100%;
+                padding: 0.75rem;
+                border: 1px solid #d1d5db;
+                border-radius: 5px;
+                font-size: 1rem;
+            }
 
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
+            .form-group textarea {
+                resize: vertical;
+                min-height: 100px;
+            }
 
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-        }
+            .form-actions {
+                display: flex;
+                gap: 1rem;
+                justify-content: flex-end;
+            }
 
-        .btn-cancel {
-            background: #e5e7eb;
-            color: #374151;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+            .btn-cancel {
+                background: #e5e7eb;
+                color: #374151;
+                border: none;
+                padding: 0.75rem 1.5rem;
+                border-radius: 5px;
+                cursor: pointer;
+            }
 
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-        }
+            /* Empty State */
+            .empty-state {
+                text-align: center;
+                padding: 4rem 2rem;
+            }
 
-        .empty-state img {
-            width: 200px;
-            opacity: 0.5;
-            margin-bottom: 1rem;
-        }
+            .empty-state img {
+                width: 200px;
+                opacity: 0.5;
+                margin-bottom: 1rem;
+            }
 
-        .empty-state h2 {
-            color: #374151;
-            margin-bottom: 0.5rem;
-        }
+            .empty-state h2 {
+                color: #374151;
+                margin-bottom: 0.5rem;
+            }
 
-        .empty-state p {
-            color: #6b7280;
-            margin-bottom: 2rem;
-        }
+            .empty-state p {
+                color: #6b7280;
+                margin-bottom: 2rem;
+            }
 
-        /* Loading */
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            color: #6b7280;
-        }
+            /* Loading */
+            .loading {
+                text-align: center;
+                padding: 2rem;
+                color: #6b7280;
+            }
 
-        .spinner {
-            border: 3px solid #f3f4f6;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
+            .spinner {
+                border: 3px solid #f3f4f6;
+                border-top: 3px solid #667eea;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 0 auto;
+            }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
 
-        /* Alert Messages */
-        .alert {
-            padding: 1rem;
-            border-radius: 5px;
-            margin-bottom: 1rem;
-            display: none;
-        }
+            /* Alert Messages */
+            .alert {
+                padding: 1rem;
+                border-radius: 5px;
+                margin-bottom: 1rem;
+                display: none;
+            }
 
-        .alert-success {
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
+            .alert-success {
+                background: #d1fae5;
+                color: #065f46;
+                border: 1px solid #a7f3d0;
+            }
 
-        .alert-error {
-            background: #fee;
-            color: #c53030;
-            border: 1px solid #fc8181;
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <div class="header">
-        <h1>🏗️ Optimal Build Projects</h1>
-        <div class="user-info">
-            <button onclick="window.location.href='singapore-properties.html'" style="background: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 5px; border: none; cursor: pointer; margin-right: 1rem;">
-                🏢 Singapore Properties
-            </button>
-            <span class="user-name" id="userName">Loading...</span>
-            <button class="logout-btn" onclick="handleLogout()">Logout</button>
-        </div>
-    </div>
-
-    <!-- Main Container -->
-    <div class="container">
-        <!-- Alert Messages -->
-        <div id="alertMessage" class="alert"></div>
-
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Total Projects</div>
-                <div class="stat-value" id="totalProjects">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Budget</div>
-                <div class="stat-value" id="totalBudget">$0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Active Projects</div>
-                <div class="stat-value" id="activeProjects">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Completed</div>
-                <div class="stat-value" id="completedProjects">0</div>
+            .alert-error {
+                background: #fee;
+                color: #c53030;
+                border: 1px solid #fc8181;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Header -->
+        <div class="header">
+            <h1>🏗️ Optimal Build Projects</h1>
+            <div class="user-info">
+                <button
+                    onclick="window.location.href = 'singapore-properties.html'"
+                    style="
+                        background: #10b981;
+                        color: white;
+                        padding: 0.5rem 1rem;
+                        border-radius: 5px;
+                        border: none;
+                        cursor: pointer;
+                        margin-right: 1rem;
+                    "
+                >
+                    🏢 Singapore Properties
+                </button>
+                <span class="user-name" id="userName">Loading...</span>
+                <button class="logout-btn" onclick="handleLogout()">
+                    Logout
+                </button>
             </div>
         </div>
 
-        <!-- Action Bar -->
-        <div class="action-bar">
-            <button class="btn-primary" onclick="showCreateModal()">
-                <span>➕</span> New Project
-            </button>
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Search projects..." onkeyup="filterProjects()">
-                <select class="filter-select" id="statusFilter" onchange="filterProjects()">
-                    <option value="">All Status</option>
-                    <option value="planning">Planning</option>
-                    <option value="approval">Approval</option>
-                    <option value="construction">Construction</option>
-                    <option value="completed">Completed</option>
-                </select>
-            </div>
-        </div>
+        <!-- Main Container -->
+        <div class="container">
+            <!-- Alert Messages -->
+            <div id="alertMessage" class="alert"></div>
 
-        <!-- Projects Grid -->
-        <div id="projectsGrid" class="projects-grid">
-            <div class="loading">
-                <div class="spinner"></div>
-                <p>Loading projects...</p>
-            </div>
-        </div>
-
-        <!-- Empty State (hidden by default) -->
-        <div id="emptyState" class="empty-state" style="display: none;">
-            <h2>No projects yet</h2>
-            <p>Create your first project to get started</p>
-            <button class="btn-primary" onclick="showCreateModal()">
-                <span>➕</span> Create First Project
-            </button>
-        </div>
-    </div>
-
-    <!-- Project Modal -->
-    <div id="projectModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" id="modalTitle">Create New Project</h2>
-                <button class="close-modal" onclick="hideModal()">&times;</button>
-            </div>
-            <form id="projectForm" onsubmit="handleProjectSubmit(event)">
-                <div class="form-group">
-                    <label for="projectName">Project Name *</label>
-                    <input type="text" id="projectName" required>
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Projects</div>
+                    <div class="stat-value" id="totalProjects">0</div>
                 </div>
-                <div class="form-group">
-                    <label for="projectDescription">Description</label>
-                    <textarea id="projectDescription"></textarea>
+                <div class="stat-card">
+                    <div class="stat-label">Total Budget</div>
+                    <div class="stat-value" id="totalBudget">$0</div>
                 </div>
-                <div class="form-group">
-                    <label for="projectLocation">Location</label>
-                    <input type="text" id="projectLocation" placeholder="e.g., Marina Bay, Singapore">
+                <div class="stat-card">
+                    <div class="stat-label">Active Projects</div>
+                    <div class="stat-value" id="activeProjects">0</div>
                 </div>
-                <div class="form-group">
-                    <label for="projectType">Project Type</label>
-                    <select id="projectType">
-                        <option value="">Select Type</option>
-                        <option value="Residential">Residential</option>
-                        <option value="Commercial">Commercial</option>
-                        <option value="Industrial">Industrial</option>
-                        <option value="Mixed Use">Mixed Use</option>
-                    </select>
+                <div class="stat-card">
+                    <div class="stat-label">Completed</div>
+                    <div class="stat-value" id="completedProjects">0</div>
                 </div>
-                <div class="form-group">
-                    <label for="projectStatus">Status</label>
-                    <select id="projectStatus">
+            </div>
+
+            <!-- Action Bar -->
+            <div class="action-bar">
+                <button class="btn-primary" onclick="showCreateModal()">
+                    <span>➕</span> New Project
+                </button>
+                <div class="search-box">
+                    <input
+                        type="text"
+                        id="searchInput"
+                        placeholder="Search projects..."
+                        onkeyup="filterProjects()"
+                    />
+                    <select
+                        class="filter-select"
+                        id="statusFilter"
+                        onchange="filterProjects()"
+                    >
+                        <option value="">All Status</option>
                         <option value="planning">Planning</option>
                         <option value="approval">Approval</option>
                         <option value="construction">Construction</option>
                         <option value="completed">Completed</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="projectBudget">Budget ($)</label>
-                    <input type="number" id="projectBudget" step="1000" min="0">
+            </div>
+
+            <!-- Projects Grid -->
+            <div id="projectsGrid" class="projects-grid">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading projects...</p>
                 </div>
-                <div class="form-actions">
-                    <button type="button" class="btn-cancel" onclick="hideModal()">Cancel</button>
-                    <button type="submit" class="btn-primary">Save Project</button>
-                </div>
-            </form>
+            </div>
+
+            <!-- Empty State (hidden by default) -->
+            <div id="emptyState" class="empty-state" style="display: none">
+                <h2>No projects yet</h2>
+                <p>Create your first project to get started</p>
+                <button class="btn-primary" onclick="showCreateModal()">
+                    <span>➕</span> Create First Project
+                </button>
+            </div>
         </div>
-    </div>
 
-    <script>
-        // API Configuration
-        const API_URL = 'http://localhost:9400/api/v1/projects';
-        let currentUser = null;
-        let accessToken = null;
-        let projects = [];
-        let editingProjectId = null;
+        <!-- Project Modal -->
+        <div id="projectModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="modalTitle">
+                        Create New Project
+                    </h2>
+                    <button class="close-modal" onclick="hideModal()">
+                        &times;
+                    </button>
+                </div>
+                <form id="projectForm" onsubmit="handleProjectSubmit(event)">
+                    <div class="form-group">
+                        <label for="projectName">Project Name *</label>
+                        <input type="text" id="projectName" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="projectDescription">Description</label>
+                        <textarea id="projectDescription"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectLocation">Location</label>
+                        <input
+                            type="text"
+                            id="projectLocation"
+                            placeholder="e.g., Marina Bay, Singapore"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="projectType">Project Type</label>
+                        <select id="projectType">
+                            <option value="">Select Type</option>
+                            <option value="Residential">Residential</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="Industrial">Industrial</option>
+                            <option value="Mixed Use">Mixed Use</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectStatus">Status</label>
+                        <select id="projectStatus">
+                            <option value="planning">Planning</option>
+                            <option value="approval">Approval</option>
+                            <option value="construction">Construction</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectBudget">Budget ($)</label>
+                        <input
+                            type="number"
+                            id="projectBudget"
+                            step="1000"
+                            min="0"
+                        />
+                    </div>
+                    <div class="form-actions">
+                        <button
+                            type="button"
+                            class="btn-cancel"
+                            onclick="hideModal()"
+                        >
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn-primary">
+                            Save Project
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-        // Load statistics
-        async function loadStats() {
-            try {
-                // Stats endpoint temporarily doesn't require authentication
-                const response = await fetch(`${API_URL}/stats/summary`);
+        <script>
+            // API Configuration
+            const API_URL = 'http://localhost:9400/api/v1/projects'
+            let currentUser = null
+            let accessToken = null
+            let projects = []
+            let editingProjectId = null
 
-                if (response.ok) {
-                    const stats = await response.json();
-                    document.getElementById('totalProjects').textContent = stats.total_projects || 0;
-                    document.getElementById('totalBudget').textContent = `$${(stats.total_budget || 0).toLocaleString()}`;
-                    document.getElementById('activeProjects').textContent = stats.active_projects || 0;
-                    document.getElementById('completedProjects').textContent = stats.completed_projects || 0;
-                }
-            } catch (error) {
-                console.error('Error loading statistics:', error);
-            }
-        }
+            // Load statistics
+            async function loadStats() {
+                try {
+                    // Stats endpoint temporarily doesn't require authentication
+                    const response = await fetch(`${API_URL}/stats/summary`)
 
-        // Initialize
-        window.onload = function() {
-            if (checkAuthentication()) {
-                loadProjects();
-                loadStats();
-            }
-        };
-
-        // Authentication
-        function checkAuthentication() {
-            accessToken = localStorage.getItem('accessToken');
-            const storedUser = localStorage.getItem('currentUser');
-
-            // Require authentication
-            if (!accessToken || !storedUser) {
-                console.log('No authentication found - redirecting to login');
-                showAlert('Please login to access projects', 'error');
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 2000);
-                return false;
-            }
-
-            currentUser = JSON.parse(storedUser);
-            document.getElementById('userName').textContent = currentUser.full_name || currentUser.email;
-            return true;
-        }
-
-        function handleLogout() {
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('currentUser');
-            window.location.href = 'index.html';
-        }
-
-        // Projects Management
-        async function loadProjects() {
-            try {
-                console.log('Loading projects...');
-
-                // List endpoint doesn't require authentication
-                const response = await fetch(`${API_URL}/list`);
-
-                console.log('Response status:', response.status);
-
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        console.error('Authentication failed - redirecting to login');
-                        handleLogout();
-                        return;
+                    if (response.ok) {
+                        const stats = await response.json()
+                        document.getElementById('totalProjects').textContent =
+                            stats.total_projects || 0
+                        document.getElementById('totalBudget').textContent =
+                            `$${(stats.total_budget || 0).toLocaleString()}`
+                        document.getElementById('activeProjects').textContent =
+                            stats.active_projects || 0
+                        document.getElementById(
+                            'completedProjects',
+                        ).textContent = stats.completed_projects || 0
                     }
-                    const errorData = await response.json().catch(() => ({}));
-                    console.error('Failed to load projects:', errorData);
-                    throw new Error(errorData.detail || 'Failed to load projects');
+                } catch (error) {
+                    console.error('Error loading statistics:', error)
+                }
+            }
+
+            // Initialize
+            window.onload = function () {
+                if (checkAuthentication()) {
+                    loadProjects()
+                    loadStats()
+                }
+            }
+
+            // Authentication
+            function checkAuthentication() {
+                accessToken = localStorage.getItem('accessToken')
+                const storedUser = localStorage.getItem('currentUser')
+
+                // Require authentication
+                if (!accessToken || !storedUser) {
+                    console.log(
+                        'No authentication found - redirecting to login',
+                    )
+                    showAlert('Please login to access projects', 'error')
+                    setTimeout(() => {
+                        window.location.href = 'index.html'
+                    }, 2000)
+                    return false
                 }
 
-                projects = await response.json();
-                displayProjects(projects);
-                updateStats(projects);
-            } catch (error) {
-                console.error('Error loading projects:', error);
-                showAlert('Failed to load projects', 'error');
-                // Show empty state when loading fails
-                document.getElementById('projectsGrid').innerHTML = `
+                currentUser = JSON.parse(storedUser)
+                document.getElementById('userName').textContent =
+                    currentUser.full_name || currentUser.email
+                return true
+            }
+
+            function handleLogout() {
+                localStorage.removeItem('accessToken')
+                localStorage.removeItem('currentUser')
+                window.location.href = 'index.html'
+            }
+
+            // Projects Management
+            async function loadProjects() {
+                try {
+                    console.log('Loading projects...')
+
+                    // List endpoint doesn't require authentication
+                    const response = await fetch(`${API_URL}/list`)
+
+                    console.log('Response status:', response.status)
+
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            console.error(
+                                'Authentication failed - redirecting to login',
+                            )
+                            handleLogout()
+                            return
+                        }
+                        const errorData = await response
+                            .json()
+                            .catch(() => ({}))
+                        console.error('Failed to load projects:', errorData)
+                        throw new Error(
+                            errorData.detail || 'Failed to load projects',
+                        )
+                    }
+
+                    projects = await response.json()
+                    displayProjects(projects)
+                    updateStats(projects)
+                } catch (error) {
+                    console.error('Error loading projects:', error)
+                    showAlert('Failed to load projects', 'error')
+                    // Show empty state when loading fails
+                    document.getElementById('projectsGrid').innerHTML = `
                     <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #6b7280;">
                         <p>Unable to load projects. Please try refreshing the page.</p>
                         <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 0.375rem; cursor: pointer;">
                             Refresh Page
                         </button>
                     </div>
-                `;
-            }
-        }
-
-        function displayProjects(projectsList) {
-            const grid = document.getElementById('projectsGrid');
-            const emptyState = document.getElementById('emptyState');
-
-            if (projectsList.length === 0) {
-                grid.style.display = 'none';
-                emptyState.style.display = 'block';
-                return;
+                `
+                }
             }
 
-            grid.style.display = 'grid';
-            emptyState.style.display = 'none';
+            function displayProjects(projectsList) {
+                const grid = document.getElementById('projectsGrid')
+                const emptyState = document.getElementById('emptyState')
 
-            grid.innerHTML = projectsList.map(project => `
+                if (projectsList.length === 0) {
+                    grid.style.display = 'none'
+                    emptyState.style.display = 'block'
+                    return
+                }
+
+                grid.style.display = 'grid'
+                emptyState.style.display = 'none'
+
+                grid.innerHTML = projectsList
+                    .map(
+                        (project) => `
                 <div class="project-card">
                     <div class="project-header">
                         <h3 class="project-title">${escapeHtml(project.name)}</h3>
@@ -644,21 +711,33 @@
                     </div>
                     ${project.description ? `<p class="project-description">${escapeHtml(project.description)}</p>` : ''}
                     <div class="project-details">
-                        ${project.location ? `
+                        ${
+                            project.location
+                                ? `
                             <div class="detail-item">
                                 📍 ${escapeHtml(project.location)}
                             </div>
-                        ` : ''}
-                        ${project.project_type ? `
+                        `
+                                : ''
+                        }
+                        ${
+                            project.project_type
+                                ? `
                             <div class="detail-item">
                                 🏢 ${escapeHtml(project.project_type)}
                             </div>
-                        ` : ''}
-                        ${project.budget ? `
+                        `
+                                : ''
+                        }
+                        ${
+                            project.budget
+                                ? `
                             <div class="detail-item">
                                 💰 $${formatNumber(project.budget)}
                             </div>
-                        ` : ''}
+                        `
+                                : ''
+                        }
                         <div class="detail-item">
                             📅 ${new Date(project.created_at).toLocaleDateString()}
                         </div>
@@ -668,179 +747,223 @@
                         <button class="btn-small btn-delete" onclick="deleteProject('${project.id}')">Delete</button>
                     </div>
                 </div>
-            `).join('');
-        }
-
-        function updateStats(projectsList) {
-            const totalBudget = projectsList.reduce((sum, p) => sum + (p.budget || 0), 0);
-            const activeCount = projectsList.filter(p => p.status !== 'completed').length;
-            const completedCount = projectsList.filter(p => p.status === 'completed').length;
-
-            document.getElementById('totalProjects').textContent = projectsList.length;
-            document.getElementById('totalBudget').textContent = '$' + formatNumber(totalBudget);
-            document.getElementById('activeProjects').textContent = activeCount;
-            document.getElementById('completedProjects').textContent = completedCount;
-        }
-
-        // Modal Management
-        function showCreateModal() {
-            editingProjectId = null;
-            document.getElementById('modalTitle').textContent = 'Create New Project';
-            document.getElementById('projectForm').reset();
-            document.getElementById('projectModal').style.display = 'flex';
-        }
-
-        function editProject(projectId) {
-            editingProjectId = projectId;
-            const project = projects.find(p => p.id === projectId);
-
-            if (!project) return;
-
-            document.getElementById('modalTitle').textContent = 'Edit Project';
-            document.getElementById('projectName').value = project.name;
-            document.getElementById('projectDescription').value = project.description || '';
-            document.getElementById('projectLocation').value = project.location || '';
-            document.getElementById('projectType').value = project.project_type || '';
-            document.getElementById('projectStatus').value = project.status;
-            document.getElementById('projectBudget').value = project.budget || '';
-
-            document.getElementById('projectModal').style.display = 'flex';
-        }
-
-        function hideModal() {
-            document.getElementById('projectModal').style.display = 'none';
-            document.getElementById('projectForm').reset();
-            editingProjectId = null;
-        }
-
-        // Form Submission
-        async function handleProjectSubmit(event) {
-            event.preventDefault();
-
-            const projectData = {
-                name: document.getElementById('projectName').value,
-                description: document.getElementById('projectDescription').value || null,
-                location: document.getElementById('projectLocation').value || null,
-                project_type: document.getElementById('projectType').value || null,
-                status: document.getElementById('projectStatus').value,
-                budget: parseFloat(document.getElementById('projectBudget').value) || null
-            };
-
-            try {
-                let response;
-
-                if (editingProjectId) {
-                    // Update existing project
-                    response = await fetch(`${API_URL}/${editingProjectId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${accessToken}`
-                        },
-                        body: JSON.stringify(projectData)
-                    });
-                } else {
-                    // Create new project
-                    response = await fetch(`${API_URL}/create`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${accessToken}`
-                        },
-                        body: JSON.stringify(projectData)
-                    });
-                }
-
-                if (!response.ok) {
-                    throw new Error('Failed to save project');
-                }
-
-                hideModal();
-                showAlert(editingProjectId ? 'Project updated successfully!' : 'Project created successfully!', 'success');
-                loadProjects();
-                loadStats();
-            } catch (error) {
-                console.error('Error saving project:', error);
-                showAlert('Failed to save project', 'error');
+            `,
+                    )
+                    .join('')
             }
-        }
 
-        // Delete Project
-        async function deleteProject(projectId) {
-            if (!confirm('Are you sure you want to delete this project?')) return;
+            function updateStats(projectsList) {
+                const totalBudget = projectsList.reduce(
+                    (sum, p) => sum + (p.budget || 0),
+                    0,
+                )
+                const activeCount = projectsList.filter(
+                    (p) => p.status !== 'completed',
+                ).length
+                const completedCount = projectsList.filter(
+                    (p) => p.status === 'completed',
+                ).length
 
-            try {
-                const response = await fetch(`${API_URL}/${projectId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`
+                document.getElementById('totalProjects').textContent =
+                    projectsList.length
+                document.getElementById('totalBudget').textContent =
+                    '$' + formatNumber(totalBudget)
+                document.getElementById('activeProjects').textContent =
+                    activeCount
+                document.getElementById('completedProjects').textContent =
+                    completedCount
+            }
+
+            // Modal Management
+            function showCreateModal() {
+                editingProjectId = null
+                document.getElementById('modalTitle').textContent =
+                    'Create New Project'
+                document.getElementById('projectForm').reset()
+                document.getElementById('projectModal').style.display = 'flex'
+            }
+
+            function editProject(projectId) {
+                editingProjectId = projectId
+                const project = projects.find((p) => p.id === projectId)
+
+                if (!project) return
+
+                document.getElementById('modalTitle').textContent =
+                    'Edit Project'
+                document.getElementById('projectName').value = project.name
+                document.getElementById('projectDescription').value =
+                    project.description || ''
+                document.getElementById('projectLocation').value =
+                    project.location || ''
+                document.getElementById('projectType').value =
+                    project.project_type || ''
+                document.getElementById('projectStatus').value = project.status
+                document.getElementById('projectBudget').value =
+                    project.budget || ''
+
+                document.getElementById('projectModal').style.display = 'flex'
+            }
+
+            function hideModal() {
+                document.getElementById('projectModal').style.display = 'none'
+                document.getElementById('projectForm').reset()
+                editingProjectId = null
+            }
+
+            // Form Submission
+            async function handleProjectSubmit(event) {
+                event.preventDefault()
+
+                const projectData = {
+                    name: document.getElementById('projectName').value,
+                    description:
+                        document.getElementById('projectDescription').value ||
+                        null,
+                    location:
+                        document.getElementById('projectLocation').value ||
+                        null,
+                    project_type:
+                        document.getElementById('projectType').value || null,
+                    status: document.getElementById('projectStatus').value,
+                    budget:
+                        parseFloat(
+                            document.getElementById('projectBudget').value,
+                        ) || null,
+                }
+
+                try {
+                    let response
+
+                    if (editingProjectId) {
+                        // Update existing project
+                        response = await fetch(
+                            `${API_URL}/${editingProjectId}`,
+                            {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    Authorization: `Bearer ${accessToken}`,
+                                },
+                                body: JSON.stringify(projectData),
+                            },
+                        )
+                    } else {
+                        // Create new project
+                        response = await fetch(`${API_URL}/create`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${accessToken}`,
+                            },
+                            body: JSON.stringify(projectData),
+                        })
                     }
-                });
 
-                if (!response.ok) {
-                    throw new Error('Failed to delete project');
+                    if (!response.ok) {
+                        throw new Error('Failed to save project')
+                    }
+
+                    hideModal()
+                    showAlert(
+                        editingProjectId
+                            ? 'Project updated successfully!'
+                            : 'Project created successfully!',
+                        'success',
+                    )
+                    loadProjects()
+                    loadStats()
+                } catch (error) {
+                    console.error('Error saving project:', error)
+                    showAlert('Failed to save project', 'error')
+                }
+            }
+
+            // Delete Project
+            async function deleteProject(projectId) {
+                if (!confirm('Are you sure you want to delete this project?'))
+                    return
+
+                try {
+                    const response = await fetch(`${API_URL}/${projectId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                        },
+                    })
+
+                    if (!response.ok) {
+                        throw new Error('Failed to delete project')
+                    }
+
+                    showAlert('Project deleted successfully!', 'success')
+                    loadProjects()
+                    loadStats()
+                } catch (error) {
+                    console.error('Error deleting project:', error)
+                    showAlert('Failed to delete project', 'error')
+                }
+            }
+
+            // Filter Projects
+            function filterProjects() {
+                const searchTerm = document
+                    .getElementById('searchInput')
+                    .value.toLowerCase()
+                const statusFilter =
+                    document.getElementById('statusFilter').value
+
+                let filtered = projects
+
+                if (searchTerm) {
+                    filtered = filtered.filter(
+                        (p) =>
+                            p.name.toLowerCase().includes(searchTerm) ||
+                            (p.description &&
+                                p.description
+                                    .toLowerCase()
+                                    .includes(searchTerm)) ||
+                            (p.location &&
+                                p.location.toLowerCase().includes(searchTerm)),
+                    )
                 }
 
-                showAlert('Project deleted successfully!', 'success');
-                loadProjects();
-                loadStats();
-            } catch (error) {
-                console.error('Error deleting project:', error);
-                showAlert('Failed to delete project', 'error');
-            }
-        }
+                if (statusFilter) {
+                    filtered = filtered.filter((p) => p.status === statusFilter)
+                }
 
-        // Filter Projects
-        function filterProjects() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value;
-
-            let filtered = projects;
-
-            if (searchTerm) {
-                filtered = filtered.filter(p =>
-                    p.name.toLowerCase().includes(searchTerm) ||
-                    (p.description && p.description.toLowerCase().includes(searchTerm)) ||
-                    (p.location && p.location.toLowerCase().includes(searchTerm))
-                );
+                displayProjects(filtered)
             }
 
-            if (statusFilter) {
-                filtered = filtered.filter(p => p.status === statusFilter);
+            // Utility Functions
+            function showAlert(message, type) {
+                const alert = document.getElementById('alertMessage')
+                alert.textContent = message
+                alert.className = `alert alert-${type}`
+                alert.style.display = 'block'
+
+                setTimeout(() => {
+                    alert.style.display = 'none'
+                }, 5000)
             }
 
-            displayProjects(filtered);
-        }
-
-        // Utility Functions
-        function showAlert(message, type) {
-            const alert = document.getElementById('alertMessage');
-            alert.textContent = message;
-            alert.className = `alert alert-${type}`;
-            alert.style.display = 'block';
-
-            setTimeout(() => {
-                alert.style.display = 'none';
-            }, 5000);
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function formatNumber(num) {
-            return new Intl.NumberFormat().format(num);
-        }
-
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('projectModal');
-            if (event.target === modal) {
-                hideModal();
+            function escapeHtml(text) {
+                const div = document.createElement('div')
+                div.textContent = text
+                return div.innerHTML
             }
-        }
-    </script>
-</body>
+
+            function formatNumber(num) {
+                return new Intl.NumberFormat().format(num)
+            }
+
+            // Close modal when clicking outside
+            window.onclick = function (event) {
+                const modal = document.getElementById('projectModal')
+                if (event.target === modal) {
+                    hideModal()
+                }
+            }
+        </script>
+    </body>
 </html>
