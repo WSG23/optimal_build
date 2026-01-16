@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   Box,
-  Button,
-  Grid,
-  Typography,
-  Chip,
   CircularProgress,
   Alert,
   Table,
@@ -41,8 +37,11 @@ import { SubmissionWizard } from './components/SubmissionWizard'
 import { CompliancePathTimeline } from './components/CompliancePathTimeline'
 import { ChangeOfUseWizard } from './components/ChangeOfUseWizard'
 import { HeritageSubmissionForm } from './components/HeritageSubmissionForm'
-import { getTableSx, getPrimaryButtonSx } from '../../../utils/themeStyles'
+import { getTableSx } from '../../../utils/themeStyles'
 import { useProject } from '../../../contexts/useProject'
+import { Button } from '../../../components/canonical/Button'
+import { StatusChip } from '../../../components/canonical/StatusChip'
+import { GlassCard } from '../../../components/canonical/GlassCard'
 
 const AGENCIES_INFO = [
   { code: 'URA', name: 'Urban Redevelopment Authority', status: 'Online' },
@@ -329,7 +328,16 @@ export const RegulatoryDashboardPage: React.FC = () => {
     setTabValue(newValue)
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusChipStatus = (
+    status: string,
+  ):
+    | 'success'
+    | 'warning'
+    | 'error'
+    | 'info'
+    | 'neutral'
+    | 'brand'
+    | 'live' => {
     switch (status.toUpperCase()) {
       case 'APPROVED':
         return 'success'
@@ -340,11 +348,11 @@ export const RegulatoryDashboardPage: React.FC = () => {
       case 'IN_REVIEW':
         return 'info'
       case 'SUBMITTED':
-        return 'primary'
+        return 'brand'
       case 'DRAFT':
-        return 'default'
+        return 'neutral'
       default:
-        return 'default'
+        return 'neutral'
     }
   }
 
@@ -366,62 +374,72 @@ export const RegulatoryDashboardPage: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* Compact Page Header - TIGHT layout with animation */}
+      {/* Page Header - Content on background (Content vs Context pattern) */}
       <Box
         component="header"
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           flexWrap: 'wrap',
           gap: 'var(--ob-space-100)',
-          mb: 'var(--ob-space-150)',
+          mb: 'var(--ob-space-200)',
           animation:
             'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--ob-space-300)',
-          }}
-        >
-          <Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-              Regulatory Dashboard
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: 'text.secondary', mt: 'var(--ob-space-025)' }}
-            >
-              Manage authority submissions and compliance tracking
-            </Typography>
+        <Box>
+          <Box
+            component="h1"
+            sx={{
+              fontSize: 'var(--ob-font-size-2xl)',
+              fontWeight: 700,
+              lineHeight: 1.2,
+              color: 'var(--ob-color-text-primary)',
+              m: 0,
+            }}
+          >
+            Regulatory Dashboard
           </Box>
-          <Typography
-            variant="body2"
-            sx={{ color: 'text.secondary', mt: 'var(--ob-space-050)' }}
+          <Box
+            component="p"
+            sx={{
+              fontSize: 'var(--ob-font-size-sm)',
+              color: 'var(--ob-color-text-secondary)',
+              m: 0,
+              mt: 'var(--ob-space-025)',
+            }}
+          >
+            Manage authority submissions and compliance tracking
+          </Box>
+          <Box
+            component="span"
+            sx={{
+              fontSize: 'var(--ob-font-size-xs)',
+              color: 'var(--ob-color-text-tertiary)',
+              mt: 'var(--ob-space-050)',
+              display: 'block',
+            }}
           >
             Project: {currentProject?.name ?? projectId}
-          </Typography>
+          </Box>
         </Box>
-        <Box sx={{ display: 'flex', gap: 'var(--ob-space-150)' }}>
+        <Box sx={{ display: 'flex', gap: 'var(--ob-space-100)' }}>
           <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
+            variant="secondary"
+            size="sm"
             onClick={() => fetchSubmissions(true)}
             disabled={refreshing || loading}
-            size="small"
           >
+            <RefreshIcon sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }} />
             {refreshing ? 'Updating...' : 'Check Status'}
           </Button>
           <Button
-            variant="contained"
-            startIcon={<AddIcon />}
+            variant="primary"
+            size="sm"
             onClick={() => setWizardOpen(true)}
-            sx={getPrimaryButtonSx()}
-            size="small"
           >
+            <AddIcon sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }} />
             New Submission
           </Button>
         </Box>
@@ -433,139 +451,183 @@ export const RegulatoryDashboardPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* Quick Actions - Depth 1 (Glass Card with cyan edge) */}
-      <Box className="ob-card-module ob-section-gap">
-        <Typography
-          variant="subtitle2"
+      {/* Quick Actions - Flat section (no wrapper, cards as siblings) */}
+      <Box
+        component="section"
+        sx={{
+          mb: 'var(--ob-space-200)',
+        }}
+      >
+        <Box
+          component="h2"
           sx={{
-            color: 'text.secondary',
-            mb: 'var(--ob-space-200)',
+            fontSize: 'var(--ob-font-size-xs)',
+            fontWeight: 600,
+            color: 'var(--ob-color-text-tertiary)',
             textTransform: 'uppercase',
-            letterSpacing: '0.05em',
+            letterSpacing: '0.1em',
+            m: 0,
+            mb: 'var(--ob-space-100)',
           }}
         >
           Quick Actions
-        </Typography>
-        <Grid container spacing="var(--ob-space-200)">
-          <Grid item xs={12} sm={4}>
-            <Box
-              onClick={() => openChangeOfUseForm()}
-              sx={{
-                p: 'var(--ob-space-200)',
-                cursor: 'pointer',
-                borderRadius: 'var(--ob-radius-sm)',
-                border: '1px solid',
-                borderColor: 'divider',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--ob-space-200)',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  transform: 'translateY(-2px)',
-                },
-              }}
-            >
-              <SwapIcon color="primary" fontSize="large" />
-              <Box>
-                <Typography variant="subtitle1" fontWeight="bold">
-                  Change of Use
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Apply for land use conversion
-                </Typography>
+        </Box>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+            gap: 'var(--ob-space-150)',
+          }}
+        >
+          <GlassCard
+            variant="default"
+            hoverEffect
+            onClick={() => openChangeOfUseForm()}
+            sx={{
+              p: 'var(--ob-space-150)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-150)',
+            }}
+          >
+            <SwapIcon
+              sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 32 }}
+            />
+            <Box>
+              <Box
+                component="span"
+                sx={{
+                  fontSize: 'var(--ob-font-size-base)',
+                  fontWeight: 600,
+                  color: 'var(--ob-color-text-primary)',
+                  display: 'block',
+                }}
+              >
+                Change of Use
+              </Box>
+              <Box
+                component="span"
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'var(--ob-color-text-secondary)',
+                }}
+              >
+                Apply for land use conversion
               </Box>
             </Box>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Box
-              onClick={() =>
-                latestHeritageSubmission
-                  ? openHeritageForm(latestHeritageSubmission)
-                  : openHeritageForm()
-              }
-              sx={{
-                p: 'var(--ob-space-200)',
-                cursor: 'pointer',
-                borderRadius: 'var(--ob-radius-sm)',
-                border: '1px solid',
-                borderColor: 'divider',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--ob-space-200)',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  transform: 'translateY(-2px)',
-                },
-              }}
-            >
-              <HeritageIcon color="primary" fontSize="large" />
-              <Box>
-                <Typography variant="subtitle1" fontWeight="bold">
-                  Heritage Submission
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  STB conservation application
-                </Typography>
-                {latestHeritageSubmission ? (
-                  <Box sx={{ mt: 'var(--ob-space-050)' }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Latest draft{' '}
-                      {new Date(
-                        latestHeritageSubmission.created_at,
-                      ).toLocaleDateString()}
-                      {' • '}Click to reopen
-                    </Typography>
-                    <Box>
-                      <Button
-                        size="small"
-                        variant="text"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          openHeritageForm()
-                        }}
-                        sx={{ mt: 'var(--ob-space-050)', px: 0 }}
-                      >
-                        Start new submission
-                      </Button>
-                    </Box>
+          </GlassCard>
+
+          <GlassCard
+            variant="default"
+            hoverEffect
+            onClick={() =>
+              latestHeritageSubmission
+                ? openHeritageForm(latestHeritageSubmission)
+                : openHeritageForm()
+            }
+            sx={{
+              p: 'var(--ob-space-150)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-150)',
+            }}
+          >
+            <HeritageIcon
+              sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 32 }}
+            />
+            <Box>
+              <Box
+                component="span"
+                sx={{
+                  fontSize: 'var(--ob-font-size-base)',
+                  fontWeight: 600,
+                  color: 'var(--ob-color-text-primary)',
+                  display: 'block',
+                }}
+              >
+                Heritage Submission
+              </Box>
+              <Box
+                component="span"
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'var(--ob-color-text-secondary)',
+                }}
+              >
+                STB conservation application
+              </Box>
+              {latestHeritageSubmission ? (
+                <Box sx={{ mt: 'var(--ob-space-050)' }}>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: 'var(--ob-font-size-2xs)',
+                      color: 'var(--ob-color-text-tertiary)',
+                      display: 'block',
+                    }}
+                  >
+                    Latest draft{' '}
+                    {new Date(
+                      latestHeritageSubmission.created_at,
+                    ).toLocaleDateString()}
+                    {' • '}Click to reopen
                   </Box>
-                ) : null}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      openHeritageForm()
+                    }}
+                  >
+                    Start new submission
+                  </Button>
+                </Box>
+              ) : null}
+            </Box>
+          </GlassCard>
+
+          <GlassCard
+            variant="default"
+            hoverEffect
+            onClick={() => setTabValue(1)}
+            sx={{
+              p: 'var(--ob-space-150)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-150)',
+            }}
+          >
+            <TimelineIcon
+              sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 32 }}
+            />
+            <Box>
+              <Box
+                component="span"
+                sx={{
+                  fontSize: 'var(--ob-font-size-base)',
+                  fontWeight: 600,
+                  color: 'var(--ob-color-text-primary)',
+                  display: 'block',
+                }}
+              >
+                Compliance Timeline
+              </Box>
+              <Box
+                component="span"
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'var(--ob-color-text-secondary)',
+                }}
+              >
+                View regulatory path by asset type
               </Box>
             </Box>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Box
-              onClick={() => setTabValue(1)}
-              sx={{
-                p: 'var(--ob-space-200)',
-                cursor: 'pointer',
-                borderRadius: 'var(--ob-radius-sm)',
-                border: '1px solid',
-                borderColor: 'divider',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--ob-space-200)',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  transform: 'translateY(-2px)',
-                },
-              }}
-            >
-              <TimelineIcon color="primary" fontSize="large" />
-              <Box>
-                <Typography variant="subtitle1" fontWeight="bold">
-                  Compliance Timeline
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  View regulatory path by asset type
-                </Typography>
-              </Box>
-            </Box>
-          </Grid>
-        </Grid>
+          </GlassCard>
+        </Box>
       </Box>
 
       {/* Tabs */}
@@ -586,80 +648,119 @@ export const RegulatoryDashboardPage: React.FC = () => {
 
       {/* Tab 0: Submissions */}
       <TabPanel value={tabValue} index={0}>
-        {/* Agency Status Cards - Depth 1 (Glass Card with cyan edge) */}
-        <Box className="ob-card-module ob-section-gap">
-          <Typography
-            variant="subtitle2"
+        {/* Agency Status Cards - Flat section pattern */}
+        <Box component="section" sx={{ mb: 'var(--ob-space-200)' }}>
+          <Box
+            component="h3"
             sx={{
-              color: 'text.secondary',
-              mb: 'var(--ob-space-200)',
+              fontSize: 'var(--ob-font-size-xs)',
+              fontWeight: 600,
+              color: 'var(--ob-color-text-tertiary)',
               textTransform: 'uppercase',
-              letterSpacing: '0.05em',
+              letterSpacing: '0.1em',
+              m: 0,
+              mb: 'var(--ob-space-100)',
             }}
           >
             Connected Agencies
-          </Typography>
-          <Grid container spacing="var(--ob-space-200)">
-            {AGENCIES_INFO.map((agency) => (
-              <Grid item xs={12} sm={6} md={3} key={agency.code}>
-                <Box
-                  sx={{
-                    p: 'var(--ob-space-200)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--ob-space-200)',
-                    borderRadius: 'var(--ob-radius-sm)',
-                    border: '1px solid',
-                    borderColor: 'divider',
-                  }}
-                >
-                  <AgencyIcon color="primary" fontSize="large" />
-                  <Box>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      {agency.code}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {agency.name}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        {/* Submissions Table - Depth 1 (Glass Card with cyan edge) */}
-        {loading ? (
+          </Box>
           <Box
             sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              p: 'var(--ob-space-800)',
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: 'repeat(2, 1fr)',
+                md: 'repeat(4, 1fr)',
+              },
+              gap: 'var(--ob-space-100)',
             }}
           >
-            <CircularProgress />
+            {AGENCIES_INFO.map((agency) => (
+              <GlassCard
+                key={agency.code}
+                variant="default"
+                sx={{
+                  p: 'var(--ob-space-100)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--ob-space-100)',
+                }}
+              >
+                <AgencyIcon
+                  sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 28 }}
+                />
+                <Box>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: 'var(--ob-font-size-sm)',
+                      fontWeight: 600,
+                      color: 'var(--ob-color-text-primary)',
+                      display: 'block',
+                    }}
+                  >
+                    {agency.code}
+                  </Box>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: 'var(--ob-font-size-2xs)',
+                      color: 'var(--ob-color-text-secondary)',
+                    }}
+                  >
+                    {agency.name}
+                  </Box>
+                </Box>
+              </GlassCard>
+            ))}
           </Box>
-        ) : (
-          <Box className="ob-card-module">
-            <Typography
-              variant="subtitle2"
+        </Box>
+
+        {/* Submissions Table - Flat section with GlassCard for data */}
+        <Box component="section" sx={{ mb: 'var(--ob-space-200)' }}>
+          <Box
+            component="h3"
+            sx={{
+              fontSize: 'var(--ob-font-size-xs)',
+              fontWeight: 600,
+              color: 'var(--ob-color-text-tertiary)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              m: 0,
+              mb: 'var(--ob-space-100)',
+            }}
+          >
+            Authority Submissions
+          </Box>
+          {loading ? (
+            <Box
               sx={{
-                color: 'text.secondary',
-                mb: 'var(--ob-space-200)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
+                display: 'flex',
+                justifyContent: 'center',
+                p: 'var(--ob-space-400)',
               }}
             >
-              Authority Submissions
-            </Typography>
-            {submissions.length === 0 ? (
-              <Box sx={{ p: 'var(--ob-space-400)', textAlign: 'center' }}>
-                <Typography color="text.secondary">
-                  No authority submissions yet. Change of Use and Heritage
-                  drafts appear below.
-                </Typography>
+              <CircularProgress />
+            </Box>
+          ) : submissions.length === 0 ? (
+            <GlassCard
+              variant="default"
+              sx={{ p: 'var(--ob-space-200)', textAlign: 'center' }}
+            >
+              <Box
+                component="p"
+                sx={{
+                  color: 'var(--ob-color-text-secondary)',
+                  fontSize: 'var(--ob-font-size-sm)',
+                  m: 0,
+                }}
+              >
+                No authority submissions yet. Change of Use and Heritage drafts
+                appear below.
               </Box>
-            ) : (
+            </GlassCard>
+          ) : (
+            <GlassCard variant="default" sx={{ overflow: 'hidden' }}>
               <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
                 <Table sx={tableSx}>
                   <TableHead>
@@ -676,41 +777,36 @@ export const RegulatoryDashboardPage: React.FC = () => {
                   <TableBody>
                     {submissions.map((row) => (
                       <TableRow key={row.id} hover>
-                        <TableCell sx={{ fontFamily: 'monospace' }}>
+                        <TableCell
+                          sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
+                        >
                           {row.submission_no || 'PENDING'}
                         </TableCell>
                         <TableCell sx={{ fontWeight: 500 }}>
                           {row.title}
                           {row.description && (
-                            <Typography
-                              variant="caption"
-                              display="block"
-                              color="text.secondary"
+                            <Box
+                              component="span"
+                              sx={{
+                                display: 'block',
+                                fontSize: 'var(--ob-font-size-xs)',
+                                color: 'var(--ob-color-text-secondary)',
+                              }}
                             >
                               {row.description}
-                            </Typography>
+                            </Box>
                           )}
                         </TableCell>
                         <TableCell>{row.agency_id}</TableCell>
                         <TableCell>{row.submission_type}</TableCell>
                         <TableCell>
-                          <Chip
-                            label={row.status.replace('_', ' ')}
-                            size="small"
-                            color={
-                              getStatusColor(row.status) as
-                                | 'default'
-                                | 'primary'
-                                | 'secondary'
-                                | 'error'
-                                | 'info'
-                                | 'success'
-                                | 'warning'
-                            }
+                          <StatusChip
+                            status={getStatusChipStatus(row.status)}
+                            size="sm"
                             icon={getStatusIcon(row.status)}
-                            variant="outlined"
-                            sx={{ textTransform: 'capitalize' }}
-                          />
+                          >
+                            {row.status.replace('_', ' ')}
+                          </StatusChip>
                         </TableCell>
                         <TableCell>
                           {new Date(
@@ -719,7 +815,8 @@ export const RegulatoryDashboardPage: React.FC = () => {
                         </TableCell>
                         <TableCell align="right">
                           <Button
-                            size="small"
+                            variant="ghost"
+                            size="sm"
                             onClick={() =>
                               regulatoryApi
                                 .getSubmissionStatus(row.id)
@@ -734,212 +831,233 @@ export const RegulatoryDashboardPage: React.FC = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
-            )}
-          </Box>
-        )}
-
-        {/* Change of Use Applications Section */}
-        <Box className="ob-card-module" sx={{ mt: 'var(--ob-space-400)' }}>
-          <Typography
-            variant="subtitle2"
-            sx={{
-              color: 'text.secondary',
-              mb: 'var(--ob-space-200)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}
-          >
-            Change of Use Applications
-          </Typography>
-          {changeOfUseApps.length === 0 ? (
-            <Box sx={{ p: 'var(--ob-space-250)', textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
-                No change of use applications yet.
-              </Typography>
-            </Box>
-          ) : (
-            <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
-              <Table sx={tableSx}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>Current Use</TableCell>
-                    <TableCell>Proposed Use</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>DC Amendment</TableCell>
-                    <TableCell>Planning Permission</TableCell>
-                    <TableCell>Created</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {changeOfUseApps.map((app) => {
-                    const isDraft = app.status.toUpperCase() === 'DRAFT'
-                    return (
-                      <TableRow key={app.id} hover>
-                        <TableCell sx={{ fontFamily: 'monospace' }}>
-                          {app.id.slice(0, 8)}...
-                        </TableCell>
-                        <TableCell sx={{ textTransform: 'capitalize' }}>
-                          {app.current_use}
-                        </TableCell>
-                        <TableCell sx={{ textTransform: 'capitalize' }}>
-                          {app.proposed_use}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={app.status.replace('_', ' ')}
-                            size="small"
-                            color={
-                              getStatusColor(app.status.toLowerCase()) as
-                                | 'default'
-                                | 'primary'
-                                | 'secondary'
-                                | 'error'
-                                | 'info'
-                                | 'success'
-                                | 'warning'
-                            }
-                            variant="outlined"
-                            sx={{ textTransform: 'capitalize' }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {app.requires_dc_amendment ? 'Yes' : 'No'}
-                        </TableCell>
-                        <TableCell>
-                          {app.requires_planning_permission ? 'Yes' : 'No'}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(app.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell align="right">
-                          <Button
-                            size="small"
-                            onClick={() => openChangeOfUseForm(app)}
-                          >
-                            {isDraft ? 'Edit' : 'View'}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            </GlassCard>
           )}
         </Box>
 
-        {/* Heritage Submissions Section */}
-        <Box className="ob-card-module" sx={{ mt: 'var(--ob-space-300)' }}>
-          <Typography
-            variant="h6"
+        {/* Change of Use Applications Section - Flat pattern */}
+        <Box component="section" sx={{ mb: 'var(--ob-space-200)' }}>
+          <Box
+            component="h3"
+            sx={{
+              fontSize: 'var(--ob-font-size-xs)',
+              fontWeight: 600,
+              color: 'var(--ob-color-text-tertiary)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              m: 0,
+              mb: 'var(--ob-space-100)',
+            }}
+          >
+            Change of Use Applications
+          </Box>
+          {changeOfUseApps.length === 0 ? (
+            <GlassCard
+              variant="default"
+              sx={{ p: 'var(--ob-space-150)', textAlign: 'center' }}
+            >
+              <Box
+                component="p"
+                sx={{
+                  fontSize: 'var(--ob-font-size-sm)',
+                  color: 'var(--ob-color-text-secondary)',
+                  m: 0,
+                }}
+              >
+                No change of use applications yet.
+              </Box>
+            </GlassCard>
+          ) : (
+            <GlassCard variant="default" sx={{ overflow: 'hidden' }}>
+              <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+                <Table sx={tableSx}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>ID</TableCell>
+                      <TableCell>Current Use</TableCell>
+                      <TableCell>Proposed Use</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>DC Amendment</TableCell>
+                      <TableCell>Planning Permission</TableCell>
+                      <TableCell>Created</TableCell>
+                      <TableCell align="right">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {changeOfUseApps.map((app) => {
+                      const isDraft = app.status.toUpperCase() === 'DRAFT'
+                      return (
+                        <TableRow key={app.id} hover>
+                          <TableCell
+                            sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
+                          >
+                            {app.id.slice(0, 8)}...
+                          </TableCell>
+                          <TableCell sx={{ textTransform: 'capitalize' }}>
+                            {app.current_use}
+                          </TableCell>
+                          <TableCell sx={{ textTransform: 'capitalize' }}>
+                            {app.proposed_use}
+                          </TableCell>
+                          <TableCell>
+                            <StatusChip
+                              status={getStatusChipStatus(app.status)}
+                              size="sm"
+                            >
+                              {app.status.replace('_', ' ')}
+                            </StatusChip>
+                          </TableCell>
+                          <TableCell>
+                            {app.requires_dc_amendment ? 'Yes' : 'No'}
+                          </TableCell>
+                          <TableCell>
+                            {app.requires_planning_permission ? 'Yes' : 'No'}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(app.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell align="right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openChangeOfUseForm(app)}
+                            >
+                              {isDraft ? 'Edit' : 'View'}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </GlassCard>
+          )}
+        </Box>
+
+        {/* Heritage Submissions Section - Flat pattern */}
+        <Box component="section">
+          <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 'var(--ob-space-100)',
-              mb: 'var(--ob-space-200)',
+              gap: 'var(--ob-space-075)',
+              mb: 'var(--ob-space-100)',
             }}
           >
-            <HeritageIcon color="primary" />
-            Heritage Submissions (STB)
-          </Typography>
-          {heritageSubmissions.length === 0 ? (
+            <HeritageIcon
+              sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 20 }}
+            />
             <Box
+              component="h3"
               sx={{
-                p: 'var(--ob-space-250)',
-                border: '1px dashed',
-                borderColor: 'divider',
-                borderRadius: 'var(--ob-radius-sm)',
-                textAlign: 'center',
+                fontSize: 'var(--ob-font-size-xs)',
+                fontWeight: 600,
+                color: 'var(--ob-color-text-tertiary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                m: 0,
               }}
             >
-              <Typography variant="body2" color="text.secondary">
+              Heritage Submissions (STB)
+            </Box>
+          </Box>
+          {heritageSubmissions.length === 0 ? (
+            <GlassCard
+              variant="default"
+              sx={{
+                p: 'var(--ob-space-200)',
+                textAlign: 'center',
+                border: '1px dashed var(--ob-color-border-subtle)',
+              }}
+            >
+              <Box
+                component="p"
+                sx={{
+                  fontSize: 'var(--ob-font-size-sm)',
+                  color: 'var(--ob-color-text-secondary)',
+                  m: 0,
+                  mb: 'var(--ob-space-100)',
+                }}
+              >
                 No heritage submissions yet. Start a draft to capture the
                 conservation details.
-              </Typography>
+              </Box>
               <Button
-                size="small"
-                sx={{ mt: 'var(--ob-space-150)' }}
+                variant="secondary"
+                size="sm"
                 onClick={() => openHeritageForm()}
               >
                 Start heritage submission
               </Button>
-            </Box>
+            </GlassCard>
           ) : (
-            <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
-              <Table sx={tableSx}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Reference</TableCell>
-                    <TableCell>Conservation Status</TableCell>
-                    <TableCell>Year Built</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Created</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {heritageSubmissions.map((sub) => (
-                    <TableRow key={sub.id} hover>
-                      <TableCell sx={{ fontFamily: 'monospace' }}>
-                        {sub.stb_reference || sub.id.slice(0, 8) + '...'}
-                      </TableCell>
-                      <TableCell sx={{ textTransform: 'capitalize' }}>
-                        {sub.conservation_status.replace(/_/g, ' ')}
-                      </TableCell>
-                      <TableCell>
-                        {sub.original_construction_year || '-'}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={sub.status.replace('_', ' ')}
-                          size="small"
-                          color={
-                            getStatusColor(sub.status) as
-                              | 'default'
-                              | 'primary'
-                              | 'secondary'
-                              | 'error'
-                              | 'info'
-                              | 'success'
-                              | 'warning'
-                          }
-                          variant="outlined"
-                          sx={{ textTransform: 'capitalize' }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {new Date(sub.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell align="right">
-                        <Button
-                          size="small"
-                          onClick={() => openHeritageForm(sub)}
-                        >
-                          {sub.status.toUpperCase() === 'DRAFT'
-                            ? 'Edit'
-                            : 'View'}
-                        </Button>
-                      </TableCell>
+            <GlassCard variant="default" sx={{ overflow: 'hidden' }}>
+              <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+                <Table sx={tableSx}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Reference</TableCell>
+                      <TableCell>Conservation Status</TableCell>
+                      <TableCell>Year Built</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Created</TableCell>
+                      <TableCell align="right">Actions</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {heritageSubmissions.map((sub) => (
+                      <TableRow key={sub.id} hover>
+                        <TableCell
+                          sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
+                        >
+                          {sub.stb_reference || sub.id.slice(0, 8) + '...'}
+                        </TableCell>
+                        <TableCell sx={{ textTransform: 'capitalize' }}>
+                          {sub.conservation_status.replace(/_/g, ' ')}
+                        </TableCell>
+                        <TableCell>
+                          {sub.original_construction_year || '-'}
+                        </TableCell>
+                        <TableCell>
+                          <StatusChip
+                            status={getStatusChipStatus(sub.status)}
+                            size="sm"
+                          >
+                            {sub.status.replace('_', ' ')}
+                          </StatusChip>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(sub.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openHeritageForm(sub)}
+                          >
+                            {sub.status.toUpperCase() === 'DRAFT'
+                              ? 'Edit'
+                              : 'View'}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </GlassCard>
           )}
         </Box>
       </TabPanel>
 
-      {/* Tab 1: Compliance Path - Depth 1 (Glass Card with cyan edge) */}
+      {/* Tab 1: Compliance Path - Content directly on background */}
       <TabPanel value={tabValue} index={1}>
-        <Box className="ob-card-module">
-          <CompliancePathTimeline
-            projectId={projectId}
-            projectName={currentProject?.name}
-            preferredAssetType={preferredAssetType}
-          />
-        </Box>
+        <CompliancePathTimeline
+          projectId={projectId}
+          projectName={currentProject?.name}
+          preferredAssetType={preferredAssetType}
+        />
       </TabPanel>
 
       {/* Dialogs */}
