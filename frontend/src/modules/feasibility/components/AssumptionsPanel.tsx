@@ -61,6 +61,7 @@ export function AssumptionsPanel({
 
   return (
     <section className="feasibility-assumptions">
+      <h3 className="feasibility-section__title">Assumptions</h3>
       <Accordion
         expanded={expanded}
         onChange={() => {
@@ -85,20 +86,17 @@ export function AssumptionsPanel({
             <ExpandMore sx={{ color: 'var(--ob-color-text-muted)' }} />
           }
           sx={{
-            padding: 'var(--ob-space-100)',
+            padding: 'var(--ob-space-050)',
             '& .MuiAccordionSummary-content': { margin: 0 },
           }}
         >
           <header>
-            <h2 className="assumptions-panel__heading">
-              {t('wizard.assumptions.title') || 'Design Parameters'}
-            </h2>
-            <p className="assumptions-panel__subtitle">Design Parameters</p>
+            <h2 className="assumptions-panel__heading">Design Parameters</h2>
           </header>
         </AccordionSummary>
 
         <AccordionDetails
-          sx={{ padding: '0 var(--ob-space-100) var(--ob-space-150)' }}
+          sx={{ padding: '0 var(--ob-space-050) var(--ob-space-075)' }}
         >
           <div className="feasibility-assumptions__grid">
             {/* Land Use Dropdown (Moved from AddressForm) */}

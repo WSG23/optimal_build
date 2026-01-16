@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
   type FeasibilityAssessmentRequest,
+  type FeasibilityAssessmentResponse,
   submitFeasibilityAssessment,
 } from '../../../api/feasibility'
 import { type BuildableSummary } from '../../../api/buildable'
@@ -15,6 +16,7 @@ interface UseFeasibilityComputeOptions {
 
 interface UseFeasibilityComputeResult {
   result: BuildableSummary | null
+  assessment: FeasibilityAssessmentResponse | null
   status: WizardStatus
   errorMessage: string | null
   liveAnnouncement: string
@@ -31,6 +33,8 @@ export function useFeasibilityCompute({
 }: UseFeasibilityComputeOptions): UseFeasibilityComputeResult {
   const [payload, setPayload] = useState<PendingPayload | null>(null)
   const [result, setResult] = useState<BuildableSummary | null>(null)
+  const [assessment, setAssessment] =
+    useState<FeasibilityAssessmentResponse | null>(null)
   const [status, setStatus] = useState<WizardStatus>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [liveAnnouncement, setLiveAnnouncement] = useState('')
@@ -118,6 +122,8 @@ export function useFeasibilityCompute({
             payload.address,
           )
 
+          setAssessment(response)
+
           // Map FeasibilityAssessmentResponse to BuildableSummary
           const mappedBox: BuildableSummary = {
             inputKind: 'address',
@@ -171,6 +177,7 @@ export function useFeasibilityCompute({
           setErrorMessage(
             error instanceof Error ? error.message : t('wizard.errors.generic'),
           )
+          setAssessment(null)
         })
         .finally(() => {
           debounceRef.current = null
@@ -210,6 +217,7 @@ export function useFeasibilityCompute({
 
   return {
     result,
+    assessment,
     status,
     errorMessage,
     liveAnnouncement,

@@ -28,10 +28,10 @@
 /* --- Layout --- */
 .feasibility-split-layout {
     display: flex;
-    height: 100vh; /* Full viewport height */
+    height: 100%;
+    min-height: 100vh;
     overflow: hidden;
-    background: #f9fafb; /* Gray 50 */
-    font-family: 'Inter', sans-serif; /* Fallback if not set globally */
+    background: var(--ob-color-bg-root);
 }
 
 .feasibility-split-layout__controls {
@@ -51,6 +51,33 @@
     flex: 1;
     overflow-y: auto;
     padding: var(--ob-space-6) var(--ob-space-8); /* Generous padding */
+}
+
+/* Sidebar for the feasibility split layout */
+.feasibility-split-layout__sidebar {
+    color: var(--ob-color-text-primary);
+}
+
+/* Light mode: Make sidebar more opaque for readability */
+html[data-theme='light'] .feasibility-split-layout__sidebar {
+    background: rgba(255, 255, 255, 0.85) !important;
+    border-color: var(--ob-color-border-neutral) !important;
+}
+
+/* Scrollable content inside sidebar */
+.feasibility-split-layout__scroll-content {
+    color: var(--ob-color-text-primary);
+}
+
+/* Sticky footer inside sidebar */
+.feasibility-split-layout__footer {
+    color: var(--ob-color-text-primary);
+}
+
+/* Light mode: ensure footer has proper background */
+html[data-theme='light'] .feasibility-split-layout__footer {
+    background: #ffffff !important;
+    border-top-color: var(--ob-color-border-neutral) !important;
 }
 
 .feasibility-wizard__copy {
@@ -133,6 +160,10 @@
     gap: var(--ob-spacing-100);
 }
 
+.feasibility-workspace__sidebar .feasibility-form__field {
+    gap: var(--ob-space-050);
+}
+
 .feasibility-form__field input {
     padding: var(--ob-spacing-200) var(--ob-spacing-300);
     border-radius: var(--ob-radius-md); /* 6px - inputs */
@@ -140,6 +171,11 @@
     font-size: var(--ob-font-size-base);
     background: var(--ob-color-bg-surface);
     color: var(--ob-color-text-primary);
+}
+
+.feasibility-workspace__sidebar .feasibility-form__field input {
+    padding: var(--ob-space-075) var(--ob-space-100);
+    font-size: var(--ob-font-size-sm);
 }
 
 .feasibility-form__field input:focus {
@@ -190,24 +226,30 @@
     cursor: not-allowed;
 }
 
+.feasibility-assumptions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-050);
+}
+
 .feasibility-assumptions header {
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-100);
+    gap: var(--ob-space-050);
 }
 
 .feasibility-assumptions h2 {
     margin: 0;
-    font-size: var(--ob-font-size-lg);
+    font-size: var(--ob-font-size-base);
     font-weight: 600;
     color: var(--ob-color-text-primary);
 }
 
 .feasibility-assumptions__grid {
-    display: grid;
-    gap: var(--ob-spacing-350);
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    margin-top: var(--ob-spacing-300);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-050);
+    margin-top: var(--ob-space-050);
 }
 
 .feasibility-assumptions__grid label {
@@ -235,21 +277,21 @@
 }
 
 .feasibility-assumptions__hint {
-    margin: var(--ob-spacing-100) 0 0;
+    margin: var(--ob-space-050) 0 0;
     font-size: var(--ob-font-size-xs);
     color: var(--ob-color-text-muted);
 }
 
 .feasibility-assumptions__error {
-    margin: var(--ob-spacing-100) 0 0;
+    margin: var(--ob-space-050) 0 0;
     font-size: var(--ob-font-size-xs);
     color: var(--ob-error-400);
 }
 
 .feasibility-assumptions__reset {
     align-self: flex-start;
-    margin-top: var(--ob-spacing-200);
-    padding: var(--ob-spacing-100) var(--ob-spacing-200);
+    margin-top: var(--ob-space-050);
+    padding: var(--ob-space-050) var(--ob-space-100);
     border: none;
     background: transparent;
     color: var(--ob-color-brand-primary);
@@ -264,15 +306,15 @@
 }
 
 .feasibility-pack {
-    margin-top: var(--ob-spacing-400);
+    margin-top: 0;
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm); /* 4px - cards */
-    padding: var(--ob-spacing-500);
+    padding: var(--ob-space-100);
     box-shadow: var(--ob-shadow-md);
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-300);
+    gap: var(--ob-space-075);
 }
 
 .feasibility-pack h2 {
@@ -291,13 +333,13 @@
 .feasibility-pack__form {
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-300);
+    gap: var(--ob-space-075);
 }
 
 .feasibility-pack__field {
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-100);
+    gap: var(--ob-space-050);
 }
 
 .feasibility-pack__field span {
@@ -308,7 +350,7 @@
 
 .feasibility-pack__field input,
 .feasibility-pack__field select {
-    padding: var(--ob-spacing-150) var(--ob-spacing-200);
+    padding: var(--ob-space-075) var(--ob-space-100);
     border-radius: var(--ob-radius-md); /* 6px - inputs */
     border: 1px solid var(--ob-color-border-subtle);
     font-size: var(--ob-font-size-sm);
@@ -330,7 +372,7 @@
 
 .feasibility-pack__submit {
     align-self: flex-start;
-    padding: var(--ob-spacing-150) var(--ob-spacing-350);
+    padding: var(--ob-space-075) var(--ob-space-150);
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     border: none;
     background: linear-gradient(
@@ -475,10 +517,39 @@
 }
 
 .feasibility-section {
-    /* Significant vertical rhythm - now controlled by ob-section-gap */
+    /* Base section styling - no visual container */
+    margin: 0;
 }
 
-/* When used with ob-card-module, override padding to use design tokens */
+/* Flat section - no card wrapper, just spacing via parent gap */
+.feasibility-section--flat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-050);
+    margin: 0;
+}
+
+/* Card section - opaque background for nested use inside glass sidebar
+   Uses opaque background (no blur) to prevent scroll lock from nested blur layers.
+   Per UI_STANDARDS.md: "nested blur causes scroll lock" */
+.feasibility-section--card {
+    background: var(--ob-color-bg-muted);
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-sm);
+    padding: var(--ob-space-075);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-050);
+    margin: 0;
+}
+
+/* Light mode: ensure card has proper visibility */
+html[data-theme='light'] .feasibility-section--card {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: var(--ob-color-border-neutral);
+}
+
+/* DEPRECATED: When used with ob-card-module - avoid nested glass */
 .feasibility-section.ob-card-module {
     /* ob-card-module provides the glass background + cyan top edge */
     /* Override the nested section margin since card handles spacing */
@@ -508,18 +579,15 @@
     transform: translateY(-1px);
 }
 
-.smart-search__icon {
-    color: var(--ob-color-text-muted);
-}
-
 .smart-search__input {
     border: none;
     outline: none;
-    font-size: 1rem;
+    font-size: var(--ob-font-size-sm);
     width: 100%;
-    color: var(--ob-color-text-display);
+    color: var(--ob-color-text-primary);
     background: transparent;
     font-weight: 500;
+    padding: var(--ob-space-025) 0;
 }
 
 .smart-search__input::placeholder {
@@ -527,11 +595,152 @@
     font-weight: 400;
 }
 
+.smart-search__input:focus {
+    outline: none;
+}
+
+/* Smart Search wrapper ensures proper positioning */
+.smart-search-wrapper {
+    position: relative;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+/* Ensure the smart search form is visible */
+.smart-search {
+    display: flex;
+    align-items: center;
+    background: var(--ob-color-bg-surface);
+    backdrop-filter: blur(var(--ob-blur-md));
+    border-radius: var(--ob-radius-md);
+    padding: var(--ob-space-075) var(--ob-space-100);
+    box-shadow: var(--ob-shadow-md);
+    border: 1px solid var(--ob-color-border-neutral);
+    transition: all 0.3s ease;
+    width: 100%;
+    min-height: var(--ob-space-250);
+}
+
+/* Light mode: ensure search box has visible contrast */
+html[data-theme='light'] .smart-search {
+    background: #ffffff;
+    border: 1px solid var(--ob-color-border-neutral);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.smart-search:focus-within {
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-glow-brand-subtle);
+}
+
+.smart-search__icon {
+    color: var(--ob-color-text-muted);
+    margin-right: var(--ob-space-075);
+}
+
+.smart-search__loader {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--ob-color-brand-primary);
+    border-top-color: transparent;
+    border-radius: var(--ob-radius-pill);
+    animation: spin 1s linear infinite;
+    margin-left: var(--ob-space-050);
+}
+
+.smart-search__error {
+    position: absolute;
+    top: 100%;
+    left: var(--ob-space-150);
+    margin-top: var(--ob-space-050);
+    background: var(--ob-color-error-soft);
+    color: var(--ob-error-600);
+    padding: var(--ob-space-025) var(--ob-space-075);
+    border-radius: var(--ob-radius-sm);
+    font-size: var(--ob-font-size-sm);
+    font-weight: 500;
+}
+
+.smart-search__suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: var(--ob-space-050);
+    background: var(--ob-color-bg-surface);
+    border-radius: var(--ob-radius-sm);
+    box-shadow: var(--ob-shadow-lg);
+    padding: var(--ob-space-050);
+    z-index: 100;
+    overflow: hidden;
+    border: 1px solid var(--ob-color-border-subtle);
+}
+
+.smart-search__suggestions-header {
+    padding: var(--ob-space-050) var(--ob-space-075);
+    font-size: var(--ob-font-size-xs);
+    font-weight: var(--ob-font-weight-bold);
+    color: var(--ob-color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--ob-letter-spacing-wide);
+}
+
+.smart-search__suggestion-item {
+    padding: var(--ob-space-075);
+    border-radius: var(--ob-radius-sm);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.smart-search__suggestion-item:hover {
+    background: var(--ob-color-action-hover);
+}
+
+.smart-search__suggestion-left {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-075);
+}
+
+.smart-search__suggestion-pin {
+    font-size: var(--ob-font-size-lg);
+}
+
+.smart-search__suggestion-title {
+    font-weight: var(--ob-font-weight-semibold);
+    color: var(--ob-color-text-primary);
+}
+
+.smart-search__suggestion-subtitle {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-muted);
+}
+
+.smart-search__suggestion-badge {
+    font-size: var(--ob-font-size-2xs);
+    font-weight: var(--ob-font-weight-bold);
+    padding: var(--ob-space-025) var(--ob-space-050);
+    border-radius: var(--ob-radius-xs);
+}
+
+.smart-search__suggestion-badge--info {
+    background: var(--ob-color-info-soft);
+    color: var(--ob-info-600);
+}
+
+.smart-search__suggestion-badge--warning {
+    background: var(--ob-color-warning-soft);
+    color: var(--ob-warning-600);
+}
+
 /* --- Components: Pack Grid --- */
 .pack-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--ob-space-4);
+    gap: var(--ob-space-075);
 }
 
 .pack-card {
@@ -744,6 +953,16 @@
     gap: var(--ob-space-050);
 }
 
+.feasibility-wizard__header-actions {
+    margin-bottom: var(--ob-space-200);
+}
+
+.feasibility-wizard__container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-150);
+}
+
 .feasibility-wizard__toolbar-btn {
     display: inline-flex;
     align-items: center;
@@ -758,10 +977,529 @@
     color: var(--ob-color-text-primary);
 }
 
+/* Sidebar Content Container */
+.feasibility-wizard__sidebar-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-050);
+    width: 100%;
+}
+
+.feasibility-project-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-025);
+    padding: var(--ob-space-050) var(--ob-space-075);
+    border-radius: var(--ob-radius-sm);
+    border: 1px solid var(--ob-color-border-subtle);
+    background: var(--ob-color-bg-surface);
+    color: var(--ob-color-text-primary);
+}
+
+.feasibility-project-card__label {
+    font-size: var(--ob-font-size-2xs);
+    text-transform: uppercase;
+    letter-spacing: var(--ob-letter-spacing-wider);
+    color: var(--ob-color-text-muted);
+    font-weight: var(--ob-font-weight-semibold);
+}
+
+.feasibility-project-card__name {
+    font-size: var(--ob-font-size-sm);
+    font-weight: var(--ob-font-weight-semibold);
+    color: var(--ob-color-text-primary);
+}
+
+.feasibility-project-card__section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-025);
+}
+
+.feasibility-project-card__site {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-primary);
+}
+
+.feasibility-project-card__meta {
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-muted);
+}
+
+.feasibility-project-card__link {
+    align-self: flex-start;
+    border: 1px solid var(--ob-color-border-subtle);
+    background: var(--ob-color-bg-surface);
+    color: var(--ob-color-brand-primary);
+    font-size: var(--ob-font-size-xs);
+    padding: var(--ob-space-025) var(--ob-space-075);
+    border-radius: var(--ob-radius-xs);
+    cursor: pointer;
+}
+
+.feasibility-project-card__link:hover {
+    border-color: var(--ob-color-neon-cyan);
+    color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan-soft);
+}
+
+/* --- Feasibility Workspace Layout --- */
+.feasibility-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-150);
+    width: 100%;
+}
+
+.feasibility-workspace__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ob-space-200);
+    align-items: start;
+}
+
+@media (min-width: 1200px) {
+    .feasibility-workspace__grid {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    }
+}
+
+.feasibility-workspace__sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-050);
+    padding: 0;
+}
+
+.feasibility-workspace__sidebar-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-050);
+}
+
+.feasibility-workspace__sidebar-footer {
+    padding-top: var(--ob-space-050);
+}
+
+.feasibility-workspace__main {
+    position: relative;
+    min-width: 0;
+}
+
+.feasibility-workspace__layer-controls {
+    position: absolute;
+    top: var(--ob-space-100);
+    right: var(--ob-space-100);
+    z-index: var(--ob-z-sticky);
+}
+
+/* --- Feasibility Output Panel --- */
+.feasibility-output {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-150);
+    --ob-feasibility-asset-residential: var(--ob-color-brand-primary);
+    --ob-feasibility-asset-commercial: var(--ob-color-neon-cyan);
+    --ob-feasibility-asset-office: var(--ob-color-brand-primary-emphasis);
+    --ob-feasibility-asset-retail: var(--ob-color-warning-strong);
+    --ob-feasibility-asset-industrial: var(--ob-color-info-strong);
+    --ob-feasibility-asset-mixed: var(--ob-color-success-strong);
+    --ob-feasibility-asset-hospitality: var(--ob-color-brand-primary);
+    --ob-feasibility-asset-default: var(--ob-color-neon-cyan);
+    --ob-feasibility-chart-gfa: var(--ob-color-brand-primary-emphasis);
+    --ob-feasibility-chart-nia: var(--ob-color-neon-cyan);
+}
+
+.feasibility-output-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-150);
+}
+
+.feasibility-output-packs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-100);
+}
+
+.feasibility-output__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--ob-space-150);
+}
+
+.feasibility-output__title {
+    margin: 0;
+}
+
+.feasibility-output__subtitle {
+    margin-top: var(--ob-space-025);
+    color: var(--ob-color-text-secondary);
+}
+
+.feasibility-output__status {
+    font-size: var(--ob-font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--ob-letter-spacing-wider);
+    color: var(--ob-color-neon-cyan);
+}
+
+.feasibility-output__kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--ob-space-150);
+}
+
+.feasibility-output__grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--ob-space-150);
+}
+
+.feasibility-output__card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-150);
+    padding: var(--ob-space-150);
+    min-height: calc(var(--ob-space-300) * 4);
+}
+
+.feasibility-output__card--span-8 {
+    grid-column: span 12;
+}
+
+.feasibility-output__card--span-4 {
+    grid-column: span 12;
+}
+
+.feasibility-output__card--span-12 {
+    grid-column: span 12;
+}
+
+@media (min-width: 1200px) {
+    .feasibility-output__card--span-8 {
+        grid-column: span 8;
+    }
+
+    .feasibility-output__card--span-4 {
+        grid-column: span 4;
+    }
+}
+
+.feasibility-output__card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ob-space-100);
+}
+
+.feasibility-output__card-actions {
+    display: flex;
+    gap: var(--ob-space-050);
+}
+
+.feasibility-output__toggle {
+    border: 1px solid var(--ob-color-border-subtle);
+    background: var(--ob-color-bg-surface);
+    color: var(--ob-color-text-secondary);
+    padding: var(--ob-space-025) var(--ob-space-075);
+    border-radius: var(--ob-radius-xs);
+    font-size: var(--ob-font-size-xs);
+    cursor: pointer;
+}
+
+.feasibility-output__toggle:hover {
+    border-color: var(--ob-color-neon-cyan);
+    color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan-soft);
+}
+
+.feasibility-output__empty {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-muted);
+}
+
+/* --- Feasibility Canvas --- */
+.feasibility-canvas {
+    position: relative;
+    min-height: calc(var(--ob-space-300) * 6);
+    border-radius: var(--ob-radius-sm);
+    background: linear-gradient(
+        135deg,
+        rgba(var(--ob-color-brand-primary-emphasis-rgb), 0.15),
+        rgba(var(--ob-color-brand-soft-rgb), 0.12)
+    );
+    border: 1px solid var(--ob-color-border-subtle);
+    overflow: hidden;
+}
+
+.feasibility-canvas__grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(
+            rgba(var(--ob-color-text-primary-rgb), 0.08) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(var(--ob-color-text-primary-rgb), 0.08) 1px,
+            transparent 1px
+        );
+    background-size: var(--ob-space-300) var(--ob-space-300);
+    opacity: 0.6;
+}
+
+.feasibility-canvas__model {
+    position: absolute;
+    top: 20%;
+    left: 20%;
+    width: 60%;
+    height: 50%;
+    background: linear-gradient(
+        135deg,
+        rgba(var(--ob-color-brand-primary-emphasis-rgb), 0.6),
+        rgba(var(--ob-color-brand-primary-rgb), 0.4)
+    );
+    transform: skewY(-6deg);
+    border-radius: var(--ob-radius-sm);
+    box-shadow: var(--ob-shadow-lg);
+}
+
+.feasibility-canvas__halo {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        circle at 70% 20%,
+        rgba(var(--ob-color-brand-primary-rgb), 0.3),
+        transparent 55%
+    );
+}
+
+.feasibility-canvas__empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-secondary);
+    background: rgba(var(--ob-color-text-inverse-rgb), 0.08);
+    backdrop-filter: blur(var(--ob-blur-sm));
+}
+
+/* --- Layer Overlays (controlled by toggle buttons) --- */
+.feasibility-canvas__layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+/* Zoning Envelope Layer - cyan dashed boundary */
+.feasibility-canvas__layer--zoning {
+    border: 2px dashed var(--ob-color-neon-cyan);
+    margin: var(--ob-space-100);
+    border-radius: var(--ob-radius-sm);
+    box-shadow: inset 0 0 20px rgba(0, 243, 255, 0.15);
+}
+
+/* Structural Grid Layer - vertical/horizontal grid lines */
+.feasibility-canvas__layer--structure {
+    background-image:
+        linear-gradient(var(--ob-warning-500) 1px, transparent 1px),
+        linear-gradient(90deg, var(--ob-warning-500) 1px, transparent 1px);
+    background-size: calc(var(--ob-space-300) * 1.5)
+        calc(var(--ob-space-300) * 1.5);
+    opacity: 0.3;
+}
+
+/* MEP Risers Layer - vertical risers */
+.feasibility-canvas__layer--mep {
+    background-image: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent calc(var(--ob-space-300) * 2),
+        var(--ob-info-500) calc(var(--ob-space-300) * 2),
+        var(--ob-info-500) calc(var(--ob-space-300) * 2 + 4px)
+    );
+    opacity: 0.4;
+}
+
+/* 3D Viewer container - uses Three.js Preview3DViewer */
+.feasibility-canvas--3d {
+    min-height: calc(var(--ob-space-300) * 6);
+    border-radius: var(--ob-radius-sm);
+    overflow: hidden;
+    background: var(--ob-color-bg-surface);
+}
+
+/* Override Preview3DViewer default styling to match Feasibility design */
+.feasibility-canvas--3d > div {
+    border: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+.feasibility-canvas--3d > div > div {
+    border-radius: var(--ob-radius-sm);
+}
+
+/* Toggle button active state */
+.feasibility-output__toggle--active {
+    background: var(--ob-color-brand-soft);
+    color: var(--ob-color-neon-cyan);
+    border-color: var(--ob-color-neon-cyan);
+}
+
+.feasibility-canvas__legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--ob-space-050);
+    margin-top: var(--ob-space-100);
+}
+
+.feasibility-canvas__legend-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ob-space-050);
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-secondary);
+}
+
+.feasibility-canvas__legend-dot {
+    width: var(--ob-space-050);
+    height: var(--ob-space-050);
+    border-radius: var(--ob-radius-pill);
+    flex-shrink: 0;
+}
+
+.feasibility-canvas__legend-value {
+    color: var(--ob-color-text-primary);
+    font-weight: var(--ob-font-weight-semibold);
+}
+
+/* --- Charts --- */
+.feasibility-chart {
+    height: calc(var(--ob-space-300) * 5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-100);
+}
+
+.feasibility-chart__legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--ob-space-050);
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-secondary);
+}
+
+.feasibility-chart__legend-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ob-space-050);
+}
+
+.feasibility-chart__legend-dot {
+    width: var(--ob-space-050);
+    height: var(--ob-space-050);
+    border-radius: var(--ob-radius-pill);
+    flex-shrink: 0;
+}
+
+.feasibility-chart__legend-value {
+    color: var(--ob-color-text-primary);
+    font-weight: var(--ob-font-weight-semibold);
+}
+
+/* --- Constraints --- */
+.feasibility-constraints {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-100);
+}
+
+.feasibility-constraints__badge {
+    background: var(--ob-color-warning-soft);
+    color: var(--ob-color-status-warning-text);
+    border: 1px solid var(--ob-color-warning-soft);
+    padding: var(--ob-space-050) var(--ob-space-075);
+    border-radius: var(--ob-radius-xs);
+    font-size: var(--ob-font-size-xs);
+}
+
+.feasibility-constraints__badge--muted {
+    background: var(--ob-color-bg-muted);
+    color: var(--ob-color-text-muted);
+    border-color: var(--ob-color-border-subtle);
+}
+
+.feasibility-constraints__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-075);
+    color: var(--ob-color-text-secondary);
+    font-size: var(--ob-font-size-sm);
+}
+
+.feasibility-constraints__item {
+    display: flex;
+    gap: var(--ob-space-050);
+    align-items: flex-start;
+}
+
+.feasibility-constraints__severity {
+    width: var(--ob-space-050);
+    height: var(--ob-space-050);
+    border-radius: var(--ob-radius-pill);
+    background: var(--ob-color-warning-strong);
+    margin-top: var(--ob-space-025);
+    flex-shrink: 0;
+}
+
+.feasibility-constraints__severity--critical {
+    background: var(--ob-color-error-strong);
+}
+
+.feasibility-constraints__severity--important {
+    background: var(--ob-color-warning-strong);
+}
+
+.feasibility-constraints__severity--informational {
+    background: var(--ob-color-info-strong);
+}
+
+/* --- AI Optimizer --- */
+.feasibility-ai {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-075);
+}
+
+.feasibility-ai__highlight {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-primary);
+    padding: var(--ob-space-100);
+    border-radius: var(--ob-radius-sm);
+    background: var(--ob-color-info-soft);
+    border: 1px solid var(--ob-color-border-subtle);
+}
+
+.feasibility-ai__meta {
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-muted);
+}
+
 /* --- Section Titles --- */
 .feasibility-section__title {
     margin: 0;
-    margin-bottom: var(--ob-space-200);
     font-size: var(--ob-font-size-xs);
     text-transform: uppercase;
     letter-spacing: var(--ob-letter-spacing-widest);
@@ -771,12 +1509,76 @@
 
 /* --- Form Field Modifiers --- */
 .feasibility-form__field--spaced {
-    margin-top: var(--ob-space-200);
+    margin-top: 0;
 }
 
 .feasibility-form__label--block {
-    margin-bottom: var(--ob-space-150);
+    margin-bottom: var(--ob-space-075);
     display: block;
+}
+
+/* --- Scenario Selector --- */
+.scenario-selector {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--ob-space-050);
+}
+
+.scenario-selector__option {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ob-space-025);
+    padding: var(--ob-space-050);
+    min-height: var(--ob-space-250);
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-sm);
+    background: var(--ob-color-bg-surface);
+    color: var(--ob-color-text-secondary);
+    cursor: pointer;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+.scenario-selector__option:hover {
+    border-color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-glow-neon-cyan-soft);
+}
+
+.scenario-selector__option--selected {
+    border-color: var(--ob-color-neon-cyan);
+    background: var(--ob-color-brand-soft);
+    box-shadow: var(--ob-glow-neon-cyan-soft);
+}
+
+.scenario-selector__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ob-color-text-muted);
+}
+
+.scenario-selector__option--selected .scenario-selector__icon {
+    color: var(--ob-color-neon-cyan);
+}
+
+.scenario-selector__label {
+    font-size: var(--ob-font-size-2xs);
+    font-weight: var(--ob-font-weight-semibold);
+    color: var(--ob-color-text-primary);
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.scenario-selector__option--selected .scenario-selector__label {
+    color: var(--ob-color-neon-cyan);
 }
 
 /* --- Actions / Compute Button --- */
@@ -795,7 +1597,7 @@
     border: none;
     border-radius: var(--ob-radius-pill);
     padding: var(--ob-space-100) var(--ob-space-200);
-    color: white;
+    color: #ffffff; /* Always white text on brand gradient */
     font-weight: var(--ob-font-weight-bold);
     font-size: var(--ob-font-size-lg);
     letter-spacing: var(--ob-letter-spacing-wide);
@@ -811,6 +1613,7 @@
     width: 100%;
     position: relative;
     overflow: hidden;
+    min-height: 48px; /* Ensure button has minimum height for visibility */
 }
 
 .feasibility-actions__compute-btn:hover {
@@ -824,13 +1627,14 @@
 .feasibility-actions__spinner {
     width: 20px;
     height: 20px;
-    border: 2px solid white;
+    border: 2px solid #ffffff;
     border-top-color: transparent;
     border-radius: var(--ob-radius-pill);
     animation: spin 1s linear infinite;
 }
 
 .feasibility-actions__radar-icon {
+    color: #ffffff;
     animation: pulse 2s infinite;
 }
 
@@ -888,7 +1692,7 @@
 
 /* --- Pack Actions --- */
 .feasibility-pack__actions {
-    margin-top: var(--ob-space-100);
+    margin-top: var(--ob-space-050);
     display: flex;
     justify-content: flex-end;
 }
@@ -981,17 +1785,22 @@
 
 /* --- Live Scorecard (HUD-style floating card) --- */
 .live-scorecard {
-    position: absolute;
-    top: var(--ob-space-150);
-    right: 80px; /* Offset from layer controls */
-    z-index: var(--ob-z-sticky);
-    background: rgba(15, 23, 42, 0.9);
+    /* Position is now controlled by parent wrapper in FeasibilityLayout */
+    background: var(--ob-color-bg-surface);
     backdrop-filter: blur(var(--ob-blur-xl));
-    border: 1px solid rgba(6, 182, 212, 0.2);
+    border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
     padding: var(--ob-space-100);
     min-width: 200px;
     animation: slideInRight 0.4s ease-out;
+    box-shadow: var(--ob-shadow-lg);
+}
+
+/* Light mode: ensure scorecard has visible contrast against map */
+html[data-theme='light'] .live-scorecard {
+    background: #ffffff;
+    border: 1px solid #94a3b8; /* Slate-400 for visible border */
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 @keyframes slideInRight {
@@ -1021,7 +1830,7 @@
     gap: var(--ob-space-050);
     margin-bottom: var(--ob-space-075);
     padding-bottom: var(--ob-space-050);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--ob-color-border-subtle);
 }
 
 .live-scorecard__pulse-dot {
@@ -1035,7 +1844,7 @@
 .live-scorecard__title {
     font-size: var(--ob-font-size-2xs);
     font-weight: var(--ob-font-weight-semibold);
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--ob-color-text-secondary);
     text-transform: uppercase;
     letter-spacing: var(--ob-letter-spacing-caps);
 }
@@ -1081,7 +1890,7 @@
 
 .live-scorecard__label {
     font-size: var(--ob-font-size-2xs);
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--ob-color-text-muted);
 }
 
 .live-scorecard__metric-right {
@@ -1093,19 +1902,19 @@
 .live-scorecard__value {
     font-size: var(--ob-font-size-sm);
     font-weight: var(--ob-font-weight-bold);
-    color: white;
+    color: var(--ob-color-text-primary);
     font-family: var(--ob-font-family-mono);
 }
 
 .live-scorecard__unit {
     font-size: var(--ob-font-size-2xs);
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--ob-color-text-subtle);
 }
 
 .live-scorecard__efficiency {
     margin-top: var(--ob-space-075);
     padding-top: var(--ob-space-075);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--ob-color-border-subtle);
 }
 
 .live-scorecard__efficiency-header {
@@ -1116,7 +1925,7 @@
 
 .live-scorecard__efficiency-label {
     font-size: var(--ob-font-size-2xs);
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--ob-color-text-muted);
 }
 
 .live-scorecard__efficiency-value {
@@ -1128,7 +1937,7 @@
 .live-scorecard__progress-track {
     height: 4px;
     border-radius: var(--ob-radius-xs);
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--ob-color-border-subtle);
     overflow: hidden;
 }
 
@@ -1172,7 +1981,7 @@
 /* --- Assumptions Panel --- */
 .assumptions-panel__heading {
     margin: 0;
-    font-size: var(--ob-font-size-lg);
+    font-size: var(--ob-font-size-base);
     font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-primary);
 }
@@ -1188,7 +1997,7 @@
 }
 
 .assumptions-panel__control-group--mb {
-    margin-bottom: var(--ob-space-150);
+    margin-bottom: var(--ob-space-050);
 }
 
 .assumptions-panel__control-header {
@@ -1300,7 +2109,7 @@
 .assumptions-panel__divider {
     height: 1px;
     background: var(--ob-color-border-subtle);
-    margin: var(--ob-space-200) 0;
+    margin: var(--ob-space-100) 0;
 }
 
 .assumptions-panel__section-title {
@@ -1309,19 +2118,19 @@
     letter-spacing: var(--ob-letter-spacing-widest);
     color: var(--ob-color-text-muted);
     font-weight: var(--ob-font-weight-semibold);
-    margin-bottom: var(--ob-space-100);
+    margin-bottom: var(--ob-space-075);
 }
 
 .assumptions-panel__card-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--ob-space-075);
+    gap: var(--ob-space-050);
 }
 
 .assumptions-panel__slider-row {
     display: flex;
     align-items: center;
-    gap: var(--ob-space-100);
+    gap: var(--ob-space-050);
 }
 
 .assumptions-panel__unit-label {

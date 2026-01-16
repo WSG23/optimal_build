@@ -1,4 +1,4 @@
-import { ExpandMore, FileDownload } from '@mui/icons-material'
+import { ExpandMore, FileDownload, CloudUpload } from '@mui/icons-material'
 import {
   Accordion,
   AccordionDetails,
@@ -6,6 +6,9 @@ import {
   Button,
   TextField,
   InputAdornment,
+  FormControlLabel,
+  Switch,
+  Box,
 } from '@mui/material'
 import type { ChangeEvent } from 'react'
 import { useState } from 'react'
@@ -18,12 +21,31 @@ interface FinancialSettingsPanelProps {
   onFinancialChange: (
     key: keyof FinancialAssumptions,
   ) => (event: ChangeEvent<HTMLInputElement>) => void
+  onVdrUploadToggle?: (enabled: boolean) => void
+  vdrUploadEnabled?: boolean
+}
+
+// Common TextField styling for theme-aware colors
+const textFieldSx = {
+  '& .MuiOutlinedInput-root': {
+    color: 'var(--ob-color-text-primary)',
+    '& fieldset': { borderColor: 'var(--ob-color-border-subtle)' },
+    '&:hover fieldset': { borderColor: 'var(--ob-color-border-neutral)' },
+    '&.Mui-focused fieldset': { borderColor: 'var(--ob-color-brand-primary)' },
+  },
+  '& .MuiInputLabel-root': { color: 'var(--ob-color-text-secondary)' },
+  '& .MuiInputLabel-root.Mui-focused': {
+    color: 'var(--ob-color-brand-primary)',
+  },
+  '& .MuiInputAdornment-root': { color: 'var(--ob-color-text-muted)' },
 }
 
 export function FinancialSettingsPanel({
   financialInputs,
   financialErrors,
   onFinancialChange,
+  onVdrUploadToggle,
+  vdrUploadEnabled = false,
 }: FinancialSettingsPanelProps) {
   const [expanded, setExpanded] = useState(false)
 
@@ -52,22 +74,24 @@ export function FinancialSettingsPanel({
         }}
         sx={{
           boxShadow: 'none',
-          background: 'transparent',
+          background: 'var(--ob-color-bg-surface)',
           '&:before': { display: 'none' },
-          border: '1px solid var(--ob-color-border-premium)',
-          borderRadius: 'var(--ob-radius-lg) !important',
-          marginTop: 'var(--ob-space-4) !important',
+          border: '1px solid var(--ob-color-border-subtle)',
+          borderRadius: 'var(--ob-radius-sm) !important',
+          marginTop: '0 !important',
           overflow: 'hidden',
           transition: 'border-color 0.2s',
           '&:hover': {
-            borderColor: 'rgba(0,0,0,0.12)',
+            borderColor: 'var(--ob-color-border-neutral)',
           },
         }}
       >
         <AccordionSummary
-          expandIcon={<ExpandMore sx={{ color: 'rgba(255,255,255,0.5)' }} />}
+          expandIcon={
+            <ExpandMore sx={{ color: 'var(--ob-color-text-muted)' }} />
+          }
           sx={{
-            padding: 'var(--ob-space-4)',
+            padding: 'var(--ob-space-075)',
             '& .MuiAccordionSummary-content': { margin: 0 },
           }}
         >
@@ -75,9 +99,9 @@ export function FinancialSettingsPanel({
             <h2
               style={{
                 margin: 0,
-                fontSize: '1rem',
+                fontSize: 'var(--ob-font-size-base)',
                 fontWeight: 600,
-                color: 'rgba(255,255,255,0.9)',
+                color: 'var(--ob-color-text-primary)',
                 letterSpacing: '0.02em',
               }}
             >
@@ -85,9 +109,9 @@ export function FinancialSettingsPanel({
             </h2>
             <p
               style={{
-                margin: '4px 0 0',
-                fontSize: '0.75rem',
-                color: 'rgba(255,255,255,0.5)',
+                margin: 'var(--ob-space-025) 0 0',
+                fontSize: 'var(--ob-font-size-xs)',
+                color: 'var(--ob-color-text-muted)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
               }}
@@ -98,9 +122,15 @@ export function FinancialSettingsPanel({
         </AccordionSummary>
 
         <AccordionDetails
-          sx={{ padding: '0 var(--ob-space-4) var(--ob-space-6)' }}
+          sx={{ padding: '0 var(--ob-space-075) var(--ob-space-100)' }}
         >
-          <div className="feasibility-assumptions__grid">
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 'var(--ob-space-075)',
+            }}
+          >
             <TextField
               label="Cap Rate (%)"
               value={financialInputs.capRatePercent}
@@ -113,17 +143,7 @@ export function FinancialSettingsPanel({
               variant="outlined"
               size="small"
               fullWidth
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: 'rgba(255,255,255,0.9)',
-                  '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                  '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.4)' },
-                  '&.Mui-focused fieldset': { borderColor: '#06b6d4' },
-                },
-                '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                '& .MuiInputLabel-root.Mui-focused': { color: '#06b6d4' },
-                '& .MuiInputAdornment-root': { color: 'rgba(255,255,255,0.5)' },
-              }}
+              sx={textFieldSx}
             />
 
             <TextField
@@ -138,18 +158,7 @@ export function FinancialSettingsPanel({
               variant="outlined"
               size="small"
               fullWidth
-              sx={{
-                mt: 2,
-                '& .MuiOutlinedInput-root': {
-                  color: 'rgba(255,255,255,0.9)',
-                  '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                  '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.4)' },
-                  '&.Mui-focused fieldset': { borderColor: '#06b6d4' },
-                },
-                '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                '& .MuiInputLabel-root.Mui-focused': { color: '#06b6d4' },
-                '& .MuiInputAdornment-root': { color: 'rgba(255,255,255,0.5)' },
-              }}
+              sx={textFieldSx}
             />
 
             <TextField
@@ -164,41 +173,71 @@ export function FinancialSettingsPanel({
               variant="outlined"
               size="small"
               fullWidth
-              sx={{
-                mt: 2,
-                '& .MuiOutlinedInput-root': {
-                  color: 'rgba(255,255,255,0.9)',
-                  '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                  '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.4)' },
-                  '&.Mui-focused fieldset': { borderColor: '#06b6d4' },
-                },
-                '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
-                '& .MuiInputLabel-root.Mui-focused': { color: '#06b6d4' },
-                '& .MuiInputAdornment-root': { color: 'rgba(255,255,255,0.5)' },
-              }}
+              sx={textFieldSx}
             />
-          </div>
+          </Box>
 
-          <div
-            style={{
-              marginTop: '1.5rem',
+          <Box
+            sx={{
+              marginTop: 'var(--ob-space-100)',
               display: 'flex',
-              justifyContent: 'flex-end',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
           >
+            {/* VDR Upload Toggle */}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={vdrUploadEnabled}
+                  onChange={(e) => onVdrUploadToggle?.(e.target.checked)}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: 'var(--ob-color-brand-primary)',
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: 'var(--ob-color-brand-primary)',
+                    },
+                  }}
+                />
+              }
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CloudUpload
+                    sx={{
+                      fontSize: '1rem',
+                      color: 'var(--ob-color-text-muted)',
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 'var(--ob-font-size-sm)',
+                      color: 'var(--ob-color-text-secondary)',
+                    }}
+                  >
+                    VDR Upload
+                  </span>
+                </Box>
+              }
+            />
+
             <Button
               variant="outlined"
               startIcon={<FileDownload />}
               onClick={handleExportArgus}
               sx={{
                 textTransform: 'none',
-                color: 'var(--ob-color-text-body)',
-                borderColor: 'var(--ob-color-border-premium)',
+                color: 'var(--ob-color-text-primary)',
+                borderColor: 'var(--ob-color-border-subtle)',
+                '&:hover': {
+                  borderColor: 'var(--ob-color-brand-primary)',
+                  backgroundColor: 'var(--ob-color-action-hover)',
+                },
               }}
             >
               Export ARGUS
             </Button>
-          </div>
+          </Box>
         </AccordionDetails>
       </Accordion>
     </section>

@@ -1,38 +1,22 @@
 import { Layers, GridOn, Plumbing } from '@mui/icons-material'
-import {
-  ToggleButton,
-  ToggleButtonGroup,
-  Tooltip,
-  Paper,
-  Box,
-} from '@mui/material'
+import { ToggleButton, ToggleButtonGroup, Tooltip, Paper } from '@mui/material'
 import { useState } from 'react'
 
 import type { ReactNode } from 'react'
-import { LiveScorecard } from './LiveScorecard'
 
 interface FeasibilityLayoutProps {
-  /** Map component to render in the right panel */
-  renderMap: () => ReactNode
+  /** Output content to render in the main panel. Receives active layer IDs. */
+  renderOutput: (activeLayers: string[]) => ReactNode
   /** Content for the left control panel */
   children: ReactNode
   /** Sticky footer content for the left panel */
   renderFooter?: () => ReactNode
-  /** Props for live scorecard */
-  scorecardProps?: {
-    siteArea?: number
-    efficiencyRatio?: number
-    floorToFloor?: number
-    plotRatio?: number
-    visible?: boolean
-  }
 }
 
 export function FeasibilityLayout({
-  renderMap,
+  renderOutput,
   children,
   renderFooter,
-  scorecardProps,
 }: FeasibilityLayoutProps) {
   const [layers, setLayers] = useState<string[]>(['zoning'])
 
@@ -45,159 +29,82 @@ export function FeasibilityLayout({
   }
 
   return (
-    <div
-      className="feasibility-split-layout"
-      style={{
-        position: 'relative',
-        width: '100%',
-        height: 'calc(100vh - 140px)', // Account for AppShell header
-        overflow: 'hidden',
-        display: 'flex',
-      }}
-    >
-      {/*
-        Full Screen Map Backdrop
-        The map takes up the entire container. The sidebar floats on top.
-      */}
-      <div
-        className="feasibility-split-layout__map-backdrop"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 1,
-        }}
-      >
-        {renderMap()}
-      </div>
-
-      {/*
-        Floating Glass Sidebar
-        Positioned on the left with margin.
-      */}
-      <aside
-        className="feasibility-split-layout__sidebar ob-card-module"
-        style={{
-          position: 'relative',
-          zIndex: 10,
-          width: '420px',
-          height: 'calc(100% - 32px)', // Top/Bottom margin
-          margin: '16px 0 16px 24px', // Floating margin
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0',
-          overflow: 'hidden',
-          // Glass styling now comes from ob-card-module class
-          // with cyan top edge accent
-        }}
-        data-testid="feasibility-controls"
-      >
-        {/* Scrollable Content Area */}
-        <div
-          className="feasibility-split-layout__scroll-content"
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '24px',
-            scrollbarWidth: 'thin',
-          }}
+    <div className="feasibility-workspace">
+      <div className="feasibility-workspace__grid">
+        <aside
+          className="feasibility-workspace__sidebar"
+          data-testid="feasibility-controls"
         >
-          {children}
-        </div>
-
-        {/* Sticky Footer for "Run Simulation" */}
-        {renderFooter && (
-          <div
-            className="feasibility-split-layout__footer"
-            style={{
-              flex: '0 0 auto',
-              padding: '16px 24px 24px',
-              background:
-                'linear-gradient(to top, rgba(20, 20, 25, 0.95), rgba(20, 20, 25, 0.0))', // Fade in
-              zIndex: 20,
-            }}
-          >
-            {renderFooter()}
+          <div className="feasibility-workspace__sidebar-scroll">
+            {children}
           </div>
-        )}
-      </aside>
+          {renderFooter && (
+            <div className="feasibility-workspace__sidebar-footer">
+              {renderFooter()}
+            </div>
+          )}
+        </aside>
 
-      {/* Live Feasibility Scorecard (Top Right, offset) */}
-      {scorecardProps && (
-        <LiveScorecard
-          siteArea={scorecardProps.siteArea}
-          efficiencyRatio={scorecardProps.efficiencyRatio}
-          floorToFloor={scorecardProps.floorToFloor}
-          plotRatio={scorecardProps.plotRatio}
-          visible={scorecardProps.visible}
-        />
-      )}
-
-      {/* Floating Layer Controls (Top Right) */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: '24px',
-          right: '24px',
-          zIndex: 20,
-        }}
-      >
-        <Paper
-          elevation={0}
-          className="ob-glass"
-          sx={{
-            borderRadius: 'var(--ob-radius-sm)',
-            overflow: 'hidden',
-            color: 'white',
-          }}
-        >
-          <ToggleButtonGroup
-            value={layers}
-            onChange={handleLayerChange}
-            aria-label="map layers"
-            orientation="vertical"
-            size="small"
-            sx={{
-              '& .MuiToggleButton-root': {
-                color: 'rgba(255,255,255,0.7)',
-                border: 'none',
-                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                '&.Mui-selected': {
-                  color: '#06b6d4', // Cyan
-                  background: 'rgba(6, 182, 212, 0.15)',
-                  '&:hover': {
-                    background: 'rgba(6, 182, 212, 0.25)',
+        <section className="feasibility-workspace__main">
+          {renderOutput(layers)}
+          <div className="feasibility-workspace__layer-controls">
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 'var(--ob-radius-sm)',
+                overflow: 'hidden',
+                background: 'var(--ob-color-bg-surface)',
+                border: '1px solid var(--ob-color-border-subtle)',
+                backdropFilter: 'blur(var(--ob-blur-md))',
+              }}
+            >
+              <ToggleButtonGroup
+                value={layers}
+                onChange={handleLayerChange}
+                aria-label="visualization layers"
+                orientation="vertical"
+                size="small"
+                sx={{
+                  '& .MuiToggleButton-root': {
+                    color: 'var(--ob-color-text-secondary)',
+                    border: 'none',
+                    borderBottom: '1px solid var(--ob-color-border-subtle)',
+                    '&.Mui-selected': {
+                      color: 'var(--ob-color-brand-primary)',
+                      background: 'var(--ob-color-brand-soft)',
+                      '&:hover': {
+                        background: 'var(--ob-color-brand-muted)',
+                      },
+                    },
+                    '&:hover': {
+                      background: 'var(--ob-color-action-hover)',
+                    },
+                    '&:last-child': {
+                      borderBottom: 'none',
+                    },
                   },
-                },
-                '&:hover': {
-                  background: 'rgba(255,255,255,0.1)',
-                },
-                '&:last-child': {
-                  borderBottom: 'none',
-                },
-              },
-            }}
-          >
-            <Tooltip title="Zoning Envelope" placement="left">
-              <ToggleButton value="zoning" aria-label="zoning envelope">
-                <Layers fontSize="small" />
-              </ToggleButton>
-            </Tooltip>
-            <Tooltip title="Structural Grid" placement="left">
-              <ToggleButton value="structure" aria-label="structural grid">
-                <GridOn fontSize="small" />
-              </ToggleButton>
-            </Tooltip>
-            <Tooltip title="MEP Risers" placement="left">
-              <ToggleButton value="mep" aria-label="mep risers">
-                <Plumbing fontSize="small" />
-              </ToggleButton>
-            </Tooltip>
-          </ToggleButtonGroup>
-        </Paper>
-      </Box>
+                }}
+              >
+                <Tooltip title="Zoning Envelope" placement="left">
+                  <ToggleButton value="zoning" aria-label="zoning envelope">
+                    <Layers fontSize="small" />
+                  </ToggleButton>
+                </Tooltip>
+                <Tooltip title="Structural Grid" placement="left">
+                  <ToggleButton value="structure" aria-label="structural grid">
+                    <GridOn fontSize="small" />
+                  </ToggleButton>
+                </Tooltip>
+                <Tooltip title="MEP Risers" placement="left">
+                  <ToggleButton value="mep" aria-label="mep risers">
+                    <Plumbing fontSize="small" />
+                  </ToggleButton>
+                </Tooltip>
+              </ToggleButtonGroup>
+            </Paper>
+          </div>
+        </section>
+      </div>
     </div>
   )
 }

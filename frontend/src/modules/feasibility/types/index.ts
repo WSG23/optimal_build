@@ -105,6 +105,8 @@ export interface GenerativeOption {
   value: GenerativeStrategy
   label: string
   description: string
+  efficiency: number // Efficiency ratio preset (percentage)
+  f2f: number // Floor-to-floor preset (meters)
   icon?: string // Placeholder for icon name or component
 }
 
@@ -113,21 +115,29 @@ export const GENERATIVE_OPTIONS: readonly GenerativeOption[] = [
     value: 'max_density',
     label: 'Max Density',
     description: 'Maximize GFA and efficiency.',
+    efficiency: 92,
+    f2f: 3.2,
   },
   {
     value: 'balanced',
     label: 'Balanced',
     description: 'Optimal trade-off between GFA and open space.',
+    efficiency: 85,
+    f2f: 3.5,
   },
   {
     value: 'iconic',
     label: 'Iconic Form',
     description: 'Unique geometry causing high visual impact.',
+    efficiency: 75,
+    f2f: 4.0,
   },
   {
     value: 'green_focus',
     label: 'Eco-First',
     description: 'Prioritizing sustainability and biophilia.',
+    efficiency: 70,
+    f2f: 3.6,
   },
 ] as const
 

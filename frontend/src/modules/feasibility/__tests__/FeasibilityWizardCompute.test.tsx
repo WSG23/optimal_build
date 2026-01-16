@@ -25,6 +25,14 @@ vi.mock('../../../api/feasibility', () => ({
   }),
 }))
 
+vi.mock('../../../contexts/useProject', () => ({
+  useProject: () => ({
+    currentProject: { id: 'proj-1', name: 'Test Project' },
+    isProjectLoading: false,
+    projectError: null,
+  }),
+}))
+
 describe('FeasibilityWizard Compute Flow', () => {
   beforeEach(() => {
     cleanup()
@@ -84,7 +92,6 @@ describe('FeasibilityWizard Compute Flow', () => {
     expect(callArgs.project.siteAddress).toBe('123 Main St')
     expect(callArgs.project.siteAreaSqm).toBe(1000)
     expect(callArgs.project.landUse).toBe('Commercial')
-    // Name is generated
-    expect(callArgs.project.name).toBe('Project 123 Main St')
+    expect(callArgs.project.name).toBe('Test Project')
   }, 30_000)
 })

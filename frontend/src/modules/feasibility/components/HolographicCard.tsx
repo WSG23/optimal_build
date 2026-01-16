@@ -7,8 +7,8 @@ const CardButton = styled('button')<{ selected?: boolean }>(({ selected }) => ({
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  padding: 'var(--ob-space-100) var(--ob-space-075)',
-  gap: 'var(--ob-space-050)',
+  padding: 'var(--ob-space-075) var(--ob-space-050)',
+  gap: 'var(--ob-space-025)',
   background: selected
     ? `linear-gradient(135deg, rgba(var(--ob-color-brand-primary-emphasis-rgb), 0.15) 0%, rgba(var(--ob-color-brand-soft-rgb), 0.15) 100%), var(--ob-surface-glass-1)`
     : 'var(--ob-surface-glass-1)',
@@ -59,7 +59,7 @@ const CostBadge = styled('div')({
 })
 
 const IconWrap = styled('div')<{ selected?: boolean }>(({ selected }) => ({
-  fontSize: 'var(--ob-font-size-3xl)',
+  fontSize: 'var(--ob-font-size-2xl)',
   lineHeight: 'var(--ob-line-height-none)',
   filter: selected
     ? `drop-shadow(0 0 var(--ob-space-050) rgba(var(--ob-color-brand-primary-emphasis-rgb), 0.6))`

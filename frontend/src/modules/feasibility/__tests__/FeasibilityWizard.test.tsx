@@ -13,6 +13,14 @@ import { TranslationProvider } from '../../../i18n'
 import { ThemeModeProvider } from '../../../theme/ThemeContext'
 import { FeasibilityWizard } from '../FeasibilityWizard'
 
+vi.mock('../../../contexts/useProject', () => ({
+  useProject: () => ({
+    currentProject: { id: 'proj-1', name: 'Test Project' },
+    isProjectLoading: false,
+    projectError: null,
+  }),
+}))
+
 describe('FeasibilityWizard marketing pack integration', () => {
   beforeEach(() => {
     cleanup()

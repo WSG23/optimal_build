@@ -1,6 +1,6 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Snackbar, Alert } from '@mui/material'
+import { Snackbar, Alert, CircularProgress, Box } from '@mui/material'
 
 import { AppLayout } from '../../App'
 import {
@@ -8,21 +8,22 @@ import {
   type ProfessionalPackType,
 } from '../../api/agents'
 import { useTranslation } from '../../i18n'
-import { useRouterLocation } from '../../router'
+import { useRouterController, useRouterLocation } from '../../router'
+import { useProject } from '../../contexts/useProject'
+import { loadCaptureForProject } from '../../app/pages/capture/utils/captureStorage'
+import type { SiteAcquisitionResult } from '../../api/siteAcquisition'
 
 import {
-  AddressForm,
   AssumptionsPanel,
   FinancialSettingsPanel,
   PackGenerationPanel,
-  ResultsPanel,
   FeasibilityLayout,
   SmartIntelligenceField,
   PackGrid,
   ScenarioHistorySidebar,
   GenerativeDesignPanel,
   AIAssistantSidebar,
-  ImmersiveMap,
+  FeasibilityOutputPanel,
   ScenarioSelector,
   type HistoryItem,
 } from './components'
@@ -68,6 +69,10 @@ export function FeasibilityWizard({
 }: FeasibilityWizardProps = {}) {
   const { t, i18n } = useTranslation()
   const { search: routerSearch } = useRouterLocation()
+  const { navigate } = useRouterController()
+  const { currentProject, isProjectLoading, projectError } = useProject()
+  const projectId = currentProject?.id ?? ''
+  const projectName = currentProject?.name ?? ''
 
   // Address state
   const [addressInput, setAddressInput] = useState('')
@@ -93,6 +98,9 @@ export function FeasibilityWizard({
   const [generativeStrategy, setGenerativeStrategy] =
     useState<GenerativeStrategy | null>(null)
 
+  // VDR Upload State
+  const [vdrUploadEnabled, setVdrUploadEnabled] = useState(false)
+
   // Custom hooks
   const {
     assumptionInputs,
@@ -112,6 +120,7 @@ export function FeasibilityWizard({
 
   const {
     result,
+    assessment,
     status,
     errorMessage,
     liveAnnouncement,
@@ -119,6 +128,50 @@ export function FeasibilityWizard({
     setPayload,
     updatePayloadAssumptions,
   } = useFeasibilityCompute({ t })
+
+  const [captureResult, setCaptureResult] =
+    useState<SiteAcquisitionResult | null>(null)
+
+  useEffect(() => {
+    if (!projectId) {
+      setCaptureResult(null)
+      return
+    }
+    setCaptureResult(loadCaptureForProject(projectId))
+  }, [projectId])
+
+  useEffect(() => {
+    if (!captureResult) {
+      return
+    }
+    if (!addressInput && captureResult.address?.fullAddress) {
+      setAddressInput(captureResult.address.fullAddress)
+    }
+    if (!siteAreaInput && captureResult.buildEnvelope?.siteAreaSqm) {
+      setSiteAreaInput(
+        String(Math.round(captureResult.buildEnvelope.siteAreaSqm)),
+      )
+    }
+  }, [addressInput, captureResult, siteAreaInput])
+
+  const activeSiteLabel = useMemo(() => {
+    if (captureResult?.address?.fullAddress) {
+      return captureResult.address.fullAddress
+    }
+    return 'No capture yet'
+  }, [captureResult])
+
+  const activeSiteDistrict = captureResult?.address?.district ?? null
+  const captureLinkLabel = captureResult?.propertyId
+    ? 'View Capture'
+    : 'Go to Capture'
+
+  const handleCaptureLink = useCallback(() => {
+    if (!projectId) {
+      return
+    }
+    navigate(`/projects/${projectId}/capture`)
+  }, [navigate, projectId])
 
   const propertyIdFromQuery = useMemo(() => {
     if (!routerSearch) {
@@ -138,8 +191,6 @@ export function FeasibilityWizard({
     packSummary,
     packLoading,
     packError,
-    capturedAssetMix,
-    capturedFinancialSummary,
     handlePackSubmit,
     setPackPropertyId,
     setPackType,
@@ -211,11 +262,10 @@ export function FeasibilityWizard({
         // Maybe structureType = mass_timber if we could
         break
     }
-    // Set to null to avoid infinite loops if user manually changes back,
-    // or keep it selected to show active mode?
-    // For now, let's keep it but we need to be careful not to loop.
-    // Actually, improved UX: just one-time apply.
-    setGenerativeStrategy(null)
+    // Keep the strategy selected to show which presets are applied.
+    // The useEffect dependency on generativeStrategy is safe because
+    // we only update assumptions when a NEW strategy is selected
+    // (different from the current one), preventing infinite loops.
 
     // Trigger submit to refresh results
     // We can't easily trigger handleSubmit (event) from here.
@@ -275,13 +325,6 @@ export function FeasibilityWizard({
     [],
   )
 
-  const handleLandUseChange = useCallback(
-    (event: ChangeEvent<HTMLSelectElement>) => {
-      setLandUseInput(event.target.value)
-    },
-    [],
-  )
-
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault()
@@ -310,7 +353,7 @@ export function FeasibilityWizard({
 
       setAddressError(null)
       const newPayload: PendingPayload = {
-        name: `Project ${trimmed}`,
+        name: projectName.trim() || `Project ${trimmed}`,
         address: trimmed,
         siteAreaSqm: siteArea,
         landUse: landUseInput,
@@ -334,6 +377,7 @@ export function FeasibilityWizard({
       landUseInput,
       appliedAssumptions,
       appliedFinancials,
+      projectName,
       setPayload,
       t,
     ],
@@ -504,46 +548,78 @@ export function FeasibilityWizard({
     </div>
   )
 
-  const wizardBody = (
-    <div className="feasibility-wizard" data-testid="feasibility-wizard">
-      <div className="feasibility-wizard__layout">
-        <section className="feasibility-wizard__controls-transparent">
-          <AddressForm
-            addressInput={addressInput}
-            addressError={addressError}
-            status={status}
-            onAddressChange={handleAddressChange}
-            onSubmit={handleSubmit}
-            t={t}
-            siteAreaInput={siteAreaInput}
-            onSiteAreaChange={handleSiteAreaChange}
-            hideAddress={true}
-            hideSubmit={true}
-          />
+  const renderOutput = (activeLayers: string[]) => (
+    <div className="feasibility-output-stack">
+      <FeasibilityOutputPanel
+        status={status}
+        assessment={assessment}
+        result={result}
+        captureResult={captureResult}
+        activeSiteLabel={activeSiteLabel}
+        numberFormatter={numberFormatter}
+        oneDecimalFormatter={oneDecimalFormatter}
+        activeLayers={activeLayers}
+      />
 
-          <AssumptionsPanel
-            assumptionInputs={assumptionInputs}
-            assumptionErrors={assumptionErrors}
-            decimalFormatter={decimalFormatter}
-            onAssumptionChange={handleAssumptionChange}
-            onResetAssumptions={handleResetAssumptions}
-            landUseInput={landUseInput}
-            onLandUseChange={handleLandUseChange}
-            t={t}
+      {result && (
+        <section className="feasibility-output-packs">
+          <h3 className="feasibility-section__title">Document Packs</h3>
+          <PackGrid
+            value={packType}
+            onChange={setPackType}
+            options={[
+              {
+                value: 'universal',
+                label: 'Universal Pack',
+                description: 'Site plan & zoning',
+              },
+              {
+                value: 'investment',
+                label: 'Investment Memo',
+                description: 'Financial model & ROI',
+              },
+              {
+                value: 'sales',
+                label: 'Sales Brochure',
+                description: 'Buyer-ready visuals',
+              },
+              {
+                value: 'lease',
+                label: 'Leasing Deck',
+                description: 'Floor efficiency & tenant mix',
+              },
+            ]}
           />
-
-          {/* New Financial Settings Panel */}
-          <FinancialSettingsPanel
-            financialInputs={financialInputs}
-            financialErrors={financialErrors}
-            onFinancialChange={handleFinancialChange}
-          />
-
-          <GenerativeDesignPanel
-            selectedStrategy={generativeStrategy}
-            onSelectStrategy={setGenerativeStrategy}
-            loading={status === 'loading'}
-          />
+          <div className="feasibility-pack__actions">
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleGeneratePack}
+              disabled={packGenerating}
+              startIcon={
+                packGenerating ? (
+                  <span className="feasibility-pack__spinner" />
+                ) : (
+                  <PdfIcon />
+                )
+              }
+              sx={{
+                fontFamily: 'var(--ob-font-family-base)',
+                textTransform: 'none',
+                fontWeight: 'var(--ob-font-weight-semibold)',
+                boxShadow: 'var(--ob-shadow-md)',
+                borderRadius: 'var(--ob-radius-xs)',
+                background: 'var(--ob-color-brand-primary)',
+                '&:hover': {
+                  background: 'var(--ob-color-brand-primary-strong)',
+                },
+              }}
+            >
+              {packGenerating
+                ? 'Generating Preview...'
+                : 'Preview & Generate Pack'}
+            </Button>
+          </div>
 
           <PackGenerationPanel
             packPropertyId={packPropertyId}
@@ -559,18 +635,169 @@ export function FeasibilityWizard({
             t={t}
           />
         </section>
+      )}
+    </div>
+  )
 
-        <ResultsPanel
-          status={status}
-          result={result}
-          errorMessage={null} // Error handled by Toast
-          capturedAssetMix={capturedAssetMix}
-          capturedFinancialSummary={capturedFinancialSummary}
-          numberFormatter={numberFormatter}
-          oneDecimalFormatter={oneDecimalFormatter}
-          t={t}
-        />
-      </div>
+  const emptyState = (
+    <Box sx={{ width: '100%' }}>
+      {isProjectLoading ? (
+        <CircularProgress size={24} />
+      ) : (
+        <Alert severity={projectError ? 'error' : 'info'}>
+          {projectError?.message ??
+            'Select a project to run feasibility analysis.'}
+        </Alert>
+      )}
+    </Box>
+  )
+
+  const wizardBody = (
+    <div className="feasibility-wizard" data-testid="feasibility-wizard">
+      <FeasibilityLayout
+        renderOutput={renderOutput}
+        renderFooter={() => (
+          <div className="feasibility-actions">
+            <button
+              data-testid="compute-button"
+              onClick={() => {
+                const syntheticEvent = {
+                  preventDefault: () => {},
+                } as FormEvent<HTMLFormElement>
+                handleSubmit(syntheticEvent)
+              }}
+              disabled={status === 'loading'}
+              className="feasibility-actions__compute-btn"
+            >
+              {status === 'loading' ? (
+                <>
+                  <span className="feasibility-actions__spinner" />
+                  <span>Scanning Site...</span>
+                </>
+              ) : (
+                <>
+                  <Radar className="feasibility-actions__radar-icon" />
+                  <span>RUN SIMULATION</span>
+                </>
+              )}
+              <div className="feasibility-actions__glow-effect" />
+            </button>
+          </div>
+        )}
+      >
+        <div className="feasibility-wizard__sidebar-content">
+          {currentProject && (
+            <div className="feasibility-project-card">
+              <div className="feasibility-project-card__section">
+                <span className="feasibility-project-card__label">Project</span>
+                <span className="feasibility-project-card__name">
+                  {currentProject.name}
+                </span>
+              </div>
+              <div className="feasibility-project-card__section">
+                <span className="feasibility-project-card__label">
+                  Active Site
+                </span>
+                <span className="feasibility-project-card__site">
+                  {activeSiteLabel}
+                </span>
+                {activeSiteDistrict ? (
+                  <span className="feasibility-project-card__meta">
+                    {activeSiteDistrict}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={handleCaptureLink}
+                  className="feasibility-project-card__link"
+                >
+                  {captureLinkLabel} →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Section 0: Smart Intelligence Field (Merged Address/Area/Zoning) */}
+          <SmartIntelligenceField
+            value={addressInput}
+            siteArea={siteAreaInput ? Number(siteAreaInput) : undefined}
+            zoning={landUseInput}
+            onChange={handleAddressChange}
+            onSubmit={(e: FormEvent<HTMLFormElement>) => {
+              e.preventDefault()
+              handleSubmit(e)
+            }}
+            loading={status === 'loading'}
+            error={addressError}
+            onSuggestionSelect={(suggestion: {
+              address: string
+              siteArea: number
+              zoning: string
+            }) => {
+              setAddressInput(suggestion.address)
+              setSiteAreaInput(suggestion.siteArea.toString())
+              setLandUseInput(suggestion.zoning)
+              setAddressError(null)
+            }}
+          />
+
+          {/* Section 1: Site Details - Flat (no wrapper surface) */}
+          <section className="feasibility-section feasibility-section--flat">
+            <h3 className="feasibility-section__title">Site Details</h3>
+            <div className="feasibility-form__field">
+              <label className="feasibility-form__label">
+                {t('wizard.form.siteAreaLabel') || 'Site Area (sqm)'}
+              </label>
+              <input
+                type="number"
+                value={siteAreaInput}
+                onChange={handleSiteAreaChange}
+                placeholder="e.g. 1000"
+                data-testid="site-area-input"
+              />
+            </div>
+            <div className="feasibility-form__field feasibility-form__field--spaced">
+              <label className="feasibility-form__label feasibility-form__label--block">
+                {t('wizard.form.landUseLabel') || 'Zoning / Land Use'}
+              </label>
+              <ScenarioSelector
+                value={landUseInput}
+                onChange={(val) => setLandUseInput(val)}
+              />
+            </div>
+          </section>
+
+          {/* Section 2: Assumptions */}
+          <AssumptionsPanel
+            assumptionInputs={assumptionInputs}
+            assumptionErrors={assumptionErrors}
+            decimalFormatter={decimalFormatter}
+            onAssumptionChange={handleAssumptionChange}
+            onResetAssumptions={handleResetAssumptions}
+            t={t}
+          />
+
+          {/* Section 2b: Financial Settings */}
+          <FinancialSettingsPanel
+            financialInputs={financialInputs}
+            financialErrors={financialErrors}
+            onFinancialChange={handleFinancialChange}
+            vdrUploadEnabled={vdrUploadEnabled}
+            onVdrUploadToggle={setVdrUploadEnabled}
+          />
+
+          {/* Section 2c: Generative Design */}
+          <GenerativeDesignPanel
+            selectedStrategy={generativeStrategy}
+            onSelectStrategy={setGenerativeStrategy}
+            loading={status === 'loading'}
+          />
+
+          {/* Section 3: Computing Action - MOVED TO STICKY FOOTER */}
+
+          {/* Section 7: Scenario History (if open) - In a sidebar */}
+        </div>
+      </FeasibilityLayout>
 
       <Snackbar
         open={status === 'error'}
@@ -742,304 +969,26 @@ export function FeasibilityWizard({
     </div>
   )
 
-  // Render Maps
-  const renderMap = () => (
-    <div style={{ height: '100%', width: '100%' }}>
-      <ImmersiveMap
-        latitude={1.285}
-        longitude={103.854}
-        onCoordinatesChange={(lat, lon) => console.log('Map coords:', lat, lon)}
-        showCentralCTA={status === 'idle' && !addressInput}
-        onAddressSearch={(address) => {
-          setAddressInput(address)
-          // Auto-trigger search when user enters address from central CTA
-          if (address.trim()) {
-            setAddressError(null)
-          }
-        }}
-      />
-    </div>
-  )
-
-  // Note: PropertyLocationMap is imported at the top of the file in the full implementation
-  // We need to ensure we import it. Since this is a partial replace, I'll add the layout usage.
-
   if (!withLayout) {
     return (
       <div className="feasibility-wizard__container">
-        {headerActions}
-        {wizardBody}
+        {projectId ? (
+          <div className="feasibility-wizard__header-actions">
+            {headerActions}
+          </div>
+        ) : null}
+        {projectId ? wizardBody : emptyState}
       </div>
     )
   }
-
-  // To properly implement the split screen, we need to completely restructure the return.
-  // I will return the new FeasibilityLayout structure.
 
   return (
     <AppLayout
       title={t('wizard.title')}
       subtitle={t('wizard.description')}
-      actions={headerActions}
+      actions={projectId ? headerActions : undefined}
     >
-      <FeasibilityLayout
-        renderMap={renderMap}
-        scorecardProps={{
-          siteArea: parseFloat(siteAreaInput) || 0,
-          efficiencyRatio: appliedAssumptions.efficiencyRatio,
-          floorToFloor: appliedAssumptions.typFloorToFloorM,
-          plotRatio: 2.8, // Could be made dynamic based on zoning
-          visible: !!siteAreaInput && parseFloat(siteAreaInput) > 0,
-        }}
-        renderFooter={() => (
-          <div className="feasibility-actions">
-            <button
-              data-testid="compute-button"
-              onClick={() => {
-                const syntheticEvent = {
-                  preventDefault: () => {},
-                } as FormEvent<HTMLFormElement>
-                handleSubmit(syntheticEvent)
-              }}
-              disabled={status === 'loading'}
-              className="feasibility-actions__compute-btn"
-            >
-              {status === 'loading' ? (
-                <>
-                  <span className="feasibility-actions__spinner" />
-                  <span>Scanning Site...</span>
-                </>
-              ) : (
-                <>
-                  <Radar className="feasibility-actions__radar-icon" />
-                  <span>RUN SIMULATION</span>
-                </>
-              )}
-              <div className="feasibility-actions__glow-effect" />
-            </button>
-          </div>
-        )}
-      >
-        <div className="feasibility-wizard__sidebar-content">
-          {/* Section 0: Smart Intelligence Field (Merged Address/Area/Zoning) */}
-          <div className="ob-section-gap">
-            <SmartIntelligenceField
-              value={addressInput}
-              siteArea={siteAreaInput ? Number(siteAreaInput) : undefined}
-              zoning={landUseInput}
-              onChange={handleAddressChange}
-              onSubmit={(e: FormEvent<HTMLFormElement>) => {
-                e.preventDefault()
-                handleSubmit(e)
-              }}
-              loading={status === 'loading'}
-              error={addressError}
-              onSuggestionSelect={(suggestion: {
-                address: string
-                siteArea: number
-                zoning: string
-              }) => {
-                setAddressInput(suggestion.address)
-                setSiteAreaInput(suggestion.siteArea.toString())
-                setLandUseInput(suggestion.zoning)
-                setAddressError(null)
-              }}
-            />
-          </div>
-          {/* Section 1: Site Details - Depth 1 Glass Card */}
-          <div className="feasibility-section ob-card-module ob-section-gap">
-            <h3 className="feasibility-section__title">
-              {t('wizard.steps.siteDetails')}
-            </h3>
-            <div className="feasibility-form__field">
-              <label className="feasibility-form__label">
-                {t('wizard.form.siteArea')}
-              </label>
-              <input
-                type="number"
-                value={siteAreaInput}
-                onChange={handleSiteAreaChange}
-                placeholder="e.g. 1000"
-                data-testid="site-area-input"
-              />
-            </div>
-            <div className="feasibility-form__field feasibility-form__field--spaced">
-              <label className="feasibility-form__label feasibility-form__label--block">
-                {t('wizard.form.landUse')}
-              </label>
-              <ScenarioSelector
-                value={landUseInput}
-                onChange={(val) => setLandUseInput(val)}
-              />
-            </div>
-          </div>
-
-          {/* Section 2: Assumptions - Depth 1 Glass Card */}
-          <div className="feasibility-section ob-card-module ob-section-gap">
-            <AssumptionsPanel
-              assumptionInputs={assumptionInputs}
-              assumptionErrors={assumptionErrors}
-              decimalFormatter={decimalFormatter}
-              onAssumptionChange={handleAssumptionChange}
-              onResetAssumptions={handleResetAssumptions}
-              t={t}
-            />
-          </div>
-
-          {/* Section 2b: Financial Settings - Depth 1 Glass Card */}
-          <div className="feasibility-section ob-card-module ob-section-gap">
-            <FinancialSettingsPanel
-              financialInputs={financialInputs}
-              financialErrors={financialErrors}
-              onFinancialChange={handleFinancialChange}
-            />
-          </div>
-
-          {/* Section 3: Computing Action - MOVED TO STICKY FOOTER */}
-
-          {/* Section 4: Results (Dynamic) - Depth 1 Glass Card */}
-          {result && (
-            <div className="feasibility-section ob-card-module ob-section-gap">
-              <ResultsPanel
-                status={status}
-                result={result}
-                errorMessage={null}
-                capturedAssetMix={capturedAssetMix}
-                capturedFinancialSummary={capturedFinancialSummary}
-                numberFormatter={numberFormatter}
-                oneDecimalFormatter={oneDecimalFormatter}
-                t={t}
-              />
-            </div>
-          )}
-
-          {/* Section 5: Packs - Depth 1 Glass Card */}
-          {result && (
-            <div className="feasibility-section ob-card-module ob-section-gap">
-              <PackGrid
-                value={packType}
-                onChange={setPackType}
-                options={[
-                  {
-                    value: 'universal',
-                    label: 'Universal Pack',
-                    description: 'Site plan & zoning',
-                  },
-                  {
-                    value: 'investment',
-                    label: 'Investment Memo',
-                    description: 'Financial model & ROI',
-                  },
-                  {
-                    value: 'sales',
-                    label: 'Sales Brochure',
-                    description: 'Buyer-ready visuals',
-                  },
-                  {
-                    value: 'lease',
-                    label: 'Leasing Deck',
-                    description: 'Floor efficiency & tenant mix',
-                  },
-                ]}
-              />
-              <div className="feasibility-pack__actions">
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleGeneratePack}
-                  disabled={packGenerating}
-                  startIcon={
-                    packGenerating ? (
-                      <span className="feasibility-pack__spinner" />
-                    ) : (
-                      <PdfIcon />
-                    )
-                  }
-                  sx={{
-                    fontFamily: 'var(--ob-font-family-base)',
-                    textTransform: 'none',
-                    fontWeight: 'var(--ob-font-weight-semibold)',
-                    boxShadow: 'var(--ob-shadow-md)',
-                    borderRadius: 'var(--ob-radius-xs)',
-                    background: 'var(--ob-color-brand-primary)',
-                    '&:hover': {
-                      background: 'var(--ob-color-brand-primary-strong)',
-                    },
-                  }}
-                >
-                  {packGenerating
-                    ? 'Generating Preview...'
-                    : 'Preview & Generate Pack'}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Flipbook Preview Modal */}
-          <Dialog
-            open={isPreviewOpen}
-            onClose={() => setIsPreviewOpen(false)}
-            maxWidth="md"
-            fullWidth
-            PaperProps={{
-              sx: { borderRadius: 'var(--ob-radius-lg)', overflow: 'hidden' },
-            }}
-          >
-            <DialogTitle className="feasibility-preview__header">
-              <span>
-                Pack Preview:{' '}
-                {packType.charAt(0).toUpperCase() + packType.slice(1)}
-              </span>
-              <Typography variant="caption" color="text.secondary">
-                LIVE GENERATION
-              </Typography>
-            </DialogTitle>
-            <DialogContent className="feasibility-preview__content">
-              <div className="feasibility-preview__flipbook">
-                <div className="feasibility-preview__cover">
-                  <span className="feasibility-preview__cover-icon">🏢</span>
-                </div>
-                <div className="feasibility-preview__body">
-                  <Typography variant="h6" gutterBottom>
-                    {addressInput || 'Site Address'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Optimal Build Professional Pack
-                  </Typography>
-                  <div className="feasibility-preview__accent-bar" />
-                </div>
-                <div className="feasibility-preview__footer">
-                  <span className="feasibility-preview__meta">
-                    GENERATED: {new Date().toLocaleDateString()}
-                  </span>
-                  <span className="feasibility-preview__meta">PAGE 1/12</span>
-                </div>
-              </div>
-            </DialogContent>
-            <DialogActions className="feasibility-preview__actions">
-              <Button
-                onClick={() => setIsPreviewOpen(false)}
-                sx={{ color: 'text.secondary' }}
-              >
-                Close
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<DownloadIcon />}
-                onClick={() =>
-                  generatePackFn?.(
-                    propertyIdFromQuery || 'demo',
-                    packType as ProfessionalPackType,
-                  )
-                }
-                sx={{ borderRadius: 'var(--ob-radius-xs)' }}
-              >
-                Download PDF
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </div>
-      </FeasibilityLayout>
+      {projectId ? wizardBody : emptyState}
     </AppLayout>
   )
 }

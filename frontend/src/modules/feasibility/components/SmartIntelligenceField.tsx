@@ -52,26 +52,10 @@ export function SmartIntelligenceField({
       className="smart-search-wrapper"
       style={{ position: 'relative', width: '100%' }}
     >
-      <form
-        className="smart-search"
-        onSubmit={onSubmit}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(var(--ob-blur-md))',
-          borderRadius: '6px', // Input shape
-          padding: '8px 16px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          transition: 'all 0.3s ease',
-          width: '100%',
-          position: 'relative',
-        }}
-      >
+      <form className="smart-search" onSubmit={onSubmit}>
         <Search
           className="smart-search__icon"
-          sx={{ color: 'var(--ob-color-text-muted)', marginRight: '12px' }}
+          sx={{ color: 'var(--ob-color-text-muted)' }}
         />
 
         <div
@@ -92,13 +76,6 @@ export function SmartIntelligenceField({
             disabled={loading}
             data-testid="address-input"
             style={{
-              border: 'none',
-              background: 'transparent',
-              fontSize: '1rem',
-              width: '100%',
-              outline: 'none',
-              color: 'var(--ob-color-text-body)',
-              height: '32px',
               paddingRight: hasAutoData ? '200px' : '0', // Make space for badges
             }}
           />
@@ -122,14 +99,14 @@ export function SmartIntelligenceField({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
-                  background: 'linear-gradient(135deg, #e0f2fe, #dbeafe)',
-                  color: '#0284c7',
+                  background: 'var(--ob-color-info-soft)',
+                  color: 'var(--ob-info-600)',
                   padding: '4px 8px',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-xs)',
                   fontSize: '0.75rem',
                   fontWeight: 700,
-                  border: '1px solid #bfdbfe',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                  border: '1px solid var(--ob-color-border-subtle)',
+                  boxShadow: 'var(--ob-shadow-sm)',
                 }}
               >
                 <AutoAwesome sx={{ fontSize: 12 }} />
@@ -137,13 +114,13 @@ export function SmartIntelligenceField({
               </div>
               <div
                 style={{
-                  background: '#f3f4f6',
-                  color: '#4b5563',
+                  background: 'var(--ob-color-bg-surface-elevated)',
+                  color: 'var(--ob-color-text-secondary)',
                   padding: '4px 8px',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-xs)',
                   fontSize: '0.75rem',
                   fontWeight: 600,
-                  border: '1px solid #e5e7eb',
+                  border: '1px solid var(--ob-color-border-subtle)',
                 }}
               >
                 {zoning}
@@ -152,118 +129,33 @@ export function SmartIntelligenceField({
           </Fade>
         </div>
 
-        {loading ? (
-          <div
-            className="smart-search__loader"
-            style={{
-              width: '20px',
-              height: '20px',
-              border: '2px solid var(--ob-color-brand-primary)',
-              borderTopColor: 'transparent',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              marginLeft: '8px',
-            }}
-          />
-        ) : null}
+        {loading ? <div className="smart-search__loader" /> : null}
       </form>
-      {error && (
-        <div
-          className="smart-search__error"
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: '24px',
-            marginTop: '8px',
-            background: '#fee2e2',
-            color: '#dc2626',
-            padding: '4px 12px',
-            borderRadius: '6px',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-          }}
-        >
-          {error}
-        </div>
-      )}
+      {error && <div className="smart-search__error">{error}</div>}
 
       {/* Mock Autocomplete Results */}
       {showSuggestions && (
-        <div
-          className="smart-search__suggestions"
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            marginTop: '8px',
-            background: 'white',
-            borderRadius: '4px',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-            padding: '8px',
-            zIndex: 100,
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              padding: '8px 12px',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              color: 'var(--ob-color-text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}
-          >
-            Suggestions
-          </div>
+        <div className="smart-search__suggestions">
+          <div className="smart-search__suggestions-header">Suggestions</div>
           {['Simulated Result 1', 'Simulated Result 2'].map((_, i) => (
             <div
               key={i}
-              style={{
-                padding: '12px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                transition: 'background 0.2s',
-              }}
-              className="suggestion-item"
+              className="smart-search__suggestion-item"
               onClick={() => handleSelect(i)}
             >
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
-              >
-                <span style={{ fontSize: '1.2rem' }}>📍</span>
+              <div className="smart-search__suggestion-left">
+                <span className="smart-search__suggestion-pin">📍</span>
                 <div>
-                  <div
-                    style={{
-                      fontWeight: 600,
-                      color: 'var(--ob-color-text-body)',
-                    }}
-                  >
+                  <div className="smart-search__suggestion-title">
                     {value} {i === 0 ? 'Street' : 'Avenue'}
                   </div>
-                  <div
-                    style={{
-                      fontSize: '0.8rem',
-                      color: 'var(--ob-color-text-muted)',
-                    }}
-                  >
+                  <div className="smart-search__suggestion-subtitle">
                     Singapore, District {9 + i}
                   </div>
                 </div>
               </div>
               <span
-                style={{
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  padding: '2px 8px',
-                  borderRadius: '4px',
-                  background: i === 0 ? '#e0f2fe' : '#fef3c7',
-                  color: i === 0 ? '#0284c7' : '#d97706',
-                }}
+                className={`smart-search__suggestion-badge ${i === 0 ? 'smart-search__suggestion-badge--info' : 'smart-search__suggestion-badge--warning'}`}
               >
                 {i === 0 ? 'COMMERCIAL' : 'RESIDENTIAL'}
               </span>

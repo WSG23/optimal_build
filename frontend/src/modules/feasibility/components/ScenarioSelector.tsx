@@ -11,37 +11,27 @@ export function ScenarioSelector({ value, onChange }: ScenarioSelectorProps) {
     {
       value: 'Mixed Use',
       label: 'Mixed Use',
-      icon: <Business />,
-      color: '#ec4899',
-    }, // Pink/Magenta
+      icon: <Business fontSize="small" />,
+    },
     {
       value: 'Residential',
       label: 'Residential',
-      icon: <HomeWork />,
-      color: '#3b82f6',
-    }, // Blue
+      icon: <HomeWork fontSize="small" />,
+    },
     {
       value: 'Commercial',
       label: 'Commercial',
-      icon: <Foundation />,
-      color: '#10b981',
-    }, // Emerald
+      icon: <Foundation fontSize="small" />,
+    },
     {
       value: 'Raw Land',
       label: 'Raw Land',
-      icon: <Landscape />,
-      color: '#f59e0b',
-    }, // Amber
+      icon: <Landscape fontSize="small" />,
+    },
   ]
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: '12px',
-      }}
-    >
+    <div className="scenario-selector">
       {options.map((option) => {
         const isSelected = value === option.value
         return (
@@ -49,61 +39,14 @@ export function ScenarioSelector({ value, onChange }: ScenarioSelectorProps) {
             key={option.value}
             type="button"
             onClick={() => onChange(option.value)}
-            style={{
-              background: isSelected
-                ? 'rgba(255, 255, 255, 0.1)'
-                : 'rgba(255, 255, 255, 0.03)',
-              border: `1px solid ${isSelected ? option.color : 'rgba(255, 255, 255, 0.1)'}`,
-              borderRadius: '4px',
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              boxShadow: isSelected
-                ? `0 0 20px ${option.color}40, inset 0 0 10px ${option.color}20`
-                : 'none',
-              height: '100px',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
+            className={`scenario-selector__option ${isSelected ? 'scenario-selector__option--selected' : ''}`}
+            aria-pressed={isSelected}
           >
-            {/* Icon */}
-            <div
-              style={{
-                color: isSelected ? option.color : 'rgba(255,255,255,0.7)',
-                transform: isSelected ? 'scale(1.1)' : 'scale(1)',
-                transition: 'transform 0.3s',
-              }}
-            >
-              {option.icon}
-            </div>
+            <span className="scenario-selector__icon">{option.icon}</span>
 
-            {/* Label */}
-            <Typography
-              variant="body2"
-              sx={{
-                color: isSelected ? 'white' : 'rgba(255,255,255,0.6)',
-                fontWeight: isSelected ? 600 : 400,
-                fontSize: '0.8rem',
-              }}
-            >
+            <Typography variant="body2" className="scenario-selector__label">
               {option.label}
             </Typography>
-
-            {/* Selection Glow */}
-            {isSelected && (
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: `radial-gradient(circle at center, ${option.color}15 0%, transparent 70%)`,
-                }}
-              />
-            )}
           </button>
         )
       })}

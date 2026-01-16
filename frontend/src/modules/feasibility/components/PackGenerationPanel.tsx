@@ -90,13 +90,13 @@ export function PackGenerationPanel({
         {/* VDR Toggle */}
         <div
           style={{
-            margin: '1rem 0',
+            margin: 'var(--ob-space-100) 0',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0.75rem',
+            padding: 'var(--ob-space-075)',
             background: 'var(--ob-color-bg-surface-secondary)',
-            borderRadius: 'var(--ob-radius-md)',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           <FormControlLabel
@@ -122,7 +122,7 @@ export function PackGenerationPanel({
                       : 'inherit',
                   }}
                 />
-                <span style={{ fontSize: '0.875rem' }}>
+                <span style={{ fontSize: 'var(--ob-font-size-sm)' }}>
                   Upload to Data Room
                 </span>
               </div>
@@ -192,16 +192,16 @@ export function PackGenerationPanel({
           {uploadToVdr && vdrStatus === 'success' && (
             <div
               style={{
-                marginTop: '1rem',
-                padding: '0.5rem',
-                background: '#e8f5e9',
-                border: '1px solid #c8e6c9',
-                borderRadius: '4px',
-                fontSize: '0.8rem',
-                color: '#2e7d32',
+                marginTop: 'var(--ob-space-100)',
+                padding: 'var(--ob-space-050)',
+                background: 'var(--ob-success-muted)',
+                border: '1px solid var(--ob-success-subtle)',
+                borderRadius: 'var(--ob-radius-sm)',
+                fontSize: 'var(--ob-font-size-xs)',
+                color: 'var(--ob-success-500)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                gap: 'var(--ob-space-050)',
               }}
             >
               <CloudUpload fontSize="small" />

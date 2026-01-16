@@ -1,5 +1,12 @@
-import { AutoAwesome } from '@mui/icons-material'
-import { Card, CardActionArea, Typography, Grid, Box } from '@mui/material'
+import { AutoAwesome, CheckCircle } from '@mui/icons-material'
+import {
+  Card,
+  CardActionArea,
+  Typography,
+  Grid,
+  Box,
+  Tooltip,
+} from '@mui/material'
 import type { GenerativeStrategy } from '../types'
 import { GENERATIVE_OPTIONS } from '../types'
 
@@ -17,17 +24,18 @@ const IsometricIcon = ({
   strategy: GenerativeStrategy
   selected: boolean
 }) => {
-  const baseColor = selected ? '#06b6d4' : '#64748b'
-  const highlightColor = selected ? '#22d3ee' : '#94a3b8'
+  const baseColor = selected ? '#06b6d4' : 'var(--ob-neutral-500)'
+  const highlightColor = selected ? '#22d3ee' : 'var(--ob-neutral-400)'
   const shadowColor = selected
     ? 'rgba(6, 182, 212, 0.3)'
     : 'rgba(100, 116, 139, 0.2)'
+  const iconSize = 32
 
   switch (strategy) {
     case 'max_density':
       // Tall dense tower cluster
       return (
-        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <svg width={iconSize} height={iconSize} viewBox="0 0 48 48" fill="none">
           <defs>
             <filter
               id="glow-density"
@@ -74,7 +82,7 @@ const IsometricIcon = ({
     case 'balanced':
       // Medium-height stepped building
       return (
-        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <svg width={iconSize} height={iconSize} viewBox="0 0 48 48" fill="none">
           <defs>
             <filter
               id="glow-balanced"
@@ -116,7 +124,7 @@ const IsometricIcon = ({
     case 'iconic':
       // Distinctive curved/angular form
       return (
-        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <svg width={iconSize} height={iconSize} viewBox="0 0 48 48" fill="none">
           <defs>
             <filter
               id="glow-iconic"
@@ -155,7 +163,7 @@ const IsometricIcon = ({
     case 'green_focus':
       // Building with terraces/greenery
       return (
-        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+        <svg width={iconSize} height={iconSize} viewBox="0 0 48 48" fill="none">
           <defs>
             <filter
               id="glow-green"
@@ -233,31 +241,36 @@ export function GenerativeDesignPanel({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
-          marginBottom: '1rem',
+          gap: 'var(--ob-space-050)',
+          marginBottom: 'var(--ob-space-075)',
         }}
       >
         <Box
           sx={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '4px',
+            width: 'var(--ob-size-icon-md)',
+            height: 'var(--ob-size-icon-md)',
+            borderRadius: 'var(--ob-radius-sm)',
             background:
-              'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2))',
+              'linear-gradient(135deg, var(--ob-color-brand-soft), rgba(59, 130, 246, 0.2))',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <AutoAwesome sx={{ color: '#06b6d4', fontSize: '18px' }} />
+          <AutoAwesome
+            sx={{
+              color: 'var(--ob-color-brand-primary)',
+              fontSize: 'var(--ob-size-icon-sm)',
+            }}
+          />
         </Box>
         <div>
           <h2
             style={{
               margin: 0,
-              fontSize: '1rem',
+              fontSize: 'var(--ob-font-size-base)',
               fontWeight: 600,
-              color: 'rgba(255,255,255,0.9)',
+              color: 'var(--ob-color-text-primary)',
             }}
           >
             Generative Design
@@ -265,8 +278,8 @@ export function GenerativeDesignPanel({
           <p
             style={{
               margin: 0,
-              fontSize: '0.75rem',
-              color: 'rgba(255,255,255,0.5)',
+              fontSize: 'var(--ob-font-size-xs)',
+              color: 'var(--ob-color-text-muted)',
             }}
           >
             AI-optimized massing strategies
@@ -274,112 +287,196 @@ export function GenerativeDesignPanel({
         </div>
       </div>
 
-      <Grid container spacing={1.5}>
+      <Grid container spacing={1}>
         {GENERATIVE_OPTIONS.map((option) => {
           const isSelected = selectedStrategy === option.value
           return (
-            <Grid item xs={6} key={option.value}>
-              <Card
-                variant="outlined"
-                sx={{
-                  height: '100%',
-                  background: isSelected
-                    ? 'linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(59, 130, 246, 0.1))'
-                    : 'rgba(255, 255, 255, 0.03)',
-                  borderColor: isSelected
-                    ? '#06b6d4'
-                    : 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '4px',
-                  transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
-                  '&:hover': {
-                    borderColor: '#06b6d4',
-                    transform: 'translateY(-4px) scale(1.02)',
-                    boxShadow: '0 12px 32px -8px rgba(6, 182, 212, 0.4)',
-                    background: 'rgba(6, 182, 212, 0.08)',
-                  },
-                  boxShadow: isSelected
-                    ? '0 0 0 1px #06b6d4, 0 8px 24px -4px rgba(6, 182, 212, 0.3), inset 0 0 20px rgba(6, 182, 212, 0.1)'
-                    : 'none',
-                }}
+            <Grid item xs={6} sm={3} key={option.value}>
+              <Tooltip
+                title={
+                  <Box sx={{ p: 1 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      {option.label}
+                    </Typography>
+                    <Typography variant="caption" sx={{ display: 'block' }}>
+                      {option.description}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: 'block',
+                        mt: 0.5,
+                        color: 'var(--ob-color-brand-primary)',
+                      }}
+                    >
+                      Efficiency: {option.efficiency}% | F2F: {option.f2f}m
+                    </Typography>
+                  </Box>
+                }
+                arrow
+                placement="top"
               >
-                <CardActionArea
-                  onClick={() => {
-                    onSelectStrategy(option.value)
-                  }}
-                  disabled={loading}
+                <Card
+                  variant="outlined"
                   sx={{
                     height: '100%',
-                    padding: '16px 12px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '8px',
+                    background: isSelected
+                      ? 'linear-gradient(135deg, var(--ob-color-brand-soft), rgba(59, 130, 246, 0.1))'
+                      : 'var(--ob-color-bg-surface)',
+                    borderColor: isSelected
+                      ? 'var(--ob-color-brand-primary)'
+                      : 'var(--ob-color-border-subtle)',
+                    borderRadius: 'var(--ob-radius-sm)',
+                    transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                    '&:hover': {
+                      borderColor: 'var(--ob-color-brand-primary)',
+                      transform: 'translateY(-4px) scale(1.02)',
+                      boxShadow: 'var(--ob-glow-brand-medium)',
+                      background: 'var(--ob-color-brand-soft)',
+                    },
+                    boxShadow: isSelected
+                      ? 'var(--ob-glow-brand-strong)'
+                      : 'none',
                   }}
                 >
-                  {/* Isometric Icon */}
-                  <Box
+                  <CardActionArea
+                    onClick={() => {
+                      onSelectStrategy(option.value)
+                    }}
+                    disabled={loading}
                     sx={{
-                      width: '56px',
-                      height: '56px',
+                      height: '100%',
+                      padding: 'var(--ob-space-075)',
                       display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'transform 0.3s ease',
-                      transform: isSelected ? 'scale(1.1)' : 'scale(1)',
+                      gap: 'var(--ob-space-050)',
                     }}
                   >
-                    <IsometricIcon
-                      strategy={option.value}
-                      selected={isSelected}
-                    />
-                  </Box>
-
-                  <Typography
-                    variant="subtitle2"
-                    sx={{
-                      fontWeight: 600,
-                      color: isSelected ? '#06b6d4' : 'rgba(255,255,255,0.9)',
-                      textAlign: 'center',
-                      fontSize: '0.8rem',
-                    }}
-                  >
-                    {option.label}
-                  </Typography>
-
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: 'rgba(255,255,255,0.5)',
-                      lineHeight: 1.3,
-                      display: 'block',
-                      textAlign: 'center',
-                      fontSize: '0.7rem',
-                    }}
-                  >
-                    {option.description}
-                  </Typography>
-
-                  {/* Selected indicator */}
-                  {isSelected && (
+                    {/* Isometric Icon */}
                     <Box
                       sx={{
-                        position: 'absolute',
-                        top: '8px',
-                        right: '8px',
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        background: '#06b6d4',
-                        boxShadow: '0 0 8px #06b6d4',
+                        width: 'var(--ob-size-icon-md)',
+                        height: 'var(--ob-size-icon-md)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'transform 0.3s ease',
+                        transform: isSelected ? 'scale(1.1)' : 'scale(1)',
                       }}
-                    />
-                  )}
-                </CardActionArea>
-              </Card>
+                    >
+                      <IsometricIcon
+                        strategy={option.value}
+                        selected={isSelected}
+                      />
+                    </Box>
+
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        fontWeight: 600,
+                        color: isSelected
+                          ? 'var(--ob-color-brand-primary)'
+                          : 'var(--ob-color-text-primary)',
+                        textAlign: 'center',
+                        fontSize: 'var(--ob-font-size-xs)',
+                      }}
+                    >
+                      {option.label}
+                    </Typography>
+
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'var(--ob-color-text-muted)',
+                        lineHeight: 1.3,
+                        textAlign: 'center',
+                        fontSize: 'var(--ob-font-size-2xs)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                    >
+                      {option.description}
+                    </Typography>
+
+                    {/* Selected indicator with checkmark */}
+                    {isSelected && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 'var(--ob-space-050)',
+                          right: 'var(--ob-space-050)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <CheckCircle
+                          sx={{
+                            fontSize: 'var(--ob-size-icon-sm)',
+                            color: 'var(--ob-color-brand-primary)',
+                            filter:
+                              'drop-shadow(0 0 4px var(--ob-color-brand-primary))',
+                          }}
+                        />
+                      </Box>
+                    )}
+                  </CardActionArea>
+                </Card>
+              </Tooltip>
             </Grid>
           )
         })}
       </Grid>
+
+      {/* Show selected strategy details */}
+      {selectedStrategy && (
+        <Box
+          sx={{
+            mt: 'var(--ob-space-075)',
+            p: 'var(--ob-space-075)',
+            borderRadius: 'var(--ob-radius-sm)',
+            background: 'var(--ob-color-brand-soft)',
+            border: '1px solid var(--ob-color-brand-primary)',
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'var(--ob-color-text-secondary)',
+              display: 'block',
+              mb: 'var(--ob-space-025)',
+            }}
+          >
+            Applied Strategy
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 600,
+              color: 'var(--ob-color-brand-primary)',
+            }}
+          >
+            {
+              GENERATIVE_OPTIONS.find((opt) => opt.value === selectedStrategy)
+                ?.label
+            }
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'var(--ob-color-text-muted)',
+              display: 'block',
+              mt: 'var(--ob-space-025)',
+            }}
+          >
+            Preset values applied to assumptions
+          </Typography>
+        </Box>
+      )}
     </section>
   )
 }
