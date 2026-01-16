@@ -219,6 +219,36 @@ _No active tasks. Pull from the Ready queue below._
 - [ ] Global Accuracy System (accuracy bands by asset type + dynamic improvement by phase) — *spec: features.md lines 390-412*
 - [ ] Confidence labels on all main outputs — *spec: features.md lines 410-412*
 
+**Advanced Intelligence Module (Predictive Analytics Dashboard):**
+> **Status:** UI Complete, Backend Stubbed — Frontend at `frontend/src/pages/visualizations/AdvancedIntelligence.tsx`, Backend at `backend/app/api/v1/advanced_intelligence.py`
+> **Current State:** All 3 API endpoints return hardcoded sample data. RAG/AI service exists but requires `OPENAI_API_KEY`.
+> **Full Documentation:** [`docs/planning/advanced-intelligence-data-sources.md`](planning/advanced-intelligence-data-sources.md)
+
+- [ ] **Workspace Signals** — Connect to real operational metrics (adoption, uplift, experiments, intelligence score)
+  - Data sources: `agent_deals` pipeline metrics, `agent_performance_snapshots`, project conversion rates
+  - Requires: Aggregation service to compute KPIs from existing tables
+  - Effort: ~1 week
+
+- [ ] **Relationship Intelligence** — Build real collaboration graph from project/deal activity
+  - Data sources: `agent_deals` contacts, `projects` team members, `audit_logs` user actions
+  - Requires: Graph construction service analyzing co-occurrence patterns
+  - Effort: ~2 weeks
+
+- [ ] **Predictive Forecast** — ML model for adoption/outcome prediction
+  - Data sources: Historical deal outcomes, project timelines, user engagement metrics
+  - Requires: ML pipeline (scikit-learn or similar), training data collection
+  - Effort: ~4-6 weeks
+
+- [ ] **Cross-Correlation** — Statistical analysis of operational metrics
+  - Data sources: Finance readiness scores, legal review latency, approval timelines
+  - Requires: Statistical service computing Pearson correlations with p-values
+  - Effort: ~2 weeks
+
+- [x] **OpenAI/RAG Integration** — Enable AI query feature on predictive endpoint
+  - Requires: `OPENAI_API_KEY` environment variable
+  - Code exists: `backend/app/services/intelligence.py` + `backend/app/core/rag.py`
+  - Effort: ~10 minutes (environment config only)
+
 ---
 
 ### ✅ Completed (Last 30 Days)
