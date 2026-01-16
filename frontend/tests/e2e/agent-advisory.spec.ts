@@ -10,47 +10,51 @@ const SUMMARY_RESPONSE = {
         use: 'office',
         allocation_pct: 55,
         target_gfa_sqm: 48125,
-        rationale: 'Sustain anchor tenancy demand.'
+        rationale: 'Sustain anchor tenancy demand.',
       },
       {
         use: 'retail',
         allocation_pct: 25,
         target_gfa_sqm: 21875,
-        rationale: 'Activate podium frontage.'
-      }
+        rationale: 'Activate podium frontage.',
+      },
     ],
-    notes: ['Retain flexibility for podium conversion.']
+    notes: ['Retain flexibility for podium conversion.'],
   },
   market_positioning: {
     market_tier: 'Prime fringe',
     pricing_guidance: {
       sale_psf: {
         target_min: 2100,
-        target_max: 2400
+        target_max: 2400,
       },
       rent_psf: {
         target_min: 7.2,
-        target_max: 9.1
-      }
+        target_max: 9.1,
+      },
     },
     target_segments: [
       { segment: 'Asset-light MNC', weight_pct: 35 },
-      { segment: 'Growth tech', weight_pct: 20 }
+      { segment: 'Growth tech', weight_pct: 20 },
     ],
     messaging: [
       'Position as next-generation fringe CBD alternative.',
-      'Highlight dual frontage and podium amenities.'
-    ]
+      'Highlight dual frontage and podium amenities.',
+    ],
   },
   absorption_forecast: {
     expected_months_to_stabilize: 11,
     monthly_velocity_target: 4,
     confidence: 'medium',
     timeline: [
-      { milestone: 'Pre-launch marketing', month: 1, expected_absorption_pct: 10 },
+      {
+        milestone: 'Pre-launch marketing',
+        month: 1,
+        expected_absorption_pct: 10,
+      },
       { milestone: 'Sales launch', month: 4, expected_absorption_pct: 35 },
-      { milestone: 'Stabilisation', month: 11, expected_absorption_pct: 100 }
-    ]
+      { milestone: 'Stabilisation', month: 11, expected_absorption_pct: 100 },
+    ],
   },
   feedback: [
     {
@@ -60,9 +64,9 @@ const SUMMARY_RESPONSE = {
       notes: 'Awaiting updated pricing guidance.',
       channel: 'email',
       metadata: {},
-      created_at: '2025-01-18T08:15:00.000Z'
-    }
-  ]
+      created_at: '2025-01-18T08:15:00.000Z',
+    },
+  ],
 }
 
 const FEEDBACK_RESPONSE = {
@@ -72,7 +76,7 @@ const FEEDBACK_RESPONSE = {
   notes: 'Site visit confirmed podium activation opportunities.',
   channel: 'call',
   metadata: {},
-  created_at: '2025-02-01T09:30:00.000Z'
+  created_at: '2025-02-01T09:30:00.000Z',
 }
 
 test.describe('Agent advisory critical flows', () => {
@@ -105,7 +109,7 @@ test.describe('Agent advisory critical flows', () => {
         const payload = request.postDataJSON() as Record<string, unknown>
         expect(payload).toMatchObject({
           sentiment: 'positive',
-          notes: 'Site visit confirmed podium activation opportunities.'
+          notes: 'Site visit confirmed podium activation opportunities.',
         })
 
         await route.fulfill({
@@ -120,33 +124,45 @@ test.describe('Agent advisory critical flows', () => {
   test('surfaces advisory insights for seeded property', async ({ page }) => {
     await page.goto(`/legacy/agents/advisory?propertyId=${PROPERTY_ID}`)
 
-    await expect(page.getByRole('heading', { name: 'Asset mix strategy' })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'Asset mix strategy' }),
+    ).toBeVisible()
     await expect(page.getByRole('cell', { name: 'office' })).toBeVisible()
     await expect(page.getByRole('cell', { name: '55' })).toBeVisible()
-    await expect(page.getByText('Retain flexibility for podium conversion.')).toBeVisible()
+    await expect(
+      page.getByText('Retain flexibility for podium conversion.'),
+    ).toBeVisible()
 
-    await expect(page.getByRole('heading', { name: 'Market positioning' })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'Market positioning' }),
+    ).toBeVisible()
     await expect(page.getByText('Prime fringe')).toBeVisible()
     await expect(page.getByText('Asset-light MNC')).toBeVisible()
     await expect(
       page.getByText('Position as next-generation fringe CBD alternative.'),
     ).toBeVisible()
 
-    await expect(page.getByRole('heading', { name: 'Absorption forecast' })).toBeVisible()
-    await expect(page.getByRole('row', { name: 'Sales launch 4 35' })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'Absorption forecast' }),
+    ).toBeVisible()
+    await expect(
+      page.getByRole('row', { name: 'Sales launch 4 35' }),
+    ).toBeVisible()
 
     await expect(
       page.getByText('Awaiting updated pricing guidance.', { exact: false }),
     ).toBeVisible()
   })
 
-  test('records new agent feedback and renders it immediately', async ({ page }) => {
+  test('records new agent feedback and renders it immediately', async ({
+    page,
+  }) => {
     await page.goto(`/legacy/agents/advisory?propertyId=${PROPERTY_ID}`)
 
     await page.getByLabel('Sentiment').selectOption('positive')
-    await page.getByLabel('Notes').fill(
-      'Site visit confirmed podium activation opportunities.',
-    )
+    await page
+      .getByLabel('Notes')
+      .fill('Site visit confirmed podium activation opportunities.')
 
     const submitButton = page.getByRole('button', { name: 'Record feedback' })
     await expect(submitButton).toBeEnabled()
