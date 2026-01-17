@@ -6,6 +6,7 @@ Create Date: 2026-01-17
 
 Stores configurable AI parameters previously hardcoded in service modules.
 """
+
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
@@ -60,14 +61,8 @@ def upgrade() -> None:
     )
 
     # Create foreign keys for ai_configs
-    op.create_foreign_key(
-        "fk_ai_configs_organization_id",
-        "ai_configs",
-        "teams",
-        ["organization_id"],
-        ["id"],
-        ondelete="SET NULL",
-    )
+    # Note: organization_id has no FK constraint since teams table doesn't exist
+    # (the app uses team_members pattern instead)
     op.create_foreign_key(
         "fk_ai_configs_created_by",
         "ai_configs",
@@ -104,7 +99,9 @@ def upgrade() -> None:
 
     # Create indexes for ai_config_audits
     op.create_index("ix_ai_config_audits_config_id", "ai_config_audits", ["config_id"])
-    op.create_index("ix_ai_config_audits_changed_at", "ai_config_audits", ["changed_at"])
+    op.create_index(
+        "ix_ai_config_audits_changed_at", "ai_config_audits", ["changed_at"]
+    )
 
     # Create foreign keys for ai_config_audits
     op.create_foreign_key(
@@ -126,24 +123,32 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Drop ai_config_audits table
-    op.drop_constraint(
-        "fk_ai_config_audits_changed_by", "ai_config_audits", type_="foreignkey"
+    # Drop ai_config_audits table (guarded with IF EXISTS via raw SQL)
+    op.execute(
+        "ALTER TABLE IF EXISTS ai_config_audits "
+        "DROP CONSTRAINT IF EXISTS fk_ai_config_audits_changed_by"
     )
-    op.drop_constraint(
-        "fk_ai_config_audits_config_id", "ai_config_audits", type_="foreignkey"
+    op.execute(
+        "ALTER TABLE IF EXISTS ai_config_audits "
+        "DROP CONSTRAINT IF EXISTS fk_ai_config_audits_config_id"
     )
-    op.drop_index("ix_ai_config_audits_changed_at", "ai_config_audits")
-    op.drop_index("ix_ai_config_audits_config_id", "ai_config_audits")
-    op.drop_table("ai_config_audits")
+    op.execute("DROP INDEX IF EXISTS ix_ai_config_audits_changed_at")
+    op.execute("DROP INDEX IF EXISTS ix_ai_config_audits_config_id")
+    op.execute("DROP TABLE IF EXISTS ai_config_audits CASCADE")
 
-    # Drop ai_configs table
-    op.drop_constraint("fk_ai_configs_updated_by", "ai_configs", type_="foreignkey")
-    op.drop_constraint("fk_ai_configs_created_by", "ai_configs", type_="foreignkey")
-    op.drop_constraint(
-        "fk_ai_configs_organization_id", "ai_configs", type_="foreignkey"
+    # Drop ai_configs table (guarded with IF EXISTS via raw SQL)
+    op.execute(
+        "ALTER TABLE IF EXISTS ai_configs "
+        "DROP CONSTRAINT IF EXISTS fk_ai_configs_updated_by"
     )
-    op.drop_constraint("uq_ai_config_category_key_org", "ai_configs", type_="unique")
-    op.drop_index("ix_ai_configs_organization_id", "ai_configs")
-    op.drop_index("ix_ai_configs_category", "ai_configs")
-    op.drop_table("ai_configs")
+    op.execute(
+        "ALTER TABLE IF EXISTS ai_configs "
+        "DROP CONSTRAINT IF EXISTS fk_ai_configs_created_by"
+    )
+    op.execute(
+        "ALTER TABLE IF EXISTS ai_configs "
+        "DROP CONSTRAINT IF EXISTS uq_ai_config_category_key_org"
+    )
+    op.execute("DROP INDEX IF EXISTS ix_ai_configs_organization_id")
+    op.execute("DROP INDEX IF EXISTS ix_ai_configs_category")
+    op.execute("DROP TABLE IF EXISTS ai_configs CASCADE")

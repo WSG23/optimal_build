@@ -16,7 +16,6 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
-    Float,
     ForeignKey,
     Index,
     String,
@@ -47,8 +46,10 @@ class AIConfig(BaseModel):
     __tablename__ = "ai_configs"
     __table_args__ = (
         UniqueConstraint(
-            "category", "config_key", "organization_id",
-            name="uq_ai_config_category_key_org"
+            "category",
+            "config_key",
+            "organization_id",
+            name="uq_ai_config_category_key_org",
         ),
         Index("ix_ai_configs_category", "category"),
         Index("ix_ai_configs_organization_id", "organization_id"),
@@ -74,7 +75,9 @@ class AIConfig(BaseModel):
     validation_schema = Column(JSON)
 
     # Scope: null = system default, organization_id = org-specific
-    organization_id = Column(UUID(), ForeignKey("teams.id"), nullable=True)
+    # Note: organization_id is a UUID stored without FK constraint since teams table
+    # uses team_members pattern rather than a standalone teams table
+    organization_id = Column(UUID(), nullable=True)
 
     # Active/inactive flag
     is_active = Column(Boolean, default=True, nullable=False)
@@ -87,9 +90,6 @@ class AIConfig(BaseModel):
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
     created_by = Column(UUID(), ForeignKey("users.id"), nullable=True)
     updated_by = Column(UUID(), ForeignKey("users.id"), nullable=True)
-
-    # Relationships
-    organization = relationship("Team", foreign_keys=[organization_id])
 
     def __repr__(self) -> str:
         return f"<AIConfig {self.category}:{self.config_key}>"
