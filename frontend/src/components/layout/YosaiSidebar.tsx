@@ -14,11 +14,17 @@ export function YosaiSidebar() {
 
   const navGroups: NavGroup[] = [
     {
-      title: 'Build',
+      title: 'General',
       items: [
+        { path: '/projects', label: 'Projects' },
+      ]
+    },
+    {
+      title: 'Capture',
+      items: [
+        { path: '/agents/site-capture', label: t('nav.agentCapture') },
         { path: '/cad/upload', label: t('nav.upload') },
         { path: '/cad/detection', label: t('nav.detection') },
-        { path: '/cad/pipelines', label: t('nav.pipelines') },
       ],
     },
     {
@@ -30,10 +36,10 @@ export function YosaiSidebar() {
       ],
     },
     {
-      title: 'Manage',
+      title: 'Execute',
       items: [
-        { path: '/agents/site-capture', label: t('nav.agentCapture') },
         { path: '/app/phase-management', label: 'Phase Management' },
+        { path: '/cad/pipelines', label: t('nav.pipelines') },
       ],
     },
   ]
@@ -138,32 +144,32 @@ export function YosaiSidebar() {
                         overflow: 'hidden',
                         '&::before': isActive
                           ? {
-                              content: '""',
-                              position: 'absolute',
-                              left: 0,
-                              top: '50%',
-                              transform: 'translateY(-50%)',
-                              width: '4px',
-                              height: '70%',
-                              borderRadius: '0 4px 4px 0',
-                              bgcolor: 'primary.main',
-                              boxShadow: `0 0 12px 2px ${alpha(theme.palette.primary.main, 0.6)}`,
-                            }
+                            content: '""',
+                            position: 'absolute',
+                            left: 0,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            width: '4px',
+                            height: '70%',
+                            borderRadius: '0 4px 4px 0',
+                            bgcolor: 'primary.main',
+                            boxShadow: `0 0 12px 2px ${alpha(theme.palette.primary.main, 0.6)}`,
+                          }
                           : {},
                         '&::after': isActive
                           ? {
-                              content: '""',
-                              position: 'absolute',
-                              right: '8px',
-                              top: '50%',
-                              transform: 'translateY(-50%)',
-                              width: '6px',
-                              height: '6px',
-                              borderRadius: '50%',
-                              bgcolor: 'primary.main',
-                              boxShadow: `0 0 8px 2px ${alpha(theme.palette.primary.main, 0.5)}`,
-                              animation: 'pulse 2s ease-in-out infinite',
-                            }
+                            content: '""',
+                            position: 'absolute',
+                            right: '8px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            bgcolor: 'primary.main',
+                            boxShadow: `0 0 8px 2px ${alpha(theme.palette.primary.main, 0.5)}`,
+                            animation: 'pulse 2s ease-in-out infinite',
+                          }
                           : {},
                         '@keyframes pulse': {
                           '0%, 100%': {

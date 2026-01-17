@@ -4,7 +4,13 @@
 
 import { applyIdentityHeaders } from '../identity'
 import { buildUrl, apiBaseUrl } from './baseUrl'
-import { ApiError, createApiError, isAbortError } from './errors'
+import {
+  ApiError,
+  createApiError,
+  createNetworkError,
+  isAbortError,
+  isNetworkError,
+} from './errors'
 
 export interface RequestOptions {
   signal?: AbortSignal
@@ -18,7 +24,7 @@ export interface JsonRequestOptions extends RequestOptions {
 
 /**
  * Makes a JSON API request with identity headers.
- * Throws ApiError for non-OK responses.
+ * Throws ApiError for non-OK responses or network failures.
  */
 export async function jsonRequest<T>(
   path: string,
@@ -41,7 +47,19 @@ export async function jsonRequest<T>(
     init.body = JSON.stringify(body)
   }
 
-  const response = await fetch(buildUrl(path, apiBaseUrl), init)
+  let response: Response
+  try {
+    response = await fetch(buildUrl(path, apiBaseUrl), init)
+  } catch (error) {
+    // Network error (server unreachable, CORS, etc.)
+    if (isAbortError(error)) {
+      throw error
+    }
+    if (isNetworkError(error)) {
+      throw createNetworkError()
+    }
+    throw error
+  }
 
   if (!response.ok) {
     throw await createApiError(response)
