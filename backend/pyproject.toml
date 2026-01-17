@@ -51,6 +51,7 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 
 [tool.mypy]
 python_version = "3.11"
+plugins = ["sqlalchemy.ext.mypy.plugin"]
 warn_unused_configs = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

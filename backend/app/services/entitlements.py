@@ -27,6 +27,9 @@ from sqlalchemy.orm import selectinload
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 200
 
+# Valid approval category values for string validation
+_VALID_APPROVAL_CATEGORIES = frozenset(e.value for e in EntApprovalCategory)
+
 
 def _normalise_limit(limit: int | None) -> int:
     """Clamp user supplied limits to reasonable bounds."""
@@ -128,6 +131,11 @@ class EntitlementsService:
             category_value = category.value
         elif isinstance(category, str):
             category_value = category.lower()
+            if category_value not in _VALID_APPROVAL_CATEGORIES:
+                raise ValueError(
+                    f"Invalid category '{category}'. "
+                    f"Must be one of: {', '.join(sorted(_VALID_APPROVAL_CATEGORIES))}"
+                )
         else:
             raise ValueError("category must be EntApprovalCategory or string")
 

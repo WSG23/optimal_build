@@ -476,6 +476,80 @@ async def test_upsert_approval_type_invalid_category(db_session: AsyncSession):
 
 
 @pytest.mark.asyncio
+async def test_upsert_approval_type_invalid_string_category(db_session: AsyncSession):
+    """Test upsert_approval_type raises error for invalid string category value."""
+    authority = _make_authority()
+    db_session.add(authority)
+    await db_session.flush()
+
+    service = EntitlementsService(db_session)
+    with pytest.raises(ValueError, match="Invalid category 'invalid_category'"):
+        await service.upsert_approval_type(
+            authority=authority,
+            code="TEST",
+            name="Test Approval",
+            category="invalid_category",  # Invalid string value
+        )
+
+
+@pytest.mark.asyncio
+async def test_upsert_approval_type_valid_uppercase_string_category(
+    db_session: AsyncSession,
+):
+    """Test upsert_approval_type accepts uppercase string and normalizes to lowercase."""
+    authority = _make_authority()
+    db_session.add(authority)
+    await db_session.flush()
+
+    service = EntitlementsService(db_session)
+    approval_type = await service.upsert_approval_type(
+        authority=authority,
+        code="BLD02",
+        name="Building Permit Uppercase",
+        category="BUILDING",  # Uppercase string
+    )
+
+    assert approval_type.category == "building"  # Should be normalized to lowercase
+
+
+@pytest.mark.asyncio
+async def test_upsert_approval_type_valid_mixed_case_string_category(
+    db_session: AsyncSession,
+):
+    """Test upsert_approval_type accepts mixed case string and normalizes to lowercase."""
+    authority = _make_authority()
+    db_session.add(authority)
+    await db_session.flush()
+
+    service = EntitlementsService(db_session)
+    approval_type = await service.upsert_approval_type(
+        authority=authority,
+        code="PLN01",
+        name="Planning Mixed Case",
+        category="Planning",  # Mixed case string
+    )
+
+    assert approval_type.category == "planning"  # Should be normalized to lowercase
+
+
+@pytest.mark.asyncio
+async def test_upsert_approval_type_empty_string_category(db_session: AsyncSession):
+    """Test upsert_approval_type raises error for empty string category."""
+    authority = _make_authority()
+    db_session.add(authority)
+    await db_session.flush()
+
+    service = EntitlementsService(db_session)
+    with pytest.raises(ValueError, match="Invalid category"):
+        await service.upsert_approval_type(
+            authority=authority,
+            code="TEST",
+            name="Test Approval",
+            category="",  # Empty string
+        )
+
+
+@pytest.mark.asyncio
 async def test_upsert_approval_type_update_existing(db_session: AsyncSession):
     """Test upsert_approval_type updates existing type when authority+code exists."""
     authority = _make_authority()
