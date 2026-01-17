@@ -469,7 +469,7 @@ async def test_list_deals_filters_by_stage(async_session_factory):
         await session.commit()
 
         # Create deals at different stages
-        deal1 = await service.create_deal(
+        await service.create_deal(
             session=session,
             agent_id=agent_id,
             title="Lead Stage Deal",
@@ -478,7 +478,7 @@ async def test_list_deals_filters_by_stage(async_session_factory):
             pipeline_stage=PipelineStage.LEAD_CAPTURED,
             created_by=agent_id,
         )
-        deal2 = await service.create_deal(
+        await service.create_deal(
             session=session,
             agent_id=agent_id,
             title="Qualified Deal",
@@ -487,7 +487,7 @@ async def test_list_deals_filters_by_stage(async_session_factory):
             pipeline_stage=PipelineStage.QUALIFIED,
             created_by=agent_id,
         )
-        deal3 = await service.create_deal(
+        await service.create_deal(
             session=session,
             agent_id=agent_id,
             title="Negotiation Deal",
@@ -524,8 +524,8 @@ async def test_list_deals_filters_by_status(async_session_factory):
         )
         await session.commit()
 
-        # Create open deal
-        deal1 = await service.create_deal(
+        # Create open deal (not assigned as it's only used for side effect)
+        await service.create_deal(
             session=session,
             agent_id=agent_id,
             title="Open Deal",

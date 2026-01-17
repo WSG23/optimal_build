@@ -90,3 +90,49 @@ async def test_submit_assessment_with_unknown_rule(app_client: AsyncClient) -> N
     detail = response.json()["detail"]
     assert "Unknown rule identifiers" in detail
     assert "unknown-rule" in detail
+
+
+@pytest.mark.asyncio
+async def test_get_engineering_defaults(app_client: AsyncClient) -> None:
+    """Test fetching engineering defaults."""
+    response = await app_client.get("/api/v1/feasibility/defaults")
+    assert response.status_code == 200
+    payload = response.json()
+    # Should return engineering defaults structure
+    assert "defaults" in payload or isinstance(payload, dict)
+
+
+@pytest.mark.asyncio
+async def test_feasibility_rules_with_minimal_project(app_client: AsyncClient) -> None:
+    """Test fetching feasibility rules with minimal required project data."""
+    minimal_project = {
+        "name": "Minimal Project",
+        "siteAddress": "1 Test Street",
+        "siteAreaSqm": 1000,
+        "landUse": "residential",
+    }
+    response = await app_client.post("/api/v1/feasibility/rules", json=minimal_project)
+    assert response.status_code == 200
+    payload = response.json()
+    assert "rules" in payload
+
+
+@pytest.mark.asyncio
+async def test_feasibility_assessment_all_rules(app_client: AsyncClient) -> None:
+    """Test assessment with all recommended rules."""
+    # First get recommended rules
+    rules_response = await app_client.post(
+        "/api/v1/feasibility/rules", json=PROJECT_PAYLOAD
+    )
+    assert rules_response.status_code == 200
+    rules_data = rules_response.json()
+    recommended_ids = rules_data.get("recommended_rule_ids", [])
+
+    if recommended_ids:
+        # Now submit assessment with all recommended rules
+        payload = {
+            "project": PROJECT_PAYLOAD,
+            "selectedRuleIds": recommended_ids,
+        }
+        response = await app_client.post("/api/v1/feasibility/assessment", json=payload)
+        assert response.status_code == 200

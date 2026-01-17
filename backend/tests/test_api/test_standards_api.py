@@ -66,3 +66,66 @@ async def test_list_standards_filters_by_property_key(client, standards_seed):
         prometheus_metrics.REQUEST_COUNTER, {"endpoint": "standards_lookup"}
     )
     assert counter_value >= 1
+
+
+@pytest.mark.asyncio
+async def test_list_standards_filters_by_standard_body(client, standards_seed):
+    """Test filtering standards by standard body."""
+    response = await client.get(
+        "/api/v1/standards",
+        params={"standard_body": "BCA"},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload) == 2  # Both are BCA standards
+
+
+@pytest.mark.asyncio
+async def test_list_standards_filters_by_standard_code(client, standards_seed):
+    """Test filtering standards by standard code."""
+    response = await client.get(
+        "/api/v1/standards",
+        params={"standard_code": "SS EN 1993"},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload) == 1
+    assert payload[0]["material_type"] == "steel"
+
+
+@pytest.mark.asyncio
+async def test_list_standards_filters_by_section(client, standards_seed):
+    """Test filtering standards by section."""
+    response = await client.get(
+        "/api/v1/standards",
+        params={"section": "4.2"},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload) == 1
+    assert payload[0]["standard_code"] == "SS EN 206"
+
+
+@pytest.mark.asyncio
+async def test_list_standards_multiple_filters(client, standards_seed):
+    """Test filtering standards with multiple parameters."""
+    response = await client.get(
+        "/api/v1/standards",
+        params={"standard_body": "BCA", "section": "5.1"},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload) == 1
+    assert payload[0]["property_key"] == "yield_strength_mpa"
+
+
+@pytest.mark.asyncio
+async def test_list_standards_empty_result(client, standards_seed):
+    """Test filtering that returns no results."""
+    response = await client.get(
+        "/api/v1/standards",
+        params={"standard_code": "nonexistent"},
+    )
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload) == 0

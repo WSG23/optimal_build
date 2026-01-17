@@ -164,9 +164,7 @@ class TestAgentPerformanceSnapshotsFlow:
         assert str(call_kwargs["agent_ids"][0]) == agent_id
 
     @pytest.mark.asyncio
-    async def test_flow_passes_parsed_date(
-        self, mocker, async_session_factory
-    ) -> None:
+    async def test_flow_passes_parsed_date(self, mocker, async_session_factory) -> None:
         """Test that the flow parses and passes the as_of date correctly."""
         mock_service = mocker.MagicMock()
         mock_service.generate_daily_snapshots = mocker.AsyncMock(return_value=[])
