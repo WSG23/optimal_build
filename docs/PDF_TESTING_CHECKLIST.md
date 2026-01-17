@@ -165,4 +165,4 @@ Before committing PDF-related changes:
 ## Related Documentation
 - [CODING_RULES.md](CODING_RULES.md) - General coding standards
 - [CONTRIBUTING.md](CONTRIBUTING.md) - PDF development guidelines
-- [TESTING_KNOWN_ISSUES.md](TESTING_KNOWN_ISSUES.md) - Known test limitations
+- [Known Testing Issues](all_steps_to_product_completion.md#-known-testing-issues) - Known test limitations

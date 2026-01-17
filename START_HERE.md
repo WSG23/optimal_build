@@ -59,7 +59,7 @@ python3 -m pytest backend/tests/test_services/test_*.py -v
 python3 -m pytest backend/tests/test_api/test_*.py -v
 ```
 
-See `docs/NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md` section "MANDATORY TESTING CHECKLIST" for full template.
+See [docs/ai-agents/next_steps.md](docs/ai-agents/next_steps.md) section "MANDATORY TESTING CHECKLIST" for full template.
 
 ---
 
@@ -107,7 +107,7 @@ This section lists ALL 20 instruction and reference files in this repository. Th
 15. **docs/PDF_TESTING_CHECKLIST.md** - Manual PDF testing requirements
 16. **docs/validation/live_testing_guide.md** - Manual/UAT testing procedures
 17. **docs/development/testing/overview.md** - Feature testing checklist
-18. **docs/planning/roadmap.md** - High-level project roadmap
+18. **docs/all_steps_to_product_completion.md** - High-level project roadmap and status
 19. **frontend/README_AI_AGENTS.md** - Frontend development guidelines
 20. **docs/SOLO_FOUNDER_GUIDE.md** - Solo founder workflow with AI agents
 21. **docs/reviewer_sop.md** - Code review procedures

@@ -17,12 +17,13 @@ import AgentIntegrationsPage from '../AgentIntegrationsPage'
 /**
  * ⚠️ KNOWN ISSUE: This test may fail with async timing issues in JSDOM.
  *
- * See: ../../TESTING_KNOWN_ISSUES.md - "Frontend: React Testing Library Async Timing"
+ * See: docs/all_steps_to_product_completion.md#-known-testing-issues
+ * Section: "Frontend: React Testing Library Async Timing"
  *
  * If this test fails but the HTML dump shows content is rendered correctly,
  * the feature is working - it's a test harness issue, not an application bug.
  *
- * When this is fixed, update TESTING_KNOWN_ISSUES.md per the maintenance checklist.
+ * When this is fixed, update the Known Testing Issues section per the maintenance checklist.
  */
 
 describe('AgentIntegrationsPage', () => {

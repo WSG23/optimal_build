@@ -36,7 +36,7 @@
 
 **Option A:** Fix bugs and verify with manual testing
 
-**Option B:** Document in TESTING_KNOWN_ISSUES.md if it's a test framework limitation (not app bug)
+**Option B:** Document in [Known Testing Issues](../docs/all_steps_to_product_completion.md#-known-testing-issues) if it's a test framework limitation (not app bug)
 
 **Option C:** Ask product owner for UX/design guidance if requirements are unclear
 

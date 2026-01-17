@@ -82,7 +82,7 @@ This is a comprehensive index of all documentation in the `docs/` directory.
 - Skip validation gates
 
 ### ✅ DO:
-- Always check NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md before starting
+- Always check [ai-agents/next_steps.md](ai-agents/next_steps.md) before starting
 - Follow the phase order in all_steps_to_product_completion.md
 - Get validation feedback between phases
 - Update progress in all_steps_to_product_completion.md and [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) as you go
@@ -100,7 +100,7 @@ See [all_steps_to_product_completion.md](all_steps_to_product_completion.md) for
 
 **For strategic questions:** Review `planning/features.md` and `all_steps_to_product_completion.md`
 **For technical questions:** Check CODING_RULES.md and existing code
-**For priority questions:** Check [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) and NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md
+**For priority questions:** Check [Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work) and [ai-agents/next_steps.md](ai-agents/next_steps.md)
 **For user questions:** Check feature-specific guides
 
 **Still unclear?** Ask the project owner before proceeding.
@@ -112,7 +112,7 @@ See [all_steps_to_product_completion.md](all_steps_to_product_completion.md) for
 **After completing a feature:**
 1. Update `[Unified Execution Backlog](all_steps_to_product_completion.md#-unified-execution-backlog--deferred-work)` (move item, add commits, document follow-ups)
 2. Update status in `all_steps_to_product_completion.md` (❌ → ✅)
-3. Update `NEXT_STEPS_FOR_AI_AGENTS_AND_DEVELOPERS.md` with new priorities
+3. Update [ai-agents/next_steps.md](ai-agents/next_steps.md) with new priorities
 4. Add user guide if customer-facing feature
 5. Update this README if major milestone reached
 
