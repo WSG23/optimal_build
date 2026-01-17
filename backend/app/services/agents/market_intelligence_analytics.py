@@ -279,9 +279,15 @@ class MarketIntelligenceAnalytics:
                         "total_units": 0,
                     }
 
-                supply_by_year[year]["projects"] = int(supply_by_year[year]["projects"]) + 1
-                supply_by_year[year]["total_gfa"] = float(supply_by_year[year]["total_gfa"]) + float(project.total_gfa_sqm or 0)
-                supply_by_year[year]["total_units"] = int(supply_by_year[year]["total_units"]) + (project.total_units or 0)
+                supply_by_year[year]["projects"] = (
+                    int(supply_by_year[year]["projects"]) + 1
+                )
+                supply_by_year[year]["total_gfa"] = float(
+                    supply_by_year[year]["total_gfa"]
+                ) + float(project.total_gfa_sqm or 0)
+                supply_by_year[year]["total_units"] = int(
+                    supply_by_year[year]["total_units"]
+                ) + (project.total_units or 0)
                 total_upcoming_gfa += float(project.total_gfa_sqm or 0)
 
         # Calculate supply pressure
@@ -513,7 +519,9 @@ class MarketIntelligenceAnalytics:
                 quarterly[quarter] = {"count": 0, "total_volume": 0.0, "avg_psf": []}
 
             quarterly[quarter]["count"] = int(quarterly[quarter]["count"]) + 1
-            quarterly[quarter]["total_volume"] = float(quarterly[quarter]["total_volume"]) + float(txn.sale_price)
+            quarterly[quarter]["total_volume"] = float(
+                quarterly[quarter]["total_volume"]
+            ) + float(txn.sale_price)
             if txn.psf_price:
                 psf_list: list[float] = quarterly[quarter]["avg_psf"]
                 psf_list.append(float(txn.psf_price))

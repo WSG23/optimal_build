@@ -88,6 +88,7 @@ SCORING_WEIGHTS = {
 # SCORING THRESHOLDS - Single Source of Truth
 # =============================================================================
 
+
 # Impact score levels (used consistently across all scoring factors)
 class ImpactScore:
     """Standardized impact scores for consistent factor weighting."""
@@ -183,19 +184,23 @@ class ConfidenceThresholds:
 
 
 # Seller motivation categories
-HIGH_MOTIVATION_REASONS = frozenset({
-    "estate_sale",
-    "distressed",
-    "divorce",
-    "urgent",
-    "relocation",
-})
+HIGH_MOTIVATION_REASONS = frozenset(
+    {
+        "estate_sale",
+        "distressed",
+        "divorce",
+        "urgent",
+        "relocation",
+    }
+)
 
-MEDIUM_MOTIVATION_REASONS = frozenset({
-    "portfolio_rebalance",
-    "upgrade",
-    "retirement",
-})
+MEDIUM_MOTIVATION_REASONS = frozenset(
+    {
+        "portfolio_rebalance",
+        "upgrade",
+        "retirement",
+    }
+)
 
 
 class DealScoringService:
@@ -250,32 +255,48 @@ class DealScoringService:
         neutral_factors: list[ScoringFactor] = []
 
         # Score: Location Match
-        location_score = await self._score_location_match(deal, property_data, db, user_id)
-        self._categorize_factor(location_score, positive_factors, risk_factors, neutral_factors)
+        location_score = await self._score_location_match(
+            deal, property_data, db, user_id
+        )
+        self._categorize_factor(
+            location_score, positive_factors, risk_factors, neutral_factors
+        )
 
         # Score: Tenure Adequacy
         tenure_score = await self._score_tenure(deal, property_data)
-        self._categorize_factor(tenure_score, positive_factors, risk_factors, neutral_factors)
+        self._categorize_factor(
+            tenure_score, positive_factors, risk_factors, neutral_factors
+        )
 
         # Score: Price vs Market
         price_score = await self._score_price_vs_market(deal, property_data, db)
-        self._categorize_factor(price_score, positive_factors, risk_factors, neutral_factors)
+        self._categorize_factor(
+            price_score, positive_factors, risk_factors, neutral_factors
+        )
 
         # Score: GPR Headroom
         gpr_score = await self._score_gpr_headroom(deal, property_data)
-        self._categorize_factor(gpr_score, positive_factors, risk_factors, neutral_factors)
+        self._categorize_factor(
+            gpr_score, positive_factors, risk_factors, neutral_factors
+        )
 
         # Score: Historical Success Rate
         history_score = await self._score_historical_success(deal, db, user_id)
-        self._categorize_factor(history_score, positive_factors, risk_factors, neutral_factors)
+        self._categorize_factor(
+            history_score, positive_factors, risk_factors, neutral_factors
+        )
 
         # Score: Competition Level
         competition_score = await self._score_competition(deal)
-        self._categorize_factor(competition_score, positive_factors, risk_factors, neutral_factors)
+        self._categorize_factor(
+            competition_score, positive_factors, risk_factors, neutral_factors
+        )
 
         # Score: Seller Motivation
         seller_score = await self._score_seller_motivation(deal)
-        self._categorize_factor(seller_score, positive_factors, risk_factors, neutral_factors)
+        self._categorize_factor(
+            seller_score, positive_factors, risk_factors, neutral_factors
+        )
 
         # Calculate overall score
         all_factors = positive_factors + risk_factors + neutral_factors
@@ -295,7 +316,8 @@ class DealScoringService:
         # Determine confidence
         if (
             len(all_factors) >= ConfidenceThresholds.HIGH_TOTAL_FACTORS
-            and len(positive_factors) + len(risk_factors) >= ConfidenceThresholds.HIGH_DECISIVE_FACTORS
+            and len(positive_factors) + len(risk_factors)
+            >= ConfidenceThresholds.HIGH_DECISIVE_FACTORS
         ):
             confidence = ScoreConfidence.HIGH
         elif len(all_factors) >= ConfidenceThresholds.MEDIUM_TOTAL_FACTORS:
@@ -304,7 +326,9 @@ class DealScoringService:
             confidence = ScoreConfidence.LOW
 
         # Generate recommendation
-        recommendation = self._generate_recommendation(final_score, positive_factors, risk_factors)
+        recommendation = self._generate_recommendation(
+            final_score, positive_factors, risk_factors
+        )
 
         # Get comparable deals
         comparable_deals = await self._get_comparable_deals(deal, db, user_id)
@@ -591,7 +615,9 @@ class DealScoringService:
                     AgentDeal.agent_id == user_id,
                     AgentDeal.deal_type == deal.deal_type,
                     AgentDeal.asset_type == deal.asset_type,
-                    AgentDeal.status.in_([DealStatus.CLOSED_WON, DealStatus.CLOSED_LOST]),
+                    AgentDeal.status.in_(
+                        [DealStatus.CLOSED_WON, DealStatus.CLOSED_LOST]
+                    ),
                 )
             )
             .group_by(AgentDeal.status)
@@ -733,7 +759,9 @@ class DealScoringService:
             else "None identified"
         )
         top_risks = (
-            ", ".join(f.name for f in risk_factors[:2]) if risk_factors else "None identified"
+            ", ".join(f.name for f in risk_factors[:2])
+            if risk_factors
+            else "None identified"
         )
 
         return f"{action}. Key strengths: {top_positive}. Key risks: {top_risks}."
@@ -752,7 +780,9 @@ class DealScoringService:
                     AgentDeal.agent_id == user_id,
                     AgentDeal.deal_type == deal.deal_type,
                     AgentDeal.asset_type == deal.asset_type,
-                    AgentDeal.status.in_([DealStatus.CLOSED_WON, DealStatus.CLOSED_LOST]),
+                    AgentDeal.status.in_(
+                        [DealStatus.CLOSED_WON, DealStatus.CLOSED_LOST]
+                    ),
                     AgentDeal.id != deal.id,
                 )
             )
@@ -768,8 +798,14 @@ class DealScoringService:
                 "id": str(d.id),
                 "title": d.title,
                 "outcome": d.status.value,
-                "value": (float(d.estimated_value_amount) if d.estimated_value_amount else None),
-                "close_date": (d.actual_close_date.isoformat() if d.actual_close_date else None),
+                "value": (
+                    float(d.estimated_value_amount)
+                    if d.estimated_value_amount
+                    else None
+                ),
+                "close_date": (
+                    d.actual_close_date.isoformat() if d.actual_close_date else None
+                ),
             }
             for d in comparable
         ]

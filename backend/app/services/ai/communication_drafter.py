@@ -139,7 +139,9 @@ class CommunicationDrafterService:
 
             if db:
                 if request.deal_id:
-                    deal_query = select(AgentDeal).where(AgentDeal.id == request.deal_id)
+                    deal_query = select(AgentDeal).where(
+                        AgentDeal.id == request.deal_id
+                    )
                     result = await db.execute(deal_query)
                     deal = result.scalar_one_or_none()
                     if deal:
@@ -157,7 +159,9 @@ class CommunicationDrafterService:
                         }
 
                 if request.property_id:
-                    prop_query = select(Property).where(Property.id == request.property_id)
+                    prop_query = select(Property).where(
+                        Property.id == request.property_id
+                    )
                     result = await db.execute(prop_query)
                     prop = result.scalar_one_or_none()
                     if prop:
@@ -168,15 +172,21 @@ class CommunicationDrafterService:
                                 prop.property_type.value if prop.property_type else None
                             ),
                             "land_area_sqm": (
-                                float(prop.land_area_sqm) if prop.land_area_sqm else None
+                                float(prop.land_area_sqm)
+                                if prop.land_area_sqm
+                                else None
                             ),
                         }
 
             # Generate draft
             if not self._initialized or not self.llm:
-                draft = self._generate_template_draft(request, deal_context, property_context)
+                draft = self._generate_template_draft(
+                    request, deal_context, property_context
+                )
             else:
-                draft = await self._generate_ai_draft(request, deal_context, property_context)
+                draft = await self._generate_ai_draft(
+                    request, deal_context, property_context
+                )
 
             generation_time = (datetime.now() - start_time).total_seconds() * 1000
 
@@ -259,7 +269,9 @@ class CommunicationDrafterService:
         recipient = request.recipient_name or "Sir/Madam"
         company = request.recipient_company or "your company"
         deal_title = deal_context["title"] if deal_context else "the opportunity"
-        property_address = property_context["address"] if property_context else "the property"
+        property_address = (
+            property_context["address"] if property_context else "the property"
+        )
 
         body = template.format(
             recipient=recipient,
@@ -267,7 +279,9 @@ class CommunicationDrafterService:
             deal_title=deal_title,
             property_address=property_address,
             key_points=(
-                "\n".join(f"- {p}" for p in request.key_points) if request.key_points else ""
+                "\n".join(f"- {p}" for p in request.key_points)
+                if request.key_points
+                else ""
             ),
         )
 
@@ -332,7 +346,9 @@ class CommunicationDrafterService:
         if request.additional_context:
             prompt_parts.append(f"\nAdditional context: {request.additional_context}")
 
-        prompt_parts.append("\nGenerate only the body of the communication, no subject line.")
+        prompt_parts.append(
+            "\nGenerate only the body of the communication, no subject line."
+        )
         prompt_parts.append(
             "Use professional real estate terminology appropriate for Singapore market."
         )
@@ -476,7 +492,9 @@ Provide only the refined version, maintaining the same format and purpose."""
 
             response = self.llm.invoke(prompt)
             refined_content = response.content
-            refined_body = refined_content if isinstance(refined_content, str) else draft.body
+            refined_body = (
+                refined_content if isinstance(refined_content, str) else draft.body
+            )
 
             refined_draft = CommunicationDraft(
                 id=f"draft_{datetime.now().strftime('%Y%m%d%H%M%S')}_refined",

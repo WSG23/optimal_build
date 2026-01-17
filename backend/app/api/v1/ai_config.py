@@ -29,7 +29,9 @@ async def list_ai_configs(
     organization_id: UUID | None = Query(
         default=None, description="Filter by organization"
     ),
-    include_inactive: bool = Query(default=False, description="Include inactive configs"),
+    include_inactive: bool = Query(
+        default=False, description="Include inactive configs"
+    ),
     page: int = Query(default=1, ge=1, description="Page number"),
     page_size: int = Query(default=50, ge=1, le=100, description="Items per page"),
     db: AsyncSession = Depends(get_db),
@@ -122,7 +124,9 @@ async def get_ai_config(
     return AIConfigResponse.model_validate(config)
 
 
-@router.post("/ai-config", response_model=AIConfigResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/ai-config", response_model=AIConfigResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_ai_config(
     payload: AIConfigCreate,
     db: AsyncSession = Depends(get_db),

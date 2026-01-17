@@ -504,7 +504,9 @@ class ScenarioOptimizerService:
         elif constraints.risk_tolerance == RiskTolerance.AGGRESSIVE:
             # Find the one with highest IRR that meets constraints
             valid = [
-                s for s in scenarios if s.projected_returns.equity_irr >= constraints.target_irr
+                s
+                for s in scenarios
+                if s.projected_returns.equity_irr >= constraints.target_irr
             ]
             if valid:
                 best = max(valid, key=lambda s: s.projected_returns.equity_irr)

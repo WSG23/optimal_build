@@ -204,9 +204,7 @@ def test_create_table_of_contents():
     story = generator._create_table_of_contents()
 
     assert len(story) > 0
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     assert "Executive Summary" in text_content or "TABLE OF CONTENTS" in text_content
 
 
@@ -236,9 +234,7 @@ def test_create_investment_highlights_contains_value_points():
 
     story = generator._create_investment_highlights(property_payload, financial_payload)
 
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     # Should mention value creation
     assert "Value" in text_content or "Invest" in text_content
 
@@ -267,9 +263,7 @@ def test_create_financial_analysis_shows_metrics():
 
     story = generator._create_financial_analysis(financial_payload)
 
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     # Should show financial content
     assert any(
         term in text_content
@@ -323,9 +317,7 @@ def test_create_risk_analysis_structure():
     story = generator._create_risk_analysis(property_payload, market_data)
 
     assert len(story) > 0
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     assert "Risk" in text_content or "RISK" in text_content
 
 
@@ -354,9 +346,7 @@ def test_create_exit_strategies_structure():
     story = generator._create_exit_strategies(property_payload, financial_payload)
 
     assert len(story) > 0
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     assert "Exit" in text_content or "EXIT" in text_content
 
 
@@ -388,9 +378,7 @@ def test_create_appendices_structure():
 
     assert len(story) > 0
     # Appendices contains important notice and contact information
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     assert "IMPORTANT NOTICE" in text_content or "Contact" in text_content
 
 
@@ -405,14 +393,10 @@ def test_create_executive_summary_contains_opportunity():
     property_payload = _property_data()
     financial_payload = _financial_data()
 
-    story = generator._create_executive_summary(
-        property_payload, financial_payload, {}
-    )
+    story = generator._create_executive_summary(property_payload, financial_payload, {})
 
     assert len(story) > 0
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     assert "Opportunity" in text_content or "investment" in text_content.lower()
 
 
@@ -422,13 +406,9 @@ def test_create_executive_summary_shows_property_name():
     property_payload = _property_data()
     financial_payload = _financial_data()
 
-    story = generator._create_executive_summary(
-        property_payload, financial_payload, {}
-    )
+    story = generator._create_executive_summary(property_payload, financial_payload, {})
 
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     assert property_payload["property"].name in text_content
 
 
@@ -511,9 +491,7 @@ def test_create_location_analysis_structure():
     story = generator._create_location_analysis(property_payload, market_data)
 
     assert len(story) > 0
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     assert "Location" in text_content or "LOCATION" in text_content
 
 
@@ -714,15 +692,21 @@ def test_create_investment_returns_various_targets():
     financial_payload = _financial_data()
 
     # Very low target
-    story_low = generator._create_investment_returns(financial_payload, target_return=5.0)
+    story_low = generator._create_investment_returns(
+        financial_payload, target_return=5.0
+    )
     assert len(story_low) > 0
 
     # High target
-    story_high = generator._create_investment_returns(financial_payload, target_return=20.0)
+    story_high = generator._create_investment_returns(
+        financial_payload, target_return=20.0
+    )
     assert len(story_high) > 0
 
     # No target (None)
-    story_none = generator._create_investment_returns(financial_payload, target_return=None)
+    story_none = generator._create_investment_returns(
+        financial_payload, target_return=None
+    )
     assert len(story_none) > 0
 
 
@@ -746,9 +730,7 @@ def test_create_exit_strategies_office():
     story = generator._create_exit_strategies(property_payload, financial_payload)
 
     assert len(story) > 0
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     assert "Exit" in text_content or "EXIT" in text_content
 
 

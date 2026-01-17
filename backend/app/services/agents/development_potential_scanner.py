@@ -956,9 +956,9 @@ class DevelopmentPotentialScanner:
         redevelopment_value = redevelopment_gfa * 8000  # Simplified new building value
 
         # Return the better option
-        return float(max(
-            renovation_value - current_value, redevelopment_value - current_value
-        ))
+        return float(
+            max(renovation_value - current_value, redevelopment_value - current_value)
+        )
 
     def _assess_heritage_value(self, property_data: Property) -> str:
         """Assess heritage value of property."""

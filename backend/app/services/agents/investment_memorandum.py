@@ -1041,4 +1041,6 @@ class InvestmentMemorandumGenerator(PDFGenerator):  # type: ignore[misc]
             if rental.is_active and rental.floor_area_sqm
         )
 
-        return max(0.0, 1.0 - (occupied_area / float(property_obj.net_lettable_area_sqm)))
+        return max(
+            0.0, 1.0 - (occupied_area / float(property_obj.net_lettable_area_sqm))
+        )

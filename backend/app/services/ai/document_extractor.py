@@ -74,8 +74,12 @@ class SalesPurchaseSchema(BaseModel):
     conditions_precedent: list[str] = Field(
         default_factory=list, description="Conditions precedent"
     )
-    encumbrances: list[str] = Field(default_factory=list, description="Known encumbrances")
-    special_conditions: list[str] = Field(default_factory=list, description="Special conditions")
+    encumbrances: list[str] = Field(
+        default_factory=list, description="Known encumbrances"
+    )
+    special_conditions: list[str] = Field(
+        default_factory=list, description="Special conditions"
+    )
 
 
 class ZoningLetterSchema(BaseModel):
@@ -87,15 +91,21 @@ class ZoningLetterSchema(BaseModel):
     zoning_description: str | None = Field(None, description="Zoning description")
     plot_ratio: float | None = Field(None, description="Gross plot ratio")
     site_coverage: float | None = Field(None, description="Site coverage percentage")
-    building_height: float | None = Field(None, description="Max building height in meters")
+    building_height: float | None = Field(
+        None, description="Max building height in meters"
+    )
     setback_front: float | None = Field(None, description="Front setback in meters")
     setback_side: float | None = Field(None, description="Side setback in meters")
     setback_rear: float | None = Field(None, description="Rear setback in meters")
-    permitted_uses: list[str] = Field(default_factory=list, description="Permitted uses")
+    permitted_uses: list[str] = Field(
+        default_factory=list, description="Permitted uses"
+    )
     special_conditions: list[str] = Field(
         default_factory=list, description="Special planning conditions"
     )
-    heritage_status: str | None = Field(None, description="Heritage/conservation status")
+    heritage_status: str | None = Field(
+        None, description="Heritage/conservation status"
+    )
     effective_date: date | None = Field(None, description="Letter effective date")
 
 
@@ -119,7 +129,9 @@ class ValuationReportSchema(BaseModel):
         default_factory=list, description="Comparable properties used"
     )
     valuation_approach: str | None = Field(None, description="Valuation approach used")
-    key_assumptions: list[str] = Field(default_factory=list, description="Key assumptions")
+    key_assumptions: list[str] = Field(
+        default_factory=list, description="Key assumptions"
+    )
 
 
 @dataclass
@@ -240,7 +252,9 @@ class DocumentExtractionService:
             self.llm = None
             self.vision_llm = None
 
-    async def detect_document_type(self, text_content: str) -> tuple[DocumentType, ConfidenceLevel]:
+    async def detect_document_type(
+        self, text_content: str
+    ) -> tuple[DocumentType, ConfidenceLevel]:
         """Detect the type of document from its content.
 
         Args:
@@ -335,7 +349,9 @@ Format: TYPE|CONFIDENCE"""
         try:
             # Detect document type if not provided
             if document_type is None:
-                document_type, type_confidence = await self.detect_document_type(text_content)
+                document_type, type_confidence = await self.detect_document_type(
+                    text_content
+                )
             else:
                 type_confidence = ConfidenceLevel.HIGH
 
@@ -475,7 +491,9 @@ Format: TYPE|CONFIDENCE"""
                             {"type": "text", "text": detect_prompt},
                             {
                                 "type": "image_url",
-                                "image_url": {"url": f"data:image/png;base64,{image_base64}"},
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{image_base64}"
+                                },
                             },
                         ],
                     }
@@ -510,7 +528,9 @@ Format: TYPE|CONFIDENCE"""
                         {"type": "text", "text": extraction_prompt},
                         {
                             "type": "image_url",
-                            "image_url": {"url": f"data:image/png;base64,{image_base64}"},
+                            "image_url": {
+                                "url": f"data:image/png;base64,{image_base64}"
+                            },
                         },
                     ],
                 }

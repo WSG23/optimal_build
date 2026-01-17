@@ -378,7 +378,9 @@ class PortfolioOptimizerService:
             },
         }
 
-        return base_allocations.get(strategy, base_allocations[OptimizationStrategy.BALANCED])
+        return base_allocations.get(
+            strategy, base_allocations[OptimizationStrategy.BALANCED]
+        )
 
     async def _generate_recommendations(
         self,
@@ -396,7 +398,9 @@ class PortfolioOptimizerService:
                 continue
 
             # Find deals of this asset type
-            type_deals = [d for d in deals if d.asset_type.value == allocation.asset_type]
+            type_deals = [
+                d for d in deals if d.asset_type.value == allocation.asset_type
+            ]
 
             if allocation.action == "decrease":
                 # Recommend selling underperforming assets
@@ -410,10 +414,14 @@ class PortfolioOptimizerService:
                             recommended_action="consider_sell",
                             target_allocation=allocation.recommended_percentage,
                             rationale=f"{allocation.asset_type} is overweight by {allocation.variance:.1f}%",
-                            priority=("medium" if abs(allocation.variance) < 10 else "high"),
+                            priority=(
+                                "medium" if abs(allocation.variance) < 10 else "high"
+                            ),
                             estimated_impact={
                                 "portfolio_balance": abs(allocation.variance),
-                                "risk_reduction": (0.5 if allocation.action == "decrease" else 0.0),
+                                "risk_reduction": (
+                                    0.5 if allocation.action == "decrease" else 0.0
+                                ),
                             },
                         )
                     )
@@ -477,7 +485,8 @@ class PortfolioOptimizerService:
         )
 
         rec_text = "\n".join(
-            f"- {r.recommended_action} {r.asset_type}: {r.rationale}" for r in recommendations[:3]
+            f"- {r.recommended_action} {r.asset_type}: {r.rationale}"
+            for r in recommendations[:3]
         )
 
         prompt = f"""Generate a concise executive summary (3-4 sentences) for this portfolio optimization analysis:
@@ -520,7 +529,9 @@ Your portfolio of ${metrics.total_value:,.0f} across {metrics.total_assets} asse
 
 {len(recommendations)} rebalancing actions are recommended to improve portfolio balance and reduce risk."""
 
-    def _empty_result(self, request: OptimizationRequest) -> PortfolioOptimizationResult:
+    def _empty_result(
+        self, request: OptimizationRequest
+    ) -> PortfolioOptimizationResult:
         """Create empty result for failed optimization."""
         return PortfolioOptimizationResult(
             id=str(uuid4()),

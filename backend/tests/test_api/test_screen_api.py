@@ -36,7 +36,10 @@ async def zoning_layer(db_session):
         zone_name="Residential Zone 1",
         attributes={
             "overlays": ["Conservation Overlay", "Heritage Zone"],
-            "advisory_hints": ["Check heritage requirements", "Consult conservation board"],
+            "advisory_hints": [
+                "Check heritage requirements",
+                "Consult conservation board",
+            ],
         },
     )
     db_session.add(layer)

@@ -69,7 +69,9 @@ def test_development_scenario_values():
     assert DevelopmentScenario.EXISTING_BUILDING.value == "existing_building"
     assert DevelopmentScenario.HERITAGE_PROPERTY.value == "heritage_property"
     assert DevelopmentScenario.UNDERUSED_ASSET.value == "underused_asset"
-    assert DevelopmentScenario.MIXED_USE_REDEVELOPMENT.value == "mixed_use_redevelopment"
+    assert (
+        DevelopmentScenario.MIXED_USE_REDEVELOPMENT.value == "mixed_use_redevelopment"
+    )
 
 
 # -----------------------------------------------------------
@@ -498,7 +500,10 @@ def test_determine_property_type_unknown():
     """Test determining property type for unknown use."""
     logger = _logger()
 
-    assert logger._determine_property_type("Specialty Facility") == PropertyType.SPECIAL_PURPOSE
+    assert (
+        logger._determine_property_type("Specialty Facility")
+        == PropertyType.SPECIAL_PURPOSE
+    )
     assert logger._determine_property_type("Unknown") == PropertyType.SPECIAL_PURPOSE
 
 
@@ -571,7 +576,9 @@ def test_quick_raw_land_analysis_with_data():
         {"distance_km": 1.0, "expected_completion": "2026-Q4"},
     ]
 
-    result = logger._quick_raw_land_analysis(ura_zoning, property_info, development_plans)
+    result = logger._quick_raw_land_analysis(
+        ura_zoning, property_info, development_plans
+    )
 
     assert result["scenario"] == "raw_land"
     assert "30,000" in result["headline"]  # 10000 * 3.0
@@ -610,7 +617,9 @@ def test_quick_existing_asset_analysis_with_uplift():
         {"psf_price": 2200},
     ]
 
-    result = logger._quick_existing_asset_analysis(ura_zoning, property_info, transactions)
+    result = logger._quick_existing_asset_analysis(
+        ura_zoning, property_info, transactions
+    )
 
     assert result["scenario"] == "existing_building"
     assert "5,000" in result["headline"]  # 40000 - 35000 uplift
@@ -642,9 +651,7 @@ def test_quick_heritage_analysis_old_building():
     logger = _logger()
     property_info = SimpleNamespace(completion_year=1960)
 
-    result = logger._quick_heritage_analysis(
-        property_info, "Office", None, [], None
-    )
+    result = logger._quick_heritage_analysis(property_info, "Office", None, [], None)
 
     assert result["scenario"] == "heritage_property"
     assert "HIGH" in result["headline"]
@@ -772,9 +779,7 @@ def test_quick_mixed_use_analysis_single_use():
         use_groups=["commercial"],
     )
 
-    result = logger._quick_mixed_use_analysis(
-        ura_zoning, None, "Office", None, []
-    )
+    result = logger._quick_mixed_use_analysis(ura_zoning, None, "Office", None, [])
 
     assert "Single-use" in result["headline"]
     assert any("limit" in note.lower() for note in result["notes"])
@@ -817,8 +822,15 @@ def test_quick_mixed_use_analysis_recent_transactions():
 def test_accuracy_bands_config_has_required_keys():
     """Test accuracy bands configuration has all required keys."""
     required_metrics = [
-        "gfa", "site_area", "plot_ratio", "price_psf",
-        "rent_psm", "valuation", "noi", "heritage_risk", "uplift",
+        "gfa",
+        "site_area",
+        "plot_ratio",
+        "price_psf",
+        "rent_psm",
+        "valuation",
+        "noi",
+        "heritage_risk",
+        "uplift",
     ]
 
     for metric in required_metrics:
@@ -1001,9 +1013,7 @@ def test_quick_heritage_analysis_with_ura_special_conditions():
     """Test heritage analysis uses URA special conditions."""
     logger = _logger()
     property_info = SimpleNamespace(completion_year=2000)
-    ura_zoning = SimpleNamespace(
-        special_conditions="Subject to heritage review"
-    )
+    ura_zoning = SimpleNamespace(special_conditions="Subject to heritage review")
 
     result = logger._quick_heritage_analysis(
         property_info, "Office", ura_zoning, [], None

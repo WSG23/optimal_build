@@ -6,7 +6,6 @@ and follow best practices.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
@@ -51,9 +50,7 @@ class TestKubernetesManifestStructure:
         get_k8s_manifests(),
         ids=lambda x: x if isinstance(x, str) else "",
     )
-    def test_manifest_has_api_version(
-        self, filename: str, manifest: dict
-    ) -> None:
+    def test_manifest_has_api_version(self, filename: str, manifest: dict) -> None:
         """Test all manifests have apiVersion."""
         assert "apiVersion" in manifest, f"{filename} missing apiVersion"
 
@@ -83,8 +80,8 @@ class TestKubernetesManifestStructure:
     def test_manifest_has_name(self, filename: str, manifest: dict) -> None:
         """Test all manifests have a name in metadata."""
         if manifest.get("kind") != "List":
-            assert (
-                "name" in manifest.get("metadata", {})
+            assert "name" in manifest.get(
+                "metadata", {}
             ), f"{filename} missing metadata.name"
 
 
@@ -93,11 +90,7 @@ class TestDeploymentManifests:
 
     @pytest.fixture
     def deployments(self) -> list[tuple[str, dict]]:
-        return [
-            (f, m)
-            for f, m in get_k8s_manifests()
-            if m.get("kind") == "Deployment"
-        ]
+        return [(f, m) for f, m in get_k8s_manifests() if m.get("kind") == "Deployment"]
 
     def test_deployments_have_replicas(
         self, deployments: list[tuple[str, dict]]
@@ -164,9 +157,7 @@ class TestDeploymentManifests:
                     "missing resource requests"
                 )
 
-    def test_containers_have_probes(
-        self, deployments: list[tuple[str, dict]]
-    ) -> None:
+    def test_containers_have_probes(self, deployments: list[tuple[str, dict]]) -> None:
         """Test containers have health probes."""
         for filename, manifest in deployments:
             containers = (
@@ -206,21 +197,15 @@ class TestServiceManifests:
 
     @pytest.fixture
     def services(self) -> list[tuple[str, dict]]:
-        return [
-            (f, m) for f, m in get_k8s_manifests() if m.get("kind") == "Service"
-        ]
+        return [(f, m) for f, m in get_k8s_manifests() if m.get("kind") == "Service"]
 
-    def test_services_have_selector(
-        self, services: list[tuple[str, dict]]
-    ) -> None:
+    def test_services_have_selector(self, services: list[tuple[str, dict]]) -> None:
         """Test services have selector."""
         for filename, manifest in services:
             spec = manifest.get("spec", {})
             assert "selector" in spec, f"{filename} missing spec.selector"
 
-    def test_services_have_ports(
-        self, services: list[tuple[str, dict]]
-    ) -> None:
+    def test_services_have_ports(self, services: list[tuple[str, dict]]) -> None:
         """Test services have ports defined."""
         for filename, manifest in services:
             spec = manifest.get("spec", {})
@@ -233,21 +218,15 @@ class TestIngressManifests:
 
     @pytest.fixture
     def ingresses(self) -> list[tuple[str, dict]]:
-        return [
-            (f, m) for f, m in get_k8s_manifests() if m.get("kind") == "Ingress"
-        ]
+        return [(f, m) for f, m in get_k8s_manifests() if m.get("kind") == "Ingress"]
 
-    def test_ingresses_have_rules(
-        self, ingresses: list[tuple[str, dict]]
-    ) -> None:
+    def test_ingresses_have_rules(self, ingresses: list[tuple[str, dict]]) -> None:
         """Test ingresses have rules defined."""
         for filename, manifest in ingresses:
             spec = manifest.get("spec", {})
             assert "rules" in spec, f"{filename} missing spec.rules"
 
-    def test_ingresses_have_tls(
-        self, ingresses: list[tuple[str, dict]]
-    ) -> None:
+    def test_ingresses_have_tls(self, ingresses: list[tuple[str, dict]]) -> None:
         """Test ingresses have TLS configured for production."""
         for filename, manifest in ingresses:
             spec = manifest.get("spec", {})
@@ -271,20 +250,16 @@ class TestHPAManifests:
             spec = manifest.get("spec", {})
             assert "scaleTargetRef" in spec, f"{filename} missing scaleTargetRef"
 
-    def test_hpas_have_min_replicas(
-        self, hpas: list[tuple[str, dict]]
-    ) -> None:
+    def test_hpas_have_min_replicas(self, hpas: list[tuple[str, dict]]) -> None:
         """Test HPAs have minimum replicas defined."""
         for filename, manifest in hpas:
             spec = manifest.get("spec", {})
             assert "minReplicas" in spec, f"{filename} missing minReplicas"
-            assert spec["minReplicas"] >= 2, (
-                f"{filename} minReplicas should be >= 2 for HA"
-            )
+            assert (
+                spec["minReplicas"] >= 2
+            ), f"{filename} minReplicas should be >= 2 for HA"
 
-    def test_hpas_have_max_replicas(
-        self, hpas: list[tuple[str, dict]]
-    ) -> None:
+    def test_hpas_have_max_replicas(self, hpas: list[tuple[str, dict]]) -> None:
         """Test HPAs have maximum replicas defined."""
         for filename, manifest in hpas:
             spec = manifest.get("spec", {})
@@ -299,16 +274,16 @@ class TestNamespaceConsistency:
         manifests = get_k8s_manifests()
         namespaces = set()
 
-        for filename, manifest in manifests:
+        for _filename, manifest in manifests:
             ns = manifest.get("metadata", {}).get("namespace")
             if ns:
                 namespaces.add(ns)
 
         # Should only have one namespace (plus possibly logging, monitoring)
         app_namespaces = {ns for ns in namespaces if "optimal" in ns}
-        assert len(app_namespaces) <= 1, (
-            f"Multiple app namespaces found: {app_namespaces}"
-        )
+        assert (
+            len(app_namespaces) <= 1
+        ), f"Multiple app namespaces found: {app_namespaces}"
 
 
 class TestLabelConsistency:
@@ -322,6 +297,6 @@ class TestLabelConsistency:
             kind = manifest.get("kind")
             if kind in ("Deployment", "Service", "Ingress"):
                 labels = manifest.get("metadata", {}).get("labels", {})
-                assert "app" in labels or "app.kubernetes.io/name" in labels, (
-                    f"{filename} missing app label"
-                )
+                assert (
+                    "app" in labels or "app.kubernetes.io/name" in labels
+                ), f"{filename} missing app label"

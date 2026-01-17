@@ -6,7 +6,6 @@ best practices.
 
 from __future__ import annotations
 
-import os
 import subprocess
 from pathlib import Path
 
@@ -252,4 +251,7 @@ class TestHelmLint:
         # Dry run may fail due to missing cluster, but should not have template errors
         if result.returncode != 0:
             # Check it's not a template error
-            assert "error" not in result.stderr.lower() or "cluster" in result.stderr.lower()
+            assert (
+                "error" not in result.stderr.lower()
+                or "cluster" in result.stderr.lower()
+            )

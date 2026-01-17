@@ -77,7 +77,9 @@ async def test_secure_users_login_success(client):
         "full_name": "Login User",
         "password": "Password123",
     }
-    signup_response = await client.post("/api/v1/secure-users/signup", json=signup_payload)
+    signup_response = await client.post(
+        "/api/v1/secure-users/signup", json=signup_payload
+    )
     assert signup_response.status_code == 200
 
     # Now login
@@ -107,7 +109,9 @@ async def test_secure_users_login_invalid_password(client):
         "full_name": "Wrong Pass User",
         "password": "Password123",
     }
-    signup_response = await client.post("/api/v1/secure-users/signup", json=signup_payload)
+    signup_response = await client.post(
+        "/api/v1/secure-users/signup", json=signup_payload
+    )
     assert signup_response.status_code == 200
 
     # Try login with wrong password

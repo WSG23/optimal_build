@@ -450,7 +450,11 @@ def capital_stack_summary(
             )
 
     equity_total = sum(
-        (component.amount for component in components if component.category == "equity"),
+        (
+            component.amount
+            for component in components
+            if component.category == "equity"
+        ),
         Decimal("0"),
     )
     debt_total = sum(

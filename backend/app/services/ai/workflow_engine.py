@@ -395,7 +395,9 @@ class WorkflowEngineService:
 
             for action in sorted_actions:
                 # Check condition
-                if action.condition and not self._evaluate_condition(action.condition, event_data):
+                if action.condition and not self._evaluate_condition(
+                    action.condition, event_data
+                ):
                     continue
 
                 # Execute action

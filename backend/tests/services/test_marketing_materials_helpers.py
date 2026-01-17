@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-import pytest
 from reportlab.platypus import Paragraph, Table
 
 from app.models.property import PropertyType
@@ -224,10 +223,7 @@ def test_create_marketing_cover_lease():
         for item in story
     )
     # Check "AVAILABLE FOR LEASE" subtitle
-    assert any(
-        isinstance(item, Paragraph) and "LEASE" in item.text
-        for item in story
-    )
+    assert any(isinstance(item, Paragraph) and "LEASE" in item.text for item in story)
 
 
 def test_create_marketing_cover_sale():
@@ -238,8 +234,7 @@ def test_create_marketing_cover_sale():
     story = generator._create_marketing_cover(payload, "sale")
 
     assert any(
-        isinstance(item, Paragraph) and "FOR SALE" in item.text
-        for item in story
+        isinstance(item, Paragraph) and "FOR SALE" in item.text for item in story
     )
 
 
@@ -257,9 +252,7 @@ def test_create_property_highlights_contains_sections():
 
     assert len(story) > 0
     # Should contain "Building Features" heading
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     assert "Building Features" in text_content or "PROPERTY" in text_content
 
 
@@ -270,9 +263,7 @@ def test_create_property_highlights_ideal_for_section():
 
     story = generator._create_property_highlights(payload, "sale")
 
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     # Should mention ideal tenants
     assert "Ideal For" in text_content or "Technology" in text_content
 
@@ -335,9 +326,7 @@ def test_create_availability_section_lease():
 
     story = generator._create_availability_section(payload, "lease")
 
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     assert "Rental" in text_content or "AVAILABILITY" in text_content
 
 
@@ -348,9 +337,7 @@ def test_create_availability_section_sale():
 
     story = generator._create_availability_section(payload, "sale")
 
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     assert "Investment" in text_content or "AVAILABILITY" in text_content
 
 
@@ -506,9 +493,16 @@ def test_amenity_icons_draw_many_amenities():
     from reportlab.pdfgen import canvas
 
     amenities = [
-        "parking", "gym", "security", "cafe",
-        "meeting", "reception", "wifi", "elevator",
-        "extra1", "extra2",  # Should be ignored (max 8)
+        "parking",
+        "gym",
+        "security",
+        "cafe",
+        "meeting",
+        "reception",
+        "wifi",
+        "elevator",
+        "extra1",
+        "extra2",  # Should be ignored (max 8)
     ]
     icons = AmenityIcons(amenities)
 
@@ -694,9 +688,7 @@ def test_create_availability_section_sale_mode():
 
     story = generator._create_availability_section(payload, "sale")
 
-    text_content = " ".join(
-        item.text for item in story if isinstance(item, Paragraph)
-    )
+    text_content = " ".join(item.text for item in story if isinstance(item, Paragraph))
     assert "Investment" in text_content or "AVAILABILITY" in text_content
 
 
@@ -727,6 +719,5 @@ def test_create_marketing_cover_custom_property():
     assert len(story) > 0
     # Check property name appears
     assert any(
-        isinstance(item, Paragraph) and property_obj.name in item.text
-        for item in story
+        isinstance(item, Paragraph) and property_obj.name in item.text for item in story
     )

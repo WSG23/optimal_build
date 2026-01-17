@@ -322,6 +322,7 @@ class TestGetOAuthClient:
 
         # Clear cache
         from app.core.oauth import _oauth_clients
+
         _oauth_clients.clear()
 
         client = get_oauth_client("google")
@@ -335,6 +336,7 @@ class TestGetOAuthClient:
         monkeypatch.setenv("OAUTH_GOOGLE_CLIENT_SECRET", "test-secret")
 
         from app.core.oauth import _oauth_clients
+
         _oauth_clients.clear()
 
         client1 = get_oauth_client("google")

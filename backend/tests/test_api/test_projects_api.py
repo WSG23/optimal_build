@@ -302,7 +302,11 @@ async def test_get_project_stats(client):
     )
     await client.post(
         "/api/v1/projects/create",
-        json={"name": "Construction Project", "status": "construction", "budget": 2000000},
+        json={
+            "name": "Construction Project",
+            "status": "construction",
+            "budget": 2000000,
+        },
     )
     await client.post(
         "/api/v1/projects/create",
@@ -417,7 +421,10 @@ async def test_phase_display_name():
 
     assert _phase_display_name(ProjectPhase.CONCEPT) == "Concept"
     assert _phase_display_name(ProjectPhase.CONSTRUCTION) == "Construction"
-    assert _phase_display_name(ProjectPhase.TESTING_COMMISSIONING) == "Testing Commissioning"
+    assert (
+        _phase_display_name(ProjectPhase.TESTING_COMMISSIONING)
+        == "Testing Commissioning"
+    )
 
 
 @pytest.mark.asyncio
@@ -484,7 +491,9 @@ async def test_get_project_dashboard_success(client):
     assert "IRR" in kpi_labels
 
     # The development cost KPI should have the budget value
-    dev_cost_kpi = next(kpi for kpi in body["kpis"] if kpi["label"] == "Development Cost")
+    dev_cost_kpi = next(
+        kpi for kpi in body["kpis"] if kpi["label"] == "Development Cost"
+    )
     assert dev_cost_kpi["raw_value"] == 42500000.0
     assert dev_cost_kpi["value"] == "$42.5M"
 
@@ -540,7 +549,9 @@ async def test_get_project_dashboard_no_finance_data(client):
             assert kpi["raw_value"] is None
 
     # Development Cost should also be placeholder without budget
-    dev_cost_kpi = next(kpi for kpi in body["kpis"] if kpi["label"] == "Development Cost")
+    dev_cost_kpi = next(
+        kpi for kpi in body["kpis"] if kpi["label"] == "Development Cost"
+    )
     assert dev_cost_kpi["value"] == "—"
 
 

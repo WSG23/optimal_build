@@ -6,7 +6,6 @@ database operations.
 
 from __future__ import annotations
 
-import os
 import stat
 from pathlib import Path
 
@@ -81,7 +80,9 @@ class TestBackupScriptContent:
 
     def test_backup_has_retention_cleanup(self, backup_script: str) -> None:
         """Test backup script has retention/cleanup logic."""
-        assert "cleanup" in backup_script.lower() or "retention" in backup_script.lower()
+        assert (
+            "cleanup" in backup_script.lower() or "retention" in backup_script.lower()
+        )
 
     def test_backup_has_logging(self, backup_script: str) -> None:
         """Test backup script has logging."""
@@ -119,7 +120,10 @@ class TestRestoreScriptContent:
 
     def test_restore_terminates_connections(self, restore_script: str) -> None:
         """Test restore script terminates existing connections."""
-        assert "terminate" in restore_script.lower() or "pg_terminate_backend" in restore_script
+        assert (
+            "terminate" in restore_script.lower()
+            or "pg_terminate_backend" in restore_script
+        )
 
     def test_restore_has_verification(self, restore_script: str) -> None:
         """Test restore script verifies the restore."""
@@ -187,9 +191,9 @@ class TestBackupCronJob:
         for cj in cronjobs:
             spec = cj.get("spec", {})
             assert "concurrencyPolicy" in spec, "CronJob missing concurrencyPolicy"
-            assert spec["concurrencyPolicy"] == "Forbid", (
-                "CronJob should forbid concurrent runs"
-            )
+            assert (
+                spec["concurrencyPolicy"] == "Forbid"
+            ), "CronJob should forbid concurrent runs"
 
     def test_cronjob_uses_secrets(self, cron_config: list[dict]) -> None:
         """Test CronJob uses secrets for credentials."""
@@ -208,17 +212,15 @@ class TestBackupCronJob:
                 env_vars = container.get("env", [])
                 # Check that password comes from secret
                 password_vars = [
-                    e
-                    for e in env_vars
-                    if "password" in e.get("name", "").lower()
+                    e for e in env_vars if "password" in e.get("name", "").lower()
                 ]
                 for pv in password_vars:
-                    assert "valueFrom" in pv, (
-                        f"Password {pv.get('name')} should come from secret"
-                    )
-                    assert "secretKeyRef" in pv.get("valueFrom", {}), (
-                        f"Password {pv.get('name')} should use secretKeyRef"
-                    )
+                    assert (
+                        "valueFrom" in pv
+                    ), f"Password {pv.get('name')} should come from secret"
+                    assert "secretKeyRef" in pv.get(
+                        "valueFrom", {}
+                    ), f"Password {pv.get('name')} should use secretKeyRef"
 
 
 class TestBackupEnvironmentVariables:
@@ -234,7 +236,7 @@ class TestBackupEnvironmentVariables:
         """Test backup script uses environment variables with defaults."""
         # Should have POSTGRES_HOST with default
         assert "POSTGRES_HOST" in backup_script
-        assert ':-' in backup_script or 'default' in backup_script.lower()
+        assert ":-" in backup_script or "default" in backup_script.lower()
 
     def test_backup_requires_password(self, backup_script: str) -> None:
         """Test backup script requires password (no default)."""

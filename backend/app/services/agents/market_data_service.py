@@ -176,7 +176,12 @@ class MarketDataService:
         if not property_types:
             property_types = list(PropertyType)
 
-        sync_results: Dict[str, Any] = {"transactions": 0, "rentals": 0, "indices": 0, "errors": []}
+        sync_results: Dict[str, Any] = {
+            "transactions": 0,
+            "rentals": 0,
+            "indices": 0,
+            "errors": [],
+        }
 
         for prop_type in property_types:
             try:
@@ -191,7 +196,9 @@ class MarketDataService:
                 stored = await self._store_transactions(
                     transactions, provider_name, session
                 )
-                sync_results["transactions"] = int(sync_results["transactions"]) + stored
+                sync_results["transactions"] = (
+                    int(sync_results["transactions"]) + stored
+                )
 
                 # Sync rentals
                 rentals = await provider.fetch_rental_data(

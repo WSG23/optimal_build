@@ -318,8 +318,8 @@ def job(
     def decorator(func: JobFunc) -> JobFunc:
         task_name = name or f"{func.__module__}.{func.__qualname__}"
         registered = job_queue.register(func, task_name, queue)
-        setattr(registered, "job_name", task_name)
-        setattr(registered, "job_queue", job_queue)
+        registered.job_name = task_name
+        registered.job_queue = job_queue
         return registered
 
     return decorator

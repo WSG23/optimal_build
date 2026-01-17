@@ -49,22 +49,34 @@ class OAuthConfig:
         """Set provider-specific URLs if not explicitly configured."""
         if self.provider == OAuthProvider.AZURE:
             base_url = f"https://login.microsoftonline.com/{self.tenant_id}"
-            self.authorization_url = self.authorization_url or f"{base_url}/oauth2/v2.0/authorize"
+            self.authorization_url = (
+                self.authorization_url or f"{base_url}/oauth2/v2.0/authorize"
+            )
             self.token_url = self.token_url or f"{base_url}/oauth2/v2.0/token"
-            self.userinfo_url = self.userinfo_url or "https://graph.microsoft.com/v1.0/me"
+            self.userinfo_url = (
+                self.userinfo_url or "https://graph.microsoft.com/v1.0/me"
+            )
             self.scopes = self.scopes or ["openid", "profile", "email", "User.Read"]
 
         elif self.provider == OAuthProvider.GOOGLE:
-            self.authorization_url = self.authorization_url or "https://accounts.google.com/o/oauth2/v2/auth"
+            self.authorization_url = (
+                self.authorization_url or "https://accounts.google.com/o/oauth2/v2/auth"
+            )
             self.token_url = self.token_url or "https://oauth2.googleapis.com/token"
-            self.userinfo_url = self.userinfo_url or "https://www.googleapis.com/oauth2/v3/userinfo"
+            self.userinfo_url = (
+                self.userinfo_url or "https://www.googleapis.com/oauth2/v3/userinfo"
+            )
             self.scopes = self.scopes or ["openid", "profile", "email"]
 
         elif self.provider == OAuthProvider.OKTA:
             base_url = f"https://{self.domain}"
-            self.authorization_url = self.authorization_url or f"{base_url}/oauth2/default/v1/authorize"
+            self.authorization_url = (
+                self.authorization_url or f"{base_url}/oauth2/default/v1/authorize"
+            )
             self.token_url = self.token_url or f"{base_url}/oauth2/default/v1/token"
-            self.userinfo_url = self.userinfo_url or f"{base_url}/oauth2/default/v1/userinfo"
+            self.userinfo_url = (
+                self.userinfo_url or f"{base_url}/oauth2/default/v1/userinfo"
+            )
             self.scopes = self.scopes or ["openid", "profile", "email"]
 
 

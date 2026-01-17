@@ -397,7 +397,9 @@ class CompetitiveIntelligenceService:
 
             if activity.relevance_score > 0.8 or sector_overlap:
                 priority = (
-                    AlertPriority.HIGH if activity.relevance_score > 0.9 else AlertPriority.MEDIUM
+                    AlertPriority.HIGH
+                    if activity.relevance_score > 0.9
+                    else AlertPriority.MEDIUM
                 )
 
                 alerts.append(
@@ -433,7 +435,9 @@ class CompetitiveIntelligenceService:
     ) -> str:
         """Suggest action based on activity."""
         if activity.category == IntelligenceCategory.TRANSACTION:
-            return f"Review comparable opportunities in {activity.location or 'the area'}"
+            return (
+                f"Review comparable opportunities in {activity.location or 'the area'}"
+            )
         elif activity.category == IntelligenceCategory.DEVELOPMENT:
             return "Assess impact on local market dynamics"
         elif activity.category == IntelligenceCategory.DIVESTMENT:
@@ -519,7 +523,9 @@ class CompetitiveIntelligenceService:
         if not self._initialized or not self.llm:
             return self._generate_basic_summary(activities, alerts, insights)
 
-        activities_text = "\n".join(f"- {a.competitor_name}: {a.title}" for a in activities[:5])
+        activities_text = "\n".join(
+            f"- {a.competitor_name}: {a.title}" for a in activities[:5]
+        )
 
         alerts_text = "\n".join(f"- [{a.priority.value}] {a.title}" for a in alerts[:3])
 
@@ -553,7 +559,9 @@ Provide actionable intelligence summary for a real estate investment professiona
     ) -> str:
         """Generate basic summary without LLM."""
         high_priority_count = sum(
-            1 for a in alerts if a.priority in [AlertPriority.CRITICAL, AlertPriority.HIGH]
+            1
+            for a in alerts
+            if a.priority in [AlertPriority.CRITICAL, AlertPriority.HIGH]
         )
 
         return f"""Competitive Intelligence Summary:

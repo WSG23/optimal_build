@@ -151,8 +151,12 @@ class RAGKnowledgeBaseService:
                 metadata={
                     "address": prop.address,
                     "district": prop.district,
-                    "property_type": (prop.property_type.value if prop.property_type else None),
-                    "land_area_sqm": (float(prop.land_area_sqm) if prop.land_area_sqm else None),
+                    "property_type": (
+                        prop.property_type.value if prop.property_type else None
+                    ),
+                    "land_area_sqm": (
+                        float(prop.land_area_sqm) if prop.land_area_sqm else None
+                    ),
                 },
             )
 
@@ -223,7 +227,9 @@ class RAGKnowledgeBaseService:
                     "asset_type": deal.asset_type.value,
                     "pipeline_stage": deal.pipeline_stage.value,
                     "estimated_value": (
-                        float(deal.estimated_value_amount) if deal.estimated_value_amount else None
+                        float(deal.estimated_value_amount)
+                        if deal.estimated_value_amount
+                        else None
                     ),
                 },
             )
@@ -342,14 +348,18 @@ class RAGKnowledgeBaseService:
         # Filter chunks by source type
         filtered_chunks = list(self._chunks.values())
         if source_types:
-            filtered_chunks = [c for c in filtered_chunks if c.source_type in source_types]
+            filtered_chunks = [
+                c for c in filtered_chunks if c.source_type in source_types
+            ]
 
         if mode in [SearchMode.SEMANTIC, SearchMode.HYBRID]:
             # Semantic search using embeddings
             if self._initialized and self.embeddings:
                 try:
                     query_embedding = await self._get_embedding(query)
-                    results = self._semantic_search(query_embedding, filtered_chunks, limit)
+                    results = self._semantic_search(
+                        query_embedding, filtered_chunks, limit
+                    )
                 except Exception as e:
                     logger.warning(f"Semantic search failed: {e}")
                     mode = SearchMode.KEYWORD
@@ -402,7 +412,8 @@ class RAGKnowledgeBaseService:
             if chunk.embedding:
                 # Cosine similarity
                 dot_product = sum(
-                    a * b for a, b in zip(query_embedding, chunk.embedding, strict=False)
+                    a * b
+                    for a, b in zip(query_embedding, chunk.embedding, strict=False)
                 )
                 norm_a = math.sqrt(sum(a * a for a in query_embedding))
                 norm_b = math.sqrt(sum(b * b for b in chunk.embedding))
@@ -457,7 +468,9 @@ class RAGKnowledgeBaseService:
         results: list[SearchResult],
     ) -> str:
         """Generate an answer using LLM and search results."""
-        context = "\n\n".join(f"Source ({r.source_type.value}): {r.content}" for r in results)
+        context = "\n\n".join(
+            f"Source ({r.source_type.value}): {r.content}" for r in results
+        )
 
         prompt = f"""Based on the following context, answer the user's question.
 If the answer cannot be found in the context, say so.
@@ -484,7 +497,11 @@ Answer:"""
             f"District: {prop.district}" if prop.district else None,
             f"Type: {prop.property_type.value}" if prop.property_type else None,
             f"Land area: {prop.land_area_sqm} sqm" if prop.land_area_sqm else None,
-            (f"GFA: {prop.gross_floor_area_sqm} sqm" if prop.gross_floor_area_sqm else None),
+            (
+                f"GFA: {prop.gross_floor_area_sqm} sqm"
+                if prop.gross_floor_area_sqm
+                else None
+            ),
             f"Plot ratio: {prop.plot_ratio}" if prop.plot_ratio else None,
             f"Tenure: {prop.tenure_type.value}" if prop.tenure_type else None,
             f"Year built: {prop.year_built}" if prop.year_built else None,

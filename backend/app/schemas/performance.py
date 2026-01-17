@@ -44,9 +44,7 @@ class AgentPerformanceSnapshotResponse(BaseModel):
     updated_at: datetime
 
     @classmethod
-    def from_orm_snapshot(
-        cls, snapshot: AgentPerformanceSnapshot
-    ) -> Self:
+    def from_orm_snapshot(cls, snapshot: AgentPerformanceSnapshot) -> Self:
         return cls.model_validate(snapshot)  # type: ignore[return-value]
 
 

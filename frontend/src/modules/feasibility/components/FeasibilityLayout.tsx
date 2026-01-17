@@ -56,12 +56,15 @@ export function FeasibilityLayout({
                 background: 'var(--ob-color-bg-surface)',
                 border: '1px solid var(--ob-color-border-subtle)',
                 backdropFilter: 'blur(var(--ob-blur-md))',
+                boxShadow: 'var(--ob-shadow-md)',
               }}
             >
               <ToggleButtonGroup
                 value={layers}
                 onChange={handleLayerChange}
+                exclusive={false}
                 aria-label="visualization layers"
+                aria-multiselectable="true"
                 orientation="vertical"
                 size="small"
                 sx={{
@@ -72,6 +75,7 @@ export function FeasibilityLayout({
                     '&.Mui-selected': {
                       color: 'var(--ob-color-brand-primary)',
                       background: 'var(--ob-color-brand-soft)',
+                      boxShadow: 'inset 2px 0 0 var(--ob-color-neon-cyan)',
                       '&:hover': {
                         background: 'var(--ob-color-brand-muted)',
                       },
@@ -85,18 +89,30 @@ export function FeasibilityLayout({
                   },
                 }}
               >
-                <Tooltip title="Zoning Envelope" placement="left">
-                  <ToggleButton value="zoning" aria-label="zoning envelope">
+                <Tooltip title="Zoning Envelope" placement="left" arrow>
+                  <ToggleButton
+                    value="zoning"
+                    aria-label="zoning envelope"
+                    title="Zoning Envelope"
+                  >
                     <Layers fontSize="small" />
                   </ToggleButton>
                 </Tooltip>
-                <Tooltip title="Structural Grid" placement="left">
-                  <ToggleButton value="structure" aria-label="structural grid">
+                <Tooltip title="Structural Grid" placement="left" arrow>
+                  <ToggleButton
+                    value="structure"
+                    aria-label="structural grid"
+                    title="Structural Grid"
+                  >
                     <GridOn fontSize="small" />
                   </ToggleButton>
                 </Tooltip>
-                <Tooltip title="MEP Risers" placement="left">
-                  <ToggleButton value="mep" aria-label="mep risers">
+                <Tooltip title="MEP Risers" placement="left" arrow>
+                  <ToggleButton
+                    value="mep"
+                    aria-label="mep risers"
+                    title="MEP Risers"
+                  >
                     <Plumbing fontSize="small" />
                   </ToggleButton>
                 </Tooltip>

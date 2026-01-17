@@ -492,9 +492,7 @@ class DueDiligenceService:
             (
                 1
                 if i.priority == DDItemPriority.CRITICAL
-                else 0.5
-                if i.priority == DDItemPriority.HIGH
-                else 0.25
+                else 0.5 if i.priority == DDItemPriority.HIGH else 0.25
             )
             for i in items
             if i.status != DDItemStatus.COMPLETED
@@ -550,7 +548,10 @@ class DueDiligenceService:
                 )
 
             # Old building
-            if property_data.year_built and (datetime.now().year - property_data.year_built) > 20:
+            if (
+                property_data.year_built
+                and (datetime.now().year - property_data.year_built) > 20
+            ):
                 items.append(
                     DDItem(
                         id=str(uuid4()),
@@ -562,7 +563,10 @@ class DueDiligenceService:
                 )
 
             # Industrial property
-            if property_data.property_type and property_data.property_type.value == "industrial":
+            if (
+                property_data.property_type
+                and property_data.property_type.value == "industrial"
+            ):
                 items.append(
                     DDItem(
                         id=str(uuid4()),
@@ -575,7 +579,10 @@ class DueDiligenceService:
 
         # Large deal value (metadata available for future enhanced checks)
         _ = deal.metadata_json or {}
-        if deal.estimated_value_amount and float(deal.estimated_value_amount) > 50000000:
+        if (
+            deal.estimated_value_amount
+            and float(deal.estimated_value_amount) > 50000000
+        ):
             items.append(
                 DDItem(
                     id=str(uuid4()),
@@ -616,7 +623,10 @@ class DueDiligenceService:
 
         # Property-specific recommendations
         if property_data:
-            if property_data.year_built and (datetime.now().year - property_data.year_built) > 25:
+            if (
+                property_data.year_built
+                and (datetime.now().year - property_data.year_built) > 25
+            ):
                 recommendations.append(
                     DDRecommendation(
                         title="Aging Building Assessment",

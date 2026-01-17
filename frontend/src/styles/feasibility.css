@@ -1056,6 +1056,7 @@ html[data-theme='light'] .smart-search {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--ob-space-200);
     align-items: start;
+    min-height: calc(100vh - var(--ob-space-400));
 }
 
 @media (min-width: 1200px) {
@@ -1069,28 +1070,54 @@ html[data-theme='light'] .smart-search {
     flex-direction: column;
     gap: var(--ob-space-050);
     padding: 0;
+    position: sticky;
+    top: var(--ob-space-150);
+    height: calc(100vh - var(--ob-space-300));
+    overflow: hidden;
+    align-self: start;
 }
 
 .feasibility-workspace__sidebar-scroll {
     display: flex;
     flex-direction: column;
     gap: var(--ob-space-050);
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: var(--ob-space-025);
 }
 
 .feasibility-workspace__sidebar-footer {
     padding-top: var(--ob-space-050);
+    flex-shrink: 0;
+}
+
+@media (max-width: 1199px) {
+    .feasibility-workspace__sidebar {
+        position: static;
+        height: auto;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .feasibility-workspace__sidebar-scroll {
+        overflow: visible;
+        padding-right: 0;
+    }
 }
 
 .feasibility-workspace__main {
     position: relative;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .feasibility-workspace__layer-controls {
-    position: absolute;
-    top: var(--ob-space-100);
-    right: var(--ob-space-100);
-    z-index: var(--ob-z-sticky);
+    position: fixed;
+    right: var(--ob-space-150);
+    bottom: var(--ob-space-150);
+    z-index: var(--ob-z-fixed);
 }
 
 /* --- Feasibility Output Panel --- */

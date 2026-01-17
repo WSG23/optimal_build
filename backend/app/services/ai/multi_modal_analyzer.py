@@ -171,15 +171,23 @@ class MultiModalAnalyzerService:
 
             for analysis_type in analysis_types:
                 if analysis_type == AnalysisType.SPACE_ANALYSIS:
-                    result.space_metrics = await self._analyze_space(image_base64, request)
+                    result.space_metrics = await self._analyze_space(
+                        image_base64, request
+                    )
                 elif analysis_type == AnalysisType.CONDITION_ASSESSMENT:
-                    result.condition = await self._assess_condition(image_base64, request)
+                    result.condition = await self._assess_condition(
+                        image_base64, request
+                    )
                 elif analysis_type == AnalysisType.LAYOUT_EXTRACTION:
                     result.layout = await self._extract_layout(image_base64, request)
                 elif analysis_type == AnalysisType.TEXT_EXTRACTION:
-                    result.extracted_text = await self._extract_text(image_base64, request)
+                    result.extracted_text = await self._extract_text(
+                        image_base64, request
+                    )
 
-            result.processing_time_ms = (datetime.now() - start_time).total_seconds() * 1000
+            result.processing_time_ms = (
+                datetime.now() - start_time
+            ).total_seconds() * 1000
             result.confidence = 0.85 if self._initialized else 0.3
 
             return result
@@ -467,7 +475,9 @@ Only return valid JSON."""
         return MultiModalAnalysisResult(
             id=str(uuid4()),
             image_type=image_type,
-            analysis_type=(analysis_types[0] if analysis_types else AnalysisType.SPACE_ANALYSIS),
+            analysis_type=(
+                analysis_types[0] if analysis_types else AnalysisType.SPACE_ANALYSIS
+            ),
             confidence=0.0,
         )
 

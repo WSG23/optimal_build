@@ -156,7 +156,9 @@ class CompliancePredictorService:
             timeline = self._estimate_timeline(submission_type, risk_factors)
 
             # Get similar submissions
-            similar = await self._get_similar_submissions(submission_type, property_data, db)
+            similar = await self._get_similar_submissions(
+                submission_type, property_data, db
+            )
 
             # Calculate overall risk
             overall_risk = self._calculate_overall_risk(risk_factors)
@@ -261,7 +263,10 @@ class CompliancePredictorService:
             )
 
         # Check industrial zoning for environmental concerns
-        if property_data.property_type and property_data.property_type.value == "industrial":
+        if (
+            property_data.property_type
+            and property_data.property_type.value == "industrial"
+        ):
             risk_factors.append(
                 RiskFactor(
                     name="Industrial Use",
@@ -337,7 +342,9 @@ class CompliancePredictorService:
                 and_(
                     AuthoritySubmission.submission_type == submission_type,
                     AuthoritySubmission.submitted_at >= two_years_ago,
-                    AuthoritySubmission.status.in_(["approved", "rejected", "completed"]),
+                    AuthoritySubmission.status.in_(
+                        ["approved", "rejected", "completed"]
+                    ),
                 )
             )
             .order_by(AuthoritySubmission.submitted_at.desc())
@@ -394,7 +401,9 @@ class CompliancePredictorService:
             return RiskLevel.MEDIUM
 
         # Multiple medium risks
-        medium_count = sum(1 for rf in risk_factors if rf.risk_level == RiskLevel.MEDIUM)
+        medium_count = sum(
+            1 for rf in risk_factors if rf.risk_level == RiskLevel.MEDIUM
+        )
         if medium_count >= 3:
             return RiskLevel.MEDIUM
 
@@ -415,7 +424,9 @@ class CompliancePredictorService:
             )
 
         # Specific recommendations from risk factors
-        for rf in sorted(risk_factors, key=lambda x: x.typical_delay_weeks, reverse=True):
+        for rf in sorted(
+            risk_factors, key=lambda x: x.typical_delay_weeks, reverse=True
+        ):
             if rf.risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]:
                 recommendations.append(rf.mitigation)
 
@@ -459,7 +470,10 @@ class CompliancePredictorService:
             consultations.append("LTA - Land Transport Authority")
 
         # Environmental
-        if property_data.property_type and property_data.property_type.value == "industrial":
+        if (
+            property_data.property_type
+            and property_data.property_type.value == "industrial"
+        ):
             consultations.append("NEA - National Environment Agency")
 
         return consultations

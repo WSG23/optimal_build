@@ -171,7 +171,9 @@ class ConversationalAssistantService:
                 if "active_deal_id" in response.context_updates:
                     context.active_deal_id = response.context_updates["active_deal_id"]
                 if "active_property_id" in response.context_updates:
-                    context.active_property_id = response.context_updates["active_property_id"]
+                    context.active_property_id = response.context_updates[
+                        "active_property_id"
+                    ]
 
             return ConversationResult(
                 success=True,
@@ -329,7 +331,9 @@ Return only valid JSON:"""
             "type": "deal_analysis",
             "deal_id": deal_id,
             "score": score.overall_score if score else None,
-            "factors": ({f.factor: f.score for f in score.factor_scores} if score else {}),
+            "factors": (
+                {f.factor: f.score for f in score.factor_scores} if score else {}
+            ),
             "recommendation": score.recommendation if score else "Unable to analyze",
         }
 
@@ -340,7 +344,10 @@ Return only valid JSON:"""
             "type": "knowledge",
             "query": query,
             "results": (
-                [{"content": r.content, "score": r.relevance_score} for r in result.results[:5]]
+                [
+                    {"content": r.content, "score": r.relevance_score}
+                    for r in result.results[:5]
+                ]
                 if result
                 else []
             ),
@@ -365,7 +372,8 @@ Return only valid JSON:"""
 
         # Build tool results summary
         results_summary = "\n".join(
-            f"- {r.get('type', 'result')}: {r.get('summary', str(r))}" for r in tool_results
+            f"- {r.get('type', 'result')}: {r.get('summary', str(r))}"
+            for r in tool_results
         )
 
         prompt = f"""You are a helpful real estate investment assistant for Singapore property market.
@@ -414,7 +422,9 @@ Response:"""
 
         return "I'm here to help with your real estate investment questions. What would you like to know?"
 
-    def _generate_fallback_response(self, context: ConversationContext) -> AssistantResponse:
+    def _generate_fallback_response(
+        self, context: ConversationContext
+    ) -> AssistantResponse:
         """Generate a fallback response when LLM is unavailable."""
         return AssistantResponse(
             message="I'm currently operating in limited mode. How can I assist you with your real estate needs?",

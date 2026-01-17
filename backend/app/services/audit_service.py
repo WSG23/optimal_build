@@ -19,10 +19,9 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.types import FlexibleJSONB
 
 logger = logging.getLogger(__name__)
 
@@ -163,7 +162,8 @@ class AuditService:
         prev_hash = await self._get_last_hash()
 
         # Insert using raw SQL for the extended audit table
-        query = text("""
+        query = text(
+            """
             INSERT INTO compliance_audit_logs (
                 action, user_id, user_email, resource_type, resource_id,
                 severity, ip_address, user_agent, correlation_id,
@@ -175,7 +175,8 @@ class AuditService:
                 :old_values, :new_values, :details,
                 :content_hash, :prev_hash, :signature, :created_at
             ) RETURNING id
-        """)
+        """
+        )
 
         result = await self.db.execute(
             query,
@@ -226,10 +227,12 @@ class AuditService:
 
     async def _get_last_hash(self) -> str | None:
         """Get the hash of the last audit entry for chain integrity."""
-        query = text("""
+        query = text(
+            """
             SELECT content_hash FROM compliance_audit_logs
             ORDER BY id DESC LIMIT 1
-        """)
+        """
+        )
         result = await self.db.execute(query)
         row = result.fetchone()
         return row[0] if row else None
@@ -267,12 +270,14 @@ class AuditService:
         Returns:
             True if chain is valid, False if tampered.
         """
-        query = text("""
+        query = text(
+            """
             SELECT id, content_hash, prev_hash, signature
             FROM compliance_audit_logs
             WHERE id >= COALESCE(:start_id, 1)
             ORDER BY id ASC
-        """)
+        """
+        )
 
         result = await self.db.execute(query, {"start_id": start_id})
         rows = result.fetchall()

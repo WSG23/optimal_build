@@ -508,7 +508,9 @@ class NaturalLanguageQueryService:
                 "status": d.status.value,
                 "pipeline_stage": d.pipeline_stage.value,
                 "estimated_value": (
-                    float(d.estimated_value_amount) if d.estimated_value_amount else None
+                    float(d.estimated_value_amount)
+                    if d.estimated_value_amount
+                    else None
                 ),
                 "currency": d.estimated_value_currency,
                 "expected_close_date": (
@@ -551,7 +553,9 @@ class NaturalLanguageQueryService:
         )
 
         if metric == "total_value":
-            query = select(func.sum(AgentDeal.estimated_value_amount)).where(base_condition)
+            query = select(func.sum(AgentDeal.estimated_value_amount)).where(
+                base_condition
+            )
             result = await db.execute(query)
             total = result.scalar() or 0
 
@@ -678,7 +682,9 @@ class NaturalLanguageQueryService:
             data = [
                 {
                     "id": str(t.id),
-                    "date": (t.transaction_date.isoformat() if t.transaction_date else None),
+                    "date": (
+                        t.transaction_date.isoformat() if t.transaction_date else None
+                    ),
                     "price": float(t.sale_price) if t.sale_price else None,
                     "psf": float(t.psf_price) if t.psf_price else None,
                     "type": t.transaction_type,

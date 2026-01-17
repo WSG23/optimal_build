@@ -66,10 +66,12 @@ class TestAWSSecretsManager:
     def mock_boto3_client(self) -> MagicMock:
         mock_client = MagicMock()
         mock_client.get_secret_value.return_value = {
-            "SecretString": json.dumps({
-                "username": "admin",
-                "password": "super-secret",
-            })
+            "SecretString": json.dumps(
+                {
+                    "username": "admin",
+                    "password": "super-secret",
+                }
+            )
         }
         return mock_client
 

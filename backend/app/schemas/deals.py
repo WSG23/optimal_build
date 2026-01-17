@@ -240,9 +240,7 @@ class CommissionAdjustmentResponse(BaseModel):
     audit_log_id: int | None = None
 
     @classmethod
-    def from_orm_adjustment(
-        cls, adjustment: AgentCommissionAdjustment
-    ) -> Self:
+    def from_orm_adjustment(cls, adjustment: AgentCommissionAdjustment) -> Self:
         metadata_value = getattr(adjustment, "metadata", None)
         if not isinstance(metadata_value, dict):
             metadata_value = getattr(adjustment, "metadata_json", {}) or {}

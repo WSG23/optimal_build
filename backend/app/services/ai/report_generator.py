@@ -140,7 +140,9 @@ class AIReportGenerator:
             )
 
             # Transaction Overview
-            transaction_section = self._generate_transaction_overview(deal, property_data)
+            transaction_section = self._generate_transaction_overview(
+                deal, property_data
+            )
             sections.append(
                 ReportSection(
                     title="Transaction Overview",
@@ -181,7 +183,9 @@ class AIReportGenerator:
             )
 
             # Recommendation
-            recommendation_section = await self._generate_recommendation(deal, property_data)
+            recommendation_section = await self._generate_recommendation(
+                deal, property_data
+            )
             sections.append(
                 ReportSection(
                     title="Recommendation",
@@ -203,7 +207,9 @@ class AIReportGenerator:
                     "deal_type": deal.deal_type.value,
                     "asset_type": deal.asset_type.value,
                     "estimated_value": (
-                        float(deal.estimated_value_amount) if deal.estimated_value_amount else None
+                        float(deal.estimated_value_amount)
+                        if deal.estimated_value_amount
+                        else None
                     ),
                 },
                 executive_summary=exec_summary,
@@ -249,7 +255,9 @@ class AIReportGenerator:
             closed_won = [d for d in deals if d.status == DealStatus.CLOSED_WON]
             closed_lost = [d for d in deals if d.status == DealStatus.CLOSED_LOST]
 
-            total_pipeline = sum(float(d.estimated_value_amount or 0) for d in open_deals)
+            total_pipeline = sum(
+                float(d.estimated_value_amount or 0) for d in open_deals
+            )
             total_closed = sum(float(d.estimated_value_amount or 0) for d in closed_won)
 
             sections = []
@@ -358,7 +366,9 @@ GFA: {property_data.gross_floor_area_sqm} sqm
     ) -> str:
         """Generate a basic summary without LLM."""
         value_str = (
-            f"${float(deal.estimated_value_amount):,.0f}" if deal.estimated_value_amount else "TBD"
+            f"${float(deal.estimated_value_amount):,.0f}"
+            if deal.estimated_value_amount
+            else "TBD"
         )
         return f"""This memorandum presents the {deal.deal_type.value} opportunity for {deal.title},
 a {deal.asset_type.value} asset with an estimated value of {value_str}.
@@ -457,7 +467,10 @@ The {deal.asset_type.value.replace("_", " ")} market continues to show [stable/g
             mitigations.append("Thorough due diligence and experienced legal counsel")
 
         if property_data:
-            if property_data.year_built and (datetime.now().year - property_data.year_built) > 20:
+            if (
+                property_data.year_built
+                and (datetime.now().year - property_data.year_built) > 20
+            ):
                 risks.append(
                     f"Building age ({datetime.now().year - property_data.year_built} years) may require capex"
                 )
@@ -468,7 +481,9 @@ The {deal.asset_type.value.replace("_", " ")} market continues to show [stable/g
                 mitigations.append("Early consultation with heritage authorities")
 
         risk_table = (
-            "\n".join(f"| {r} | {m} |" for r, m in zip(risks, mitigations, strict=False))
+            "\n".join(
+                f"| {r} | {m} |" for r, m in zip(risks, mitigations, strict=False)
+            )
             or "| Standard transaction risks | Standard due diligence |"
         )
 

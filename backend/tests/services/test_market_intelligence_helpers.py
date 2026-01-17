@@ -42,10 +42,18 @@ def _make_transaction(**overrides):
 def test_group_by_quarter_groups_correctly(analytics):
     """Test transactions are correctly grouped into quarters."""
     transactions = [
-        _make_transaction(transaction_date=date(2024, 1, 15), sale_price=1_000_000, psf_price=1000.0),
-        _make_transaction(transaction_date=date(2024, 2, 10), sale_price=2_000_000, psf_price=2000.0),
-        _make_transaction(transaction_date=date(2024, 4, 20), sale_price=3_000_000, psf_price=3000.0),
-        _make_transaction(transaction_date=date(2024, 7, 5), sale_price=4_000_000, psf_price=4000.0),
+        _make_transaction(
+            transaction_date=date(2024, 1, 15), sale_price=1_000_000, psf_price=1000.0
+        ),
+        _make_transaction(
+            transaction_date=date(2024, 2, 10), sale_price=2_000_000, psf_price=2000.0
+        ),
+        _make_transaction(
+            transaction_date=date(2024, 4, 20), sale_price=3_000_000, psf_price=3000.0
+        ),
+        _make_transaction(
+            transaction_date=date(2024, 7, 5), sale_price=4_000_000, psf_price=4000.0
+        ),
     ]
 
     result = analytics._group_by_quarter(transactions)
@@ -61,8 +69,12 @@ def test_group_by_quarter_groups_correctly(analytics):
 def test_group_by_quarter_calculates_averages(analytics):
     """Test average PSF is correctly calculated per quarter."""
     transactions = [
-        _make_transaction(transaction_date=date(2024, 1, 1), sale_price=1_000_000, psf_price=1000.0),
-        _make_transaction(transaction_date=date(2024, 1, 15), sale_price=2_000_000, psf_price=2000.0),
+        _make_transaction(
+            transaction_date=date(2024, 1, 1), sale_price=1_000_000, psf_price=1000.0
+        ),
+        _make_transaction(
+            transaction_date=date(2024, 1, 15), sale_price=2_000_000, psf_price=2000.0
+        ),
     ]
 
     result = analytics._group_by_quarter(transactions)
@@ -269,9 +281,7 @@ def test_analyze_buyer_profile_empty_list(analytics):
 def test_calculate_supply_pressure_high(analytics):
     """Test high supply pressure detection."""
     result = analytics._calculate_supply_pressure(
-        upcoming_gfa=800_000,
-        property_type=PropertyType.OFFICE,
-        location="D01"
+        upcoming_gfa=800_000, property_type=PropertyType.OFFICE, location="D01"
     )
     assert result == "high"
 
@@ -279,9 +289,7 @@ def test_calculate_supply_pressure_high(analytics):
 def test_calculate_supply_pressure_moderate(analytics):
     """Test moderate supply pressure detection."""
     result = analytics._calculate_supply_pressure(
-        upcoming_gfa=550_000,
-        property_type=PropertyType.OFFICE,
-        location="D01"
+        upcoming_gfa=550_000, property_type=PropertyType.OFFICE, location="D01"
     )
     assert result == "moderate"
 
@@ -289,9 +297,7 @@ def test_calculate_supply_pressure_moderate(analytics):
 def test_calculate_supply_pressure_low(analytics):
     """Test low supply pressure detection."""
     result = analytics._calculate_supply_pressure(
-        upcoming_gfa=200_000,
-        property_type=PropertyType.OFFICE,
-        location="D01"
+        upcoming_gfa=200_000, property_type=PropertyType.OFFICE, location="D01"
     )
     assert result == "low"
 
@@ -300,17 +306,13 @@ def test_calculate_supply_pressure_different_property_types(analytics):
     """Test thresholds for different property types."""
     # Retail has lower threshold (200000)
     result_retail = analytics._calculate_supply_pressure(
-        upcoming_gfa=250_000,
-        property_type=PropertyType.RETAIL,
-        location="D01"
+        upcoming_gfa=250_000, property_type=PropertyType.RETAIL, location="D01"
     )
     assert result_retail == "moderate"
 
     # Residential has higher threshold (1000000)
     result_residential = analytics._calculate_supply_pressure(
-        upcoming_gfa=500_000,
-        property_type=PropertyType.RESIDENTIAL,
-        location="D01"
+        upcoming_gfa=500_000, property_type=PropertyType.RESIDENTIAL, location="D01"
     )
     assert result_residential == "low"
 
@@ -318,9 +320,7 @@ def test_calculate_supply_pressure_different_property_types(analytics):
 def test_calculate_supply_pressure_fallback_threshold(analytics):
     """Test fallback threshold for unknown property types."""
     result = analytics._calculate_supply_pressure(
-        upcoming_gfa=800_000,
-        property_type=PropertyType.LAND,
-        location="D01"
+        upcoming_gfa=800_000, property_type=PropertyType.LAND, location="D01"
     )
     # Uses default 500000 threshold, 800000 > 750000 (1.5x)
     assert result == "high"
@@ -395,8 +395,7 @@ def test_get_major_developments_handles_none_completion(analytics):
 def test_assess_supply_impact_high(analytics):
     """Test high impact assessment."""
     result = analytics._assess_supply_impact(
-        upcoming_gfa=800_000,
-        property_type=PropertyType.OFFICE
+        upcoming_gfa=800_000, property_type=PropertyType.OFFICE
     )
     assert "downward pressure" in result
 
@@ -404,8 +403,7 @@ def test_assess_supply_impact_high(analytics):
 def test_assess_supply_impact_moderate(analytics):
     """Test moderate impact assessment."""
     result = analytics._assess_supply_impact(
-        upcoming_gfa=550_000,
-        property_type=PropertyType.OFFICE
+        upcoming_gfa=550_000, property_type=PropertyType.OFFICE
     )
     assert "absorb" in result
 
@@ -413,8 +411,7 @@ def test_assess_supply_impact_moderate(analytics):
 def test_assess_supply_impact_low(analytics):
     """Test low impact assessment."""
     result = analytics._assess_supply_impact(
-        upcoming_gfa=200_000,
-        property_type=PropertyType.OFFICE
+        upcoming_gfa=200_000, property_type=PropertyType.OFFICE
     )
     assert "growth" in result
 
@@ -507,10 +504,14 @@ def test_detect_seasonal_patterns_identifies_peak_month(analytics):
         for m in range(1, 13)
     ]
     # Add more data points
-    absorption_data.extend([
-        _make_absorption(tracking_date=date(2024, m, 15), sales_absorption_rate=5.0 + m)
-        for m in range(1, 4)
-    ])
+    absorption_data.extend(
+        [
+            _make_absorption(
+                tracking_date=date(2024, m, 15), sales_absorption_rate=5.0 + m
+            )
+            for m in range(1, 4)
+        ]
+    )
 
     result = analytics._detect_seasonal_patterns(absorption_data)
 
@@ -1022,7 +1023,9 @@ def test_generate_recommendations_high_supply(analytics):
         cycle={},
     )
 
-    assert any("supply" in r.lower() or "absorption" in r.lower() for r in recommendations)
+    assert any(
+        "supply" in r.lower() or "absorption" in r.lower() for r in recommendations
+    )
 
 
 def test_generate_recommendations_low_supply(analytics):
@@ -1035,7 +1038,9 @@ def test_generate_recommendations_low_supply(analytics):
         cycle={},
     )
 
-    assert any("premium" in r.lower() or "pricing" in r.lower() for r in recommendations)
+    assert any(
+        "premium" in r.lower() or "pricing" in r.lower() for r in recommendations
+    )
 
 
 def test_generate_recommendations_compressed_yields(analytics):
@@ -1087,7 +1092,9 @@ def test_generate_recommendations_decelerating_absorption(analytics):
         cycle={},
     )
 
-    assert any("incentives" in r.lower() or "adjustments" in r.lower() for r in recommendations)
+    assert any(
+        "incentives" in r.lower() or "adjustments" in r.lower() for r in recommendations
+    )
 
 
 def test_generate_recommendations_expansion_phase(analytics):
@@ -1139,7 +1146,9 @@ def test_generate_recommendations_recovery_phase(analytics):
         cycle={"current_phase": "recovery"},
     )
 
-    assert any("growth" in r.lower() or "recovering" in r.lower() for r in recommendations)
+    assert any(
+        "growth" in r.lower() or "recovering" in r.lower() for r in recommendations
+    )
 
 
 def test_generate_recommendations_always_includes_monitoring(analytics):
