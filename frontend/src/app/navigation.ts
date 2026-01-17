@@ -1,4 +1,5 @@
 export type NavItemKey =
+  | 'projects'
   | 'performance'
   | 'gpsCapture'
   | 'marketing'
@@ -68,6 +69,12 @@ export const AGENT_NAV_ITEMS: NavItem[] = [
 
 // Developer Workspace Tools (Phase 2)
 export const DEVELOPER_NAV_ITEMS: NavItem[] = [
+  {
+    key: 'projects',
+    label: 'All Projects',
+    path: '/projects',
+    workspace: 'developer',
+  },
   {
     key: 'siteAcquisition',
     label: 'Site Acquisition',

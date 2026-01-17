@@ -183,15 +183,15 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
           // Glowing underline for active state - positioned below the nav bar
           '&::after': isActive
             ? {
-                content: '""',
-                position: 'absolute',
-                bottom: '-4px',
-                left: 0,
-                right: 0,
-                height: '2px',
-                bgcolor: 'var(--ob-color-neon-cyan)',
-                boxShadow: '0 0 8px var(--ob-color-neon-cyan)',
-              }
+              content: '""',
+              position: 'absolute',
+              bottom: '-4px',
+              left: 0,
+              right: 0,
+              height: '2px',
+              bgcolor: 'var(--ob-color-neon-cyan)',
+              boxShadow: '0 0 8px var(--ob-color-neon-cyan)',
+            }
             : {},
         }}
       >
@@ -384,7 +384,7 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
                     ⬡
                   </Box>
                 </Box>
-                <Stack direction="row" alignItems="baseline" spacing={1}>
+                <Stack direction="column" alignItems="flex-start" spacing={0}>
                   <Typography
                     component="span"
                     sx={{
@@ -393,6 +393,7 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
                       fontWeight: 800,
                       letterSpacing: 'var(--ob-letter-spacing-wider)',
                       fontSize: 'var(--ob-font-size-md)',
+                      lineHeight: 1,
                     }}
                   >
                     OPTIMAL BUILD
@@ -404,8 +405,9 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
                       fontSize: 'var(--ob-font-size-2xs)',
                       fontWeight: 800,
                       border: '1px solid var(--ob-color-neon-cyan-dim)',
-                      padding: '2px 6px',
+                      padding: '0px 4px',
                       borderRadius: 'var(--ob-radius-xs)',
+                      mt: '2px',
                     }}
                   >
                     V2.5_PRO

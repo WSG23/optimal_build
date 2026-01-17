@@ -97,3 +97,31 @@ export async function getProjectProgress(
     `/api/v1/projects/${projectId}/progress`,
   )
 }
+
+export interface DashboardKPI {
+  label: string
+  value: string
+  sub_value?: string | null
+  trend?: string | null
+  trend_direction?: 'up' | 'down' | 'neutral' | null
+}
+
+export interface DashboardModule {
+  label: string
+  path: string
+  enabled: boolean
+  description?: string | null
+}
+
+export interface ProjectDashboardResponse {
+  kpis: DashboardKPI[]
+  modules: DashboardModule[]
+}
+
+export async function getProjectDashboard(
+  projectId: string,
+): Promise<ProjectDashboardResponse> {
+  return getJson<ProjectDashboardResponse>(
+    `/api/v1/projects/${projectId}/dashboard`,
+  )
+}

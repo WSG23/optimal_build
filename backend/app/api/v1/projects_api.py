@@ -13,6 +13,7 @@ from app.api import deps
 from app.api.v1.finance_common import normalise_project_id
 from app.core.database import get_session
 from app.models.development_phase import DevelopmentPhase, PhaseStatus
+from app.models.finance import FinProject, FinScenario
 from app.models.projects import Project, ProjectPhase, ProjectType
 from app.models.workflow import ApprovalStep, ApprovalWorkflow, StepStatus
 from app.services.team.team_service import TeamService
@@ -107,6 +108,26 @@ class ProjectProgressResponse(BaseModel):
     workflow_summary: WorkflowSummary
     pending_approvals: List[PendingApprovalItem]
     team_activity: List[TeamActivityItem]
+
+
+class DashboardKPI(BaseModel):
+    label: str
+    value: str
+    sub_value: Optional[str] = None
+    trend: Optional[str] = None
+    trend_direction: Optional[str] = None  # up, down, neutral
+
+
+class DashboardModule(BaseModel):
+    label: str
+    path: str
+    enabled: bool
+    description: Optional[str] = None
+
+
+class ProjectDashboardResponse(BaseModel):
+    kpis: List[DashboardKPI]
+    modules: List[DashboardModule]
 
 
 def _project_to_response(project: Project) -> ProjectResponse:
@@ -580,3 +601,135 @@ async def get_project_progress(
         pending_approvals=pending_approvals,
         team_activity=team_activity,
     )
+
+
+@router.get("/{project_id}/dashboard", response_model=ProjectDashboardResponse)
+async def get_project_dashboard(
+    project_id: str,
+    db: AsyncSession = Depends(get_session),
+    identity: deps.RequestIdentity = Depends(deps.require_viewer),
+) -> ProjectDashboardResponse:
+    """Get dashboard data including KPIs and available modules."""
+    try:
+        project_uuid = uuid.UUID(project_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid project ID format. Expected UUID.",
+        ) from e
+
+    # Fetch Project with Financial Data
+    stmt = select(Project).where(
+        Project.id == project_uuid, Project.is_active == True
+    )  # noqa: E712
+    result = await db.execute(stmt)
+    project = result.scalar_one_or_none()
+
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project not found"
+        )
+
+    # Fetch Primary Financial Scenario
+    fin_stmt = (
+        select(FinScenario)
+        .join(FinProject, FinScenario.fin_project_id == FinProject.id)
+        .where(
+            FinProject.project_id == project_uuid,
+            FinScenario.is_primary == True,  # noqa: E712
+        )
+        .options(selectinload(FinScenario.results))
+    )
+    fin_result = await db.execute(fin_stmt)
+    primary_scenario = fin_result.scalars().first()
+
+    # Calculate KPIs
+    kpis: List[DashboardKPI] = []
+
+    # 1. GFA
+    gfa_val = (
+        f"{project.proposed_gfa_sqm:,.0f} m²" if project.proposed_gfa_sqm else "0 m²"
+    )
+    kpis.append(DashboardKPI(label="Total GFA", value=gfa_val))
+
+    # 2. Development Cost (Est)
+    cost_val = (
+        f"${project.estimated_cost_sgd / 1_000_000:.1f}M"
+        if project.estimated_cost_sgd
+        else "$0.0M"
+    )
+    kpis.append(DashboardKPI(label="Development Cost", value=cost_val))
+
+    # 3. Projected Revenue (from Finance)
+    revenue_val = "$0.0M"
+    revenue_trend = None
+    if primary_scenario:
+        # Try to find revenue in results
+        # Assuming there's a result named 'Total Revenue' or similar
+        rev_res = next(
+            (r for r in primary_scenario.results if "Revenue" in r.name), None
+        )
+        if rev_res and rev_res.value:
+            revenue_val = f"${float(rev_res.value) / 1_000_000:.1f}M"
+
+    kpis.append(
+        DashboardKPI(
+            label="Projected Revenue",
+            value=revenue_val,
+            # trend="12% vs target",  # Placeholder logic for now
+            # trend_direction="up",
+        )
+    )
+
+    # 4. IRR (from Finance)
+    irr_val = "0.0%"
+    if primary_scenario:
+        irr_res = next((r for r in primary_scenario.results if "IRR" in r.name), None)
+        if irr_res and irr_res.value:
+            irr_val = f"{float(irr_res.value):.1f}%"
+
+    kpis.append(DashboardKPI(label="IRR", value=irr_val))
+
+    # Modules (Dynamic based on logic, currently static list logic mapped to dynamic)
+    # Could be based on user permissions or project type
+    base_path = f"/projects/{project_id}"
+    modules = [
+        DashboardModule(
+            label="Capture Results",
+            path=f"{base_path}/capture",
+            enabled=True,
+            description="Site analysis and capture data",
+        ),
+        DashboardModule(
+            label="Feasibility",
+            path=f"{base_path}/feasibility",
+            enabled=True,
+            description="Financial modeling and feasibility",
+        ),
+        DashboardModule(
+            label="Finance",
+            path=f"{base_path}/finance",
+            enabled=True,
+            description="Detailed financial control",
+        ),
+        DashboardModule(
+            label="Phase Management",
+            path=f"{base_path}/phases",
+            enabled=True,
+            description="Manage project phases",
+        ),
+        DashboardModule(
+            label="Team",
+            path=f"{base_path}/team",
+            enabled=True,
+            description="Team members and roles",
+        ),
+        DashboardModule(
+            label="Regulatory",
+            path=f"{base_path}/regulatory",
+            enabled=True,
+            description="Regulatory submissions and approvals",
+        ),
+    ]
+
+    return ProjectDashboardResponse(kpis=kpis, modules=modules)
