@@ -10,8 +10,10 @@ type ObVariant = 'primary' | 'secondary' | 'ghost'
 type MuiVariant = NonNullable<MuiButtonProps['variant']>
 type GlassButtonVariant = ObVariant | MuiVariant
 
-export interface GlassButtonProps
-  extends Omit<MuiButtonProps, 'variant' | 'size' | 'sx'> {
+export interface GlassButtonProps extends Omit<
+  MuiButtonProps,
+  'variant' | 'size' | 'sx'
+> {
   variant?: GlassButtonVariant
   size?: 'small' | 'medium' | 'large'
   shape?: 'pill' | 'rounded'

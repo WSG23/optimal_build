@@ -89,8 +89,7 @@ const Shine = styled('div')({
   pointerEvents: 'none',
 })
 
-interface HolographicCardProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface HolographicCardProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   selected?: boolean
   label: string
   icon: React.ReactNode
