@@ -64,11 +64,11 @@ class AWSSecretsManager(SecretsBackend):
                     "secretsmanager",
                     region_name=self.region_name,
                 )
-            except ImportError:
+            except ImportError as e:
                 raise RuntimeError(
                     "boto3 is required for AWS Secrets Manager. "
                     "Install with: pip install boto3"
-                )
+                ) from e
         return self._client
 
     async def get_secret(self, secret_name: str) -> dict[str, Any]:
@@ -113,10 +113,10 @@ class VaultSecretsBackend(SecretsBackend):
                 self._client = hvac.Client(url=self.addr, token=self.token)
                 if not self._client.is_authenticated():
                     raise RuntimeError("Vault authentication failed")
-            except ImportError:
+            except ImportError as e:
                 raise RuntimeError(
                     "hvac is required for Vault. Install with: pip install hvac"
-                )
+                ) from e
         return self._client
 
     async def get_secret(self, secret_name: str) -> dict[str, Any]:

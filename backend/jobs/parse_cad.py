@@ -834,7 +834,9 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
                     wall_metadata[key] = value
             extra_metadata = entry.get("metadata")
             if isinstance(extra_metadata, Mapping):
-                wall_metadata.update({key: value for key, value in extra_metadata.items()})
+                wall_metadata.update(
+                    {key: value for key, value in extra_metadata.items()}
+                )
             try:
                 builder.add_wall(
                     {
@@ -877,7 +879,9 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
             space_metadata: dict[str, Any] = {"source": "vector_path"}
             extra_metadata = entry.get("metadata")
             if isinstance(extra_metadata, Mapping):
-                space_metadata.update({key: value for key, value in extra_metadata.items()})
+                space_metadata.update(
+                    {key: value for key, value in extra_metadata.items()}
+                )
             layer_name = entry.get("layer")
             if layer_name not in (None, ""):
                 space_metadata["layer"] = layer_name
@@ -923,7 +927,7 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
         floors=floors_summary,
         units=list(space_ids),
         layers=layer_metadata,
-        metadata=metadata,
+        metadata=result_metadata,
     )
 
 

@@ -278,7 +278,6 @@ def test_apply_market_adjustments_suburban_increases_residential(stub_services):
 
     # Residential should increase, office should decrease
     normalized_res = adjusted["residential"]
-    normalized_office = adjusted["office"]
     # Adjustments should favor residential over office in suburban
     assert normalized_res > 0.3 * 0.9  # Accounts for normalization
 
@@ -338,7 +337,9 @@ def test_identify_market_opportunities_office_building(stub_services):
 
     property_data = make_property(property_type=PropertyType.OFFICE)
     use_mix = {"office": 0.7, "retail": 0.3}
-    opportunities = scanner._identify_market_opportunities(property_data, zoning_info, use_mix)
+    opportunities = scanner._identify_market_opportunities(
+        property_data, zoning_info, use_mix
+    )
 
     assert len(opportunities) > 0
 
@@ -350,7 +351,9 @@ def test_identify_market_opportunities_retail_building(stub_services):
 
     property_data = make_property(property_type=PropertyType.RETAIL)
     use_mix = {"retail": 0.8, "office": 0.2}
-    opportunities = scanner._identify_market_opportunities(property_data, zoning_info, use_mix)
+    opportunities = scanner._identify_market_opportunities(
+        property_data, zoning_info, use_mix
+    )
 
     # Method runs and returns a list (may be empty if no conditions met)
     assert isinstance(opportunities, list)
@@ -363,7 +366,9 @@ def test_identify_market_opportunities_residential(stub_services):
 
     property_data = make_property(property_type=PropertyType.RESIDENTIAL)
     use_mix = {"residential": 0.9, "retail": 0.1}
-    opportunities = scanner._identify_market_opportunities(property_data, zoning_info, use_mix)
+    opportunities = scanner._identify_market_opportunities(
+        property_data, zoning_info, use_mix
+    )
 
     # Method runs and returns a list (may be empty if no conditions met)
     assert isinstance(opportunities, list)

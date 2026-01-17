@@ -620,8 +620,8 @@ async def get_project_dashboard(
 
     # Fetch Project with Financial Data
     stmt = select(Project).where(
-        Project.id == project_uuid, Project.is_active == True
-    )  # noqa: E712
+        Project.id == project_uuid, Project.is_active.is_(True)
+    )
     result = await db.execute(stmt)
     project = result.scalar_one_or_none()
 
@@ -636,7 +636,7 @@ async def get_project_dashboard(
         .join(FinProject, FinScenario.fin_project_id == FinProject.id)
         .where(
             FinProject.project_id == project_uuid,
-            FinScenario.is_primary == True,  # noqa: E712
+            FinScenario.is_primary.is_(True),
         )
         .options(selectinload(FinScenario.results))
     )
@@ -662,7 +662,6 @@ async def get_project_dashboard(
 
     # 3. Projected Revenue (from Finance)
     revenue_val = "$0.0M"
-    revenue_trend = None
     if primary_scenario:
         # Try to find revenue in results
         # Assuming there's a result named 'Total Revenue' or similar
