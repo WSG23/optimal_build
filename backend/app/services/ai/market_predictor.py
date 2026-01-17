@@ -126,19 +126,13 @@ class MarketPredictorService:
             rental_forecast = await self._forecast_rentals(property_type, location, db)
 
             # Get supply/demand data
-            supply_demand = await self._forecast_supply_demand(
-                property_type, location, db
-            )
+            supply_demand = await self._forecast_supply_demand(property_type, location, db)
 
             # Identify key drivers
-            drivers = self._identify_key_drivers(
-                property_type, rental_forecast, supply_demand
-            )
+            drivers = self._identify_key_drivers(property_type, rental_forecast, supply_demand)
 
             # Generate recommendation
-            recommendation = self._generate_recommendation(
-                rental_forecast, supply_demand, drivers
-            )
+            recommendation = self._generate_recommendation(rental_forecast, supply_demand, drivers)
 
             # Identify risks and opportunities
             risks, opportunities = self._identify_risks_opportunities(
@@ -155,9 +149,7 @@ class MarketPredictorService:
                 recommendation=recommendation,
                 risks=risks,
                 opportunities=opportunities,
-                confidence=self._calculate_overall_confidence(
-                    rental_forecast, supply_demand
-                ),
+                confidence=self._calculate_overall_confidence(rental_forecast, supply_demand),
             )
 
             return PredictionResult(success=True, forecast=forecast)
@@ -348,15 +340,10 @@ class MarketPredictorService:
         positive_count = sum(1 for d in drivers if d.impact == "positive")
         negative_count = sum(1 for d in drivers if d.impact == "negative")
 
-        if (
-            positive_count > negative_count
-            and rental_forecast.trend != TrendDirection.DOWN
-        ):
+        if positive_count > negative_count and rental_forecast.trend != TrendDirection.DOWN:
             return "Favorable conditions for acquisition. Strong fundamentals support investment."
         elif negative_count > positive_count or supply_demand.imbalance == "oversupply":
-            return (
-                "Exercise caution. Market headwinds may impact near-term performance."
-            )
+            return "Exercise caution. Market headwinds may impact near-term performance."
         else:
             return "Neutral outlook. Selective opportunities may exist for well-located assets."
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass
-from typing import Any, Callable, TypeVar, overload
+from typing import Any, Callable, TypeVar, dataclass_transform, overload
 
 _T = TypeVar("_T")
 
@@ -13,10 +13,12 @@ __all__ = ["compat_dataclass"]
 
 # Overloads to match dataclass signature for mypy
 @overload
+@dataclass_transform()
 def compat_dataclass(cls: type[_T]) -> type[_T]: ...
 
 
 @overload
+@dataclass_transform()
 def compat_dataclass(
     *,
     init: bool = True,
@@ -29,6 +31,7 @@ def compat_dataclass(
 ) -> Callable[[type[_T]], type[_T]]: ...
 
 
+@dataclass_transform()
 def compat_dataclass(
     *args: Any, **kwargs: Any
 ) -> Callable[[type[_T]], type[_T]] | type[_T]:

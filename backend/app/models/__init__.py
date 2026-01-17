@@ -25,6 +25,7 @@ else:
     # Import model modules so their metadata is registered with SQLAlchemy.
     from . import agent_advisory  # Added: agent advisory feedback model
     from . import ai_agents  # Added: AI agents model
+    from . import ai_config  # Added: AI configuration model
     from . import developer_condition  # Added: developer condition assessments
     from . import development_phase  # Added: Phase 2D development phases
     from . import hong_kong_property  # Added: Hong Kong property model
@@ -56,6 +57,7 @@ else:
     _SUBMODULES: dict[str, ModuleType] = {
         "agent_advisory": agent_advisory,  # Added: agent advisory feedback model
         "ai_agents": ai_agents,  # Added: AI agents model
+        "ai_config": ai_config,  # Added: AI configuration model
         "developer_condition": developer_condition,
         "development_phase": development_phase,  # Added: Phase 2D development phases
         "hong_kong_property": hong_kong_property,  # Added: Hong Kong property model

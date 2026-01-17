@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -29,7 +29,7 @@ class ApprovalStepRead(BaseModel):
         from_attributes = True
 
     @classmethod
-    def from_orm_step(cls, step) -> "ApprovalStepRead":
+    def from_orm_step(cls, step: Any) -> "ApprovalStepRead":
         """Create from ORM ApprovalStep model."""
         approver_role = None
         if step.required_role:
@@ -83,7 +83,7 @@ class ApprovalWorkflowRead(BaseModel):
         from_attributes = True
 
     @classmethod
-    def from_orm_workflow(cls, workflow) -> "ApprovalWorkflowRead":
+    def from_orm_workflow(cls, workflow: Any) -> "ApprovalWorkflowRead":
         """Create from ORM ApprovalWorkflow model."""
         # Calculate current_step_order from steps
         current_step_order = 0

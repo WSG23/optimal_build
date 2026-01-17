@@ -2,24 +2,26 @@
 
 from __future__ import annotations
 
+from typing import Any
 
-def ST_Buffer(*_args, **_kwargs):  # pragma: no cover - placeholder
+
+def ST_Buffer(*_args: Any, **_kwargs: Any) -> None:  # pragma: no cover - placeholder
     return None
 
 
-def ST_Area(*_args, **_kwargs):  # pragma: no cover - placeholder
+def ST_Area(*_args: Any, **_kwargs: Any) -> None:  # pragma: no cover - placeholder
     return None
 
 
-def ST_Centroid(*_args, **_kwargs):  # pragma: no cover - placeholder
+def ST_Centroid(*_args: Any, **_kwargs: Any) -> None:  # pragma: no cover - placeholder
     return None
 
 
-def ST_AsText(*_args, **_kwargs):  # pragma: no cover - placeholder
+def ST_AsText(*_args: Any, **_kwargs: Any) -> None:  # pragma: no cover - placeholder
     return None
 
 
-def ST_GeomFromText(*_args, **_kwargs):  # pragma: no cover - placeholder
+def ST_GeomFromText(*_args: Any, **_kwargs: Any) -> None:  # pragma: no cover - placeholder
     return None
 
 

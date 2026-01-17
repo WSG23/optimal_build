@@ -66,6 +66,7 @@ def _reexport(module: ModuleType) -> None:
     globals()["__all__"] = list(exported)
 
 
+_runtime_module: ModuleType | None
 try:
     _runtime_module = _load_runtime()
 except ModuleNotFoundError:

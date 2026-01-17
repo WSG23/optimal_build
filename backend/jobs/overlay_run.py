@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import inspect
 import time
-from collections.abc import AsyncIterator, Callable, Mapping, Sequence
+from collections.abc import AsyncIterator, Mapping, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
@@ -185,7 +185,7 @@ def _acquire_lock(
     return lock
 
 
-def _space_area(space) -> float | None:
+def _space_area(space: Any) -> float | None:
     """Compute the polygon area for a space boundary."""
 
     metadata = getattr(space, "metadata", None)
@@ -284,7 +284,8 @@ def _build_rule_metrics(
         if height is not None:
             max_height = height if max_height is None else max(max_height, height)
 
-    metrics["total_unit_area_sqm"] = total_area if total_area > 0 else None
+    if total_area > 0:
+        metrics["total_unit_area_sqm"] = total_area
     if max_height is not None:
         metrics["max_height_m"] = max_height
 
@@ -625,7 +626,8 @@ def _evaluate_geometry(
             site_level_id=site_level_id,
         )
         for overlay in rule_suggestions:
-            suggestions[overlay["code"]] = overlay
+            code = str(overlay["code"])
+            suggestions[code] = overlay
 
     if not suggestions:
         fallback_targets = _string_list(site_level_id)
@@ -675,19 +677,6 @@ def _collect_site_metadata(geometry: GeometryGraph) -> dict[str, Any]:
     for level in geometry.levels.values():
         metadata.update(level.metadata)
     return metadata
-
-
-def _coerce_float(value: object) -> float | None:
-    """Safely coerce a value to float."""
-
-    if value is None:
-        return None
-    if isinstance(value, (int, float)):
-        return float(value)
-    try:
-        return float(str(value))
-    except (TypeError, ValueError):
-        return None
 
 
 def _string_list(*values: object) -> list[str]:
@@ -908,11 +897,11 @@ def _build_missing_metric_overlay(
     }
 
 
-def _resolve_session_dependency() -> Callable[[], Any]:
+def _resolve_session_dependency() -> Any:
     """Return the dependency callable used to acquire database sessions."""
 
     try:  # pragma: no cover - FastAPI is optional in some environments
-        from app.main import app as fastapi_app  # type: ignore
+        from app.main import app as fastapi_app
     except Exception:  # pragma: no cover - fallback when app isn't available
         fastapi_app = None
 
@@ -933,7 +922,7 @@ async def _job_session() -> AsyncIterator[AsyncSession]:
     if inspect.isasyncgen(resource):
         generator = resource
         try:
-            session = await anext(generator)  # type: ignore[arg-type]
+            session = await anext(generator)
         except StopAsyncIteration as exc:  # pragma: no cover - defensive guard
             raise RuntimeError("Session dependency did not yield a session") from exc
         try:

@@ -14,13 +14,14 @@ from app.models.workflow import (
 )
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 
 class WorkflowService:
     """Service for managing approval workflows."""
 
-    def __init__(self, db_session):
+    def __init__(self, db_session: AsyncSession) -> None:
         self.db = db_session
 
     async def _check_step_permission(self, step: ApprovalStep, user_id: UUID) -> bool:
@@ -83,7 +84,7 @@ class WorkflowService:
         workflow_type: str,
         created_by_id: UUID,
         steps_data: list[dict],
-        description: str = None,
+        description: str | None = None,
     ) -> ApprovalWorkflow:
         """Create a new approval workflow with steps."""
 
@@ -144,7 +145,7 @@ class WorkflowService:
         return result.scalars().unique().all()
 
     async def approve_step(
-        self, step_id: UUID, user_id: UUID, comments: str = None
+        self, step_id: UUID, user_id: UUID, comments: str | None = None
     ) -> ApprovalStep:
         """Approve a specific step."""
 

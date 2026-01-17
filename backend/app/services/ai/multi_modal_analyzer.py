@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 from uuid import uuid4
 
 from langchain_openai import ChatOpenAI
@@ -120,11 +120,13 @@ class AnalysisRequest:
 class MultiModalAnalyzerService:
     """Service for multi-modal AI analysis."""
 
+    llm: Optional[ChatOpenAI]
+
     def __init__(self) -> None:
         """Initialize the analyzer."""
         try:
             self.llm = ChatOpenAI(
-                model_name="gpt-4o",  # Vision-capable model
+                model="gpt-4o",  # Vision-capable model
                 temperature=0.1,
             )
             self._initialized = True
@@ -169,23 +171,15 @@ class MultiModalAnalyzerService:
 
             for analysis_type in analysis_types:
                 if analysis_type == AnalysisType.SPACE_ANALYSIS:
-                    result.space_metrics = await self._analyze_space(
-                        image_base64, request
-                    )
+                    result.space_metrics = await self._analyze_space(image_base64, request)
                 elif analysis_type == AnalysisType.CONDITION_ASSESSMENT:
-                    result.condition = await self._assess_condition(
-                        image_base64, request
-                    )
+                    result.condition = await self._assess_condition(image_base64, request)
                 elif analysis_type == AnalysisType.LAYOUT_EXTRACTION:
                     result.layout = await self._extract_layout(image_base64, request)
                 elif analysis_type == AnalysisType.TEXT_EXTRACTION:
-                    result.extracted_text = await self._extract_text(
-                        image_base64, request
-                    )
+                    result.extracted_text = await self._extract_text(image_base64, request)
 
-            result.processing_time_ms = (
-                datetime.now() - start_time
-            ).total_seconds() * 1000
+            result.processing_time_ms = (datetime.now() - start_time).total_seconds() * 1000
             result.confidence = 0.85 if self._initialized else 0.3
 
             return result
@@ -264,7 +258,9 @@ Only return valid JSON."""
 
             import json
 
-            content = response.content or "{}"
+            content = response.content
+            if not isinstance(content, str):
+                content = "{}"
             start = content.find("{")
             end = content.rfind("}") + 1
             if start >= 0 and end > start:
@@ -317,7 +313,9 @@ Only return valid JSON."""
 
             import json
 
-            content = response.content or "{}"
+            content = response.content
+            if not isinstance(content, str):
+                content = "{}"
             start = content.find("{")
             end = content.rfind("}") + 1
             if start >= 0 and end > start:
@@ -375,7 +373,9 @@ Only return valid JSON."""
 
             import json
 
-            content = response.content or "{}"
+            content = response.content
+            if not isinstance(content, str):
+                content = "{}"
             start = content.find("{")
             end = content.rfind("}") + 1
             if start >= 0 and end > start:
@@ -436,7 +436,9 @@ Only return valid JSON."""
 
             import json
 
-            content = response.content or "{}"
+            content = response.content
+            if not isinstance(content, str):
+                content = "{}"
             start = content.find("{")
             end = content.rfind("}") + 1
             if start >= 0 and end > start:
@@ -465,9 +467,7 @@ Only return valid JSON."""
         return MultiModalAnalysisResult(
             id=str(uuid4()),
             image_type=image_type,
-            analysis_type=(
-                analysis_types[0] if analysis_types else AnalysisType.SPACE_ANALYSIS
-            ),
+            analysis_type=(analysis_types[0] if analysis_types else AnalysisType.SPACE_ANALYSIS),
             confidence=0.0,
         )
 
@@ -519,11 +519,14 @@ Only return valid JSON."""
 
             import json
 
-            content = response.content or "{}"
+            content = response.content
+            if not isinstance(content, str):
+                content = "{}"
             start = content.find("{")
             end = content.rfind("}") + 1
             if start >= 0 and end > start:
-                return json.loads(content[start:end])
+                parsed: dict[str, Any] = json.loads(content[start:end])
+                return parsed
         except Exception as e:
             logger.warning(f"Floor plan comparison failed: {e}")
 

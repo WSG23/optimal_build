@@ -1,0 +1,143 @@
+# Alertmanager configuration for optimal_build
+global:
+  # How long to wait before sending a notification again
+  resolve_timeout: 5m
+
+  # SMTP settings for email notifications
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_from: 'alerts@optimal-build.com'
+  smtp_auth_username: 'alerts@optimal-build.com'
+  smtp_auth_password_file: '/etc/alertmanager/secrets/smtp_password'
+  smtp_require_tls: true
+
+  # Slack API URL (from secrets)
+  slack_api_url_file: '/etc/alertmanager/secrets/slack_webhook'
+
+  # PagerDuty routing key
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+# Route tree for alert routing
+route:
+  # Default receiver
+  receiver: 'slack-platform'
+
+  # Group alerts by these labels
+  group_by: ['alertname', 'severity', 'team']
+
+  # How long to wait before sending group notification
+  group_wait: 30s
+
+  # How long to wait before sending notification about new alerts in group
+  group_interval: 5m
+
+  # How long to wait before resending notification
+  repeat_interval: 4h
+
+  # Child routes for specific alert routing
+  routes:
+    # Critical alerts go to PagerDuty
+    - match:
+        severity: critical
+      receiver: 'pagerduty-critical'
+      continue: true  # Also send to Slack
+
+    # Critical alerts also go to Slack
+    - match:
+        severity: critical
+      receiver: 'slack-critical'
+
+    # Warning alerts go to Slack
+    - match:
+        severity: warning
+      receiver: 'slack-platform'
+
+    # SLO breaches go to dedicated channel
+    - match_re:
+        slo: '.*'
+      receiver: 'slack-slo'
+      group_by: ['slo', 'alertname']
+
+# Inhibition rules to suppress redundant alerts
+inhibit_rules:
+  # If service is down, suppress high latency alerts
+  - source_match:
+      alertname: 'ServiceDown'
+    target_match:
+      alertname: 'HighLatency'
+    equal: ['job']
+
+  # If service is down, suppress high error rate alerts
+  - source_match:
+      alertname: 'ServiceDown'
+    target_match:
+      alertname: 'HighErrorRate'
+    equal: ['job']
+
+  # Critical severity suppresses warning for same alert
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'job']
+
+# Notification receivers
+receivers:
+  # Slack: Platform team channel
+  - name: 'slack-platform'
+    slack_configs:
+      - channel: '#platform-alerts'
+        send_resolved: true
+        title: '{{ template "slack.default.title" . }}'
+        text: '{{ template "slack.default.text" . }}'
+        actions:
+          - type: button
+            text: 'Runbook'
+            url: '{{ (index .Alerts 0).Annotations.runbook_url }}'
+          - type: button
+            text: 'Silence'
+            url: '{{ template "__alert_silence_link" . }}'
+
+  # Slack: Critical alerts channel
+  - name: 'slack-critical'
+    slack_configs:
+      - channel: '#critical-alerts'
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: ':rotating_light: {{ .Status | toUpper }}: {{ .CommonLabels.alertname }}'
+        text: |
+          *Severity:* {{ .CommonLabels.severity }}
+          *Description:* {{ .CommonAnnotations.description }}
+          *Runbook:* {{ .CommonAnnotations.runbook_url }}
+
+  # Slack: SLO breaches
+  - name: 'slack-slo'
+    slack_configs:
+      - channel: '#slo-alerts'
+        send_resolved: true
+        title: 'SLO {{ .CommonLabels.slo }} Alert'
+        text: '{{ template "slack.default.text" . }}'
+
+  # PagerDuty for critical alerts
+  - name: 'pagerduty-critical'
+    pagerduty_configs:
+      - service_key_file: '/etc/alertmanager/secrets/pagerduty_key'
+        severity: '{{ if eq .CommonLabels.severity "critical" }}critical{{ else }}warning{{ end }}'
+        description: '{{ .CommonAnnotations.summary }}'
+        details:
+          firing: '{{ template "pagerduty.default.instances" .Alerts.Firing }}'
+          resolved: '{{ template "pagerduty.default.instances" .Alerts.Resolved }}'
+          num_firing: '{{ .Alerts.Firing | len }}'
+          num_resolved: '{{ .Alerts.Resolved | len }}'
+
+  # Email notifications (backup)
+  - name: 'email-platform'
+    email_configs:
+      - to: 'platform-team@optimal-build.com'
+        send_resolved: true
+        headers:
+          Subject: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}'
+        html: '{{ template "email.default.html" . }}'
+
+# Templates for notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'

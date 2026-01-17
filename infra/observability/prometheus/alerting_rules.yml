@@ -1,0 +1,219 @@
+# Prometheus Alerting Rules for optimal_build
+groups:
+  - name: optimal-build-critical
+    rules:
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{job="optimal-build-backend", status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{job="optimal-build-backend"}[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+          runbook_url: "https://docs.optimal-build.com/runbooks/high-error-rate"
+
+      # Service Down
+      - alert: ServiceDown
+        expr: up{job="optimal-build-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Backend service is down"
+          description: "Backend service {{ $labels.instance }} has been down for more than 1 minute"
+          runbook_url: "https://docs.optimal-build.com/runbooks/service-down"
+
+      # Database Connection Failures
+      - alert: DatabaseConnectionFailure
+        expr: |
+          increase(database_connection_errors_total{job="optimal-build-backend"}[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Database connection failures detected"
+          description: "{{ $value }} database connection errors in the last 5 minutes"
+          runbook_url: "https://docs.optimal-build.com/runbooks/database-connection"
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            container_memory_usage_bytes{namespace="optimal-build", container!=""}
+            /
+            container_spec_memory_limit_bytes{namespace="optimal-build", container!=""}
+          ) > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Container memory usage is critical"
+          description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of memory limit"
+          runbook_url: "https://docs.optimal-build.com/runbooks/high-memory"
+
+  - name: optimal-build-warning
+    rules:
+      # High Latency
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="optimal-build-backend"}[5m])) by (le, endpoint)) > 2
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High API latency detected"
+          description: "95th percentile latency for {{ $labels.endpoint }} is {{ $value | humanizeDuration }}"
+          runbook_url: "https://docs.optimal-build.com/runbooks/high-latency"
+
+      # High CPU Usage
+      - alert: HighCPUUsage
+        expr: |
+          (
+            sum(rate(container_cpu_usage_seconds_total{namespace="optimal-build", container!=""}[5m])) by (pod, container)
+            /
+            sum(container_spec_cpu_quota{namespace="optimal-build", container!=""} / container_spec_cpu_period{namespace="optimal-build", container!=""}) by (pod, container)
+          ) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High CPU usage detected"
+          description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} CPU"
+
+      # Pod Restart
+      - alert: PodRestarting
+        expr: |
+          increase(kube_pod_container_status_restarts_total{namespace="optimal-build"}[1h]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Pod restarting frequently"
+          description: "Pod {{ $labels.pod }} has restarted {{ $value }} times in the last hour"
+
+      # Slow Database Queries
+      - alert: SlowDatabaseQueries
+        expr: |
+          histogram_quantile(0.95, sum(rate(database_query_duration_seconds_bucket{job="optimal-build-backend"}[5m])) by (le)) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Slow database queries detected"
+          description: "95th percentile database query time is {{ $value | humanizeDuration }}"
+
+      # Redis Connection Issues
+      - alert: RedisConnectionIssues
+        expr: |
+          increase(redis_connection_errors_total{job="optimal-build-backend"}[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Redis connection issues detected"
+          description: "{{ $value }} Redis connection errors in the last 5 minutes"
+
+      # Rate Limiting Triggered
+      - alert: HighRateLimiting
+        expr: |
+          sum(rate(rate_limit_exceeded_total{job="optimal-build-backend"}[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High rate of rate-limited requests"
+          description: "{{ $value }} requests/second are being rate limited"
+
+  - name: optimal-build-slo
+    rules:
+      # SLO: Availability (99.9%)
+      - alert: SLOAvailabilityBreach
+        expr: |
+          (
+            sum(rate(http_requests_total{job="optimal-build-backend", status!~"5.."}[1h]))
+            /
+            sum(rate(http_requests_total{job="optimal-build-backend"}[1h]))
+          ) < 0.999
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+          slo: availability
+        annotations:
+          summary: "SLO availability breach"
+          description: "Availability is {{ $value | humanizePercentage }}, below 99.9% SLO"
+
+      # SLO: Latency (95th < 500ms)
+      - alert: SLOLatencyBreach
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="optimal-build-backend"}[1h])) by (le)) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+          slo: latency
+        annotations:
+          summary: "SLO latency breach"
+          description: "95th percentile latency is {{ $value | humanizeDuration }}, above 500ms SLO"
+
+  - name: optimal-build-capacity
+    rules:
+      # Disk Space Low
+      - alert: DiskSpaceLow
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint="/", job="node-exporter"}
+            /
+            node_filesystem_size_bytes{mountpoint="/", job="node-exporter"}
+          ) < 0.15
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Low disk space"
+          description: "Node {{ $labels.instance }} has only {{ $value | humanizePercentage }} disk space remaining"
+
+      # PVC Almost Full
+      - alert: PVCAlmostFull
+        expr: |
+          (
+            kubelet_volume_stats_available_bytes{namespace="optimal-build"}
+            /
+            kubelet_volume_stats_capacity_bytes{namespace="optimal-build"}
+          ) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "PVC almost full"
+          description: "PVC {{ $labels.persistentvolumeclaim }} has only {{ $value | humanizePercentage }} space remaining"
+
+      # High Pending Pods
+      - alert: HighPendingPods
+        expr: |
+          sum(kube_pod_status_phase{namespace="optimal-build", phase="Pending"}) > 2
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Multiple pods pending"
+          description: "{{ $value }} pods are in Pending state for more than 10 minutes"

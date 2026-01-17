@@ -84,6 +84,119 @@ SCORING_WEIGHTS = {
     "similar_deal_outcomes": 0.07,
 }
 
+# =============================================================================
+# SCORING THRESHOLDS - Single Source of Truth
+# =============================================================================
+
+# Impact score levels (used consistently across all scoring factors)
+class ImpactScore:
+    """Standardized impact scores for consistent factor weighting."""
+
+    STRONG_POSITIVE = 0.8  # Exceptional advantage
+    HIGH_POSITIVE = 0.7  # Strong advantage
+    MODERATE_POSITIVE = 0.6  # Good advantage
+    MEDIUM_POSITIVE = 0.5  # Moderate advantage
+    LOW_POSITIVE = 0.4  # Slight advantage
+    MILD_POSITIVE = 0.3  # Minor advantage
+    WEAK_POSITIVE = 0.2  # Minimal advantage
+    NEUTRAL = 0.0  # No impact
+    MILD_NEGATIVE = -0.3  # Minor disadvantage
+    MODERATE_NEGATIVE = -0.4  # Moderate disadvantage
+    HIGH_NEGATIVE = -0.6  # Strong disadvantage
+    STRONG_NEGATIVE = -0.7  # Significant disadvantage
+
+
+# Factor categorization thresholds
+class FactorThresholds:
+    """Thresholds for categorizing factors as positive/negative/neutral."""
+
+    POSITIVE = 0.1  # Above this = positive factor
+    NEGATIVE = -0.1  # Below this = negative factor
+
+
+# Tenure thresholds (years remaining)
+class TenureThresholds:
+    """Lease tenure thresholds in years."""
+
+    STRONG = 70  # 70+ years = strong tenure
+    ADEQUATE = 50  # 50-70 years = adequate
+    LIMITED = 30  # 30-50 years = limited
+    # Below 30 = short tenure
+
+
+# Location experience thresholds (win count)
+class LocationExperienceThresholds:
+    """Thresholds for location-based experience scoring."""
+
+    STRONG = 5  # 5+ wins = strong track record
+    MODERATE = 2  # 2-4 wins = some experience
+    # Below 2 = limited experience
+
+
+# Price deviation thresholds (percentage from market average)
+class PriceDeviationThresholds:
+    """Price vs market deviation thresholds (percentage)."""
+
+    BELOW_MARKET = -10  # More than 10% below = good deal
+    AT_MARKET = 5  # Within 5% = at market
+    ABOVE_MARKET = 15  # 5-15% above = slightly overpriced
+    # Above 15% = significantly overpriced
+
+
+# GPR (Gross Plot Ratio) headroom thresholds (percentage)
+class GPRHeadroomThresholds:
+    """Development potential thresholds (percentage headroom)."""
+
+    SIGNIFICANT = 20  # 20%+ headroom = significant potential
+    MODERATE = 10  # 10-20% headroom = some potential
+    # Below 10% = fully developed
+
+
+# Historical success rate thresholds
+class HistoricalSuccessThresholds:
+    """Thresholds for historical win rate scoring."""
+
+    MIN_DEALS_FOR_ANALYSIS = 5  # Minimum deals needed for meaningful analysis
+    STRONG_WIN_RATE = 0.7  # 70%+ = strong track record
+    MODERATE_WIN_RATE = 0.5  # 50-70% = moderate track record
+    # Below 50% = challenging category
+
+
+# Recommendation score thresholds
+class RecommendationThresholds:
+    """Score thresholds for generating recommendations."""
+
+    STRONG_BUY = 80  # 80+ = strong buy
+    PROCEED = 65  # 65-79 = proceed with standard DD
+    CAUTION = 50  # 50-64 = proceed with caution
+    REVIEW = 35  # 35-49 = review carefully
+    # Below 35 = reconsider
+
+
+# Confidence thresholds
+class ConfidenceThresholds:
+    """Thresholds for determining score confidence level."""
+
+    HIGH_TOTAL_FACTORS = 5  # Need 5+ total factors for high confidence
+    HIGH_DECISIVE_FACTORS = 3  # Need 3+ positive/negative for high confidence
+    MEDIUM_TOTAL_FACTORS = 3  # Need 3+ factors for medium confidence
+
+
+# Seller motivation categories
+HIGH_MOTIVATION_REASONS = frozenset({
+    "estate_sale",
+    "distressed",
+    "divorce",
+    "urgent",
+    "relocation",
+})
+
+MEDIUM_MOTIVATION_REASONS = frozenset({
+    "portfolio_rebalance",
+    "upgrade",
+    "retirement",
+})
+
 
 class DealScoringService:
     """Service for scoring deals using ML and heuristics."""
@@ -132,53 +245,37 @@ class DealScoringService:
             property_data = prop_result.scalar_one_or_none()
 
         # Calculate individual factor scores
-        positive_factors = []
-        risk_factors = []
-        neutral_factors = []
+        positive_factors: list[ScoringFactor] = []
+        risk_factors: list[ScoringFactor] = []
+        neutral_factors: list[ScoringFactor] = []
 
         # Score: Location Match
-        location_score = await self._score_location_match(
-            deal, property_data, db, user_id
-        )
-        self._categorize_factor(
-            location_score, positive_factors, risk_factors, neutral_factors
-        )
+        location_score = await self._score_location_match(deal, property_data, db, user_id)
+        self._categorize_factor(location_score, positive_factors, risk_factors, neutral_factors)
 
         # Score: Tenure Adequacy
         tenure_score = await self._score_tenure(deal, property_data)
-        self._categorize_factor(
-            tenure_score, positive_factors, risk_factors, neutral_factors
-        )
+        self._categorize_factor(tenure_score, positive_factors, risk_factors, neutral_factors)
 
         # Score: Price vs Market
         price_score = await self._score_price_vs_market(deal, property_data, db)
-        self._categorize_factor(
-            price_score, positive_factors, risk_factors, neutral_factors
-        )
+        self._categorize_factor(price_score, positive_factors, risk_factors, neutral_factors)
 
         # Score: GPR Headroom
         gpr_score = await self._score_gpr_headroom(deal, property_data)
-        self._categorize_factor(
-            gpr_score, positive_factors, risk_factors, neutral_factors
-        )
+        self._categorize_factor(gpr_score, positive_factors, risk_factors, neutral_factors)
 
         # Score: Historical Success Rate
         history_score = await self._score_historical_success(deal, db, user_id)
-        self._categorize_factor(
-            history_score, positive_factors, risk_factors, neutral_factors
-        )
+        self._categorize_factor(history_score, positive_factors, risk_factors, neutral_factors)
 
         # Score: Competition Level
         competition_score = await self._score_competition(deal)
-        self._categorize_factor(
-            competition_score, positive_factors, risk_factors, neutral_factors
-        )
+        self._categorize_factor(competition_score, positive_factors, risk_factors, neutral_factors)
 
         # Score: Seller Motivation
         seller_score = await self._score_seller_motivation(deal)
-        self._categorize_factor(
-            seller_score, positive_factors, risk_factors, neutral_factors
-        )
+        self._categorize_factor(seller_score, positive_factors, risk_factors, neutral_factors)
 
         # Calculate overall score
         all_factors = positive_factors + risk_factors + neutral_factors
@@ -196,17 +293,18 @@ class DealScoringService:
         probability = final_score / 100.0
 
         # Determine confidence
-        if len(all_factors) >= 5 and len(positive_factors) + len(risk_factors) >= 3:
+        if (
+            len(all_factors) >= ConfidenceThresholds.HIGH_TOTAL_FACTORS
+            and len(positive_factors) + len(risk_factors) >= ConfidenceThresholds.HIGH_DECISIVE_FACTORS
+        ):
             confidence = ScoreConfidence.HIGH
-        elif len(all_factors) >= 3:
+        elif len(all_factors) >= ConfidenceThresholds.MEDIUM_TOTAL_FACTORS:
             confidence = ScoreConfidence.MEDIUM
         else:
             confidence = ScoreConfidence.LOW
 
         # Generate recommendation
-        recommendation = self._generate_recommendation(
-            final_score, positive_factors, risk_factors
-        )
+        recommendation = self._generate_recommendation(final_score, positive_factors, risk_factors)
 
         # Get comparable deals
         comparable_deals = await self._get_comparable_deals(deal, db, user_id)
@@ -231,10 +329,10 @@ class DealScoringService:
         neutral: list[ScoringFactor],
     ) -> None:
         """Categorize a factor based on its impact."""
-        if factor.impact_score > 0.1:
+        if factor.impact_score > FactorThresholds.POSITIVE:
             factor.factor_type = FactorType.POSITIVE
             positive.append(factor)
-        elif factor.impact_score < -0.1:
+        elif factor.impact_score < FactorThresholds.NEGATIVE:
             factor.factor_type = FactorType.NEGATIVE
             negative.append(factor)
         else:
@@ -279,20 +377,20 @@ class DealScoringService:
         result = await db.execute(wins_query)
         win_count = result.scalar() or 0
 
-        if win_count >= 5:
+        if win_count >= LocationExperienceThresholds.STRONG:
             return ScoringFactor(
                 name="Location Match",
                 description=f"You have {win_count} successful deals in similar locations",
                 factor_type=FactorType.POSITIVE,
-                impact_score=0.8,
+                impact_score=ImpactScore.STRONG_POSITIVE,
                 evidence=f"{win_count} historical wins",
             )
-        elif win_count >= 2:
+        elif win_count >= LocationExperienceThresholds.MODERATE:
             return ScoringFactor(
                 name="Location Match",
                 description=f"You have some experience in this location ({win_count} deals)",
                 factor_type=FactorType.POSITIVE,
-                impact_score=0.4,
+                impact_score=ImpactScore.LOW_POSITIVE,
                 evidence=f"{win_count} historical wins",
             )
         else:
@@ -300,7 +398,7 @@ class DealScoringService:
                 name="Location Match",
                 description="Limited track record in this location",
                 factor_type=FactorType.NEUTRAL,
-                impact_score=0.0,
+                impact_score=ImpactScore.NEUTRAL,
             )
 
     async def _score_tenure(
@@ -320,28 +418,28 @@ class DealScoringService:
         today = datetime.now().date()
         years_remaining = (property_data.lease_expiry_date - today).days / 365
 
-        if years_remaining >= 70:
+        if years_remaining >= TenureThresholds.STRONG:
             return ScoringFactor(
                 name="Tenure Adequacy",
                 description=f"Strong tenure: {years_remaining:.0f} years remaining",
                 factor_type=FactorType.POSITIVE,
-                impact_score=0.7,
+                impact_score=ImpactScore.HIGH_POSITIVE,
                 evidence=f"{years_remaining:.0f} years",
             )
-        elif years_remaining >= 50:
+        elif years_remaining >= TenureThresholds.ADEQUATE:
             return ScoringFactor(
                 name="Tenure Adequacy",
                 description=f"Adequate tenure: {years_remaining:.0f} years remaining",
                 factor_type=FactorType.POSITIVE,
-                impact_score=0.3,
+                impact_score=ImpactScore.MILD_POSITIVE,
                 evidence=f"{years_remaining:.0f} years",
             )
-        elif years_remaining >= 30:
+        elif years_remaining >= TenureThresholds.LIMITED:
             return ScoringFactor(
                 name="Tenure Adequacy",
                 description=f"Limited tenure: {years_remaining:.0f} years remaining",
                 factor_type=FactorType.NEGATIVE,
-                impact_score=-0.3,
+                impact_score=ImpactScore.MILD_NEGATIVE,
                 evidence=f"{years_remaining:.0f} years",
             )
         else:
@@ -349,7 +447,7 @@ class DealScoringService:
                 name="Tenure Adequacy",
                 description=f"Short tenure: Only {years_remaining:.0f} years remaining",
                 factor_type=FactorType.NEGATIVE,
-                impact_score=-0.7,
+                impact_score=ImpactScore.STRONG_NEGATIVE,
                 evidence=f"{years_remaining:.0f} years",
             )
 
@@ -389,28 +487,28 @@ class DealScoringService:
 
         deviation = (target_psf - float(market_avg)) / float(market_avg) * 100
 
-        if deviation < -10:
+        if deviation < PriceDeviationThresholds.BELOW_MARKET:
             return ScoringFactor(
                 name="Price vs Market",
                 description=f"Target price is {abs(deviation):.1f}% below market average",
                 factor_type=FactorType.POSITIVE,
-                impact_score=0.6,
+                impact_score=ImpactScore.MODERATE_POSITIVE,
                 evidence=f"${target_psf:,.0f} vs ${float(market_avg):,.0f} avg",
             )
-        elif deviation < 5:
+        elif deviation < PriceDeviationThresholds.AT_MARKET:
             return ScoringFactor(
                 name="Price vs Market",
                 description="Target price is in line with market",
                 factor_type=FactorType.POSITIVE,
-                impact_score=0.2,
+                impact_score=ImpactScore.WEAK_POSITIVE,
                 evidence=f"${target_psf:,.0f} vs ${float(market_avg):,.0f} avg",
             )
-        elif deviation < 15:
+        elif deviation < PriceDeviationThresholds.ABOVE_MARKET:
             return ScoringFactor(
                 name="Price vs Market",
                 description=f"Target price is {deviation:.1f}% above market average",
                 factor_type=FactorType.NEGATIVE,
-                impact_score=-0.3,
+                impact_score=ImpactScore.MILD_NEGATIVE,
                 evidence=f"${target_psf:,.0f} vs ${float(market_avg):,.0f} avg",
             )
         else:
@@ -418,7 +516,7 @@ class DealScoringService:
                 name="Price vs Market",
                 description=f"Target price is significantly above market ({deviation:.1f}%)",
                 factor_type=FactorType.NEGATIVE,
-                impact_score=-0.6,
+                impact_score=ImpactScore.HIGH_NEGATIVE,
                 evidence=f"${target_psf:,.0f} vs ${float(market_avg):,.0f} avg",
             )
 
@@ -451,20 +549,20 @@ class DealScoringService:
         current_ratio = float(current_gfa) / float(land_area)
         headroom = (float(plot_ratio) - current_ratio) / float(plot_ratio) * 100
 
-        if headroom > 20:
+        if headroom > GPRHeadroomThresholds.SIGNIFICANT:
             return ScoringFactor(
                 name="GPR Headroom",
                 description=f"Significant development potential: {headroom:.0f}% GPR headroom",
                 factor_type=FactorType.POSITIVE,
-                impact_score=0.7,
+                impact_score=ImpactScore.HIGH_POSITIVE,
                 evidence=f"Current {current_ratio:.2f} vs allowed {float(plot_ratio):.2f}",
             )
-        elif headroom > 10:
+        elif headroom > GPRHeadroomThresholds.MODERATE:
             return ScoringFactor(
                 name="GPR Headroom",
                 description=f"Some development potential: {headroom:.0f}% GPR headroom",
                 factor_type=FactorType.POSITIVE,
-                impact_score=0.3,
+                impact_score=ImpactScore.MILD_POSITIVE,
                 evidence=f"Current {current_ratio:.2f} vs allowed {float(plot_ratio):.2f}",
             )
         else:
@@ -472,7 +570,7 @@ class DealScoringService:
                 name="GPR Headroom",
                 description="Fully developed - limited upside potential",
                 factor_type=FactorType.NEUTRAL,
-                impact_score=0.0,
+                impact_score=ImpactScore.NEUTRAL,
             )
 
     async def _score_historical_success(
@@ -493,45 +591,43 @@ class DealScoringService:
                     AgentDeal.agent_id == user_id,
                     AgentDeal.deal_type == deal.deal_type,
                     AgentDeal.asset_type == deal.asset_type,
-                    AgentDeal.status.in_(
-                        [DealStatus.CLOSED_WON, DealStatus.CLOSED_LOST]
-                    ),
+                    AgentDeal.status.in_([DealStatus.CLOSED_WON, DealStatus.CLOSED_LOST]),
                 )
             )
             .group_by(AgentDeal.status)
         )
 
         result = await db.execute(similar_query)
-        stats = {row.status: row.count for row in result}
+        stats: dict[DealStatus, int] = {row.status: int(row.count) for row in result}
 
-        wins = stats.get(DealStatus.CLOSED_WON, 0)
-        losses = stats.get(DealStatus.CLOSED_LOST, 0)
-        total = wins + losses
+        wins: int = stats.get(DealStatus.CLOSED_WON, 0)
+        losses: int = stats.get(DealStatus.CLOSED_LOST, 0)
+        total: int = wins + losses
 
-        if total < 5:
+        if total < HistoricalSuccessThresholds.MIN_DEALS_FOR_ANALYSIS:
             return ScoringFactor(
                 name="Historical Success",
                 description=f"Limited history for {deal.deal_type.value} {deal.asset_type.value} deals",
                 factor_type=FactorType.NEUTRAL,
-                impact_score=0.0,
+                impact_score=ImpactScore.NEUTRAL,
             )
 
         win_rate = wins / total
 
-        if win_rate >= 0.7:
+        if win_rate >= HistoricalSuccessThresholds.STRONG_WIN_RATE:
             return ScoringFactor(
                 name="Historical Success",
                 description=f"Strong track record: {win_rate:.0%} win rate on similar deals",
                 factor_type=FactorType.POSITIVE,
-                impact_score=0.7,
+                impact_score=ImpactScore.HIGH_POSITIVE,
                 evidence=f"{wins} wins / {total} total",
             )
-        elif win_rate >= 0.5:
+        elif win_rate >= HistoricalSuccessThresholds.MODERATE_WIN_RATE:
             return ScoringFactor(
                 name="Historical Success",
                 description=f"Moderate track record: {win_rate:.0%} win rate on similar deals",
                 factor_type=FactorType.POSITIVE,
-                impact_score=0.3,
+                impact_score=ImpactScore.MILD_POSITIVE,
                 evidence=f"{wins} wins / {total} total",
             )
         else:
@@ -539,7 +635,7 @@ class DealScoringService:
                 name="Historical Success",
                 description=f"Challenging category: {win_rate:.0%} win rate historically",
                 factor_type=FactorType.NEGATIVE,
-                impact_score=-0.3,
+                impact_score=ImpactScore.MILD_NEGATIVE,
                 evidence=f"{wins} wins / {total} total",
             )
 
@@ -553,28 +649,28 @@ class DealScoringService:
                 name="Competition Level",
                 description="Low competition for this deal",
                 factor_type=FactorType.POSITIVE,
-                impact_score=0.5,
+                impact_score=ImpactScore.MEDIUM_POSITIVE,
             )
         elif competition == "medium":
             return ScoringFactor(
                 name="Competition Level",
                 description="Moderate competition expected",
                 factor_type=FactorType.NEUTRAL,
-                impact_score=0.0,
+                impact_score=ImpactScore.NEUTRAL,
             )
         elif competition == "high":
             return ScoringFactor(
                 name="Competition Level",
                 description="High competition - multiple bidders expected",
                 factor_type=FactorType.NEGATIVE,
-                impact_score=-0.4,
+                impact_score=ImpactScore.MODERATE_NEGATIVE,
             )
         else:
             return ScoringFactor(
                 name="Competition Level",
                 description="Competition level unknown",
                 factor_type=FactorType.NEUTRAL,
-                impact_score=0.0,
+                impact_score=ImpactScore.NEUTRAL,
             )
 
     async def _score_seller_motivation(self, deal: AgentDeal) -> ScoringFactor:
@@ -637,9 +733,7 @@ class DealScoringService:
             else "None identified"
         )
         top_risks = (
-            ", ".join(f.name for f in risk_factors[:2])
-            if risk_factors
-            else "None identified"
+            ", ".join(f.name for f in risk_factors[:2]) if risk_factors else "None identified"
         )
 
         return f"{action}. Key strengths: {top_positive}. Key risks: {top_risks}."
@@ -658,9 +752,7 @@ class DealScoringService:
                     AgentDeal.agent_id == user_id,
                     AgentDeal.deal_type == deal.deal_type,
                     AgentDeal.asset_type == deal.asset_type,
-                    AgentDeal.status.in_(
-                        [DealStatus.CLOSED_WON, DealStatus.CLOSED_LOST]
-                    ),
+                    AgentDeal.status.in_([DealStatus.CLOSED_WON, DealStatus.CLOSED_LOST]),
                     AgentDeal.id != deal.id,
                 )
             )
@@ -676,14 +768,8 @@ class DealScoringService:
                 "id": str(d.id),
                 "title": d.title,
                 "outcome": d.status.value,
-                "value": (
-                    float(d.estimated_value_amount)
-                    if d.estimated_value_amount
-                    else None
-                ),
-                "close_date": (
-                    d.actual_close_date.isoformat() if d.actual_close_date else None
-                ),
+                "value": (float(d.estimated_value_amount) if d.estimated_value_amount else None),
+                "close_date": (d.actual_close_date.isoformat() if d.actual_close_date else None),
             }
             for d in comparable
         ]

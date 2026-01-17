@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Self
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -46,8 +46,8 @@ class AgentPerformanceSnapshotResponse(BaseModel):
     @classmethod
     def from_orm_snapshot(
         cls, snapshot: AgentPerformanceSnapshot
-    ) -> "AgentPerformanceSnapshotResponse":
-        return cls.model_validate(snapshot)
+    ) -> Self:
+        return cls.model_validate(snapshot)  # type: ignore[return-value]
 
 
 class BenchmarkResponse(BaseModel):
@@ -69,8 +69,8 @@ class BenchmarkResponse(BaseModel):
     updated_at: datetime
 
     @classmethod
-    def from_orm_benchmark(cls, benchmark: PerformanceBenchmark) -> "BenchmarkResponse":
-        return cls.model_validate(benchmark)
+    def from_orm_benchmark(cls, benchmark: PerformanceBenchmark) -> Self:
+        return cls.model_validate(benchmark)  # type: ignore[return-value]
 
 
 __all__ = [

@@ -10,7 +10,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
@@ -74,12 +74,8 @@ class SalesPurchaseSchema(BaseModel):
     conditions_precedent: list[str] = Field(
         default_factory=list, description="Conditions precedent"
     )
-    encumbrances: list[str] = Field(
-        default_factory=list, description="Known encumbrances"
-    )
-    special_conditions: list[str] = Field(
-        default_factory=list, description="Special conditions"
-    )
+    encumbrances: list[str] = Field(default_factory=list, description="Known encumbrances")
+    special_conditions: list[str] = Field(default_factory=list, description="Special conditions")
 
 
 class ZoningLetterSchema(BaseModel):
@@ -91,21 +87,15 @@ class ZoningLetterSchema(BaseModel):
     zoning_description: str | None = Field(None, description="Zoning description")
     plot_ratio: float | None = Field(None, description="Gross plot ratio")
     site_coverage: float | None = Field(None, description="Site coverage percentage")
-    building_height: float | None = Field(
-        None, description="Max building height in meters"
-    )
+    building_height: float | None = Field(None, description="Max building height in meters")
     setback_front: float | None = Field(None, description="Front setback in meters")
     setback_side: float | None = Field(None, description="Side setback in meters")
     setback_rear: float | None = Field(None, description="Rear setback in meters")
-    permitted_uses: list[str] = Field(
-        default_factory=list, description="Permitted uses"
-    )
+    permitted_uses: list[str] = Field(default_factory=list, description="Permitted uses")
     special_conditions: list[str] = Field(
         default_factory=list, description="Special planning conditions"
     )
-    heritage_status: str | None = Field(
-        None, description="Heritage/conservation status"
-    )
+    heritage_status: str | None = Field(None, description="Heritage/conservation status")
     effective_date: date | None = Field(None, description="Letter effective date")
 
 
@@ -129,9 +119,7 @@ class ValuationReportSchema(BaseModel):
         default_factory=list, description="Comparable properties used"
     )
     valuation_approach: str | None = Field(None, description="Valuation approach used")
-    key_assumptions: list[str] = Field(
-        default_factory=list, description="Key assumptions"
-    )
+    key_assumptions: list[str] = Field(default_factory=list, description="Key assumptions")
 
 
 @dataclass
@@ -230,15 +218,18 @@ Return as JSON with field names: property_address, valuation_date, valuer_name, 
 class DocumentExtractionService:
     """Service for extracting structured data from documents using AI."""
 
+    llm: Optional[ChatOpenAI]
+    vision_llm: Optional[ChatOpenAI]
+
     def __init__(self) -> None:
         """Initialize the document extraction service."""
         try:
             self.llm = ChatOpenAI(
-                model_name="gpt-4-turbo",
+                model="gpt-4-turbo",
                 temperature=0,
             )
             self.vision_llm = ChatOpenAI(
-                model_name="gpt-4-turbo",
+                model="gpt-4-turbo",
                 temperature=0,
                 max_tokens=4096,
             )
@@ -249,9 +240,7 @@ class DocumentExtractionService:
             self.llm = None
             self.vision_llm = None
 
-    async def detect_document_type(
-        self, text_content: str
-    ) -> tuple[DocumentType, ConfidenceLevel]:
+    async def detect_document_type(self, text_content: str) -> tuple[DocumentType, ConfidenceLevel]:
         """Detect the type of document from its content.
 
         Args:
@@ -285,7 +274,10 @@ Format: TYPE|CONFIDENCE"""
 
         try:
             response = self.llm.invoke(prompt)
-            parts = response.content.strip().split("|")
+            content = response.content
+            if not isinstance(content, str):
+                return DocumentType.UNKNOWN, ConfidenceLevel.LOW
+            parts = content.strip().split("|")
 
             doc_type_str = parts[0].strip().lower()
             confidence_str = parts[1].strip().lower() if len(parts) > 1 else "medium"
@@ -343,9 +335,7 @@ Format: TYPE|CONFIDENCE"""
         try:
             # Detect document type if not provided
             if document_type is None:
-                document_type, type_confidence = await self.detect_document_type(
-                    text_content
-                )
+                document_type, type_confidence = await self.detect_document_type(text_content)
             else:
                 type_confidence = ConfidenceLevel.HIGH
 
@@ -388,6 +378,8 @@ Important:
             try:
                 # Try to extract JSON from response
                 content = response.content
+                if not isinstance(content, str):
+                    content = ""
                 # Find JSON block if wrapped in markdown
                 if "```json" in content:
                     content = content.split("```json")[1].split("```")[0]
@@ -397,7 +389,10 @@ Important:
                 extracted_data = json.loads(content.strip())
             except json.JSONDecodeError:
                 # Try to parse as-is
-                extracted_data = {"raw_response": response.content}
+                raw_content = response.content
+                extracted_data = {
+                    "raw_response": raw_content if isinstance(raw_content, str) else ""
+                }
 
             # Identify low confidence fields (nulls or empty)
             low_confidence_fields = [
@@ -480,16 +475,17 @@ Format: TYPE|CONFIDENCE"""
                             {"type": "text", "text": detect_prompt},
                             {
                                 "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/png;base64,{image_base64}"
-                                },
+                                "image_url": {"url": f"data:image/png;base64,{image_base64}"},
                             },
                         ],
                     }
                 ]
 
                 response = self.vision_llm.invoke(messages)
-                parts = response.content.strip().split("|")
+                content = response.content
+                if not isinstance(content, str):
+                    content = "unknown|low"
+                parts = content.strip().split("|")
                 doc_type_str = parts[0].strip().lower()
 
                 type_map = {
@@ -514,9 +510,7 @@ Format: TYPE|CONFIDENCE"""
                         {"type": "text", "text": extraction_prompt},
                         {
                             "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/png;base64,{image_base64}"
-                            },
+                            "image_url": {"url": f"data:image/png;base64,{image_base64}"},
                         },
                     ],
                 }
@@ -529,13 +523,18 @@ Format: TYPE|CONFIDENCE"""
 
             try:
                 content = response.content
+                if not isinstance(content, str):
+                    content = ""
                 if "```json" in content:
                     content = content.split("```json")[1].split("```")[0]
                 elif "```" in content:
                     content = content.split("```")[1].split("```")[0]
                 extracted_data = json.loads(content.strip())
             except json.JSONDecodeError:
-                extracted_data = {"raw_response": response.content}
+                raw_content = response.content
+                extracted_data = {
+                    "raw_response": raw_content if isinstance(raw_content, str) else ""
+                }
 
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
 

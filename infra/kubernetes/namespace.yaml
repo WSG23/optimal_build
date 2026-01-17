@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: optimal-build
+  labels:
+    app.kubernetes.io/name: optimal-build
+    app.kubernetes.io/part-of: optimal-build

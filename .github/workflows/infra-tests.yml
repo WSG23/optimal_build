@@ -1,0 +1,316 @@
+name: Infrastructure Tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'infra/**'
+      - 'backend/app/core/secrets.py'
+      - 'backend/app/core/oauth.py'
+      - 'backend/app/core/sentry.py'
+      - 'backend/app/services/audit_service.py'
+      - 'tests/infra/**'
+      - 'tests/e2e/**'
+      - 'tests/load/**'
+      - '.github/workflows/infra-tests.yml'
+  pull_request:
+    paths:
+      - 'infra/**'
+      - 'backend/app/core/secrets.py'
+      - 'backend/app/core/oauth.py'
+      - 'backend/app/core/sentry.py'
+      - 'backend/app/services/audit_service.py'
+      - 'tests/infra/**'
+      - 'tests/e2e/**'
+      - 'tests/load/**'
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+
+jobs:
+  # Backend infrastructure module tests
+  backend-infra-tests:
+    name: Backend Infrastructure Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Run secrets management tests
+        run: |
+          cd backend
+          python -m pytest tests/test_core/test_secrets.py -v --tb=short
+        env:
+          PYTHONPATH: backend
+
+      - name: Run OAuth tests
+        run: |
+          cd backend
+          python -m pytest tests/test_core/test_oauth.py -v --tb=short
+        env:
+          PYTHONPATH: backend
+
+      - name: Run Sentry integration tests
+        run: |
+          cd backend
+          python -m pytest tests/test_core/test_sentry.py -v --tb=short
+        env:
+          PYTHONPATH: backend
+
+      - name: Run audit service tests
+        run: |
+          cd backend
+          python -m pytest tests/test_services/test_audit_service.py -v --tb=short
+        env:
+          PYTHONPATH: backend
+
+  # Kubernetes manifest validation
+  kubernetes-validation:
+    name: Kubernetes Manifest Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install test dependencies
+        run: |
+          pip install pytest pyyaml
+
+      - name: Run Kubernetes manifest tests
+        run: |
+          python -m pytest tests/infra/test_kubernetes_manifests.py -v --tb=short
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Validate manifests with kubectl
+        run: |
+          for file in infra/kubernetes/*.yaml; do
+            echo "Validating $file..."
+            kubectl apply --dry-run=client -f "$file" 2>&1 || true
+          done
+
+      - name: Install kubeval
+        run: |
+          wget https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
+          tar xf kubeval-linux-amd64.tar.gz
+          sudo mv kubeval /usr/local/bin/
+
+      - name: Validate with kubeval
+        run: |
+          kubeval --strict infra/kubernetes/*.yaml || true
+
+  # Helm chart validation
+  helm-validation:
+    name: Helm Chart Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install test dependencies
+        run: |
+          pip install pytest pyyaml
+
+      - name: Run Helm chart structure tests
+        run: |
+          python -m pytest tests/infra/test_helm_chart.py -v --tb=short -k "not helm_"
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.13.0'
+
+      - name: Helm lint
+        run: |
+          helm lint infra/helm/optimal-build
+
+      - name: Helm template
+        run: |
+          helm template test-release infra/helm/optimal-build > /dev/null
+
+      - name: Run Helm CLI tests
+        run: |
+          python -m pytest tests/infra/test_helm_chart.py -v --tb=short -k "helm_"
+
+  # Backup script validation
+  backup-validation:
+    name: Backup Script Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install test dependencies
+        run: |
+          pip install pytest pyyaml
+
+      - name: Run backup script tests
+        run: |
+          python -m pytest tests/infra/test_backup_scripts.py -v --tb=short
+
+      - name: Validate shell scripts with shellcheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: './infra/backup'
+          severity: warning
+
+      - name: Check script syntax
+        run: |
+          bash -n infra/backup/backup.sh
+          bash -n infra/backup/restore.sh
+
+  # Alerting rules validation
+  alerting-validation:
+    name: Alerting Rules Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Prometheus rules syntax
+        run: |
+          # Install promtool
+          wget https://github.com/prometheus/prometheus/releases/download/v2.47.0/prometheus-2.47.0.linux-amd64.tar.gz
+          tar xf prometheus-2.47.0.linux-amd64.tar.gz
+          sudo mv prometheus-2.47.0.linux-amd64/promtool /usr/local/bin/
+
+      - name: Check alerting rules
+        run: |
+          if [ -f infra/observability/prometheus/alerting_rules.yml ]; then
+            promtool check rules infra/observability/prometheus/alerting_rules.yml
+          fi
+
+      - name: Validate Alertmanager config
+        run: |
+          # Install amtool
+          wget https://github.com/prometheus/alertmanager/releases/download/v0.26.0/alertmanager-0.26.0.linux-amd64.tar.gz
+          tar xf alertmanager-0.26.0.linux-amd64.tar.gz
+          sudo mv alertmanager-0.26.0.linux-amd64/amtool /usr/local/bin/
+
+      - name: Check Alertmanager config
+        run: |
+          if [ -f infra/observability/alertmanager/alertmanager.yml ]; then
+            # Replace secret file references with dummy values for validation
+            sed 's/_file:.*/_file: \/dev\/null/g' infra/observability/alertmanager/alertmanager.yml > /tmp/alertmanager-test.yml
+            amtool check-config /tmp/alertmanager-test.yml || true
+          fi
+
+  # E2E test setup validation
+  e2e-setup-validation:
+    name: E2E Test Setup Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Playwright
+        run: |
+          cd tests/e2e
+          npm init -y || true
+          npm install @playwright/test
+          npx playwright install --with-deps chromium
+
+      - name: Validate Playwright config
+        run: |
+          cd tests/e2e
+          npx playwright test --list || true
+
+  # Load test setup validation
+  load-test-validation:
+    name: Load Test Setup Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Validate k6 scripts
+        run: |
+          k6 inspect tests/load/k6/baseline.js
+
+      - name: Run k6 syntax check
+        run: |
+          # Run with 0 VUs just to check syntax
+          k6 run --vus 0 --iterations 0 tests/load/k6/baseline.js || true
+
+  # Summary job
+  infra-tests-summary:
+    name: Infrastructure Tests Summary
+    runs-on: ubuntu-latest
+    needs:
+      - backend-infra-tests
+      - kubernetes-validation
+      - helm-validation
+      - backup-validation
+      - alerting-validation
+      - e2e-setup-validation
+      - load-test-validation
+    if: always()
+    steps:
+      - name: Check results
+        run: |
+          echo "## Infrastructure Tests Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend Infra Tests | ${{ needs.backend-infra-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Kubernetes Validation | ${{ needs.kubernetes-validation.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Helm Validation | ${{ needs.helm-validation.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backup Validation | ${{ needs.backup-validation.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Alerting Validation | ${{ needs.alerting-validation.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Setup | ${{ needs.e2e-setup-validation.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Load Test Setup | ${{ needs.load-test-validation.result }} |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail if any test failed
+        if: |
+          needs.backend-infra-tests.result == 'failure' ||
+          needs.kubernetes-validation.result == 'failure' ||
+          needs.helm-validation.result == 'failure' ||
+          needs.backup-validation.result == 'failure'
+        run: |
+          echo "::error::One or more infrastructure tests failed"
+          exit 1

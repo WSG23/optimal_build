@@ -10,7 +10,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 from langchain_openai import ChatOpenAI
 from sqlalchemy import select, func, and_, or_
@@ -269,16 +269,16 @@ class NaturalLanguageQueryService:
 
     def __init__(self) -> None:
         """Initialize the NL query service with LLM."""
+        self.llm: Optional[ChatOpenAI] = None
         try:
             self.llm = ChatOpenAI(
-                model_name="gpt-4-turbo",
+                model="gpt-4-turbo",
                 temperature=0,
             )
             self._initialized = True
         except Exception as e:
             logger.warning(f"NL Query Service not initialized: {e}")
             self._initialized = False
-            self.llm = None
 
     async def process_query(
         self,
@@ -338,11 +338,16 @@ class NaturalLanguageQueryService:
                 return result
 
             # No function called - return general response
+            content = response.content
+            natural_response = (
+                content
+                if isinstance(content, str) and content
+                else "I understand your question but need more context to provide specific data."
+            )
             return QueryResult(
                 success=True,
                 query_type=QueryType.GENERAL_QUESTION,
-                natural_response=response.content
-                or "I understand your question but need more context to provide specific data.",
+                natural_response=natural_response,
                 execution_time_ms=execution_time,
                 suggestions=[
                     "Try asking about specific properties, deals, or metrics",
@@ -503,9 +508,7 @@ class NaturalLanguageQueryService:
                 "status": d.status.value,
                 "pipeline_stage": d.pipeline_stage.value,
                 "estimated_value": (
-                    float(d.estimated_value_amount)
-                    if d.estimated_value_amount
-                    else None
+                    float(d.estimated_value_amount) if d.estimated_value_amount else None
                 ),
                 "currency": d.estimated_value_currency,
                 "expected_close_date": (
@@ -548,9 +551,7 @@ class NaturalLanguageQueryService:
         )
 
         if metric == "total_value":
-            query = select(func.sum(AgentDeal.estimated_value_amount)).where(
-                base_condition
-            )
+            query = select(func.sum(AgentDeal.estimated_value_amount)).where(base_condition)
             result = await db.execute(query)
             total = result.scalar() or 0
 
@@ -677,9 +678,7 @@ class NaturalLanguageQueryService:
             data = [
                 {
                     "id": str(t.id),
-                    "date": (
-                        t.transaction_date.isoformat() if t.transaction_date else None
-                    ),
+                    "date": (t.transaction_date.isoformat() if t.transaction_date else None),
                     "price": float(t.sale_price) if t.sale_price else None,
                     "psf": float(t.psf_price) if t.psf_price else None,
                     "type": t.transaction_type,

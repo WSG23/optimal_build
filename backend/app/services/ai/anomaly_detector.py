@@ -106,7 +106,7 @@ class AssumptionVsMarketRule(AlertRule):
         context: dict[str, Any],
     ) -> list[Alert]:
         """Check if any deal assumptions deviate from market averages."""
-        alerts = []
+        alerts: list[Alert] = []
 
         # Get user's open deals
         deals_query = select(AgentDeal).where(
@@ -120,9 +120,9 @@ class AssumptionVsMarketRule(AlertRule):
 
         # Get recent market transactions for comparison
         six_months_ago = datetime.now() - timedelta(days=180)
-        market_query = select(
-            func.avg(MarketTransaction.psf_price).label("avg_psf")
-        ).where(MarketTransaction.transaction_date >= six_months_ago.date())
+        market_query = select(func.avg(MarketTransaction.psf_price).label("avg_psf")).where(
+            MarketTransaction.transaction_date >= six_months_ago.date()
+        )
 
         market_result = await db.execute(market_query)
         market_avg = market_result.scalar() or 0
@@ -147,9 +147,7 @@ class AssumptionVsMarketRule(AlertRule):
                             message=f"Your assumed PSF (${assumed_psf:,.0f}) is {abs(deviation):.1f}% {direction} the market average (${float(market_avg):,.0f})",
                             category=self.category,
                             priority=(
-                                AlertPriority.HIGH
-                                if abs(deviation) > 25
-                                else AlertPriority.NORMAL
+                                AlertPriority.HIGH if abs(deviation) > 25 else AlertPriority.NORMAL
                             ),
                             entity_type="deal",
                             entity_id=str(deal.id),
@@ -214,9 +212,7 @@ class PipelineVelocityRule(AlertRule):
         last_month_value = float(last_month_result.scalar() or 0)
 
         if last_month_value > 0:
-            change_percent = (
-                (this_month_value - last_month_value) / last_month_value * 100
-            )
+            change_percent = (this_month_value - last_month_value) / last_month_value * 100
 
             if change_percent < -20:
                 alerts.append(
@@ -226,9 +222,7 @@ class PipelineVelocityRule(AlertRule):
                         message=f"Your pipeline value has dropped {abs(change_percent):.1f}% compared to last month",
                         category=self.category,
                         priority=(
-                            AlertPriority.HIGH
-                            if change_percent < -30
-                            else AlertPriority.NORMAL
+                            AlertPriority.HIGH if change_percent < -30 else AlertPriority.NORMAL
                         ),
                         entity_type="pipeline",
                         entity_id=user_id,
@@ -308,11 +302,7 @@ class RegulatoryDelayRule(AlertRule):
                     title=f"Regulatory Submission Delayed: {submission.reference_number}",
                     message=f"Submission has been pending for {days_pending} days (typical: 45 days)",
                     category=self.category,
-                    priority=(
-                        AlertPriority.HIGH
-                        if days_pending > 90
-                        else AlertPriority.NORMAL
-                    ),
+                    priority=(AlertPriority.HIGH if days_pending > 90 else AlertPriority.NORMAL),
                     entity_type="regulatory_submission",
                     entity_id=str(submission.id),
                     data={

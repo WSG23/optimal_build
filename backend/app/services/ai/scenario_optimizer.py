@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 from langchain_openai import ChatOpenAI
 from sqlalchemy import select
@@ -115,16 +115,16 @@ class ScenarioOptimizerService:
 
     def __init__(self) -> None:
         """Initialize the scenario optimizer."""
+        self.llm: Optional[ChatOpenAI] = None
         try:
             self.llm = ChatOpenAI(
-                model_name="gpt-4-turbo",
+                model="gpt-4-turbo",
                 temperature=0.2,
             )
             self._initialized = True
         except Exception as e:
             logger.warning(f"Scenario Optimizer not initialized: {e}")
             self._initialized = False
-            self.llm = None
 
     async def optimize(
         self,
@@ -504,9 +504,7 @@ class ScenarioOptimizerService:
         elif constraints.risk_tolerance == RiskTolerance.AGGRESSIVE:
             # Find the one with highest IRR that meets constraints
             valid = [
-                s
-                for s in scenarios
-                if s.projected_returns.equity_irr >= constraints.target_irr
+                s for s in scenarios if s.projected_returns.equity_irr >= constraints.target_irr
             ]
             if valid:
                 best = max(valid, key=lambda s: s.projected_returns.equity_irr)
@@ -542,7 +540,10 @@ Provide a 2-3 sentence executive summary of the financing options and key consid
 
         try:
             response = self.llm.invoke(prompt)
-            return response.content or "Review generated scenarios."
+            content = response.content
+            if isinstance(content, str):
+                return content or "Review generated scenarios."
+            return "Review generated scenarios."
         except Exception as e:
             logger.error(f"Error generating optimization notes: {e}")
             return "Review generated scenarios for financing options."

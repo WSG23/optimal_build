@@ -18,7 +18,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from pydantic import BaseModel
 from sqlalchemy import Boolean, Column, DateTime, String
-from sqlalchemy.orm import Session, declarative_base
+from sqlalchemy.orm import DeclarativeBase, Session
 
 from app.core.config import settings
 from app.schemas.user import UserSignupBase
@@ -35,7 +35,7 @@ security = HTTPBearer()
 optional_security = HTTPBearer(auto_error=False)
 
 
-class TokenData(BaseModel):
+class TokenData(BaseModel):  # type: ignore[misc]
     """Token payload data."""
 
     email: str
@@ -43,7 +43,7 @@ class TokenData(BaseModel):
     user_id: str
 
 
-class TokenResponse(BaseModel):
+class TokenResponse(BaseModel):  # type: ignore[misc]
     """Token response model."""
 
     access_token: str
@@ -61,7 +61,7 @@ def _secret_key() -> str:
         raise RuntimeError(
             "SECRET_KEY is not configured. This should have been caught at startup."
         )
-    return settings.SECRET_KEY
+    return str(settings.SECRET_KEY)
 
 
 def create_access_token(data: dict[str, Any]) -> str:
@@ -96,14 +96,14 @@ def verify_token(token: str, token_type: str = "access") -> TokenData:
         if payload.get("type") != token_type:
             raise credentials_exception
 
-        email: str = payload.get("email")
-        username: str = payload.get("username")
-        user_id: str = payload.get("user_id")
+        email = payload.get("email")
+        username = payload.get("username")
+        user_id = payload.get("user_id")
 
         if email is None or username is None or user_id is None:
             raise credentials_exception
 
-        return TokenData(email=email, username=username, user_id=user_id)
+        return TokenData(email=str(email), username=str(username), user_id=str(user_id))
     except JWTError as exc:  # pragma: no cover - passthrough
         raise credentials_exception from exc
 
@@ -143,7 +143,11 @@ def create_tokens(user_data: dict[str, Any]) -> TokenResponse:
 # ---------------------------------------------------------------------------
 # User storage
 
-UserORMBase = declarative_base()
+
+class UserORMBase(DeclarativeBase):  # type: ignore[misc]
+    """Base class for ORM models in the auth module."""
+
+    pass
 
 
 class UserRecord(UserORMBase):
@@ -265,25 +269,30 @@ class SqlAlchemyAuthRepository(AuthRepository):
         self.session.add(record)
         self.session.commit()
         self.session.refresh(record)
-        return self._to_user(record)
+        # record is guaranteed to exist after refresh, use non-None overload
+        return self._to_user_required(record)
 
     def list_users(self) -> Iterable[AuthUser]:
         records = self.session.query(UserRecord).all()
-        return [self._to_user(record) for record in records if record]
+        return [self._to_user_required(record) for record in records if record]
 
     @staticmethod
     def _to_user(record: UserRecord | None) -> AuthUser | None:
         if record is None:
             return None
+        return SqlAlchemyAuthRepository._to_user_required(record)
+
+    @staticmethod
+    def _to_user_required(record: UserRecord) -> AuthUser:
         return AuthUser(
-            id=record.id,
-            email=record.email,
-            username=record.username,
-            full_name=record.full_name,
-            company_name=record.company_name,
-            hashed_password=record.hashed_password,
+            id=str(record.id),
+            email=str(record.email),
+            username=str(record.username),
+            full_name=str(record.full_name),
+            company_name=str(record.company_name) if record.company_name else None,
+            hashed_password=str(record.hashed_password),
             created_at=record.created_at,
-            is_active=record.is_active,
+            is_active=bool(record.is_active),
         )
 
 
@@ -371,7 +380,7 @@ class AuthService:
 # Authorization policy (formerly app.core.auth.policy)
 
 
-class WorkspaceRole(str, Enum):  # type: ignore[misc]
+class WorkspaceRole(str, Enum):
     """Workspace roles supported by policy checks."""
 
     AGENCY = "agency"

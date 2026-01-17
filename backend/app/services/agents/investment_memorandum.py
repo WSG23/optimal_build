@@ -7,10 +7,10 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import inch
-from reportlab.platypus import (
+from reportlab.lib import colors  # type: ignore[import-untyped]
+from reportlab.lib.pagesizes import A4  # type: ignore[import-untyped]
+from reportlab.lib.units import inch  # type: ignore[import-untyped]
+from reportlab.platypus import (  # type: ignore[import-untyped]
     Flowable,
     ListFlowable,
     ListItem,
@@ -33,7 +33,7 @@ from sqlalchemy import String, cast, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class InvestmentHighlight(Flowable):
+class InvestmentHighlight(Flowable):  # type: ignore[misc]
     """Custom flowable for investment highlights."""
 
     def __init__(self, highlights: List[Dict[str, str]], width: float = 6 * inch):
@@ -66,7 +66,7 @@ class InvestmentHighlight(Flowable):
             self.canv.drawCentredString(x + box_width / 2, 20, highlight["label"])
 
 
-class InvestmentMemorandumGenerator(PDFGenerator):
+class InvestmentMemorandumGenerator(PDFGenerator):  # type: ignore[misc]
     """Generate institutional-grade investment memorandum."""
 
     async def generate(
@@ -193,8 +193,8 @@ class InvestmentMemorandumGenerator(PDFGenerator):
         return {
             "property": property_obj,
             "transactions": transactions,
-            "rentals": rentals,
-            "vacancy_rate": self._calculate_vacancy_rate(rentals, property_obj),
+            "rentals": list(rentals),
+            "vacancy_rate": self._calculate_vacancy_rate(list(rentals), property_obj),
         }
 
     async def _calculate_financials(
@@ -1036,9 +1036,9 @@ class InvestmentMemorandumGenerator(PDFGenerator):
             return 0.05  # Default 5%
 
         occupied_area = sum(
-            rental.floor_area_sqm
+            float(rental.floor_area_sqm)
             for rental in rentals
             if rental.is_active and rental.floor_area_sqm
         )
 
-        return max(0, 1 - (occupied_area / property_obj.net_lettable_area_sqm))
+        return max(0.0, 1.0 - (occupied_area / float(property_obj.net_lettable_area_sqm)))

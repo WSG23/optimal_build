@@ -14,7 +14,7 @@ class MockCorenetService:
     and individual agency APIs (URA, BCA, etc.) which are not yet publicly accessible.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.mock_delay_ms = 500  # Simulate network latency
 
     async def submit_to_agency(

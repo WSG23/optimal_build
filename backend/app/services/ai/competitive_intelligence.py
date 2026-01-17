@@ -9,7 +9,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 from uuid import uuid4
 
 from langchain_openai import ChatOpenAI
@@ -128,11 +128,13 @@ class IntelligenceDashboard:
 class CompetitiveIntelligenceService:
     """Service for competitive intelligence."""
 
+    llm: Optional[ChatOpenAI]
+
     def __init__(self) -> None:
         """Initialize the service."""
         try:
             self.llm = ChatOpenAI(
-                model_name="gpt-4-turbo",
+                model="gpt-4-turbo",
                 temperature=0.3,
             )
             self._initialized = True
@@ -395,9 +397,7 @@ class CompetitiveIntelligenceService:
 
             if activity.relevance_score > 0.8 or sector_overlap:
                 priority = (
-                    AlertPriority.HIGH
-                    if activity.relevance_score > 0.9
-                    else AlertPriority.MEDIUM
+                    AlertPriority.HIGH if activity.relevance_score > 0.9 else AlertPriority.MEDIUM
                 )
 
                 alerts.append(
@@ -433,9 +433,7 @@ class CompetitiveIntelligenceService:
     ) -> str:
         """Suggest action based on activity."""
         if activity.category == IntelligenceCategory.TRANSACTION:
-            return (
-                f"Review comparable opportunities in {activity.location or 'the area'}"
-            )
+            return f"Review comparable opportunities in {activity.location or 'the area'}"
         elif activity.category == IntelligenceCategory.DEVELOPMENT:
             return "Assess impact on local market dynamics"
         elif activity.category == IntelligenceCategory.DIVESTMENT:
@@ -521,9 +519,7 @@ class CompetitiveIntelligenceService:
         if not self._initialized or not self.llm:
             return self._generate_basic_summary(activities, alerts, insights)
 
-        activities_text = "\n".join(
-            f"- {a.competitor_name}: {a.title}" for a in activities[:5]
-        )
+        activities_text = "\n".join(f"- {a.competitor_name}: {a.title}" for a in activities[:5])
 
         alerts_text = "\n".join(f"- [{a.priority.value}] {a.title}" for a in alerts[:3])
 
@@ -541,9 +537,10 @@ Provide actionable intelligence summary for a real estate investment professiona
 
         try:
             response = self.llm.invoke(prompt)
-            return response.content or self._generate_basic_summary(
-                activities, alerts, insights
-            )
+            content = response.content
+            if isinstance(content, str):
+                return content
+            return self._generate_basic_summary(activities, alerts, insights)
         except Exception as e:
             logger.warning(f"Summary generation failed: {e}")
             return self._generate_basic_summary(activities, alerts, insights)
@@ -556,9 +553,7 @@ Provide actionable intelligence summary for a real estate investment professiona
     ) -> str:
         """Generate basic summary without LLM."""
         high_priority_count = sum(
-            1
-            for a in alerts
-            if a.priority in [AlertPriority.CRITICAL, AlertPriority.HIGH]
+            1 for a in alerts if a.priority in [AlertPriority.CRITICAL, AlertPriority.HIGH]
         )
 
         return f"""Competitive Intelligence Summary:

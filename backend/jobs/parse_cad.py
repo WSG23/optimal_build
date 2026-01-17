@@ -14,16 +14,17 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from backend._compat import compat_dataclass
+from dataclasses import dataclass
+
 from backend._compat.datetime import UTC
 
 try:  # pragma: no cover - optional dependency
-    import ezdxf  # type: ignore
+    import ezdxf  # type: ignore[import-not-found]
 except ModuleNotFoundError:  # pragma: no cover - available in production environments
     ezdxf = None  # type: ignore[assignment]
 
 try:  # pragma: no cover - optional dependency
-    import ifcopenshell  # type: ignore
+    import ifcopenshell  # type: ignore[import-not-found]
 except ModuleNotFoundError:  # pragma: no cover - available in production environments
     ifcopenshell = None  # type: ignore[assignment]
 
@@ -37,7 +38,7 @@ from app.services.overlay_ingest import ingest_parsed_import_geometry
 from app.services.storage import get_storage_service
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class ParsedGeometry:
     """Result emitted by the parsing pipeline."""
 
@@ -48,7 +49,7 @@ class ParsedGeometry:
     metadata: dict[str, Any]
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class DxfSpaceCandidate:
     """Representation of a DXF entity that can be treated as a space."""
 
@@ -58,7 +59,7 @@ class DxfSpaceCandidate:
     metadata: dict[str, Any]
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class DxfQuicklook:
     """Summary metadata extracted from a DXF payload."""
 
@@ -69,7 +70,7 @@ class DxfQuicklook:
     metadata: dict[str, Any]
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class IfcSpaceCandidate:
     """Representation of an IFC space detected within a storey."""
 
@@ -79,7 +80,7 @@ class IfcSpaceCandidate:
     metadata: dict[str, Any]
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class IfcQuicklook:
     """Summary metadata extracted from an IFC payload."""
 
@@ -110,9 +111,9 @@ def _resolve_local_path(storage_path: str) -> Path:
         # bucket = parsed.netloc  # Future: may need bucket for S3 operations
         key = parsed.path.lstrip("/")
         # Store payloads beneath the local base path; ignore bucket component.
-        return storage_service.local_base_path / key
+        return Path(storage_service.local_base_path / key)
     # Fall back to treating the value as a relative path beneath the storage root
-    return storage_service.local_base_path / storage_path
+    return Path(storage_service.local_base_path / storage_path)
 
 
 async def _load_payload(record: ImportRecord) -> bytes:
@@ -149,7 +150,7 @@ def _ensure_unique(identifier: str, seen: dict[str, None]) -> str:
     return identifier
 
 
-def _read_dxf_document(payload: bytes):
+def _read_dxf_document(payload: bytes) -> Any:
     if ezdxf is None:  # pragma: no cover - optional dependency
         raise RuntimeError("ezdxf is required to parse DXF payloads")
     if not isinstance(payload, bytes):
@@ -191,7 +192,7 @@ def _read_dxf_document(payload: bytes):
 
 
 def _extract_dxf_layer_metadata(
-    doc,
+    doc: Any,
 ) -> list[dict[str, Any]]:  # pragma: no cover - depends on ezdxf
     metadata: list[dict[str, Any]] = []
     layers = getattr(doc, "layers", None)
@@ -236,7 +237,7 @@ def _extract_dxf_layer_metadata(
 
 
 def _collect_dxf_space_candidates(
-    doc,
+    doc: Any,
 ) -> tuple[
     list[DxfSpaceCandidate], dict[str, list[str]]
 ]:  # pragma: no cover - depends on ezdxf
@@ -426,7 +427,7 @@ def detect_dxf_metadata(
     return quicklook.floors, quicklook.units, quicklook.layers
 
 
-def _load_ifc_model(payload: bytes):
+def _load_ifc_model(payload: bytes) -> Any:
     if ifcopenshell is None:  # pragma: no cover - optional dependency
         raise RuntimeError("ifcopenshell is required to parse IFC payloads")
     text = payload.decode("utf-8", errors="ignore")
@@ -434,7 +435,7 @@ def _load_ifc_model(payload: bytes):
 
 
 def _extract_ifc_layer_metadata(
-    model,
+    model: Any,
 ) -> list[dict[str, Any]]:  # pragma: no cover - depends on ifcopenshell
     metadata: list[dict[str, Any]] = []
     try:
@@ -822,18 +823,18 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
                 _normalise_name(raw_identifier, f"W{index:03d}"),
                 seen_walls,
             )
-            metadata: dict[str, Any] = {}
+            wall_metadata: dict[str, Any] = {}
             for key in ("thickness", "confidence"):
                 value = entry.get(key)
                 if isinstance(value, (int, float)):
-                    metadata[key] = float(value)
+                    wall_metadata[key] = float(value)
             for key in ("source", "layer"):
                 value = entry.get(key)
                 if value not in (None, ""):
-                    metadata[key] = value
+                    wall_metadata[key] = value
             extra_metadata = entry.get("metadata")
             if isinstance(extra_metadata, Mapping):
-                metadata.update({key: value for key, value in extra_metadata.items()})
+                wall_metadata.update({key: value for key, value in extra_metadata.items()})
             try:
                 builder.add_wall(
                     {
@@ -841,7 +842,7 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
                         "level_id": level_id,
                         "start": start,
                         "end": end,
-                        "metadata": metadata,
+                        "metadata": wall_metadata,
                     }
                 )
             except (TypeError, ValueError):
@@ -873,17 +874,17 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
                 _normalise_name(raw_identifier, f"S{index:03d}"),
                 seen_spaces,
             )
-            metadata: dict[str, Any] = {"source": "vector_path"}
+            space_metadata: dict[str, Any] = {"source": "vector_path"}
             extra_metadata = entry.get("metadata")
             if isinstance(extra_metadata, Mapping):
-                metadata.update({key: value for key, value in extra_metadata.items()})
+                space_metadata.update({key: value for key, value in extra_metadata.items()})
             layer_name = entry.get("layer")
             if layer_name not in (None, ""):
-                metadata["layer"] = layer_name
+                space_metadata["layer"] = layer_name
             stroke_width = entry.get("stroke_width")
             if isinstance(stroke_width, (int, float)):
-                metadata["stroke_width"] = float(stroke_width)
-            metadata["path_index"] = index - 1
+                space_metadata["stroke_width"] = float(stroke_width)
+            space_metadata["path_index"] = index - 1
 
             try:
                 builder.add_space(
@@ -891,7 +892,7 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
                         "id": space_id,
                         "level_id": level_id,
                         "boundary": boundary,
-                        "metadata": metadata,
+                        "metadata": space_metadata,
                     }
                 )
             except (TypeError, ValueError):
@@ -904,7 +905,7 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
 
     floors_summary = [{"name": level_name, "unit_ids": list(space_ids)}]
 
-    metadata: dict[str, Any] = {
+    result_metadata: dict[str, Any] = {
         "source": "vector_payload",
         "walls": len(wall_ids),
         "spaces": len(space_ids),
@@ -912,10 +913,10 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
         "layers": len(layer_metadata),
     }
     if isinstance(bounds, Mapping):
-        metadata["bounds"] = level_metadata.get("bounds")
+        result_metadata["bounds"] = level_metadata.get("bounds")
     options = payload.get("options")
     if isinstance(options, Mapping):
-        metadata["vector_options"] = dict(options)
+        result_metadata["vector_options"] = dict(options)
 
     return ParsedGeometry(
         graph=builder.graph,
@@ -1067,7 +1068,7 @@ def _parse_payload(
 
 
 async def _persist_result(
-    session, record: ImportRecord, parsed: ParsedGeometry
+    session: Any, record: ImportRecord, parsed: ParsedGeometry
 ) -> dict[str, Any]:
     graph_payload = GeometrySerializer.to_export(parsed.graph)
     record.parse_status = "completed"

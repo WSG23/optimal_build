@@ -1,0 +1,204 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: optimal-build
+  labels:
+    app: optimal-build
+    component: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: optimal-build
+      component: backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: optimal-build
+        component: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: backend-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: backend
+          image: optimal-build/backend:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: SECRETS_MANAGER
+              value: "aws"
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-config
+                  key: aws-region
+            - name: POSTGRES_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: host
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: password
+            - name: POSTGRES_DB
+              value: "building_compliance"
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: secret-key
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: url
+            - name: S3_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-config
+                  key: s3-endpoint
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: access-key
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3-credentials
+                  key: secret-key
+            - name: SENTRY_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: monitoring-secrets
+                  key: sentry-dsn
+                  optional: true
+            - name: BACKEND_ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-config
+                  key: allowed-origins
+            - name: LOG_LEVEL
+              value: "INFO"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /app/.cache
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: optimal-build
+                    component: backend
+                topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: optimal-build
+              component: backend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: optimal-build
+  labels:
+    app: optimal-build
+    component: backend
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: optimal-build
+    component: backend
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backend-service-account
+  namespace: optimal-build
+  annotations:
+    # For EKS with IRSA
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/OptimalBuildBackendRole
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: optimal-build
+data:
+  aws-region: "ap-southeast-1"
+  s3-endpoint: "https://s3.ap-southeast-1.amazonaws.com"
+  allowed-origins: '["https://optimal-build.example.com"]'

@@ -131,6 +131,7 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "regulatory",  # Regulatory navigation endpoints (Phase 2F)
     "development_phases",  # Multi-phase development management (Phase 2D)
     "ai",  # AI services endpoints (Phase 1-4 AI rollout)
+    "ai_config",  # AI configuration management endpoints
     "geocoding",  # Address lookup endpoints
 )
 

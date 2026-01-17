@@ -6,7 +6,7 @@ import logging
 from typing import Any, Mapping
 
 try:  # pragma: no cover - optional dependency
-    import httpx  # type: ignore
+    import httpx  # type: ignore[import-not-found]
 except ModuleNotFoundError:  # pragma: no cover - graceful degradation
     httpx = None  # type: ignore[assignment]
 

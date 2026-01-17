@@ -450,13 +450,16 @@ def capital_stack_summary(
             )
 
     equity_total = sum(
-        component.amount for component in components if component.category == "equity"
+        (component.amount for component in components if component.category == "equity"),
+        Decimal("0"),
     )
     debt_total = sum(
-        component.amount for component in components if component.category == "debt"
+        (component.amount for component in components if component.category == "debt"),
+        Decimal("0"),
     )
     other_total = sum(
-        component.amount for component in components if component.category == "other"
+        (component.amount for component in components if component.category == "other"),
+        Decimal("0"),
     )
     debt_like_total = debt_total + other_total
 
@@ -644,14 +647,16 @@ class FinanceCalculator:
         net_operating_incomes: Sequence[NumberLike],
         debt_services: Sequence[NumberLike],
         *,
-        period_labels: Sequence[NumberLike] | None = None,
+        period_labels: Sequence[int | str] | None = None,
         currency: str = "SGD",
     ) -> tuple[DscrEntry, ...]:
-        return dscr_timeline(
-            net_operating_incomes,
-            debt_services,
-            period_labels=period_labels,
-            currency=currency,
+        return tuple(
+            dscr_timeline(
+                net_operating_incomes,
+                debt_services,
+                period_labels=period_labels,
+                currency=currency,
+            )
         )
 
     def escalate_amount(

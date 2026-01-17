@@ -10,7 +10,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 from uuid import uuid4
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -96,23 +96,21 @@ class RAGKnowledgeBaseService:
 
     def __init__(self) -> None:
         """Initialize the knowledge base service."""
+        self.embeddings: Optional[OpenAIEmbeddings] = None
+        self.llm: Optional[ChatOpenAI] = None
+        self._chunks: dict[str, KnowledgeChunk] = {}
+        self._embeddings_cache: dict[str, list[float]] = {}
         try:
             self.embeddings = OpenAIEmbeddings()
             self.llm = ChatOpenAI(
-                model_name="gpt-4-turbo",
+                model="gpt-4-turbo",
                 temperature=0.1,
             )
             self._initialized = True
             # In-memory store for demo (production would use ChromaDB/Pinecone)
-            self._chunks: dict[str, KnowledgeChunk] = {}
-            self._embeddings_cache: dict[str, list[float]] = {}
         except Exception as e:
             logger.warning(f"RAG Knowledge Base not initialized: {e}")
             self._initialized = False
-            self.embeddings = None
-            self.llm = None
-            self._chunks = {}
-            self._embeddings_cache = {}
 
     async def ingest_property(
         self,
@@ -153,12 +151,8 @@ class RAGKnowledgeBaseService:
                 metadata={
                     "address": prop.address,
                     "district": prop.district,
-                    "property_type": (
-                        prop.property_type.value if prop.property_type else None
-                    ),
-                    "land_area_sqm": (
-                        float(prop.land_area_sqm) if prop.land_area_sqm else None
-                    ),
+                    "property_type": (prop.property_type.value if prop.property_type else None),
+                    "land_area_sqm": (float(prop.land_area_sqm) if prop.land_area_sqm else None),
                 },
             )
 
@@ -229,9 +223,7 @@ class RAGKnowledgeBaseService:
                     "asset_type": deal.asset_type.value,
                     "pipeline_stage": deal.pipeline_stage.value,
                     "estimated_value": (
-                        float(deal.estimated_value_amount)
-                        if deal.estimated_value_amount
-                        else None
+                        float(deal.estimated_value_amount) if deal.estimated_value_amount else None
                     ),
                 },
             )
@@ -350,18 +342,14 @@ class RAGKnowledgeBaseService:
         # Filter chunks by source type
         filtered_chunks = list(self._chunks.values())
         if source_types:
-            filtered_chunks = [
-                c for c in filtered_chunks if c.source_type in source_types
-            ]
+            filtered_chunks = [c for c in filtered_chunks if c.source_type in source_types]
 
         if mode in [SearchMode.SEMANTIC, SearchMode.HYBRID]:
             # Semantic search using embeddings
             if self._initialized and self.embeddings:
                 try:
                     query_embedding = await self._get_embedding(query)
-                    results = self._semantic_search(
-                        query_embedding, filtered_chunks, limit
-                    )
+                    results = self._semantic_search(query_embedding, filtered_chunks, limit)
                 except Exception as e:
                     logger.warning(f"Semantic search failed: {e}")
                     mode = SearchMode.KEYWORD
@@ -394,7 +382,9 @@ class RAGKnowledgeBaseService:
         if cache_key in self._embeddings_cache:
             return self._embeddings_cache[cache_key]
 
-        embedding = self.embeddings.embed_query(text)
+        if self.embeddings is None:
+            return []
+        embedding: list[float] = self.embeddings.embed_query(text)
         self._embeddings_cache[cache_key] = embedding
         return embedding
 
@@ -412,8 +402,7 @@ class RAGKnowledgeBaseService:
             if chunk.embedding:
                 # Cosine similarity
                 dot_product = sum(
-                    a * b
-                    for a, b in zip(query_embedding, chunk.embedding, strict=False)
+                    a * b for a, b in zip(query_embedding, chunk.embedding, strict=False)
                 )
                 norm_a = math.sqrt(sum(a * a for a in query_embedding))
                 norm_b = math.sqrt(sum(b * b for b in chunk.embedding))
@@ -468,9 +457,7 @@ class RAGKnowledgeBaseService:
         results: list[SearchResult],
     ) -> str:
         """Generate an answer using LLM and search results."""
-        context = "\n\n".join(
-            f"Source ({r.source_type.value}): {r.content}" for r in results
-        )
+        context = "\n\n".join(f"Source ({r.source_type.value}): {r.content}" for r in results)
 
         prompt = f"""Based on the following context, answer the user's question.
 If the answer cannot be found in the context, say so.
@@ -482,8 +469,13 @@ Question: {query}
 
 Answer:"""
 
+        if self.llm is None:
+            return "Unable to generate answer."
         response = self.llm.invoke(prompt)
-        return response.content or "Unable to generate answer."
+        content = response.content
+        if isinstance(content, str):
+            return content or "Unable to generate answer."
+        return "Unable to generate answer."
 
     def _property_to_text(self, prop: Property) -> str:
         """Convert property to searchable text."""
@@ -492,11 +484,7 @@ Answer:"""
             f"District: {prop.district}" if prop.district else None,
             f"Type: {prop.property_type.value}" if prop.property_type else None,
             f"Land area: {prop.land_area_sqm} sqm" if prop.land_area_sqm else None,
-            (
-                f"GFA: {prop.gross_floor_area_sqm} sqm"
-                if prop.gross_floor_area_sqm
-                else None
-            ),
+            (f"GFA: {prop.gross_floor_area_sqm} sqm" if prop.gross_floor_area_sqm else None),
             f"Plot ratio: {prop.plot_ratio}" if prop.plot_ratio else None,
             f"Tenure: {prop.tenure_type.value}" if prop.tenure_type else None,
             f"Year built: {prop.year_built}" if prop.year_built else None,

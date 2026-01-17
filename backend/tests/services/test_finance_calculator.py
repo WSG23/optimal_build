@@ -209,3 +209,54 @@ def test_dscr_timeline_raises_on_length_mismatch() -> None:
 def test_irr_requires_sign_change() -> None:
     with pytest.raises(ValueError):
         calc.irr([100, 50, 25])
+
+
+# -----------------------------------------------------------
+# Additional IRR tests
+# -----------------------------------------------------------
+
+
+def test_irr_with_valid_cashflows() -> None:
+    """Test IRR calculation with valid cash flows."""
+    # Typical investment: -100 initial, then returns
+    cashflows = [-1000, 300, 400, 500, 200]
+    result = calc.irr(cashflows)
+    assert result is not None
+    assert isinstance(result, Decimal)
+
+
+def test_irr_with_negative_only_cashflows() -> None:
+    """Test IRR with all negative cashflows raises."""
+    with pytest.raises(ValueError):
+        calc.irr([-100, -50, -25])
+
+
+# -----------------------------------------------------------
+# NPV tests
+# -----------------------------------------------------------
+
+
+def test_npv_basic_calculation() -> None:
+    """Test basic NPV calculation."""
+    cashflows = [-1000, 300, 400, 500, 200]
+    discount_rate = Decimal("0.10")
+
+    result = calc.npv(discount_rate, cashflows)
+
+    assert isinstance(result, Decimal)
+    # NPV should be positive if returns exceed initial investment at this rate
+
+
+def test_npv_with_zero_discount_rate() -> None:
+    """Test NPV with zero discount rate equals sum of cashflows."""
+    cashflows = [-1000, 300, 400, 500, 200]
+    result = calc.npv(Decimal("0"), cashflows)
+
+    expected = sum(Decimal(str(cf)) for cf in cashflows)
+    assert result == expected
+
+
+def test_npv_empty_cashflows() -> None:
+    """Test NPV with empty cashflows returns zero."""
+    result = calc.npv(Decimal("0.10"), [])
+    assert result == Decimal("0")

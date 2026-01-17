@@ -8,7 +8,7 @@ from typing import Any
 
 import numpy as np
 import structlog
-import trimesh
+import trimesh  # type: ignore[import-untyped]
 from geoalchemy2.functions import ST_AsText
 
 from app.models.property import Property, PropertyType
@@ -40,16 +40,16 @@ class BuildingMassing:
         height: float,
         floors: int,
         scenario_type: ScenarioType,
-        use_mix: dict[str, float] = None,
+        use_mix: dict[str, float] | None = None,
     ):
         self.footprint_coords = footprint_coords
         self.height = height
         self.floors = floors
         self.scenario_type = scenario_type
         self.use_mix = use_mix or {}
-        self.mesh = None
-        self.volume = None
-        self.gfa = None
+        self.mesh: trimesh.Trimesh | None = None
+        self.volume: float | None = None
+        self.gfa: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -478,7 +478,7 @@ class Quick3DScenarioBuilder:
     ) -> list[BuildingMassing]:
         """Generate phased development scenarios."""
 
-        phases = []
+        phases: list[BuildingMassing] = []
         buildable_footprint = await self._apply_setbacks(
             boundary, self.default_setbacks, session
         )
@@ -504,8 +504,9 @@ class Quick3DScenarioBuilder:
         phase1_massing.mesh = self._create_building_mesh(
             phase1_footprint, phase1_height
         )
-        phase1_massing.mesh.visual.face_colors = [200, 150, 150, 255]
-        phase1_massing.volume = self._calculate_volume(phase1_massing.mesh)
+        if phase1_massing.mesh is not None:
+            phase1_massing.mesh.visual.face_colors = [200, 150, 150, 255]
+            phase1_massing.volume = self._calculate_volume(phase1_massing.mesh)
         phase1_massing.gfa = self._calculate_gfa(phase1_footprint, phase1_floors)
 
         phases.append(phase1_massing)
@@ -525,8 +526,9 @@ class Quick3DScenarioBuilder:
         phase2_massing.mesh = self._create_building_mesh(
             phase2_footprint, phase2_height
         )
-        phase2_massing.mesh.visual.face_colors = [150, 200, 150, 255]
-        phase2_massing.volume = self._calculate_volume(phase2_massing.mesh)
+        if phase2_massing.mesh is not None:
+            phase2_massing.mesh.visual.face_colors = [150, 200, 150, 255]
+            phase2_massing.volume = self._calculate_volume(phase2_massing.mesh)
         phase2_massing.gfa = self._calculate_gfa(phase2_footprint, phase2_floors)
 
         phases.append(phase2_massing)
@@ -550,10 +552,10 @@ class Quick3DScenarioBuilder:
             logger.warning("No setback values provided, using default")
             avg_setback = 3.0  # Default setback
         else:
-            avg_setback = np.mean(setback_values)
+            avg_setback = float(np.mean(setback_values))
 
         # Use PostGIS to buffer inward
-        from shapely.geometry import Polygon
+        from shapely.geometry import Polygon  # type: ignore[import-untyped]
 
         poly = Polygon(boundary[:-1])  # Remove duplicate last point
         buffered = poly.buffer(-avg_setback)  # Negative for inward
@@ -624,7 +626,7 @@ class Quick3DScenarioBuilder:
         from shapely.geometry import Polygon
 
         poly = Polygon(footprint[:-1])
-        floor_area = poly.area
+        floor_area = float(poly.area)
 
         return floor_area * floors
 
@@ -665,8 +667,8 @@ class Quick3DScenarioBuilder:
         self, footprint: list[tuple[float, float]], scale: float
     ) -> list[tuple[float, float]]:
         """Scale footprint around its centroid."""
-        from shapely.affinity import scale as shapely_scale
-        from shapely.geometry import Polygon
+        from shapely.affinity import scale as shapely_scale  # type: ignore[import-untyped]
+        from shapely.geometry import Polygon  # type: ignore[import-untyped]
 
         poly = Polygon(footprint[:-1])
         scaled = shapely_scale(poly, xfact=scale, yfact=scale)
@@ -751,7 +753,7 @@ class Quick3DScenarioBuilder:
 
         # Get top vertices
         vertices = base_mesh.vertices
-        max_z = np.max(vertices[:, 2])
+        max_z: float = float(np.max(vertices[:, 2]))
         top_vertices = vertices[vertices[:, 2] > max_z - 0.1]
 
         # Create roof feature
@@ -772,11 +774,11 @@ class Quick3DScenarioBuilder:
             raise ValueError("No mesh to export")
 
         if format == "obj":
-            return trimesh.exchange.obj.export_obj(massing.mesh)
+            return bytes(trimesh.exchange.obj.export_obj(massing.mesh))
         elif format == "stl":
-            return massing.mesh.export(file_type="stl")
+            return bytes(massing.mesh.export(file_type="stl"))
         elif format == "glb":
-            return massing.mesh.export(file_type="glb")
+            return bytes(massing.mesh.export(file_type="glb"))
         elif format == "json":
             # Custom JSON format for web visualization
             return json.dumps(

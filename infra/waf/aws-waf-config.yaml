@@ -1,0 +1,392 @@
+# AWS WAF Configuration for optimal_build
+#
+# This configuration provides comprehensive protection against:
+# - SQL injection
+# - Cross-site scripting (XSS)
+# - Common web exploits
+# - Bad bots and scrapers
+# - DDoS attacks (application layer)
+#
+# Deploy using AWS CloudFormation or Terraform
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: WAF Web ACL for optimal_build application
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues: [dev, staging, prod]
+    Default: prod
+
+  RateLimitPerIP:
+    Type: Number
+    Default: 2000
+    Description: Maximum requests per 5-minute period per IP
+
+  BlockedCountries:
+    Type: CommaDelimitedList
+    Default: ""
+    Description: ISO country codes to block (leave empty to allow all)
+
+Resources:
+  # IP Set for known malicious IPs (update regularly)
+  BlockedIPSet:
+    Type: AWS::WAFv2::IPSet
+    Properties:
+      Name: !Sub optimal-build-blocked-ips-${Environment}
+      Scope: REGIONAL  # Use CLOUDFRONT for CloudFront distributions
+      IPAddressVersion: IPV4
+      Addresses: []  # Populate with known bad IPs
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # IP Set for allowed IPs (for admin/internal access)
+  AllowedIPSet:
+    Type: AWS::WAFv2::IPSet
+    Properties:
+      Name: !Sub optimal-build-allowed-ips-${Environment}
+      Scope: REGIONAL
+      IPAddressVersion: IPV4
+      Addresses:
+        - 10.0.0.0/8      # Internal VPC
+        # Add office IPs, VPN IPs, etc.
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Regex pattern set for sensitive paths
+  SensitivePathsRegex:
+    Type: AWS::WAFv2::RegexPatternSet
+    Properties:
+      Name: !Sub optimal-build-sensitive-paths-${Environment}
+      Scope: REGIONAL
+      RegularExpressionList:
+        - /admin.*
+        - /api/v1/internal.*
+        - /.env.*
+        - /.git.*
+        - /wp-admin.*
+        - /phpmyadmin.*
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Main Web ACL
+  WebACL:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: !Sub optimal-build-waf-${Environment}
+      Scope: REGIONAL
+      DefaultAction:
+        Allow: {}
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: !Sub optimal-build-waf-${Environment}
+
+      Rules:
+        # Rule 1: Block known malicious IPs
+        - Name: BlockMaliciousIPs
+          Priority: 0
+          Statement:
+            IPSetReferenceStatement:
+              Arn: !GetAtt BlockedIPSet.Arn
+          Action:
+            Block:
+              CustomResponse:
+                ResponseCode: 403
+                ResponseHeaders:
+                  - Name: X-Blocked-Reason
+                    Value: ip-blocked
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: BlockMaliciousIPs
+
+        # Rule 2: AWS Managed Rules - Common Rule Set
+        - Name: AWSManagedRulesCommonRuleSet
+          Priority: 1
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesCommonRuleSet
+              ExcludedRules:
+                # Exclude rules that may cause false positives
+                - Name: SizeRestrictions_BODY
+                # Add more exclusions as needed
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: AWSManagedRulesCommonRuleSet
+
+        # Rule 3: AWS Managed Rules - SQL Injection
+        - Name: AWSManagedRulesSQLiRuleSet
+          Priority: 2
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesSQLiRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: AWSManagedRulesSQLiRuleSet
+
+        # Rule 4: AWS Managed Rules - Known Bad Inputs
+        - Name: AWSManagedRulesKnownBadInputsRuleSet
+          Priority: 3
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesKnownBadInputsRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: AWSManagedRulesKnownBadInputsRuleSet
+
+        # Rule 5: AWS Managed Rules - Linux OS
+        - Name: AWSManagedRulesLinuxRuleSet
+          Priority: 4
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesLinuxRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: AWSManagedRulesLinuxRuleSet
+
+        # Rule 6: AWS Managed Rules - Bad Bots
+        - Name: AWSManagedRulesBotControlRuleSet
+          Priority: 5
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesBotControlRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: AWSManagedRulesBotControlRuleSet
+
+        # Rule 7: Rate limiting per IP
+        - Name: RateLimitPerIP
+          Priority: 6
+          Statement:
+            RateBasedStatement:
+              Limit: !Ref RateLimitPerIP
+              AggregateKeyType: IP
+          Action:
+            Block:
+              CustomResponse:
+                ResponseCode: 429
+                ResponseHeaders:
+                  - Name: Retry-After
+                    Value: "300"
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: RateLimitPerIP
+
+        # Rule 8: Stricter rate limit for login endpoint
+        - Name: RateLimitLogin
+          Priority: 7
+          Statement:
+            RateBasedStatement:
+              Limit: 100  # 100 requests per 5 minutes
+              AggregateKeyType: IP
+              ScopeDownStatement:
+                ByteMatchStatement:
+                  SearchString: /api/v1/auth/login
+                  FieldToMatch:
+                    UriPath: {}
+                  TextTransformations:
+                    - Priority: 0
+                      Type: LOWERCASE
+                  PositionalConstraint: STARTS_WITH
+          Action:
+            Block:
+              CustomResponse:
+                ResponseCode: 429
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: RateLimitLogin
+
+        # Rule 9: Block access to sensitive paths from non-allowed IPs
+        - Name: ProtectSensitivePaths
+          Priority: 8
+          Statement:
+            AndStatement:
+              Statements:
+                - RegexPatternSetReferenceStatement:
+                    Arn: !GetAtt SensitivePathsRegex.Arn
+                    FieldToMatch:
+                      UriPath: {}
+                    TextTransformations:
+                      - Priority: 0
+                        Type: LOWERCASE
+                - NotStatement:
+                    Statement:
+                      IPSetReferenceStatement:
+                        Arn: !GetAtt AllowedIPSet.Arn
+          Action:
+            Block:
+              CustomResponse:
+                ResponseCode: 403
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: ProtectSensitivePaths
+
+        # Rule 10: Block requests with suspicious user agents
+        - Name: BlockSuspiciousUserAgents
+          Priority: 9
+          Statement:
+            OrStatement:
+              Statements:
+                - ByteMatchStatement:
+                    SearchString: sqlmap
+                    FieldToMatch:
+                      SingleHeader:
+                        Name: user-agent
+                    TextTransformations:
+                      - Priority: 0
+                        Type: LOWERCASE
+                    PositionalConstraint: CONTAINS
+                - ByteMatchStatement:
+                    SearchString: nikto
+                    FieldToMatch:
+                      SingleHeader:
+                        Name: user-agent
+                    TextTransformations:
+                      - Priority: 0
+                        Type: LOWERCASE
+                    PositionalConstraint: CONTAINS
+                - ByteMatchStatement:
+                    SearchString: dirbuster
+                    FieldToMatch:
+                      SingleHeader:
+                        Name: user-agent
+                    TextTransformations:
+                      - Priority: 0
+                        Type: LOWERCASE
+                    PositionalConstraint: CONTAINS
+          Action:
+            Block: {}
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: BlockSuspiciousUserAgents
+
+        # Rule 11: Size constraints (prevent large payload attacks)
+        - Name: SizeConstraints
+          Priority: 10
+          Statement:
+            OrStatement:
+              Statements:
+                - SizeConstraintStatement:
+                    FieldToMatch:
+                      Body: {}
+                    ComparisonOperator: GT
+                    Size: 10485760  # 10MB
+                    TextTransformations:
+                      - Priority: 0
+                        Type: NONE
+                - SizeConstraintStatement:
+                    FieldToMatch:
+                      UriPath: {}
+                    ComparisonOperator: GT
+                    Size: 2048
+                    TextTransformations:
+                      - Priority: 0
+                        Type: NONE
+          Action:
+            Block:
+              CustomResponse:
+                ResponseCode: 413
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: SizeConstraints
+
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: optimal-build
+
+  # Associate WAF with ALB
+  WebACLAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    Properties:
+      ResourceArn: !Sub arn:aws:elasticloadbalancing:${AWS::Region}:${AWS::AccountId}:loadbalancer/app/optimal-build-${Environment}/*
+      WebACLArn: !GetAtt WebACL.Arn
+
+  # CloudWatch Dashboard for WAF metrics
+  WAFDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub optimal-build-waf-${Environment}
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "properties": {
+                "title": "Blocked Requests",
+                "metrics": [
+                  ["AWS/WAFV2", "BlockedRequests", "WebACL", "optimal-build-waf-${Environment}", "Rule", "ALL"]
+                ],
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "title": "Allowed Requests",
+                "metrics": [
+                  ["AWS/WAFV2", "AllowedRequests", "WebACL", "optimal-build-waf-${Environment}", "Rule", "ALL"]
+                ],
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "title": "Rate Limited Requests",
+                "metrics": [
+                  ["AWS/WAFV2", "BlockedRequests", "WebACL", "optimal-build-waf-${Environment}", "Rule", "RateLimitPerIP"]
+                ],
+                "period": 300,
+                "stat": "Sum"
+              }
+            }
+          ]
+        }
+
+Outputs:
+  WebACLArn:
+    Description: ARN of the WAF Web ACL
+    Value: !GetAtt WebACL.Arn
+    Export:
+      Name: !Sub optimal-build-waf-arn-${Environment}
+
+  WebACLId:
+    Description: ID of the WAF Web ACL
+    Value: !Ref WebACL
+
+  DashboardURL:
+    Description: URL to the CloudWatch Dashboard
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=optimal-build-waf-${Environment}

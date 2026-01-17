@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -214,7 +214,7 @@ async def list_checklist_templates(
     ),
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-) -> List[Dict[str, Any]]:
+) -> List[dict[str, Any]]:
     """Return checklist templates, optionally filtered by development scenario."""
 
     await DeveloperChecklistService.ensure_templates_seeded(session)
@@ -236,7 +236,7 @@ async def create_checklist_template(
     request: ChecklistTemplateCreateRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Create a new checklist template definition."""
 
     try:
@@ -259,7 +259,7 @@ async def update_checklist_template(
     request: ChecklistTemplateUpdateRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Update an existing checklist template definition."""
 
     try:

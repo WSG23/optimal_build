@@ -7,7 +7,7 @@ name = "regstack"
 version = "0.1.0"
 description = "Jurisdiction plug-in architecture for building regulations"
 authors = [{ name = "Regstack Contributors" }]
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
     "SQLAlchemy>=2.0",
     "pydantic>=2.6",
@@ -51,7 +51,7 @@ extend-exclude = """
 
 [tool.ruff]
 line-length = 100
-target-version = "py313"
+target-version = "py311"
 exclude = [
     ".venv",
     ".git",

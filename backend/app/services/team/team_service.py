@@ -12,6 +12,7 @@ from app.models.users import UserRole
 from app.services.notification.email_service import EmailService
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,9 @@ logger = logging.getLogger(__name__)
 class TeamService:
     """Service for managing team members and invitations."""
 
-    def __init__(self, db_session, email_service: EmailService | None = None):
+    def __init__(
+        self, db_session: AsyncSession, email_service: EmailService | None = None
+    ) -> None:
         self.db = db_session
         self.email_service = email_service or EmailService()
 

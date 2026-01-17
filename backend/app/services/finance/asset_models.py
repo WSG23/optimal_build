@@ -143,12 +143,12 @@ def build_asset_financials(
 ) -> AssetFinanceBreakdown | tuple[AssetFinanceBreakdown, ...]:
     """Transform optimiser outputs into per-asset finance metrics."""
 
-    is_single = isinstance(inputs, AssetFinanceInput)
-    queue: Sequence[AssetFinanceInput]
-    if is_single:
-        queue = (inputs,)
+    if isinstance(inputs, AssetFinanceInput):
+        queue: Sequence[AssetFinanceInput] = [inputs]
+        is_single = True
     else:
         queue = inputs
+        is_single = False
 
     breakdowns: list[AssetFinanceBreakdown] = []
     for item in queue:
@@ -195,7 +195,7 @@ def build_asset_financials(
 
         capex = _quantize_currency(item.estimated_capex_sgd)
         payback_years = None
-        if capex is not None and noi not in (None, Decimal("0")):
+        if capex is not None and noi is not None and noi != Decimal("0"):
             try:
                 payback_years = (capex / noi).quantize(
                     PAYBACK_QUANT, rounding=ROUND_HALF_UP
@@ -204,7 +204,7 @@ def build_asset_financials(
                 payback_years = None
 
         stabilised_yield = None
-        if noi is not None and capex not in (None, Decimal("0")):
+        if noi is not None and capex is not None and capex != Decimal("0"):
             try:
                 stabilised_yield = (noi / capex).quantize(
                     PERCENT_QUANT, rounding=ROUND_HALF_UP
@@ -300,12 +300,12 @@ def serialise_breakdown(
 ) -> FinanceAssetBreakdownSchema | list[FinanceAssetBreakdownSchema]:
     """Convert dataclass breakdowns into API response schemas."""
 
-    is_single = isinstance(breakdowns, AssetFinanceBreakdown)
-    queue: Iterable[AssetFinanceBreakdown]
-    if is_single:
-        queue = (breakdowns,)
+    if isinstance(breakdowns, AssetFinanceBreakdown):
+        queue: Iterable[AssetFinanceBreakdown] = [breakdowns]
+        is_single = True
     else:
         queue = breakdowns
+        is_single = False
 
     payload: list[FinanceAssetBreakdownSchema] = []
     for entry in queue:

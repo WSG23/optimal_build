@@ -26,6 +26,6 @@ def compat_zip(
                 if any(value is not sentinel for value in combo):
                     raise ValueError("zip() argument lengths differ")
                 return
-            yield combo  # type: ignore[return-value]
+            yield combo  # type: ignore[misc]
 
     return _generator()

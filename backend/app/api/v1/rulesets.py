@@ -56,9 +56,7 @@ async def list_rulesets(
     )
     result = await session.execute(stmt)
     packs = result.scalars().all()
-    items = [
-        RulePackSchema.model_validate(pack, from_attributes=True) for pack in packs
-    ]
+    items = [RulePackSchema.from_orm_model(pack) for pack in packs]
     return RulesetListResponse(items=items, count=len(items))
 
 

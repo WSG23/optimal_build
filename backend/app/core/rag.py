@@ -9,7 +9,7 @@ import chromadb
 class RagEngine:
     """Core RAG Engine utilizing ChromaDB and OpenAI Embeddings."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._persist_directory = os.path.join(os.getcwd(), ".storage", "chroma_db")
         self._collection_name = "optimal_build_knowledge"
 

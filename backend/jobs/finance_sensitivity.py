@@ -17,9 +17,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 
-def _resolve_session_dependency():
+def _resolve_session_dependency() -> Any:
     try:
-        from app.main import app as fastapi_app  # type: ignore
+        from app.main import app as fastapi_app
     except Exception:  # pragma: no cover - fallback when app isn't available
         fastapi_app = None
 
@@ -38,7 +38,7 @@ async def _job_session() -> AsyncIterator[AsyncSession]:
     if inspect.isasyncgen(resource):
         generator = resource
         try:
-            session = await anext(generator)  # type: ignore[arg-type]
+            session = await anext(generator)
         except StopAsyncIteration as exc:  # pragma: no cover - defensive guard
             raise RuntimeError("Session dependency did not yield a session") from exc
         try:
@@ -172,7 +172,7 @@ async def process_finance_sensitivity_job(
         facility_payloads = context.get("facilities")
         if isinstance(facility_payloads, Sequence):
             facility_inputs = [
-                dict(item) if isinstance(item, Mapping) else dict(item)  # type: ignore[arg-type]
+                dict(item) if isinstance(item, Mapping) else {}
                 for item in facility_payloads
             ]
         else:
@@ -313,12 +313,11 @@ async def process_finance_sensitivity_job(
     if use_external_session:
         # Test mode: use provided session
         return await _run_job(session)  # type: ignore[arg-type]
-    else:
-        # Production mode: create and manage own session
-        if session_ctx is None:  # pragma: no cover - defensive guard
-            raise RuntimeError("Session dependency did not return a context manager")
-        async with session_ctx as managed_session:  # type: ignore[union-attr]
-            return await _run_job(managed_session)
+    # Production mode: create and manage own session
+    if session_ctx is None:  # pragma: no cover - defensive guard
+        raise RuntimeError("Session dependency did not return a context manager")
+    async with session_ctx as managed_session:
+        return await _run_job(managed_session)
 
 
 __all__ = ["process_finance_sensitivity_job"]

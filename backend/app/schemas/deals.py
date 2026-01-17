@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, Self
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -100,7 +100,7 @@ class DealStageEventSchema(BaseModel):
         *,
         duration_seconds: float | None = None,
         audit_log: dict[str, Any] | None = None,
-    ) -> "DealStageEventSchema":
+    ) -> Self:
         payload = cls.model_validate(event).model_dump()
         payload["duration_seconds"] = duration_seconds
         payload["audit_log"] = audit_log
@@ -133,7 +133,7 @@ class DealSchema(BaseModel):
     updated_at: datetime
 
     @classmethod
-    def from_orm_deal(cls, deal: AgentDeal) -> "DealSchema":
+    def from_orm_deal(cls, deal: AgentDeal, **kwargs: Any) -> Self:
         _ = getattr(deal, "id", None)
         metadata_value = getattr(deal, "metadata", None)
         if not isinstance(metadata_value, dict):
@@ -154,37 +154,39 @@ class DealWithTimelineSchema(DealSchema):
         cls,
         deal: AgentDeal,
         *,
-        timeline: list[AgentDealStageEvent],
+        timeline: list[AgentDealStageEvent] | None = None,
         audit_logs: dict[str, dict[str, Any]] | None = None,
-    ) -> "DealWithTimelineSchema":
-        data = cls.model_validate(deal).model_dump()
+        **kwargs: Any,
+    ) -> Self:
+        data = DealSchema.from_orm_deal(deal).model_dump()
         data["timeline"] = []
-        for index, event in enumerate(timeline):
-            next_event = timeline[index + 1] if index + 1 < len(timeline) else None
-            duration_seconds: float | None = None
-            if (
-                event.recorded_at
-                and next_event
-                and next_event.recorded_at
-                and next_event.recorded_at >= event.recorded_at
-            ):
-                duration_seconds = (
-                    next_event.recorded_at - event.recorded_at
-                ).total_seconds()
-            audit_log = None
-            if audit_logs:
-                audit_id = None
-                if event.metadata:
-                    audit_id = event.metadata.get("audit_log_id")
-                if audit_id:
-                    audit_log = audit_logs.get(str(audit_id))
-            data["timeline"].append(
-                DealStageEventSchema.from_orm_event(
-                    event,
-                    duration_seconds=duration_seconds,
-                    audit_log=audit_log,
+        if timeline is not None:
+            for index, event in enumerate(timeline):
+                next_event = timeline[index + 1] if index + 1 < len(timeline) else None
+                duration_seconds: float | None = None
+                if (
+                    event.recorded_at
+                    and next_event
+                    and next_event.recorded_at
+                    and next_event.recorded_at >= event.recorded_at
+                ):
+                    duration_seconds = (
+                        next_event.recorded_at - event.recorded_at
+                    ).total_seconds()
+                audit_log = None
+                if audit_logs:
+                    audit_id = None
+                    if event.metadata:
+                        audit_id = event.metadata.get("audit_log_id")
+                    if audit_id:
+                        audit_log = audit_logs.get(str(audit_id))
+                data["timeline"].append(
+                    DealStageEventSchema.from_orm_event(
+                        event,
+                        duration_seconds=duration_seconds,
+                        audit_log=audit_log,
+                    )
                 )
-            )
         return cls.model_validate(data)
 
 
@@ -240,7 +242,7 @@ class CommissionAdjustmentResponse(BaseModel):
     @classmethod
     def from_orm_adjustment(
         cls, adjustment: AgentCommissionAdjustment
-    ) -> "CommissionAdjustmentResponse":
+    ) -> Self:
         metadata_value = getattr(adjustment, "metadata", None)
         if not isinstance(metadata_value, dict):
             metadata_value = getattr(adjustment, "metadata_json", {}) or {}
@@ -279,8 +281,15 @@ class CommissionResponse(BaseModel):
     )
 
     @classmethod
-    def from_orm_record(cls, record: AgentCommissionRecord) -> "CommissionResponse":
+    def from_orm_record(cls, record: AgentCommissionRecord) -> Self:
         # Build dict manually to avoid lazy-loading adjustments during validation
+        adjustments_list: list[CommissionAdjustmentResponse] = []
+        # Only access adjustments if explicitly loaded
+        if hasattr(record, "__dict__") and "adjustments" in record.__dict__:
+            adjustments_list = [
+                CommissionAdjustmentResponse.from_orm_adjustment(adj)
+                for adj in record.adjustments
+            ]
         data = {
             "id": record.id,
             "deal_id": record.deal_id,
@@ -305,16 +314,9 @@ class CommissionResponse(BaseModel):
             "audit_log_id": record.audit_log_id,
             "created_at": record.created_at,
             "updated_at": record.updated_at,
-            "adjustments": [],
+            "adjustments": adjustments_list,
         }
-        model = cls.model_validate(data)
-        # Only access adjustments if explicitly loaded
-        if hasattr(record, "__dict__") and "adjustments" in record.__dict__:
-            model.adjustments = [
-                CommissionAdjustmentResponse.from_orm_adjustment(adj)
-                for adj in record.adjustments
-            ]
-        return model
+        return cls.model_validate(data)
 
 
 __all__ = [

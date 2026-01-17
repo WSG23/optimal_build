@@ -30,7 +30,7 @@ router = APIRouter(prefix="/feasibility", tags=["Feasibility"])
 
 
 @router.websocket("/ws")
-async def ws_feasibility(websocket: WebSocket):
+async def ws_feasibility(websocket: WebSocket) -> None:
     """
     Real-time feasibility assessment via WebSockets.
     Accepts JSON payload matching FeasibilityAssessmentRequest.

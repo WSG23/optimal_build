@@ -1,0 +1,211 @@
+# Default values for optimal-build Helm chart
+# This is a YAML-formatted file.
+
+# Global settings
+global:
+  environment: production
+  domain: optimal-build.example.com
+
+# Backend configuration
+backend:
+  replicaCount: 3
+  image:
+    repository: optimal-build/backend
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8000
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+  env:
+    LOG_LEVEL: "INFO"
+    BUILDABLE_USE_POSTGIS: "true"
+  # Secrets - should be created separately or via external-secrets
+  secretsManager: aws  # aws, vault, or env
+
+# Frontend configuration
+frontend:
+  replicaCount: 2
+  image:
+    repository: optimal-build/frontend
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+  tls:
+    enabled: true
+    # ACM certificate ARN
+    certificateArn: ""
+  hosts:
+    - host: optimal-build.example.com
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: backend
+        - path: /
+          pathType: Prefix
+          service: frontend
+
+# PostgreSQL configuration
+postgresql:
+  enabled: false  # Set to true if deploying PostgreSQL in-cluster
+  # Use external RDS in production
+  external:
+    host: ""
+    port: 5432
+    database: building_compliance
+    # Credentials should come from secrets
+  auth:
+    database: building_compliance
+    postgresPassword: ""  # Set via --set or external secret
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: gp3
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "4Gi"
+        cpu: "2000m"
+
+# Redis configuration
+redis:
+  enabled: false  # Set to true if deploying Redis in-cluster
+  # Use ElastiCache in production
+  external:
+    host: ""
+    port: 6379
+  architecture: standalone
+  auth:
+    enabled: true
+    password: ""  # Set via --set or external secret
+  master:
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: gp3
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+# S3 / MinIO configuration
+s3:
+  endpoint: "https://s3.ap-southeast-1.amazonaws.com"
+  region: ap-southeast-1
+  buckets:
+    imports: cad-imports
+    exports: cad-exports
+    documents: documents
+  # Use IRSA for AWS credentials
+
+# Monitoring configuration
+monitoring:
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+  grafana:
+    enabled: false  # Use external Grafana
+  sentry:
+    enabled: true
+    # DSN should come from secrets
+
+# Backup configuration
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM UTC
+  retention:
+    daily: 7
+    weekly: 4
+    monthly: 12
+  s3:
+    bucket: optimal-build-backups
+    prefix: backups/postgresql
+
+# Security settings
+security:
+  networkPolicies:
+    enabled: true
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+# Service account configuration
+serviceAccount:
+  create: true
+  annotations:
+    # For EKS with IRSA
+    eks.amazonaws.com/role-arn: ""
+  name: optimal-build
+
+# Node selector for workloads
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity rules
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app: optimal-build
+          topologyKey: kubernetes.io/hostname

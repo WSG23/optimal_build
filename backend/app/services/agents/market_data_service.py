@@ -108,14 +108,14 @@ class MockMarketDataProvider(MarketDataProvider):
         import random
 
         indices = []
-        base_value = 100
-        current_value = base_value
+        base_value: float = 100
+        current_value: float = base_value
 
         for i in range(12):
             index_date = date.today() - timedelta(days=30 * i)
 
             # Random walk
-            change = random.uniform(-5, 5)
+            change: float = random.uniform(-5, 5)
             current_value = current_value * (1 + change / 100)
 
             indices.append(
@@ -176,7 +176,7 @@ class MarketDataService:
         if not property_types:
             property_types = list(PropertyType)
 
-        sync_results = {"transactions": 0, "rentals": 0, "indices": 0, "errors": []}
+        sync_results: Dict[str, Any] = {"transactions": 0, "rentals": 0, "indices": 0, "errors": []}
 
         for prop_type in property_types:
             try:
@@ -191,7 +191,7 @@ class MarketDataService:
                 stored = await self._store_transactions(
                     transactions, provider_name, session
                 )
-                sync_results["transactions"] += stored
+                sync_results["transactions"] = int(sync_results["transactions"]) + stored
 
                 # Sync rentals
                 rentals = await provider.fetch_rental_data(
@@ -202,11 +202,12 @@ class MarketDataService:
                 )
 
                 stored = await self._store_rentals(rentals, provider_name, session)
-                sync_results["rentals"] += stored
+                sync_results["rentals"] = int(sync_results["rentals"]) + stored
 
             except Exception as e:
                 logger.error(f"Error syncing {prop_type.value}: {str(e)}")
-                sync_results["errors"].append(f"{prop_type.value}: {str(e)}")
+                errors_list: List[str] = sync_results["errors"]
+                errors_list.append(f"{prop_type.value}: {str(e)}")
 
         # Sync market indices
         try:
@@ -215,7 +216,8 @@ class MarketDataService:
             sync_results["indices"] = stored
         except Exception as e:
             logger.error(f"Error syncing indices: {str(e)}")
-            sync_results["errors"].append(f"indices: {str(e)}")
+            indices_errors_list: List[str] = sync_results["errors"]
+            indices_errors_list.append(f"indices: {str(e)}")
 
         # Update sync history
         self.sync_history[provider_name] = sync_start
@@ -518,7 +520,7 @@ class MarketDataService:
         stmt = stmt.order_by(MarketTransaction.transaction_date.desc())
 
         result = await session.execute(stmt)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def get_rental_data(
         self,
@@ -545,4 +547,4 @@ class MarketDataService:
         stmt = stmt.order_by(RentalListing.listing_date.desc())
 
         result = await session.execute(stmt)
-        return result.scalars().all()
+        return list(result.scalars().all())

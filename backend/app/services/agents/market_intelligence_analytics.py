@@ -8,9 +8,9 @@ from typing import Any, Optional
 from uuid import UUID
 
 try:  # pragma: no cover - optional dependency
-    import pandas as pd
+    import pandas as pd  # type: ignore[import-untyped]
 except ModuleNotFoundError:  # pragma: no cover - fallback when pandas missing
-    pd = None  # type: ignore[assignment]
+    pd = None
 
 try:  # pragma: no cover - optional dependency
     import numpy as np
@@ -266,8 +266,8 @@ class MarketIntelligenceAnalytics:
         pipeline_projects = result.scalars().all()
 
         # Group by completion timeline
-        supply_by_year = {}
-        total_upcoming_gfa = 0
+        supply_by_year: dict[int, dict[str, float | int]] = {}
+        total_upcoming_gfa: float = 0.0
 
         for project in pipeline_projects:
             if project.expected_completion:
@@ -275,13 +275,13 @@ class MarketIntelligenceAnalytics:
                 if year not in supply_by_year:
                     supply_by_year[year] = {
                         "projects": 0,
-                        "total_gfa": 0,
+                        "total_gfa": 0.0,
                         "total_units": 0,
                     }
 
-                supply_by_year[year]["projects"] += 1
-                supply_by_year[year]["total_gfa"] += float(project.total_gfa_sqm or 0)
-                supply_by_year[year]["total_units"] += project.total_units or 0
+                supply_by_year[year]["projects"] = int(supply_by_year[year]["projects"]) + 1
+                supply_by_year[year]["total_gfa"] = float(supply_by_year[year]["total_gfa"]) + float(project.total_gfa_sqm or 0)
+                supply_by_year[year]["total_units"] = int(supply_by_year[year]["total_units"]) + (project.total_units or 0)
                 total_upcoming_gfa += float(project.total_gfa_sqm or 0)
 
         # Calculate supply pressure
@@ -502,7 +502,7 @@ class MarketIntelligenceAnalytics:
         self, transactions: list[MarketTransaction]
     ) -> dict[str, Any]:
         """Group transactions by quarter."""
-        quarterly = {}
+        quarterly: dict[str, dict[str, Any]] = {}
 
         for txn in transactions:
             quarter = (
@@ -510,17 +510,19 @@ class MarketIntelligenceAnalytics:
             )
 
             if quarter not in quarterly:
-                quarterly[quarter] = {"count": 0, "total_volume": 0, "avg_psf": []}
+                quarterly[quarter] = {"count": 0, "total_volume": 0.0, "avg_psf": []}
 
-            quarterly[quarter]["count"] += 1
-            quarterly[quarter]["total_volume"] += float(txn.sale_price)
+            quarterly[quarter]["count"] = int(quarterly[quarter]["count"]) + 1
+            quarterly[quarter]["total_volume"] = float(quarterly[quarter]["total_volume"]) + float(txn.sale_price)
             if txn.psf_price:
-                quarterly[quarter]["avg_psf"].append(float(txn.psf_price))
+                psf_list: list[float] = quarterly[quarter]["avg_psf"]
+                psf_list.append(float(txn.psf_price))
 
         # Calculate averages
         for _quarter, data in quarterly.items():
-            if data["avg_psf"]:
-                data["avg_psf"] = statistics.mean(data["avg_psf"])
+            psf_values: list[float] = data["avg_psf"]
+            if psf_values:
+                data["avg_psf"] = statistics.mean(psf_values)
             else:
                 data["avg_psf"] = 0
 
@@ -575,7 +577,7 @@ class MarketIntelligenceAnalytics:
         self, transactions: list[MarketTransaction]
     ) -> dict[str, int]:
         """Analyze buyer type distribution."""
-        buyer_types = {}
+        buyer_types: dict[str, int] = {}
 
         for txn in transactions:
             buyer_type = txn.buyer_type or "Unknown"
@@ -802,7 +804,7 @@ class MarketIntelligenceAnalytics:
             return {"message": "Insufficient data for seasonal analysis"}
 
         # Group by month
-        monthly_absorption = {}
+        monthly_absorption: dict[int, list[float]] = {}
         for data in absorption_data:
             month = data.tracking_date.month
             if month not in monthly_absorption:
@@ -844,7 +846,7 @@ class MarketIntelligenceAnalytics:
         )
 
         result = await session.execute(stmt)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     def _analyze_index_trends(self, indices: list[MarketIndex]) -> dict[str, Any]:
         """Analyze market index trends."""

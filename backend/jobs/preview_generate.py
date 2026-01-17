@@ -22,9 +22,9 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-def _resolve_session_dependency():
+def _resolve_session_dependency() -> Any:
     try:
-        from app.main import app as fastapi_app  # type: ignore
+        from app.main import app as fastapi_app
     except Exception:  # pragma: no cover - fallback when app isn't available
         fastapi_app = None
 
@@ -43,7 +43,7 @@ async def _job_session() -> AsyncIterator[AsyncSession]:
     if inspect.isasyncgen(resource):
         generator = resource
         try:
-            session = await anext(generator)  # type: ignore[arg-type]
+            session = await anext(generator)
         except StopAsyncIteration as exc:  # pragma: no cover - defensive guard
             raise RuntimeError("Session dependency did not yield a session") from exc
         try:

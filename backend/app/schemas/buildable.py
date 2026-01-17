@@ -240,11 +240,10 @@ class BuildableCalculation(BaseModel):
     zone_source: ZoneSource
     rules: list[BuildableRule]
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def gfa_total(self) -> float:
         """Total gross floor area permitted by the calculation."""
-
         return float(self.metrics.gfa_cap_m2)
 
 

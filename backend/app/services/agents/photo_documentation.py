@@ -13,12 +13,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 try:  # pragma: no cover - optional runtime dependency
     from PIL import Image
 except ModuleNotFoundError:  # pragma: no cover
-    Image = None  # type: ignore[assignment]
+    Image = None
 
 try:  # pragma: no cover - optional runtime dependency
-    import exifread
+    import exifread  # type: ignore[import-untyped]
 except ModuleNotFoundError:  # pragma: no cover
-    exifread = None  # type: ignore[assignment]
+    exifread = None
 
 import structlog
 

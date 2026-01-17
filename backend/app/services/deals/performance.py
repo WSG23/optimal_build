@@ -347,7 +347,10 @@ class AgentPerformanceService:
             if isinstance(raw_roi, Mapping):
                 normalised = _normalise_roi_snapshot(raw_roi)
                 if normalised is not None:
-                    offline_snapshots[normalised["project_id"]] = normalised
+                    # project_id is guaranteed to be int by _normalise_roi_snapshot
+                    pid = normalised["project_id"]
+                    if isinstance(pid, int):
+                        offline_snapshots[pid] = normalised
 
             for key in ("roi_project_id", "overlay_project_id", "overlay_project"):
                 project_id = _safe_int(metadata.get(key))
@@ -407,7 +410,7 @@ def _deal_cycle_days(deal: AgentDeal) -> Optional[float]:
         if not created or not closed:
             return None
         delta = closed - created
-        return delta.days + delta.seconds / 86400.0
+        return float(delta.days) + float(delta.seconds) / 86400.0
     except Exception:  # pragma: no cover - defensive
         return None
 
@@ -563,10 +566,14 @@ def _coerce_date(value: object) -> date | None:
 def _coerce_float(value: object) -> float | None:
     if value is None:
         return None
-    try:
+    if isinstance(value, (int, float)):
         return float(value)
-    except (TypeError, ValueError) as e:  # pragma: no cover - defensive
-        raise TypeError(f"Expected numeric value, got {value!r}") from e
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError as e:  # pragma: no cover - defensive
+            raise TypeError(f"Expected numeric value, got {value!r}") from e
+    raise TypeError(f"Expected numeric value, got {value!r}")
 
 
 __all__ = ["AgentPerformanceService"]

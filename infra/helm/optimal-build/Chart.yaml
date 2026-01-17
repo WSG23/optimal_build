@@ -1,0 +1,23 @@
+apiVersion: v2
+name: optimal-build
+description: A Helm chart for optimal_build - Commercial Real Estate Development Platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - real-estate
+  - development
+  - singapore
+  - compliance
+maintainers:
+  - name: optimal-build-team
+    email: team@optimal-build.com
+dependencies:
+  - name: postgresql
+    version: "~13.0"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+  - name: redis
+    version: "~18.0"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled

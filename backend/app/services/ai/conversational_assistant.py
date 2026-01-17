@@ -9,7 +9,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 from uuid import uuid4
 
 from langchain_openai import ChatOpenAI
@@ -95,11 +95,13 @@ class ConversationResult:
 class ConversationalAssistantService:
     """AI-powered conversational assistant."""
 
+    llm: Optional[ChatOpenAI]
+
     def __init__(self) -> None:
         """Initialize the assistant."""
         try:
             self.llm = ChatOpenAI(
-                model_name="gpt-4-turbo",
+                model="gpt-4-turbo",
                 temperature=0.7,
             )
             self.nl_query_service = NaturalLanguageQueryService()
@@ -169,9 +171,7 @@ class ConversationalAssistantService:
                 if "active_deal_id" in response.context_updates:
                     context.active_deal_id = response.context_updates["active_deal_id"]
                 if "active_property_id" in response.context_updates:
-                    context.active_property_id = response.context_updates[
-                        "active_property_id"
-                    ]
+                    context.active_property_id = response.context_updates["active_property_id"]
 
             return ConversationResult(
                 success=True,
@@ -198,9 +198,9 @@ class ConversationalAssistantService:
         latest_message = context.messages[-1].content
         intent = await self._analyze_intent(latest_message)
 
-        actions_taken = []
-        context_updates = {}
-        tool_results = []
+        actions_taken: list[dict[str, Any]] = []
+        context_updates: dict[str, Any] = {}
+        tool_results: list[dict[str, Any]] = []
 
         # Execute relevant tools based on intent
         if intent.get("needs_search"):
@@ -280,15 +280,18 @@ Return only valid JSON:"""
 
         try:
             response = self.llm.invoke(prompt)
-            content = response.content or "{}"
+            content = response.content
             # Simple JSON extraction
             import json
 
+            if not isinstance(content, str):
+                return {"intent": "general", "confidence": 0.5}
             # Find JSON in response
             start = content.find("{")
             end = content.rfind("}") + 1
             if start >= 0 and end > start:
-                return json.loads(content[start:end])
+                parsed: dict[str, Any] = json.loads(content[start:end])
+                return parsed
             return {"intent": "general", "confidence": 0.5}
         except Exception as e:
             logger.warning(f"Intent analysis failed: {e}")
@@ -326,9 +329,7 @@ Return only valid JSON:"""
             "type": "deal_analysis",
             "deal_id": deal_id,
             "score": score.overall_score if score else None,
-            "factors": (
-                {f.factor: f.score for f in score.factor_scores} if score else {}
-            ),
+            "factors": ({f.factor: f.score for f in score.factor_scores} if score else {}),
             "recommendation": score.recommendation if score else "Unable to analyze",
         }
 
@@ -339,10 +340,7 @@ Return only valid JSON:"""
             "type": "knowledge",
             "query": query,
             "results": (
-                [
-                    {"content": r.content, "score": r.relevance_score}
-                    for r in result.results[:5]
-                ]
+                [{"content": r.content, "score": r.relevance_score} for r in result.results[:5]]
                 if result
                 else []
             ),
@@ -367,8 +365,7 @@ Return only valid JSON:"""
 
         # Build tool results summary
         results_summary = "\n".join(
-            f"- {r.get('type', 'result')}: {r.get('summary', str(r))}"
-            for r in tool_results
+            f"- {r.get('type', 'result')}: {r.get('summary', str(r))}" for r in tool_results
         )
 
         prompt = f"""You are a helpful real estate investment assistant for Singapore property market.
@@ -381,8 +378,8 @@ Tool Results:
 {results_summary or "No tool results"}
 
 Current Context:
-- Active Deal: {context.active_deal_id or 'None'}
-- Active Property: {context.active_property_id or 'None'}
+- Active Deal: {context.active_deal_id or "None"}
+- Active Property: {context.active_property_id or "None"}
 
 Generate a helpful, conversational response. Be specific with any data from the tool results.
 If you don't have enough information, ask clarifying questions.
@@ -391,10 +388,10 @@ Response:"""
 
         try:
             response = self.llm.invoke(prompt)
-            return (
-                response.content
-                or "I apologize, I'm having trouble generating a response."
-            )
+            content = response.content
+            if isinstance(content, str):
+                return content
+            return "I apologize, I'm having trouble generating a response."
         except Exception as e:
             logger.error(f"Response generation failed: {e}")
             return self._compose_fallback_response(context, tool_results)
@@ -412,13 +409,12 @@ Response:"""
                 if result.get("type") == "deal_analysis" and result.get("score"):
                     return f"The deal has a score of {result['score']}/100. {result.get('recommendation', '')}"
                 if result.get("type") == "knowledge" and result.get("answer"):
-                    return result["answer"]
+                    answer = result["answer"]
+                    return str(answer) if answer else ""
 
         return "I'm here to help with your real estate investment questions. What would you like to know?"
 
-    def _generate_fallback_response(
-        self, context: ConversationContext
-    ) -> AssistantResponse:
+    def _generate_fallback_response(self, context: ConversationContext) -> AssistantResponse:
         """Generate a fallback response when LLM is unavailable."""
         return AssistantResponse(
             message="I'm currently operating in limited mode. How can I assist you with your real estate needs?",

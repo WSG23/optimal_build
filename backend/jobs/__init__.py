@@ -8,16 +8,16 @@ import os
 from collections.abc import Awaitable, Callable, Mapping
 from typing import Any, Union
 
-from backend._compat import compat_dataclass
+from dataclasses import dataclass
 
 try:  # pragma: no cover - optional dependency, available in some deployments
-    from celery import Celery  # type: ignore
+    from celery import Celery  # type: ignore[import-untyped]
 except ModuleNotFoundError:  # pragma: no cover - keep inline fallback working
     Celery = None  # type: ignore[assignment]
 
 try:  # pragma: no cover - optional dependency, available in some deployments
-    from redis import Redis  # type: ignore
-    from rq import Queue  # type: ignore
+    from redis import Redis  # type: ignore[import-untyped]
+    from rq import Queue  # type: ignore[import-untyped]
 except ModuleNotFoundError:  # pragma: no cover - keep inline fallback working
     Redis = None  # type: ignore[assignment]
     Queue = None  # type: ignore[assignment]
@@ -37,7 +37,7 @@ def _store_job(
     return func
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class JobDispatch:
     """Metadata describing a scheduled job."""
 
@@ -105,7 +105,7 @@ class _InlineBackend(_BaseBackend):
         func, registered_queue = self._registry[name]
         result = func(*args, **kwargs)
         if inspect.isawaitable(result):
-            result = await result  # type: ignore[assignment]
+            result = await result
         return JobDispatch(
             backend=self.name,
             job_name=name,
@@ -131,7 +131,7 @@ class _CeleryBackend(
         self._registry: dict[str, tuple[JobFunc, str | None]] = {}
 
     def register(self, func: JobFunc, name: str, queue: str | None) -> JobFunc:
-        task = self.app.task(name=name, bind=False)(func)
+        task: JobFunc = self.app.task(name=name, bind=False)(func)
         self._registry[name] = (task, queue)
         return task
 
@@ -292,7 +292,7 @@ class JobQueue:
                 try:
                     result = proxy(job, *args, queue=queue, **kwargs)
                     if inspect.isawaitable(result):
-                        result = await result  # type: ignore[assignment]
+                        result = await result
                     return result  # type: ignore[return-value]
                 finally:
                     object.__setattr__(self, "_enqueue_proxy_depth", depth)
@@ -318,8 +318,8 @@ def job(
     def decorator(func: JobFunc) -> JobFunc:
         task_name = name or f"{func.__module__}.{func.__qualname__}"
         registered = job_queue.register(func, task_name, queue)
-        registered.job_name = task_name
-        registered.job_queue = job_queue
+        setattr(registered, "job_name", task_name)
+        setattr(registered, "job_queue", job_queue)
         return registered
 
     return decorator

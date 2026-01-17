@@ -6,21 +6,21 @@ import asyncio
 import math
 import re
 from collections.abc import Iterable, Sequence
-from dataclasses import field
+from dataclasses import dataclass, field
 from io import BytesIO
 from itertools import chain
 from typing import Any
 from xml.etree import ElementTree as ET
 
-from backend._compat import compat_dataclass, compat_zip
+from backend._compat import compat_zip
 
 try:  # pragma: no cover - optional dependency
-    import fitz  # type: ignore  # PyMuPDF
+    import fitz  # PyMuPDF  # type: ignore[import-not-found]
 except ModuleNotFoundError:  # pragma: no cover - available in production environments
     fitz = None  # type: ignore[assignment]
 
 try:  # pragma: no cover - optional dependency
-    from PIL import Image
+    from PIL import Image  # type: ignore[import-not-found]
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
     Image = None  # type: ignore[assignment]
 
@@ -29,7 +29,7 @@ from backend.jobs import job
 Point = tuple[float, float]
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class VectorPath:
     """A vectorised path consisting of ordered coordinates."""
 
@@ -45,7 +45,7 @@ class VectorPath:
         }
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class WallCandidate:
     """A baseline wall approximation extracted from vector or bitmap data."""
 
@@ -65,7 +65,7 @@ class WallCandidate:
         }
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class RasterVectorOptions:
     """Configuration toggles for raster to vector processing."""
 
@@ -74,7 +74,7 @@ class RasterVectorOptions:
     bitmap_threshold: float = 0.65
 
 
-@compat_dataclass(slots=True)
+@dataclass(slots=True)
 class RasterVectorResult:
     """Result produced by :func:`vectorize_floorplan`."""
 
@@ -434,7 +434,7 @@ def _vectorize_bitmap_image(
     if Image is None:  # pragma: no cover - optional dependency
         raise RuntimeError("Raster image vectorization requires Pillow")
 
-    with Image.open(BytesIO(image_payload)) as image:  # type: ignore[attr-defined]
+    with Image.open(BytesIO(image_payload)) as image:
         grayscale = image.convert("L")
         width, height = grayscale.size
 
@@ -528,7 +528,7 @@ def _extract_pdf_paths(
 ) -> RasterVectorResult:
     if fitz is None:  # pragma: no cover - optional dependency
         raise RuntimeError("PDF vectorization requires PyMuPDF (fitz)")
-    document = fitz.open(stream=pdf_payload, filetype="pdf")  # type: ignore[arg-type]
+    document = fitz.open(stream=pdf_payload, filetype="pdf")
     paths: list[VectorPath] = []
     vector_walls: list[WallCandidate] = []
     bitmap_walls: list[WallCandidate] = []

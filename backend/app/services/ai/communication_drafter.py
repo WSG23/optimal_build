@@ -9,7 +9,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 from langchain_openai import ChatOpenAI
 from sqlalchemy import select
@@ -101,11 +101,13 @@ class DraftResult:
 class CommunicationDrafterService:
     """Service for AI-powered communication drafting."""
 
+    llm: Optional[ChatOpenAI]
+
     def __init__(self) -> None:
         """Initialize the drafter service."""
         try:
             self.llm = ChatOpenAI(
-                model_name="gpt-4-turbo",
+                model="gpt-4-turbo",
                 temperature=0.7,  # Slightly creative for natural language
             )
             self._initialized = True
@@ -137,9 +139,7 @@ class CommunicationDrafterService:
 
             if db:
                 if request.deal_id:
-                    deal_query = select(AgentDeal).where(
-                        AgentDeal.id == request.deal_id
-                    )
+                    deal_query = select(AgentDeal).where(AgentDeal.id == request.deal_id)
                     result = await db.execute(deal_query)
                     deal = result.scalar_one_or_none()
                     if deal:
@@ -157,9 +157,7 @@ class CommunicationDrafterService:
                         }
 
                 if request.property_id:
-                    prop_query = select(Property).where(
-                        Property.id == request.property_id
-                    )
+                    prop_query = select(Property).where(Property.id == request.property_id)
                     result = await db.execute(prop_query)
                     prop = result.scalar_one_or_none()
                     if prop:
@@ -170,21 +168,15 @@ class CommunicationDrafterService:
                                 prop.property_type.value if prop.property_type else None
                             ),
                             "land_area_sqm": (
-                                float(prop.land_area_sqm)
-                                if prop.land_area_sqm
-                                else None
+                                float(prop.land_area_sqm) if prop.land_area_sqm else None
                             ),
                         }
 
             # Generate draft
             if not self._initialized or not self.llm:
-                draft = self._generate_template_draft(
-                    request, deal_context, property_context
-                )
+                draft = self._generate_template_draft(request, deal_context, property_context)
             else:
-                draft = await self._generate_ai_draft(
-                    request, deal_context, property_context
-                )
+                draft = await self._generate_ai_draft(request, deal_context, property_context)
 
             generation_time = (datetime.now() - start_time).total_seconds() * 1000
 
@@ -208,27 +200,30 @@ class CommunicationDrafterService:
         property_context: dict[str, Any] | None,
     ) -> CommunicationDraft:
         """Generate draft using AI."""
+        assert self.llm is not None  # Caller ensures this
         prompt = self._build_prompt(request, deal_context, property_context)
         response = self.llm.invoke(prompt)
-        body = response.content or ""
+        content = response.content
+        body = content if isinstance(content, str) else ""
 
         # Generate alternatives if requested
-        alternatives = []
+        alternatives: list[str] = []
         if request.include_alternatives:
             for variation in ["more concise", "more detailed"]:
                 alt_prompt = f"{prompt}\n\nPlease make this version {variation}."
                 alt_response = self.llm.invoke(alt_prompt)
-                if alt_response.content:
-                    alternatives.append(alt_response.content)
+                alt_content = alt_response.content
+                if isinstance(alt_content, str):
+                    alternatives.append(alt_content)
 
         # Generate subject line for emails
-        subject = None
+        subject: str | None = None
         if request.communication_type == CommunicationType.EMAIL:
             subject_prompt = f"Generate a professional email subject line for this email:\n{body}\n\nSubject line only, no quotes:"
             subject_response = self.llm.invoke(subject_prompt)
-            subject = (
-                subject_response.content.strip() if subject_response.content else None
-            )
+            subject_content = subject_response.content
+            if isinstance(subject_content, str):
+                subject = subject_content.strip()
 
         return CommunicationDraft(
             id=f"draft_{datetime.now().strftime('%Y%m%d%H%M%S')}",
@@ -264,9 +259,7 @@ class CommunicationDrafterService:
         recipient = request.recipient_name or "Sir/Madam"
         company = request.recipient_company or "your company"
         deal_title = deal_context["title"] if deal_context else "the opportunity"
-        property_address = (
-            property_context["address"] if property_context else "the property"
-        )
+        property_address = property_context["address"] if property_context else "the property"
 
         body = template.format(
             recipient=recipient,
@@ -274,9 +267,7 @@ class CommunicationDrafterService:
             deal_title=deal_title,
             property_address=property_address,
             key_points=(
-                "\n".join(f"- {p}" for p in request.key_points)
-                if request.key_points
-                else ""
+                "\n".join(f"- {p}" for p in request.key_points) if request.key_points else ""
             ),
         )
 
@@ -341,9 +332,7 @@ class CommunicationDrafterService:
         if request.additional_context:
             prompt_parts.append(f"\nAdditional context: {request.additional_context}")
 
-        prompt_parts.append(
-            "\nGenerate only the body of the communication, no subject line."
-        )
+        prompt_parts.append("\nGenerate only the body of the communication, no subject line.")
         prompt_parts.append(
             "Use professional real estate terminology appropriate for Singapore market."
         )
@@ -475,6 +464,7 @@ Best regards""",
             )
 
         try:
+            assert self.llm is not None  # Caller ensures this
             prompt = f"""Please refine the following {draft.communication_type.value} based on this feedback:
 
 Feedback: {feedback}
@@ -485,7 +475,8 @@ Original:
 Provide only the refined version, maintaining the same format and purpose."""
 
             response = self.llm.invoke(prompt)
-            refined_body = response.content or draft.body
+            refined_content = response.content
+            refined_body = refined_content if isinstance(refined_content, str) else draft.body
 
             refined_draft = CommunicationDraft(
                 id=f"draft_{datetime.now().strftime('%Y%m%d%H%M%S')}_refined",

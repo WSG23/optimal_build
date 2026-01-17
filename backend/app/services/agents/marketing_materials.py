@@ -6,15 +6,15 @@ import io
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from reportlab.graphics.barcode import qr
-from reportlab.graphics.shapes import Drawing
-from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import ParagraphStyle
-from reportlab.lib.units import inch
-from reportlab.pdfgen import canvas
-from reportlab.platypus import (
+from reportlab.graphics.barcode import qr  # type: ignore[import-untyped]
+from reportlab.graphics.shapes import Drawing  # type: ignore[import-untyped]
+from reportlab.lib import colors  # type: ignore[import-untyped]
+from reportlab.lib.enums import TA_CENTER  # type: ignore[import-untyped]
+from reportlab.lib.pagesizes import A4  # type: ignore[import-untyped]
+from reportlab.lib.styles import ParagraphStyle  # type: ignore[import-untyped]
+from reportlab.lib.units import inch  # type: ignore[import-untyped]
+from reportlab.pdfgen import canvas  # type: ignore[import-untyped]
+from reportlab.platypus import (  # type: ignore[import-untyped]
     Flowable,
     ListFlowable,
     ListItem,
@@ -33,7 +33,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class FloorPlanDiagram(Flowable):
+class FloorPlanDiagram(Flowable):  # type: ignore[misc]
     """Custom flowable for floor plan visualization."""
 
     def __init__(
@@ -99,7 +99,7 @@ class FloorPlanDiagram(Flowable):
                 )
 
 
-class AmenityIcons(Flowable):
+class AmenityIcons(Flowable):  # type: ignore[misc]
     """Custom flowable for amenity icons grid."""
 
     def __init__(self, amenities: List[str], width: float = 6 * inch):
@@ -158,7 +158,7 @@ class AmenityIcons(Flowable):
         return amenity[0].upper()
 
 
-class MarketingMaterialsGenerator(PDFGenerator):
+class MarketingMaterialsGenerator(PDFGenerator):  # type: ignore[misc]
     """Generate marketing materials for selling/leasing."""
 
     async def generate_sales_brochure(
@@ -388,7 +388,7 @@ class MarketingMaterialsGenerator(PDFGenerator):
             stmt = stmt.limit(limit)
 
         result = await session.execute(stmt)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     def _create_marketing_cover(
         self, property_data: Dict[str, Any], material_type: str
@@ -967,7 +967,7 @@ class MarketingMaterialsGenerator(PDFGenerator):
 
     def _get_key_highlights(
         self, property_data: Dict[str, Any], material_type: str
-    ) -> List[tuple]:
+    ) -> List[tuple[str, str]]:
         """Get key highlights for flyer."""
         property_obj = property_data["property"]
 

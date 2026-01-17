@@ -9,7 +9,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 from langchain_openai import ChatOpenAI
 from sqlalchemy import select
@@ -83,16 +83,16 @@ class AIReportGenerator:
 
     def __init__(self) -> None:
         """Initialize the report generator."""
+        self.llm: Optional[ChatOpenAI] = None
         try:
             self.llm = ChatOpenAI(
-                model_name="gpt-4-turbo",
+                model="gpt-4-turbo",
                 temperature=0.3,
             )
             self._initialized = True
         except Exception as e:
             logger.warning(f"Report Generator not initialized: {e}")
             self._initialized = False
-            self.llm = None
 
     async def generate_ic_memo(
         self,
@@ -140,9 +140,7 @@ class AIReportGenerator:
             )
 
             # Transaction Overview
-            transaction_section = self._generate_transaction_overview(
-                deal, property_data
-            )
+            transaction_section = self._generate_transaction_overview(deal, property_data)
             sections.append(
                 ReportSection(
                     title="Transaction Overview",
@@ -183,9 +181,7 @@ class AIReportGenerator:
             )
 
             # Recommendation
-            recommendation_section = await self._generate_recommendation(
-                deal, property_data
-            )
+            recommendation_section = await self._generate_recommendation(deal, property_data)
             sections.append(
                 ReportSection(
                     title="Recommendation",
@@ -207,9 +203,7 @@ class AIReportGenerator:
                     "deal_type": deal.deal_type.value,
                     "asset_type": deal.asset_type.value,
                     "estimated_value": (
-                        float(deal.estimated_value_amount)
-                        if deal.estimated_value_amount
-                        else None
+                        float(deal.estimated_value_amount) if deal.estimated_value_amount else None
                     ),
                 },
                 executive_summary=exec_summary,
@@ -255,9 +249,7 @@ class AIReportGenerator:
             closed_won = [d for d in deals if d.status == DealStatus.CLOSED_WON]
             closed_lost = [d for d in deals if d.status == DealStatus.CLOSED_LOST]
 
-            total_pipeline = sum(
-                float(d.estimated_value_amount or 0) for d in open_deals
-            )
+            total_pipeline = sum(float(d.estimated_value_amount or 0) for d in open_deals)
             total_closed = sum(float(d.estimated_value_amount or 0) for d in closed_won)
 
             sections = []
@@ -272,7 +264,7 @@ class AIReportGenerator:
 | Pipeline Value | ${total_pipeline:,.0f} |
 | Closed (Won) | {len(closed_won)} deals |
 | Closed Value | ${total_closed:,.0f} |
-| Win Rate | {len(closed_won)/(len(closed_won)+len(closed_lost))*100:.1f}% | (if closed deals exist)
+| Win Rate | {len(closed_won) / (len(closed_won) + len(closed_lost)) * 100:.1f}% | (if closed deals exist)
 """
             sections.append(
                 ReportSection(
@@ -344,14 +336,17 @@ Status: {deal.pipeline_stage.value}
         if property_data:
             prompt += f"""
 Property: {property_data.address}
-Property Type: {property_data.property_type.value if property_data.property_type else 'N/A'}
+Property Type: {property_data.property_type.value if property_data.property_type else "N/A"}
 Land Area: {property_data.land_area_sqm} sqm
 GFA: {property_data.gross_floor_area_sqm} sqm
 """
 
         try:
             response = self.llm.invoke(prompt)
-            return response.content or self._generate_basic_summary(deal, property_data)
+            content = response.content
+            if isinstance(content, str):
+                return content or self._generate_basic_summary(deal, property_data)
+            return self._generate_basic_summary(deal, property_data)
         except Exception as e:
             logger.error(f"LLM error in executive summary: {e}")
             return self._generate_basic_summary(deal, property_data)
@@ -363,13 +358,11 @@ GFA: {property_data.gross_floor_area_sqm} sqm
     ) -> str:
         """Generate a basic summary without LLM."""
         value_str = (
-            f"${float(deal.estimated_value_amount):,.0f}"
-            if deal.estimated_value_amount
-            else "TBD"
+            f"${float(deal.estimated_value_amount):,.0f}" if deal.estimated_value_amount else "TBD"
         )
         return f"""This memorandum presents the {deal.deal_type.value} opportunity for {deal.title},
 a {deal.asset_type.value} asset with an estimated value of {value_str}.
-The deal is currently in the {deal.pipeline_stage.value.replace('_', ' ')} stage."""
+The deal is currently in the {deal.pipeline_stage.value.replace("_", " ")} stage."""
 
     def _generate_transaction_overview(
         self,
@@ -384,16 +377,16 @@ The deal is currently in the {deal.pipeline_stage.value.replace('_', ' ')} stage
 
 | Item | Value |
 |------|-------|
-| Deal Type | {deal.deal_type.value.replace('_', ' ').title()} |
-| Asset Type | {deal.asset_type.value.replace('_', ' ').title()} |
+| Deal Type | {deal.deal_type.value.replace("_", " ").title()} |
+| Asset Type | {deal.asset_type.value.replace("_", " ").title()} |
 | Estimated Value | ${float(deal.estimated_value_amount or 0):,.0f} {deal.estimated_value_currency} |
-| Pipeline Stage | {deal.pipeline_stage.value.replace('_', ' ').title()} |
-| Expected Close | {deal.expected_close_date.strftime('%B %Y') if deal.expected_close_date else 'TBD'} |
-| Lead Source | {deal.lead_source or 'Direct'} |
+| Pipeline Stage | {deal.pipeline_stage.value.replace("_", " ").title()} |
+| Expected Close | {deal.expected_close_date.strftime("%B %Y") if deal.expected_close_date else "TBD"} |
+| Lead Source | {deal.lead_source or "Direct"} |
 
 **Transaction Description**
 
-{deal.description or 'No additional description provided.'}
+{deal.description or "No additional description provided."}
 """
 
     def _generate_property_details(
@@ -406,9 +399,9 @@ The deal is currently in the {deal.pipeline_stage.value.replace('_', ' ')} stage
 | Attribute | Value |
 |-----------|-------|
 | Address | {property_data.address} |
-| District | {property_data.district or 'N/A'} |
-| Property Type | {property_data.property_type.value.replace('_', ' ').title() if property_data.property_type else 'N/A'} |
-| Status | {property_data.status.value.replace('_', ' ').title() if property_data.status else 'N/A'} |
+| District | {property_data.district or "N/A"} |
+| Property Type | {property_data.property_type.value.replace("_", " ").title() if property_data.property_type else "N/A"} |
+| Status | {property_data.status.value.replace("_", " ").title() if property_data.status else "N/A"} |
 
 **Site Details**
 
@@ -417,10 +410,10 @@ The deal is currently in the {deal.pipeline_stage.value.replace('_', ' ')} stage
 | Land Area | {float(property_data.land_area_sqm):,.0f} sqm | ({float(property_data.land_area_sqm) * 10.764:,.0f} sqft) if property_data.land_area_sqm else 'N/A' |
 | Gross Floor Area | {float(property_data.gross_floor_area_sqm):,.0f} sqm | if property_data.gross_floor_area_sqm else 'N/A' |
 | Plot Ratio | {float(property_data.plot_ratio):.2f} | if property_data.plot_ratio else 'N/A' |
-| Tenure | {property_data.tenure_type.value.replace('_', ' ').title() if property_data.tenure_type else 'N/A'} |
-| Year Built | {property_data.year_built or 'N/A'} |
+| Tenure | {property_data.tenure_type.value.replace("_", " ").title() if property_data.tenure_type else "N/A"} |
+| Year Built | {property_data.year_built or "N/A"} |
 
-**Conservation Status**: {'Yes - Heritage Constraints Apply' if property_data.is_conservation else 'No'}
+**Conservation Status**: {"Yes - Heritage Constraints Apply" if property_data.is_conservation else "No"}
 """
 
     async def _generate_market_analysis(
@@ -431,7 +424,7 @@ The deal is currently in the {deal.pipeline_stage.value.replace('_', ' ')} stage
         """Generate market analysis section."""
         return f"""**Market Overview**
 
-The {deal.asset_type.value.replace('_', ' ')} market continues to show [stable/growing/declining] fundamentals.
+The {deal.asset_type.value.replace("_", " ")} market continues to show [stable/growing/declining] fundamentals.
 
 **Key Market Indicators**
 - Average transaction PSF: $X,XXX
@@ -464,10 +457,7 @@ The {deal.asset_type.value.replace('_', ' ')} market continues to show [stable/g
             mitigations.append("Thorough due diligence and experienced legal counsel")
 
         if property_data:
-            if (
-                property_data.year_built
-                and (datetime.now().year - property_data.year_built) > 20
-            ):
+            if property_data.year_built and (datetime.now().year - property_data.year_built) > 20:
                 risks.append(
                     f"Building age ({datetime.now().year - property_data.year_built} years) may require capex"
                 )
@@ -478,9 +468,7 @@ The {deal.asset_type.value.replace('_', ' ')} market continues to show [stable/g
                 mitigations.append("Early consultation with heritage authorities")
 
         risk_table = (
-            "\n".join(
-                f"| {r} | {m} |" for r, m in zip(risks, mitigations, strict=False)
-            )
+            "\n".join(f"| {r} | {m} |" for r, m in zip(risks, mitigations, strict=False))
             or "| Standard transaction risks | Standard due diligence |"
         )
 
@@ -513,7 +501,10 @@ Provide a clear recommendation: APPROVE, APPROVE WITH CONDITIONS, or DECLINE, wi
 
         try:
             response = self.llm.invoke(prompt)
-            return f"**Committee Recommendation**\n\n{response.content}"
+            content = response.content
+            if isinstance(content, str):
+                return f"**Committee Recommendation**\n\n{content}"
+            return self._generate_basic_recommendation(deal)
         except Exception:
             return self._generate_basic_recommendation(deal)
 
@@ -526,7 +517,7 @@ Based on the analysis presented, we recommend the Investment Committee **APPROVE
 2. Final pricing within approved parameters
 3. Standard legal documentation review
 
-The deal aligns with our strategic objectives for {deal.asset_type.value.replace('_', ' ')} assets.
+The deal aligns with our strategic objectives for {deal.asset_type.value.replace("_", " ")} assets.
 """
 
     def _extract_recommendations(self, recommendation_section: str) -> list[str]:
