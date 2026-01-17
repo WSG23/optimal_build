@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 logger = structlog.get_logger()
 
 
-class DevelopmentScenario(BaseModel):
+class DevelopmentScenario(BaseModel):  # type: ignore[misc]
     """A development scenario for a property."""
 
     scenario_type: str
@@ -36,7 +36,7 @@ class DevelopmentScenario(BaseModel):
     opportunities: List[str]
 
 
-class RawLandAnalysis(BaseModel):
+class RawLandAnalysis(BaseModel):  # type: ignore[misc]
     """Analysis results for raw land development."""
 
     gfa_potential: float
@@ -47,7 +47,7 @@ class RawLandAnalysis(BaseModel):
     market_value_indication: Optional[float] = None  # Based on comparables only
 
 
-class ExistingBuildingAnalysis(BaseModel):
+class ExistingBuildingAnalysis(BaseModel):  # type: ignore[misc]
     """Analysis results for existing building redevelopment."""
 
     current_gfa: float
@@ -121,7 +121,7 @@ class DevelopmentPotentialScanner:
                     property_data.id, property_type, analysis, session
                 )
 
-            return analysis.dict()
+            return dict(analysis.model_dump())
 
         except Exception as e:
             logger.error(f"Error analyzing property {property_data.id}: {str(e)}")
@@ -749,15 +749,15 @@ class DevelopmentPotentialScanner:
 
         # Calculate total potential
         total_cost = sum(
-            option["estimated_cost_psm"] * current_gfa
+            int(option["estimated_cost_psm"]) * current_gfa
             for option in renovation_potential.values()
-            if option.get("feasible", False)
+            if isinstance(option, dict) and option.get("feasible", False)
         )
 
         total_uplift = sum(
-            option["value_uplift_percentage"]
+            int(option["value_uplift_percentage"])
             for option in renovation_potential.values()
-            if option.get("feasible", False)
+            if isinstance(option, dict) and option.get("feasible", False)
         )
 
         renovation_potential["summary"] = {
@@ -921,7 +921,7 @@ class DevelopmentPotentialScanner:
         base_cost_psm = base_costs.get(property_data.property_type, 3500)
 
         # Demolition cost if existing building
-        demolition_cost = 0
+        demolition_cost: float = 0.0
         if property_data.gross_floor_area_sqm:
             demolition_cost = float(property_data.gross_floor_area_sqm) * 150
 
@@ -956,9 +956,9 @@ class DevelopmentPotentialScanner:
         redevelopment_value = redevelopment_gfa * 8000  # Simplified new building value
 
         # Return the better option
-        return max(
+        return float(max(
             renovation_value - current_value, redevelopment_value - current_value
-        )
+        ))
 
     def _assess_heritage_value(self, property_data: Property) -> str:
         """Assess heritage value of property."""
