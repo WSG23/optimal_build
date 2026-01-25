@@ -1,0 +1,10 @@
+diff --git a/node_modules/react-leaflet/package.json b/node_modules/react-leaflet/package.json
+--- a/node_modules/react-leaflet/package.json
++++ b/node_modules/react-leaflet/package.json
+@@
+   "exports": {
+     ".": "./lib/index.js",
+-    "./*": "./lib/*.js"
++    "./*": "./lib/*.js",
++    "./package.json": "./package.json"
+   },

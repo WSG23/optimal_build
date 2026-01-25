@@ -1,9 +1,9 @@
 import path from 'node:path'
 
 import { defineConfig, loadEnv } from 'vite'
-import react from '@vitejs/plugin-react'
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(async ({ mode }) => {
+  const react = (await import('@vitejs/plugin-react')).default
   const env = loadEnv(mode, process.cwd(), '')
 
   const serverPort = Number.parseInt(env.FRONTEND_PORT ?? '', 10)
