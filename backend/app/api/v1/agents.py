@@ -31,10 +31,6 @@ from app.services.agents.gps_property_logger import (
 from app.services.agents.photo_documentation import PhotoDocumentationManager
 from app.services.agents.voice_note_service import VoiceNoteService
 from app.services.agents.ura_integration import ura_service
-from app.services.developer_checklist_service import (
-    DEFAULT_TEMPLATE_DEFINITIONS,
-    DeveloperChecklistService,
-)
 from app.services.geocoding import Address, GeocodingService
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -507,36 +503,6 @@ async def log_property_by_gps(
             scenarios=request.development_scenarios,
             jurisdiction_code=request.jurisdiction_code,
         )
-        try:
-            await DeveloperChecklistService.ensure_templates_seeded(db)
-            scenario_slugs = [
-                (
-                    scenario.scenario.value
-                    if isinstance(scenario.scenario, DevelopmentScenario)
-                    else str(scenario.scenario)
-                )
-                for scenario in fallback.quick_analysis.scenarios
-            ]
-            if not scenario_slugs:
-                scenario_slugs = sorted(
-                    {
-                        str(definition["development_scenario"])
-                        for definition in DEFAULT_TEMPLATE_DEFINITIONS
-                    }
-                )
-            await DeveloperChecklistService.auto_populate_checklist(
-                session=db,
-                property_id=fallback.property_id,
-                development_scenarios=scenario_slugs,
-            )
-            await db.commit()
-        except Exception as checklist_error:  # pragma: no cover - best effort only
-            await db.rollback()
-            logger.warning(
-                "gps_logger_fallback_checklist_seed_failed",
-                error=str(checklist_error),
-                property_id=str(fallback.property_id),
-            )
         return fallback
 
 

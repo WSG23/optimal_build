@@ -1071,8 +1071,8 @@ html[data-theme='light'] .smart-search {
     gap: var(--ob-space-050);
     padding: 0;
     position: sticky;
-    top: var(--ob-space-150);
-    height: calc(100vh - var(--ob-space-300));
+    top: var(--ob-space-200);
+    height: calc(100vh - var(--ob-space-400));
     overflow: hidden;
     align-self: start;
 }
@@ -1084,6 +1084,7 @@ html[data-theme='light'] .smart-search {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding-right: var(--ob-space-025);
 }
 
@@ -1118,6 +1119,35 @@ html[data-theme='light'] .smart-search {
     right: var(--ob-space-150);
     bottom: var(--ob-space-150);
     z-index: var(--ob-z-fixed);
+}
+
+.feasibility-layer-toggle {
+    position: relative;
+}
+
+.feasibility-layer-toggle::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    right: calc(100% + var(--ob-space-050));
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--ob-color-bg-surface);
+    color: var(--ob-color-text-primary);
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-sm);
+    padding: var(--ob-space-025) var(--ob-space-050);
+    font-size: var(--ob-font-size-xs);
+    letter-spacing: var(--ob-letter-spacing-wide);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: var(--ob-shadow-md);
+    transition: opacity 0.15s ease;
+}
+
+.feasibility-layer-toggle:hover::after,
+.feasibility-layer-toggle:focus-visible::after {
+    opacity: 1;
 }
 
 /* --- Feasibility Output Panel --- */

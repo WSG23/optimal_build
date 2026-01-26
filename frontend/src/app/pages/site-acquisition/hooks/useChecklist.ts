@@ -64,6 +64,7 @@ export interface UseChecklistResult {
     itemId: string,
     newStatus: 'pending' | 'in_progress' | 'completed' | 'not_applicable',
   ) => Promise<void>
+  refreshChecklist: () => Promise<void>
 }
 
 // ============================================================================
@@ -97,54 +98,26 @@ export function useChecklist({
   // Load Checklist Effect
   // ============================================================================
 
-  useEffect(() => {
-    async function loadChecklist() {
-      if (!capturedProperty) {
-        setChecklistItems([])
-        setChecklistSummary(null)
-        setAvailableChecklistScenarios([])
-        setActiveScenario('all')
-        setSelectedCategory(null)
-        return
-      }
+  const loadChecklist = useCallback(async () => {
+    if (!capturedProperty) {
+      setChecklistItems([])
+      setChecklistSummary(null)
+      setAvailableChecklistScenarios([])
+      setActiveScenario('all')
+      setSelectedCategory(null)
+      return
+    }
 
-      setIsLoadingChecklist(true)
-      try {
-        if (capturedProperty.propertyId === OFFLINE_PROPERTY_ID) {
-          const offlineItems = buildOfflineChecklistItems(
-            capturedProperty.propertyId,
-            capturedProperty.quickAnalysis.scenarios.map(
-              (scenario) => scenario.scenario,
-            ),
-          )
-          const sortedOffline = [...offlineItems].sort((a, b) => {
-            const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER
-            const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER
-            if (orderA !== orderB) {
-              return orderA - orderB
-            }
-            return a.itemTitle.localeCompare(b.itemTitle)
-          })
-          setChecklistItems(sortedOffline)
-          const offlineScenarios = Array.from(
-            new Set(sortedOffline.map((item) => item.developmentScenario)),
-          )
-          setAvailableChecklistScenarios(offlineScenarios)
-          setActiveScenario(
-            offlineScenarios.length === 1 ? offlineScenarios[0] : 'all',
-          )
-          setChecklistSummary(
-            computeChecklistSummary(sortedOffline, capturedProperty.propertyId),
-          )
-          setSelectedCategory(null)
-          return
-        }
-
-        const [items, summary] = await Promise.all([
-          fetchPropertyChecklist(capturedProperty.propertyId),
-          fetchChecklistSummary(capturedProperty.propertyId),
-        ])
-        const sortedItems = [...items].sort((a, b) => {
+    setIsLoadingChecklist(true)
+    try {
+      if (capturedProperty.propertyId === OFFLINE_PROPERTY_ID) {
+        const offlineItems = buildOfflineChecklistItems(
+          capturedProperty.propertyId,
+          capturedProperty.quickAnalysis.scenarios.map(
+            (scenario) => scenario.scenario,
+          ),
+        )
+        const sortedOffline = [...offlineItems].sort((a, b) => {
           const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER
           const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER
           if (orderA !== orderB) {
@@ -152,72 +125,66 @@ export function useChecklist({
           }
           return a.itemTitle.localeCompare(b.itemTitle)
         })
-        setChecklistItems(sortedItems)
-        if (sortedItems.length === 0) {
-          const fallbackItems = buildOfflineChecklistItems(
-            capturedProperty.propertyId,
-            capturedProperty.quickAnalysis.scenarios.map(
-              (scenario) => scenario.scenario,
-            ),
-          )
-          if (fallbackItems.length > 0) {
-            const sortedFallback = [...fallbackItems].sort((a, b) => {
-              const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER
-              const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER
-              if (orderA !== orderB) {
-                return orderA - orderB
-              }
-              return a.itemTitle.localeCompare(b.itemTitle)
-            })
-            setChecklistItems(sortedFallback)
-            setChecklistSummary(
-              computeChecklistSummary(
-                sortedFallback,
-                capturedProperty.propertyId,
-              ),
-            )
-            const fallbackScenarios = Array.from(
-              new Set(sortedFallback.map((item) => item.developmentScenario)),
-            )
-            setAvailableChecklistScenarios(fallbackScenarios)
-            setActiveScenario(
-              fallbackScenarios.length === 1 ? fallbackScenarios[0] : 'all',
-            )
-            setSelectedCategory(null)
-            return
-          }
-        }
-        setChecklistSummary(summary)
-        const scenarioSet = new Set<DevelopmentScenario>()
-        sortedItems.forEach((item) => {
-          if (scenarioLookup.has(item.developmentScenario)) {
-            scenarioSet.add(item.developmentScenario)
-          }
-        })
-        const scenarios = Array.from(scenarioSet)
-        setAvailableChecklistScenarios(scenarios)
-        setActiveScenario((prev: 'all' | DevelopmentScenario) => {
-          if (scenarios.length === 0) {
-            return 'all'
-          }
-          if (prev !== 'all' && scenarios.includes(prev)) {
-            return prev
-          }
-          if (scenarios.length === 1) {
-            return scenarios[0]
-          }
-          return 'all'
-        })
+        setChecklistItems(sortedOffline)
+        const offlineScenarios = Array.from(
+          new Set(sortedOffline.map((item) => item.developmentScenario)),
+        )
+        setAvailableChecklistScenarios(offlineScenarios)
+        setActiveScenario(
+          offlineScenarios.length === 1 ? offlineScenarios[0] : 'all',
+        )
+        setChecklistSummary(
+          computeChecklistSummary(sortedOffline, capturedProperty.propertyId),
+        )
         setSelectedCategory(null)
-      } catch (err) {
-        console.error('Failed to load checklist:', err)
-      } finally {
-        setIsLoadingChecklist(false)
+        return
       }
-    }
 
-    loadChecklist()
+      const [items, summary] = await Promise.all([
+        fetchPropertyChecklist(capturedProperty.propertyId),
+        fetchChecklistSummary(capturedProperty.propertyId),
+      ])
+      const sortedItems = [...items].sort((a, b) => {
+        const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER
+        const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER
+        if (orderA !== orderB) {
+          return orderA - orderB
+        }
+        return a.itemTitle.localeCompare(b.itemTitle)
+      })
+      setChecklistItems(sortedItems)
+      setChecklistSummary(summary)
+      const scenarioSet = new Set<DevelopmentScenario>()
+      sortedItems.forEach((item) => {
+        if (scenarioLookup.has(item.developmentScenario)) {
+          scenarioSet.add(item.developmentScenario)
+        }
+      })
+      const scenarios = Array.from(scenarioSet)
+      setAvailableChecklistScenarios(scenarios)
+      setActiveScenario((prev: 'all' | DevelopmentScenario) => {
+        if (scenarios.length === 0) {
+          return 'all'
+        }
+        if (prev !== 'all' && scenarios.includes(prev)) {
+          return prev
+        }
+        if (scenarios.length === 1) {
+          return scenarios[0]
+        }
+        return 'all'
+      })
+      setSelectedCategory(null)
+    } catch (err) {
+      console.error('Failed to load checklist:', err)
+    } finally {
+      setIsLoadingChecklist(false)
+    }
   }, [capturedProperty, scenarioLookup])
+
+  useEffect(() => {
+    void loadChecklist()
+  }, [loadChecklist])
 
   // ============================================================================
   // Derived Values
@@ -333,5 +300,6 @@ export function useChecklist({
 
     // Actions
     handleChecklistUpdate,
+    refreshChecklist: loadChecklist,
   }
 }

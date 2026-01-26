@@ -1,5 +1,5 @@
 import { Layers, GridOn, Plumbing } from '@mui/icons-material'
-import { ToggleButton, ToggleButtonGroup, Tooltip, Paper } from '@mui/material'
+import { ToggleButton, ToggleButtonGroup, Paper } from '@mui/material'
 import { useState } from 'react'
 
 import type { ReactNode } from 'react'
@@ -52,7 +52,7 @@ export function FeasibilityLayout({
               elevation={0}
               sx={{
                 borderRadius: 'var(--ob-radius-sm)',
-                overflow: 'hidden',
+                overflow: 'visible',
                 background: 'var(--ob-color-bg-surface)',
                 border: '1px solid var(--ob-color-border-subtle)',
                 backdropFilter: 'blur(var(--ob-blur-md))',
@@ -89,33 +89,33 @@ export function FeasibilityLayout({
                   },
                 }}
               >
-                <Tooltip title="Zoning Envelope" placement="left" arrow>
-                  <ToggleButton
-                    value="zoning"
-                    aria-label="zoning envelope"
-                    title="Zoning Envelope"
-                  >
-                    <Layers fontSize="small" />
-                  </ToggleButton>
-                </Tooltip>
-                <Tooltip title="Structural Grid" placement="left" arrow>
-                  <ToggleButton
-                    value="structure"
-                    aria-label="structural grid"
-                    title="Structural Grid"
-                  >
-                    <GridOn fontSize="small" />
-                  </ToggleButton>
-                </Tooltip>
-                <Tooltip title="MEP Risers" placement="left" arrow>
-                  <ToggleButton
-                    value="mep"
-                    aria-label="mep risers"
-                    title="MEP Risers"
-                  >
-                    <Plumbing fontSize="small" />
-                  </ToggleButton>
-                </Tooltip>
+                <ToggleButton
+                  value="zoning"
+                  aria-label="zoning envelope"
+                  title="Zoning Envelope"
+                  data-tooltip="Zoning Envelope"
+                  className="feasibility-layer-toggle"
+                >
+                  <Layers fontSize="small" />
+                </ToggleButton>
+                <ToggleButton
+                  value="structure"
+                  aria-label="structural grid"
+                  title="Structural Grid"
+                  data-tooltip="Structural Grid"
+                  className="feasibility-layer-toggle"
+                >
+                  <GridOn fontSize="small" />
+                </ToggleButton>
+                <ToggleButton
+                  value="mep"
+                  aria-label="mep risers"
+                  title="MEP Risers"
+                  data-tooltip="MEP Risers"
+                  className="feasibility-layer-toggle"
+                >
+                  <Plumbing fontSize="small" />
+                </ToggleButton>
               </ToggleButtonGroup>
             </Paper>
           </div>
