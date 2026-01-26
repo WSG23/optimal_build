@@ -12,11 +12,12 @@ try:
     Fernet = _Fernet
     InvalidToken = _InvalidToken
 except ModuleNotFoundError:  # pragma: no cover - fallback for lightweight test envs
+    # Redefine classes when cryptography not installed (test environments)
 
-    class InvalidToken(Exception):  # type: ignore[no-redef]
+    class InvalidToken(Exception):  # type: ignore[no-redef]  # Optional dependency fallback
         """Raised when decryption fails using the lightweight cipher stub."""
 
-    class Fernet:  # type: ignore[no-redef]
+    class Fernet:  # type: ignore[no-redef]  # Optional dependency fallback
         """Minimal stub that uses reversible base64 encoding in tests."""
 
         def __init__(self, key: bytes) -> None:

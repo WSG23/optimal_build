@@ -21,7 +21,8 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - optional dependency fallback
     from sqlalchemy.types import UserDefinedType
 
-    class Geometry(UserDefinedType):  # type: ignore[misc]
+    # GeoAlchemy2 stub when PostGIS not available (test environments)
+    class Geometry(UserDefinedType):  # type: ignore[misc]  # SQLAlchemy UserDefinedType pattern
         """Minimal stub emulating geoalchemy2.Geometry when unavailable."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:

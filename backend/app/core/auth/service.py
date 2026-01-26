@@ -35,7 +35,8 @@ security = HTTPBearer()
 optional_security = HTTPBearer(auto_error=False)
 
 
-class TokenData(BaseModel):  # type: ignore[misc]
+# Pydantic BaseModel subclasses trigger mypy misc errors due to metaclass magic
+class TokenData(BaseModel):  # type: ignore[misc]  # Pydantic metaclass
     """Token payload data."""
 
     email: str
@@ -43,7 +44,7 @@ class TokenData(BaseModel):  # type: ignore[misc]
     user_id: str
 
 
-class TokenResponse(BaseModel):  # type: ignore[misc]
+class TokenResponse(BaseModel):  # type: ignore[misc]  # Pydantic metaclass
     """Token response model."""
 
     access_token: str

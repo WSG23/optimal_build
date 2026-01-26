@@ -8,7 +8,7 @@ from uuid import UUID
 from backend._compat.datetime import utcnow
 
 from app.models.team import InvitationStatus, TeamInvitation, TeamMember
-from app.models.users import UserRole
+from app.models.user import UserRole
 from app.services.notification.email_service import EmailService
 
 from sqlalchemy import select
@@ -73,7 +73,7 @@ class TeamService:
         # Send invitation email
         try:
             # Get project name for the email
-            from app.models.projects import Project
+            from app.models.project import Project
 
             project_result = await self.db.execute(
                 select(Project).where(Project.id == project_id)
@@ -82,7 +82,7 @@ class TeamService:
             project_name = project.project_name if project else f"Project {project_id}"
 
             # Get inviter name
-            from app.models.users import User
+            from app.models.user import User
 
             inviter_result = await self.db.execute(
                 select(User).where(User.id == invited_by_id)
@@ -157,7 +157,7 @@ class TeamService:
 
         Returns member info with activity stats (pending/completed tasks).
         """
-        from app.models.users import User
+        from app.models.user import User
         from app.models.workflow import ApprovalStep, ApprovalWorkflow
 
         # Get team members with user info
@@ -237,6 +237,7 @@ class TeamService:
             if not value:
                 return ""
             if hasattr(value, "value"):
+                # Runtime check confirms value is enum-like; extract string value
                 value = value.value  # type: ignore[assignment]
             return str(value).strip().lower()
 
@@ -244,6 +245,7 @@ class TeamService:
             if not value:
                 return "Unassigned"
             if hasattr(value, "value"):
+                # Runtime check confirms value is enum-like; extract string value
                 value = value.value  # type: ignore[assignment]
             return str(value).replace("_", " ").title()
 
