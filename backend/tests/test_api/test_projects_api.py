@@ -376,8 +376,8 @@ async def test_project_response_conversion():
     from datetime import datetime, timezone
     from unittest.mock import MagicMock
 
-    from app.api.v1.projects_api import _project_to_response
-    from app.models.projects import ProjectPhase, ProjectType
+    from app.api.v1.projects import _project_to_response
+    from app.models.project import ProjectPhase, ProjectType
 
     mock_project = MagicMock()
     mock_project.id = uuid.uuid4()
@@ -406,7 +406,7 @@ async def test_project_response_conversion():
 @pytest.mark.asyncio
 async def test_generate_project_code():
     """Test project code generation."""
-    from app.api.v1.projects_api import _generate_project_code
+    from app.api.v1.projects import _generate_project_code
 
     code = _generate_project_code()
     assert code.startswith("PROJ-")
@@ -416,8 +416,8 @@ async def test_generate_project_code():
 @pytest.mark.asyncio
 async def test_phase_display_name():
     """Test phase display name conversion."""
-    from app.api.v1.projects_api import _phase_display_name
-    from app.models.projects import ProjectPhase
+    from app.api.v1.projects import _phase_display_name
+    from app.models.project import ProjectPhase
 
     assert _phase_display_name(ProjectPhase.CONCEPT) == "Concept"
     assert _phase_display_name(ProjectPhase.CONSTRUCTION) == "Construction"
@@ -430,7 +430,7 @@ async def test_phase_display_name():
 @pytest.mark.asyncio
 async def test_phase_status_from_development():
     """Test development phase status mapping."""
-    from app.api.v1.projects_api import _phase_status_from_development
+    from app.api.v1.projects import _phase_status_from_development
     from app.models.development_phase import PhaseStatus
 
     assert _phase_status_from_development(None) == "not_started"
@@ -444,7 +444,7 @@ async def test_phase_status_from_development():
 @pytest.mark.asyncio
 async def test_workflow_step_status():
     """Test workflow step status conversion."""
-    from app.api.v1.projects_api import _workflow_step_status
+    from app.api.v1.projects import _workflow_step_status
     from app.models.workflow import StepStatus
 
     assert _workflow_step_status(None) == StepStatus.PENDING.value
@@ -558,7 +558,7 @@ async def test_get_project_dashboard_no_finance_data(client):
 @pytest.mark.asyncio
 async def test_format_currency():
     """Test currency formatting helper."""
-    from app.api.v1.projects_api import _format_currency
+    from app.api.v1.projects import _format_currency
 
     assert _format_currency(500) == "$500"
     assert _format_currency(1500) == "$1.5K"
@@ -569,7 +569,7 @@ async def test_format_currency():
 @pytest.mark.asyncio
 async def test_format_area():
     """Test area formatting helper."""
-    from app.api.v1.projects_api import _format_area
+    from app.api.v1.projects import _format_area
 
     assert _format_area(15400) == "15,400 m²"
     assert _format_area(1000000) == "1,000,000 m²"
@@ -578,7 +578,7 @@ async def test_format_area():
 @pytest.mark.asyncio
 async def test_format_percentage():
     """Test percentage formatting helper."""
-    from app.api.v1.projects_api import _format_percentage
+    from app.api.v1.projects import _format_percentage
 
     assert _format_percentage(18.4) == "18.4%"
     assert _format_percentage(0.5) == "0.5%"

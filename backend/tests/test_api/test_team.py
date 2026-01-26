@@ -15,9 +15,9 @@ from backend._compat.datetime import utcnow
 
 from app.api import deps
 from app.main import app
-from app.models.projects import Project, ProjectPhase, ProjectType
+from app.models.project import Project, ProjectPhase, ProjectType
 from app.models.team import InvitationStatus, TeamInvitation, TeamMember
-from app.models.users import User, UserRole
+from app.models.user import User, UserRole
 from httpx import AsyncClient
 
 

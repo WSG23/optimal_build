@@ -182,7 +182,7 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
 
     mapRef.current = new google.maps.Map(mapContainer.current, {
       center: { lat: 1.3521, lng: 103.8198 },
-      zoom: 11,
+      zoom: 'var(--ob-space-800)',
       styles: darkMapStyle,
       mapTypeControl: false,
       streetViewControl: false,
@@ -270,7 +270,7 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
 
   if (loadError) {
     return (
-      <Paper sx={{ p: 3, height: 500 }}>
+      <Paper sx={{ p: 'var(--ob-space-300)', height: 500 }}>
         <Typography variant="body1" color="textSecondary" align="center">
           {loadError === 'Google Maps API key not configured'
             ? 'Map requires Google Maps API key. Set VITE_GOOGLE_MAPS_API_KEY in environment.'
@@ -282,7 +282,7 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
 
   if (!isLoaded) {
     return (
-      <Paper sx={{ p: 3, height: 500 }}>
+      <Paper sx={{ p: 'var(--ob-space-300)', height: 500 }}>
         <Typography variant="body1" color="textSecondary" align="center">
           Loading map...
         </Typography>
@@ -291,13 +291,17 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
   }
 
   return (
-    <Paper sx={{ p: 2, height: 500 }}>
+    <Paper sx={{ p: 'var(--ob-space-200)', height: 500 }}>
       <Typography variant="h6" gutterBottom>
         Transaction Heatmap
       </Typography>
       <Box
         ref={mapContainer}
-        sx={{ height: 450, borderRadius: 1, overflow: 'hidden' }}
+        sx={{
+          height: 450,
+          borderRadius: 'var(--ob-radius-sm)',
+          overflow: 'hidden',
+        }}
       />
     </Paper>
   )

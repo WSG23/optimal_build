@@ -179,7 +179,7 @@ describe('finance API mapping', () => {
     }
   })
 
-  it('falls back to offline feasibility data when the request hits a network error', async () => {
+  it('throws when the feasibility request hits a network error', async () => {
     const originalFetch = globalThis.fetch
     globalThis.fetch = (async () => {
       throw new TypeError('Load failed')
@@ -204,34 +204,23 @@ describe('finance API mapping', () => {
     }
 
     try {
-      const summary = await runFinanceFeasibility(request)
-      expect(summary.projectId).toBe('510')
-      expect(summary.scenarioName).toBe('Offline Mixed-Use Scenario')
-      expect(summary.currency).toBe('USD')
-      expect(summary.results.length).toBeGreaterThan(0)
-      expect(summary.capitalStack).not.toBeNull()
+      await expect(runFinanceFeasibility(request)).rejects.toThrow(
+        /Load failed/,
+      )
     } finally {
       globalThis.fetch = originalFetch
     }
   })
 
-  it('provides an offline scenario list when listing scenarios fails with a network error', async () => {
+  it('throws when listing scenarios fails with a network error', async () => {
     const originalFetch = globalThis.fetch
     globalThis.fetch = (async () => {
       throw new TypeError('Network request failed')
     }) as typeof globalThis.fetch
 
     try {
-      const scenarios = await listFinanceScenarios({ projectId: 777 })
-      expect(scenarios.length).toBe(3)
-      expect(scenarios.map((scenario) => scenario.scenarioId)).toEqual([
-        0, -1, -2,
-      ])
-      expect(scenarios.every((scenario) => scenario.projectId === 777)).toBe(
-        true,
-      )
-      expect(scenarios.every((scenario) => scenario.capitalStack != null)).toBe(
-        true,
+      await expect(listFinanceScenarios({ projectId: 777 })).rejects.toThrow(
+        /Network request failed/,
       )
     } finally {
       globalThis.fetch = originalFetch

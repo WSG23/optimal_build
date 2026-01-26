@@ -72,7 +72,7 @@ function AnomalyAlertItem({ alert }: { alert: AnomalyAlert }) {
         onClick={() => setExpanded(!expanded)}
       >
         <Box sx={{ display: 'flex', gap: 'var(--ob-space-100)' }}>
-          <WarningAmberIcon sx={{ color, fontSize: 18, mt: 0.25 }} />
+          <WarningAmberIcon sx={{ color, fontSize: 18, mt: '0' }} />
           <Box>
             <Typography
               variant="body2"
@@ -84,7 +84,7 @@ function AnomalyAlertItem({ alert }: { alert: AnomalyAlert }) {
               label={alert.severity}
               size="small"
               sx={{
-                mt: 0.5,
+                mt: 'var(--ob-space-50)',
                 height: 18,
                 fontSize: '0.65rem',
                 backgroundColor: `${color}20`,
@@ -207,7 +207,13 @@ function MarketInsightItem({
             >
               {item.prediction_type.replace(/_/g, ' ')}
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-50)',
+              }}
+            >
               {item.change_percentage !== null && (
                 <Typography
                   variant="caption"
@@ -230,7 +236,7 @@ function MarketInsightItem({
                 sx={{
                   height: 16,
                   fontSize: '0.6rem',
-                  ml: 0.5,
+                  ml: 'var(--ob-space-50)',
                 }}
               />
             </Box>
@@ -319,9 +325,21 @@ export function AIInsightsPanel({
     return (
       <Card variant="glass" sx={{ p: 'var(--ob-space-200)' }}>
         <Skeleton variant="text" width="60%" />
-        <Skeleton variant="rectangular" height={60} sx={{ mt: 1 }} />
-        <Skeleton variant="rectangular" height={60} sx={{ mt: 1 }} />
-        <Skeleton variant="text" width="40%" sx={{ mt: 2 }} />
+        <Skeleton
+          variant="rectangular"
+          height={60}
+          sx={{ mt: 'var(--ob-space-100)' }}
+        />
+        <Skeleton
+          variant="rectangular"
+          height={60}
+          sx={{ mt: 'var(--ob-space-100)' }}
+        />
+        <Skeleton
+          variant="text"
+          width="40%"
+          sx={{ mt: 'var(--ob-space-200)' }}
+        />
       </Card>
     )
   }
@@ -340,7 +358,9 @@ export function AIInsightsPanel({
             color: 'var(--ob-color-text-tertiary)',
           }}
         >
-          <LightbulbIcon sx={{ fontSize: 32, mb: 1, opacity: 0.5 }} />
+          <LightbulbIcon
+            sx={{ fontSize: 32, mb: 'var(--ob-space-100)', opacity: 0.5 }}
+          />
           <Typography variant="body2">No insights available</Typography>
         </Box>
       </Card>

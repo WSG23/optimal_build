@@ -289,11 +289,11 @@ async def test_check_property_compliance_endpoint(
     )
     # Also patch the import location used by the API module
     monkeypatch.setattr(
-        "app.api.v1.singapore_property_api.update_property_compliance",
+        "app.api.v1.singapore_property.update_property_compliance",
         _mock_compliance,
     )
     monkeypatch.setattr(
-        "app.api.v1.singapore_property_api.run_full_compliance_check",
+        "app.api.v1.singapore_property.run_full_compliance_check",
         _mock_compliance,
     )
 

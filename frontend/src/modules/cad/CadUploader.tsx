@@ -144,7 +144,7 @@ export function CadUploader({
             width: 'var(--ob-size-icon-lg)',
             height: 'var(--ob-size-icon-lg)',
             borderRadius: '50%',
-            backgroundColor: 'rgba(0, 243, 255, 0.1)',
+            backgroundColor: 'var(--ob-color-action-selected)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

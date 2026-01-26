@@ -112,7 +112,11 @@ export function PackGenerationPanel({
             }
             label={
               <div
-                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--ob-space-100)',
+                }}
               >
                 <CloudUpload
                   fontSize="small"

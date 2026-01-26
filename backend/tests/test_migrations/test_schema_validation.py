@@ -33,7 +33,7 @@ def test_projects_table_schema_matches_model(db_inspector):
 
     # Get columns from model
     try:
-        from backend.app.models.projects import Project
+        from backend.app.models.project import Project
 
         model_columns = {col.name for col in Project.__table__.columns}
     except ImportError:

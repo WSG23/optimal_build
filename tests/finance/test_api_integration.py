@@ -23,7 +23,7 @@ if _PYDANTIC_MAJOR < 2:
     pytest.skip("Finance API tests require Pydantic v2", allow_module_level=True)
 
 
-from backend.app.models.projects import Project, ProjectPhase, ProjectType
+from backend.app.models.project import Project, ProjectPhase, ProjectType
 from backend.app.models.rkp import RefCostIndex
 from backend.app.schemas.finance import DscrInputs
 from backend.app.services.finance import calculator

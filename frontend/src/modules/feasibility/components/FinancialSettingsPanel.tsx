@@ -202,7 +202,13 @@ export function FinancialSettingsPanel({
                 />
               }
               label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--ob-space-100)',
+                  }}
+                >
                   <CloudUpload
                     sx={{
                       fontSize: '1rem',

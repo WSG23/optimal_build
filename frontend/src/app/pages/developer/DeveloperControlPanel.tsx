@@ -32,16 +32,28 @@ export function DeveloperControlPanel() {
 
   return (
     <Container maxWidth="lg">
-      <Grid container spacing={4} sx={{ mt: 2 }}>
+      <Grid
+        container
+        spacing="var(--ob-space-400)"
+        sx={{ mt: 'var(--ob-space-200)' }}
+      >
         {/* Feature Flags Section */}
         <Grid item xs={12} md={6}>
           <Card variant="glass">
-            <Box sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <ScienceIcon sx={{ mr: 1, color: 'primary.main' }} />
+            <Box sx={{ p: 'var(--ob-space-300)' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  mb: 'var(--ob-space-200)',
+                }}
+              >
+                <ScienceIcon
+                  sx={{ mr: 'var(--ob-space-100)', color: 'primary.main' }}
+                />
                 <Typography variant="h6">Experimental Features</Typography>
               </Box>
-              <Divider sx={{ mb: 2 }} />
+              <Divider sx={{ mb: 'var(--ob-space-200)' }} />
               <FeatureTogglePanel
                 preferences={preferences}
                 entitlements={entitlements}
@@ -55,17 +67,25 @@ export function DeveloperControlPanel() {
         {/* Tools Section */}
         <Grid item xs={12} md={6}>
           <Card variant="glass">
-            <Box sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <ViewInArIcon sx={{ mr: 1, color: 'secondary.main' }} />
+            <Box sx={{ p: 'var(--ob-space-300)' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  mb: 'var(--ob-space-200)',
+                }}
+              >
+                <ViewInArIcon
+                  sx={{ mr: 'var(--ob-space-100)', color: 'secondary.main' }}
+                />
                 <Typography variant="h6">3D Preview Tool</Typography>
               </Box>
-              <Divider sx={{ mb: 2 }} />
+              <Divider sx={{ mb: 'var(--ob-space-200)' }} />
               <Typography variant="body2" color="text.secondary" paragraph>
                 Directly access the 3D 2B preview viewer for a specific property
                 ID.
               </Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
+              <Box sx={{ display: 'flex', gap: 'var(--ob-space-100)' }}>
                 <TextField
                   size="small"
                   placeholder="Property ID (e.g. PROP-123)"
@@ -84,14 +104,22 @@ export function DeveloperControlPanel() {
             </Box>
           </Card>
 
-          <Box sx={{ mt: 3 }}>
+          <Box sx={{ mt: 'var(--ob-space-300)' }}>
             <Card variant="glass">
-              <Box sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <BugReportIcon sx={{ mr: 1, color: 'error.main' }} />
+              <Box sx={{ p: 'var(--ob-space-300)' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    mb: 'var(--ob-space-200)',
+                  }}
+                >
+                  <BugReportIcon
+                    sx={{ mr: 'var(--ob-space-100)', color: 'error.main' }}
+                  />
                   <Typography variant="h6">Debug Info</Typography>
                 </Box>
-                <Divider sx={{ mb: 2 }} />
+                <Divider sx={{ mb: 'var(--ob-space-200)' }} />
                 <Typography variant="body2" fontFamily="monospace">
                   Build Version: v2.0.0-alpha
                   <br />

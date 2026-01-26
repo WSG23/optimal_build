@@ -72,7 +72,13 @@ function FactorScoreBar({ factor }: { factor: FactorScore }) {
           {factor.factor.replace(/_/g, ' ')}
         </Typography>
         <Tooltip title={factor.rationale} placement="top">
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-50)',
+            }}
+          >
             <Typography variant="caption" sx={{ color, fontWeight: 600 }}>
               {factor.score.toFixed(0)}
             </Typography>
@@ -141,14 +147,31 @@ export function DealScoreCard({
   if (loading) {
     return (
       <Card variant="glass" sx={{ p: 'var(--ob-space-200)' }}>
-        <Skeleton variant="circular" width={60} height={60} sx={{ mb: 2 }} />
+        <Skeleton
+          variant="circular"
+          width={60}
+          height={60}
+          sx={{ mb: 'var(--ob-space-200)' }}
+        />
         <Skeleton variant="text" width="60%" />
         <Skeleton variant="text" width="80%" />
         {!compact && (
           <>
-            <Skeleton variant="rectangular" height={8} sx={{ mt: 2 }} />
-            <Skeleton variant="rectangular" height={8} sx={{ mt: 1 }} />
-            <Skeleton variant="rectangular" height={8} sx={{ mt: 1 }} />
+            <Skeleton
+              variant="rectangular"
+              height={8}
+              sx={{ mt: 'var(--ob-space-200)' }}
+            />
+            <Skeleton
+              variant="rectangular"
+              height={8}
+              sx={{ mt: 'var(--ob-space-100)' }}
+            />
+            <Skeleton
+              variant="rectangular"
+              height={8}
+              sx={{ mt: 'var(--ob-space-100)' }}
+            />
           </>
         )}
       </Card>
@@ -192,7 +215,13 @@ export function DealScoreCard({
           >
             AI Deal Score
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: 'var(--ob-space-100)',
+            }}
+          >
             <Typography
               variant="h3"
               sx={{
@@ -243,7 +272,13 @@ export function DealScoreCard({
               {score.grade}
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              mt: 'var(--ob-space-50)',
+            }}
+          >
             {isPositive ? (
               <TrendingUpIcon
                 sx={{ fontSize: 14, color: 'var(--ob-color-semantic-success)' }}

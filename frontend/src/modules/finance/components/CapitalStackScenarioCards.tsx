@@ -77,9 +77,11 @@ export function CapitalStackScenarioCards({
               p: 'var(--ob-space-100)',
               borderRadius: 'var(--ob-radius-sm)',
               border: 1,
-              borderColor: isActive ? 'rgba(0, 243, 255, 0.3)' : 'divider',
+              borderColor: isActive
+                ? 'var(--ob-color-neon-cyan-muted)'
+                : 'divider',
               bgcolor: isActive
-                ? 'rgba(0, 243, 255, 0.05)'
+                ? 'var(--ob-color-table-row-hover)'
                 : 'background.paper',
               boxShadow: isActive ? 'var(--ob-glow-neon-cyan)' : 'none',
               cursor: 'pointer',

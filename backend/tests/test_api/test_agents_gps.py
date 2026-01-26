@@ -56,23 +56,11 @@ async def test_log_property_by_gps_success(client, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_log_property_by_gps_fallback(client, monkeypatch):
+async def test_log_property_by_gps_returns_error_on_failure(client, monkeypatch):
     monkeypatch.setattr(
         agents_api.gps_logger,
         "log_property_from_gps",
         AsyncMock(side_effect=RuntimeError("gps offline")),
-    )
-    ensure_seeded = AsyncMock(return_value=None)
-    auto_populate = AsyncMock(return_value=None)
-    monkeypatch.setattr(
-        agents_api.DeveloperChecklistService,
-        "ensure_templates_seeded",
-        ensure_seeded,
-    )
-    monkeypatch.setattr(
-        agents_api.DeveloperChecklistService,
-        "auto_populate_checklist",
-        auto_populate,
     )
 
     response = await client.post(
@@ -80,8 +68,4 @@ async def test_log_property_by_gps_fallback(client, monkeypatch):
         json={"latitude": 1.31, "longitude": 103.82},
     )
 
-    assert response.status_code == 200
-    body = response.json()
-    assert body["ura_zoning"]["zone_code"] == "MU"
-    ensure_seeded.assert_awaited()
-    auto_populate.assert_awaited()
+    assert response.status_code == 503

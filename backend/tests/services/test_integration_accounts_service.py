@@ -9,7 +9,7 @@ import pytest
 
 from app.core.config import settings
 from app.models.listing_integration import ListingAccountStatus, ListingProvider
-from app.models.users import User
+from app.models.user import User
 from app.services.integrations.accounts import ListingIntegrationAccountService
 
 

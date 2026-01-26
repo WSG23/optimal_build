@@ -378,7 +378,7 @@ export const ProjectProgressDashboard: React.FC<
               value={overallProgress}
               sx={{
                 mt: 'var(--ob-space-100)',
-                bgcolor: 'rgba(255,255,255,0.3)',
+                bgcolor: 'var(--ob-color-surface-overlay-strong)',
                 '& .MuiLinearProgress-bar': { bgcolor: 'white' },
               }}
             />

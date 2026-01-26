@@ -6,7 +6,7 @@ from enum import Enum
 from backend._compat.datetime import utcnow
 
 from app.models.base import UUID, BaseModel
-from app.models.users import UserRole
+from app.models.user import UserRole
 from sqlalchemy import Boolean, Column, DateTime, Enum as SQLEnum, ForeignKey, String
 from sqlalchemy.orm import relationship
 

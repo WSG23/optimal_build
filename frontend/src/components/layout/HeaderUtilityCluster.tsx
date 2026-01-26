@@ -164,7 +164,10 @@ export function HeaderUtilityCluster() {
             key={lang.code}
             onClick={() => handleLanguageChange(lang.code)}
             selected={currentLanguage === lang.code}
-            sx={{ gap: 2, fontSize: 'var(--ob-font-size-sm)' }}
+            sx={{
+              gap: 'var(--ob-space-200)',
+              fontSize: 'var(--ob-font-size-sm)',
+            }}
           >
             <Box component="span" sx={{ fontSize: 'var(--ob-font-size-lg)' }}>
               {lang.flag}

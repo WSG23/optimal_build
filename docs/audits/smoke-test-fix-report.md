@@ -61,7 +61,7 @@ Successfully fixed the smoke test schema mismatch error by creating migration [2
 - Key Dates: Land tender, award, groundbreaking, TOP, CSC dates
 - Metadata: `created_at` (timestamptz), `updated_at` (timestamptz), `created_by`
 
-### 2. Fixed Model: [backend/app/models/projects.py](backend/app/models/projects.py#L181-L182)
+### 2. Fixed Model: [backend/app/models/project.py](backend/app/models/project.py#L181-L182)
 
 **Before:**
 ```python
@@ -321,7 +321,7 @@ The **projects table schema mismatch is fully resolved**. The migration successf
 
 **Files to Review:**
 - [backend/migrations/versions/20251026_000019_add_projects_table_columns.py](backend/migrations/versions/20251026_000019_add_projects_table_columns.py) - The fix
-- [backend/app/models/projects.py](backend/app/models/projects.py) - Model updates
+- [backend/app/models/project.py](backend/app/models/project.py) - Model updates
 - [backend/scripts/run_smokes.py](backend/scripts/run_smokes.py) - Seeder cleanup
 
 **Migration Status:** ✅ Ready for commit and deployment

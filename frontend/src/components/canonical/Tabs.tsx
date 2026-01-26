@@ -136,14 +136,14 @@ export function Tabs({
 
               // Underline variant
               ...(variant === 'underline' && {
-                borderRadius: 0,
+                borderRadius: 'var(--ob-radius-none)',
                 background: 'transparent',
                 marginBottom: '-1px',
 
                 '&::after': {
                   content: '""',
                   position: 'absolute',
-                  bottom: 0,
+                  bottom: '0',
                   left: 0,
                   right: 0,
                   height: '2px',

@@ -67,17 +67,6 @@ export type SubmissionType =
   | 'HERITAGE_APPROVAL'
   | 'INDUSTRIAL_PERMIT'
   | 'CHANGE_OF_USE'
-  // Legacy mock values (for backwards compatibility)
-  | 'planning_permission'
-  | 'development_control'
-  | 'building_plan'
-  | 'structural_plan'
-  | 'fire_safety'
-  | 'environmental'
-  | 'heritage_conservation'
-  | 'change_of_use'
-  | 'csc_application'
-  | 'top_application'
 
 // Compliance path for regulatory timeline
 export interface AssetCompliancePath {

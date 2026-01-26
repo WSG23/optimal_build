@@ -71,7 +71,7 @@ export function DrawdownDetailsPanel({
         sx={{
           px: 'var(--ob-space-150)',
           py: 'var(--ob-space-125)',
-          borderBottom: 1,
+          borderBottom: 'var(--ob-space-100)',
           borderColor: 'divider',
           bgcolor: alpha(theme.palette.background.default, 0.5),
           display: 'flex',
@@ -113,7 +113,7 @@ export function DrawdownDetailsPanel({
               textTransform: 'uppercase',
               fontSize: 'var(--ob-font-size-xs)',
               bgcolor: alpha(theme.palette.background.default, 0.5),
-              borderBottom: 1,
+              borderBottom: 'var(--ob-space-100)',
               borderColor: 'divider',
             },
             '& th:first-of-type, & td:first-of-type': {
@@ -126,7 +126,7 @@ export function DrawdownDetailsPanel({
               },
             },
             '& tbody tr:not(:last-child)': {
-              borderBottom: 1,
+              borderBottom: 'var(--ob-space-100)',
               borderColor: alpha(theme.palette.divider, 0.5),
             },
           }}
@@ -221,7 +221,7 @@ export function DrawdownDetailsPanel({
             <Box
               component="tr"
               sx={{
-                borderTop: 1,
+                borderTop: 'var(--ob-space-100)',
                 borderColor: 'divider',
                 bgcolor: alpha(theme.palette.background.default, 0.5),
               }}
@@ -283,7 +283,7 @@ export function DrawdownDetailsPanel({
       <Box
         sx={{
           p: 'var(--ob-space-100)',
-          borderTop: 1,
+          borderTop: 'var(--ob-space-100)',
           borderColor: 'divider',
           bgcolor: alpha(theme.palette.background.default, 0.5),
           display: 'flex',
@@ -299,7 +299,7 @@ export function DrawdownDetailsPanel({
             fontWeight: 500,
             textTransform: 'none',
             '&:hover': {
-              bgcolor: 'rgba(0, 243, 255, 0.08)',
+              bgcolor: 'var(--ob-color-table-row-selected)',
               textShadow: 'var(--ob-glow-neon-text)',
             },
           }}

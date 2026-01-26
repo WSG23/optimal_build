@@ -121,8 +121,12 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
   const formattedPropertyType = marketReport.property_type.replace(/_/g, ' ')
 
   return (
-    <Box sx={{ mb: 3 }}>
-      <Alert severity={sentiment.severity} icon={sentiment.icon} sx={{ mb: 2 }}>
+    <Box sx={{ mb: 'var(--ob-space-300)' }}>
+      <Alert
+        severity={sentiment.severity}
+        icon={sentiment.icon}
+        sx={{ mb: 'var(--ob-space-200)' }}
+      >
         <Typography variant="subtitle1" fontWeight="medium">
           {formattedPropertyType.toUpperCase()} •{' '}
           {marketReport.location.toUpperCase()} •{' '}
@@ -134,9 +138,13 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
         </Typography>
       </Alert>
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid
+        container
+        spacing="var(--ob-space-200)"
+        sx={{ mb: 'var(--ob-space-300)' }}
+      >
         <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 2 }}>
+          <Paper sx={{ p: 'var(--ob-space-200)' }}>
             <Typography variant="body2" color="textSecondary" gutterBottom>
               Transactions (period)
             </Typography>
@@ -149,7 +157,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
           </Paper>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 2 }}>
+          <Paper sx={{ p: 'var(--ob-space-200)' }}>
             <Typography variant="body2" color="textSecondary" gutterBottom>
               Average PSF
             </Typography>
@@ -162,7 +170,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
           </Paper>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 2 }}>
+          <Paper sx={{ p: 'var(--ob-space-200)' }}>
             <Typography variant="body2" color="textSecondary" gutterBottom>
               Cap Rate (median)
             </Typography>
@@ -187,7 +195,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
           </Paper>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 2 }}>
+          <Paper sx={{ p: 'var(--ob-space-200)' }}>
             <Typography variant="body2" color="textSecondary" gutterBottom>
               Supply Pressure
             </Typography>
@@ -210,7 +218,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
               variant="caption"
               color="textSecondary"
               display="block"
-              sx={{ mt: 1 }}
+              sx={{ mt: 'var(--ob-space-100)' }}
             >
               Upcoming GFA {formatNumber(supplyData?.total_upcoming_gfa)} sqm
             </Typography>
@@ -218,9 +226,13 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
         </Grid>
       </Grid>
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid
+        container
+        spacing="var(--ob-space-200)"
+        sx={{ mb: 'var(--ob-space-300)' }}
+      >
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, height: '100%' }}>
+          <Paper sx={{ p: 'var(--ob-space-200)', height: '100%' }}>
             <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
               Absorption Snapshot
             </Typography>
@@ -240,7 +252,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
               variant="caption"
               color="textSecondary"
               display="block"
-              sx={{ mt: 1 }}
+              sx={{ mt: 'var(--ob-space-100)' }}
             >
               Velocity trend:{' '}
               {absorptionData?.velocity_trend?.replace('_', ' ') ?? 'N/A'}
@@ -248,7 +260,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, height: '100%' }}>
+          <Paper sx={{ p: 'var(--ob-space-200)', height: '100%' }}>
             <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
               Yield Outlook
             </Typography>
@@ -267,7 +279,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
               variant="caption"
               color="textSecondary"
               display="block"
-              sx={{ mt: 1 }}
+              sx={{ mt: 'var(--ob-space-100)' }}
             >
               {yieldData?.market_position?.replace('_', ' ') ??
                 'No yield position available'}
@@ -275,7 +287,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, height: '100%' }}>
+          <Paper sx={{ p: 'var(--ob-space-200)', height: '100%' }}>
             <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
               Supply Impact
             </Typography>
@@ -288,7 +300,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
       </Grid>
 
       {marketReport.recommendations.length > 0 && (
-        <Paper sx={{ p: 2 }}>
+        <Paper sx={{ p: 'var(--ob-space-200)' }}>
           <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
             Recommendations
           </Typography>

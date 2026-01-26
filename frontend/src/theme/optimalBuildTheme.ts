@@ -55,7 +55,7 @@ function getModeColors(mode: ThemeMode) {
   }
 }
 
-function createYosaiTheme(mode: ThemeMode): Theme {
+function createOptimalBuildTheme(mode: ThemeMode): Theme {
   const modeColors = getModeColors(mode)
 
   const themeOptions: ThemeOptions = {
@@ -258,13 +258,13 @@ function createYosaiTheme(mode: ThemeMode): Theme {
 }
 
 // Pre-create themes for performance
-export const yosaiDarkTheme = createYosaiTheme('dark')
-export const yosaiLightTheme = createYosaiTheme('light')
+export const optimalBuildDarkTheme = createOptimalBuildTheme('dark')
+export const optimalBuildLightTheme = createOptimalBuildTheme('light')
 
 // Default export for backward compatibility
-export const yosaiTheme = yosaiDarkTheme
+export const optimalBuildTheme = optimalBuildDarkTheme
 
 // Get theme by mode
-export function getYosaiTheme(mode: ThemeMode): Theme {
-  return mode === 'dark' ? yosaiDarkTheme : yosaiLightTheme
+export function getOptimalBuildTheme(mode: ThemeMode): Theme {
+  return mode === 'dark' ? optimalBuildDarkTheme : optimalBuildLightTheme
 }

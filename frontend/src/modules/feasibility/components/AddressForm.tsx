@@ -31,10 +31,10 @@ export function AddressForm({
 }: AddressFormProps) {
   // Shared Input Styles for Dark/Glass Theme
   const inputStyle = {
-    background: 'rgba(255, 255, 255, 0.05)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    background: 'var(--ob-color-surface-overlay-light)',
+    border: '1px solid var(--ob-color-surface-overlay)',
     color: 'white',
-    borderRadius: '6px',
+    borderRadius: 'var(--ob-radius-md)',
     padding: '10px 12px',
     fontSize: '0.9rem',
     width: '100%',
@@ -43,10 +43,10 @@ export function AddressForm({
   }
 
   const labelStyle = {
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: 'var(--ob-color-text-secondary)',
     fontSize: '0.8rem',
     fontWeight: 500,
-    marginBottom: '6px',
+    marginBottom: 'var(--ob-space-100)',
     display: 'block',
   }
 
@@ -55,7 +55,11 @@ export function AddressForm({
       className="feasibility-form"
       onSubmit={onSubmit}
       noValidate
-      style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--ob-space-200)',
+      }}
     >
       {!hideAddress && (
         <div className="feasibility-form__field">
@@ -73,7 +77,10 @@ export function AddressForm({
             style={inputStyle}
           />
           {addressError && (
-            <p className="feasibility-form__error" style={{ color: '#f87171' }}>
+            <p
+              className="feasibility-form__error"
+              style={{ color: 'var(--ob-color-error-light)' }}
+            >
               {addressError}
             </p>
           )}

@@ -1,14 +1,13 @@
-"""LoopNet integration client (mock for US commercial real estate)."""
+"""LoopNet integration client (requires provider implementation)."""
 
 from __future__ import annotations
 
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
-from backend._compat.datetime import utcnow
 
 logger = structlog.get_logger()
 
@@ -51,11 +50,7 @@ class LoopNetListing:
 
 
 class LoopNetClient:
-    """Mock client for LoopNet/CoStar API interactions.
-
-    LoopNet (owned by CoStar) requires commercial API partnership.
-    This stub provides the expected interface for future implementation.
-    """
+    """Client for LoopNet/CoStar API interactions (integration required)."""
 
     AUTH_BASE_URL = "https://api.loopnet.com/oauth2"
     LISTING_BASE_URL = "https://api.loopnet.com/v2/listings"
@@ -71,27 +66,23 @@ class LoopNetClient:
         self.client_id = client_id
         self.client_secret = client_secret
 
+    def _raise_unavailable(self) -> None:
+        raise RuntimeError(
+            "LoopNet integration is not configured. Provide credentials and "
+            "implement the API client."
+        )
+
     async def exchange_authorization_code(
         self, code: str, redirect_uri: str
     ) -> LoopNetOAuthBundle:
         """Exchange an authorization code for access/refresh tokens."""
         logger.info("loopnet.exchange_code", redirect_uri=redirect_uri)
-        now = utcnow()
-        return LoopNetOAuthBundle(
-            access_token=f"loopnet-access-{code}",
-            refresh_token=f"loopnet-refresh-{code}",
-            expires_at=now + timedelta(hours=1),
-        )
+        self._raise_unavailable()
 
     async def refresh_tokens(self, refresh_token: str) -> LoopNetOAuthBundle:
         """Refresh the OAuth tokens."""
         logger.info("loopnet.refresh_token")
-        now = utcnow()
-        return LoopNetOAuthBundle(
-            access_token=f"loopnet-access-{refresh_token[:8]}",
-            refresh_token=refresh_token,
-            expires_at=now + timedelta(hours=1),
-        )
+        self._raise_unavailable()
 
     async def search_listings(
         self,
@@ -105,7 +96,7 @@ class LoopNetClient:
         page: int = 1,
         page_size: int = 20,
     ) -> List[LoopNetListing]:
-        """Search for commercial listings on LoopNet (mock data)."""
+        """Search for commercial listings on LoopNet."""
         logger.info(
             "loopnet.search_listings",
             city=city,
@@ -113,87 +104,7 @@ class LoopNetClient:
             property_type=property_type,
             transaction_type=transaction_type,
         )
-
-        # Mock listings for Seattle commercial
-        if state.upper() == "WA" and city.lower() == "seattle":
-            return [
-                LoopNetListing(
-                    listing_id="LN-SEA-001",
-                    address="1201 Third Ave",
-                    city="Seattle",
-                    state="WA",
-                    zipcode="98101",
-                    property_type="Office",
-                    transaction_type="ForSale",
-                    price=45000000,
-                    price_per_sqft=485,
-                    building_sqft=92780,
-                    year_built=1988,
-                    cap_rate=0.055,
-                    noi=2475000,
-                    occupancy_pct=0.92,
-                    zoning="DOC2",
-                    latitude=47.6062,
-                    longitude=-122.3321,
-                    days_on_market=45,
-                ),
-                LoopNetListing(
-                    listing_id="LN-SEA-002",
-                    address="400 Pine St",
-                    city="Seattle",
-                    state="WA",
-                    zipcode="98101",
-                    property_type="Retail",
-                    transaction_type="ForLease",
-                    lease_rate=65.0,
-                    lease_type="NNN",
-                    building_sqft=12500,
-                    year_built=2005,
-                    occupancy_pct=0.85,
-                    zoning="DMC",
-                    latitude=47.6110,
-                    longitude=-122.3375,
-                    days_on_market=30,
-                ),
-                LoopNetListing(
-                    listing_id="LN-SEA-003",
-                    address="3500 Airport Way S",
-                    city="Seattle",
-                    state="WA",
-                    zipcode="98134",
-                    property_type="Industrial",
-                    transaction_type="ForSale",
-                    price=8500000,
-                    price_per_sqft=175,
-                    building_sqft=48500,
-                    land_acres=2.1,
-                    year_built=1975,
-                    cap_rate=0.065,
-                    noi=552500,
-                    occupancy_pct=1.0,
-                    zoning="IG2",
-                    latitude=47.5745,
-                    longitude=-122.3215,
-                    days_on_market=60,
-                ),
-            ]
-
-        # Generic mock response
-        return [
-            LoopNetListing(
-                listing_id=f"LN-{city[:3].upper()}-001",
-                address="100 Commercial Blvd",
-                city=city,
-                state=state,
-                zipcode="00000",
-                property_type=property_type,
-                transaction_type=transaction_type,
-                price=5000000 if transaction_type == "ForSale" else None,
-                lease_rate=35.0 if transaction_type == "ForLease" else None,
-                building_sqft=25000,
-                days_on_market=21,
-            )
-        ]
+        self._raise_unavailable()
 
     async def get_sale_comps(
         self,
@@ -203,33 +114,14 @@ class LoopNetClient:
         property_type: str = "Office",
         months_back: int = 12,
     ) -> List[Dict[str, Any]]:
-        """Get comparable sales for a location (mock)."""
+        """Get comparable sales for a location."""
         logger.info(
             "loopnet.get_sale_comps",
             lat=latitude,
             lon=longitude,
             property_type=property_type,
         )
-        return [
-            {
-                "address": "Comparable 1",
-                "sale_date": "2024-06-15",
-                "sale_price": 12500000,
-                "price_per_sqft": 425,
-                "building_sqft": 29400,
-                "cap_rate": 0.058,
-                "distance_miles": 0.3,
-            },
-            {
-                "address": "Comparable 2",
-                "sale_date": "2024-03-22",
-                "sale_price": 8200000,
-                "price_per_sqft": 390,
-                "building_sqft": 21025,
-                "cap_rate": 0.062,
-                "distance_miles": 0.7,
-            },
-        ]
+        self._raise_unavailable()
 
     async def publish_listing(
         self, listing_payload: Dict[str, Any]
@@ -238,34 +130,21 @@ class LoopNetClient:
         logger.info(
             "loopnet.publish_listing", payload_keys=list(listing_payload.keys())
         )
-        listing_id = listing_payload.get("external_id", f"LN-{utcnow().timestamp()}")
-        return listing_id, {"echo": listing_payload, "status": "published"}
+        self._raise_unavailable()
 
     async def remove_listing(self, listing_id: str) -> bool:
         """Remove a listing from LoopNet."""
         logger.info("loopnet.remove_listing", listing_id=listing_id)
-        return True
+        self._raise_unavailable()
 
     async def get_market_stats(
         self, city: str, state: str, property_type: str = "Office"
     ) -> Dict[str, Any]:
-        """Get commercial market statistics for an area (mock)."""
+        """Get commercial market statistics for an area."""
         logger.info(
             "loopnet.get_market_stats",
             city=city,
             state=state,
             property_type=property_type,
         )
-        return {
-            "city": city,
-            "state": state,
-            "property_type": property_type,
-            "vacancy_rate": 0.085,
-            "asking_rent_psf": 42.50,
-            "net_absorption_sqft": 125000,
-            "inventory_sqft": 45000000,
-            "under_construction_sqft": 1200000,
-            "avg_cap_rate": 0.058,
-            "median_sale_price_psf": 415,
-            "year_over_year_rent_change": 0.032,
-        }
+        self._raise_unavailable()

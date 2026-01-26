@@ -81,14 +81,20 @@ export function InspectionHistoryContent({
   formatRecordedTimestamp,
 }: InspectionHistoryContentProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--ob-space-200)',
+      }}
+    >
       {/* Header with toggle */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          gap: '1rem',
+          gap: 'var(--ob-space-200)',
           flexWrap: 'wrap',
         }}
       >
@@ -104,9 +110,9 @@ export function InspectionHistoryContent({
           </h3>
           <p
             style={{
-              margin: '0.3rem 0 0',
+              margin: 'var(--ob-space-50) 0 0',
               fontSize: '0.875rem',
-              color: '#6e6e73',
+              color: 'var(--ob-color-text-secondary)',
               maxWidth: '480px',
             }}
           >
@@ -114,16 +120,25 @@ export function InspectionHistoryContent({
             recent assessments side-by-side.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 'var(--ob-space-100)',
+            flexWrap: 'wrap',
+          }}
+        >
           <button
             type="button"
             onClick={() => setHistoryViewMode('timeline')}
             style={{
-              border: '1px solid #1d1d1f',
+              border: '1px solid var(--ob-color-bg-inverse)',
               background: historyViewMode === 'timeline' ? '#1d1d1f' : 'white',
-              color: historyViewMode === 'timeline' ? 'white' : '#1d1d1f',
-              borderRadius: '9999px',
-              padding: '0.4rem 0.9rem',
+              color:
+                historyViewMode === 'timeline'
+                  ? 'white'
+                  : 'var(--ob-color-bg-inverse)',
+              borderRadius: 'var(--ob-radius-lg)',
+              padding: 'var(--ob-space-100) 0.9rem',
               fontSize: '0.8125rem',
               fontWeight: 600,
               cursor: 'pointer',
@@ -135,11 +150,14 @@ export function InspectionHistoryContent({
             type="button"
             onClick={() => setHistoryViewMode('compare')}
             style={{
-              border: '1px solid #1d1d1f',
+              border: '1px solid var(--ob-color-bg-inverse)',
               background: historyViewMode === 'compare' ? '#1d1d1f' : 'white',
-              color: historyViewMode === 'compare' ? 'white' : '#1d1d1f',
-              borderRadius: '9999px',
-              padding: '0.4rem 0.9rem',
+              color:
+                historyViewMode === 'compare'
+                  ? 'white'
+                  : 'var(--ob-color-bg-inverse)',
+              borderRadius: 'var(--ob-radius-lg)',
+              padding: 'var(--ob-space-100) 0.9rem',
               fontSize: '0.8125rem',
               fontWeight: 600,
               cursor: 'pointer',
@@ -164,11 +182,11 @@ export function InspectionHistoryContent({
       ) : isLoadingAssessmentHistory ? (
         <div
           style={{
-            padding: '1.5rem',
+            padding: 'var(--ob-space-300)',
             textAlign: 'center',
-            color: '#6e6e73',
-            background: '#f5f5f7',
-            borderRadius: '4px',
+            color: 'var(--ob-color-text-secondary)',
+            background: 'var(--ob-color-bg-muted)',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           <p style={{ margin: 0, fontSize: '0.9rem' }}>
@@ -178,17 +196,17 @@ export function InspectionHistoryContent({
       ) : assessmentHistory.length === 0 ? (
         <div
           style={{
-            padding: '1.5rem',
+            padding: 'var(--ob-space-300)',
             textAlign: 'center',
-            color: '#6e6e73',
-            background: '#f5f5f7',
-            borderRadius: '4px',
+            color: 'var(--ob-color-text-secondary)',
+            background: 'var(--ob-color-bg-muted)',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           <p style={{ margin: 0, fontSize: '0.9rem' }}>
             No developer inspections recorded yet.
           </p>
-          <p style={{ margin: '0.35rem 0 0', fontSize: '0.8rem' }}>
+          <p style={{ margin: 'var(--ob-space-50) 0 0', fontSize: '0.8rem' }}>
             Save an inspection above to start the audit trail.
           </p>
         </div>
@@ -205,11 +223,11 @@ export function InspectionHistoryContent({
         !previousAssessmentEntry ? (
           <div
             style={{
-              padding: '1.5rem',
+              padding: 'var(--ob-space-300)',
               textAlign: 'center',
-              color: '#6e6e73',
-              background: '#f5f5f7',
-              borderRadius: '4px',
+              color: 'var(--ob-color-text-secondary)',
+              background: 'var(--ob-color-bg-muted)',
+              borderRadius: 'var(--ob-radius-sm)',
             }}
           >
             <p style={{ margin: 0, fontSize: '0.9rem' }}>

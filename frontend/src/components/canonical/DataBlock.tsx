@@ -62,7 +62,7 @@ export function DataBlock({
             px: 'var(--ob-space-100)',
             py: 'var(--ob-space-075)',
             borderBottom: 'var(--ob-divider-strong)',
-            background: 'rgba(0, 0, 0, 0.1)',
+            background: 'var(--ob-color-action-active-light)',
           }}
         >
           {header}
@@ -86,7 +86,7 @@ export function DataBlock({
           '& thead': {
             background: 'var(--ob-color-surface-strong)',
             position: 'sticky',
-            top: 0,
+            top: '0',
             zIndex: 1,
           },
 
@@ -145,7 +145,7 @@ export function DataBlock({
             px: 'var(--ob-space-100)',
             py: 'var(--ob-space-075)',
             borderTop: 'var(--ob-divider-strong)',
-            background: 'rgba(0, 0, 0, 0.05)',
+            background: 'var(--ob-color-action-hover-light)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',

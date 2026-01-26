@@ -68,8 +68,8 @@ ui-admin/src/
 ✅ Working routers:
 ├── users_secure.py       # Authentication & authorization
 ├── users_db.py           # User CRUD operations
-├── projects_api.py       # Project management
-├── singapore_property_api.py  # Singapore property data
+├── projects.py           # Project management
+├── singapore_property.py  # Singapore property data
 ├── finance.py            # Financial calculations
 ├── entitlements.py       # Entitlements/regulations
 ├── overlay.py            # Overlay processing
@@ -117,13 +117,13 @@ backend/app/core/
 
 **Models** (`backend/app/models/`)
 ```
-✅ Implemented (plural naming convention):
-├── users.py              # User authentication & management
-├── projects.py           # Development projects
-├── property.py           # Property data
+✅ Implemented (consistent naming; core entities singular):
+├── user.py               # User authentication & management
+├── project.py            # Development projects
+├── property.py           # Property data + transactional market tables
 ├── singapore_property.py # Singapore-specific (includes ComplianceStatus enum)
-├── market.py             # Market data (YieldBenchmark, AbsorptionTracking, MarketCycle, etc.)
-├── ai_agents.py          # AI agent configurations
+├── market.py             # Market benchmarks/alerts (YieldBenchmark, AbsorptionTracking, MarketCycle, etc.)
+├── ai_agent.py           # AI agent configurations
 ├── audit.py              # Audit trails
 ├── entitlements.py       # Entitlements
 ├── finance.py            # Financial models
@@ -133,25 +133,27 @@ backend/app/core/
 ├── rulesets.py           # Rulesets
 └── types.py              # Shared types
 
-📝 Note: No market_transactions table (has YieldBenchmark, etc. instead)
+📝 Note: Transactional market tables live in `property.py` (`market_transactions`, `rental_listings`, `development_pipeline`).
+📝 Note: Benchmark/alert tables live in `market.py` (`yield_benchmarks`, `absorption_tracking`, `market_cycles`, `market_indices`, `competitive_sets`, `market_alerts`).
 📝 Note: No standalone compliance.py (embedded in singapore_property.py)
 ```
 
 **Schemas** (`backend/app/schemas/`)
 ```
-✅ 13 schema files following domain structure:
+✅ Schema files follow domain structure (representative list):
 ├── user.py
-├── project.py
 ├── property.py
 ├── market.py
 ├── finance.py
 ├── entitlements.py
-├── audit.py
+├── compliance.py
+├── regulatory.py
 ├── overlay.py
 ├── rulesets.py
-└── ... (9 more)
+├── performance.py
+└── workflow.py
 
-📝 Note: Naming follows models (some plural, some singular - inconsistent)
+📝 Note: No standalone project schema; project payloads are embedded in feasibility/finance endpoints.
 ```
 
 **Services** (`backend/app/services/`)
@@ -181,7 +183,7 @@ backend/app/core/
     ├── calculator.py
     └── re_metrics.py
 
-✅ Agents subdirectory (11 agents - mostly undocumented):
+✅ Agents subdirectory (11 agents - cataloged in docs):
 └── agents/
     ├── market_intelligence_analytics.py  # Market analysis
     ├── development_potential_scanner.py  # Development potential
@@ -195,6 +197,8 @@ backend/app/core/
     ├── universal_site_pack.py            # Site packs
     └── ura_integration.py                # URA integration
 ```
+
+See `docs/agents/agent_catalog.md` for the full agent catalog.
 
 **Middleware** (`backend/app/middleware/`)
 ```
@@ -272,16 +276,17 @@ backend/app/core/
 **Key Tables** (actual):
 - `users` - User authentication & management
 - `projects` - Development projects
-- `singapore_property` - Singapore-specific regulatory data
+- `singapore_properties` - Singapore-specific regulatory data
+- `market_transactions` - Transactional market data (sales/leases)
 - `yield_benchmarks` - Financial yield data
 - `absorption_tracking` - Market absorption
-- `market_cycle` - Market cycle data
-- `market_index` - Market indices
-- `competitive_set` - Competition data
-- `market_alert` - Market alerts
+- `market_cycles` - Market cycle data
+- `market_indices` - Market indices
+- `competitive_sets` - Competition data
+- `market_alerts` - Market alerts
 - `ai_agents` - AI agent configurations
 
-📝 Note: No `market_transactions` table (different schema than documented)
+📝 Note: Transactional data lives in `market_transactions` (property domain); benchmarks/alerts live in the market tables above.
 
 #### **Redis** (Port: 6379) — ✅ Working
 - **Version**: Redis 7-alpine
@@ -445,25 +450,25 @@ Managed services:
 
 ### High
 4. ~~**Rate Limiting Missing**: Documented but not implemented in middleware~~ **✅ RESOLVED** – SlowAPI now enforces limits with Redis-backed storage.
-5. **Inconsistent Naming**: Mix of plural/singular models, `_api` suffixes, no clear convention
+5. ~~**Inconsistent Naming**: Mix of plural/singular models, `_api` suffixes, no clear convention~~ **✅ RESOLVED (2026-01-24)** – Standardized model module names (user/project/ai_agent) and dropped `_api` suffixes on routers (projects, singapore_property).
 6. ~~**Auth Split**: Authentication logic fragmented across 4 files (users_secure, users_db, jwt_auth, auth/policy)~~ **✅ RESOLVED** – Consolidated into `app/core/auth/service.py` with thin wrappers for compatibility.
 
 ### Medium
 7. ~~**MinIO Bucket**: `documents` bucket documented but not in docker-compose.yml~~ **✅ RESOLVED** – `DOCUMENTS_BUCKET_NAME` default added; MinIOService bootstraps documents/imports/exports buckets.
-8. **Market Schema Mismatch**: Docs mention `market_transactions` table but actual schema has YieldBenchmark, AbsorptionTracking, etc.
+8. ~~**Market Schema Mismatch**: Docs mention `market_transactions` table but actual schema has YieldBenchmark, AbsorptionTracking, etc.~~ **✅ RESOLVED (2026-01-24)** – Docs now reflect both transactional (`market_transactions`) and benchmark tables (`yield_benchmarks`, `absorption_tracking`, `market_cycles`, `market_indices`, `competitive_sets`, `market_alerts`).
 9. **Compliance Model**: No standalone compliance.py model (embedded as enum in singapore_property.py)
 
 ### Low
 10. ~~**Directory Naming**: `ui-admin/` vs documented `admin/`~~ **✅ Documented** – Frontend references now point to the canonical `ui-admin/` directory.
 11. ~~**Script Location**: `ingest.py` in top-level `/scripts/` not `backend/scripts/`~~ **✅ Documented** – Runbook now references `/scripts/ingest.py` as the supported entry point.
-12. **Undocumented Features**: 10 of 11 AI agents not mentioned in docs
+12. ~~**Undocumented Features**: 10 of 11 AI agents not mentioned in docs~~ **✅ RESOLVED (2026-01-24)** – Added agent catalog documentation and linked from high-level docs.
 
 ---
 
 ## 📈 Architecture Strengths
 
 ### What Works Well
-1. **Domain-Driven Evolution**: API split (users_secure/users_db, singapore_property_api) reflects real security and domain boundaries
+1. **Domain-Driven Evolution**: API split (users_secure/users_db, singapore_property) reflects real security and domain boundaries
 2. **Rich Agent Ecosystem**: 11 specialized AI agents for market analysis, documentation, 3D scenarios
 3. **Comprehensive Services**: 24 service modules covering overlay, standards, ergonomics, PWP, ingestion
 4. **Production Workflows**: Prefect flows with scheduled deployments for compliance (hourly) and market intelligence (daily)

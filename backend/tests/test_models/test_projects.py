@@ -6,7 +6,7 @@ from datetime import date, datetime
 
 import pytest
 
-from app.models.projects import ApprovalStatus, Project, ProjectPhase, ProjectType
+from app.models.project import ApprovalStatus, Project, ProjectPhase, ProjectType
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

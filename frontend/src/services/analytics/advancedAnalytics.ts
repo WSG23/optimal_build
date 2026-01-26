@@ -1,11 +1,6 @@
 import { z, type ZodIssue } from 'zod'
 
 import { apiClient } from '../api'
-import {
-  buildSampleCorrelationIntelligence,
-  buildSampleGraphIntelligence,
-  buildSamplePredictiveIntelligence,
-} from './fixtures'
 
 export class IntelligenceValidationError extends Error {
   readonly issues: ZodIssue[]
@@ -291,8 +286,10 @@ export async function fetchGraphIntelligence(
     if (error instanceof IntelligenceValidationError) {
       throw error
     }
-    debugLog('[fetchGraphIntelligence] Returning sample fallback graph data')
-    return buildSampleGraphIntelligence()
+    throw new IntelligenceRequestError(
+      'Graph intelligence request failed',
+      error,
+    )
   }
 }
 
@@ -325,10 +322,10 @@ export async function fetchPredictiveIntelligence(
     if (error instanceof IntelligenceValidationError) {
       throw error
     }
-    debugLog(
-      '[fetchPredictiveIntelligence] Returning sample fallback predictive data',
+    throw new IntelligenceRequestError(
+      'Predictive intelligence request failed',
+      error,
     )
-    return buildSamplePredictiveIntelligence()
   }
 }
 
@@ -364,10 +361,10 @@ export async function fetchCrossCorrelationIntelligence(
     if (error instanceof IntelligenceValidationError) {
       throw error
     }
-    debugLog(
-      '[fetchCrossCorrelationIntelligence] Returning sample fallback correlation data',
+    throw new IntelligenceRequestError(
+      'Cross-correlation intelligence request failed',
+      error,
     )
-    return buildSampleCorrelationIntelligence()
   }
 }
 

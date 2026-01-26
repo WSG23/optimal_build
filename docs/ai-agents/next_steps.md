@@ -114,7 +114,7 @@ This prevents you from:
 - Compliance utils: `backend/app/utils/<jurisdiction>_compliance.py`
 - Seed script: `backend/scripts/seed_<jurisdiction>_rules.py`
 - Test suite: `backend/tests/test_utils/test_<jurisdiction>_compliance.py`
-- Relationships: Added to `backend/app/models/projects.py`
+- Relationships: Added to `backend/app/models/project.py`
 - Registration: Added to `backend/app/models/__init__.py`
 
 **Next:** Phase 2D-2I can now proceed with multi-jurisdiction support built-in from the start.

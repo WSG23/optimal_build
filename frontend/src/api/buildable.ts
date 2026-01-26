@@ -1,5 +1,3 @@
-import { createMockBuildableTransport } from '../mocks/buildable'
-
 function normaliseBaseUrl(value: string | undefined | null): string {
   if (typeof value !== 'string') {
     return '/'
@@ -239,22 +237,6 @@ export async function fetchBuildable(
   options: BuildableRequestOptions = {},
 ): Promise<BuildableSummary> {
   const { transport = postBuildable, signal } = options
-  try {
-    const payload = await transport(apiBaseUrl, request, { signal })
-    return mapResponse(payload)
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw error
-    }
-    if (error instanceof TypeError) {
-      console.warn(
-        '[buildable] primary request failed, falling back to mock response',
-        error,
-      )
-      const fallbackTransport = createMockBuildableTransport()
-      const payload = await fallbackTransport(apiBaseUrl, request)
-      return mapResponse(payload)
-    }
-    throw error
-  }
+  const payload = await transport(apiBaseUrl, request, { signal })
+  return mapResponse(payload)
 }

@@ -14,7 +14,7 @@ from app.api.v1.finance_common import normalise_project_id
 from app.core.database import get_session
 from app.models.development_phase import DevelopmentPhase, PhaseStatus
 from app.models.finance import FinProject, FinScenario
-from app.models.projects import Project, ProjectPhase, ProjectType
+from app.models.project import Project, ProjectPhase, ProjectType
 from app.models.workflow import ApprovalStep, ApprovalWorkflow, StepStatus
 from app.services.team.team_service import TeamService
 
@@ -152,10 +152,6 @@ def _project_to_response(project: Project) -> ProjectResponse:
 def _generate_project_code() -> str:
     """Generate a unique project code."""
     return f"PROJ-{uuid.uuid4().hex[:8].upper()}"
-
-
-def _phase_display_name(phase: ProjectPhase) -> str:
-    return phase.value.replace("_", " ").title()
 
 
 def _phase_status_from_development(status: PhaseStatus | None) -> str:
@@ -484,42 +480,6 @@ async def get_project_progress(
                         else None
                     ),
                     source="development_phase",
-                )
-            )
-    else:
-        phase_order = [
-            ProjectPhase.CONCEPT,
-            ProjectPhase.FEASIBILITY,
-            ProjectPhase.DESIGN,
-            ProjectPhase.APPROVAL,
-            ProjectPhase.TENDER,
-            ProjectPhase.CONSTRUCTION,
-            ProjectPhase.TESTING_COMMISSIONING,
-            ProjectPhase.HANDOVER,
-            ProjectPhase.OPERATION,
-        ]
-        current_phase = project.current_phase or ProjectPhase.CONCEPT
-        try:
-            current_index = phase_order.index(current_phase)
-        except ValueError:
-            current_index = 0
-        for idx, phase in enumerate(phase_order):
-            if idx < current_index:
-                status_label = "completed"
-                progress_value = 100.0
-            elif idx == current_index:
-                status_label = "in_progress"
-                progress_value = 50.0
-            else:
-                status_label = "not_started"
-                progress_value = 0.0
-            phases.append(
-                ProgressPhase(
-                    id=phase.value,
-                    name=_phase_display_name(phase),
-                    progress=progress_value,
-                    status=status_label,
-                    source="project_phase",
                 )
             )
 

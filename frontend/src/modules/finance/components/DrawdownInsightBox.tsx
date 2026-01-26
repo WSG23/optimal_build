@@ -43,9 +43,9 @@ export function DrawdownInsightBox({ scenario }: DrawdownInsightBoxProps) {
   return (
     <Box
       sx={{
-        bgcolor: 'rgba(0, 243, 255, 0.08)',
+        bgcolor: 'var(--ob-color-table-row-selected)',
         border: 2,
-        borderColor: 'rgba(0, 243, 255, 0.3)',
+        borderColor: 'var(--ob-color-neon-cyan-muted)',
         borderRadius: 'var(--ob-radius-sm)',
         p: 'var(--ob-space-150)',
         mt: 'var(--ob-space-150)',

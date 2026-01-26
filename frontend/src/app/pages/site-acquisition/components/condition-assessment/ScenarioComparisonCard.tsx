@@ -49,7 +49,11 @@ export function ScenarioComparisonCard({
   recommendedActions,
 }: ScenarioComparisonCardProps) {
   const scoreDeltaColor =
-    scoreDelta > 0 ? '#15803d' : scoreDelta < 0 ? '#c53030' : '#6e6e73'
+    scoreDelta > 0
+      ? '#15803d'
+      : scoreDelta < 0
+        ? '#c53030'
+        : 'var(--ob-color-text-secondary)'
 
   const formattedDelta =
     scoreDelta === 0 ? 'Δ 0' : `Δ ${scoreDelta > 0 ? '+' : ''}${scoreDelta}`
@@ -58,13 +62,13 @@ export function ScenarioComparisonCard({
     <div
       key={scenarioKey}
       style={{
-        border: '1px solid #e5e5e7',
-        borderRadius: '4px',
-        padding: '1.25rem',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
+        padding: 'var(--ob-space-200)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.6rem',
-        background: '#ffffff',
+        gap: 'var(--ob-space-100)',
+        background: 'var(--ob-color-bg-default)',
       }}
     >
       <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
@@ -74,9 +78,9 @@ export function ScenarioComparisonCard({
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '0.4rem',
+          gap: 'var(--ob-space-100)',
           fontSize: '0.9rem',
-          color: '#3a3a3c',
+          color: 'var(--ob-color-bg-elevated)',
         }}
       >
         <span>
@@ -111,7 +115,7 @@ export function ScenarioComparisonCard({
         style={{
           margin: 0,
           fontSize: '0.9rem',
-          color: '#3a3a3c',
+          color: 'var(--ob-color-bg-elevated)',
           lineHeight: 1.5,
         }}
       >
@@ -129,14 +133,14 @@ export function ScenarioComparisonCard({
         </p>
       )}
       {recommendedActions.length > 0 && (
-        <div style={{ display: 'grid', gap: '0.4rem' }}>
+        <div style={{ display: 'grid', gap: 'var(--ob-space-100)' }}>
           <strong style={{ fontSize: '0.85rem' }}>Actions</strong>
           <ul
             style={{
               margin: 0,
-              paddingLeft: '1.1rem',
+              paddingLeft: 'var(--ob-space-200)',
               fontSize: '0.85rem',
-              color: '#3a3a3c',
+              color: 'var(--ob-color-bg-elevated)',
               lineHeight: 1.4,
             }}
           >

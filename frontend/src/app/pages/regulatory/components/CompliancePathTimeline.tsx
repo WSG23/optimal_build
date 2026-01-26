@@ -45,11 +45,6 @@ interface CompliancePathTimelineProps {
   onStepClick?: (step: AssetCompliancePath) => void
 }
 
-type ComplianceStepDraft = Omit<
-  AssetCompliancePath,
-  'asset_type' | 'agency_id' | 'sequence_order' | 'created_at'
->
-
 // Agency display info (available for future use in tooltips/detailed views)
 const _AGENCY_INFO: Record<string, { name: string; color: string }> = {
   URA: { name: 'Urban Redevelopment Authority', color: colors.brand[600] },
@@ -65,9 +60,8 @@ const _AGENCY_INFO: Record<string, { name: string; color: string }> = {
 }
 void _AGENCY_INFO // Suppress unused warning - available for future tooltip enhancement
 
-// Submission type display names - includes both API values and legacy mock values
+// Submission type display names
 const SUBMISSION_TYPE_LABELS: Record<string, string> = {
-  // Actual API submission types
   DC: 'Development Control (URA)',
   BP: 'Building Plan (BCA)',
   TOP: 'Temporary Occupation Permit',
@@ -77,17 +71,6 @@ const SUBMISSION_TYPE_LABELS: Record<string, string> = {
   HERITAGE_APPROVAL: 'Heritage Conservation (STB)',
   INDUSTRIAL_PERMIT: 'Industrial Permit (JTC)',
   CHANGE_OF_USE: 'Change of Use',
-  // Legacy mock values (fallback)
-  planning_permission: 'Planning Permission',
-  development_control: 'Development Control',
-  building_plan: 'Building Plan Approval',
-  structural_plan: 'Structural Plan',
-  fire_safety: 'Fire Safety Certificate',
-  environmental: 'Environmental Clearance',
-  heritage_conservation: 'Heritage Conservation',
-  change_of_use: 'Change of Use',
-  csc_application: 'CSC Application',
-  top_application: 'TOP Application',
 }
 
 const ASSET_TYPE_OPTIONS: { value: AssetType; label: string }[] = [
@@ -404,8 +387,8 @@ function TimelineBar({
           sx={{
             position: 'absolute',
             left: 0,
-            top: 0,
-            bottom: 0,
+            top: '0',
+            bottom: '0',
             width: `${progress}%`,
             background:
               'linear-gradient(90deg, rgba(var(--ob-color-text-primary-rgb) / 0) 0%, rgba(var(--ob-color-text-primary-rgb) / 0.2) 100%)',
@@ -423,10 +406,10 @@ function TimelineBar({
             color: 'var(--ob-neutral-50)',
             fontWeight: 'var(--ob-font-weight-semibold)',
             fontSize: 'var(--ob-font-size-2xs)',
-            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+            textShadow: '0 1px 2px var(--ob-color-overlay-backdrop)',
             position: 'relative',
             zIndex: 1,
-            px: 1,
+            px: 'var(--ob-space-100)',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -499,9 +482,9 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
       try {
         const paths = await regulatoryApi.getCompliancePaths(assetType)
         setCompliancePaths(paths)
-      } catch {
-        // Use mock data for demonstration if API fails
-        setCompliancePaths(getMockCompliancePaths(assetType))
+      } catch (err) {
+        console.error('Failed to load compliance paths', err)
+        setCompliancePaths([])
       } finally {
         setLoading(false)
       }
@@ -588,9 +571,11 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
 
   if (loading) {
     return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
+      <Box sx={{ p: 'var(--ob-space-400)', textAlign: 'center' }}>
         <Typography>Loading compliance path...</Typography>
-        <LinearProgress sx={{ mt: 2, maxWidth: 300, mx: 'auto' }} />
+        <LinearProgress
+          sx={{ mt: 'var(--ob-space-200)', maxWidth: 300, mx: 'auto' }}
+        />
       </Box>
     )
   }
@@ -623,7 +608,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                 fontSize: 'var(--ob-font-size-lg)',
                 fontWeight: 700,
                 color: 'var(--ob-color-text-primary)',
-                m: 0,
+                m: '0',
               }}
             >
               Compliance Path Timeline
@@ -634,7 +619,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
             sx={{
               fontSize: 'var(--ob-font-size-sm)',
               color: 'var(--ob-color-text-secondary)',
-              m: 0,
+              m: '0',
               mt: 'var(--ob-space-025)',
             }}
           >
@@ -811,7 +796,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                 'rgba(var(--ob-color-surface-default-rgb) / 0.9)',
               backdropFilter: 'blur(var(--ob-blur-md))',
               position: 'sticky',
-              top: 0,
+              top: '0',
               zIndex: 20,
             }}
           >
@@ -822,7 +807,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                 borderRight: '1px solid var(--ob-border-glass)',
                 display: 'flex',
                 alignItems: 'center',
-                px: 2,
+                px: 'var(--ob-space-200)',
               }}
             >
               <Typography
@@ -840,7 +825,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                 flex: 1,
                 display: 'flex',
                 alignItems: 'center',
-                px: 2,
+                px: 'var(--ob-space-200)',
               }}
             >
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -861,16 +846,17 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                 sx={{
                   display: 'flex',
                   height: `${ROW_HEIGHT}px`,
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                  borderBottom:
+                    '1px solid var(--ob-color-surface-overlay-light)',
                   backgroundColor:
                     selectedStep === step.id
-                      ? 'rgba(0, 243, 255, 0.05)'
+                      ? 'var(--ob-color-table-row-hover)'
                       : 'transparent',
                   '&:hover': {
                     backgroundColor:
                       selectedStep === step.id
-                        ? 'rgba(0, 243, 255, 0.05)'
-                        : 'rgba(255, 255, 255, 0.02)',
+                        ? 'var(--ob-color-table-row-hover)'
+                        : 'var(--ob-color-table-row-alt)',
                   },
                 }}
               >
@@ -882,8 +868,8 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                     borderRight: '1px solid var(--ob-border-glass)',
                     display: 'flex',
                     alignItems: 'center',
-                    px: 2,
-                    gap: 1.5,
+                    px: 'var(--ob-space-200)',
+                    gap: 'var(--ob-space-150)',
                     bgcolor: 'rgba(var(--ob-color-surface-default-rgb) / 0.3)',
                     backdropFilter: 'blur(var(--ob-blur-sm))',
                   }}
@@ -934,8 +920,8 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
         <Box
           sx={{
             display: 'flex',
-            gap: 3,
-            p: 2,
+            gap: 'var(--ob-space-300)',
+            p: 'var(--ob-space-200)',
             borderTop: '1px solid var(--ob-border-glass)',
             background: 'rgba(var(--ob-color-surface-default-rgb) / 0.95)',
             flexWrap: 'wrap',
@@ -946,7 +932,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
             <Stack
               key={status}
               direction="row"
-              spacing={0.5}
+              spacing="var(--ob-space-50)"
               alignItems="center"
             >
               <Box
@@ -965,14 +951,22 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
               </Typography>
             </Stack>
           ))}
-          <Box sx={{ display: 'flex', gap: 2, ml: 'auto' }}>
-            <Stack direction="row" spacing={0.5} alignItems="center">
+          <Box sx={{ display: 'flex', gap: 'var(--ob-space-200)', ml: 'auto' }}>
+            <Stack
+              direction="row"
+              spacing="var(--ob-space-50)"
+              alignItems="center"
+            >
               <AgencyIcon
                 sx={{ fontSize: 16, color: 'var(--ob-color-text-muted)' }}
               />
               <Typography variant="caption">Regulatory Agency</Typography>
             </Stack>
-            <Stack direction="row" spacing={0.5} alignItems="center">
+            <Stack
+              direction="row"
+              spacing="var(--ob-space-50)"
+              alignItems="center"
+            >
               <HeritageIcon
                 sx={{ fontSize: 16, color: 'var(--ob-color-text-muted)' }}
               />
@@ -983,80 +977,6 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
       </GlassCard>
     </Box>
   )
-}
-
-// Mock data generator for demonstration
-function getMockCompliancePaths(assetType: AssetType): AssetCompliancePath[] {
-  const baseSteps: ComplianceStepDraft[] = [
-    {
-      id: '1',
-      submission_type: 'planning_permission' as const,
-      typical_duration_days: 21,
-      is_mandatory: true,
-    },
-    {
-      id: '2',
-      submission_type: 'development_control' as const,
-      typical_duration_days: 14,
-      is_mandatory: true,
-    },
-    {
-      id: '3',
-      submission_type: 'building_plan' as const,
-      typical_duration_days: 28,
-      is_mandatory: true,
-    },
-    {
-      id: '4',
-      submission_type: 'structural_plan' as const,
-      typical_duration_days: 21,
-      is_mandatory: true,
-    },
-    {
-      id: '5',
-      submission_type: 'fire_safety' as const,
-      typical_duration_days: 14,
-      is_mandatory: true,
-    },
-    {
-      id: '6',
-      submission_type: 'environmental' as const,
-      typical_duration_days: 14,
-      is_mandatory: assetType === 'industrial',
-    },
-  ]
-
-  if (assetType === 'heritage') {
-    baseSteps.splice(1, 0, {
-      id: '1b',
-      submission_type: 'heritage_conservation' as const,
-      typical_duration_days: 35,
-      is_mandatory: true,
-    })
-  }
-
-  baseSteps.push(
-    {
-      id: '7',
-      submission_type: 'csc_application' as const,
-      typical_duration_days: 7,
-      is_mandatory: true,
-    },
-    {
-      id: '8',
-      submission_type: 'top_application' as const,
-      typical_duration_days: 14,
-      is_mandatory: true,
-    },
-  )
-
-  return baseSteps.map((step, index) => ({
-    ...step,
-    asset_type: assetType,
-    agency_id: 'mock-agency-id',
-    sequence_order: index + 1,
-    created_at: new Date().toISOString(),
-  }))
 }
 
 export default CompliancePathTimeline

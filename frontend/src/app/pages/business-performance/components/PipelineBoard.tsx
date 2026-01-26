@@ -106,7 +106,11 @@ export function PipelineBoard({
             elevation={isSelected ? 6 : 1}
             className="bp-pipeline__deal-surface"
           >
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack
+              direction="row"
+              spacing="var(--ob-space-100)"
+              alignItems="center"
+            >
               <DragIndicatorIcon
                 fontSize="small"
                 className="bp-pipeline__deal-handle"
@@ -135,7 +139,7 @@ export function PipelineBoard({
             )}
             <Stack
               direction="row"
-              spacing={1}
+              spacing="var(--ob-space-100)"
               className="bp-pipeline__deal-tags"
             >
               {deal.confidence !== null && (

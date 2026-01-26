@@ -35,14 +35,20 @@ export function AbsorptionChart({ data }: AbsorptionChartProps) {
   return (
     <GlassCard className="advisory-panel">
       <Box
-        sx={{ p: 2, borderBottom: '1px solid var(--ob-color-border-subtle)' }}
+        sx={{
+          p: 'var(--ob-space-200)',
+          borderBottom: '1px solid var(--ob-color-border-subtle)',
+        }}
       >
         <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
           Absorption Forecast
         </Typography>
         <Typography
           variant="body2"
-          sx={{ color: 'var(--ob-color-text-secondary)', mt: 0.5 }}
+          sx={{
+            color: 'var(--ob-color-text-secondary)',
+            mt: 'var(--ob-space-50)',
+          }}
         >
           Expected Stabilisation:{' '}
           <strong style={{ color: 'var(--ob-color-text-primary)' }}>
@@ -55,11 +61,11 @@ export function AbsorptionChart({ data }: AbsorptionChartProps) {
         </Typography>
       </Box>
 
-      <Box sx={{ p: 3, height: 400 }}>
+      <Box sx={{ p: 'var(--ob-space-300)', height: 400 }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={chartData}
-            margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
+            margin={{ top: 24, right: 20, bottom: 24, left: 20 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
@@ -94,10 +100,10 @@ export function AbsorptionChart({ data }: AbsorptionChartProps) {
               contentStyle={{
                 backgroundColor: 'rgba(0,0,0,0.85)',
                 borderColor: 'var(--ob-color-border-subtle)',
-                color: '#fff',
+                color: 'var(--ob-color-bg-default)',
               }}
             />
-            <Legend wrapperStyle={{ paddingTop: 10 }} />
+            <Legend wrapperStyle={{ paddingTop: 'var(--ob-space-300)' }} />
             <Bar
               yAxisId="left"
               dataKey="absorption"

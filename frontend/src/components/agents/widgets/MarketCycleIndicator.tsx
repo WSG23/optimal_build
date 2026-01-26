@@ -55,7 +55,7 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
 }) => {
   if (!cycleData) {
     return (
-      <Paper sx={{ p: 3, height: 500 }}>
+      <Paper sx={{ p: 'var(--ob-space-300)', height: 500 }}>
         <Typography variant="h6" gutterBottom>
           Market Cycle Position
         </Typography>
@@ -87,12 +87,12 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
   }
 
   return (
-    <Paper sx={{ p: 3, height: 500 }}>
+    <Paper sx={{ p: 'var(--ob-space-300)', height: 500 }}>
       <Box
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        mb={2}
+        mb="var(--ob-space-200)"
       >
         <Typography variant="h6" gutterBottom>
           Market Cycle Position
@@ -158,15 +158,20 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
         variant="body2"
         color="textSecondary"
         align="center"
-        sx={{ mt: 2, mb: 3 }}
+        sx={{ mt: 'var(--ob-space-200)', mb: 'var(--ob-space-300)' }}
       >
         {cycleData.outlook?.next_12_months ?? 'No outlook available'}
       </Typography>
 
-      <Grid container spacing={2}>
+      <Grid container spacing="var(--ob-space-200)">
         <Grid item xs={6}>
           <Box>
-            <Box display="flex" alignItems="center" gap={1} mb={1}>
+            <Box
+              display="flex"
+              alignItems="center"
+              gap="var(--ob-space-100)"
+              mb="var(--ob-space-100)"
+            >
               <Typography variant="body2" color="textSecondary">
                 Price Momentum
               </Typography>
@@ -190,7 +195,12 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
 
         <Grid item xs={6}>
           <Box>
-            <Box display="flex" alignItems="center" gap={1} mb={1}>
+            <Box
+              display="flex"
+              alignItems="center"
+              gap="var(--ob-space-100)"
+              mb="var(--ob-space-100)"
+            >
               <Typography variant="body2" color="textSecondary">
                 Rental Momentum
               </Typography>
@@ -224,7 +234,7 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
                   100,
                   cycleData.indicators.supply_demand_ratio * 50,
                 )}
-                sx={{ height: 8, borderRadius: 4 }}
+                sx={{ height: 8, borderRadius: 'var(--ob-radius-sm)' }}
                 color={
                   cycleData.indicators.supply_demand_ratio > 1.2
                     ? 'error'
@@ -233,7 +243,11 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
                       : 'primary'
                 }
               />
-              <Box display="flex" justifyContent="space-between" mt={0.5}>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                mt="var(--ob-space-50)"
+              >
                 <Typography variant="caption">Under supply</Typography>
                 <Typography variant="caption">Oversupply</Typography>
               </Box>
@@ -243,7 +257,7 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
 
         {cycleData.index_trends && (
           <Grid item xs={12}>
-            <Paper sx={{ p: 2 }}>
+            <Paper sx={{ p: 'var(--ob-space-200)' }}>
               <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                 Index Trends
               </Typography>
@@ -265,7 +279,7 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
 
         {cycleData.outlook && (
           <Grid item xs={12}>
-            <Paper sx={{ p: 2 }}>
+            <Paper sx={{ p: 'var(--ob-space-200)' }}>
               <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                 Outlook Drivers
               </Typography>

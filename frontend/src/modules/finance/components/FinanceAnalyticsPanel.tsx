@@ -49,7 +49,7 @@ function formatRatio(value: string | null | undefined): string {
  * Semantic colors (orange/green) reserved for status badges and alert banners only.
  */
 const BUCKET_COLORS: Record<string, string> = {
-  lt_1: '#0096cc', // Darker cyan for DSCR < 1 (still in cyan family)
+  lt_1: 'var(--ob-color-primary)', // Darker cyan for DSCR < 1 (still in cyan family)
   '1_to_1_25': 'var(--ob-color-neon-cyan)', // Bright cyan
   gt_1_25: 'var(--ob-color-neon-cyan)', // Bright cyan
 }

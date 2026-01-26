@@ -181,7 +181,12 @@ export function DrawdownChart({ scenarios, scenarioId }: DrawdownChartProps) {
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart
           data={data}
-          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          margin={{
+            top: 'var(--ob-space-800)',
+            right: 30,
+            left: 20,
+            bottom: 'var(--ob-space-500)',
+          }}
         >
           <CartesianGrid {...gridProps} />
           <XAxis dataKey="period" {...axisProps} tickMargin={10} />

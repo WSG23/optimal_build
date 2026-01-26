@@ -61,9 +61,9 @@ export function AnalyticsPanel({
     <Box className="bp-analytics">
       <Grid
         container
-        spacing={2}
+        spacing="var(--ob-space-200)"
         className="bp-analytics__metrics"
-        sx={{ mb: 4 }}
+        sx={{ mb: 'var(--ob-space-400)' }}
       >
         {metrics.map((metric) => (
           <Grid item xs={12} sm={6} md={4} key={metric.key}>
@@ -81,7 +81,7 @@ export function AnalyticsPanel({
           direction="row"
           justifyContent="space-between"
           alignItems="center"
-          mb={1}
+          mb="var(--ob-space-100)"
         >
           <Typography variant="h6">30-day trend</Typography>
           <Typography variant="caption" color="text.secondary">
@@ -91,13 +91,13 @@ export function AnalyticsPanel({
         <Card
           variant="glass"
           className="bp-analytics__chart"
-          sx={{ height: 300, position: 'relative', p: 2 }}
+          sx={{ height: 300, position: 'relative', p: 'var(--ob-space-200)' }}
         >
           {chartData.length === 0 ? (
             <Stack
               alignItems="center"
               justifyContent="center"
-              spacing={2}
+              spacing="var(--ob-space-200)"
               sx={{
                 height: '100%',
                 color: 'text.secondary',
@@ -118,28 +118,33 @@ export function AnalyticsPanel({
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
                 data={chartData}
-                margin={{ top: 16, right: 24, bottom: 0, left: 0 }}
+                margin={{
+                  top: 'var(--ob-space-800)',
+                  right: 24,
+                  bottom: '0',
+                  left: 0,
+                }}
               >
                 {/* ... Chart Content Preserved ... */}
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}
-                  stroke="rgba(255,255,255,0.1)"
+                  stroke="var(--ob-color-surface-overlay)"
                 />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 12, fill: 'var(--ob-color-text-tertiary)' }}
                   minTickGap={32}
                 />
                 <YAxis
                   yAxisId="left"
                   tickFormatter={(value: number) => `${value.toFixed(1)}m`}
-                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 12, fill: 'var(--ob-color-text-tertiary)' }}
                   label={{
                     value: 'Pipeline (SGD millions)',
                     angle: -90,
                     position: 'insideLeft',
-                    fill: '#9CA3AF',
+                    fill: 'var(--ob-color-text-tertiary)',
                     fontSize: 12,
                   }}
                 />
@@ -147,22 +152,26 @@ export function AnalyticsPanel({
                   yAxisId="right"
                   orientation="right"
                   tickFormatter={(value: number) => `${value.toFixed(0)}`}
-                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 12, fill: 'var(--ob-color-text-tertiary)' }}
                   label={{
                     value: 'Conversion % / Cycle days',
                     angle: 90,
                     position: 'insideRight',
-                    fill: '#9CA3AF',
+                    fill: 'var(--ob-color-text-tertiary)',
                     fontSize: 12,
                   }}
                 />
                 <RechartsTooltip
                   formatter={formatTooltipValue}
-                  labelStyle={{ fontWeight: 600, color: '#111827' }}
+                  labelStyle={{
+                    fontWeight: 600,
+                    color: 'var(--ob-color-bg-inverse)',
+                  }}
                   contentStyle={{
-                    borderRadius: 4, // Square Cyber-Minimalism: sm for tooltips
+                    borderRadius: 'var(--ob-radius-sm)', // Square Cyber-Minimalism: sm for tooltips
                     border: 'none',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    boxShadow:
+                      '0 4px 6px -1px var(--ob-color-action-active-light)',
                   }}
                 />
                 <Legend iconType="circle" />
@@ -225,7 +234,7 @@ export function AnalyticsPanel({
         </Card>
       </Box>
 
-      <Divider sx={{ my: 2 }} />
+      <Divider sx={{ my: 'var(--ob-space-200)' }} />
 
       <Box className="bp-analytics__benchmarks">
         <Typography variant="h6" gutterBottom>
@@ -236,7 +245,11 @@ export function AnalyticsPanel({
             <ListItem key={entry.key} className="bp-benchmark-list__item">
               <ListItemText
                 primary={
-                  <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack
+                    direction="row"
+                    spacing="var(--ob-space-100)"
+                    alignItems="center"
+                  >
                     <Typography variant="subtitle1">{entry.label}</Typography>
                     {entry.deltaText && (
                       <Chip
@@ -248,7 +261,11 @@ export function AnalyticsPanel({
                   </Stack>
                 }
                 secondary={
-                  <Stack direction="row" spacing={1} flexWrap="wrap">
+                  <Stack
+                    direction="row"
+                    spacing="var(--ob-space-100)"
+                    flexWrap="wrap"
+                  >
                     <Typography variant="body2" fontWeight={600}>
                       {entry.actual}
                     </Typography>

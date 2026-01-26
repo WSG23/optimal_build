@@ -10,9 +10,17 @@ interface SmartIntelligenceFieldProps {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onSuggestionSelect?: (suggestion: {
     address: string
-    siteArea: number
-    zoning: string
+    siteArea?: number
+    zoning?: string
   }) => void
+  suggestions?: Array<{
+    address: string
+    siteArea?: number
+    zoning?: string
+    subtitle?: string
+    badgeLabel?: string
+    badgeVariant?: 'info' | 'warning'
+  }>
   placeholder?: string
   loading?: boolean
   error?: string | null
@@ -25,24 +33,17 @@ export function SmartIntelligenceField({
   onChange,
   onSubmit,
   onSuggestionSelect,
+  suggestions,
   placeholder = 'Enter site address...',
   loading = false,
   error,
 }: SmartIntelligenceFieldProps) {
-  // Mock suggestions for visual demo "As user types"
   const showSuggestions =
-    value.length > 2 && !loading && !error && onSuggestionSelect && !siteArea
-
-  const handleSelect = (index: number) => {
-    if (!onSuggestionSelect) return
-    // Simulation logic
-    const isCommercial = index === 0
-    onSuggestionSelect({
-      address: `${value} ${isCommercial ? 'Street' : 'Avenue'}`,
-      siteArea: isCommercial ? 1200 : 850,
-      zoning: isCommercial ? 'Commercial' : 'Residential',
-    })
-  }
+    (suggestions?.length ?? 0) > 0 &&
+    !loading &&
+    !error &&
+    onSuggestionSelect &&
+    !siteArea
 
   // Derived state to show badges
   const hasAutoData = !!siteArea && !!zoning
@@ -90,7 +91,7 @@ export function SmartIntelligenceField({
                 transform: 'translateY(-50%)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: 'var(--ob-space-50)',
                 pointerEvents: 'none', // Click through to input? Or make interactive?
               }}
             >
@@ -98,7 +99,7 @@ export function SmartIntelligenceField({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
+                  gap: 'var(--ob-space-50)',
                   background: 'var(--ob-color-info-soft)',
                   color: 'var(--ob-info-600)',
                   padding: '4px 8px',
@@ -133,36 +134,42 @@ export function SmartIntelligenceField({
       </form>
       {error && <div className="smart-search__error">{error}</div>}
 
-      {/* Mock Autocomplete Results */}
-      {showSuggestions && (
+      {/* Autocomplete Results */}
+      {showSuggestions && suggestions ? (
         <div className="smart-search__suggestions">
           <div className="smart-search__suggestions-header">Suggestions</div>
-          {['Simulated Result 1', 'Simulated Result 2'].map((_, i) => (
+          {suggestions.map((suggestion, i) => (
             <div
               key={i}
               className="smart-search__suggestion-item"
-              onClick={() => handleSelect(i)}
+              onClick={() => onSuggestionSelect?.(suggestion)}
             >
               <div className="smart-search__suggestion-left">
                 <span className="smart-search__suggestion-pin">📍</span>
                 <div>
                   <div className="smart-search__suggestion-title">
-                    {value} {i === 0 ? 'Street' : 'Avenue'}
+                    {suggestion.address}
                   </div>
-                  <div className="smart-search__suggestion-subtitle">
-                    Singapore, District {9 + i}
-                  </div>
+                  {suggestion.subtitle ? (
+                    <div className="smart-search__suggestion-subtitle">
+                      {suggestion.subtitle}
+                    </div>
+                  ) : null}
                 </div>
               </div>
               <span
-                className={`smart-search__suggestion-badge ${i === 0 ? 'smart-search__suggestion-badge--info' : 'smart-search__suggestion-badge--warning'}`}
+                className={`smart-search__suggestion-badge ${
+                  suggestion.badgeVariant === 'warning'
+                    ? 'smart-search__suggestion-badge--warning'
+                    : 'smart-search__suggestion-badge--info'
+                }`}
               >
-                {i === 0 ? 'COMMERCIAL' : 'RESIDENTIAL'}
+                {suggestion.badgeLabel ?? suggestion.zoning}
               </span>
             </div>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

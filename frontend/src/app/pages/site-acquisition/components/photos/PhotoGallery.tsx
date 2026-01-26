@@ -64,9 +64,9 @@ export function PhotoGallery({
     return (
       <div
         style={{
-          padding: '2rem',
+          padding: 'var(--ob-space-400)',
           textAlign: 'center',
-          color: '#6b7280',
+          color: 'var(--ob-color-text-secondary)',
         }}
       >
         Loading photos...
@@ -78,19 +78,19 @@ export function PhotoGallery({
     return (
       <div
         style={{
-          padding: '2rem',
+          padding: 'var(--ob-space-400)',
           textAlign: 'center',
-          color: '#6b7280',
-          background: '#f9fafb',
-          borderRadius: '4px',
-          border: '1px dashed #d1d5db',
+          color: 'var(--ob-color-text-secondary)',
+          background: 'var(--ob-color-bg-muted)',
+          borderRadius: 'var(--ob-radius-sm)',
+          border: '1px dashed var(--ob-color-border-default)',
         }}
       >
-        <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+        <div style={{ fontSize: '2rem', marginBottom: 'var(--ob-space-100)' }}>
           {'\uD83D\uDDBC\uFE0F'}
         </div>
         <p style={{ margin: 0, fontWeight: 500 }}>No photos yet</p>
-        <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem' }}>
+        <p style={{ margin: 'var(--ob-space-50) 0 0', fontSize: '0.8125rem' }}>
           Upload photos to document this property
         </p>
       </div>
@@ -98,21 +98,27 @@ export function PhotoGallery({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--ob-space-200)',
+      }}
+    >
       {/* View mode toggle */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0.5rem 0',
+          padding: 'var(--ob-space-100) 0',
         }}
       >
         <span
           style={{
             fontSize: '0.875rem',
             fontWeight: 600,
-            color: '#374151',
+            color: 'var(--ob-color-text-primary)',
           }}
         >
           {photos.length} photo{photos.length !== 1 ? 's' : ''}
@@ -122,24 +128,29 @@ export function PhotoGallery({
           style={{
             display: 'inline-flex',
             background: '#f3f4f6',
-            borderRadius: '9999px',
-            padding: '0.25rem',
+            borderRadius: 'var(--ob-radius-lg)',
+            padding: 'var(--ob-space-50)',
           }}
         >
           <button
             type="button"
             onClick={() => setViewMode('original')}
             style={{
-              padding: '0.375rem 0.875rem',
-              borderRadius: '9999px',
+              padding: 'var(--ob-space-50) 0.875rem',
+              borderRadius: 'var(--ob-radius-lg)',
               border: 'none',
               background: viewMode === 'original' ? '#fff' : 'transparent',
-              color: viewMode === 'original' ? '#1f2937' : '#6b7280',
+              color:
+                viewMode === 'original'
+                  ? '#1f2937'
+                  : 'var(--ob-color-text-secondary)',
               fontSize: '0.8125rem',
               fontWeight: 500,
               cursor: 'pointer',
               boxShadow:
-                viewMode === 'original' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                viewMode === 'original'
+                  ? '0 1px 3px var(--ob-color-action-active-light)'
+                  : 'none',
               transition: 'all 0.15s ease',
             }}
           >
@@ -149,16 +160,21 @@ export function PhotoGallery({
             type="button"
             onClick={() => setViewMode('marketing')}
             style={{
-              padding: '0.375rem 0.875rem',
-              borderRadius: '9999px',
+              padding: 'var(--ob-space-50) 0.875rem',
+              borderRadius: 'var(--ob-radius-lg)',
               border: 'none',
               background: viewMode === 'marketing' ? '#fff' : 'transparent',
-              color: viewMode === 'marketing' ? '#1f2937' : '#6b7280',
+              color:
+                viewMode === 'marketing'
+                  ? '#1f2937'
+                  : 'var(--ob-color-text-secondary)',
               fontSize: '0.8125rem',
               fontWeight: 500,
               cursor: 'pointer',
               boxShadow:
-                viewMode === 'marketing' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                viewMode === 'marketing'
+                  ? '0 1px 3px var(--ob-color-action-active-light)'
+                  : 'none',
               transition: 'all 0.15s ease',
             }}
           >
@@ -172,7 +188,7 @@ export function PhotoGallery({
         style={{
           margin: 0,
           fontSize: '0.75rem',
-          color: '#9ca3af',
+          color: 'var(--ob-color-text-tertiary)',
           fontStyle: 'italic',
         }}
       >
@@ -186,7 +202,7 @@ export function PhotoGallery({
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-          gap: '0.75rem',
+          gap: 'var(--ob-space-150)',
         }}
       >
         {photos.map((photo) => {
@@ -199,7 +215,7 @@ export function PhotoGallery({
               style={{
                 position: 'relative',
                 aspectRatio: '1',
-                borderRadius: '4px',
+                borderRadius: 'var(--ob-radius-sm)',
                 overflow: 'hidden',
                 background: '#f3f4f6',
                 cursor: 'pointer',
@@ -228,7 +244,7 @@ export function PhotoGallery({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#9ca3af',
+                    color: 'var(--ob-color-text-tertiary)',
                     fontSize: '2rem',
                   }}
                 >
@@ -241,25 +257,25 @@ export function PhotoGallery({
                 <div
                   style={{
                     position: 'absolute',
-                    bottom: 0,
+                    bottom: '0',
                     left: 0,
                     right: 0,
-                    padding: '0.25rem 0.5rem',
+                    padding: 'var(--ob-space-50) 0.5rem',
                     background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
                     display: 'flex',
                     flexWrap: 'wrap',
-                    gap: '0.25rem',
+                    gap: 'var(--ob-space-50)',
                   }}
                 >
                   {photo.autoTags.slice(0, 2).map((tag) => (
                     <span
                       key={tag}
                       style={{
-                        padding: '0.125rem 0.375rem',
-                        background: 'rgba(255,255,255,0.2)',
-                        borderRadius: '4px',
+                        padding: 'var(--ob-space-50) 0.375rem',
+                        background: 'var(--ob-color-surface-overlay-medium)',
+                        borderRadius: 'var(--ob-radius-sm)',
                         fontSize: '0.625rem',
-                        color: '#fff',
+                        color: 'var(--ob-color-bg-default)',
                       }}
                     >
                       {tag.replace(/_/g, ' ')}
@@ -285,8 +301,8 @@ export function PhotoGallery({
                     height: '24px',
                     borderRadius: '50%',
                     border: 'none',
-                    background: 'rgba(0,0,0,0.6)',
-                    color: '#fff',
+                    background: 'var(--ob-color-overlay-backdrop-strong)',
+                    color: 'var(--ob-color-bg-default)',
                     fontSize: '0.875rem',
                     cursor: 'pointer',
                     display: 'flex',
@@ -313,7 +329,7 @@ export function PhotoGallery({
             zIndex: 1000,
             display: 'flex',
             flexDirection: 'column',
-            padding: '1rem',
+            padding: 'var(--ob-space-200)',
           }}
           onClick={() => setSelectedPhoto(null)}
           onKeyDown={(e) => e.key === 'Escape' && setSelectedPhoto(null)}
@@ -326,29 +342,34 @@ export function PhotoGallery({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: '1rem',
+              marginBottom: 'var(--ob-space-200)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ color: '#fff' }}>
+            <div style={{ color: 'var(--ob-color-bg-default)' }}>
               <div style={{ fontWeight: 600 }}>
                 {selectedPhoto.notes || 'Property Photo'}
               </div>
               {selectedPhoto.captureTimestamp && (
-                <div style={{ fontSize: '0.8125rem', color: '#9ca3af' }}>
+                <div
+                  style={{
+                    fontSize: '0.8125rem',
+                    color: 'var(--ob-color-text-tertiary)',
+                  }}
+                >
                   {new Date(selectedPhoto.captureTimestamp).toLocaleString()}
                 </div>
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: 'var(--ob-space-100)' }}>
               {/* View toggle in lightbox */}
               <div
                 style={{
                   display: 'inline-flex',
-                  background: 'rgba(255,255,255,0.1)',
-                  borderRadius: '9999px',
-                  padding: '0.25rem',
+                  background: 'var(--ob-color-surface-overlay)',
+                  borderRadius: 'var(--ob-radius-lg)',
+                  padding: 'var(--ob-space-50)',
                 }}
               >
                 <button
@@ -358,14 +379,14 @@ export function PhotoGallery({
                     setViewMode('original')
                   }}
                   style={{
-                    padding: '0.375rem 0.75rem',
-                    borderRadius: '9999px',
+                    padding: 'var(--ob-space-50) 0.75rem',
+                    borderRadius: 'var(--ob-radius-lg)',
                     border: 'none',
                     background:
                       viewMode === 'original'
-                        ? 'rgba(255,255,255,0.2)'
+                        ? 'var(--ob-color-surface-overlay-medium)'
                         : 'transparent',
-                    color: '#fff',
+                    color: 'var(--ob-color-bg-default)',
                     fontSize: '0.75rem',
                     fontWeight: 500,
                     cursor: 'pointer',
@@ -380,14 +401,14 @@ export function PhotoGallery({
                     setViewMode('marketing')
                   }}
                   style={{
-                    padding: '0.375rem 0.75rem',
-                    borderRadius: '9999px',
+                    padding: 'var(--ob-space-50) 0.75rem',
+                    borderRadius: 'var(--ob-radius-lg)',
                     border: 'none',
                     background:
                       viewMode === 'marketing'
-                        ? 'rgba(255,255,255,0.2)'
+                        ? 'var(--ob-color-surface-overlay-medium)'
                         : 'transparent',
-                    color: '#fff',
+                    color: 'var(--ob-color-bg-default)',
                     fontSize: '0.75rem',
                     fontWeight: 500,
                     cursor: 'pointer',
@@ -401,11 +422,11 @@ export function PhotoGallery({
                 type="button"
                 onClick={() => setSelectedPhoto(null)}
                 style={{
-                  padding: '0.5rem 1rem',
-                  borderRadius: '4px',
+                  padding: 'var(--ob-space-100) 1rem',
+                  borderRadius: 'var(--ob-radius-sm)',
                   border: 'none',
-                  background: 'rgba(255,255,255,0.1)',
-                  color: '#fff',
+                  background: 'var(--ob-color-surface-overlay)',
+                  color: 'var(--ob-color-bg-default)',
                   fontSize: '0.875rem',
                   cursor: 'pointer',
                 }}
@@ -434,11 +455,13 @@ export function PhotoGallery({
                   maxWidth: '100%',
                   maxHeight: '100%',
                   objectFit: 'contain',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-sm)',
                 }}
               />
             ) : (
-              <div style={{ color: '#9ca3af' }}>Image not available</div>
+              <div style={{ color: 'var(--ob-color-text-tertiary)' }}>
+                Image not available
+              </div>
             )}
           </div>
 
@@ -446,10 +469,10 @@ export function PhotoGallery({
           {selectedPhoto.autoTags.length > 0 && (
             <div
               style={{
-                marginTop: '1rem',
+                marginTop: 'var(--ob-space-200)',
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: '0.5rem',
+                gap: 'var(--ob-space-100)',
                 justifyContent: 'center',
               }}
               onClick={(e) => e.stopPropagation()}
@@ -458,11 +481,11 @@ export function PhotoGallery({
                 <span
                   key={tag}
                   style={{
-                    padding: '0.25rem 0.75rem',
-                    background: 'rgba(255,255,255,0.1)',
-                    borderRadius: '9999px',
+                    padding: 'var(--ob-space-50) 0.75rem',
+                    background: 'var(--ob-color-surface-overlay)',
+                    borderRadius: 'var(--ob-radius-lg)',
                     fontSize: '0.75rem',
-                    color: '#fff',
+                    color: 'var(--ob-color-bg-default)',
                   }}
                 >
                   {tag.replace(/_/g, ' ')}

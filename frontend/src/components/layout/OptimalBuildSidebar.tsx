@@ -7,7 +7,7 @@ type NavGroup = {
   items: Array<{ path: string; label: string }>
 }
 
-export function YosaiSidebar() {
+export function OptimalBuildSidebar() {
   const { t } = useTranslation()
   const path = useRouterPath()
   const theme = useTheme()
@@ -15,9 +15,7 @@ export function YosaiSidebar() {
   const navGroups: NavGroup[] = [
     {
       title: 'General',
-      items: [
-        { path: '/projects', label: 'Projects' },
-      ]
+      items: [{ path: '/projects', label: 'Projects' }],
     },
     {
       title: 'Capture',
@@ -60,7 +58,7 @@ export function YosaiSidebar() {
       }}
     >
       {/* Brand */}
-      <Box sx={{ p: 4, mb: 1 }}>
+      <Box sx={{ p: 'var(--ob-space-400)', mb: 'var(--ob-space-100)' }}>
         <Typography
           variant="h6"
           sx={{
@@ -80,8 +78,15 @@ export function YosaiSidebar() {
       </Box>
 
       {/* Nav */}
-      <Box component="nav" sx={{ flexGrow: 1, px: 2, pb: 4 }}>
-        <Box sx={{ mb: 2 }}>
+      <Box
+        component="nav"
+        sx={{
+          flexGrow: 1,
+          px: 'var(--ob-space-200)',
+          pb: 'var(--ob-space-400)',
+        }}
+      >
+        <Box sx={{ mb: 'var(--ob-space-200)' }}>
           <Button
             component={Link}
             to="/"
@@ -89,22 +94,22 @@ export function YosaiSidebar() {
             sx={{
               justifyContent: 'flex-start',
               color: path === '/' ? 'primary.main' : 'text.secondary',
-              px: 2,
-              mb: 2,
+              px: 'var(--ob-space-200)',
+              mb: 'var(--ob-space-200)',
             }}
           >
             {t('nav.home')}
           </Button>
         </Box>
 
-        <Stack spacing={3}>
+        <Stack spacing="var(--ob-space-300)">
           {navGroups.map((group) => (
             <Box key={group.title}>
               <Typography
                 variant="caption"
                 sx={{
-                  px: 2,
-                  mb: 1,
+                  px: 'var(--ob-space-200)',
+                  mb: 'var(--ob-space-100)',
                   display: 'block',
                   fontWeight: 700,
                   color: 'text.disabled',
@@ -115,7 +120,7 @@ export function YosaiSidebar() {
               >
                 {group.title}
               </Typography>
-              <Stack spacing={0.5}>
+              <Stack spacing="var(--ob-space-50)">
                 {group.items.map((item) => {
                   const isActive = path.startsWith(item.path)
                   return (
@@ -133,8 +138,8 @@ export function YosaiSidebar() {
                         borderLeft: 4,
                         borderColor: isActive ? 'primary.main' : 'transparent',
                         borderRadius: '0 4px 4px 0', // Square Cyber-Minimalism: sm
-                        px: 2, // 16px - consistent with layout gaps
-                        py: 1.25,
+                        px: 'var(--ob-space-200)', // 16px - consistent with layout gaps
+                        py: 'var(--ob-space-100)',
                         textAlign: 'left',
                         textTransform: 'none',
                         fontWeight: isActive ? 600 : 400,
@@ -144,32 +149,32 @@ export function YosaiSidebar() {
                         overflow: 'hidden',
                         '&::before': isActive
                           ? {
-                            content: '""',
-                            position: 'absolute',
-                            left: 0,
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            width: '4px',
-                            height: '70%',
-                            borderRadius: '0 4px 4px 0',
-                            bgcolor: 'primary.main',
-                            boxShadow: `0 0 12px 2px ${alpha(theme.palette.primary.main, 0.6)}`,
-                          }
+                              content: '""',
+                              position: 'absolute',
+                              left: 0,
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              width: '4px',
+                              height: '70%',
+                              borderRadius: '0 4px 4px 0',
+                              bgcolor: 'primary.main',
+                              boxShadow: `0 0 12px 2px ${alpha(theme.palette.primary.main, 0.6)}`,
+                            }
                           : {},
                         '&::after': isActive
                           ? {
-                            content: '""',
-                            position: 'absolute',
-                            right: '8px',
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            width: '6px',
-                            height: '6px',
-                            borderRadius: '50%',
-                            bgcolor: 'primary.main',
-                            boxShadow: `0 0 8px 2px ${alpha(theme.palette.primary.main, 0.5)}`,
-                            animation: 'pulse 2s ease-in-out infinite',
-                          }
+                              content: '""',
+                              position: 'absolute',
+                              right: '8px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              width: '6px',
+                              height: '6px',
+                              borderRadius: '50%',
+                              bgcolor: 'primary.main',
+                              boxShadow: `0 0 8px 2px ${alpha(theme.palette.primary.main, 0.5)}`,
+                              animation: 'pulse 2s ease-in-out infinite',
+                            }
                           : {},
                         '@keyframes pulse': {
                           '0%, 100%': {

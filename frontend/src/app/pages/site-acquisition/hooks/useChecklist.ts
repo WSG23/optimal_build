@@ -2,7 +2,7 @@
  * Hook for managing checklist state
  *
  * Handles:
- * - Loading checklist items from backend or offline templates
+ * - Loading checklist items from backend
  * - Checklist filtering by scenario and category
  * - Checklist summary computation
  * - Checklist item status updates
@@ -13,14 +13,13 @@ import {
   fetchChecklistSummary,
   fetchPropertyChecklist,
   updateChecklistItem,
-  OFFLINE_PROPERTY_ID,
   type ChecklistItem,
   type ChecklistSummary,
   type DevelopmentScenario,
   type SiteAcquisitionResult,
 } from '../../../../api/siteAcquisition'
 import { SCENARIO_OPTIONS } from '../constants'
-import { buildOfflineChecklistItems, computeChecklistSummary } from '../utils'
+import { computeChecklistSummary } from '../utils'
 
 // ============================================================================
 // Types
@@ -110,36 +109,6 @@ export function useChecklist({
 
       setIsLoadingChecklist(true)
       try {
-        if (capturedProperty.propertyId === OFFLINE_PROPERTY_ID) {
-          const offlineItems = buildOfflineChecklistItems(
-            capturedProperty.propertyId,
-            capturedProperty.quickAnalysis.scenarios.map(
-              (scenario) => scenario.scenario,
-            ),
-          )
-          const sortedOffline = [...offlineItems].sort((a, b) => {
-            const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER
-            const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER
-            if (orderA !== orderB) {
-              return orderA - orderB
-            }
-            return a.itemTitle.localeCompare(b.itemTitle)
-          })
-          setChecklistItems(sortedOffline)
-          const offlineScenarios = Array.from(
-            new Set(sortedOffline.map((item) => item.developmentScenario)),
-          )
-          setAvailableChecklistScenarios(offlineScenarios)
-          setActiveScenario(
-            offlineScenarios.length === 1 ? offlineScenarios[0] : 'all',
-          )
-          setChecklistSummary(
-            computeChecklistSummary(sortedOffline, capturedProperty.propertyId),
-          )
-          setSelectedCategory(null)
-          return
-        }
-
         const [items, summary] = await Promise.all([
           fetchPropertyChecklist(capturedProperty.propertyId),
           fetchChecklistSummary(capturedProperty.propertyId),
@@ -153,40 +122,6 @@ export function useChecklist({
           return a.itemTitle.localeCompare(b.itemTitle)
         })
         setChecklistItems(sortedItems)
-        if (sortedItems.length === 0) {
-          const fallbackItems = buildOfflineChecklistItems(
-            capturedProperty.propertyId,
-            capturedProperty.quickAnalysis.scenarios.map(
-              (scenario) => scenario.scenario,
-            ),
-          )
-          if (fallbackItems.length > 0) {
-            const sortedFallback = [...fallbackItems].sort((a, b) => {
-              const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER
-              const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER
-              if (orderA !== orderB) {
-                return orderA - orderB
-              }
-              return a.itemTitle.localeCompare(b.itemTitle)
-            })
-            setChecklistItems(sortedFallback)
-            setChecklistSummary(
-              computeChecklistSummary(
-                sortedFallback,
-                capturedProperty.propertyId,
-              ),
-            )
-            const fallbackScenarios = Array.from(
-              new Set(sortedFallback.map((item) => item.developmentScenario)),
-            )
-            setAvailableChecklistScenarios(fallbackScenarios)
-            setActiveScenario(
-              fallbackScenarios.length === 1 ? fallbackScenarios[0] : 'all',
-            )
-            setSelectedCategory(null)
-            return
-          }
-        }
         setChecklistSummary(summary)
         const scenarioSet = new Set<DevelopmentScenario>()
         sortedItems.forEach((item) => {

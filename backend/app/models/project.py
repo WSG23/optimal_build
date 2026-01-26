@@ -199,6 +199,11 @@ class Project(BaseModel):
     hk_properties = relationship(
         "HongKongProperty", back_populates="project"
     )  # One project can have multiple properties (Hong Kong)
+    security_tickets = relationship(
+        "SecurityTicket",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
     nz_properties = relationship(
         "NewZealandProperty", back_populates="project"
     )  # One project can have multiple properties (New Zealand)

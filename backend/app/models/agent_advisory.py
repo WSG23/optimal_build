@@ -6,10 +6,9 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID as UUIDType, uuid4
 
-from app.models.base import BaseModel
+from app.models.base import BaseModel, UUID as DBUUID
 from app.models.types import FlexibleJSONB
 from sqlalchemy import DateTime, ForeignKey, String, Text
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -19,11 +18,9 @@ class AgentAdvisoryFeedback(BaseModel):
 
     __tablename__ = "agent_advisory_feedback"
 
-    id: Mapped[UUIDType] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid4
-    )
+    id: Mapped[UUIDType] = mapped_column(DBUUID(), primary_key=True, default=uuid4)
     property_id: Mapped[UUIDType] = mapped_column(
-        UUID(as_uuid=True),
+        DBUUID(),
         ForeignKey("properties.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

@@ -1,7 +1,7 @@
 import {
   AppShell as BaseAppShell,
   AppShellProps as BaseAppShellProps,
-} from '../../components/layout/YosaiShell'
+} from '../../components/layout/OptimalBuildShell'
 
 interface AppShellProps extends Omit<BaseAppShellProps, 'subtitle'> {
   activeItem?: string // Kept for backward compatibility

@@ -20,7 +20,7 @@ from app.models.business_performance import (
     DealType,
     PipelineStage,
 )
-from app.models.users import User
+from app.models.user import User
 from app.schemas.deals import DealWithTimelineSchema
 from app.services.deals import AgentDealService
 from app.services.deals.utils import audit_project_key

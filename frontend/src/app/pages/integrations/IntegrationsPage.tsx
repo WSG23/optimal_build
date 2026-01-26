@@ -1,34 +1,18 @@
 import { useEffect, useState } from 'react'
-import type { ListingIntegrationAccount } from '../../../api/listings'
+import type {
+  ListingIntegrationAccount,
+  ListingProviderOption,
+} from '../../../api/listings'
 import {
-  connectMockAccount,
-  disconnectMockAccount,
   fetchListingAccounts,
-  publishMockListing,
+  fetchListingProviders,
+  connectListingAccount,
+  disconnectListingAccount,
+  publishListing,
 } from '../../../api/listings'
 
-const PROVIDERS = [
-  {
-    id: 'propertyguru',
-    name: 'PropertyGuru',
-    description: "Singapore's leading property portal",
-    color: '#00aaff',
-  },
-  {
-    id: 'edgeprop',
-    name: 'EdgeProp',
-    description: 'The Edge Singapore property platform',
-    color: '#ff6b35',
-  },
-  {
-    id: 'zoho_crm',
-    name: 'Zoho CRM',
-    description: 'CRM and lead management',
-    color: '#e42527',
-  },
-]
-
 export function IntegrationsPage() {
+  const [providers, setProviders] = useState<ListingProviderOption[]>([])
   const [accounts, setAccounts] = useState<ListingIntegrationAccount[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +37,11 @@ export function IntegrationsPage() {
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchListingAccounts()
+      const [providerOptions, data] = await Promise.all([
+        fetchListingProviders(),
+        fetchListingAccounts(),
+      ])
+      setProviders(providerOptions)
       setAccounts(data)
     } catch (err) {
       const errorMessage =
@@ -75,9 +63,14 @@ export function IntegrationsPage() {
   async function handleConnect(provider: string) {
     setConnectingProvider(provider)
     try {
-      // Mock OAuth: generate a fake auth code
-      const mockCode = `mock_${provider}_${Date.now()}`
-      const newAccount = await connectMockAccount(provider, mockCode)
+      const code = window.prompt(
+        'Enter the OAuth authorization code for this provider',
+      )
+      if (!code) {
+        setConnectingProvider(null)
+        return
+      }
+      const newAccount = await connectListingAccount(provider, code)
       setAccounts([
         ...accounts.filter((a) => a.provider !== provider),
         newAccount,
@@ -93,7 +86,7 @@ export function IntegrationsPage() {
     if (!confirm(`Disconnect from ${provider}?`)) return
 
     try {
-      await disconnectMockAccount(provider)
+      await disconnectListingAccount(provider)
       setAccounts(accounts.filter((a) => a.provider !== provider))
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Disconnection failed')
@@ -106,7 +99,7 @@ export function IntegrationsPage() {
 
     setPublishingProvider(publishForm.provider)
     try {
-      const result = await publishMockListing(publishForm.provider, {
+      const result = await publishListing(publishForm.provider, {
         property_id: publishForm.propertyId,
         title: publishForm.title,
         price: parseFloat(publishForm.price) || 0,
@@ -126,23 +119,23 @@ export function IntegrationsPage() {
 
   function isConnected(providerId: string) {
     return accounts.some(
-      (a) => a.provider === providerId && a.status === 'active',
+      (a) => a.provider === providerId && a.status === 'connected',
     )
   }
 
   return (
     <div
       style={{
-        padding: '3rem 2rem',
+        padding: 'var(--ob-space-600) 2rem',
         maxWidth: '1200px',
         margin: '0 auto',
         fontFamily:
           '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
-        color: '#1d1d1f',
+        color: 'var(--ob-color-bg-inverse)',
       }}
     >
       {/* Header */}
-      <header style={{ marginBottom: '3rem' }}>
+      <header style={{ marginBottom: 'var(--ob-space-600)' }}>
         <h1
           style={{
             fontSize: '3rem',
@@ -157,7 +150,7 @@ export function IntegrationsPage() {
         <p
           style={{
             fontSize: '1.25rem',
-            color: '#6e6e73',
+            color: 'var(--ob-color-text-secondary)',
             fontWeight: 400,
             margin: 0,
             letterSpacing: '-0.01em',
@@ -168,7 +161,7 @@ export function IntegrationsPage() {
       </header>
 
       {/* Integration Cards */}
-      <section style={{ marginBottom: '3rem' }}>
+      <section style={{ marginBottom: 'var(--ob-space-600)' }}>
         <h2
           style={{
             fontSize: '1.75rem',
@@ -183,12 +176,12 @@ export function IntegrationsPage() {
         {loading ? (
           <div
             style={{
-              padding: '3rem',
+              padding: 'var(--ob-space-600)',
               textAlign: 'center',
               background: 'white',
-              border: '1px solid #d2d2d7',
-              borderRadius: '4px',
-              color: '#6e6e73',
+              border: '1px solid var(--ob-color-border-default)',
+              borderRadius: 'var(--ob-radius-sm)',
+              color: 'var(--ob-color-text-secondary)',
             }}
           >
             Loading integrations...
@@ -196,11 +189,11 @@ export function IntegrationsPage() {
         ) : error ? (
           <div
             style={{
-              padding: '3rem 2rem',
+              padding: 'var(--ob-space-600) 2rem',
               textAlign: 'center',
               background: 'white',
-              border: '1px solid #d2d2d7',
-              borderRadius: '4px',
+              border: '1px solid var(--ob-color-border-default)',
+              borderRadius: 'var(--ob-radius-sm)',
             }}
           >
             <div
@@ -222,8 +215,8 @@ export function IntegrationsPage() {
               style={{
                 fontSize: '1.125rem',
                 fontWeight: 500,
-                color: '#1d1d1f',
-                marginBottom: '0.5rem',
+                color: 'var(--ob-color-bg-inverse)',
+                marginBottom: 'var(--ob-space-100)',
                 letterSpacing: '-0.01em',
               }}
             >
@@ -232,7 +225,7 @@ export function IntegrationsPage() {
             <p
               style={{
                 fontSize: '0.9375rem',
-                color: '#6e6e73',
+                color: 'var(--ob-color-text-secondary)',
                 margin: 0,
                 letterSpacing: '-0.005em',
               }}
@@ -245,180 +238,207 @@ export function IntegrationsPage() {
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '1.5rem',
+              gap: 'var(--ob-space-300)',
             }}
           >
-            {PROVIDERS.map((provider) => {
-              const account = getAccountForProvider(provider.id)
-              const connected = isConnected(provider.id)
-              const connecting = connectingProvider === provider.id
+            {providers.length === 0 ? (
+              <div
+                style={{
+                  padding: 'var(--ob-space-600)',
+                  textAlign: 'center',
+                  background: 'white',
+                  border: '1px solid var(--ob-color-border-default)',
+                  borderRadius: 'var(--ob-radius-sm)',
+                  color: 'var(--ob-color-text-secondary)',
+                }}
+              >
+                No listing providers configured yet.
+              </div>
+            ) : (
+              providers.map((provider) => {
+                const account = getAccountForProvider(provider.provider)
+                const connected = isConnected(provider.provider)
+                const connecting = connectingProvider === provider.provider
+                const accent = provider.brandColor || '#1f2937'
+                const label = provider.label || provider.provider
+                const description =
+                  provider.description || 'Listing integration provider'
 
-              return (
-                <div
-                  key={provider.id}
-                  style={{
-                    background: 'white',
-                    border: `2px solid ${connected ? provider.color : '#d2d2d7'}`,
-                    borderRadius: '4px',
-                    padding: '2rem',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
+                return (
                   <div
+                    key={provider.provider}
                     style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '4px',
-                      background: provider.color,
-                      marginBottom: '1rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      fontSize: '1.5rem',
-                      fontWeight: 700,
+                      background: 'white',
+                      border: `2px solid ${connected ? accent : 'var(--ob-color-border-default)'}`,
+                      borderRadius: 'var(--ob-radius-sm)',
+                      padding: 'var(--ob-space-400)',
+                      transition: 'all 0.2s ease',
                     }}
                   >
-                    {provider.name[0]}
-                  </div>
-
-                  <h3
-                    style={{
-                      fontSize: '1.25rem',
-                      fontWeight: 600,
-                      margin: '0 0 0.5rem',
-                      letterSpacing: '-0.01em',
-                    }}
-                  >
-                    {provider.name}
-                  </h3>
-
-                  <p
-                    style={{
-                      fontSize: '0.9375rem',
-                      color: '#6e6e73',
-                      margin: '0 0 1.5rem',
-                      letterSpacing: '-0.005em',
-                    }}
-                  >
-                    {provider.description}
-                  </p>
-
-                  {connected && account && (
                     <div
                       style={{
-                        padding: '0.75rem 1rem',
-                        background: '#f5f5f7',
-                        borderRadius: '4px',
-                        marginBottom: '1rem',
-                        fontSize: '0.875rem',
-                        color: '#6e6e73',
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: 'var(--ob-radius-sm)',
+                        background: accent,
+                        marginBottom: 'var(--ob-space-200)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: '1.5rem',
+                        fontWeight: 700,
                       }}
                     >
-                      <div style={{ marginBottom: '0.25rem' }}>
-                        <strong style={{ color: '#1d1d1f' }}>Status:</strong>{' '}
-                        {account.status}
-                      </div>
-                      <div style={{ fontSize: '0.8125rem' }}>
-                        Connected{' '}
-                        {new Date(account.created_at).toLocaleDateString()}
-                      </div>
+                      {label[0]}
                     </div>
-                  )}
 
-                  <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    {connected ? (
-                      <>
+                    <h3
+                      style={{
+                        fontSize: '1.25rem',
+                        fontWeight: 600,
+                        margin: '0 0 0.5rem',
+                        letterSpacing: '-0.01em',
+                      }}
+                    >
+                      {label}
+                    </h3>
+
+                    <p
+                      style={{
+                        fontSize: '0.9375rem',
+                        color: 'var(--ob-color-text-secondary)',
+                        margin: '0 0 1.5rem',
+                        letterSpacing: '-0.005em',
+                      }}
+                    >
+                      {description}
+                    </p>
+
+                    {connected && account && (
+                      <div
+                        style={{
+                          padding: 'var(--ob-space-150) 1rem',
+                          background: 'var(--ob-color-bg-muted)',
+                          borderRadius: 'var(--ob-radius-sm)',
+                          marginBottom: 'var(--ob-space-200)',
+                          fontSize: '0.875rem',
+                          color: 'var(--ob-color-text-secondary)',
+                        }}
+                      >
+                        <div style={{ marginBottom: 'var(--ob-space-50)' }}>
+                          <strong
+                            style={{ color: 'var(--ob-color-bg-inverse)' }}
+                          >
+                            Status:
+                          </strong>{' '}
+                          {account.status}
+                        </div>
+                        <div style={{ fontSize: '0.8125rem' }}>
+                          Connected{' '}
+                          {new Date(account.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    )}
+
+                    <div
+                      style={{ display: 'flex', gap: 'var(--ob-space-150)' }}
+                    >
+                      {connected ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPublishForm({
+                                provider: provider.provider,
+                                propertyId: '',
+                                title: '',
+                                price: '',
+                              })
+                            }
+                            style={{
+                              flex: 1,
+                              padding: 'var(--ob-space-150) 1rem',
+                              fontSize: '0.9375rem',
+                              fontWeight: 500,
+                              color: 'white',
+                              background: accent,
+                              border: 'none',
+                              borderRadius: 'var(--ob-radius-sm)',
+                              cursor: 'pointer',
+                              transition: 'opacity 0.2s ease',
+                              letterSpacing: '-0.005em',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.opacity = '0.85'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.opacity = '1'
+                            }}
+                          >
+                            Publish
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDisconnect(provider.provider)}
+                            style={{
+                              padding: 'var(--ob-space-150) 1rem',
+                              fontSize: '0.9375rem',
+                              fontWeight: 500,
+                              color: 'var(--ob-color-bg-inverse)',
+                              background: 'transparent',
+                              border:
+                                '1px solid var(--ob-color-border-default)',
+                              borderRadius: 'var(--ob-radius-sm)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              letterSpacing: '-0.005em',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background =
+                                'var(--ob-color-bg-muted)'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'transparent'
+                            }}
+                          >
+                            Disconnect
+                          </button>
+                        </>
+                      ) : (
                         <button
                           type="button"
-                          onClick={() =>
-                            setPublishForm({
-                              provider: provider.id,
-                              propertyId: '',
-                              title: '',
-                              price: '',
-                            })
-                          }
+                          onClick={() => handleConnect(provider.provider)}
+                          disabled={connecting}
                           style={{
                             flex: 1,
-                            padding: '0.75rem 1.25rem',
+                            padding: 'var(--ob-space-150) 1rem',
                             fontSize: '0.9375rem',
                             fontWeight: 500,
-                            color: 'white',
-                            background: provider.color,
+                            color: connecting ? '#6e6e73' : 'white',
+                            background: connecting ? '#f5f5f7' : accent,
                             border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
+                            borderRadius: 'var(--ob-radius-sm)',
+                            cursor: connecting ? 'not-allowed' : 'pointer',
                             transition: 'opacity 0.2s ease',
                             letterSpacing: '-0.005em',
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.opacity = '0.85'
+                            if (!connecting)
+                              e.currentTarget.style.opacity = '0.85'
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.opacity = '1'
+                            if (!connecting) e.currentTarget.style.opacity = '1'
                           }}
                         >
-                          Publish
+                          {connecting ? 'Connecting...' : 'Connect'}
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDisconnect(provider.id)}
-                          style={{
-                            padding: '0.75rem 1.25rem',
-                            fontSize: '0.9375rem',
-                            fontWeight: 500,
-                            color: '#1d1d1f',
-                            background: 'transparent',
-                            border: '1px solid #d2d2d7',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                            letterSpacing: '-0.005em',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#f5f5f7'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent'
-                          }}
-                        >
-                          Disconnect
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleConnect(provider.id)}
-                        disabled={connecting}
-                        style={{
-                          flex: 1,
-                          padding: '0.75rem 1.25rem',
-                          fontSize: '0.9375rem',
-                          fontWeight: 500,
-                          color: connecting ? '#6e6e73' : 'white',
-                          background: connecting ? '#f5f5f7' : provider.color,
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: connecting ? 'not-allowed' : 'pointer',
-                          transition: 'opacity 0.2s ease',
-                          letterSpacing: '-0.005em',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!connecting)
-                            e.currentTarget.style.opacity = '0.85'
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!connecting) e.currentTarget.style.opacity = '1'
-                        }}
-                      >
-                        {connecting ? 'Connecting...' : 'Connect'}
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })
+            )}
           </div>
         )}
       </section>
@@ -428,11 +448,11 @@ export function IntegrationsPage() {
         <div
           style={{
             position: 'fixed',
-            top: 0,
+            top: '0',
             left: 0,
             right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
+            bottom: '0',
+            background: 'var(--ob-color-overlay-backdrop)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -443,8 +463,8 @@ export function IntegrationsPage() {
           <div
             style={{
               background: 'white',
-              borderRadius: '4px',
-              padding: '2rem',
+              borderRadius: 'var(--ob-radius-sm)',
+              padding: 'var(--ob-space-400)',
               maxWidth: '500px',
               width: '90%',
             }}
@@ -459,18 +479,19 @@ export function IntegrationsPage() {
               }}
             >
               Publish to{' '}
-              {PROVIDERS.find((p) => p.id === publishForm.provider)?.name}
+              {providers.find((p) => p.provider === publishForm.provider)
+                ?.label || publishForm.provider}
             </h3>
 
             <form onSubmit={handlePublish}>
-              <div style={{ marginBottom: '1rem' }}>
+              <div style={{ marginBottom: 'var(--ob-space-200)' }}>
                 <label
                   style={{
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: 500,
-                    color: '#1d1d1f',
-                    marginBottom: '0.5rem',
+                    color: 'var(--ob-color-bg-inverse)',
+                    marginBottom: 'var(--ob-space-100)',
                     letterSpacing: '-0.005em',
                   }}
                 >
@@ -489,10 +510,10 @@ export function IntegrationsPage() {
                   required
                   style={{
                     width: '100%',
-                    padding: '0.75rem 1rem',
+                    padding: 'var(--ob-space-150) 1rem',
                     fontSize: '1rem',
-                    border: '1px solid #d2d2d7',
-                    borderRadius: '4px',
+                    border: '1px solid var(--ob-color-border-default)',
+                    borderRadius: 'var(--ob-radius-sm)',
                     outline: 'none',
                     fontFamily:
                       'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace',
@@ -500,14 +521,14 @@ export function IntegrationsPage() {
                 />
               </div>
 
-              <div style={{ marginBottom: '1rem' }}>
+              <div style={{ marginBottom: 'var(--ob-space-200)' }}>
                 <label
                   style={{
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: 500,
-                    color: '#1d1d1f',
-                    marginBottom: '0.5rem',
+                    color: 'var(--ob-color-bg-inverse)',
+                    marginBottom: 'var(--ob-space-100)',
                     letterSpacing: '-0.005em',
                   }}
                 >
@@ -523,23 +544,23 @@ export function IntegrationsPage() {
                   required
                   style={{
                     width: '100%',
-                    padding: '0.75rem 1rem',
+                    padding: 'var(--ob-space-150) 1rem',
                     fontSize: '1rem',
-                    border: '1px solid #d2d2d7',
-                    borderRadius: '4px',
+                    border: '1px solid var(--ob-color-border-default)',
+                    borderRadius: 'var(--ob-radius-sm)',
                     outline: 'none',
                   }}
                 />
               </div>
 
-              <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ marginBottom: 'var(--ob-space-300)' }}>
                 <label
                   style={{
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: 500,
-                    color: '#1d1d1f',
-                    marginBottom: '0.5rem',
+                    color: 'var(--ob-color-bg-inverse)',
+                    marginBottom: 'var(--ob-space-100)',
                     letterSpacing: '-0.005em',
                   }}
                 >
@@ -555,28 +576,28 @@ export function IntegrationsPage() {
                   required
                   style={{
                     width: '100%',
-                    padding: '0.75rem 1rem',
+                    padding: 'var(--ob-space-150) 1rem',
                     fontSize: '1rem',
-                    border: '1px solid #d2d2d7',
-                    borderRadius: '4px',
+                    border: '1px solid var(--ob-color-border-default)',
+                    borderRadius: 'var(--ob-radius-sm)',
                     outline: 'none',
                   }}
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem' }}>
+              <div style={{ display: 'flex', gap: 'var(--ob-space-200)' }}>
                 <button
                   type="button"
                   onClick={() => setPublishForm(null)}
                   style={{
                     flex: 1,
-                    padding: '0.875rem',
+                    padding: 'var(--ob-space-150)',
                     fontSize: '1rem',
                     fontWeight: 500,
-                    color: '#1d1d1f',
+                    color: 'var(--ob-color-bg-inverse)',
                     background: 'transparent',
-                    border: '1px solid #d2d2d7',
-                    borderRadius: '4px',
+                    border: '1px solid var(--ob-color-border-default)',
+                    borderRadius: 'var(--ob-radius-sm)',
                     cursor: 'pointer',
                   }}
                 >
@@ -587,17 +608,18 @@ export function IntegrationsPage() {
                   disabled={publishingProvider === publishForm.provider}
                   style={{
                     flex: 1,
-                    padding: '0.875rem',
+                    padding: 'var(--ob-space-150)',
                     fontSize: '1rem',
                     fontWeight: 500,
                     color: 'white',
                     background:
                       publishingProvider === publishForm.provider
                         ? '#d2d2d7'
-                        : PROVIDERS.find((p) => p.id === publishForm.provider)
-                            ?.color || '#1d1d1f',
+                        : providers.find(
+                            (p) => p.provider === publishForm.provider,
+                          )?.brandColor || '#1d1d1f',
                     border: 'none',
-                    borderRadius: '4px',
+                    borderRadius: 'var(--ob-radius-sm)',
                     cursor:
                       publishingProvider === publishForm.provider
                         ? 'not-allowed'
@@ -618,9 +640,9 @@ export function IntegrationsPage() {
       <section
         style={{
           background: 'white',
-          border: '1px solid #d2d2d7',
-          borderRadius: '4px',
-          padding: '2rem',
+          border: '1px solid var(--ob-color-border-default)',
+          borderRadius: 'var(--ob-radius-sm)',
+          padding: 'var(--ob-space-400)',
         }}
       >
         <h2
@@ -636,53 +658,49 @@ export function IntegrationsPage() {
         <p
           style={{
             fontSize: '0.9375rem',
-            color: '#6e6e73',
+            color: 'var(--ob-color-text-secondary)',
             lineHeight: 1.6,
             margin: '0 0 1rem',
             letterSpacing: '-0.005em',
           }}
         >
           Connect your property listing accounts to publish directly from the
-          platform. Mock OAuth flow simulates real provider authentication for
-          development purposes.
+          platform. Provider capabilities are loaded from your configured
+          integrations.
         </p>
-        <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
-          <li
+        {providers.length > 0 ? (
+          <ul style={{ margin: 0, paddingLeft: 'var(--ob-space-200)' }}>
+            {providers.map((provider) => (
+              <li
+                key={provider.provider}
+                style={{
+                  fontSize: '0.9375rem',
+                  color: 'var(--ob-color-text-secondary)',
+                  lineHeight: 1.6,
+                  marginBottom: 'var(--ob-space-100)',
+                  letterSpacing: '-0.005em',
+                }}
+              >
+                <strong style={{ color: 'var(--ob-color-bg-inverse)' }}>
+                  {provider.label ?? provider.provider}:
+                </strong>{' '}
+                {provider.description ?? 'Listing integration provider'}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p
             style={{
               fontSize: '0.9375rem',
-              color: '#6e6e73',
+              color: 'var(--ob-color-text-secondary)',
               lineHeight: 1.6,
-              marginBottom: '0.5rem',
+              margin: 0,
               letterSpacing: '-0.005em',
             }}
           >
-            <strong style={{ color: '#1d1d1f' }}>PropertyGuru:</strong>{' '}
-            Singapore's largest property portal with wide reach
-          </li>
-          <li
-            style={{
-              fontSize: '0.9375rem',
-              color: '#6e6e73',
-              lineHeight: 1.6,
-              marginBottom: '0.5rem',
-              letterSpacing: '-0.005em',
-            }}
-          >
-            <strong style={{ color: '#1d1d1f' }}>EdgeProp:</strong> Premium
-            property insights and listings
-          </li>
-          <li
-            style={{
-              fontSize: '0.9375rem',
-              color: '#6e6e73',
-              lineHeight: 1.6,
-              letterSpacing: '-0.005em',
-            }}
-          >
-            <strong style={{ color: '#1d1d1f' }}>Zoho CRM:</strong> Lead
-            management and client tracking
-          </li>
-        </ul>
+            No listing providers configured yet.
+          </p>
+        )}
       </section>
     </div>
   )

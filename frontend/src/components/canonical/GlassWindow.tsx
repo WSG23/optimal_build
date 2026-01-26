@@ -53,7 +53,7 @@ export function GlassWindow({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          background: 'rgba(0,0,0,0.1)', // Subtle darken for header
+          background: 'var(--ob-color-action-active-light)', // Subtle darken for header
         }}
       >
         <Box>
@@ -72,7 +72,7 @@ export function GlassWindow({
               variant="body2"
               sx={{
                 color: 'var(--ob-color-text-secondary)',
-                mt: 0.5,
+                mt: 'var(--ob-space-50)',
               }}
             >
               {subtitle}
@@ -119,7 +119,7 @@ export function GlassWindow({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        p: 2,
+        p: 'var(--ob-space-200)',
         backdropFilter: 'blur(var(--ob-blur-sm))', // Extra blurred backdrop for focus
       }}
     >

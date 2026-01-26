@@ -10,7 +10,7 @@
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
-    /* padding removed - YosaiShell provides canonical 16px layout padding */
+    /* padding removed - OptimalBuildShell provides canonical 16px layout padding */
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
 }
@@ -18,7 +18,7 @@
 .developer-preview-standalone__header {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
 }
 
 .developer-preview-standalone__subtitle {
@@ -58,13 +58,13 @@
 .developer-preview-standalone__viewer {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--ob-space-300);
 }
 
 .developer-preview-standalone__status-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: var(--ob-space-150);
     align-items: center;
 }
 
@@ -109,7 +109,7 @@
     background: var(--ob-color-bg-surface);
     border-radius: 1.25rem;
     padding: 1.5rem 1.75rem;
-    gap: 1.25rem;
+    gap: var(--ob-space-200);
     box-shadow: var(--ob-shadow-lg);
     margin: 0;
 }
@@ -117,7 +117,7 @@
 .developer-preview-standalone__details div {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: var(--ob-space-100);
 }
 
 .developer-preview-standalone__details dt {
@@ -146,13 +146,13 @@
     box-shadow: var(--ob-shadow-lg);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--ob-space-200);
 }
 
 .developer-preview-standalone__layers-header {
     display: flex;
     justify-content: space-between;
-    gap: 1rem;
+    gap: var(--ob-space-200);
     align-items: flex-start;
 }
 
@@ -198,7 +198,7 @@
 .developer-preview-standalone__layers-table th,
 .developer-preview-standalone__layers-table td {
     padding: 0.65rem 0.75rem;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+    border-bottom: 1px solid var(--ob-color-border-subtle);
     text-align: left;
 }
 
@@ -215,7 +215,7 @@
 .developer-preview-standalone__layer-name {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
     font-weight: 600;
     text-transform: capitalize;
 }
@@ -224,14 +224,14 @@
     width: 16px;
     height: 16px;
     border-radius: 6px;
-    border: 1px solid rgba(15, 23, 42, 0.15);
+    border: 1px solid var(--ob-color-border-subtle);
     flex-shrink: 0;
 }
 
 .developer-preview-standalone__layers-controls {
     display: flex;
     justify-content: flex-end;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
     flex-wrap: wrap;
     margin-bottom: 0.5rem;
 }
@@ -254,7 +254,7 @@
 .developer-preview-standalone__layer-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 0.4rem;
+    gap: var(--ob-space-100);
 }
 
 .developer-preview-standalone__layer-action {
@@ -282,34 +282,34 @@
 
 .developer-preview-standalone__inspection {
     margin-top: 2rem;
-    padding: 1.5rem;
+    padding: var(--ob-space-300);
     border-radius: 12px;
     background: var(--ob-neutral-900);
     border: 1px solid var(--ob-color-border-subtle);
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: var(--ob-space-200);
 }
 
 .developer-preview-standalone__inspection-header {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    gap: 1.5rem;
+    gap: var(--ob-space-300);
     align-items: center;
 }
 
 .developer-preview-standalone__inspection-title {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--ob-space-200);
 }
 
 .developer-preview-standalone__inspection-swatch {
     width: 2.5rem;
     height: 2.5rem;
     border-radius: 0.9rem;
-    border: 2px solid rgba(255, 255, 255, 0.25);
+    border: 2px solid var(--ob-color-border-subtle);
 }
 
 .developer-preview-standalone__inspection-label {
@@ -325,7 +325,7 @@
     flex-direction: column;
     font-size: 0.8rem;
     color: var(--ob-neutral-300);
-    gap: 0.35rem;
+    gap: var(--ob-space-50);
 }
 
 .developer-preview-standalone__inspection-select select {
@@ -339,7 +339,7 @@
 .developer-preview-standalone__inspection-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
+    gap: var(--ob-space-200);
 }
 
 .developer-preview-standalone__inspection-grid dt {
@@ -358,7 +358,7 @@
 
 .developer-preview-standalone__inspection-footprint,
 .developer-preview-standalone__inspection-floorlines {
-    border-top: 1px solid rgba(148, 163, 184, 0.25);
+    border-top: 1px solid var(--ob-color-border-subtle);
     padding-top: 1rem;
 }
 
@@ -376,7 +376,7 @@
 .developer-preview-standalone__inspection-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: var(--ob-space-150);
 }
 
 .developer-preview-standalone__layers-button.is-active {
@@ -389,19 +389,19 @@
     margin-top: 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--ob-space-150);
 }
 
 .developer-preview-standalone__legend-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 0.75rem;
+    gap: var(--ob-space-150);
 }
 
 .developer-preview-standalone__legend-item {
     display: flex;
-    gap: 0.65rem;
-    padding: 0.85rem;
+    gap: var(--ob-space-150);
+    padding: var(--ob-space-150);
     border: 1px solid var(--ob-color-border-neutral);
     border-radius: 12px;
     background: var(--ob-color-bg-surface-elevated);
@@ -411,7 +411,7 @@
     width: 18px;
     height: 18px;
     border-radius: 999px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--ob-color-action-active-light);
     flex-shrink: 0;
     margin-top: 0.15rem;
 }

@@ -396,7 +396,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
               fontWeight: 700,
               lineHeight: 1.2,
               color: 'var(--ob-color-text-primary)',
-              m: 0,
+              m: '0',
             }}
           >
             Regulatory Dashboard
@@ -406,7 +406,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
             sx={{
               fontSize: 'var(--ob-font-size-sm)',
               color: 'var(--ob-color-text-secondary)',
-              m: 0,
+              m: '0',
               mt: 'var(--ob-space-025)',
             }}
           >
@@ -466,7 +466,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
             color: 'var(--ob-color-text-tertiary)',
             textTransform: 'uppercase',
             letterSpacing: '0.1em',
-            m: 0,
+            m: '0',
             mb: 'var(--ob-space-100)',
           }}
         >
@@ -631,7 +631,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
       </Box>
 
       {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      <Box sx={{ borderBottom: 'var(--ob-space-100)', borderColor: 'divider' }}>
         <Tabs value={tabValue} onChange={handleTabChange}>
           <Tab
             label="Submissions"
@@ -658,7 +658,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
               color: 'var(--ob-color-text-tertiary)',
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
-              m: 0,
+              m: '0',
               mb: 'var(--ob-space-100)',
             }}
           >
@@ -726,7 +726,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
               color: 'var(--ob-color-text-tertiary)',
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
-              m: 0,
+              m: '0',
               mb: 'var(--ob-space-100)',
             }}
           >
@@ -752,7 +752,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
                 sx={{
                   color: 'var(--ob-color-text-secondary)',
                   fontSize: 'var(--ob-font-size-sm)',
-                  m: 0,
+                  m: '0',
                 }}
               >
                 No authority submissions yet. Change of Use and Heritage drafts
@@ -845,7 +845,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
               color: 'var(--ob-color-text-tertiary)',
               textTransform: 'uppercase',
               letterSpacing: '0.1em',
-              m: 0,
+              m: '0',
               mb: 'var(--ob-space-100)',
             }}
           >
@@ -861,7 +861,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
                 sx={{
                   fontSize: 'var(--ob-font-size-sm)',
                   color: 'var(--ob-color-text-secondary)',
-                  m: 0,
+                  m: '0',
                 }}
               >
                 No change of use applications yet.
@@ -956,7 +956,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
                 color: 'var(--ob-color-text-tertiary)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.1em',
-                m: 0,
+                m: '0',
               }}
             >
               Heritage Submissions (STB)
@@ -976,7 +976,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
                 sx={{
                   fontSize: 'var(--ob-font-size-sm)',
                   color: 'var(--ob-color-text-secondary)',
-                  m: 0,
+                  m: '0',
                   mb: 'var(--ob-space-100)',
                 }}
               >

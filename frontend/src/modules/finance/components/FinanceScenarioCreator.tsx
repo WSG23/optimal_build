@@ -337,7 +337,7 @@ export function FinanceScenarioCreator({
               sx={{
                 px: 'var(--ob-space-150)',
                 py: 'var(--ob-space-125)',
-                borderBottom: 1,
+                borderBottom: 'var(--ob-space-100)',
                 borderColor: 'divider',
                 bgcolor: alpha(theme.palette.background.default, 0.5),
                 display: 'flex',
@@ -371,13 +371,13 @@ export function FinanceScenarioCreator({
                     textTransform: 'uppercase',
                     letterSpacing: 'var(--ob-letter-spacing-wider)',
                     whiteSpace: 'nowrap',
-                    borderBottom: 1,
+                    borderBottom: 'var(--ob-space-100)',
                     borderColor: 'divider',
                   },
                   '& td': {
                     px: 'var(--ob-space-100)',
                     py: 'var(--ob-space-100)',
-                    borderBottom: 1,
+                    borderBottom: 'var(--ob-space-100)',
                     borderColor: 'divider', // or 'var(--ob-color-border-subtle)'
                     verticalAlign: 'middle',
                   },
@@ -575,7 +575,7 @@ export function FinanceScenarioCreator({
             <Box
               sx={{
                 p: 'var(--ob-space-100)',
-                borderTop: 1,
+                borderTop: 'var(--ob-space-100)',
                 borderColor: 'divider',
               }}
             >

@@ -27,7 +27,7 @@ export interface NeonTextProps extends Omit<TypographyProps, 'sx'> {
 const colorConfig = {
   cyan: {
     color: 'var(--ob-color-neon-cyan)',
-    glowSubtle: '0 0 4px rgba(0, 243, 255, 0.3)',
+    glowSubtle: '0 0 4px var(--ob-color-neon-cyan-muted)',
     glowMedium: 'var(--ob-glow-neon-text)',
     glowStrong: 'var(--ob-glow-neon-cyan)',
   },

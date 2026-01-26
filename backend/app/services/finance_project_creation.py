@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import RequestIdentity
 from app.models.finance import FinCapitalStack, FinProject, FinScenario
-from app.models.projects import Project, ProjectPhase, ProjectType
+from app.models.project import Project, ProjectPhase, ProjectType
 from app.models.property import Property
 from app.schemas.finance import (
     CapitalStackSliceInput,

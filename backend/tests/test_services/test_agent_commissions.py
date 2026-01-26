@@ -16,7 +16,7 @@ from app.models.business_performance import (
     DealAssetType,
     DealType,
 )
-from app.models.users import User
+from app.models.user import User
 from app.services.deals import AgentCommissionService, AgentDealService
 from sqlalchemy import select
 

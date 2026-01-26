@@ -62,21 +62,21 @@ function HolographicCard({
         position: 'relative',
         minWidth: 160,
         flex: 1,
-        p: 2,
-        borderRadius: 3,
+        p: 'var(--ob-space-200)',
+        borderRadius: 'var(--ob-radius-md)',
         background: 'rgba(30, 30, 30, 0.6)',
         backdropFilter: 'blur(var(--ob-blur-md))',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+        border: '1px solid var(--ob-color-action-hover)',
+        boxShadow: '0 8px 32px 0 var(--ob-color-overlay-backdrop-light)',
         display: 'flex',
         alignItems: 'center',
-        gap: 2,
+        gap: 'var(--ob-space-200)',
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow:
-            '0 12px 40px 0 rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 243, 255, 0.1)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
+            '0 12px 40px 0 var(--ob-color-overlay-backdrop), 0 0 20px var(--ob-color-action-selected)',
+          border: '1px solid var(--ob-color-surface-overlay-medium)',
         },
       }}
     >
@@ -89,7 +89,7 @@ function HolographicCard({
               value={100}
               size={52}
               thickness={4}
-              sx={{ color: 'rgba(255, 255, 255, 0.1)' }}
+              sx={{ color: 'var(--ob-color-surface-overlay)' }}
             />
             <CircularProgress
               variant="determinate"
@@ -107,9 +107,9 @@ function HolographicCard({
             />
             <Box
               sx={{
-                top: 0,
+                top: '0',
                 left: 0,
-                bottom: 0,
+                bottom: '0',
                 right: 0,
                 position: 'absolute',
                 display: 'flex',
@@ -121,7 +121,7 @@ function HolographicCard({
             </Box>
           </Box>
         ) : (
-          icon && <Box sx={{ p: 1 }}>{icon}</Box>
+          icon && <Box sx={{ p: 'var(--ob-space-100)' }}>{icon}</Box>
         )}
       </Box>
 
@@ -130,11 +130,11 @@ function HolographicCard({
           variant="h4"
           sx={{
             fontWeight: 700,
-            color: '#fff',
-            textShadow: '0 2px 10px rgba(0,0,0,0.5)',
+            color: 'var(--ob-color-bg-default)',
+            textShadow: '0 2px 10px var(--ob-color-overlay-backdrop)',
             fontSize: '1.75rem',
             lineHeight: 1,
-            mb: 0.5,
+            mb: 'var(--ob-space-50)',
           }}
         >
           {value}
@@ -142,13 +142,17 @@ function HolographicCard({
             <Typography
               component="span"
               variant="h6"
-              sx={{ ml: 0.5, opacity: 0.7 }}
+              sx={{ ml: 'var(--ob-space-50)', opacity: 0.7 }}
             >
               {suffix}
             </Typography>
           )}
         </Typography>
-        <Stack direction="row" alignItems="center" spacing={1}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing="var(--ob-space-100)"
+        >
           <Typography
             variant="body2"
             sx={{
@@ -197,7 +201,7 @@ function TabPanel({ children, value, index }: TabPanelProps) {
       hidden={value !== index}
       id={`phase-tabpanel-${index}`}
       aria-labelledby={`phase-tab-${index}`}
-      sx={{ pt: 3 }}
+      sx={{ pt: 'var(--ob-space-300)' }}
     >
       {value === index && children}
     </Box>
@@ -239,19 +243,48 @@ export function PhaseManagementPage() {
       setError(null)
 
       try {
-        const [gantt, critical, heritage, tenant] = await Promise.all([
-          fetchGanttChart(projectId, signal).catch(() => null),
-          fetchCriticalPath(projectId, signal).catch(() => null),
-          fetchHeritageTracker(projectId, signal).catch(() => null),
-          fetchTenantCoordination(projectId, signal).catch(() => null),
+        const results = await Promise.allSettled([
+          fetchGanttChart(projectId, signal),
+          fetchCriticalPath(projectId, signal),
+          fetchHeritageTracker(projectId, signal),
+          fetchTenantCoordination(projectId, signal),
         ])
 
         if (signal?.aborted) return
 
-        setGanttData(gantt)
-        setCriticalPath(critical)
-        setHeritageData(heritage)
-        setTenantData(tenant)
+        const [ganttResult, criticalResult, heritageResult, tenantResult] =
+          results
+
+        setGanttData(
+          ganttResult.status === 'fulfilled' ? ganttResult.value : null,
+        )
+        setCriticalPath(
+          criticalResult.status === 'fulfilled' ? criticalResult.value : null,
+        )
+        setHeritageData(
+          heritageResult.status === 'fulfilled' ? heritageResult.value : null,
+        )
+        setTenantData(
+          tenantResult.status === 'fulfilled' ? tenantResult.value : null,
+        )
+
+        const failedRequests: string[] = []
+        if (ganttResult.status === 'rejected')
+          failedRequests.push('Gantt chart')
+        if (criticalResult.status === 'rejected')
+          failedRequests.push('Critical path')
+        if (heritageResult.status === 'rejected')
+          failedRequests.push('Heritage tracking')
+        if (tenantResult.status === 'rejected')
+          failedRequests.push('Tenant coordination')
+
+        if (failedRequests.length > 0) {
+          setError(
+            `Failed to load: ${failedRequests.join(
+              ', ',
+            )}. Please verify the phase APIs are available.`,
+          )
+        }
       } catch (err) {
         if ((err as { name?: string }).name === 'AbortError') return
         console.error('Failed to load phase data', err)
@@ -324,17 +357,37 @@ export function PhaseManagementPage() {
         tenantPhases: 0,
         totalDuration: 0,
         criticalDuration: 0,
+        completionPct: 0,
+        heritageCompletionPct: 0,
+        tenantCompletionPct: 0,
       }
     }
+
+    const heritageTasks = ganttData.tasks.filter((t) => t.isHeritage)
+    const tenantTasks = ganttData.tasks.filter((t) => t.hasTenantCoordination)
+    const heritageCompletionPct =
+      heritageTasks.length > 0
+        ? (heritageTasks.reduce((acc, t) => acc + t.progress, 0) /
+            heritageTasks.length) *
+          100
+        : 0
+    const tenantCompletionPct =
+      tenantTasks.length > 0
+        ? (tenantTasks.reduce((acc, t) => acc + t.progress, 0) /
+            tenantTasks.length) *
+          100
+        : 0
 
     return {
       totalPhases: ganttData.tasks.length,
       criticalPhases: ganttData.tasks.filter((t) => t.isCritical).length,
-      heritagePhases: ganttData.tasks.filter((t) => t.isHeritage).length,
-      tenantPhases: ganttData.tasks.filter((t) => t.hasTenantCoordination)
-        .length,
+      heritagePhases: heritageTasks.length,
+      tenantPhases: tenantTasks.length,
       totalDuration: ganttData.totalDuration,
       criticalDuration: ganttData.criticalPathDuration,
+      completionPct: ganttData.completionPct,
+      heritageCompletionPct,
+      tenantCompletionPct,
     }
   }, [ganttData])
 
@@ -363,7 +416,7 @@ export function PhaseManagementPage() {
           minHeight: 400,
         }}
       >
-        <Stack alignItems="center" spacing={2}>
+        <Stack alignItems="center" spacing="var(--ob-space-200)">
           <CircularProgress />
           <Typography color="text.secondary">
             Loading project phases...
@@ -408,7 +461,7 @@ export function PhaseManagementPage() {
             </Typography>
           )}
         </Box>
-        <Stack direction="row" spacing={1} flexWrap="wrap">
+        <Stack direction="row" spacing="var(--ob-space-100)" flexWrap="wrap">
           {projectId && (
             <>
               <Button
@@ -466,7 +519,7 @@ export function PhaseManagementPage() {
 
       {error && (
         <Alert severity="info" sx={{ mb: 'var(--ob-space-200)' }}>
-          {error} Demo data is shown below.
+          {error}
         </Alert>
       )}
 
@@ -487,10 +540,14 @@ export function PhaseManagementPage() {
           sx={{ display: 'flex', gap: 'var(--ob-space-200)', flexWrap: 'wrap' }}
         >
           <HolographicCard
-            icon={<TimelineIcon sx={{ fontSize: 28, color: '#00f3ff' }} />}
+            icon={
+              <TimelineIcon
+                sx={{ fontSize: 28, color: 'var(--ob-color-neon-cyan)' }}
+              />
+            }
             value={stats.totalPhases}
             label="Total Phases"
-            progress={75} // Example progress
+            progress={stats.completionPct}
             color="#00f3ff"
           />
           <HolographicCard
@@ -509,25 +566,27 @@ export function PhaseManagementPage() {
           />
           <HolographicCard
             icon={
-              <AccountBalanceIcon sx={{ fontSize: 28, color: '#f59e0b' }} />
+              <AccountBalanceIcon
+                sx={{ fontSize: 28, color: 'var(--ob-color-warning)' }}
+              />
             }
             value={stats.heritagePhases}
             label="Heritage Phases"
-            progress={45}
+            progress={stats.heritageCompletionPct}
             color="#f59e0b"
           />
           <HolographicCard
             icon={<PeopleIcon sx={{ fontSize: 28, color: '#a855f7' }} />}
             value={stats.tenantPhases}
             label="Tenant Coord"
-            progress={60}
+            progress={stats.tenantCompletionPct}
             color="#a855f7"
           />
           <HolographicCard
             value={stats.totalDuration}
             label="Total Days"
             suffix="d"
-            progress={35} // Just an example, ideally calculated (elapsed / total)
+            progress={stats.completionPct}
             color="#fff"
           />
           <HolographicCard
@@ -543,7 +602,7 @@ export function PhaseManagementPage() {
       {/* Tabs - Depth 0 (Direct on Grid) */}
       <Box
         sx={{
-          borderBottom: 1,
+          borderBottom: 'var(--ob-space-100)',
           borderColor: 'divider',
           mb: 'var(--ob-space-300)',
         }}
@@ -583,10 +642,9 @@ export function PhaseManagementPage() {
               selectedTaskId={selectedTaskId}
             />
           ) : (
-            <DemoGanttChart
-              onTaskClick={handleTaskClick}
-              selectedTaskId={selectedTaskId}
-            />
+            <Alert severity="info">
+              No Gantt data available for this project yet.
+            </Alert>
           )}
         </TabPanel>
 
@@ -595,7 +653,9 @@ export function PhaseManagementPage() {
           {criticalPath ? (
             <CriticalPathView data={criticalPath} />
           ) : (
-            <DemoCriticalPath />
+            <Alert severity="info">
+              Critical path analysis is unavailable for this project.
+            </Alert>
           )}
         </TabPanel>
 
@@ -604,7 +664,9 @@ export function PhaseManagementPage() {
           {heritageData ? (
             <HeritageView data={heritageData} />
           ) : (
-            <DemoHeritageView />
+            <Alert severity="info">
+              Heritage tracking is unavailable for this project.
+            </Alert>
           )}
         </TabPanel>
 
@@ -613,7 +675,9 @@ export function PhaseManagementPage() {
           {tenantData ? (
             <TenantRelocationDashboard data={tenantData} />
           ) : (
-            <DemoTenantCoordination />
+            <Alert severity="info">
+              Tenant coordination data is unavailable for this project.
+            </Alert>
           )}
         </TabPanel>
       </Box>
@@ -630,145 +694,14 @@ export function PhaseManagementPage() {
   )
 }
 
-// Demo components for when API is not available
-function DemoGanttChart({
-  onTaskClick,
-  selectedTaskId,
-}: {
-  onTaskClick: (id: string) => void
-  selectedTaskId: string | null
-}) {
-  const demoData: GanttChartData = {
-    projectId: 'demo-project',
-    projectName: 'Heritage Mixed-Use Development',
-    generatedAt: new Date().toISOString(),
-    tasks: [
-      {
-        id: '1',
-        name: 'Site Preparation',
-        phaseType: 'site_preparation',
-        status: 'completed',
-        startDate: '2025-01-01',
-        endDate: '2025-01-30',
-        duration: 30,
-        progress: 1.0,
-        dependencies: [],
-        isCritical: true,
-        isHeritage: false,
-        hasTenantCoordination: false,
-        color: '#10b981',
-        budgetAmount: 500000,
-        actualCostAmount: 480000,
-      },
-      {
-        id: '2',
-        name: 'Heritage Facade Restoration',
-        phaseType: 'heritage_restoration',
-        status: 'in_progress',
-        startDate: '2025-02-01',
-        endDate: '2025-04-15',
-        duration: 74,
-        progress: 0.45,
-        dependencies: ['1'],
-        isCritical: true,
-        isHeritage: true,
-        hasTenantCoordination: false,
-        color: '#f59e0b',
-        budgetAmount: 2000000,
-        actualCostAmount: null,
-      },
-      {
-        id: '3',
-        name: 'Tenant Relocation Phase 1',
-        phaseType: 'tenant_renovation',
-        status: 'in_progress',
-        startDate: '2025-02-15',
-        endDate: '2025-03-31',
-        duration: 45,
-        progress: 0.6,
-        dependencies: ['1'],
-        isCritical: false,
-        isHeritage: false,
-        hasTenantCoordination: true,
-        color: '#3b82f6',
-        budgetAmount: 300000,
-        actualCostAmount: null,
-      },
-      {
-        id: '4',
-        name: 'Structure Reinforcement',
-        phaseType: 'structure',
-        status: 'planning',
-        startDate: '2025-04-16',
-        endDate: '2025-06-30',
-        duration: 76,
-        progress: 0,
-        dependencies: ['2'],
-        isCritical: true,
-        isHeritage: false,
-        hasTenantCoordination: false,
-        color: '#94a3b8',
-        budgetAmount: 3500000,
-        actualCostAmount: null,
-      },
-      {
-        id: '5',
-        name: 'MEP Installation',
-        phaseType: 'mep_rough_in',
-        status: 'not_started',
-        startDate: '2025-07-01',
-        endDate: '2025-09-15',
-        duration: 77,
-        progress: 0,
-        dependencies: ['4'],
-        isCritical: true,
-        isHeritage: false,
-        hasTenantCoordination: false,
-        color: '#94a3b8',
-        budgetAmount: 2500000,
-        actualCostAmount: null,
-      },
-      {
-        id: '6',
-        name: 'Interior Fit-Out',
-        phaseType: 'interior_fit_out',
-        status: 'not_started',
-        startDate: '2025-09-16',
-        endDate: '2025-11-30',
-        duration: 76,
-        progress: 0,
-        dependencies: ['5'],
-        isCritical: false,
-        isHeritage: false,
-        hasTenantCoordination: true,
-        color: '#94a3b8',
-        budgetAmount: 1800000,
-        actualCostAmount: null,
-      },
-    ],
-    projectStartDate: '2025-01-01',
-    projectEndDate: '2025-11-30',
-    totalDuration: 334,
-    criticalPathDuration: 257,
-  }
-
-  return (
-    <GanttChart
-      data={demoData}
-      onTaskClick={onTaskClick}
-      selectedTaskId={selectedTaskId}
-    />
-  )
-}
-
 function CriticalPathView({ data }: { data: CriticalPathResult }) {
   return (
-    <Stack spacing={3}>
-      <Paper variant="outlined" sx={{ p: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
+    <Stack spacing="var(--ob-space-300)">
+      <Paper variant="outlined" sx={{ p: 'var(--ob-space-300)' }}>
+        <Typography variant="h6" sx={{ mb: 'var(--ob-space-200)' }}>
           Critical Path Analysis
         </Typography>
-        <Typography variant="body1" sx={{ mb: 2 }}>
+        <Typography variant="body1" sx={{ mb: 'var(--ob-space-200)' }}>
           Total Duration: <strong>{data.totalDuration} days</strong>
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -778,25 +711,29 @@ function CriticalPathView({ data }: { data: CriticalPathResult }) {
         </Typography>
       </Paper>
 
-      <Grid container spacing={2}>
+      <Grid container spacing="var(--ob-space-200)">
         <Grid item xs={12} md={6}>
-          <Paper variant="outlined" sx={{ p: 2 }}>
+          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
             <Typography
               variant="subtitle1"
-              sx={{ fontWeight: 600, mb: 2, color: 'error.main' }}
+              sx={{
+                fontWeight: 600,
+                mb: 'var(--ob-space-200)',
+                color: 'error.main',
+              }}
             >
               Critical Phases ({data.criticalPhases.length})
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing="var(--ob-space-100)">
               {data.criticalPhases.map((phase) => (
                 <Box
                   key={phase.phaseId}
                   sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    p: 1,
+                    p: 'var(--ob-space-100)',
                     backgroundColor: '#fef2f2',
-                    borderRadius: 1,
+                    borderRadius: 'var(--ob-radius-sm)',
                   }}
                 >
                   <Typography variant="body2">{phase.name}</Typography>
@@ -809,23 +746,27 @@ function CriticalPathView({ data }: { data: CriticalPathResult }) {
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Paper variant="outlined" sx={{ p: 2 }}>
+          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
             <Typography
               variant="subtitle1"
-              sx={{ fontWeight: 600, mb: 2, color: 'success.main' }}
+              sx={{
+                fontWeight: 600,
+                mb: 'var(--ob-space-200)',
+                color: 'success.main',
+              }}
             >
               Non-Critical Phases ({data.nonCriticalPhases.length})
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing="var(--ob-space-100)">
               {data.nonCriticalPhases.map((phase) => (
                 <Box
                   key={phase.phaseId}
                   sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    p: 1,
+                    p: 'var(--ob-space-100)',
                     backgroundColor: '#f0fdf4',
-                    borderRadius: 1,
+                    borderRadius: 'var(--ob-radius-sm)',
                   }}
                 >
                   <Typography variant="body2">{phase.name}</Typography>
@@ -842,80 +783,29 @@ function CriticalPathView({ data }: { data: CriticalPathResult }) {
   )
 }
 
-function DemoCriticalPath() {
-  const demoData: CriticalPathResult = {
-    projectId: 'demo-project',
-    criticalPath: ['1', '2', '4', '5'],
-    totalDuration: 257,
-    criticalPhases: [
-      {
-        phaseId: 1,
-        name: 'Site Preparation',
-        earlyStart: 0,
-        earlyFinish: 30,
-        lateStart: 0,
-        lateFinish: 30,
-        float: 0,
-      },
-      {
-        phaseId: 2,
-        name: 'Heritage Facade Restoration',
-        earlyStart: 31,
-        earlyFinish: 104,
-        lateStart: 31,
-        lateFinish: 104,
-        float: 0,
-      },
-      {
-        phaseId: 4,
-        name: 'Structure Reinforcement',
-        earlyStart: 105,
-        earlyFinish: 180,
-        lateStart: 105,
-        lateFinish: 180,
-        float: 0,
-      },
-      {
-        phaseId: 5,
-        name: 'MEP Installation',
-        earlyStart: 181,
-        earlyFinish: 257,
-        lateStart: 181,
-        lateFinish: 257,
-        float: 0,
-      },
-    ],
-    nonCriticalPhases: [
-      { phaseId: 3, name: 'Tenant Relocation Phase 1', float: 30 },
-      { phaseId: 6, name: 'Interior Fit-Out', float: 15 },
-    ],
-  }
-  return <CriticalPathView data={demoData} />
-}
-
 function HeritageView({ data }: { data: HeritageTracker }) {
   return (
-    <Stack spacing={3}>
-      <Paper variant="outlined" sx={{ p: 3 }}>
+    <Stack spacing="var(--ob-space-300)">
+      <Paper variant="outlined" sx={{ p: 'var(--ob-space-300)' }}>
         <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="center"
-          sx={{ mb: 2 }}
+          sx={{ mb: 'var(--ob-space-200)' }}
         >
           <Typography variant="h6">Heritage Preservation Status</Typography>
           <Typography
             variant="body2"
             sx={{
-              px: 2,
-              py: 0.5,
+              px: 'var(--ob-space-200)',
+              py: 'var(--ob-space-50)',
               backgroundColor:
                 data.overallApprovalStatus === 'approved'
                   ? '#dcfce7'
                   : data.overallApprovalStatus === 'pending'
                     ? '#fef3c7'
-                    : '#fee2e2',
-              borderRadius: 1,
+                    : 'var(--ob-color-error-muted)',
+              borderRadius: 'var(--ob-radius-sm)',
             }}
           >
             {data.overallApprovalStatus}
@@ -927,13 +817,16 @@ function HeritageView({ data }: { data: HeritageTracker }) {
         </Typography>
       </Paper>
 
-      <Grid container spacing={2}>
+      <Grid container spacing="var(--ob-space-200)">
         <Grid item xs={12} md={4}>
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 600, mb: 'var(--ob-space-200)' }}
+            >
               Required Approvals
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing="var(--ob-space-100)">
               {data.requiredApprovals.map((approval, idx) => (
                 <Typography key={idx} variant="body2">
                   • {approval}
@@ -943,14 +836,18 @@ function HeritageView({ data }: { data: HeritageTracker }) {
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper variant="outlined" sx={{ p: 2 }}>
+          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
             <Typography
               variant="subtitle2"
-              sx={{ fontWeight: 600, mb: 2, color: 'warning.main' }}
+              sx={{
+                fontWeight: 600,
+                mb: 'var(--ob-space-200)',
+                color: 'warning.main',
+              }}
             >
               Preservation Risks
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing="var(--ob-space-100)">
               {data.preservationRisks.map((risk, idx) => (
                 <Typography key={idx} variant="body2">
                   • {risk}
@@ -960,14 +857,18 @@ function HeritageView({ data }: { data: HeritageTracker }) {
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper variant="outlined" sx={{ p: 2 }}>
+          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
             <Typography
               variant="subtitle2"
-              sx={{ fontWeight: 600, mb: 2, color: 'info.main' }}
+              sx={{
+                fontWeight: 600,
+                mb: 'var(--ob-space-200)',
+                color: 'info.main',
+              }}
             >
               Recommendations
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing="var(--ob-space-100)">
               {data.recommendations.map((rec, idx) => (
                 <Typography key={idx} variant="body2">
                   • {rec}
@@ -978,12 +879,15 @@ function HeritageView({ data }: { data: HeritageTracker }) {
         </Grid>
       </Grid>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+      <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+        <Typography
+          variant="subtitle1"
+          sx={{ fontWeight: 600, mb: 'var(--ob-space-200)' }}
+        >
           Heritage Phases
         </Typography>
-        <Divider sx={{ mb: 2 }} />
-        <Stack spacing={2}>
+        <Divider sx={{ mb: 'var(--ob-space-200)' }} />
+        <Stack spacing="var(--ob-space-200)">
           {data.phases.map((phase) => (
             <Box
               key={phase.phaseId}
@@ -991,10 +895,12 @@ function HeritageView({ data }: { data: HeritageTracker }) {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                p: 1.5,
-                backgroundColor: phase.approvalRequired ? '#fefce8' : '#f9fafb',
-                borderRadius: 1,
-                border: '1px solid #e5e7eb',
+                p: 'var(--ob-space-150)',
+                backgroundColor: phase.approvalRequired
+                  ? '#fefce8'
+                  : 'var(--ob-color-bg-muted)',
+                borderRadius: 'var(--ob-radius-sm)',
+                border: '1px solid var(--ob-color-border-subtle)',
               }}
             >
               <Box>
@@ -1009,13 +915,13 @@ function HeritageView({ data }: { data: HeritageTracker }) {
                 <Typography
                   variant="caption"
                   sx={{
-                    px: 1.5,
-                    py: 0.5,
+                    px: 'var(--ob-space-150)',
+                    py: 'var(--ob-space-50)',
                     backgroundColor:
                       phase.approvalStatus === 'approved'
                         ? '#dcfce7'
                         : '#fef3c7',
-                    borderRadius: 1,
+                    borderRadius: 'var(--ob-radius-sm)',
                   }}
                 >
                   {phase.approvalStatus ?? 'Pending'}
@@ -1027,186 +933,4 @@ function HeritageView({ data }: { data: HeritageTracker }) {
       </Paper>
     </Stack>
   )
-}
-
-function DemoHeritageView() {
-  const demoData: HeritageTracker = {
-    projectId: 'demo-project',
-    heritageClassification: 'conservation_building',
-    overallApprovalStatus: 'pending',
-    phases: [
-      {
-        phaseId: 2,
-        name: 'Heritage Facade Restoration',
-        heritageClassification: 'conservation_building',
-        approvalRequired: true,
-        approvalStatus: 'approved',
-        specialConsiderations: [
-          'Original materials must be preserved',
-          'Historical facade elements protected',
-        ],
-      },
-      {
-        phaseId: 4,
-        name: 'Structure Reinforcement',
-        heritageClassification: 'conservation_building',
-        approvalRequired: true,
-        approvalStatus: 'pending',
-        specialConsiderations: ['Non-invasive reinforcement methods required'],
-      },
-    ],
-    requiredApprovals: [
-      'URA Conservation approval',
-      'National Heritage Board review',
-      'Structural engineer heritage certification',
-    ],
-    preservationRisks: [
-      'Original facade materials may be fragile',
-      'Hidden structural issues in heritage elements',
-      'Limited documentation of original construction',
-    ],
-    recommendations: [
-      'Engage heritage architect for facade work',
-      'Conduct detailed photogrammetry before work',
-      'Prepare contingency for material sourcing',
-    ],
-  }
-  return <HeritageView data={demoData} />
-}
-
-function DemoTenantCoordination() {
-  const demoData: TenantCoordinationSummary = {
-    projectId: 'demo-project',
-    totalTenants: 8,
-    statusBreakdown: {
-      pending_notification: 1,
-      notified: 2,
-      confirmed: 2,
-      in_progress: 1,
-      relocated: 2,
-    },
-    relocations: [
-      {
-        id: 1,
-        phaseId: 3,
-        tenantName: 'ABC Trading Co.',
-        currentUnit: '#01-01',
-        relocationType: 'temporary',
-        status: 'relocated',
-        notificationDate: '2024-12-01',
-        plannedMoveDate: '2025-02-15',
-        actualMoveDate: '2025-02-14',
-        temporaryLocation: '#05-01 (Temp)',
-        compensationAmount: 15000,
-        notes: null,
-      },
-      {
-        id: 2,
-        phaseId: 3,
-        tenantName: 'XYZ Retail',
-        currentUnit: '#01-02',
-        relocationType: 'temporary',
-        status: 'relocated',
-        notificationDate: '2024-12-01',
-        plannedMoveDate: '2025-02-20',
-        actualMoveDate: '2025-02-19',
-        temporaryLocation: '#05-02 (Temp)',
-        compensationAmount: 12000,
-        notes: null,
-      },
-      {
-        id: 3,
-        phaseId: 3,
-        tenantName: 'Golden Restaurant',
-        currentUnit: '#02-01',
-        relocationType: 'permanent',
-        status: 'in_progress',
-        notificationDate: '2025-01-15',
-        plannedMoveDate: '2025-03-15',
-        actualMoveDate: null,
-        temporaryLocation: null,
-        compensationAmount: 50000,
-        notes: 'Requires special kitchen equipment moving',
-      },
-      {
-        id: 4,
-        phaseId: 6,
-        tenantName: 'Tech Startup Inc.',
-        currentUnit: '#03-01',
-        relocationType: 'temporary',
-        status: 'confirmed',
-        notificationDate: '2025-02-01',
-        plannedMoveDate: '2025-09-01',
-        actualMoveDate: null,
-        temporaryLocation: '#06-01 (Temp)',
-        compensationAmount: 8000,
-        notes: null,
-      },
-      {
-        id: 5,
-        phaseId: 6,
-        tenantName: 'Design Studio',
-        currentUnit: '#03-02',
-        relocationType: 'temporary',
-        status: 'confirmed',
-        notificationDate: '2025-02-01',
-        plannedMoveDate: '2025-09-15',
-        actualMoveDate: null,
-        temporaryLocation: '#06-02 (Temp)',
-        compensationAmount: 6000,
-        notes: null,
-      },
-    ],
-    upcomingMoves: [
-      {
-        id: 3,
-        phaseId: 3,
-        tenantName: 'Golden Restaurant',
-        currentUnit: '#02-01',
-        relocationType: 'permanent',
-        status: 'in_progress',
-        notificationDate: '2025-01-15',
-        plannedMoveDate: '2025-03-15',
-        actualMoveDate: null,
-        temporaryLocation: null,
-        compensationAmount: 50000,
-        notes: null,
-      },
-    ],
-    overdueNotifications: [],
-    timeline: [
-      {
-        date: '2025-02-19',
-        event: 'Move completed',
-        tenantName: 'XYZ Retail',
-        status: 'relocated',
-      },
-      {
-        date: '2025-02-14',
-        event: 'Move completed',
-        tenantName: 'ABC Trading Co.',
-        status: 'relocated',
-      },
-      {
-        date: '2025-02-01',
-        event: 'Notification sent',
-        tenantName: 'Design Studio',
-        status: 'notified',
-      },
-      {
-        date: '2025-02-01',
-        event: 'Notification sent',
-        tenantName: 'Tech Startup Inc.',
-        status: 'notified',
-      },
-      {
-        date: '2025-01-15',
-        event: 'Notification sent',
-        tenantName: 'Golden Restaurant',
-        status: 'notified',
-      },
-    ],
-    warnings: [],
-  }
-  return <TenantRelocationDashboard data={demoData} />
 }

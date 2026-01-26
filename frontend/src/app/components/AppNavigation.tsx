@@ -99,9 +99,9 @@ export function AppNavigation({
       <div
         style={{
           display: 'flex',
-          gap: '0.5rem',
-          padding: '0.75rem 1rem',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          gap: 'var(--ob-space-100)',
+          padding: 'var(--ob-space-150) 1rem',
+          borderBottom: '1px solid var(--ob-color-surface-overlay)',
         }}
       >
         <button
@@ -109,7 +109,7 @@ export function AppNavigation({
           onClick={() => handleWorkspaceSwitch('agent')}
           style={{
             flex: 1,
-            padding: '0.5rem',
+            padding: 'var(--ob-space-100)',
             fontSize: '0.875rem',
             fontWeight: 500,
             color:
@@ -118,10 +118,10 @@ export function AppNavigation({
                 : 'rgba(255, 255, 255, 0.6)',
             background:
               selectedWorkspace === 'agent'
-                ? 'rgba(255, 255, 255, 0.1)'
+                ? 'var(--ob-color-surface-overlay)'
                 : 'transparent',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '6px',
+            border: '1px solid var(--ob-color-surface-overlay-medium)',
+            borderRadius: 'var(--ob-radius-md)',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
           }}
@@ -133,7 +133,7 @@ export function AppNavigation({
           onClick={() => handleWorkspaceSwitch('developer')}
           style={{
             flex: 1,
-            padding: '0.5rem',
+            padding: 'var(--ob-space-100)',
             fontSize: '0.875rem',
             fontWeight: 500,
             color:
@@ -142,10 +142,10 @@ export function AppNavigation({
                 : 'rgba(255, 255, 255, 0.6)',
             background:
               selectedWorkspace === 'developer'
-                ? 'rgba(255, 255, 255, 0.1)'
+                ? 'var(--ob-color-surface-overlay)'
                 : 'transparent',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '6px',
+            border: '1px solid var(--ob-color-surface-overlay-medium)',
+            borderRadius: 'var(--ob-radius-md)',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
           }}

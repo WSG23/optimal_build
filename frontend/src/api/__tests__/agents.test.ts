@@ -150,7 +150,7 @@ describe('agents API mapping', () => {
     }
   })
 
-  it('returns an offline market intelligence report when the endpoint fails', async () => {
+  it('throws when the market intelligence endpoint fails', async () => {
     const originalFetch = globalThis.fetch
     globalThis.fetch = (async () => ({
       ok: false,
@@ -164,11 +164,10 @@ describe('agents API mapping', () => {
     })) as typeof globalThis.fetch
 
     try {
-      const summary = await fetchPropertyMarketIntelligence('abc123')
-      assert.equal(summary.propertyId, 'abc123')
-      assert.equal(summary.isFallback, true)
-      assert.ok(summary.warning?.includes('service unavailable'))
-      assert.ok(summary.report.comparables_analysis)
+      await assert.rejects(
+        fetchPropertyMarketIntelligence('abc123'),
+        /service unavailable/,
+      )
     } finally {
       globalThis.fetch = originalFetch
     }
@@ -221,7 +220,7 @@ describe('agents API mapping', () => {
     }
   })
 
-  it('returns an offline pack summary when professional pack generation fails', async () => {
+  it('throws when professional pack generation fails', async () => {
     const originalFetch = globalThis.fetch
 
     globalThis.fetch = (async () => ({
@@ -237,25 +236,22 @@ describe('agents API mapping', () => {
     })) as typeof globalThis.fetch
 
     try {
-      const summary = await generateProfessionalPack('abc123', 'investment')
-      assert.equal(summary.propertyId, 'abc123')
-      assert.equal(summary.packType, 'investment')
-      assert.equal(summary.isFallback, true)
-      assert.equal(summary.downloadUrl, null)
-      assert.ok(summary.warning?.includes('generation throttled'))
+      await assert.rejects(
+        generateProfessionalPack('abc123', 'investment'),
+        /generation throttled/,
+      )
     } finally {
       globalThis.fetch = originalFetch
     }
   })
 
-  it('falls back to offline GPS data when the network request fails', async () => {
+  it('throws when the GPS capture request fails', async () => {
     const request = { latitude: 1.301, longitude: 103.832 }
-    const summary = await logPropertyByGps(request, async () => {
-      throw new TypeError('Network timeout')
-    })
-
-    assert.equal(summary.propertyId, 'offline-property')
-    assert.equal(summary.coordinates.latitude, 1.301)
-    assert.ok(summary.quickAnalysis.scenarios.length > 0)
+    await assert.rejects(
+      logPropertyByGps(request, async () => {
+        throw new TypeError('Network timeout')
+      }),
+      /Network timeout/,
+    )
   })
 })

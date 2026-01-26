@@ -119,7 +119,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           '&::before': {
             content: '""',
             position: 'absolute',
-            top: 0,
+            top: '0',
             left: 0,
             right: 0,
             height: '2px',

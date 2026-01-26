@@ -93,7 +93,7 @@ export function EmptyState({
         textAlign: 'center',
         p: config.padding,
         borderRadius: 'var(--ob-radius-sm)', // 4px
-        border: '1px dashed rgba(255, 255, 255, 0.12)',
+        border: '1px dashed var(--ob-color-action-active)',
         background: 'var(--ob-color-surface-strong)',
         ...sx,
       }}

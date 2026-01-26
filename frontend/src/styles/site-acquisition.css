@@ -13,7 +13,7 @@
     /* No gap - use explicit margins like canonical pages (Team, Business Performance) */
     width: 100%;
     /* No max-width - use full width like other pages */
-    /* padding removed - YosaiShell provides canonical 16px layout padding */
+    /* padding removed - OptimalBuildShell provides canonical 16px layout padding */
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
 }

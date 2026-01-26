@@ -32,7 +32,7 @@ try:  # pragma: no cover - importlib.metadata available on Python 3.8+
     importlib_metadata = cast(_MetadataModule, _importlib_metadata_module)
 except ImportError:  # pragma: no cover - runtime older than Python 3.8
     try:
-        import importlib_metadata as _importlib_metadata_backport  # type: ignore[import-not-found]  # noqa: F401
+        import importlib_metadata as _importlib_metadata_backport
     except ModuleNotFoundError:  # pragma: no cover - no metadata helpers available
         importlib_metadata = None
     else:

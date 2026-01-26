@@ -200,12 +200,12 @@ h6 {
 /* Home / Dashboard Grid */
 .app-home {
     display: grid;
-    gap: 1.5rem;
+    gap: var(--ob-space-300);
     grid-template-columns: repeat(
         auto-fit,
         minmax(280px, 1fr)
     ); /* Wider minimum */
-    /* padding removed - YosaiShell provides canonical 16px layout padding */
+    /* padding removed - OptimalBuildShell provides canonical 16px layout padding */
     max-width: 1400px;
     margin: 0 auto;
 }
@@ -213,14 +213,14 @@ h6 {
 /* Premium Card Style */
 .app-home__card {
     background: var(--ob-color-bg-surface);
-    padding: 2rem;
+    padding: var(--ob-space-400);
     border-radius: var(--ob-radius-sm); /* 4px - Square Cyber-Minimalism */
     border: 1px solid var(--ob-color-border-subtle);
     box-shadow: var(--ob-shadow-sm);
 
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: var(--ob-space-200);
 
     transition:
         transform 0.2s ease,
@@ -256,7 +256,7 @@ h6 {
     padding: 0.75rem 1.5rem;
     border-radius: var(--ob-radius-xs); /* 2px - Square Cyber-Minimalism */
     background: var(--ob-color-brand-primary);
-    color: #ffffff; /* Always white text on brand button */
+    color: var(--ob-color-bg-default); /* Always white text on brand button */
     font-weight: 600;
     width: fit-content;
     text-decoration: none !important;

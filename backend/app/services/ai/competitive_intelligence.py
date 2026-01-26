@@ -325,50 +325,8 @@ class CompetitiveIntelligenceService:
                         )
                     )
 
-        # Add simulated activities for demo
-        if not activities:
-            activities = self._get_sample_activities()
-
         self._activities = activities
         return activities
-
-    def _get_sample_activities(self) -> list[CompetitorActivity]:
-        """Get sample activities for demonstration."""
-        return [
-            CompetitorActivity(
-                id=str(uuid4()),
-                competitor_id="comp_1",
-                competitor_name="CapitaLand",
-                category=IntelligenceCategory.DEVELOPMENT,
-                title="New Mixed-Use Development at Jurong",
-                description="CapitaLand announced new mixed-use development at Jurong Gateway",
-                location="Jurong East",
-                value=500_000_000,
-                relevance_score=0.9,
-            ),
-            CompetitorActivity(
-                id=str(uuid4()),
-                competitor_id="comp_2",
-                competitor_name="Mapletree",
-                category=IntelligenceCategory.TRANSACTION,
-                title="Industrial Acquisition at Tuas",
-                description="Mapletree acquired industrial complex in Tuas South",
-                location="Tuas",
-                value=200_000_000,
-                relevance_score=0.85,
-            ),
-            CompetitorActivity(
-                id=str(uuid4()),
-                competitor_id="comp_4",
-                competitor_name="Keppel",
-                category=IntelligenceCategory.PARTNERSHIP,
-                title="JV with GIC for Data Centre",
-                description="Keppel forms JV with GIC for data centre development",
-                location="Changi",
-                value=800_000_000,
-                relevance_score=0.95,
-            ),
-        ]
 
     async def _generate_alerts(
         self,

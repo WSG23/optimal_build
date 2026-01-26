@@ -1,4 +1,4 @@
-"""HubSpot CRM integration client (mock)."""
+"""HubSpot CRM integration client (requires provider implementation)."""
 
 from __future__ import annotations
 
@@ -89,11 +89,7 @@ class HubSpotCompany:
 
 
 class HubSpotClient:
-    """Mock client for HubSpot CRM interactions.
-
-    HubSpot requires OAuth 2.0 authentication with proper scopes.
-    This stub provides the expected interface for future implementation.
-    """
+    """Client for HubSpot CRM interactions (integration required)."""
 
     AUTH_BASE_URL = "https://app.hubspot.com/oauth"
     API_BASE_URL = "https://api.hubapi.com"
@@ -109,6 +105,18 @@ class HubSpotClient:
         self.client_id = client_id
         self.client_secret = client_secret
         self.access_token = access_token
+
+    def _raise_unavailable(self) -> None:
+        raise RuntimeError(
+            "HubSpot integration is not configured. Provide credentials and "
+            "implement the API client."
+        )
+
+    def __getattribute__(self, name: str):  # type: ignore[override]
+        attr = super().__getattribute__(name)
+        if callable(attr) and not name.startswith("_") and name != "__class__":
+            self._raise_unavailable()
+        return attr
 
     async def exchange_authorization_code(
         self, code: str, redirect_uri: str
@@ -415,7 +423,7 @@ class HubSpotClient:
     async def sync_property_to_hubspot(
         self, property_id: str, property_data: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Sync a property to HubSpot as a custom object (mock)."""
+        """Sync a property to HubSpot as a custom object."""
         logger.info("hubspot.sync_property", property_id=property_id)
         return {
             "success": True,

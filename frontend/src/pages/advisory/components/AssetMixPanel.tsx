@@ -41,14 +41,20 @@ export function AssetMixPanel({
   return (
     <GlassCard className="advisory-panel">
       <Box
-        sx={{ p: 2, borderBottom: '1px solid var(--ob-color-border-subtle)' }}
+        sx={{
+          p: 'var(--ob-space-200)',
+          borderBottom: '1px solid var(--ob-color-border-subtle)',
+        }}
       >
         <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
           Asset Mix Strategy
         </Typography>
         <Typography
           variant="body2"
-          sx={{ color: 'var(--ob-color-text-secondary)', mt: 0.5 }}
+          sx={{
+            color: 'var(--ob-color-text-secondary)',
+            mt: 'var(--ob-space-50)',
+          }}
         >
           Total Programmable GFA:{' '}
           <span style={{ color: 'var(--ob-color-text-primary)' }}>
@@ -61,8 +67,8 @@ export function AssetMixPanel({
         sx={{
           display: 'flex',
           flexDirection: { xs: 'column', md: 'row' },
-          gap: 3,
-          p: 3,
+          gap: 'var(--ob-space-300)',
+          p: 'var(--ob-space-300)',
         }}
       >
         {/* Left: Chart */}
@@ -93,12 +99,12 @@ export function AssetMixPanel({
               </Pie>
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'rgba(0,0,0,0.8)',
+                  backgroundColor: 'var(--ob-color-overlay-backdrop-strong)',
                   borderColor: 'var(--ob-color-border-subtle)',
-                  borderRadius: '4px',
-                  color: '#fff',
+                  borderRadius: 'var(--ob-radius-sm)',
+                  color: 'var(--ob-color-bg-default)',
                 }}
-                itemStyle={{ color: '#fff' }}
+                itemStyle={{ color: 'var(--ob-color-bg-default)' }}
               />
               <Legend
                 verticalAlign="bottom"
@@ -154,8 +160,8 @@ export function AssetMixPanel({
           {notes.length > 0 && (
             <Box
               sx={{
-                mt: 2,
-                p: 2,
+                mt: 'var(--ob-space-200)',
+                p: 'var(--ob-space-200)',
                 bgcolor: 'var(--ob-background-surface-0)',
                 borderRadius: 'var(--ob-radius-sm)',
                 border: '1px solid var(--ob-color-border-subtle)',
@@ -165,7 +171,7 @@ export function AssetMixPanel({
                 variant="subtitle2"
                 sx={{
                   color: 'var(--ob-color-text-secondary)',
-                  mb: 1,
+                  mb: 'var(--ob-space-100)',
                   fontSize: '0.75rem',
                   textTransform: 'uppercase',
                 }}
@@ -179,7 +185,7 @@ export function AssetMixPanel({
                     style={{
                       color: 'var(--ob-color-text-secondary)',
                       fontSize: '0.85rem',
-                      marginBottom: 4,
+                      marginBottom: 'var(--ob-space-400)',
                     }}
                   >
                     {note}

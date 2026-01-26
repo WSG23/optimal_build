@@ -9,15 +9,40 @@ from app.models.regulatory import (
     RegulatoryAgency,
     SubmissionStatus,
 )
-from app.models.projects import Project
+from app.models.project import Project
 from app.schemas.regulatory import AuthoritySubmissionCreate
-from app.services.mock_corenet import MockCorenetService
+from app.services.regulatory.integration import CorenetIntegrationService
 
 
 class RegulatoryService:
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.corenet = MockCorenetService()
+        self.corenet = CorenetIntegrationService()
+
+    @staticmethod
+    def _map_external_status(status: str | None) -> SubmissionStatus | None:
+        if not status:
+            return None
+        normalised = status.lower()
+        if "approve" in normalised:
+            return SubmissionStatus.APPROVED
+        if "reject" in normalised:
+            return SubmissionStatus.REJECTED
+        if (
+            "rfi" in normalised
+            or "clarification" in normalised
+            or "amend" in normalised
+        ):
+            return SubmissionStatus.RFI
+        if (
+            "process" in normalised
+            or "review" in normalised
+            or "received" in normalised
+        ):
+            return SubmissionStatus.IN_REVIEW
+        if "submit" in normalised:
+            return SubmissionStatus.SUBMITTED
+        return None
 
     async def create_submission(
         self,
@@ -26,7 +51,7 @@ class RegulatoryService:
         submitted_by_id: Optional[UUID] = None,
     ) -> AuthoritySubmission:
         """
-        Creates a new submission record and 'sends' it to the external agency via MockCorenet.
+        Creates a new submission record and sends it to the external agency.
         """
         # 1. Validate Project
         result = await self.db.execute(select(Project).filter(Project.id == project_id))
@@ -64,20 +89,20 @@ class RegulatoryService:
         await self.db.commit()
         await self.db.refresh(db_submission)
 
-        # 4. Trigger External Submission (Mock)
-        external_response = await self.corenet.submit_to_agency(
-            agency_code=submission.agency,
-            submission_type=submission.submission_type,
-            project_ref=project.project_code,
-            payload=submission.model_dump(),
+        # 4. Trigger External Submission
+        submission_ref = await self.corenet.submit_application(
+            {
+                "agency": submission.agency,
+                "submission_type": submission.submission_type,
+                "project_ref": project.project_code,
+                "payload": submission.model_dump(),
+            }
         )
 
         # 5. Update Record with External Reference
-        if external_response.get("success"):
-            db_submission.submission_no = external_response.get("transaction_id")
-            # db_submission.status = SubmissionStatus.IN_REVIEW # or keep as submitted
-            await self.db.commit()
-            await self.db.refresh(db_submission)
+        db_submission.submission_no = submission_ref
+        await self.db.commit()
+        await self.db.refresh(db_submission)
 
         return db_submission
 
@@ -85,7 +110,7 @@ class RegulatoryService:
         self, submission_id: UUID
     ) -> AuthoritySubmission:
         """
-        Polls the mock external service for status updates and persists changes.
+        Polls the external service for status updates and persists changes.
         """
         submission = await self.db.get(AuthoritySubmission, submission_id)
         if not submission:
@@ -97,17 +122,17 @@ class RegulatoryService:
         ]:
             return submission  # No Update needed
 
-        # Fetch agency separately to avoid lazy loading issues in async context
-        agency = await self.db.get(RegulatoryAgency, submission.agency_id)
-        agency_code = agency.code if agency else "URA"  # Default to URA
-
-        # Poll Mock Service
-        status_update = await self.corenet.check_status(
-            agency_code, submission.submission_no
+        status_update = await self.corenet.check_submission_status(
+            submission.submission_no
         )
 
-        mapped_status = status_update.get("mapped_status")
-        remarks = status_update.get("remarks")
+        external_status = status_update.get("status") or status_update.get(
+            "submission_status"
+        )
+        mapped_status = status_update.get("mapped_status") or self._map_external_status(
+            external_status
+        )
+        remarks = status_update.get("agency_remarks") or status_update.get("remarks")
 
         if mapped_status and mapped_status != submission.status:
             submission.status = mapped_status

@@ -41,7 +41,7 @@ const colorMap = {
   brand: {
     bg: 'var(--ob-color-brand-soft)',
     text: 'var(--ob-color-brand-primary)',
-    border: '1px solid rgba(59, 130, 246, 0.2)',
+    border: '1px solid var(--ob-color-action-selected)',
   },
   success: {
     bg: 'var(--ob-color-success-soft)',
@@ -61,7 +61,7 @@ const colorMap = {
   info: {
     bg: 'var(--ob-color-info-soft)',
     text: 'var(--ob-color-status-info-text)',
-    border: '1px solid rgba(59, 130, 246, 0.2)',
+    border: '1px solid var(--ob-color-action-selected)',
   },
 }
 
@@ -148,7 +148,7 @@ export function Tag({
             width: size === 'sm' ? 14 : 16,
             height: size === 'sm' ? 14 : 16,
             ml: 'var(--ob-space-025)',
-            p: 0,
+            p: '0',
             border: 'none',
             background: 'transparent',
             color: colors.text,
@@ -158,7 +158,7 @@ export function Tag({
             transition: 'opacity 0.2s',
             '&:hover': {
               opacity: 1,
-              background: 'rgba(255, 255, 255, 0.1)',
+              background: 'var(--ob-color-surface-overlay)',
             },
             '&::before': {
               content: '"×"',

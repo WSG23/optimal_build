@@ -182,7 +182,7 @@ export function Window({
             display: 'flex',
             justifyContent: 'flex-end',
             gap: 'var(--ob-space-075)',
-            background: 'rgba(0, 0, 0, 0.1)',
+            background: 'var(--ob-color-action-active-light)',
           }}
         >
           {footer}

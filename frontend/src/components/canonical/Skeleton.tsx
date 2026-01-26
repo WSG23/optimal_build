@@ -169,7 +169,12 @@ export function SkeletonMetric({ sx = {} }: { sx?: SxProps<Theme> }) {
     >
       <Skeleton variant="rounded" width="50%" height={14} />
       <Box>
-        <Skeleton variant="rounded" width="70%" height={28} sx={{ mb: 1 }} />
+        <Skeleton
+          variant="rounded"
+          width="70%"
+          height={28}
+          sx={{ mb: 'var(--ob-space-100)' }}
+        />
         <Skeleton variant="rounded" width="30%" height={16} />
       </Box>
     </Box>

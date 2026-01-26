@@ -41,93 +41,66 @@ class MarketDataProvider(ABC):
 
 
 class MockMarketDataProvider(MarketDataProvider):
-    """Mock provider for testing and development."""
+    """Mock provider for tests and local development."""
 
     async def fetch_transactions(self, params: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Return mock transaction data."""
-        import random
-
-        property_type = params.get("property_type", "office")
-        count = params.get("count", 10)
-
-        transactions = []
-        for i in range(count):
-            transaction_date = date.today() - timedelta(days=random.randint(1, 180))
-
+        count = int(params.get("count", 10))
+        property_type = str(params.get("property_type", "office"))
+        today = date.today()
+        transactions: List[Dict[str, Any]] = []
+        for idx in range(count):
             transactions.append(
                 {
-                    "transaction_id": f"MOCK-{i}",
-                    "property_name": f"Mock Building {i}",
+                    "transaction_id": f"mock-txn-{idx + 1}",
+                    "transaction_date": (today - timedelta(days=idx)).isoformat(),
+                    "transaction_type": "sale",
+                    "sale_price": str(1_000_000 + (idx * 10_000)),
+                    "psf_price": str(2000 + idx),
+                    "floor_area_sqm": str(500 + idx),
+                    "buyer_type": "Company",
+                    "property_name": f"Mock {property_type.title()} {idx + 1}",
                     "property_type": property_type,
-                    "transaction_date": transaction_date.isoformat(),
-                    "sale_price": random.randint(10000000, 100000000),
-                    "floor_area_sqm": random.randint(500, 5000),
-                    "psf_price": random.randint(1500, 3500),
-                    "buyer_type": random.choice(
-                        ["Individual", "Company", "REIT", "Foreign"]
-                    ),
-                    "district": f"D{random.randint(1, 28):02d}",
-                    "tenure": random.choice(["Freehold", "99-year leasehold"]),
+                    "district": "D01",
                 }
             )
-
         return transactions
 
     async def fetch_rental_data(self, params: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Return mock rental data."""
-        import random
-
-        property_type = params.get("property_type", "office")
-        count = params.get("count", 10)
-
-        rentals = []
-        for i in range(count):
-            listing_date = date.today() - timedelta(days=random.randint(1, 90))
-
+        count = int(params.get("count", 10))
+        property_type = str(params.get("property_type", "office"))
+        today = date.today()
+        rentals: List[Dict[str, Any]] = []
+        for idx in range(count):
             rentals.append(
                 {
-                    "listing_id": f"RENT-{i}",
-                    "property_name": f"Mock Building {i}",
+                    "listing_id": f"mock-rental-{idx + 1}",
+                    "listing_date": (today - timedelta(days=idx)).isoformat(),
                     "property_type": property_type,
-                    "listing_date": listing_date.isoformat(),
-                    "floor_area_sqm": random.randint(100, 2000),
-                    "asking_rent_monthly": random.randint(5000, 50000),
-                    "asking_psf_monthly": random.uniform(3.0, 15.0),
-                    "floor_level": f"{random.randint(1, 20)}",
-                    "available_date": (listing_date + timedelta(days=30)).isoformat(),
-                    "district": f"D{random.randint(1, 28):02d}",
+                    "floor_area_sqm": str(600 + idx),
+                    "asking_rent_monthly": str(10000 + (idx * 250)),
+                    "asking_psf_monthly": str(6 + (idx * 0.1)),
+                    "floor_level": str(5 + idx),
+                    "available_date": (today + timedelta(days=30)).isoformat(),
                 }
             )
-
         return rentals
 
     async def fetch_market_indices(
         self, params: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
-        """Return mock market index data."""
-        import random
-
-        indices = []
-        base_value: float = 100
-        current_value: float = base_value
-
-        for i in range(12):
-            index_date = date.today() - timedelta(days=30 * i)
-
-            # Random walk
-            change: float = random.uniform(-5, 5)
-            current_value = current_value * (1 + change / 100)
-
+        today = date.today()
+        indices: List[Dict[str, Any]] = []
+        for idx in range(12):
+            month_date = today - timedelta(days=30 * idx)
             indices.append(
                 {
-                    "index_date": index_date.isoformat(),
-                    "index_name": "Mock_Property_Price_Index",
-                    "index_value": current_value,
-                    "mom_change": change,
-                    "yoy_change": random.uniform(-10, 10),
+                    "index_date": month_date.isoformat(),
+                    "index_name": f"Mock_Property_Index_{month_date.strftime('%Y_%m')}",
+                    "index_value": str(100 + idx),
+                    "mom_change": str(0.5),
+                    "yoy_change": str(2.0),
                 }
             )
-
         return indices
 
 
@@ -139,6 +112,9 @@ class MarketDataService:
             "mock": MockMarketDataProvider()
         }
         self.sync_history: Dict[str, datetime] = {}
+        from app.services.geocoding import GeocodingService
+
+        self.geocoding = GeocodingService()
 
     def register_provider(self, name: str, provider: MarketDataProvider) -> None:
         """Register a data provider."""
@@ -149,6 +125,10 @@ class MarketDataService:
         self, session: AsyncSession, property_types: Optional[List[PropertyType]] = None
     ) -> Dict[str, Any]:
         """Sync data from all registered providers."""
+        if not self.providers:
+            logger.warning("No market data providers configured")
+            return {}
+
         results = {}
 
         for provider_name, provider in self.providers.items():
@@ -366,7 +346,11 @@ class MarketDataService:
     ) -> str:
         """Get existing property or create new one."""
         # Try to find existing property by name
-        property_name = data.get("property_name", "Unknown Property")
+        property_name = (
+            data.get("property_name") or data.get("name") or data.get("address")
+        )
+        if not property_name:
+            raise ValueError("Property name or address is required")
 
         stmt = select(Property).where(Property.name == property_name).limit(1)
 
@@ -383,11 +367,21 @@ class MarketDataService:
 
         property_id = uuid4()
 
-        # Create mock location (in production, geocode the address)
-        import random
+        raw_lat = data.get("latitude") or data.get("lat")
+        raw_lon = data.get("longitude") or data.get("lon") or data.get("lng")
 
-        lat = 1.3521 + random.uniform(-0.1, 0.1)  # Singapore latitude
-        lon = 103.8198 + random.uniform(-0.1, 0.1)  # Singapore longitude
+        if raw_lat is None or raw_lon is None:
+            address = data.get("address") or property_name
+            if not address:
+                raise ValueError("Address is required to geocode property location")
+            coords = await self.geocoding.geocode(str(address))
+            if not coords:
+                raise ValueError("Unable to geocode property location")
+            lat, lon = coords
+        else:
+            lat = float(raw_lat)
+            lon = float(raw_lon)
+
         point = WKTElement(f"POINT({lon} {lat})", srid=4326)
 
         property_type_map = {
@@ -397,13 +391,25 @@ class MarketDataService:
             "industrial": PropertyType.INDUSTRIAL,
         }
 
+        raw_property_type = data.get("property_type")
+        if not raw_property_type:
+            raise ValueError("property_type is required to create a property")
+
+        property_type_value = str(raw_property_type).lower()
+        property_type = property_type_map.get(property_type_value)
+        if property_type is None:
+            try:
+                property_type = PropertyType(property_type_value)
+            except ValueError as exc:
+                raise ValueError(
+                    f"Unknown property_type '{raw_property_type}'"
+                ) from exc
+
         new_property = {
             "id": property_id,
             "name": property_name,
             "address": data.get("address", property_name),
-            "property_type": property_type_map.get(
-                data.get("property_type", "office").lower(), PropertyType.OFFICE
-            ),
+            "property_type": property_type,
             "location": point,
             "district": data.get("district"),
             "gross_floor_area_sqm": (

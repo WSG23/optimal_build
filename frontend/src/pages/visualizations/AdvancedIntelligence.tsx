@@ -18,15 +18,6 @@ export interface AdvancedIntelligencePageProps {
 
 const DEFAULT_WORKSPACE_ID = 'default-investigation'
 
-// --- Mock Data Generators (until API provides trends) ---
-function generateSparkline(seedValue: number, length = 20): number[] {
-  let current = seedValue
-  return Array.from({ length }, () => {
-    current = current * (1 + (Math.random() - 0.5) * 0.1)
-    return current
-  })
-}
-
 export function AdvancedIntelligencePage({
   workspaceId = DEFAULT_WORKSPACE_ID,
   services,
@@ -58,9 +49,67 @@ export function AdvancedIntelligencePage({
     return count === 0 ? 0 : sum / count
   }, [predictive])
 
-  // Mock trends for the Hero Cards
-  const adoptionTrend = 12.5 // Fixed mock for demo
-  const upliftTrend = 44.7
+  const adoptionSeries = useMemo(
+    () =>
+      predictive.status === 'ok'
+        ? predictive.segments.map((segment) => segment.probability * 100)
+        : [],
+    [predictive],
+  )
+
+  const upliftSeries = useMemo(
+    () =>
+      predictive.status === 'ok'
+        ? predictive.segments.map((segment) => {
+            if (!segment.baseline) return 0
+            return (
+              ((segment.projection - segment.baseline) / segment.baseline) * 100
+            )
+          })
+        : [],
+    [predictive],
+  )
+
+  const adoptionTrend = useMemo(() => {
+    if (adoptionSeries.length < 2) return 0
+    const min = Math.min(...adoptionSeries)
+    const max = Math.max(...adoptionSeries)
+    return max - min
+  }, [adoptionSeries])
+
+  const upliftTrend = useMemo(() => {
+    if (upliftSeries.length < 2) return 0
+    const min = Math.min(...upliftSeries)
+    const max = Math.max(...upliftSeries)
+    return max - min
+  }, [upliftSeries])
+
+  const correlationSeries = useMemo(
+    () =>
+      correlation.status === 'ok'
+        ? correlation.relationships.map((rel) => rel.coefficient * 100)
+        : [],
+    [correlation],
+  )
+
+  const correlationCount = correlationSeries.length
+  const correlationTrend = useMemo(() => {
+    if (correlationSeries.length === 0) return 0
+    const sum = correlationSeries.reduce((acc, value) => acc + value, 0)
+    return sum / correlationSeries.length
+  }, [correlationSeries])
+
+  const graphSeries = useMemo(
+    () =>
+      graph.status === 'ok' ? graph.graph.nodes.map((node) => node.score) : [],
+    [graph],
+  )
+  const graphNodeCount = graphSeries.length
+  const graphTrend = useMemo(() => {
+    if (graphSeries.length === 0) return 0
+    const sum = graphSeries.reduce((acc, value) => acc + value, 0)
+    return sum / graphSeries.length
+  }, [graphSeries])
 
   return (
     <AppLayout
@@ -77,7 +126,7 @@ export function AdvancedIntelligencePage({
             border: `1px solid ${theme.palette.primary.main}`,
             color: theme.palette.primary.main,
             padding: '6px 12px',
-            borderRadius: '2px',
+            borderRadius: 'var(--ob-radius-xs)',
             cursor: isLoading ? 'not-allowed' : 'pointer',
             opacity: isLoading ? 0.5 : 1,
             fontSize: '0.875rem',
@@ -106,13 +155,13 @@ export function AdvancedIntelligencePage({
           >
             Workspace Signals
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing="var(--ob-space-300)">
             <Grid item xs={12} md={3}>
               <KPITickerCard
                 label="Adoption Likelihood"
                 value={`${adoptionRate.toFixed(1)}%`}
                 trend={adoptionTrend}
-                data={generateSparkline(adoptionRate)}
+                data={adoptionSeries}
                 active={true}
               />
             </Grid>
@@ -121,23 +170,23 @@ export function AdvancedIntelligencePage({
                 label="Projected Uplift"
                 value={`${uplift.toFixed(1)}%`}
                 trend={upliftTrend}
-                data={generateSparkline(uplift)}
+                data={upliftSeries}
               />
             </Grid>
             <Grid item xs={12} md={3}>
               <KPITickerCard
-                label="Active Experiments"
-                value="12"
-                trend={8.2}
-                data={generateSparkline(12)}
+                label="Correlation Pairs"
+                value={`${correlationCount}`}
+                trend={correlationTrend}
+                data={correlationSeries}
               />
             </Grid>
             <Grid item xs={12} md={3}>
               <KPITickerCard
-                label="Intelligence Score"
-                value="94"
-                trend={-2.4}
-                data={generateSparkline(94)}
+                label="Graph Nodes"
+                value={`${graphNodeCount}`}
+                trend={graphTrend}
+                data={graphSeries}
               />
             </Grid>
           </Grid>
@@ -185,7 +234,7 @@ export function AdvancedIntelligencePage({
                     alignItems: 'center',
                     justifyContent: 'center',
                     border: '1px dashed grey',
-                    borderRadius: '4px', // Square Cyber-Minimalism: sm
+                    borderRadius: 'var(--ob-radius-sm)', // Square Cyber-Minimalism: sm
                   }}
                 >
                   <Typography color="text.secondary">

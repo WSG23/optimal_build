@@ -33,11 +33,7 @@ function pickIdentityValue(
 export function resolveDefaultRole(): string | null {
   return (
     pickIdentityValue(
-      [
-        metaEnv?.VITE_API_ROLE,
-        getLocalStorageValue('app:api-role'),
-        'reviewer',
-      ],
+      [metaEnv?.VITE_API_ROLE, getLocalStorageValue('app:api-role')],
       null,
     ) ?? null
   )
@@ -49,7 +45,6 @@ export function resolveDefaultUserEmail(): string | null {
       [
         metaEnv?.VITE_API_USER_EMAIL,
         getLocalStorageValue('app:api-user-email'),
-        'demo-owner@example.com',
       ],
       null,
     ) ?? null
@@ -59,11 +54,7 @@ export function resolveDefaultUserEmail(): string | null {
 export function resolveDefaultUserId(): string | null {
   return (
     pickIdentityValue(
-      [
-        metaEnv?.VITE_API_USER_ID,
-        getLocalStorageValue('app:api-user-id'),
-        '00000000-0000-0000-0000-000000000001', // Demo user UUID fallback
-      ],
+      [metaEnv?.VITE_API_USER_ID, getLocalStorageValue('app:api-user-id')],
       null,
     ) ?? null
   )

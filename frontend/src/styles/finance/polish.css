@@ -408,7 +408,7 @@
     background: var(--ob-color-surface-default);
     border: 2px solid var(--ob-color-brand-primary);
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 1px 3px var(--ob-color-overlay-backdrop-light);
     transition: transform 0.1s;
     margin-top: -5px;
     /* Alignment fix */

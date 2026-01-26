@@ -107,7 +107,7 @@
 
 @keyframes ob-pulse-glow {
     0% {
-        box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.6);
+        box-shadow: 0 0 0 0 var(--ob-color-neon-cyan);
     }
     70% {
         box-shadow: 0 0 0 8px rgba(0, 243, 255, 0);
@@ -174,7 +174,7 @@
     background: linear-gradient(
         0deg,
         rgba(0, 243, 255, 0) 0%,
-        rgba(0, 243, 255, 0.02) 50%,
+        var(--ob-color-table-row-alt) 50%,
         rgba(0, 243, 255, 0) 100%
     );
     position: fixed;
@@ -259,7 +259,7 @@
     background: linear-gradient(
         120deg,
         transparent 30%,
-        rgba(0, 243, 255, 0.1) 50%,
+        var(--ob-color-action-selected) 50%,
         transparent 70%
     );
     background-size: 200% 100%;
@@ -284,11 +284,11 @@
 .ob-progress-striped {
     background-image: linear-gradient(
         45deg,
-        rgba(255, 255, 255, 0.15) 25%,
+        var(--ob-color-action-active) 25%,
         transparent 25%,
         transparent 50%,
-        rgba(255, 255, 255, 0.15) 50%,
-        rgba(255, 255, 255, 0.15) 75%,
+        var(--ob-color-action-active) 50%,
+        var(--ob-color-action-active) 75%,
         transparent 75%,
         transparent
     );
@@ -316,11 +316,13 @@
 
 /* Light mode: "frosted ice" effect with preserved premium identity */
 html[data-theme='light'] .ob-card-module {
-    background: rgba(255, 255, 255, 0.7); /* More opaque glass for light mode */
+    background: var(
+        --ob-color-text-secondary
+    ); /* More opaque glass for light mode */
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--ob-color-action-hover-light);
+    box-shadow: 0 4px 16px var(--ob-color-action-hover-light);
 }
 
 /* Light mode: preserve cyan accent edge glow */
@@ -417,7 +419,7 @@ html[data-theme='light'] .ob-card-module::before {
 }
 
 .ob-card-module .MuiTableHead-root {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--ob-color-surface-overlay-light);
 }
 
 .ob-card-module .MuiTableHead-root .MuiTableCell-root {
@@ -426,37 +428,39 @@ html[data-theme='light'] .ob-card-module::before {
     text-transform: uppercase;
     letter-spacing: var(--ob-letter-spacing-wider);
     color: var(--ob-color-text-secondary);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--ob-color-surface-overlay);
     padding: var(--ob-space-150) var(--ob-space-200);
 }
 
 .ob-card-module .MuiTableBody-root .MuiTableRow-root {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--ob-color-surface-overlay-light);
     transition: background-color 0.15s ease;
 }
 
 /* Light mode table styling */
 html[data-theme='light'] .ob-card-module .MuiTableHead-root {
-    background: rgba(0, 0, 0, 0.03);
+    background: var(--ob-color-table-header);
 }
 
 html[data-theme='light'] .ob-card-module .MuiTableHead-root .MuiTableCell-root {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid var(--ob-color-action-hover-light);
 }
 
 html[data-theme='light'] .ob-card-module .MuiTableBody-root .MuiTableRow-root {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    border-bottom: 1px solid var(--ob-color-border-subtle);
 }
 
 html[data-theme='light']
     .ob-card-module
     .MuiTableBody-root
     .MuiTableRow-root:hover {
-    background-color: rgba(0, 243, 255, 0.04); /* Subtle cyan tint on hover */
+    background-color: var(
+        --ob-color-action-selected
+    ); /* Subtle cyan tint on hover */
 }
 
 .ob-card-module .MuiTableBody-root .MuiTableRow-root:hover {
-    background-color: rgba(255, 255, 255, 0.03);
+    background-color: var(--ob-color-table-header);
 }
 
 .ob-card-module .MuiTableBody-root .MuiTableCell-root {
@@ -517,8 +521,8 @@ html[data-theme='light']
 
 /* Light mode glass panel */
 html[data-theme='light'] .ob-seamless-panel--glass {
-    background: rgba(255, 255, 255, 0.5);
-    border-color: rgba(0, 0, 0, 0.08);
+    background: var(--ob-color-border-default);
+    border-color: var(--ob-color-action-hover-light);
 }
 
 /* Hover state with neon cyan accent */
@@ -549,7 +553,7 @@ html[data-theme='light'] .ob-seamless-panel--glass {
 }
 
 html[data-theme='light'] .ob-seamless-grid > * {
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--ob-color-border-default);
 }
 
 /* Technical precision label - 9px, all-caps, wide tracking */

@@ -762,7 +762,11 @@ export function DeveloperResults({
       >
         <DialogTitle>Save Capture as Project</DialogTitle>
         <DialogContent>
-          <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+          <Stack
+            direction="row"
+            spacing="var(--ob-space-100)"
+            sx={{ mb: 'var(--ob-space-200)' }}
+          >
             <Button
               variant={saveMode === 'new' ? 'primary' : 'secondary'}
               onClick={() => {
@@ -807,7 +811,11 @@ export function DeveloperResults({
             </FormControl>
           )}
           {saveError && (
-            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+            <Typography
+              color="error"
+              variant="body2"
+              sx={{ mt: 'var(--ob-space-100)' }}
+            >
               {saveError}
             </Typography>
           )}

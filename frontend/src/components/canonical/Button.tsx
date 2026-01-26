@@ -80,7 +80,7 @@ const StyledButton = styled(MuiButton, {
       ...common,
       background:
         'linear-gradient(135deg, #0096cc 0%, var(--ob-color-neon-cyan) 100%)',
-      color: '#0a1628', // Dark text for contrast on bright cyan
+      color: 'var(--ob-color-bg-inverse)', // Dark text for contrast on bright cyan
       border: 'none',
       boxShadow: 'var(--ob-glow-neon-cyan)',
       '&:hover': {
@@ -94,12 +94,12 @@ const StyledButton = styled(MuiButton, {
         '&::after': {
           content: '""',
           position: 'absolute',
-          top: 0,
+          top: '0',
           left: '-100%',
           width: '50%',
           height: '100%',
           background:
-            'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+            'linear-gradient(90deg, transparent, var(--ob-color-surface-overlay-medium), transparent)',
           transform: 'skewX(-20deg)',
           transition: 'none',
         },

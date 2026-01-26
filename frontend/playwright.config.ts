@@ -1,7 +1,11 @@
 import { defineConfig } from '@playwright/test'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import fs from 'node:fs'
 
-const rootDir = path.resolve(__dirname, '..')
+const currentFile = fileURLToPath(import.meta.url)
+const currentDir = path.dirname(currentFile)
+const rootDir = path.resolve(currentDir, '..')
 const backendDir = path.resolve(rootDir, 'backend')
 const pythonPathEntries = [backendDir, rootDir]
 if (process.env.PYTHONPATH && process.env.PYTHONPATH.trim() !== '') {
@@ -23,9 +27,19 @@ const frontendCommand = isCI
   ? 'pnpm preview:ci'
   : 'pnpm dev -- --host 127.0.0.1 --port 3000'
 const frontendUrl = `http://127.0.0.1:${frontendPort}`
+const candidatePythonPaths = [
+  process.env.PYTHON_EXECUTABLE,
+  path.resolve(rootDir, 'backend/.venv/bin/python'),
+  path.resolve(rootDir, '.venv/bin/python'),
+  path.resolve(rootDir, 'venv/bin/python'),
+]
+const pythonExec =
+  candidatePythonPaths.find(
+    (candidate) => candidate && fs.existsSync(candidate),
+  ) ?? 'python3'
 
 export default defineConfig({
-  testDir: path.resolve(__dirname, 'tests/e2e'),
+  testDir: path.resolve(currentDir, 'tests/e2e'),
   timeout: 120_000,
   expect: {
     timeout: 10_000,
@@ -37,14 +51,14 @@ export default defineConfig({
   },
   webServer: [
     {
-      command:
-        'python -m backend.uvicorn app.main:app --host 127.0.0.1 --port 8000',
+      command: `${pythonExec} -m uvicorn app.main:app --host 127.0.0.1 --port 8000`,
       cwd: backendDir,
       env: {
         PYTHONPATH: pythonPath,
         SQLALCHEMY_DATABASE_URI: configuredDbUrl,
         PLAYWRIGHT_E2E_DB_URL: e2eDbUrl,
         BUILDABLE_USE_POSTGIS: buildableUsePostgis,
+        SECRET_KEY: process.env.SECRET_KEY ?? 'playwright-e2e-secret',
       },
       port: 8000,
       reuseExistingServer: !isCI,

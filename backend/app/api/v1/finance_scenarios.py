@@ -26,7 +26,7 @@ from app.models.finance import (
     FinResult,
     FinScenario,
 )
-from app.models.projects import Project
+from app.models.project import Project
 from app.models.rkp import RefCostIndex
 from app.schemas.finance import (
     AssetFinancialSummarySchema,

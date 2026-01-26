@@ -10,7 +10,7 @@ from backend._compat.datetime import utcnow
 from app.api.v1 import developers_gps as developers_api
 from app.models.finance import FinCapitalStack, FinProject, FinScenario
 from app.models.preview import PreviewJob
-from app.models.projects import Project
+from app.models.project import Project
 from app.models.property import Property, PropertyStatus, PropertyType
 from app.services.agents.gps_property_logger import PropertyLogResult
 from app.services.geocoding import Address

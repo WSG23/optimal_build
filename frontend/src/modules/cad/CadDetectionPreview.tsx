@@ -166,10 +166,10 @@ export function CadDetectionPreview({
   )
 
   const displayMetrics = liveMetrics || {
-    automationScore: 0.72,
-    savingsPercent: 15,
-    reviewHoursSaved: 8,
-    paybackWeeks: 6,
+    automationScore: 0,
+    savingsPercent: 0,
+    reviewHoursSaved: 0,
+    paybackWeeks: 0,
   }
 
   // Icons mapping for Floating Control
@@ -214,15 +214,21 @@ export function CadDetectionPreview({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
-            p: 3,
-            pb: 2,
+            p: 'var(--ob-space-300)',
+            pb: 'var(--ob-space-200)',
             borderBottom: '1px solid var(--ob-border-fine)',
             flexWrap: 'wrap',
-            gap: 2,
+            gap: 'var(--ob-space-200)',
           }}
         >
           {/* Left Side: Zone & Title */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-100)',
+            }}
+          >
             <Chip
               icon={
                 <MapIcon
@@ -279,7 +285,7 @@ export function CadDetectionPreview({
           <Box
             sx={{
               position: 'absolute',
-              bottom: 32,
+              bottom: 'var(--ob-space-800)',
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 30,
@@ -290,11 +296,11 @@ export function CadDetectionPreview({
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1,
-                p: 1,
-                pl: 2,
-                pr: 2,
-                borderRadius: '999px',
+                gap: 'var(--ob-space-100)',
+                p: 'var(--ob-space-100)',
+                pl: 'var(--ob-space-200)',
+                pr: 'var(--ob-space-200)',
+                borderRadius: 'var(--ob-radius-lg)',
                 background: 'var(--ob-surface-glass-1)',
                 backdropFilter: 'blur(var(--ob-blur-xl))',
                 border: '1px solid var(--ob-border-fine)',
@@ -307,7 +313,7 @@ export function CadDetectionPreview({
                   sx={{
                     color: 'var(--ob-neutral-400)',
                     fontWeight: 600,
-                    mr: 1,
+                    mr: 'var(--ob-space-100)',
                     textTransform: 'uppercase',
                   }}
                 >
@@ -324,7 +330,7 @@ export function CadDetectionPreview({
                         width: 8,
                         height: 8,
                         color: 'var(--ob-error-500)',
-                        mr: 1,
+                        mr: 'var(--ob-space-100)',
                         animation: 'pulse 2s infinite',
                       }}
                     />
@@ -341,11 +347,11 @@ export function CadDetectionPreview({
                   .filter((o) => o.severity === severityKey)
                   .slice(0, 3)
                 const tooltipContent = (
-                  <Box sx={{ p: 0.5 }}>
+                  <Box sx={{ p: 'var(--ob-space-50)' }}>
                     <Typography
                       variant="subtitle2"
                       component="div"
-                      sx={{ fontWeight: 700, mb: 0.5 }}
+                      sx={{ fontWeight: 700, mb: 'var(--ob-space-50)' }}
                     >
                       {severityKey.toUpperCase()} ({count})
                     </Typography>
@@ -389,12 +395,14 @@ export function CadDetectionPreview({
                       sx={{
                         transition: 'all 0.2s',
                         background: isActive
-                          ? 'rgba(255,255,255,0.15)'
+                          ? 'var(--ob-color-action-active)'
                           : 'transparent',
                         border: isActive
-                          ? '1px solid rgba(255,255,255,0.3)'
+                          ? '1px solid var(--ob-color-surface-overlay-strong)'
                           : '1px solid transparent',
-                        '&:hover': { background: 'rgba(255,255,255,0.2)' },
+                        '&:hover': {
+                          background: 'var(--ob-color-surface-overlay-medium)',
+                        },
                       }}
                     >
                       {getSeverityIcon(severityKey)}
@@ -408,7 +416,7 @@ export function CadDetectionPreview({
                   width: 1,
                   height: 24,
                   background: 'var(--ob-border-fine)',
-                  mx: 1,
+                  mx: 'var(--ob-space-100)',
                 }}
               />
 
@@ -448,12 +456,18 @@ export function CadDetectionPreview({
       </Box>
 
       {/* 2. DETAILS SECTION (Table & Hints) - Below Fold */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 3 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 300px',
+          gap: 'var(--ob-space-300)',
+        }}
+      >
         {/* Unit Table */}
         <Paper
           variant="outlined"
           sx={{
-            p: 0,
+            p: '0',
             overflow: 'hidden',
             borderRadius: 'var(--ob-radius-sm)',
           }}
@@ -563,7 +577,7 @@ export function CadDetectionPreview({
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '8px',
+                            gap: 'var(--ob-space-100)',
                           }}
                         >
                           <span className="cad-unit-label">
@@ -651,7 +665,10 @@ export function CadDetectionPreview({
                               <button
                                 type="submit"
                                 disabled={provideMetricDisabled}
-                                style={{ marginLeft: '4px', cursor: 'pointer' }}
+                                style={{
+                                  marginLeft: 'var(--ob-space-50)',
+                                  cursor: 'pointer',
+                                }}
                               >
                                 ✓
                               </button>
@@ -659,7 +676,10 @@ export function CadDetectionPreview({
                                 type="button"
                                 disabled={provideMetricDisabled}
                                 onClick={cancelEditing}
-                                style={{ marginLeft: '4px', cursor: 'pointer' }}
+                                style={{
+                                  marginLeft: 'var(--ob-space-50)',
+                                  cursor: 'pointer',
+                                }}
                               >
                                 ✕
                               </button>
@@ -699,7 +719,11 @@ export function CadDetectionPreview({
         {/* Advisory / Hints Panel */}
         <Paper
           variant="outlined"
-          sx={{ p: 3, borderRadius: '4px', height: 'fit-content' }}
+          sx={{
+            p: 'var(--ob-space-300)',
+            borderRadius: 'var(--ob-radius-sm)',
+            height: 'fit-content',
+          }}
         >
           <Typography variant="h6" gutterBottom>
             {t('detection.advisory')}
@@ -709,12 +733,12 @@ export function CadDetectionPreview({
               {fallbackDash}
             </Typography>
           ) : (
-            <ul style={{ paddingLeft: '20px', margin: 0 }}>
+            <ul style={{ paddingLeft: 'var(--ob-space-200)', margin: 0 }}>
               {hints.map((hint) => (
                 <li
                   key={hint.key}
                   style={{
-                    marginBottom: '8px',
+                    marginBottom: 'var(--ob-space-100)',
                     fontSize: 'var(--ob-font-size-sm)',
                     color: 'var(--ob-neutral-600)',
                   }}

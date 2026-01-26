@@ -90,7 +90,7 @@ export default function AgentPerformancePage() {
       title={t('agentPerformance.title')}
       subtitle={t('agentPerformance.subtitle')}
     >
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 'var(--ob-space-300)' }}>
         <AnimatedPageHeader
           title={t('agentPerformance.title')}
           subtitle={t('agentPerformance.subtitle')}
@@ -100,14 +100,17 @@ export default function AgentPerformancePage() {
           ]}
         />
 
-        <Grid container spacing={3}>
+        <Grid container spacing="var(--ob-space-300)">
           {/* Kanban Section */}
           <Grid item xs={12} lg={8}>
-            <Card variant="glass" sx={{ p: 2, height: '100%', minHeight: 400 }}>
+            <Card
+              variant="glass"
+              sx={{ p: 'var(--ob-space-200)', height: '100%', minHeight: 400 }}
+            >
               <Stack
                 direction="row"
-                spacing={2}
-                sx={{ overflowX: 'auto', pb: 2 }}
+                spacing="var(--ob-space-200)"
+                sx={{ overflowX: 'auto', pb: 'var(--ob-space-200)' }}
               >
                 {stageOrder.map((stage) => {
                   const items = groupedDeals[stage] ?? []
@@ -119,10 +122,10 @@ export default function AgentPerformancePage() {
                     <Box key={stage} sx={{ minWidth: 280, flexShrink: 0 }}>
                       <Box
                         sx={{
-                          pb: 1,
-                          borderBottom: 2,
+                          pb: 'var(--ob-space-100)',
+                          borderBottom: 'var(--ob-space-200)',
                           borderColor: 'divider',
-                          mb: 2,
+                          mb: 'var(--ob-space-200)',
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
@@ -137,23 +140,23 @@ export default function AgentPerformancePage() {
                         <Typography
                           variant="caption"
                           sx={{
-                            background: 'rgba(0,0,0,0.05)',
-                            px: 1,
-                            borderRadius: '2px', // Square Cyber-Minimalism: xs for badges
+                            background: 'var(--ob-color-action-hover-light)',
+                            px: 'var(--ob-space-100)',
+                            borderRadius: 'var(--ob-radius-xs)', // Square Cyber-Minimalism: xs for badges
                           }}
                         >
                           {items.length}
                         </Typography>
                       </Box>
 
-                      <Stack spacing={1}>
+                      <Stack spacing="var(--ob-space-100)">
                         {items.map((deal) => (
                           <Card
                             variant="glass"
                             key={deal.id}
                             hover="lift"
                             sx={{
-                              p: 1.5,
+                              p: 'var(--ob-space-150)',
                               cursor: 'pointer',
                               border:
                                 selectedDealId === deal.id
@@ -214,12 +217,19 @@ export default function AgentPerformancePage() {
           {/* Analytics Section */}
           {analyticsHasContent && (
             <Grid item xs={12}>
-              <Divider sx={{ my: 4 }} />
-              <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
+              <Divider sx={{ my: 'var(--ob-space-400)' }} />
+              <Typography
+                variant="h5"
+                sx={{ mb: 'var(--ob-space-300)', fontWeight: 600 }}
+              >
                 {t('agentPerformance.analytics.title')}
               </Typography>
 
-              <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid
+                container
+                spacing="var(--ob-space-300)"
+                sx={{ mb: 'var(--ob-space-400)' }}
+              >
                 {latestSnapshot &&
                   [
                     {
@@ -273,9 +283,12 @@ export default function AgentPerformancePage() {
               </Grid>
 
               {trendData.length > 0 && (
-                <Grid container spacing={3}>
+                <Grid container spacing="var(--ob-space-300)">
                   <Grid item xs={12} md={6}>
-                    <Card variant="glass" sx={{ p: 2, height: 320 }}>
+                    <Card
+                      variant="glass"
+                      sx={{ p: 'var(--ob-space-200)', height: 320 }}
+                    >
                       <Typography variant="h6" gutterBottom>
                         {t('agentPerformance.analytics.trend.pipelineHeading')}
                       </Typography>
@@ -332,7 +345,10 @@ export default function AgentPerformancePage() {
                     </Card>
                   </Grid>
                   <Grid item xs={12} md={6}>
-                    <Card variant="glass" sx={{ p: 2, height: 320 }}>
+                    <Card
+                      variant="glass"
+                      sx={{ p: 'var(--ob-space-200)', height: 320 }}
+                    >
                       <Typography variant="h6" gutterBottom>
                         {t(
                           'agentPerformance.analytics.trend.conversionHeading',
@@ -371,7 +387,10 @@ export default function AgentPerformancePage() {
               )}
 
               {benchmarksHasContent && (
-                <Card variant="glass" sx={{ p: 2, mt: 3 }}>
+                <Card
+                  variant="glass"
+                  sx={{ p: 'var(--ob-space-200)', mt: 'var(--ob-space-300)' }}
+                >
                   <Typography variant="h6" gutterBottom>
                     {t('agentPerformance.analytics.benchmarks.title')}
                   </Typography>
@@ -387,7 +406,7 @@ export default function AgentPerformancePage() {
                   )}
 
                   {!benchmarksLoading && !benchmarksError && (
-                    <Stack spacing={2}>
+                    <Stack spacing="var(--ob-space-200)">
                       {benchmarkComparisons.map((item) => (
                         <Box
                           key={item.key}

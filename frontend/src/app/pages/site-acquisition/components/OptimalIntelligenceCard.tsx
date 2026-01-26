@@ -41,7 +41,9 @@ export function OptimalIntelligenceCard({
     <div className="optimal-intelligence-card">
       {/* Header */}
       <div className="optimal-intelligence-card__header">
-        <AutoAwesome sx={{ fontSize: 20, color: 'rgba(255, 255, 255, 0.9)' }} />
+        <AutoAwesome
+          sx={{ fontSize: 20, color: 'var(--ob-color-bg-default)' }}
+        />
         <span className="optimal-intelligence-card__title">
           Optimal Intelligence
         </span>

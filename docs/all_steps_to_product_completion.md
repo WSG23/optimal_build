@@ -290,7 +290,7 @@ _No active tasks. Pull from the Ready queue below._
   - **Phase 1C:** All v2 integrations implemented as mocks: `ZillowClient` (222 lines), `LoopNetClient` (271 lines), `SalesforceClient` (327 lines), `HubSpotClient` (425 lines). All exported from `integrations/__init__.py`.
   - Phase 1A and 1D were already complete. **All 4 Phase 1 sub-phases now at 100%**.
 
-- **2025-12-06:** Expansion Window 1 COMPLETE (Claude) — Toronto/Ontario jurisdiction fully implemented with property model (`TorontoProperty` with By-law 569-2013 zoning enums), compliance utilities (`toronto_compliance.py` with FSI/TGS calculations), seed script (`seed_toronto_rules.py` with OBC building rules), and test suite. All 4 jurisdictions (HK, NZ, Seattle, Toronto) now have complete file sets: property models, compliance utils, seed scripts, and tests. Models registered in `__init__.py` and relationships added to `projects.py`.
+- **2025-12-06:** Expansion Window 1 COMPLETE (Claude) — Toronto/Ontario jurisdiction fully implemented with property model (`TorontoProperty` with By-law 569-2013 zoning enums), compliance utilities (`toronto_compliance.py` with FSI/TGS calculations), seed script (`seed_toronto_rules.py` with OBC building rules), and test suite. All 4 jurisdictions (HK, NZ, Seattle, Toronto) now have complete file sets: property models, compliance utils, seed scripts, and tests. Models registered in `__init__.py` and relationships added to `project.py`.
 
 - **2025-11-29:** Updated Spec Integration (32 features) documented (Claude) — Integrated all 32 new/enhanced features from the updated global product spec into both `docs/planning/features.md` and `docs/all_steps_to_product_completion.md`. Features organized by role (Agents: 8, Developers: 12, Architects: 5, Engineers: 5, Cross-Cutting: 2). Added phase-specific "Queued Enhancements" sections and new "Cross-Cutting Systems" section for Verification & Transparency Suite and Global Accuracy System. All features now have line-number references to the canonical spec.
 
@@ -306,7 +306,7 @@ _No active tasks. Pull from the Ready queue below._
 - **2025-11-18:** Backend mypy plugin enforcement (Codex Local) — Enabled `pydantic.mypy` and `sqlalchemy.ext.mypy.plugin` in `mypy.ini`, added `pydantic[email,mypy]==2.5.0` and `sqlalchemy[asyncio,mypy]==2.0.23` to `backend/requirements.txt`, and validated via `PYTHONPATH=/Users/wakaekihara/GitHub/optimal_build ../.venv/bin/mypy app/services/preview_generator.py --config-file=../mypy.ini`.
 - **2025-11-18:** Finance export bundle tranche metadata (Codex Local) — `GET /api/v1/finance/export` now includes `capital_stack.csv` with metadata columns and a `capital_stack.json` file capturing tranche details; covered by `pytest tests/test_api/test_finance_asset_breakdown.py::test_finance_export_bundle_includes_artifacts`.
 - **2025-11-18:** Infrastructure Audit Option 11 – Backend coverage ≥80 % (Codex Local) — `make test-cov` now reports 89 % total backend coverage (see `backend/htmlcov/index.html`), covering ingestion + finance adapters per audit requirement.
-- **2025-11-23:** Security & Infrastructure Audit Complete (Claude) — Comprehensive security audit completed: (1) ✅ 100% async compliance achieved (converted 3 files, 9 routes in singapore_property_api.py), (2) ✅ Dependency vulnerability scan with pip-audit found 4 CVEs in 3 packages (prefect 2.16.5→2.20.17+ CORS fix, starlette 0.41.3→0.49.1+ DoS fixes, ecdsa timing attack accepted risk), (3) ✅ SQL injection audit PASSED (100% ORM usage, zero vulnerabilities), (4) ✅ Input sanitization audit PASSED (comprehensive Pydantic validation), (5) ✅ OWASP Top 10 compliance 8/10 PASS, (6) ✅ GitHub Dependabot configured (.github/dependabot.yml), (7) ⚠️ Action required: upgrade prefect + starlette (pending). Full report: [`docs/audits/SECURITY_AUDIT_2025-11-23.md`](audits/SECURITY_AUDIT_2025-11-23.md). Async refactoring tracked in [`.coding-rules-exceptions.yml`](.coding-rules-exceptions.yml#L24-L49).
+- **2025-11-23:** Security & Infrastructure Audit Complete (Claude) — Comprehensive security audit completed: (1) ✅ 100% async compliance achieved (converted 3 files, 9 routes in singapore_property.py), (2) ✅ Dependency vulnerability scan with pip-audit found 4 CVEs in 3 packages (prefect 2.16.5→2.20.17+ CORS fix, starlette 0.41.3→0.49.1+ DoS fixes, ecdsa timing attack accepted risk), (3) ✅ SQL injection audit PASSED (100% ORM usage, zero vulnerabilities), (4) ✅ Input sanitization audit PASSED (comprehensive Pydantic validation), (5) ✅ OWASP Top 10 compliance 8/10 PASS, (6) ✅ GitHub Dependabot configured (.github/dependabot.yml), (7) ⚠️ Action required: upgrade prefect + starlette (pending). Full report: [`docs/audits/SECURITY_AUDIT_2025-11-23.md`](audits/SECURITY_AUDIT_2025-11-23.md). Async refactoring tracked in [`.coding-rules-exceptions.yml`](.coding-rules-exceptions.yml#L24-L49).
 - **2025-11-23:** Production Readiness Audit Complete (Claude) — ✅ **PRODUCTION READY** status achieved. All high-priority security fixes deployed: (1) ✅ Upgraded prefect 2.16.5→2.20.17 (CVE-2024-8183 CORS vulnerability), (2) ✅ Upgraded FastAPI 0.115.6→0.121.3 + starlette 0.41.3→0.49.1 (CVE-2025-54121 DoS, CVE-2025-62727 ReDoS), (3) ✅ Added pip-audit to CI/CD pipeline ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml#L558-L562)), (4) ✅ CORS configuration verified secure (localhost-only defaults, environment-configurable origins). Test results: 981/994 tests passing (98.7% pass rate), 89% backend coverage. OWASP compliance: 8/10 PASS. Coding standards: zero violations (enforced via pre-commit hooks). Remaining 4 low-priority CVEs (brotli, pip, pypdf, ecdsa) documented for next maintenance window. Deployment approved with documented maintenance plan.
 - **2025-11-17:** Front-end npm audit cleanup (Claude) — Resolved all 3 moderate vulnerabilities: upgraded vite 4.5.14 → 7.2.2 (fixes esbuild <=0.24.2 + vite <=6.1.6), upgraded eslint-plugin-react-hooks 4.6.2 → 5.2.0 (unblocked js-yaml fix), applied `npm audit fix` for js-yaml <4.1.1. `npm audit` now reports 0 vulnerabilities. Dev server, HMR, and production build verified working with vite@7.
 - **2025-11-12:** Roadmap link consolidation + validator update (Codex Local) — Removed stale `ROADMAP.MD` links across enforcement docs, QA checklists, and scripts; `make validate-delivery-plan` now targets `all_steps_to_product_completion.md`.
@@ -339,15 +339,14 @@ Older wins moved to archive for brevity; see git history for prior months.
 
 ### 🧱 Technical Debt Radar
 
-> Source: Former `TECHNICAL_DEBT_SUMMARY.MD` (2025-11-10). Keep the bullets in sync with `docs/architecture_honest.md`.
+> Source: Former `TECHNICAL_DEBT_SUMMARY.MD` (2025-11-10). Keep the bullets in sync with `docs/ARCHITECTURE_REALITY_CHECK.md`.
 
 **Critical:** _None_ – Market intelligence & agent routers are live, Alembic migrations are versioned, and `RequestMetricsMiddleware` plus `/metrics` expose throughput/latency/error collectors.
 
 **High Priority**
-- Domain naming inconsistent (mixed pluralization / `_api` suffixes) across models + schemas.
+_None_
 
 **Medium Priority**
-- Market schema drift: documentation cites `market_transactions`, production uses YieldBenchmark/AbsorptionTracking/MarketCycle tables.
 - Compliance models live inside `singapore_property.py` instead of a dedicated module.
 
 **Resolved (2025-11-22)**
@@ -355,8 +354,10 @@ Older wins moved to archive for brevity; see git history for prior months.
 - Auth flows consolidated into `app/core/auth/service.py` with legacy wrappers kept for compatibility.
 - MinIO creates imports/exports/documents buckets automatically; `DOCUMENTS_BUCKET_NAME` default added.
 
-**Low Priority**
-- Ten of eleven AI agents exist in code but lack coverage in high-level docs. Update agent catalog when feasible.
+**Resolved (2026-01-24)**
+- Domain naming standardized (model modules use singular names; `_api` suffixes removed from routers) and docs updated.
+- Market schema documentation aligned with actual tables (transactional + benchmark/alert tables).
+- Agent catalog documented and linked from high-level docs.
 
 ---
 

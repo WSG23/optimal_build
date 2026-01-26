@@ -80,7 +80,7 @@ function StatsCard({ label, value, subtext, icon: Icon }: StatsCardProps) {
         sx={{
           p: 'var(--ob-space-075)',
           borderRadius: 'var(--ob-radius-sm)',
-          bgcolor: 'rgba(0, 243, 255, 0.1)',
+          bgcolor: 'var(--ob-color-action-selected)',
           color: 'var(--ob-color-neon-cyan)',
           display: 'flex',
           alignItems: 'center',

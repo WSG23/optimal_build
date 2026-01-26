@@ -114,7 +114,7 @@ export function MetricCard({
             animation="wave"
             sx={{
               transform: 'none',
-              mb: 1,
+              mb: 'var(--ob-space-100)',
               borderRadius: 'var(--ob-radius-sm)',
             }}
           />
@@ -137,7 +137,14 @@ export function MetricCard({
         )}
 
         {(trend !== undefined || loading) && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-100)',
+              mt: 'var(--ob-space-100)',
+            }}
+          >
             {loading ? (
               <Skeleton width="40%" height={20} animation="wave" />
             ) : (
@@ -153,8 +160,8 @@ export function MetricCard({
                         : typeof trend === 'number' && trend < 0
                           ? 'var(--ob-color-error-bg)'
                           : 'var(--ob-color-surface-elevated)',
-                    px: 0.75,
-                    py: 0.25,
+                    px: 'var(--ob-space-50)',
+                    py: '0',
                     borderRadius: 'var(--ob-radius-sm)',
                   }}
                 >

@@ -339,8 +339,6 @@ function mapQuickAnalysis(payload: RawQuickAnalysis): QuickAnalysisSummary {
   }
 }
 
-export const OFFLINE_PROPERTY_ID = 'offline-property'
-
 // Developer feature types for hybrid API function
 export interface DeveloperVisualizationSummary {
   status: string
@@ -421,170 +419,6 @@ export interface DeveloperFeatureData {
 export interface GpsCaptureSummaryWithFeatures extends GpsCaptureSummary {
   developerFeatures: DeveloperFeatureData | null
 }
-const OFFLINE_MARKET_WARNING =
-  'Using offline market intelligence preview. Backend data unavailable.'
-const OFFLINE_PACK_WARNING =
-  'Using offline preview pack. Backend generator unavailable.'
-
-const GPS_FALLBACK_SUMMARY: GpsCaptureSummary = {
-  propertyId: OFFLINE_PROPERTY_ID,
-  address: {
-    fullAddress: '123 Offline Road, Singapore',
-    streetName: 'Offline Road',
-    buildingName: 'Offline Hub',
-    blockNumber: '12',
-    postalCode: '049123',
-    district: 'D01',
-    country: 'Singapore',
-  },
-  coordinates: {
-    latitude: 1.285,
-    longitude: 103.853,
-  },
-  uraZoning: {
-    zoneCode: 'Commercial',
-    zoneDescription: 'Central Business District',
-    plotRatio: 4.2,
-    buildingHeightLimit: 160,
-    siteCoverage: 80,
-    useGroups: ['Office', 'Retail', 'F&B'],
-    specialConditions: 'Refer to urban design guidelines for facade upgrades.',
-  },
-  existingUse: 'Integrated mixed-use podium with office tower',
-  propertyInfo: {
-    propertyName: 'Offline Hub',
-    tenure: '99-year leasehold',
-    siteAreaSqm: 5200,
-    gfaApproved: 20800,
-    buildingHeight: 34,
-    completionYear: 2008,
-    lastTransactionDate: '2024-03-31',
-    lastTransactionPrice: 185000000,
-  },
-  nearbyAmenities: {
-    mrtStations: [
-      { name: 'Downtown MRT', distanceM: 220 },
-      { name: 'Raffles Place MRT', distanceM: 410 },
-    ],
-    busStops: [{ name: 'One Raffles Quay', distanceM: 120 }],
-    schools: [],
-    shoppingMalls: [{ name: 'Marina One Retail', distanceM: 310 }],
-    parks: [{ name: 'Central Linear Park', distanceM: 450 }],
-  },
-  quickAnalysis: {
-    generatedAt: '2025-01-15T08:00:00Z',
-    scenarios: [
-      {
-        scenario: 'existing_building',
-        headline: 'Stabilised NOI supports 4.3% yield post-refresh',
-        metrics: {
-          occupancy_pct: 0.94,
-          annual_noi: 8650000,
-          valuation_cap_rate: 0.043,
-        },
-        notes: [
-          'Reposition ground-floor podium for F&B and lifestyle concepts.',
-          'Upgrade end-of-trip facilities to attract flex-office tenants.',
-        ],
-      },
-      {
-        scenario: 'heritage_property',
-        headline: 'Adaptive reuse opportunity respecting facade guidelines',
-        metrics: {
-          conservation_status: 'partial',
-          estimated_capex: 4200000,
-        },
-        notes: [
-          'Consult URA on conservation requirements for street-facing facade.',
-        ],
-      },
-      {
-        scenario: 'underused_asset',
-        headline: 'Introduce wellness suites to lift blended rents by 8%',
-        metrics: {
-          potential_rent_uplift_pct: 0.08,
-          target_lease_term_years: 5,
-        },
-        notes: [
-          'Demand from healthcare operators for central locations remains strong.',
-        ],
-      },
-    ],
-  },
-  timestamp: '2025-01-15T08:05:00Z',
-  jurisdictionCode: 'SG',
-  currencySymbol: 'S$',
-}
-
-function cloneGpsSummary(summary: GpsCaptureSummary): GpsCaptureSummary {
-  return {
-    propertyId: summary.propertyId,
-    address: { ...summary.address },
-    coordinates: { ...summary.coordinates },
-    uraZoning: {
-      zoneCode: summary.uraZoning.zoneCode,
-      zoneDescription: summary.uraZoning.zoneDescription,
-      plotRatio: summary.uraZoning.plotRatio ?? null,
-      buildingHeightLimit: summary.uraZoning.buildingHeightLimit ?? null,
-      siteCoverage: summary.uraZoning.siteCoverage ?? null,
-      useGroups: [...summary.uraZoning.useGroups],
-      specialConditions: summary.uraZoning.specialConditions ?? null,
-    },
-    existingUse: summary.existingUse,
-    propertyInfo: summary.propertyInfo ? { ...summary.propertyInfo } : null,
-    nearbyAmenities: summary.nearbyAmenities
-      ? {
-          mrtStations: summary.nearbyAmenities.mrtStations.map((item) => ({
-            ...item,
-          })),
-          busStops: summary.nearbyAmenities.busStops.map((item) => ({
-            ...item,
-          })),
-          schools: summary.nearbyAmenities.schools.map((item) => ({
-            ...item,
-          })),
-          shoppingMalls: summary.nearbyAmenities.shoppingMalls.map((item) => ({
-            ...item,
-          })),
-          parks: summary.nearbyAmenities.parks.map((item) => ({ ...item })),
-        }
-      : null,
-    quickAnalysis: {
-      generatedAt: summary.quickAnalysis.generatedAt,
-      scenarios: summary.quickAnalysis.scenarios.map((scenario) => ({
-        scenario: scenario.scenario,
-        headline: scenario.headline,
-        metrics: { ...scenario.metrics },
-        notes: [...scenario.notes],
-      })),
-    },
-    timestamp: summary.timestamp,
-    jurisdictionCode: summary.jurisdictionCode,
-    currencySymbol: summary.currencySymbol,
-  }
-}
-
-function createGpsFallbackSummary(
-  request: LogPropertyByGpsRequest,
-): GpsCaptureSummary {
-  const fallback = cloneGpsSummary(GPS_FALLBACK_SUMMARY)
-  fallback.coordinates = {
-    latitude: request.latitude,
-    longitude: request.longitude,
-  }
-  const generatedAt = new Date().toISOString()
-  fallback.timestamp = generatedAt
-  fallback.quickAnalysis = {
-    ...fallback.quickAnalysis,
-    generatedAt,
-    scenarios: fallback.quickAnalysis.scenarios.map((scenario) => ({
-      ...scenario,
-      metrics: { ...scenario.metrics },
-      notes: [...scenario.notes],
-    })),
-  }
-  return fallback
-}
 
 export type LogTransport = (
   baseUrl: string,
@@ -658,13 +492,6 @@ export async function logPropertyByGps(
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw error
-    }
-    if (error instanceof TypeError) {
-      console.warn(
-        '[agents] GPS capture request failed, using offline fallback data',
-        error,
-      )
-      return createGpsFallbackSummary(request)
     }
     throw error
   }
@@ -935,14 +762,6 @@ export async function logPropertyByGpsWithFeatures(
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw error
     }
-    if (error instanceof TypeError) {
-      console.warn(
-        '[agents] Developer GPS capture request failed, using offline fallback data',
-        error,
-      )
-      const fallback = createGpsFallbackSummary(baseRequest)
-      return { ...fallback, developerFeatures: null }
-    }
     throw error
   }
 }
@@ -988,84 +807,52 @@ export async function fetchPropertyMarketIntelligence(
   months = 12,
   signal?: AbortSignal,
 ): Promise<MarketIntelligenceSummary> {
-  if (propertyId === OFFLINE_PROPERTY_ID) {
-    return {
-      propertyId,
-      report: createOfflineMarketIntelligenceReport(months),
-      isFallback: true,
-      warning: OFFLINE_MARKET_WARNING,
-    }
-  }
-
   const params = new URLSearchParams()
   if (months) {
     params.set('months', String(months))
   }
 
-  try {
-    const response = await fetch(
-      buildUrl(
-        `api/v1/agents/commercial-property/properties/${propertyId}/market-intelligence?${params.toString()}`,
-      ),
-      {
-        method: 'GET',
-        signal,
-      },
+  const response = await fetch(
+    buildUrl(
+      `api/v1/agents/commercial-property/properties/${propertyId}/market-intelligence?${params.toString()}`,
+    ),
+    {
+      method: 'GET',
+      signal,
+    },
+  )
+
+  const contentType = response.headers?.get?.('content-type') ?? ''
+
+  if (!response.ok) {
+    const detail = contentType.includes('application/json')
+      ? await response.json().then((data: Record<string, unknown>) => {
+          const errorDetail = data?.detail
+          return typeof errorDetail === 'string' ? errorDetail : undefined
+        })
+      : await response.text()
+    throw new Error(
+      detail ||
+        `Market intelligence request failed with status ${response.status}`,
     )
+  }
 
-    const contentType = response.headers?.get?.('content-type') ?? ''
+  if (!contentType.includes('application/json')) {
+    throw new Error('Unexpected response format from market intelligence')
+  }
 
-    if (!response.ok) {
-      const detail = contentType.includes('application/json')
-        ? await response.json().then((data: Record<string, unknown>) => {
-            const errorDetail = data?.detail
-            return typeof errorDetail === 'string' ? errorDetail : undefined
-          })
-        : await response.text()
+  const payload = (await response.json()) as {
+    property_id: string
+    report: Record<string, unknown>
+    is_fallback?: boolean
+    warning?: string
+  }
 
-      return {
-        propertyId,
-        report: createOfflineMarketIntelligenceReport(months),
-        isFallback: true,
-        warning: detail
-          ? `${OFFLINE_MARKET_WARNING} (${detail})`
-          : OFFLINE_MARKET_WARNING,
-      }
-    }
-
-    if (!contentType.includes('application/json')) {
-      return {
-        propertyId,
-        report: createOfflineMarketIntelligenceReport(months),
-        isFallback: true,
-        warning: `${OFFLINE_MARKET_WARNING} (Unexpected response format)`,
-      }
-    }
-
-    const payload = (await response.json()) as {
-      property_id: string
-      report: Record<string, unknown>
-    }
-
-    return {
-      propertyId: payload.property_id,
-      report: payload.report ?? {},
-      isFallback: false,
-    }
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      throw error
-    }
-    const detail =
-      error instanceof Error
-        ? error.message
-        : 'Unable to load market intelligence.'
-    return {
-      propertyId,
-      report: createOfflineMarketIntelligenceReport(months),
-      isFallback: true,
-      warning: `${OFFLINE_MARKET_WARNING} (${detail})`,
-    }
+  return {
+    propertyId: payload.property_id,
+    report: payload.report ?? {},
+    isFallback: Boolean(payload.is_fallback),
+    warning: typeof payload.warning === 'string' ? payload.warning : undefined,
   }
 }
 
@@ -1074,147 +861,51 @@ export async function generateProfessionalPack(
   packType: ProfessionalPackType,
   signal?: AbortSignal,
 ): Promise<ProfessionalPackSummary> {
-  if (propertyId === OFFLINE_PROPERTY_ID) {
-    return createOfflinePackSummary(propertyId, packType, OFFLINE_PACK_WARNING)
-  }
-
   const url = buildUrl(
     `api/v1/agents/commercial-property/properties/${propertyId}/generate-pack/${packType}`,
   )
 
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      signal,
-    })
+  const response = await fetch(url, {
+    method: 'POST',
+    signal,
+  })
 
-    const contentType = response.headers?.get?.('content-type') ?? ''
+  const contentType = response.headers?.get?.('content-type') ?? ''
 
-    if (!response.ok) {
-      const detail = contentType.includes('application/json')
-        ? await response.json().then((data: Record<string, unknown>) => {
-            const message = data?.detail
-            return typeof message === 'string' ? message : undefined
-          })
-        : await response.text()
-
-      return createOfflinePackSummary(
-        propertyId,
-        packType,
-        detail ? `${OFFLINE_PACK_WARNING} (${detail})` : OFFLINE_PACK_WARNING,
-      )
-    }
-
-    if (!contentType.includes('application/json')) {
-      return createOfflinePackSummary(
-        propertyId,
-        packType,
-        `${OFFLINE_PACK_WARNING} (Unexpected response format)`,
-      )
-    }
-
-    const payload = (await response.json()) as {
-      pack_type: ProfessionalPackType
-      property_id: string
-      filename: string
-      download_url?: string | null
-      generated_at: string
-      size_bytes?: number | null
-    }
-
-    return {
-      packType: payload.pack_type,
-      propertyId: payload.property_id,
-      filename: payload.filename,
-      downloadUrl: payload.download_url ?? null,
-      generatedAt: payload.generated_at,
-      sizeBytes:
-        typeof payload.size_bytes === 'number' ? payload.size_bytes : null,
-      isFallback: false,
-    }
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      throw error
-    }
-    const detail =
-      error instanceof Error ? error.message : 'Unable to reach pack generator.'
-    return createOfflinePackSummary(
-      propertyId,
-      packType,
-      `${OFFLINE_PACK_WARNING} (${detail})`,
+  if (!response.ok) {
+    const detail = contentType.includes('application/json')
+      ? await response.json().then((data: Record<string, unknown>) => {
+          const message = data?.detail
+          return typeof message === 'string' ? message : undefined
+        })
+      : await response.text()
+    throw new Error(
+      detail || `Pack generation failed with status ${response.status}`,
     )
   }
-}
 
-function createOfflinePackSummary(
-  propertyId: string,
-  packType: ProfessionalPackType,
-  warning?: string,
-): ProfessionalPackSummary {
-  const timestamp = new Date().toISOString()
-  const filename = `${packType}_pack_preview_${timestamp.slice(0, 10)}.pdf`
-  return {
-    packType,
-    propertyId,
-    filename,
-    downloadUrl: null,
-    generatedAt: timestamp,
-    sizeBytes: null,
-    isFallback: true,
-    warning,
+  if (!contentType.includes('application/json')) {
+    throw new Error('Unexpected response format from pack generator')
   }
-}
 
-function createOfflineMarketIntelligenceReport(months: number) {
-  const end = new Date()
-  const start = new Date(end)
-  start.setMonth(end.getMonth() - Math.max(1, months))
+  const payload = (await response.json()) as {
+    pack_type: ProfessionalPackType
+    property_id: string
+    filename: string
+    download_url?: string | null
+    generated_at: string
+    size_bytes?: number | null
+  }
 
   return {
-    property_type: 'Mixed Use',
-    location: 'CBD',
-    generated_at: end.toISOString(),
-    period: {
-      start: start.toISOString(),
-      end: end.toISOString(),
-    },
-    comparables_analysis: {
-      transaction_count: 18,
-      average_psf: 2480,
-      median_psf: 2440,
-      highest_psf: 2725,
-      lowest_psf: 2190,
-      trend: 'stable',
-    },
-    supply_dynamics: {
-      projects_in_pipeline: 5,
-      completions_next_12_months: 2,
-      occupancy_rate: 0.93,
-      headline:
-        'Limited new supply supports rental stability through the next cycle.',
-    },
-    yield_benchmarks: {
-      core_yield: 0.041,
-      value_add_yield: 0.047,
-      opportunistic_yield: 0.052,
-      commentary:
-        'CBD mixed-use yields tightened 15 bps over the past quarter.',
-    },
-    absorption_trends: {
-      average_absorption_months: 7,
-      leasing_velocity: 'improving',
-      pre_commitment_rate: 0.68,
-      notes: 'Flight-to-quality demand continues for premium CBD assets.',
-    },
-    market_cycle_position: {
-      phase: 'Expansion',
-      confidence: 'medium',
-      catalysts: [
-        'Office-to-flex conversions sustaining occupancy',
-        'Retail footfall exceeding pre-pandemic baseline',
-      ],
-      risks: ['Interest rate volatility moderating investor bids'],
-    },
+    packType: payload.pack_type,
+    propertyId: payload.property_id,
+    filename: payload.filename,
+    downloadUrl: payload.download_url ?? null,
+    generatedAt: payload.generated_at,
+    sizeBytes:
+      typeof payload.size_bytes === 'number' ? payload.size_bytes : null,
+    isFallback: false,
   }
 }
 

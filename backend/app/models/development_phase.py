@@ -32,7 +32,7 @@ from sqlalchemy.orm import Mapped, relationship
 from app.models.base import BaseModel as Base, UUID
 
 if TYPE_CHECKING:
-    from app.models.projects import Project
+    from app.models.project import Project
 
 
 class PhaseType(str, Enum):

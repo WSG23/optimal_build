@@ -32,7 +32,6 @@ def _make_service_with_responder(responder) -> GeocodingService:
     service = GeocodingService()
     service.client = _DummyClient(responder)
     service.google_maps_api_key = "test-key"
-    service.offline_mode = False
     return service
 
 
@@ -122,7 +121,6 @@ async def test_reverse_geocode_with_none_client() -> None:
     service = GeocodingService()
     service.client = None
     service.google_maps_api_key = "test-key"
-    service.offline_mode = False
 
     with pytest.raises(RuntimeError):
         await service.reverse_geocode(1.3, 103.8)
@@ -134,7 +132,6 @@ async def test_geocode_with_none_client() -> None:
     service = GeocodingService()
     service.client = None
     service.google_maps_api_key = "test-key"
-    service.offline_mode = False
 
     with pytest.raises(RuntimeError):
         await service.geocode("Test Address")
@@ -179,10 +176,9 @@ async def test_geocode_returns_fallback_when_coordinates_missing() -> None:
 async def test_nearby_amenities_returns_mock_when_client_missing() -> None:
     service = GeocodingService()
     service.client = None
-    service.offline_mode = True
 
-    amenities = await service.get_nearby_amenities(1.3, 103.8)
-    assert amenities["mrt_stations"][0]["name"] == "Mock MRT"
+    with pytest.raises(RuntimeError):
+        await service.get_nearby_amenities(1.3, 103.8)
 
 
 @pytest.mark.asyncio

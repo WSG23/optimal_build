@@ -9,7 +9,7 @@
     gap: var(--ob-spacing-500);
     max-width: 1400px;
     margin: 0 auto;
-    /* padding removed - YosaiShell provides canonical 16px layout padding */
+    /* padding removed - OptimalBuildShell provides canonical 16px layout padding */
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
 }
@@ -88,7 +88,7 @@
 
 .agents-capture__scenario-option:has(input:checked) {
     border-color: var(--ob-color-neon-cyan);
-    background: rgba(0, 243, 255, 0.08);
+    background: var(--ob-color-table-row-selected);
     box-shadow: var(--ob-glow-neon-cyan);
 }
 
@@ -113,10 +113,10 @@
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     background: linear-gradient(
         135deg,
-        #0096cc 0%,
+        var(--ob-color-primary) 0%,
         var(--ob-color-neon-cyan) 100%
     );
-    color: #0a1628;
+    color: var(--ob-color-bg-inverse);
     font-weight: 600;
     border: none;
     cursor: pointer;
@@ -128,7 +128,7 @@
     background: linear-gradient(
         135deg,
         var(--ob-color-neon-cyan) 0%,
-        #0096cc 100%
+        var(--ob-color-primary) 100%
     );
     box-shadow: var(--ob-glow-neon-cyan-strong);
     transform: translateY(-1px);
@@ -213,7 +213,7 @@
 }
 
 .agents-capture__cta-link:hover {
-    background: rgba(0, 243, 255, 0.1);
+    background: var(--ob-color-action-selected);
     box-shadow: var(--ob-glow-neon-cyan);
 }
 
@@ -449,10 +449,10 @@
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     background: linear-gradient(
         135deg,
-        #0096cc 0%,
+        var(--ob-color-primary) 0%,
         var(--ob-color-neon-cyan) 100%
     );
-    color: #0a1628;
+    color: var(--ob-color-bg-inverse);
     font-weight: 600;
     border: none;
     cursor: pointer;
@@ -464,7 +464,7 @@
     background: linear-gradient(
         135deg,
         var(--ob-color-neon-cyan) 0%,
-        #0096cc 100%
+        var(--ob-color-primary) 100%
     );
     box-shadow: var(--ob-glow-neon-cyan-strong);
     transform: translateY(-1px);

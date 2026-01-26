@@ -24,18 +24,19 @@ if _ALIAS and _ALIAS in sys.modules:
 else:
     # Import model modules so their metadata is registered with SQLAlchemy.
     from . import agent_advisory  # Added: agent advisory feedback model
-    from . import ai_agents  # Added: AI agents model
+    from . import ai_agent  # Added: AI agents model
     from . import ai_config  # Added: AI configuration model
     from . import developer_condition  # Added: developer condition assessments
     from . import development_phase  # Added: Phase 2D development phases
     from . import hong_kong_property  # Added: Hong Kong property model
     from . import listing_integration  # Added: external listing integrations
     from . import new_zealand_property  # Added: New Zealand property model
-    from . import projects  # Added: development projects model
+    from . import project  # Added: development projects model
+    from . import security  # Added: security incident model
     from . import seattle_property  # Added: Seattle property model
     from . import singapore_property  # Added: Singapore property model
     from . import toronto_property  # Added: Toronto property model
-    from . import users  # Added: user authentication model
+    from . import user  # Added: user authentication model
     from . import team  # Added: Phase 2E team management
     from . import workflow  # Added: Phase 2E approval workflows
     from . import (  # noqa: F401  pylint: disable=unused-import
@@ -56,7 +57,7 @@ else:
 
     _SUBMODULES: dict[str, ModuleType] = {
         "agent_advisory": agent_advisory,  # Added: agent advisory feedback model
-        "ai_agents": ai_agents,  # Added: AI agents model
+        "ai_agent": ai_agent,  # Added: AI agents model
         "ai_config": ai_config,  # Added: AI configuration model
         "developer_condition": developer_condition,
         "development_phase": development_phase,  # Added: Phase 2D development phases
@@ -73,12 +74,13 @@ else:
         "preview": preview,
         "property": property_model,
         "listing_integration": listing_integration,
-        "projects": projects,  # Added: development projects model
+        "project": project,  # Added: development projects model
+        "security": security,  # Added: security incident model
         "rkp": rkp,
         "rulesets": rulesets,
         "singapore_property": singapore_property,  # Added: Singapore property model
         "toronto_property": toronto_property,  # Added: Toronto property model
-        "users": users,  # Added: user authentication model
+        "user": user,  # Added: user authentication model
         "team": team,  # Added: Phase 2E team management
         "workflow": workflow,  # Added: Phase 2E approval workflows
         "regulatory": regulatory,

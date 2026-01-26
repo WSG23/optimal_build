@@ -13,17 +13,17 @@
 .cad-uploader__dropzone {
     border: 2px dashed var(--ob-color-border-neutral);
     border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
-    padding: 3rem;
+    padding: var(--ob-space-600);
     text-align: center;
     background: var(--ob-color-bg-surface-elevated);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--ob-space-200);
     justify-content: center;
 }
 
 .cad-uploader__dropzone--dragging {
-    background: rgba(0, 243, 255, 0.08);
+    background: var(--ob-color-table-row-selected);
     border-color: var(--ob-color-neon-cyan);
     box-shadow: var(--ob-glow-neon-cyan);
 }
@@ -44,10 +44,10 @@
     border: none;
     background: linear-gradient(
         135deg,
-        #0096cc 0%,
+        var(--ob-color-primary) 0%,
         var(--ob-color-neon-cyan) 100%
     );
-    color: #0a1628;
+    color: var(--ob-color-bg-inverse);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -58,7 +58,7 @@
     background: linear-gradient(
         135deg,
         var(--ob-color-neon-cyan) 0%,
-        #0096cc 100%
+        var(--ob-color-primary) 100%
     );
     box-shadow: var(--ob-glow-neon-cyan-strong);
     transform: translateY(-1px);
@@ -68,7 +68,7 @@
     background: var(--ob-color-bg-surface);
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
-    padding: 2rem;
+    padding: var(--ob-space-400);
     box-shadow: var(--ob-shadow-md);
 }
 
@@ -78,14 +78,14 @@
 
 .cad-uploader__meta {
     display: grid;
-    gap: 0.75rem;
+    gap: var(--ob-space-150);
     margin: 1.5rem 0 0;
 }
 
 .cad-uploader__meta div {
     display: flex;
     justify-content: space-between;
-    gap: 1rem;
+    gap: var(--ob-space-200);
 }
 
 .cad-uploader__meta dt {
@@ -104,7 +104,7 @@
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
-    /* padding removed - YosaiShell provides canonical 16px layout padding */
+    /* padding removed - OptimalBuildShell provides canonical 16px layout padding */
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
 }
@@ -112,14 +112,14 @@
 .cad-upload__controls {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--ob-space-200);
     flex-wrap: wrap;
 }
 
 .cad-upload__label {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
     font-weight: 600;
 }
 
@@ -255,7 +255,7 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--ob-space-150);
 }
 
 .cad-overlay-summary {
@@ -269,7 +269,7 @@
 .cad-overlay-summary__heading {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--ob-space-150);
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--ob-color-surface-inverse);
@@ -277,7 +277,7 @@
 
 .cad-overlay-summary__actions {
     display: flex;
-    gap: 0.4rem;
+    gap: var(--ob-space-100);
     margin-left: auto;
 }
 
@@ -295,7 +295,7 @@
 
 .cad-overlay-status-summary {
     display: flex;
-    gap: 0.75rem;
+    gap: var(--ob-space-150);
     font-size: 0.75rem;
     margin-bottom: 0.5rem;
     color: var(--ob-color-surface-inverse);
@@ -343,14 +343,14 @@
 
 .cad-overlay-summary__badges {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
     flex-wrap: wrap;
 }
 
 .cad-overlay-summary__badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: var(--ob-space-50);
     padding: 0.2rem 0.6rem;
     border-radius: 999px;
     font-size: 0.75rem;
@@ -367,7 +367,7 @@
 
 .cad-overlay-summary__badge:hover,
 .cad-overlay-summary__badge:focus-visible {
-    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.15);
+    box-shadow: 0 0 0 2px var(--ob-color-border-subtle);
     transform: translateY(-1px);
     outline: none;
 }
@@ -397,7 +397,7 @@
 }
 
 .cad-overlay-summary__badge--active {
-    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 0 0 2px var(--ob-color-action-active-light);
     transform: translateY(-1px);
 }
 
@@ -415,7 +415,7 @@
     line-height: 1.4;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
     align-items: center;
 }
 
@@ -441,7 +441,7 @@
 .cad-overlay-empty {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
     padding: 0.75rem 1rem;
     background: var(--ob-color-surface-alt);
     border-radius: 4px; /* Square Cyber-Minimalism: sm for panels */
@@ -472,17 +472,17 @@
     background: var(--ob-color-bg-surface-elevated);
     border-radius: 4px; /* Square Cyber-Minimalism: sm for cards */
     padding: 0.75rem 1rem;
-    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.25);
+    box-shadow: inset 0 0 0 1px var(--ob-color-border-subtle);
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: var(--ob-space-50);
 }
 
 .cad-overlay-item__header {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: var(--ob-space-150);
 }
 
 .cad-overlay-item__title {
@@ -495,7 +495,7 @@
 .cad-overlay-item__severity {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: var(--ob-space-50);
     padding: 0.125rem 0.5rem;
     border-radius: 999px;
     font-size: 0.75rem;
@@ -527,7 +527,7 @@
 .cad-overlay-item__meta {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--ob-space-150);
     font-size: 0.85rem;
     color: var(--ob-color-text-muted);
 }
@@ -576,7 +576,7 @@
 .cad-unit-severity {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: var(--ob-space-50);
     font-size: 0.65rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -612,7 +612,7 @@
 .cad-status__label {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
     margin-bottom: 0.5rem;
 }
 
@@ -626,7 +626,7 @@
 .cad-metric-editor {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
     max-width: 220px;
 }
 
@@ -645,7 +645,7 @@
 
 .cad-metric-editor__actions {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
 }
 
 .cad-metric-editor__actions button {
@@ -742,7 +742,7 @@
 .cad-layer-toggle {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
 }
 
 .cad-layer-toggle__button {
@@ -760,7 +760,7 @@
 }
 
 .cad-layer-toggle__button--active {
-    background: rgba(0, 243, 255, 0.15);
+    background: var(--ob-color-action-selected-strong);
     color: var(--ob-color-neon-cyan);
     border-color: var(--ob-color-neon-cyan);
     box-shadow: var(--ob-glow-neon-cyan);
@@ -775,7 +775,7 @@
 
 .cad-bulk-controls {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
 }
 
 .cad-bulk-controls button,
@@ -795,10 +795,10 @@
     border: none;
     background: linear-gradient(
         135deg,
-        #0096cc 0%,
+        var(--ob-color-primary) 0%,
         var(--ob-color-neon-cyan) 100%
     );
-    color: #0a1628;
+    color: var(--ob-color-bg-inverse);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -811,7 +811,7 @@
     background: linear-gradient(
         135deg,
         var(--ob-color-neon-cyan) 0%,
-        #0096cc 100%
+        var(--ob-color-primary) 100%
     );
     box-shadow: var(--ob-glow-neon-cyan-strong);
     transform: translateY(-1px);
@@ -845,7 +845,7 @@
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
-    /* padding removed - YosaiShell provides canonical 16px layout padding */
+    /* padding removed - OptimalBuildShell provides canonical 16px layout padding */
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
 }
@@ -904,7 +904,7 @@
 
 .cad-detection__filter-banner-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
 }
 
 .cad-detection__filter-banner-actions button {
@@ -941,7 +941,7 @@
 
 .cad-rulepack {
     display: grid;
-    gap: 1rem;
+    gap: var(--ob-space-200);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -949,7 +949,7 @@
 
 .cad-rulepack > li {
     background: var(--ob-neutral-50);
-    padding: 1rem;
+    padding: var(--ob-space-200);
     border-radius: var(--ob-radius-sm);
 }
 
@@ -965,7 +965,7 @@
     padding: 0;
     margin: 0;
     display: grid;
-    gap: 1rem;
+    gap: var(--ob-space-200);
 }
 
 .cad-timeline__baseline {
@@ -976,8 +976,8 @@
 .cad-export {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    margin: 1rem 0 0;
+    gap: var(--ob-space-100);
+    margin: var(--ob-space-200) 0 0;
     padding: 0;
     list-style: none;
 }
@@ -985,7 +985,7 @@
 .cad-export__pending {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--ob-space-150);
     margin: 0.75rem 0 0;
     padding: 0.75rem 1rem;
     border-radius: var(--ob-radius-sm);
@@ -1023,7 +1023,7 @@
 .cad-roi {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1rem;
+    gap: var(--ob-space-200);
     margin: 0;
 }
 

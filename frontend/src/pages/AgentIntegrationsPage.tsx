@@ -3,68 +3,64 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { AppLayout } from '../App'
 import {
   ListingIntegrationAccount,
-  connectMockAccount,
-  disconnectMockAccount,
   fetchListingAccounts,
-  publishMockListing,
+  fetchListingProviders,
+  connectListingAccount,
+  disconnectListingAccount,
+  publishListing,
+  type ListingProviderOption,
 } from '../api/listings'
 
-const PROVIDERS = [
-  { key: 'propertyguru', label: 'PropertyGuru (mock)' },
-  { key: 'edgeprop', label: 'EdgeProp (mock)' },
-  { key: 'zoho_crm', label: 'Zoho CRM (mock)' },
-] as const
-
-type ProviderKey = (typeof PROVIDERS)[number]['key']
+type ProviderKey = string
 
 type ProviderState = Record<ProviderKey, string>
 
 type PublishState = Record<
   ProviderKey,
-  { propertyId: string; externalId: string }
+  { propertyId: string; externalId: string; title: string }
 >
 
-const PROVIDER_LABEL: Record<ProviderKey, string> = PROVIDERS.reduce(
-  (acc, provider) => ({
-    ...acc,
-    [provider.key]: provider.label,
-  }),
-  {} as Record<ProviderKey, string>,
-)
-
-function createDefaultCodes(): ProviderState {
-  return PROVIDERS.reduce<ProviderState>((acc, provider) => {
-    acc[provider.key] = 'mock-code'
-    return acc
-  }, {} as ProviderState)
-}
-
-function createDefaultPublishState(): PublishState {
-  return PROVIDERS.reduce<PublishState>((acc, provider) => {
-    acc[provider.key] = {
-      propertyId: '',
-      externalId: `${provider.key}-listing-1`,
-    }
-    return acc
-  }, {} as PublishState)
-}
-
 export function AgentIntegrationsPage() {
+  const [providers, setProviders] = useState<ListingProviderOption[]>([])
   const [accounts, setAccounts] = useState<ListingIntegrationAccount[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
-  const [codes, setCodes] = useState<ProviderState>(() => createDefaultCodes())
-  const [publishState, setPublishState] = useState<PublishState>(() =>
-    createDefaultPublishState(),
-  )
+  const [codes, setCodes] = useState<ProviderState>({})
+  const [publishState, setPublishState] = useState<PublishState>({})
 
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true)
-    fetchListingAccounts(controller.signal)
-      .then((records) => {
+    Promise.all([
+      fetchListingProviders(controller.signal),
+      fetchListingAccounts(controller.signal),
+    ])
+      .then(([providerOptions, records]) => {
+        setProviders(providerOptions)
         setAccounts(records)
+        setCodes((current) => {
+          const next = { ...current }
+          providerOptions.forEach((provider) => {
+            if (!(provider.provider in next)) {
+              next[provider.provider] = ''
+            }
+          })
+          return next
+        })
+        setPublishState((current) => {
+          const next = { ...current }
+          providerOptions.forEach((provider) => {
+            if (!(provider.provider in next)) {
+              next[provider.provider] = {
+                propertyId: '',
+                externalId: '',
+                title: '',
+              }
+            }
+          })
+          return next
+        })
       })
       .catch((err) => {
         if (err instanceof Error && err.name === 'AbortError') {
@@ -89,16 +85,21 @@ export function AgentIntegrationsPage() {
   ) => {
     event.preventDefault()
     setError(null)
+    const code = codes[provider]?.trim()
+    if (!code) {
+      setError('Enter an authorization code before linking the account.')
+      return
+    }
     try {
-      const account = await connectMockAccount(
-        provider,
-        codes[provider] || 'mock-code',
-      )
+      const account = await connectListingAccount(provider, code)
       setAccounts((current) => {
         const filtered = current.filter((row) => row.id !== account.id)
         return [...filtered, account]
       })
-      setMessage(`${PROVIDER_LABEL[provider]} account linked.`)
+      const label =
+        providers.find((entry) => entry.provider === provider)?.label ||
+        provider
+      setMessage(`${label} account linked.`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to connect account')
     }
@@ -109,19 +110,27 @@ export function AgentIntegrationsPage() {
     provider: ProviderKey,
   ) => {
     event.preventDefault()
-    const { propertyId, externalId } = publishState[provider]
+    const publishValues = publishState[provider] ?? {
+      propertyId: '',
+      externalId: '',
+      title: '',
+    }
+    const { propertyId, externalId, title } = publishValues
     if (!propertyId.trim()) {
       setError('Enter a property ID before publishing.')
       return
     }
     setError(null)
     try {
-      const result = await publishMockListing(provider, {
+      const result = await publishListing(provider, {
         property_id: propertyId.trim(),
         external_id: externalId.trim() || `${provider}-listing`,
-        title: `Mock listing (${provider})`,
+        title: title.trim() || propertyId.trim(),
       })
-      setMessage(`${PROVIDER_LABEL[provider]} published ${result.listing_id}.`)
+      const label =
+        providers.find((entry) => entry.provider === provider)?.label ||
+        provider
+      setMessage(`${label} published ${result.listing_id}.`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to publish listing')
     }
@@ -130,11 +139,14 @@ export function AgentIntegrationsPage() {
   const handleDisconnect = async (provider: ProviderKey) => {
     setError(null)
     try {
-      await disconnectMockAccount(provider)
+      await disconnectListingAccount(provider)
       setAccounts((existing) =>
         existing.filter((account) => account.provider !== provider),
       )
-      setMessage(`${PROVIDER_LABEL[provider]} account disconnected.`)
+      const label =
+        providers.find((entry) => entry.provider === provider)?.label ||
+        provider
+      setMessage(`${label} account disconnected.`)
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Failed to disconnect account',
@@ -145,7 +157,7 @@ export function AgentIntegrationsPage() {
   return (
     <AppLayout
       title="Listing integrations"
-      subtitle="Link mock PropertyGuru and EdgeProp accounts while we wait for production credentials."
+      subtitle="Link listing platforms to publish and manage inventory."
     >
       <div className="integrations">
         {error && <div className="integrations__error">{error}</div>}
@@ -183,82 +195,113 @@ export function AgentIntegrationsPage() {
           )}
         </section>
 
-        {PROVIDERS.map((provider) => {
-          const account = accountByProvider.get(provider.key)
-          const connected = account?.status === 'connected'
-          const publishValues = publishState[provider.key]
-          return (
-            <section key={provider.key} className="integrations__panel">
-              <h2>{provider.label}</h2>
-              <form
-                className="integrations__form"
-                onSubmit={(event) => handleConnect(event, provider.key)}
-              >
-                <label>
-                  Authorization code
-                  <input
-                    value={codes[provider.key]}
-                    onChange={(event) =>
-                      setCodes((current) => ({
-                        ...current,
-                        [provider.key]: event.target.value,
-                      }))
-                    }
-                    placeholder="mock-code"
-                  />
-                </label>
-                <button type="submit">Link account</button>
-              </form>
-              <button
-                type="button"
-                className="integrations__disconnect"
-                onClick={() => handleDisconnect(provider.key)}
-                disabled={!connected}
-              >
-                Disconnect account
-              </button>
+        {providers.length === 0 ? (
+          <section className="integrations__panel">
+            <p className="integrations__empty">No providers configured yet.</p>
+          </section>
+        ) : (
+          providers.map((provider) => {
+            const account = accountByProvider.get(provider.provider)
+            const connected = account?.status === 'connected'
+            const publishValues = publishState[provider.provider] ?? {
+              propertyId: '',
+              externalId: '',
+              title: '',
+            }
+            return (
+              <section key={provider.provider} className="integrations__panel">
+                <h2>{provider.label}</h2>
+                {provider.description && (
+                  <p className="integrations__subtitle">
+                    {provider.description}
+                  </p>
+                )}
+                <form
+                  className="integrations__form"
+                  onSubmit={(event) => handleConnect(event, provider.provider)}
+                >
+                  <label>
+                    Authorization code
+                    <input
+                      value={codes[provider.provider] ?? ''}
+                      onChange={(event) =>
+                        setCodes((current) => ({
+                          ...current,
+                          [provider.provider]: event.target.value,
+                        }))
+                      }
+                      placeholder="Paste OAuth authorization code"
+                    />
+                  </label>
+                  <button type="submit">Link account</button>
+                </form>
+                <button
+                  type="button"
+                  className="integrations__disconnect"
+                  onClick={() => handleDisconnect(provider.provider)}
+                  disabled={!connected}
+                >
+                  Disconnect account
+                </button>
 
-              <form
-                className="integrations__form"
-                onSubmit={(event) => handlePublish(event, provider.key)}
-              >
-                <label>
-                  Property ID
-                  <input
-                    value={publishValues.propertyId}
-                    onChange={(event) =>
-                      setPublishState((current) => ({
-                        ...current,
-                        [provider.key]: {
-                          ...current[provider.key],
-                          propertyId: event.target.value,
-                        },
-                      }))
-                    }
-                    placeholder="e.g. 4271b4aa-f33c-4fd7-ad23-d128a262842b"
-                  />
-                </label>
-                <label>
-                  External listing ID
-                  <input
-                    value={publishValues.externalId}
-                    onChange={(event) =>
-                      setPublishState((current) => ({
-                        ...current,
-                        [provider.key]: {
-                          ...current[provider.key],
-                          externalId: event.target.value,
-                        },
-                      }))
-                    }
-                    placeholder={`${provider.key}-listing-1`}
-                  />
-                </label>
-                <button type="submit">Publish mock listing</button>
-              </form>
-            </section>
-          )
-        })}
+                <form
+                  className="integrations__form"
+                  onSubmit={(event) => handlePublish(event, provider.provider)}
+                >
+                  <label>
+                    Property ID
+                    <input
+                      value={publishValues.propertyId}
+                      onChange={(event) =>
+                        setPublishState((current) => ({
+                          ...current,
+                          [provider.provider]: {
+                            ...current[provider.provider],
+                            propertyId: event.target.value,
+                          },
+                        }))
+                      }
+                      placeholder="e.g. 4271b4aa-f33c-4fd7-ad23-d128a262842b"
+                    />
+                  </label>
+                  <label>
+                    Listing title
+                    <input
+                      value={publishValues.title}
+                      onChange={(event) =>
+                        setPublishState((current) => ({
+                          ...current,
+                          [provider.provider]: {
+                            ...current[provider.provider],
+                            title: event.target.value,
+                          },
+                        }))
+                      }
+                      placeholder="e.g. Grade A Office Tower"
+                    />
+                  </label>
+                  <label>
+                    External listing ID
+                    <input
+                      value={publishValues.externalId}
+                      onChange={(event) =>
+                        setPublishState((current) => ({
+                          ...current,
+                          [provider.provider]: {
+                            ...current[provider.provider],
+                            externalId: event.target.value,
+                          },
+                        }))
+                      }
+                      placeholder={`${provider.provider}-listing-1`}
+                    />
+                  </label>
+                  <button type="submit">Publish listing</button>
+                </form>
+              </section>
+            )
+          })
+        )}
       </div>
     </AppLayout>
   )

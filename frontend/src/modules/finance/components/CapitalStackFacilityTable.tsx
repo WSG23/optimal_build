@@ -94,7 +94,7 @@ export function CapitalStackFacilityTable({
         sx={{
           px: 'var(--ob-space-150)',
           py: 'var(--ob-space-125)',
-          borderBottom: 1,
+          borderBottom: 'var(--ob-space-100)',
           borderColor: 'divider',
           bgcolor: alpha(theme.palette.background.default, 0.5),
           display: 'flex',
@@ -138,7 +138,7 @@ export function CapitalStackFacilityTable({
               color: 'text.secondary',
               textTransform: 'uppercase',
               letterSpacing: 'var(--ob-letter-spacing-wider)',
-              borderBottom: 1,
+              borderBottom: 'var(--ob-space-100)',
               borderColor: 'divider',
               bgcolor: alpha(theme.palette.background.default, 0.5),
               textAlign: 'left',
@@ -147,7 +147,7 @@ export function CapitalStackFacilityTable({
               px: 'var(--ob-space-150)',
               py: 'var(--ob-space-100)',
               fontSize: 'var(--ob-font-size-sm)',
-              borderBottom: 1,
+              borderBottom: 'var(--ob-space-100)',
               borderColor: alpha(theme.palette.divider, 0.5),
             },
             // Right-align numeric columns (Amount, Share, Rate, etc.)

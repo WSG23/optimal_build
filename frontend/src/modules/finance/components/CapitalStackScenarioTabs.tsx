@@ -34,7 +34,7 @@ export function CapitalStackScenarioTabs({
   return (
     <Box
       sx={{
-        borderBottom: 1,
+        borderBottom: 'var(--ob-space-100)',
         borderColor: 'divider',
         mb: 'var(--ob-space-150)',
       }}
@@ -56,7 +56,7 @@ export function CapitalStackScenarioTabs({
                 py: 'var(--ob-space-100)',
                 px: 'var(--ob-space-025)',
                 borderRadius: 'var(--ob-radius-none)',
-                borderBottom: 2,
+                borderBottom: 'var(--ob-space-200)',
                 borderColor: isActive
                   ? 'var(--ob-color-neon-cyan)'
                   : 'transparent',

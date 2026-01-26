@@ -99,10 +99,14 @@ export function ProjectHubPage() {
           <Typography color="text.secondary">Loading project...</Typography>
         ) : (
           <>
-            <Typography variant="h5" sx={{ mb: 1 }}>
+            <Typography variant="h5" sx={{ mb: 'var(--ob-space-100)' }}>
               No project selected
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 'var(--ob-space-200)' }}
+            >
               {projectError?.message ??
                 'Select a project to view results and navigate to modules.'}
             </Typography>
@@ -115,11 +119,11 @@ export function ProjectHubPage() {
     )
   }
 
-  const basePath = `/projects/${currentProject.id}`
+  const _basePath = `/projects/${currentProject.id}`
 
   // Render KPI skeleton using MetricTile loading state for exact sizing match
   const renderKPISkeleton = () => (
-    <Grid container spacing={3} mb={5}>
+    <Grid container spacing="var(--ob-space-300)" mb="var(--ob-space-500)">
       {[1, 2, 3, 4].map((i) => (
         <Grid item xs={12} sm={6} md={3} key={i} sx={{ display: 'flex' }}>
           <MetricTile
@@ -136,9 +140,16 @@ export function ProjectHubPage() {
 
   // Render KPIs from API data
   const renderKPIs = (kpis: DashboardKPI[]) => (
-    <Grid container spacing={3} mb={5}>
+    <Grid container spacing="var(--ob-space-300)" mb="var(--ob-space-500)">
       {kpis.map((kpi) => (
-        <Grid item xs={12} sm={6} md={3} key={kpi.label} sx={{ display: 'flex' }}>
+        <Grid
+          item
+          xs={12}
+          sm={6}
+          md={3}
+          key={kpi.label}
+          sx={{ display: 'flex' }}
+        >
           <MetricTile
             label={kpi.label}
             value={kpi.value}
@@ -154,7 +165,7 @@ export function ProjectHubPage() {
 
   // Render modules from API data
   const renderModules = (modules: DashboardModule[]) => (
-    <Grid container spacing={3}>
+    <Grid container spacing="var(--ob-space-300)">
       {modules
         .filter((m) => m.enabled)
         .map((item) => {
@@ -180,12 +191,12 @@ export function ProjectHubPage() {
                   direction="row"
                   justifyContent="space-between"
                   alignItems="flex-start"
-                  mb={2}
+                  mb="var(--ob-space-200)"
                 >
                   <Box
                     sx={{
-                      p: 1.5,
-                      borderRadius: 2,
+                      p: 'var(--ob-space-150)',
+                      borderRadius: 'var(--ob-radius-sm)',
                       bgcolor: alpha(color, 0.1),
                       color: color,
                     }}
@@ -210,14 +221,28 @@ export function ProjectHubPage() {
   )
 
   const renderModuleSkeleton = () => (
-    <Grid container spacing={3}>
+    <Grid container spacing="var(--ob-space-300)">
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <Grid item xs={12} md={6} lg={4} key={i}>
           <GlassCard sx={{ height: '100%' }}>
-            <Stack direction="row" justifyContent="space-between" mb={2}>
-              <Skeleton variant="rectangular" width={48} height={48} sx={{ borderRadius: 2 }} />
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              mb="var(--ob-space-200)"
+            >
+              <Skeleton
+                variant="rectangular"
+                width={48}
+                height={48}
+                sx={{ borderRadius: 'var(--ob-radius-sm)' }}
+              />
             </Stack>
-            <Skeleton variant="text" width="60%" height={32} sx={{ mb: 1 }} />
+            <Skeleton
+              variant="text"
+              width="60%"
+              height={32}
+              sx={{ mb: 'var(--ob-space-100)' }}
+            />
             <Skeleton variant="text" width="80%" />
           </GlassCard>
         </Grid>
@@ -226,12 +251,12 @@ export function ProjectHubPage() {
   )
 
   return (
-    <Box sx={{ width: '100%', pb: 5 }}>
+    <Box sx={{ width: '100%', pb: 'var(--ob-space-500)' }}>
       {/* Header Section */}
       <Box
         sx={{
-          mb: 4,
-          pb: 3,
+          mb: 'var(--ob-space-400)',
+          pb: 'var(--ob-space-300)',
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
         }}
       >
@@ -240,11 +265,15 @@ export function ProjectHubPage() {
           justifyContent="space-between"
           alignItems="flex-start"
         >
-          <Stack spacing={1}>
+          <Stack spacing="var(--ob-space-100)">
             <Typography variant="h3" fontWeight={700}>
               {currentProject.name}
             </Typography>
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack
+              direction="row"
+              spacing="var(--ob-space-100)"
+              alignItems="center"
+            >
               <Chip
                 label={currentProject.status}
                 color="success"
@@ -256,7 +285,7 @@ export function ProjectHubPage() {
               </Typography>
             </Stack>
           </Stack>
-          <Stack direction="row" spacing={2}>
+          <Stack direction="row" spacing="var(--ob-space-200)">
             <Button variant="outlined" startIcon={<MoreVert />}>
               Options
             </Button>
@@ -271,7 +300,7 @@ export function ProjectHubPage() {
       {dashboardError && (
         <Alert
           severity="warning"
-          sx={{ mb: 3 }}
+          sx={{ mb: 'var(--ob-space-300)' }}
           action={
             <Button
               color="inherit"
@@ -294,7 +323,12 @@ export function ProjectHubPage() {
           : renderKPISkeleton()}
 
       {/* Module Navigation Grid */}
-      <Typography variant="h5" fontWeight={600} gutterBottom sx={{ mb: 3 }}>
+      <Typography
+        variant="h5"
+        fontWeight={600}
+        gutterBottom
+        sx={{ mb: 'var(--ob-space-300)' }}
+      >
         Project Modules
       </Typography>
       {dashboardLoading

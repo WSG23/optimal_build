@@ -65,6 +65,14 @@ allowed_files:
   # Security documentation
   - docs/SECURITY.md
 
+  # Agent catalog and AI documentation
+  - docs/agents/agent_catalog.md
+  - docs/ai/SHARED_CORE.md
+
+  # MCP documentation
+  - docs/mcp/MCP_GUARDRAILS.md
+  - docs/mcp/MCP_RULES.md
+
   # Planning and status
   - docs/planning/features.md
   - docs/planning/ui-status.md

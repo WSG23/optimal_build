@@ -13,7 +13,7 @@ const SAMPLE_CLASHES: ClashItem[] = [
     discipline: 'Structural vs MEP',
     severity: 'critical',
     description: 'HVAC Duct clashes with primary beam at L3',
-    impact_area_sqm: 12.5,
+    impact_area_sqm: 'var(--ob-space-800)',
     impact_cost: 15000,
   },
   {
@@ -21,7 +21,7 @@ const SAMPLE_CLASHES: ClashItem[] = [
     discipline: 'Façade vs Civil',
     severity: 'warning',
     description: 'Canopy overlap with drainage clearance',
-    impact_area_sqm: 4.0,
+    impact_area_sqm: 'var(--ob-space-400)',
     impact_cost: 5000,
   },
   {
@@ -29,7 +29,7 @@ const SAMPLE_CLASHES: ClashItem[] = [
     discipline: 'MEP vs Architecture',
     severity: 'resolved',
     description: 'Riser adjustment for corridor width',
-    impact_area_sqm: 0,
+    impact_area_sqm: '0',
     impact_cost: 0,
   },
 ]

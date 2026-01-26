@@ -1998,7 +1998,7 @@ const unifiedCaptureElement = (
 Show a single "Capture" item in navigation:
 
 ```tsx
-// YosaiTopNav.tsx
+// OptimalBuildTopNav.tsx
 {
   items: [{ path: '/app/capture', label: t('nav.capture') }],
 }

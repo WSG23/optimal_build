@@ -72,7 +72,7 @@
 | updated_at | DateTime | Last update timestamp |
 | is_active | Boolean | Project active status |
 
-**Note:** Full schema includes 70+ columns covering site metrics, planning parameters, financial metrics, etc. See [backend/app/models/projects.py](../../backend/app/models/projects.py) for complete schema.
+**Note:** Full schema includes 70+ columns covering site metrics, planning parameters, financial metrics, etc. See [backend/app/models/project.py](../../backend/app/models/project.py) for complete schema.
 
 **Indexes:**
 - `ix_projects_owner_id`
@@ -107,7 +107,7 @@
 
 ---
 
-### singapore_property
+### singapore_properties
 **Purpose:** Singapore regulatory data
 
 | Column | Type | Description |
@@ -141,8 +141,8 @@
 | updated_at | DateTime | Last update timestamp |
 
 **Indexes:**
-- `ix_singapore_property_project_id`
-- `ix_singapore_property_district`
+- `ix_singapore_properties_project_id`
+- `ix_singapore_properties_district`
 
 ---
 
@@ -772,7 +772,7 @@ users
   └──< overlay_decisions (decided_by)
 
 projects
-  ├──── singapore_property (project_id, 1:1)
+  ├──── singapore_properties (project_id, 1:1)
   ├──< fin_projects (project_id)
   ├──< fin_scenarios (project_id)
   ├──< ent_roadmap (project_id)

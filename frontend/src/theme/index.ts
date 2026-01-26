@@ -3,21 +3,20 @@
 
 export {
   AppThemeProvider,
-  YosaiThemeProvider,
+  OptimalBuildThemeProvider,
   useThemeMode,
-} from './YosaiThemeProvider'
-export type { ThemeMode } from './YosaiThemeProvider'
+} from './OptimalBuildThemeProvider'
+export type { ThemeMode } from './OptimalBuildThemeProvider'
 export { ThemeToggle } from './ThemeToggle'
 export {
   theme,
   darkTheme,
   lightTheme,
   getTheme,
-  // Deprecated exports for backward compatibility
-  yosaiTheme,
-  yosaiDarkTheme,
-  yosaiLightTheme,
-  getYosaiTheme,
+  optimalBuildTheme,
+  optimalBuildDarkTheme,
+  optimalBuildLightTheme,
+  getOptimalBuildTheme,
 } from './theme'
 export {
   colors,

@@ -1,4 +1,4 @@
-"""Salesforce CRM integration client (mock)."""
+"""Salesforce CRM integration client (requires provider implementation)."""
 
 from __future__ import annotations
 
@@ -87,11 +87,7 @@ class SalesforceAccount:
 
 
 class SalesforceClient:
-    """Mock client for Salesforce CRM interactions.
-
-    Salesforce requires Connected App setup and OAuth 2.0 authentication.
-    This stub provides the expected interface for future implementation.
-    """
+    """Client for Salesforce CRM interactions (integration required)."""
 
     AUTH_BASE_URL = "https://login.salesforce.com/services/oauth2"
     API_VERSION = "v59.0"
@@ -105,6 +101,18 @@ class SalesforceClient:
         self.client_id = client_id
         self.client_secret = client_secret
         self.instance_url = instance_url or "https://na1.salesforce.com"
+
+    def _raise_unavailable(self) -> None:
+        raise RuntimeError(
+            "Salesforce integration is not configured. Provide credentials and "
+            "implement the API client."
+        )
+
+    def __getattribute__(self, name: str):  # type: ignore[override]
+        attr = super().__getattribute__(name)
+        if callable(attr) and not name.startswith("_") and name != "__class__":
+            self._raise_unavailable()
+        return attr
 
     async def exchange_authorization_code(
         self, code: str, redirect_uri: str
@@ -295,12 +303,9 @@ class SalesforceClient:
 
     # SOQL queries
     async def query(self, soql: str) -> List[Dict[str, Any]]:
-        """Execute a SOQL query (mock)."""
+        """Execute a SOQL query."""
         logger.info("salesforce.query", soql=soql[:100])
-        return [
-            {"Id": "mock001", "Name": "Mock Record 1"},
-            {"Id": "mock002", "Name": "Mock Record 2"},
-        ]
+        self._raise_unavailable()
 
     # Bulk operations
     async def bulk_create_leads(
@@ -317,7 +322,7 @@ class SalesforceClient:
     async def sync_property_to_salesforce(
         self, property_id: str, property_data: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Sync a property to Salesforce as a custom object (mock)."""
+        """Sync a property to Salesforce as a custom object."""
         logger.info("salesforce.sync_property", property_id=property_id)
         return {
             "success": True,

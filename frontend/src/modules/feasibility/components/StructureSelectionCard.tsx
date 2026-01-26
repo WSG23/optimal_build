@@ -25,13 +25,13 @@ export function StructureSelectionCard({
       sx={{
         position: 'relative',
         cursor: 'pointer',
-        borderRadius: 2,
+        borderRadius: 'var(--ob-radius-sm)',
         padding: 2,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 1,
+        gap: 'var(--ob-space-100)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         background: selected
           ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`
@@ -39,7 +39,7 @@ export function StructureSelectionCard({
         border: `1px solid ${selected ? theme.palette.primary.main : alpha(theme.palette.divider, 0.6)}`,
         boxShadow: selected
           ? `0 8px 16px ${alpha(theme.palette.primary.main, 0.2)}`
-          : '0 2px 4px rgba(0,0,0,0.02)',
+          : '0 2px 4px var(--ob-color-table-row-alt)',
         transform: selected ? 'translateY(-2px)' : 'none',
         '&:hover': {
           borderColor: theme.palette.primary.main,
@@ -50,7 +50,7 @@ export function StructureSelectionCard({
     >
       <Typography
         variant="h3"
-        sx={{ fontSize: '2rem', lineHeight: 1, mb: 0.5 }}
+        sx={{ fontSize: '2rem', lineHeight: 1, mb: 'var(--ob-space-50)' }}
       >
         {icon}
       </Typography>
@@ -70,10 +70,10 @@ export function StructureSelectionCard({
       {costEstimate && (
         <Box
           sx={{
-            mt: 1,
-            px: 1,
-            py: 0.25,
-            borderRadius: 1,
+            mt: 'var(--ob-space-100)',
+            px: 'var(--ob-space-100)',
+            py: '0',
+            borderRadius: 'var(--ob-radius-sm)',
             bgcolor: alpha(theme.palette.success.main, 0.1),
             color: 'success.dark',
             fontSize: '0.65rem',

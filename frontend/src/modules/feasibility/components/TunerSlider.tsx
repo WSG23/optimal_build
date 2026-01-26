@@ -13,7 +13,7 @@ const StyledSlider = styled(Slider)(() => ({
     width: 'var(--ob-size-icon-sm)',
     backgroundColor: 'var(--ob-color-text-primary)',
     border: '2px solid currentColor',
-    marginTop: 0,
+    marginTop: '0',
     marginLeft: 'calc(-1 * var(--ob-size-icon-sm) / 2)',
     boxShadow: 'var(--ob-shadow-md)',
     transition: 'transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275)', // Spring effect

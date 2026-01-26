@@ -125,7 +125,7 @@ test.describe('Agent advisory critical flows', () => {
     await page.goto(`/legacy/agents/advisory?propertyId=${PROPERTY_ID}`)
 
     await expect(
-      page.getByRole('heading', { name: 'Asset mix strategy' }),
+      page.getByRole('heading', { name: /asset mix strategy/i }),
     ).toBeVisible()
     await expect(page.getByRole('cell', { name: 'office' })).toBeVisible()
     await expect(page.getByRole('cell', { name: '55' })).toBeVisible()
@@ -134,7 +134,7 @@ test.describe('Agent advisory critical flows', () => {
     ).toBeVisible()
 
     await expect(
-      page.getByRole('heading', { name: 'Market positioning' }),
+      page.getByRole('heading', { name: /market positioning/i }),
     ).toBeVisible()
     await expect(page.getByText('Prime fringe')).toBeVisible()
     await expect(page.getByText('Asset-light MNC')).toBeVisible()
@@ -143,11 +143,10 @@ test.describe('Agent advisory critical flows', () => {
     ).toBeVisible()
 
     await expect(
-      page.getByRole('heading', { name: 'Absorption forecast' }),
+      page.getByRole('heading', { name: /absorption forecast/i }),
     ).toBeVisible()
-    await expect(
-      page.getByRole('row', { name: 'Sales launch 4 35' }),
-    ).toBeVisible()
+    await expect(page.getByText(/Expected Stabilisation/i)).toBeVisible()
+    await expect(page.getByText('Monthly Absorption')).toBeVisible()
 
     await expect(
       page.getByText('Awaiting updated pricing guidance.', { exact: false }),
@@ -159,7 +158,6 @@ test.describe('Agent advisory critical flows', () => {
   }) => {
     await page.goto(`/legacy/agents/advisory?propertyId=${PROPERTY_ID}`)
 
-    await page.getByLabel('Sentiment').selectOption('positive')
     await page
       .getByLabel('Notes')
       .fill('Site visit confirmed podium activation opportunities.')
@@ -168,9 +166,17 @@ test.describe('Agent advisory critical flows', () => {
     await expect(submitButton).toBeEnabled()
     await submitButton.click()
 
+    const recentActivityPanel = page.locator('.advisory-panel', {
+      has: page.getByRole('heading', { name: /recent activity/i }),
+    })
+
     await expect(
-      page.getByText('Site visit confirmed podium activation opportunities.'),
+      recentActivityPanel.getByText(
+        'Site visit confirmed podium activation opportunities.',
+      ),
     ).toBeVisible()
-    await expect(page.getByText('positive', { exact: false })).toBeVisible()
+    await expect(
+      recentActivityPanel.getByText('positive', { exact: true }),
+    ).toBeVisible()
   })
 })

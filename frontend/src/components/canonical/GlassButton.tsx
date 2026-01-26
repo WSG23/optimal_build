@@ -82,12 +82,12 @@ export const GlassButton = forwardRef<HTMLButtonElement, GlassButtonProps>(
             '&::after': {
               content: '""',
               position: 'absolute',
-              top: 0,
+              top: '0',
               left: '-100%',
               width: '50%',
               height: '100%',
               background:
-                'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                'linear-gradient(90deg, transparent, var(--ob-color-surface-overlay-medium), transparent)',
               transform: 'skewX(-20deg)',
               transition: 'none',
             },

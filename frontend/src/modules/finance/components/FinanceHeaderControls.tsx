@@ -310,8 +310,8 @@ export function FinanceHeaderControls({
         sx={{
           height: '100%',
           minWidth: 0,
-          px: 0,
-          borderRadius: 0,
+          px: '0',
+          borderRadius: 'var(--ob-radius-none)',
           flexShrink: 0,
           borderRight: 1,
           borderColor: alpha(theme.palette.divider, 0.6),
@@ -335,7 +335,7 @@ export function FinanceHeaderControls({
         sx={{
           height: '100%',
           px: 'var(--ob-space-150)',
-          borderRadius: 0,
+          borderRadius: 'var(--ob-radius-none)',
           fontWeight: 800,
           letterSpacing: 'var(--ob-letter-spacing-wider)',
           textTransform: 'uppercase',

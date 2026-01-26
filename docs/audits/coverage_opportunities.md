@@ -218,7 +218,7 @@ New test files created to bring API coverage to 85% target:
 | API File | Previous Coverage | New Tests Added |
 |----------|------------------|-----------------|
 | `users_secure.py` | 47% | `test_users_secure.py` - 13 tests covering signup, login, JWT auth, list users |
-| `projects_api.py` | 59% | `test_projects_api.py` - 25 tests covering full CRUD, stats, progress endpoints |
+| `projects.py` | 59% | `test_projects_api.py` - 25 tests covering full CRUD, stats, progress endpoints |
 | `users_db.py` | 66% | `test_users_db.py` - 11 tests covering DB-backed user operations |
 | `test_users.py` | 60% | Enhanced `test_test_users_api.py` - 4 additional tests |
 | `overlay.py` | 68% | Enhanced `test_overlay_api.py` - 18 additional tests covering all branches |

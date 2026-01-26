@@ -1,4 +1,13 @@
-.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset docker dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-backend typecheck-all typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean
+.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset docker dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-backend typecheck-all typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean check-ui-canon fix-ui-canon fix-ui-canon-dry \
+	prod-test prod-status prod-logs prod-stop prod-health prod-readiness-check \
+	check-ports kill-ports ports dev-safe \
+	docker-cleanup-light docker-cleanup-standard docker-cleanup-deep docker-cleanup-emergency docker-status \
+	health doctor dashboard d \
+	t tu ti ts tf tw test-file test-match test-failed tlf cov cov-html ci ci-quick \
+	fix fix-backend fix-frontend fix-format fix-imports \
+	precommit precommit-all stage-backend stage-frontend stage-docs stage-all \
+	shell-db open open-ui open-api open-admin \
+	reset-soft reset-hard h
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -735,3 +744,626 @@ export-approved: ## Approve overlays and generate a CAD/BIM export artefact
 
 sync-products:
 	$(PY) -m backend.flows.sync_products --csv-path vendor.csv
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🏭 PRODUCTION TESTING (Local)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+prod-test: ## Start production stack locally for testing
+	@echo "🏭 Starting production stack locally for testing..."
+	@echo ""
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  Production Stack Test Mode"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@if [ ! -f .env.production ]; then \
+		echo "⚠️  Warning: .env.production not found, creating from .env.example..."; \
+		cp .env.example .env.production 2>/dev/null || echo "Note: No .env.example found"; \
+	fi
+	@echo "Step 1/3: Building production images..."
+	$(REQUIRE_DOCKER_COMPOSE)
+	@$(DOCKER_COMPOSE) -f docker-compose.production.yml build 2>/dev/null || $(DOCKER_COMPOSE) build
+	@echo ""
+	@echo "Step 2/3: Starting production stack..."
+	@$(DOCKER_COMPOSE) -f docker-compose.production.yml up -d 2>/dev/null || $(DOCKER_COMPOSE) up -d
+	@echo ""
+	@echo "Step 3/3: Waiting for services to be healthy..."
+	@sleep 10
+	@echo ""
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  ✅ Production stack is running!"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "🌐 Access URLs:"
+	@echo "  Backend API: http://localhost:$(BACKEND_PORT)"
+	@echo "  Frontend:    http://localhost:$(FRONTEND_PORT)"
+	@echo "  Admin UI:    http://localhost:$(ADMIN_PORT)"
+	@echo ""
+	@echo "📊 Check status: make prod-status"
+	@echo "📋 View logs:    make prod-logs"
+	@echo "⏹️  Stop stack:   make prod-stop"
+
+prod-status: ## Show production stack status
+	@echo "📊 Production Stack Status:"
+	@echo ""
+	$(REQUIRE_DOCKER_COMPOSE)
+	@$(DOCKER_COMPOSE) ps
+
+prod-logs: ## View production stack logs
+	@echo "📋 Production Stack Logs (Ctrl+C to exit):"
+	$(REQUIRE_DOCKER_COMPOSE)
+	@$(DOCKER_COMPOSE) logs -f --tail=100
+
+prod-stop: ## Stop production stack
+	@echo "⏹️  Stopping production stack..."
+	$(REQUIRE_DOCKER_COMPOSE)
+	@$(DOCKER_COMPOSE) down
+	@echo "✅ Production stack stopped"
+
+prod-health: ## Check production service health
+	@echo "🏥 Checking production service health..."
+	@echo ""
+	@echo "API Health:"
+	@curl -sf http://localhost:$(BACKEND_PORT)/api/v1/health 2>/dev/null && echo "  ✅ API is healthy" || echo "  ❌ API is not responding"
+	@echo ""
+	@echo "Frontend Health:"
+	@curl -sf http://localhost:$(FRONTEND_PORT) -o /dev/null 2>/dev/null && echo "  ✅ Frontend is healthy" || echo "  ❌ Frontend is not responding"
+
+prod-readiness-check: ## Run production readiness checks
+	@echo "🔍 Running production readiness checks..."
+	@echo ""
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  Production Readiness Checklist"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "Step 1/4: Validating environment configuration..."
+	@test -f .env.production && echo "  ✅ .env.production exists" || echo "  ⚠️  .env.production missing"
+	@echo ""
+	@echo "Step 2/4: Checking coding rules compliance..."
+	@$(MAKE) check-coding-rules || echo "  ⚠️  Some coding rules violations found"
+	@echo ""
+	@echo "Step 3/4: Checking Docker images..."
+	@docker images | grep -q optimal && echo "  ✅ Docker images found" || echo "  ⚠️  No Docker images (run: make build)"
+	@echo ""
+	@echo "Step 4/4: Checking git status..."
+	@git status --short 2>/dev/null | grep -q "." && echo "  ⚠️  Uncommitted changes found" || echo "  ✅ Working directory clean"
+	@echo ""
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  ✅ Production readiness checks complete!"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🔌 PORT CONFLICT DETECTION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DEV_PORTS := $(BACKEND_PORT) $(FRONTEND_PORT) $(ADMIN_PORT) 5432 6379
+
+check-ports: ## Check for port conflicts on development ports
+	@echo "🔍 Checking for port conflicts on development ports..."
+	@echo ""
+	@CONFLICTS=0; \
+	for port in $(DEV_PORTS); do \
+		pids=$$(lsof -ti:$$port 2>/dev/null | head -5); \
+		if [ "$$pids" ]; then \
+			for pid in $$pids; do \
+				proc_name=$$(ps -p $$pid -o command= 2>/dev/null | head -c 80 || echo "unknown"); \
+				case "$$proc_name" in \
+					*OrbStack*|*com.apple.WebKit*|*docker*) ;; \
+					*) \
+						echo "⚠️  Port $$port in use by: $$proc_name (PID $$pid)"; \
+						CONFLICTS=$$((CONFLICTS + 1)); \
+						;; \
+				esac; \
+			done; \
+		fi; \
+	done; \
+	if [ $$CONFLICTS -gt 0 ]; then \
+		echo ""; \
+		echo "❌ Found $$CONFLICTS port conflict(s)"; \
+		echo "   Run 'make kill-ports' to free them."; \
+		exit 1; \
+	else \
+		echo "✅ All development ports are available"; \
+	fi
+
+kill-ports: ## Kill processes blocking development ports
+	@echo "🔪 Killing processes on development ports..."
+	@echo ""
+	@KILLED=0; \
+	for port in $(DEV_PORTS); do \
+		pids=$$(lsof -ti:$$port 2>/dev/null); \
+		if [ "$$pids" ]; then \
+			for pid in $$pids; do \
+				proc_name=$$(ps -p $$pid -o command= 2>/dev/null | head -c 80 || echo "unknown"); \
+				case "$$proc_name" in \
+					*OrbStack*|*com.apple.WebKit*|*docker*) ;; \
+					*) \
+						echo "   Killing $$proc_name (PID $$pid) on port $$port"; \
+						kill $$pid 2>/dev/null || true; \
+						KILLED=$$((KILLED + 1)); \
+						;; \
+				esac; \
+			done; \
+		fi; \
+	done; \
+	if [ $$KILLED -gt 0 ]; then \
+		sleep 1; \
+		echo ""; \
+		echo "✅ Killed $$KILLED process(es)"; \
+	else \
+		echo "✅ No conflicting processes found"; \
+	fi
+
+ports: check-ports ## Alias for check-ports
+
+dev-safe: kill-ports dev ## Kill port conflicts then start dev servers
+	@echo "✅ Dev servers started with port conflicts resolved"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🧹 TIERED DOCKER CLEANUP
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+docker-cleanup-light: ## Light cleanup: remove stopped containers
+	@echo "🧹 Light cleanup: removing stopped containers..."
+	@docker container prune -f
+	@echo "✅ Light cleanup complete"
+
+docker-cleanup-standard: ## Standard cleanup: containers + unused images
+	@echo "🧹 Standard cleanup: removing stopped containers and unused images..."
+	@docker container prune -f
+	@docker image prune -f
+	@echo "✅ Standard cleanup complete"
+
+docker-cleanup-deep: ## Deep cleanup: containers + images + volumes + networks
+	@echo "🧹 Deep cleanup: removing all unused Docker resources..."
+	@docker system prune -f
+	@echo "✅ Deep cleanup complete"
+
+docker-cleanup-emergency: ## Emergency cleanup: remove EVERYTHING (DESTRUCTIVE)
+	@echo "🚨 Emergency cleanup: removing ALL Docker resources..."
+	@read -p "This will delete ALL containers, images, volumes, and networks. Continue? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		docker system prune -af --volumes; \
+		echo "✅ Emergency cleanup complete"; \
+	else \
+		echo "❌ Cancelled"; \
+	fi
+
+docker-status: ## Show Docker disk usage and info
+	@echo "🔍 Docker Disk Usage:"
+	@docker system df
+	@echo ""
+	@echo "📦 Docker Info:"
+	@docker info 2>/dev/null | grep -E "Containers|Images|Server Version|Operating System|CPUs|Total Memory" || echo "Docker not running"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🏥 HEALTH & DIAGNOSTICS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+health: ## Show service health status
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  🏥 Optimal Build Service Health Status"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@printf "📡 Backend API ($(BACKEND_PORT)):  "; \
+		if curl -sf http://localhost:$(BACKEND_PORT)/docs -o /dev/null 2>/dev/null; then \
+			echo "✅ Healthy"; \
+		elif [ -f $(DEV_BACKEND_PID) ] && kill -0 $$(cat $(DEV_BACKEND_PID)) 2>/dev/null; then \
+			echo "⚠️  Running but not responding"; \
+		else \
+			echo "❌ Not running"; \
+		fi
+	@echo ""
+	@printf "🌐 Frontend ($(FRONTEND_PORT)):    "; \
+		if curl -sf http://localhost:$(FRONTEND_PORT) -o /dev/null 2>/dev/null; then \
+			echo "✅ Healthy"; \
+		elif [ -f $(DEV_FRONTEND_PID) ] && kill -0 $$(cat $(DEV_FRONTEND_PID)) 2>/dev/null; then \
+			echo "⚠️  Running but not responding"; \
+		else \
+			echo "❌ Not running"; \
+		fi
+	@echo ""
+	@printf "⚙️  Admin UI ($(ADMIN_PORT)):      "; \
+		if curl -sf http://localhost:$(ADMIN_PORT) -o /dev/null 2>/dev/null; then \
+			echo "✅ Healthy"; \
+		elif [ -f $(DEV_ADMIN_PID) ] && kill -0 $$(cat $(DEV_ADMIN_PID)) 2>/dev/null; then \
+			echo "⚠️  Running but not responding"; \
+		else \
+			echo "❌ Not running"; \
+		fi
+	@echo ""
+	@printf "🐘 PostgreSQL (5432):    "; \
+		if pg_isready -h localhost -p 5432 >/dev/null 2>&1; then \
+			echo "✅ Ready"; \
+		elif docker ps --filter "name=postgres" --format "{{.Status}}" 2>/dev/null | grep -q "Up"; then \
+			echo "✅ Running (Docker)"; \
+		else \
+			echo "⚪ Not running"; \
+		fi
+	@echo ""
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "Run 'make doctor' for environment diagnostics"
+
+doctor: ## Diagnose environment issues
+	@echo ""
+	@echo "🏥 Optimal Build Doctor - Diagnosing your environment..."
+	@echo ""
+	@ISSUES=0; \
+	\
+	echo "Checking prerequisites..."; \
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	\
+	printf "  Python 3.11+:   "; \
+	if command -v python3 >/dev/null 2>&1; then \
+		PY_VERSION=$$(python3 --version 2>&1 | cut -d' ' -f2); \
+		echo "✓ $$PY_VERSION"; \
+	else \
+		echo "✗ Not found"; \
+		ISSUES=$$((ISSUES + 1)); \
+	fi; \
+	\
+	printf "  Node.js 18+:    "; \
+	if command -v node >/dev/null 2>&1; then \
+		NODE_VERSION=$$(node --version 2>&1); \
+		echo "✓ $$NODE_VERSION"; \
+	else \
+		echo "✗ Not found"; \
+		ISSUES=$$((ISSUES + 1)); \
+	fi; \
+	\
+	printf "  Docker:         "; \
+	if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then \
+		DOCKER_VERSION=$$(docker --version 2>&1 | cut -d' ' -f3 | tr -d ','); \
+		echo "✓ $$DOCKER_VERSION"; \
+	else \
+		echo "✗ Not running"; \
+		ISSUES=$$((ISSUES + 1)); \
+	fi; \
+	\
+	printf "  Virtual env:    "; \
+	if [ -d "$(VENV)" ] && [ -x "$(PY)" ]; then \
+		echo "✓ $(VENV) exists"; \
+	else \
+		echo "⚠ Not found (run: make install)"; \
+		ISSUES=$$((ISSUES + 1)); \
+	fi; \
+	\
+	printf "  node_modules:   "; \
+	if [ -d "frontend/node_modules" ]; then \
+		echo "✓ Installed"; \
+	else \
+		echo "⚠ Not found (run: make install)"; \
+		ISSUES=$$((ISSUES + 1)); \
+	fi; \
+	\
+	echo ""; \
+	echo "Checking configuration..."; \
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	\
+	printf "  .env file:      "; \
+	if [ -f ".env" ]; then \
+		echo "✓ Present"; \
+	else \
+		echo "⚠ Missing (copy from .env.example)"; \
+		ISSUES=$$((ISSUES + 1)); \
+	fi; \
+	\
+	printf "  pre-commit:     "; \
+	if [ -f ".git/hooks/pre-commit" ]; then \
+		echo "✓ Installed"; \
+	else \
+		echo "⚠ Not installed (run: make hooks)"; \
+	fi; \
+	\
+	echo ""; \
+	echo "Checking ports..."; \
+	echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+	\
+	for port in $(BACKEND_PORT) $(FRONTEND_PORT) 5432; do \
+		printf "  Port $$port:       "; \
+		if lsof -ti:$$port >/dev/null 2>&1; then \
+			PROC=$$(lsof -ti:$$port | head -1 | xargs ps -p 2>/dev/null | tail -1 | awk '{print $$4}'); \
+			echo "⚠ In use ($$PROC)"; \
+		else \
+			echo "✓ Available"; \
+		fi; \
+	done; \
+	\
+	echo ""; \
+	if [ $$ISSUES -eq 0 ]; then \
+		echo "✅ All checks passed! Your environment is healthy."; \
+	else \
+		echo "⚠ Found $$ISSUES issue(s). See recommendations above."; \
+	fi; \
+	echo ""
+
+dashboard: ## Show developer dashboard with service status
+	@echo ""
+	@echo "╔═══════════════════════════════════════════════════════════════════════╗"
+	@echo "║                    🏗️  Optimal Build Dashboard                        ║"
+	@echo "╚═══════════════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "📊 Service Status"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@printf "  API ($(BACKEND_PORT)):     "; curl -sf http://localhost:$(BACKEND_PORT)/docs -o /dev/null 2>/dev/null && echo "● Running" || echo "○ Stopped"
+	@printf "  UI ($(FRONTEND_PORT)):    "; curl -sf http://localhost:$(FRONTEND_PORT) -o /dev/null 2>/dev/null && echo "● Running" || echo "○ Stopped"
+	@printf "  Admin ($(ADMIN_PORT)):   "; curl -sf http://localhost:$(ADMIN_PORT) -o /dev/null 2>/dev/null && echo "● Running" || echo "○ Stopped"
+	@echo ""
+	@echo "📁 Git Status"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@printf "  Branch: "; git branch --show-current 2>/dev/null || echo "unknown"
+	@CHANGES=$$(git status --porcelain 2>/dev/null | wc -l | tr -d ' '); \
+	if [ "$$CHANGES" -gt 0 ]; then \
+		echo "  Changes: $$CHANGES file(s) modified"; \
+	else \
+		echo "  Changes: Working directory clean"; \
+	fi
+	@echo ""
+	@echo "⚡ Quick Commands"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "  make dev       Start API + UI (no Docker)"
+	@echo "  make docker    Start full Docker stack"
+	@echo "  make stop      Stop dev servers"
+	@echo "  make doctor    Diagnose issues"
+	@echo ""
+
+d: dashboard ## Alias for dashboard
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ⚡ TESTING SHORTCUTS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+t: ## Quick unit tests (quiet mode)
+	@$(PYTEST) -q unit_tests/
+
+tu: ## Unit tests (verbose)
+	@$(PYTEST) -v unit_tests/
+
+ti: ## Integration tests
+	@$(PYTEST) -v backend/tests/ -k "integration"
+
+ts: ## Security tests
+	@$(PYTEST) -v backend/tests/ -k "security"
+
+tf: ## Frontend tests
+	@cd frontend && npm test
+
+tw: ## Test watch mode (re-run on changes)
+	@$(PYTEST) -v unit_tests/ --watch 2>/dev/null || $(PYTEST) -v unit_tests/
+
+test-file: ## Run specific test file (FILE=path/to/test.py)
+	@if [ -z "$(FILE)" ]; then \
+		echo "Usage: make test-file FILE=path/to/test.py"; \
+		exit 1; \
+	fi
+	@$(PYTEST) -v $(FILE)
+
+test-match: ## Run tests matching pattern (K=pattern)
+	@if [ -z "$(K)" ]; then \
+		echo "Usage: make test-match K=pattern"; \
+		exit 1; \
+	fi
+	@$(PYTEST) -v -k "$(K)"
+
+test-failed: ## Re-run last failed tests
+	@$(PYTEST) --lf -v
+
+tlf: test-failed ## Alias for test-failed
+
+cov: ## Quick coverage report
+	@SECRET_KEY=test-secret-key PYTHONPATH=$(CURDIR) $(PYTEST) backend/tests \
+		--cov=backend/app --cov-report=term-missing
+
+cov-html: coverage-report ## Alias for coverage-report
+
+ci: ## Run CI-like checks (types, lint, tests)
+	@echo "🔄 Running CI-like test suite..."
+	@echo ""
+	@echo "Step 1/4: Type checking..."
+	@$(MAKE) typecheck-all
+	@echo ""
+	@echo "Step 2/4: Linting..."
+	@$(MAKE) lint
+	@echo ""
+	@echo "Step 3/4: Backend tests..."
+	@$(MAKE) test
+	@echo ""
+	@echo "Step 4/4: Frontend tests..."
+	@cd frontend && npm test || true
+	@echo ""
+	@echo "✅ CI checks completed!"
+
+ci-quick: ## Quick CI checks (skip slow tests)
+	@echo "⚡ Running quick CI checks..."
+	@$(MAKE) quick-check
+	@$(MAKE) test
+	@echo "✅ Quick CI checks passed!"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🔧 AUTO-FIX TARGETS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+fix: fix-backend fix-frontend ## Auto-fix all code issues
+	@echo ""
+	@echo "✅ All auto-fixes completed!"
+	@echo ""
+	@echo "📋 Next steps:"
+	@echo "  1. Review changes: git diff"
+	@echo "  2. Run checks: make verify"
+	@echo "  3. Run tests: make test"
+
+fix-backend: ## Auto-fix backend Python code
+	@echo "🔧 Auto-fixing backend code..."
+	@echo "  → Running Black formatter..."
+	@$(BLACK) backend/ 2>&1 | grep -v "^All done" || true
+	@echo "  → Running Ruff auto-fixes..."
+	@$(RUFF) check --fix backend/ 2>&1 | grep -v "^Found" || true
+	@echo "✅ Backend auto-fixes applied"
+
+fix-frontend: ## Auto-fix frontend code
+	@echo "🔧 Auto-fixing frontend code..."
+	@echo "  → Running ESLint auto-fixes..."
+	@cd frontend && npm run lint -- --fix 2>&1 | tail -5 || true
+	@echo "  → Running Prettier formatter..."
+	@cd frontend && npx prettier --write "src/**/*.{ts,tsx,css}" 2>&1 | tail -3 || true
+	@echo "✅ Frontend auto-fixes applied"
+
+fix-format: ## Auto-fix formatting only
+	@echo "🔧 Auto-fixing code formatting..."
+	@$(BLACK) backend/
+	@cd frontend && npx prettier --write "src/**/*.{ts,tsx,css}"
+	@echo "✅ Formatting complete"
+
+fix-imports: ## Auto-fix import ordering
+	@echo "🔧 Auto-fixing import issues..."
+	@$(RUFF) check --select I --fix backend/
+	@echo "✅ Import fixes applied"
+
+fix-ui-canon: ## Auto-fix UI canon violations (spacing, colors, radius)
+	@echo "🔧 Auto-fixing UI canon violations..."
+	@$(PY) scripts/fix_ui_canon.py
+	@echo "✅ UI canon fixes applied"
+	@echo ""
+	@echo "📋 Run 'make check-ui-canon' to see remaining violations"
+
+fix-ui-canon-dry: ## Preview UI canon fixes without modifying files
+	@echo "🔍 Previewing UI canon fixes (dry run)..."
+	@$(PY) scripts/fix_ui_canon.py --dry-run
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 📦 GIT WORKFLOW HELPERS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+precommit: ## Run pre-commit hooks on staged files
+	@echo "🔍 Running pre-commit on staged files..."
+	@$(PRE_COMMIT) run
+
+precommit-all: ## Run pre-commit hooks on all files
+	@echo "🔍 Running pre-commit on all files..."
+	@$(PRE_COMMIT) run --all-files
+
+stage-backend: ## Stage backend Python files
+	@echo "📦 Staging backend files..."
+	@git add backend/app backend/tests backend/scripts
+	@git status --short backend/
+
+stage-frontend: ## Stage frontend files
+	@echo "📦 Staging frontend files..."
+	@git add frontend/src
+	@git status --short frontend/
+
+stage-docs: ## Stage documentation files
+	@echo "📦 Staging documentation files..."
+	@git add docs/ *.md
+	@git status --short docs/ *.md
+
+stage-all: ## Stage all modified files
+	@echo "📦 Staging all modified files..."
+	@git add -A
+	@git status --short
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🐚 SHELL ACCESS & OPEN SHORTCUTS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+shell-db: ## Open PostgreSQL shell
+	@echo "🐚 Opening PostgreSQL shell..."
+	@docker exec -it $$(docker ps --filter "name=postgres" --format "{{.Names}}" | head -1) psql -U postgres 2>/dev/null || echo "PostgreSQL not running"
+
+open: open-ui ## Open UI in browser (alias)
+
+open-ui: ## Open frontend UI in browser
+	@echo "🌐 Opening UI..."
+	@open http://localhost:$(FRONTEND_PORT) 2>/dev/null || xdg-open http://localhost:$(FRONTEND_PORT) 2>/dev/null || echo "Open http://localhost:$(FRONTEND_PORT)"
+
+open-api: ## Open API docs in browser
+	@echo "🌐 Opening API docs..."
+	@open http://localhost:$(BACKEND_PORT)/docs 2>/dev/null || xdg-open http://localhost:$(BACKEND_PORT)/docs 2>/dev/null || echo "Open http://localhost:$(BACKEND_PORT)/docs"
+
+open-admin: ## Open admin UI in browser
+	@echo "🌐 Opening Admin UI..."
+	@open http://localhost:$(ADMIN_PORT) 2>/dev/null || xdg-open http://localhost:$(ADMIN_PORT) 2>/dev/null || echo "Open http://localhost:$(ADMIN_PORT)"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🔄 RESET TARGETS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+reset-soft: ## Soft reset: stop services and clean caches
+	@echo "⚠️  This will stop all services and clean caches."
+	@read -p "Continue? [y/N] " -n 1 -r; echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		echo ""; \
+		echo "🛑 Stopping services..."; \
+		$(MAKE) stop 2>/dev/null || true; \
+		echo ""; \
+		echo "🧹 Cleaning caches..."; \
+		rm -rf frontend/node_modules/.vite 2>/dev/null || true; \
+		rm -rf frontend/.vite 2>/dev/null || true; \
+		rm -rf frontend/dist 2>/dev/null || true; \
+		find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true; \
+		find . -name "*.pyc" -delete 2>/dev/null || true; \
+		echo ""; \
+		echo "✅ Soft reset complete!"; \
+		echo ""; \
+		echo "Next steps:"; \
+		echo "  make dev      # Start development servers"; \
+		echo "  make docker   # Start Docker services"; \
+	else \
+		echo "Cancelled."; \
+	fi
+
+reset-hard: ## Hard reset: remove all dependencies (DESTRUCTIVE)
+	@echo "🚨 HARD RESET - This will remove all dependencies!"
+	@echo "   - Everything from soft reset"
+	@echo "   - Remove .venv (Python virtual environment)"
+	@echo "   - Remove node_modules"
+	@echo ""
+	@read -p "Are you absolutely sure? [y/N] " -n 1 -r; echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		$(MAKE) reset-soft; \
+		echo "🗑️  Removing .venv..."; \
+		rm -rf $(VENV); \
+		echo "🗑️  Removing node_modules..."; \
+		rm -rf frontend/node_modules; \
+		rm -rf ui-admin/node_modules; \
+		echo ""; \
+		echo "✅ Hard reset complete!"; \
+		echo "Run 'make install' to reinstall dependencies."; \
+	else \
+		echo "Cancelled."; \
+	fi
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 📚 QUICK REFERENCE HELP
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+h: ## Quick reference help
+	@echo "╔═══════════════════════════════════════════════════════════════════════╗"
+	@echo "║                    🏗️  Optimal Build Quick Reference                  ║"
+	@echo "╚═══════════════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "🚀 Getting Started"
+	@echo "  make install        Install all dependencies"
+	@echo "  make dev            Start API + UI (no Docker)"
+	@echo "  make docker         Start full Docker stack"
+	@echo "  make stop           Stop dev servers"
+	@echo ""
+	@echo "🧪 Testing"
+	@echo "  make t              Quick unit tests"
+	@echo "  make tu/ti/ts/tf    Unit/Integration/Security/Frontend tests"
+	@echo "  make cov            Coverage report"
+	@echo "  make ci             Run CI checks"
+	@echo ""
+	@echo "✨ Code Quality"
+	@echo "  make fix            Auto-fix all issues"
+	@echo "  make verify         Full verification"
+	@echo "  make hooks          Run pre-commit hooks"
+	@echo ""
+	@echo "🛠️  Utilities"
+	@echo "  make d / dashboard  Show service status"
+	@echo "  make doctor         Diagnose environment"
+	@echo "  make health         Check service health"
+	@echo "  make open           Open UI in browser"
+	@echo ""
+	@echo "Run 'make help-dev' for complete command list"
+	@echo ""

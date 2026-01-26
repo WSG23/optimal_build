@@ -30,8 +30,8 @@ export function KPITickerCard({
     <Box
       sx={{
         position: 'relative',
-        p: 3,
-        borderRadius: '4px', // Square Cyber-Minimalism: sm for cards
+        p: 'var(--ob-space-300)',
+        borderRadius: 'var(--ob-radius-sm)', // Square Cyber-Minimalism: sm for cards
         overflow: 'hidden',
         bgcolor: alpha(theme.palette.background.paper, 0.6), // Glassmorphic base
         backdropFilter: 'blur(var(--ob-blur-lg))',
@@ -41,11 +41,11 @@ export function KPITickerCard({
           : alpha(theme.palette.divider, 0.1),
         boxShadow: active
           ? `0 0 20px -5px ${alpha(theme.palette.primary.main, 0.5)}`
-          : '0 4px 24px -1px rgba(0, 0, 0, 0.05)',
+          : '0 4px 24px -1px var(--ob-color-action-hover-light)',
         transition: 'all 0.3s ease',
         '&:hover': {
           transform: 'translateY(-2px)',
-          boxShadow: '0 8px 30px -5px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 8px 30px -5px var(--ob-color-action-active-light)',
         },
         height: '100%',
         display: 'flex',
@@ -53,7 +53,7 @@ export function KPITickerCard({
         justifyContent: 'space-between',
       }}
     >
-      <Box mb={2}>
+      <Box mb="var(--ob-space-200)">
         <Typography
           variant="overline"
           sx={{
@@ -67,8 +67,8 @@ export function KPITickerCard({
         <Stack
           direction="row"
           alignItems="baseline"
-          spacing={1}
-          sx={{ mt: 0.5 }}
+          spacing="var(--ob-space-100)"
+          sx={{ mt: 'var(--ob-space-50)' }}
         >
           <Typography
             variant="h3"
@@ -84,9 +84,9 @@ export function KPITickerCard({
             sx={{
               bgcolor: alpha(trendColor, 0.1),
               color: trendColor,
-              px: 1,
-              py: 0.25,
-              borderRadius: '2px', // Square Cyber-Minimalism: xs for badges
+              px: 'var(--ob-space-100)',
+              py: '0',
+              borderRadius: 'var(--ob-radius-xs)', // Square Cyber-Minimalism: xs for badges
               fontSize: '0.75rem',
               fontWeight: 700,
             }}

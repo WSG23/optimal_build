@@ -94,7 +94,7 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        mb={2}
+        mb="var(--ob-space-200)"
       >
         <Typography variant="h6">Yield Benchmarks</Typography>
         <Typography variant="caption" color="textSecondary">
@@ -103,7 +103,11 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
       </Box>
 
       {statistics ? (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid
+          container
+          spacing="var(--ob-space-200)"
+          sx={{ mb: 'var(--ob-space-300)' }}
+        >
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
@@ -176,7 +180,7 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
           </Grid>
         </Grid>
       ) : (
-        <Paper sx={{ p: 3, mb: 3 }}>
+        <Paper sx={{ p: 'var(--ob-space-300)', mb: 'var(--ob-space-300)' }}>
           <Typography color="textSecondary">
             No yield benchmark data available.
           </Typography>
@@ -184,7 +188,12 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
       )}
 
       {trends && (
-        <Box display="flex" gap={1} flexWrap="wrap" mb={3}>
+        <Box
+          display="flex"
+          gap="var(--ob-space-100)"
+          flexWrap="wrap"
+          mb="var(--ob-space-300)"
+        >
           {trendChip('Cap Rate', trends.cap_rate_trend)}
           {trendChip('Rental', trends.rental_trend)}
           <Chip
@@ -198,7 +207,7 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
         </Box>
       )}
 
-      <Paper sx={{ p: 3 }}>
+      <Paper sx={{ p: 'var(--ob-space-300)' }}>
         <Typography variant="h6" gutterBottom>
           Year-over-year movement
         </Typography>
@@ -211,7 +220,12 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={yoyData}
-                margin={{ top: 20, right: 20, bottom: 20, left: 0 }}
+                margin={{
+                  top: 'var(--ob-space-800)',
+                  right: 20,
+                  bottom: 'var(--ob-space-800)',
+                  left: 0,
+                }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="label" />

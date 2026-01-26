@@ -8,7 +8,7 @@
 /* -------------------------------------------------------------------------- */
 
 .page {
-    /* padding removed - YosaiShell provides canonical 16px layout padding */
+    /* padding removed - OptimalBuildShell provides canonical 16px layout padding */
     max-width: 1400px;
     margin: 0 auto;
     font-family: var(--ob-font-family-base);
@@ -195,10 +195,10 @@
 .page__btn--primary {
     background: linear-gradient(
         135deg,
-        #0096cc 0%,
+        var(--ob-color-primary) 0%,
         var(--ob-color-neon-cyan) 100%
     );
-    color: #0a1628;
+    color: var(--ob-color-bg-inverse);
     box-shadow: var(--ob-glow-neon-cyan);
 }
 
@@ -206,7 +206,7 @@
     background: linear-gradient(
         135deg,
         var(--ob-color-neon-cyan) 0%,
-        #0096cc 100%
+        var(--ob-color-primary) 100%
     );
     box-shadow: var(--ob-glow-neon-cyan-strong);
     transform: translateY(-1px);
@@ -219,7 +219,7 @@
 }
 
 .page__btn--secondary:hover:not(:disabled) {
-    background: rgba(0, 243, 255, 0.08);
+    background: var(--ob-color-table-row-selected);
     border-color: var(--ob-color-neon-cyan);
 }
 

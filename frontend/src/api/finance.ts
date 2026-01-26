@@ -1072,327 +1072,11 @@ function mapResponse(
   }
 }
 
-const FINANCE_FALLBACK_SUMMARY: FinanceScenarioSummary = {
-  scenarioId: 0,
-  projectId: 0,
-  finProjectId: 0,
-  scenarioName: 'Offline Feasibility Scenario',
-  currency: 'SGD',
-  escalatedCost: '24850000.00',
-  costIndex: {
-    seriesName: 'construction_all_in',
-    jurisdiction: 'SG',
-    provider: 'Public',
-    basePeriod: '2024-Q1',
-    latestPeriod: '2024-Q4',
-    scalar: '1.1200',
-    baseIndex: {
-      period: '2024-Q1',
-      value: '100',
-      unit: 'index',
-      source: 'BCA',
-      provider: 'BCA',
-      methodology: null,
-    },
-    latestIndex: {
-      period: '2024-Q4',
-      value: '112',
-      unit: 'index',
-      source: 'BCA',
-      provider: 'BCA',
-      methodology: null,
-    },
-  },
-  results: [
-    {
-      name: 'NPV',
-      value: '1850000.00',
-      unit: 'currency',
-      metadata: { currency: 'SGD' },
-    },
-    {
-      name: 'IRR',
-      value: '0.125',
-      unit: 'ratio',
-      metadata: { format: 'percentage' },
-    },
-    {
-      name: 'Equity Multiple',
-      value: '1.80',
-      unit: 'multiple',
-      metadata: {},
-    },
-  ],
-  dscrTimeline: [
-    {
-      period: 'Year 1',
-      noi: '5200000.00',
-      debtService: '4300000.00',
-      dscr: '1.21',
-      currency: 'SGD',
-    },
-    {
-      period: 'Year 2',
-      noi: '5600000.00',
-      debtService: '4300000.00',
-      dscr: '1.30',
-      currency: 'SGD',
-    },
-    {
-      period: 'Year 3',
-      noi: '5900000.00',
-      debtService: '4300000.00',
-      dscr: '1.37',
-      currency: 'SGD',
-    },
-  ],
-  capitalStack: {
-    currency: 'SGD',
-    total: '24850000.00',
-    equityTotal: '9940000.00',
-    debtTotal: '14910000.00',
-    otherTotal: '0.00',
-    equityRatio: '0.40',
-    debtRatio: '0.60',
-    otherRatio: '0.00',
-    loanToCost: '0.60',
-    weightedAverageDebtRate: '0.043',
-    slices: [
-      {
-        name: 'Sponsor Equity',
-        sourceType: 'equity',
-        category: 'equity',
-        amount: '7455000.00',
-        share: '0.30',
-        rate: null,
-        trancheOrder: 1,
-        metadata: {},
-      },
-      {
-        name: 'Co-invest Equity',
-        sourceType: 'equity',
-        category: 'equity',
-        amount: '2485000.00',
-        share: '0.10',
-        rate: null,
-        trancheOrder: 2,
-        metadata: {},
-      },
-      {
-        name: 'Senior Debt',
-        sourceType: 'debt',
-        category: 'debt',
-        amount: '14910000.00',
-        share: '0.60',
-        rate: '0.043',
-        trancheOrder: 3,
-        metadata: {},
-      },
-    ],
-  },
-  drawdownSchedule: {
-    currency: 'SGD',
-    entries: [
-      {
-        period: 'Q1',
-        equityDraw: '3727500.00',
-        debtDraw: '0.00',
-        totalDraw: '3727500.00',
-        cumulativeEquity: '3727500.00',
-        cumulativeDebt: '0.00',
-        outstandingDebt: '0.00',
-      },
-      {
-        period: 'Q2',
-        equityDraw: '3727500.00',
-        debtDraw: '4970000.00',
-        totalDraw: '8697500.00',
-        cumulativeEquity: '7455000.00',
-        cumulativeDebt: '4970000.00',
-        outstandingDebt: '4970000.00',
-      },
-      {
-        period: 'Q3',
-        equityDraw: '2485000.00',
-        debtDraw: '4960000.00',
-        totalDraw: '7445000.00',
-        cumulativeEquity: '9940000.00',
-        cumulativeDebt: '9930000.00',
-        outstandingDebt: '9930000.00',
-      },
-      {
-        period: 'Q4',
-        equityDraw: '0.00',
-        debtDraw: '4980000.00',
-        totalDraw: '4980000.00',
-        cumulativeEquity: '9940000.00',
-        cumulativeDebt: '14910000.00',
-        outstandingDebt: '14910000.00',
-      },
-    ],
-    totalEquity: '9940000.00',
-    totalDebt: '14910000.00',
-    peakDebtBalance: '14910000.00',
-    finalDebtBalance: '14910000.00',
-  },
-  assetMixSummary: null,
-  assetBreakdowns: [],
-  constructionLoanInterest: null,
-  constructionLoan: null,
-  sensitivityResults: [],
-  sensitivityJobs: [],
-  sensitivityBands: [],
-  isPrimary: true,
-  isPrivate: false,
-  updatedAt: null,
-}
-
-function cloneFinanceSummary(
-  summary: FinanceScenarioSummary,
-): FinanceScenarioSummary {
-  return {
-    ...summary,
-    costIndex: {
-      ...summary.costIndex,
-      baseIndex: summary.costIndex.baseIndex
-        ? { ...summary.costIndex.baseIndex }
-        : null,
-      latestIndex: summary.costIndex.latestIndex
-        ? { ...summary.costIndex.latestIndex }
-        : null,
-    },
-    results: summary.results.map((item) => ({
-      ...item,
-      metadata: { ...item.metadata },
-    })),
-    dscrTimeline: summary.dscrTimeline.map((entry) => ({ ...entry })),
-    capitalStack: summary.capitalStack
-      ? {
-          ...summary.capitalStack,
-          slices: summary.capitalStack.slices.map((slice) => ({
-            ...slice,
-            metadata: { ...slice.metadata },
-          })),
-        }
-      : null,
-    drawdownSchedule: summary.drawdownSchedule
-      ? {
-          ...summary.drawdownSchedule,
-          entries: summary.drawdownSchedule.entries.map((entry) => ({
-            ...entry,
-          })),
-        }
-      : null,
-    assetMixSummary: summary.assetMixSummary
-      ? {
-          ...summary.assetMixSummary,
-          notes: [...summary.assetMixSummary.notes],
-        }
-      : null,
-    assetBreakdowns: summary.assetBreakdowns.map((entry) => ({
-      ...entry,
-      notes: [...entry.notes],
-    })),
-    constructionLoanInterest: summary.constructionLoanInterest
-      ? {
-          ...summary.constructionLoanInterest,
-          facilities: summary.constructionLoanInterest.facilities.map(
-            (facility) => ({ ...facility }),
-          ),
-          entries: summary.constructionLoanInterest.entries.map((entry) => ({
-            ...entry,
-          })),
-        }
-      : null,
-    constructionLoan: summary.constructionLoan
-      ? {
-          ...summary.constructionLoan,
-          facilities: summary.constructionLoan.facilities
-            ? summary.constructionLoan.facilities.map((facility) => ({
-                ...facility,
-              }))
-            : null,
-        }
-      : null,
-    sensitivityResults: summary.sensitivityResults.map((entry) => ({
-      ...entry,
-      notes: [...entry.notes],
-    })),
-    sensitivityJobs: summary.sensitivityJobs.map((job) => ({ ...job })),
-  }
-}
-
-function createFinanceFallbackSummary(
-  request: FinanceFeasibilityRequest,
-): FinanceScenarioSummary {
-  const fallback = cloneFinanceSummary(FINANCE_FALLBACK_SUMMARY)
-  // Ensure locally-created fallback scenarios do not collide with the static
-  // offline summary (scenarioId=0) used by listFinanceScenarios fallback.
-  fallback.scenarioId = -Date.now()
-  fallback.isPrimary = true
-  if (request.projectId !== undefined && request.projectId !== null) {
-    fallback.projectId = request.projectId as typeof fallback.projectId
-  }
-  if (typeof request.finProjectId === 'number') {
-    fallback.finProjectId = request.finProjectId
-  }
-  fallback.scenarioName = request.scenario.name?.trim() || fallback.scenarioName
-  const currency = request.scenario.currency?.trim() || fallback.currency
-  fallback.currency = currency
-  fallback.costIndex = {
-    ...fallback.costIndex,
-  }
-  if (fallback.costIndex.baseIndex) {
-    fallback.costIndex.baseIndex = {
-      ...fallback.costIndex.baseIndex,
-    }
-  }
-  if (fallback.costIndex.latestIndex) {
-    fallback.costIndex.latestIndex = {
-      ...fallback.costIndex.latestIndex,
-    }
-  }
-  fallback.results = fallback.results.map((item) => {
-    const metadata = { ...item.metadata }
-    if (item.name.toLowerCase().includes('npv')) {
-      metadata.currency = currency
-    }
-    return {
-      ...item,
-      metadata,
-    }
-  })
-  fallback.dscrTimeline = fallback.dscrTimeline.map((entry) => ({
-    ...entry,
-    currency,
-  }))
-  if (fallback.capitalStack) {
-    fallback.capitalStack = {
-      ...fallback.capitalStack,
-      currency,
-      slices: fallback.capitalStack.slices.map((slice) => ({
-        ...slice,
-        metadata: { ...slice.metadata },
-      })),
-    }
-  }
-  if (fallback.drawdownSchedule) {
-    fallback.drawdownSchedule = {
-      ...fallback.drawdownSchedule,
-      currency,
-      entries: fallback.drawdownSchedule.entries.map((entry) => ({
-        ...entry,
-      })),
-    }
-  }
-  return fallback
-}
-
 export interface FinanceFeasibilityOptions {
   signal?: AbortSignal
   /**
    * Optional client-side timeout for API calls.
-   * When reached, the request aborts and callers may fall back to offline data.
+   * When reached, the request aborts.
    */
   timeoutMs?: number
 }
@@ -1405,40 +1089,26 @@ export async function runFinanceFeasibility(
     'Content-Type': 'application/json',
   })
 
-  try {
-    const response = await fetch(
-      buildUrl('api/v1/finance/feasibility', apiBaseUrl),
-      {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(toPayload(request)),
-        signal: options.signal,
-      },
+  const response = await fetch(
+    buildUrl('api/v1/finance/feasibility', apiBaseUrl),
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(toPayload(request)),
+      signal: options.signal,
+    },
+  )
+
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(
+      message ||
+        `Finance feasibility request failed with status ${response.status}`,
     )
-
-    if (!response.ok) {
-      const message = await response.text()
-      throw new Error(
-        message ||
-          `Finance feasibility request failed with status ${response.status}`,
-      )
-    }
-
-    const payload = (await response.json()) as FinanceFeasibilityResponsePayload
-    return mapResponse(payload)
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      throw error
-    }
-    if (error instanceof TypeError) {
-      console.warn(
-        '[finance] feasibility request failed, using offline fallback data',
-        error,
-      )
-      return createFinanceFallbackSummary(request)
-    }
-    throw error
   }
+
+  const payload = (await response.json()) as FinanceFeasibilityResponsePayload
+  return mapResponse(payload)
 }
 
 export function findResult(
@@ -1451,137 +1121,6 @@ export function findResult(
 export interface FinanceScenarioListParams {
   projectId?: number | string
   finProjectId?: number
-}
-
-function scaleFixed(
-  value: string | null | undefined,
-  multiplier: number,
-): string {
-  if (typeof value !== 'string') return '0.00'
-  const parsed = Number(value)
-  if (!Number.isFinite(parsed)) return value
-  return (parsed * multiplier).toFixed(2)
-}
-
-function setResultValue(
-  summary: FinanceScenarioSummary,
-  key: string,
-  value: string,
-) {
-  const target = key.trim().toLowerCase()
-  const match = summary.results.find(
-    (result) => result.name.trim().toLowerCase() === target,
-  )
-  if (match) {
-    match.value = value
-    return
-  }
-  summary.results.push({
-    name: key,
-    value,
-    unit: 'currency',
-    metadata: { currency: summary.currency ?? 'SGD' },
-  })
-}
-
-function createFinanceFallbackScenarioList(
-  params: FinanceScenarioListParams,
-): FinanceScenarioSummary[] {
-  const base = cloneFinanceSummary(FINANCE_FALLBACK_SUMMARY)
-  if (params.projectId !== undefined && params.projectId !== null) {
-    base.projectId = params.projectId as typeof base.projectId
-  }
-  if (typeof params.finProjectId === 'number') {
-    base.finProjectId = params.finProjectId
-  }
-
-  const scenarioA = cloneFinanceSummary(base)
-  scenarioA.scenarioId = 0
-  scenarioA.scenarioName = 'Scenario A'
-  scenarioA.isPrimary = true
-  scenarioA.escalatedCost = scaleFixed(base.escalatedCost, 1)
-  setResultValue(scenarioA, 'NPV', '375863.00')
-  setResultValue(scenarioA, 'IRR', '0.0688')
-
-  const scenarioB = cloneFinanceSummary(base)
-  scenarioB.scenarioId = -1
-  scenarioB.scenarioName = 'Scenario B'
-  scenarioB.isPrimary = false
-  scenarioB.escalatedCost = scaleFixed(base.escalatedCost, 1.045)
-  setResultValue(scenarioB, 'NPV', '1270733.00')
-  setResultValue(scenarioB, 'IRR', '0.1091')
-
-  const scenarioC = cloneFinanceSummary(base)
-  scenarioC.scenarioId = -2
-  scenarioC.scenarioName = 'Scenario C'
-  scenarioC.isPrimary = false
-  scenarioC.escalatedCost = scaleFixed(base.escalatedCost, 0.955)
-  setResultValue(scenarioC, 'NPV', '4160673.00')
-  setResultValue(scenarioC, 'IRR', '-0.0745')
-
-  const variants = [
-    { scenario: scenarioA, multiplier: 1 },
-    { scenario: scenarioB, multiplier: 1.045 },
-    { scenario: scenarioC, multiplier: 0.955 },
-  ]
-
-  for (const { scenario, multiplier } of variants) {
-    if (scenario.capitalStack) {
-      scenario.capitalStack.total = scaleFixed(
-        scenario.capitalStack.total,
-        multiplier,
-      )
-      scenario.capitalStack.equityTotal = scaleFixed(
-        scenario.capitalStack.equityTotal,
-        multiplier,
-      )
-      scenario.capitalStack.debtTotal = scaleFixed(
-        scenario.capitalStack.debtTotal,
-        multiplier,
-      )
-      scenario.capitalStack.otherTotal = scaleFixed(
-        scenario.capitalStack.otherTotal,
-        multiplier,
-      )
-      scenario.capitalStack.slices = scenario.capitalStack.slices.map(
-        (slice) => ({
-          ...slice,
-          amount: scaleFixed(slice.amount, multiplier),
-        }),
-      )
-    }
-    if (scenario.drawdownSchedule) {
-      scenario.drawdownSchedule.totalEquity = scaleFixed(
-        scenario.drawdownSchedule.totalEquity,
-        multiplier,
-      )
-      scenario.drawdownSchedule.totalDebt = scaleFixed(
-        scenario.drawdownSchedule.totalDebt,
-        multiplier,
-      )
-      scenario.drawdownSchedule.peakDebtBalance = scaleFixed(
-        scenario.drawdownSchedule.peakDebtBalance,
-        multiplier,
-      )
-      scenario.drawdownSchedule.finalDebtBalance = scaleFixed(
-        scenario.drawdownSchedule.finalDebtBalance,
-        multiplier,
-      )
-      scenario.drawdownSchedule.entries = scenario.drawdownSchedule.entries.map(
-        (entry) => ({
-          ...entry,
-          equityDraw: scaleFixed(entry.equityDraw, multiplier),
-          debtDraw: scaleFixed(entry.debtDraw, multiplier),
-          totalDraw: scaleFixed(entry.totalDraw, multiplier),
-          cumulativeEquity: scaleFixed(entry.cumulativeEquity, multiplier),
-          cumulativeDebt: scaleFixed(entry.cumulativeDebt, multiplier),
-          outstandingDebt: scaleFixed(entry.outstandingDebt, multiplier),
-        }),
-      )
-    }
-  }
-
-  return [scenarioA, scenarioB, scenarioC]
 }
 
 export async function listFinanceScenarios(
@@ -1646,13 +1185,6 @@ export async function listFinanceScenarios(
 
     if (!response.ok) {
       const message = await response.text()
-      if (response.status >= 500) {
-        console.warn(
-          `[finance] scenario list request failed (server ${response.status}), using offline fallback data`,
-          message,
-        )
-        return createFinanceFallbackScenarioList(params)
-      }
       throw new Error(
         message ||
           `Finance scenario list request failed with status ${response.status}`,
@@ -1666,28 +1198,11 @@ export async function listFinanceScenarios(
     if (error instanceof DOMException && error.name === 'AbortError') {
       const timedOut =
         timeoutController.signal.aborted && !options.signal?.aborted
-      if (!timedOut) {
-        throw error
+      if (timedOut) {
+        throw new Error(
+          `Finance scenario list request timed out after ${timeoutMs}ms`,
+        )
       }
-      console.warn(
-        `[finance] scenario list request timed out after ${timeoutMs}ms, using offline fallback data`,
-      )
-      return createFinanceFallbackScenarioList(params)
-    }
-    // Use fallback data for network errors (TypeError) or API auth errors (401/403)
-    const isNetworkError = error instanceof TypeError
-    const isAuthError =
-      error instanceof Error &&
-      (error.message.includes('401') ||
-        error.message.includes('403') ||
-        error.message.includes('restricted') ||
-        error.message.includes('owner'))
-    if (isNetworkError || isAuthError) {
-      console.warn(
-        `[finance] scenario list request failed (${isNetworkError ? 'network' : 'auth'}), using offline fallback data`,
-        error,
-      )
-      return createFinanceFallbackScenarioList(params)
     }
     throw error
   } finally {

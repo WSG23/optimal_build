@@ -28,8 +28,12 @@ export function ConfidenceGauge({
       arrow
       placement="top"
     >
-      <Box sx={{ mb: 2, cursor: 'help' }}>
-        <Box display="flex" justifyContent="space-between" mb={0.5}>
+      <Box sx={{ mb: 'var(--ob-space-200)', cursor: 'help' }}>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          mb="var(--ob-space-50)"
+        >
           <Typography variant="body2" fontWeight={600}>
             {label}
           </Typography>
@@ -42,7 +46,7 @@ export function ConfidenceGauge({
             height: 8,
             width: '100%',
             bgcolor: alpha(theme.palette.text.disabled, 0.1),
-            borderRadius: '4px', // Square Cyber-Minimalism: sm for containers
+            borderRadius: 'var(--ob-radius-sm)', // Square Cyber-Minimalism: sm for containers
             overflow: 'hidden',
             position: 'relative',
           }}
@@ -51,10 +55,10 @@ export function ConfidenceGauge({
           <Box
             sx={{
               position: 'absolute',
-              top: 0,
+              top: '0',
               left: 0,
               right: 0,
-              bottom: 0,
+              bottom: '0',
               backgroundImage: `linear-gradient(90deg, transparent 95%, ${theme.palette.background.paper} 95%)`,
               backgroundSize: '10% 100%',
               opacity: 0.3,
@@ -68,7 +72,7 @@ export function ConfidenceGauge({
               height: '100%',
               width: `${value}%`,
               bgcolor: color,
-              borderRadius: '4px', // Square Cyber-Minimalism: sm for containers
+              borderRadius: 'var(--ob-radius-sm)', // Square Cyber-Minimalism: sm for containers
               transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
               position: 'relative',
               zIndex: 2,

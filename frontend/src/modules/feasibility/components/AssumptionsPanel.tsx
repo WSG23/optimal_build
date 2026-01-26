@@ -133,6 +133,8 @@ export function AssumptionsPanel({
                 <div className="assumptions-panel__input-wrapper">
                   <input
                     type="number"
+                    id="assumption-floor"
+                    data-testid="assumption-floor"
                     value={assumptionInputs.typFloorToFloorM}
                     onChange={onAssumptionChange('typFloorToFloorM')}
                     min={2.5}
@@ -175,6 +177,7 @@ export function AssumptionsPanel({
                 <div className="assumptions-panel__input-wrapper">
                   <input
                     type="number"
+                    id="assumption-efficiency"
                     value={Math.round(
                       (Number(assumptionInputs.efficiencyRatio) || 0) * 100,
                     )}

@@ -21,7 +21,7 @@ from backend.jobs import JobDispatch, job_queue
 
 from app.core.config import settings
 from app.models.finance import FinAssetBreakdown
-from app.models.projects import Project, ProjectPhase, ProjectType
+from app.models.project import Project, ProjectPhase, ProjectType
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker

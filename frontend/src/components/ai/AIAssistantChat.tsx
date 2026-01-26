@@ -210,7 +210,9 @@ export function AIAssistantChat({
                   color: 'var(--ob-color-text-tertiary)',
                 }}
               >
-                <SmartToyIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
+                <SmartToyIcon
+                  sx={{ fontSize: 48, mb: 'var(--ob-space-200)', opacity: 0.5 }}
+                />
                 <Typography variant="body2">
                   Ask me anything about your deals, properties, or market
                   insights.
@@ -241,7 +243,7 @@ export function AIAssistantChat({
                         sx={{
                           color: 'var(--ob-color-neon-cyan)',
                           fontSize: 20,
-                          mt: 0.5,
+                          mt: 'var(--ob-space-50)',
                         }}
                       />
                     )}
@@ -271,7 +273,7 @@ export function AIAssistantChat({
                         sx={{
                           color: 'var(--ob-color-text-secondary)',
                           fontSize: 20,
-                          mt: 0.5,
+                          mt: 'var(--ob-space-50)',
                         }}
                       />
                     )}

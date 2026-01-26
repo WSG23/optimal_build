@@ -2,13 +2,52 @@
 
 Extended persona playbooks for `optimal_build`. These provide deeper guidance beyond the `MCP.md` checklists.
 
+**28 Specialized Personas** for comprehensive coverage of real estate development software needs.
+
+---
+
 ## Quick Reference
 
 | Document | Purpose |
 |----------|---------|
 | [MCP.md](../../MCP.md) | Core directives, persona summaries, agent roster |
 | [CLAUDE.md](../../CLAUDE.md) | Claude-specific instructions and workflows |
+| [SHARED_CORE.md](../ai/SHARED_CORE.md) | Universal rules for ALL AI tools |
+| [MCP_RULES.md](../mcp/MCP_RULES.md) | Machine-readable DO/DON'T rules with IDs |
+| [MCP_GUARDRAILS.md](../mcp/MCP_GUARDRAILS.md) | Security, performance, testing standards |
 | [_TEMPLATE.md](./_TEMPLATE.md) | Template for creating new playbooks |
+
+---
+
+## Conflict Resolution Hierarchy
+
+When personas disagree, priority order:
+
+1. **Security & Compliance** (highest)
+2. **Quality & Testing**
+3. **Reliability & Availability**
+4. **Performance & Scalability**
+5. **User Value & UX**
+6. **Cost Optimization**
+7. **Speed of Delivery** (lowest)
+
+---
+
+## Handoff Protocol
+
+When switching personas, provide a **Handoff Packet**:
+
+```markdown
+**Handoff Packet**
+- **From -> To:** [e.g., Architect -> QA Engineer]
+- **Context:** [What was being worked on]
+- **Decisions:** [Key choices with rationale]
+- **Risks:** [Known issues]
+- **Test status:** [Passing/failing]
+- **Next steps:** [Follow-up actions]
+```
+
+---
 
 ## Playbook Index
 

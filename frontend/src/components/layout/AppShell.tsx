@@ -80,7 +80,7 @@ export function AppShell({
             sx={{
               zIndex: (theme) => theme.zIndex.drawer + 1,
               bgcolor: 'background.paper',
-              borderBottom: 1,
+              borderBottom: 'var(--ob-space-100)',
               borderColor: 'divider',
               backdropFilter: 'blur(var(--ob-blur-lg))',
               background: `linear-gradient(to right, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(
@@ -243,7 +243,7 @@ export function AppShell({
               sx={{
                 py: 'var(--ob-space-150)',
                 px: 'var(--ob-space-200)',
-                borderBottom: 1,
+                borderBottom: 'var(--ob-space-100)',
                 borderColor: 'divider',
                 display: 'flex',
                 alignItems: 'center',

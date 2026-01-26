@@ -94,10 +94,10 @@ export function AgentAdvisoryPage() {
         title="Development Advisory"
         subtitle="Market Intelligence & Strategic Positioning"
       >
-        <Container maxWidth="xl" sx={{ py: 4 }}>
-          <Stack spacing={3}>
+        <Container maxWidth="xl" sx={{ py: 'var(--ob-space-400)' }}>
+          <Stack spacing="var(--ob-space-300)">
             <Skeleton height={300} variant="glass" />
-            <Grid container spacing={3}>
+            <Grid container spacing="var(--ob-space-300)">
               <Grid item xs={12} md={6}>
                 <Skeleton height={200} variant="glass" />
               </Grid>
@@ -116,9 +116,15 @@ export function AgentAdvisoryPage() {
       title="Development Advisory"
       subtitle="Belnd site analysis with market intelligence to recommend positioning, velocity, and next steps."
     >
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ py: 'var(--ob-space-400)' }}>
         {!propertyId && (
-          <Box sx={{ p: 3, border: '1px dashed grey', borderRadius: 2 }}>
+          <Box
+            sx={{
+              p: 'var(--ob-space-300)',
+              border: '1px dashed grey',
+              borderRadius: 'var(--ob-radius-sm)',
+            }}
+          >
             <Typography color="textSecondary">
               Provide a `propertyId` query parameter to load advisory insights.
             </Typography>
@@ -128,11 +134,11 @@ export function AgentAdvisoryPage() {
         {error && (
           <Box
             sx={{
-              p: 2,
-              mb: 3,
+              p: 'var(--ob-space-200)',
+              mb: 'var(--ob-space-300)',
               bgcolor: 'error.main',
               color: 'white',
-              borderRadius: 1,
+              borderRadius: 'var(--ob-radius-sm)',
             }}
           >
             {error}
@@ -140,7 +146,7 @@ export function AgentAdvisoryPage() {
         )}
 
         {summary && (
-          <Stack spacing={4}>
+          <Stack spacing="var(--ob-space-400)">
             {/* Top Row: Asset Mix Strategy */}
             <AssetMixPanel
               totalGfa={summary.asset_mix.total_programmable_gfa_sqm}
@@ -149,7 +155,7 @@ export function AgentAdvisoryPage() {
             />
 
             {/* Middle Row: Market Positioning & Absorption Grid */}
-            <Grid container spacing={4}>
+            <Grid container spacing="var(--ob-space-400)">
               <Grid item xs={12} lg={6}>
                 <MarketPositioningPanel data={summary.market_positioning} />
               </Grid>

@@ -42,7 +42,7 @@ export function GlassCard({
   const seamlessSx: SxProps<Theme> = {
     background: 'var(--ob-surface-glass-1)',
     border: '1px solid var(--ob-color-border-subtle)',
-    borderRadius: 0, // Edge-to-edge tile
+    borderRadius: 'var(--ob-radius-none)', // Edge-to-edge tile
     transition: 'border-color 0.15s ease',
     overflow: 'hidden',
     cursor: onClick ? 'pointer' : 'default',

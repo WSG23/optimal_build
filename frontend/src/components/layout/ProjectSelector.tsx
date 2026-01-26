@@ -208,7 +208,11 @@ export function ProjectSelector() {
               py: 'var(--ob-space-150)',
             }}
           >
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack
+              direction="row"
+              spacing="var(--ob-space-100)"
+              alignItems="center"
+            >
               <CircularProgress size={16} />
               <Typography variant="body2">Loading projects...</Typography>
             </Stack>
@@ -221,7 +225,11 @@ export function ProjectSelector() {
               selected={project.id === currentProject?.id}
               onClick={() => handleSelectProject(project.id)}
             >
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack
+                direction="row"
+                spacing="var(--ob-space-100)"
+                alignItems="center"
+              >
                 <SwapHorizIcon fontSize="small" />
                 <Typography variant="body2">{project.name}</Typography>
               </Stack>
@@ -241,7 +249,11 @@ export function ProjectSelector() {
             handleCloseMenu()
           }}
         >
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack
+            direction="row"
+            spacing="var(--ob-space-100)"
+            alignItems="center"
+          >
             <AddCircleOutlineIcon fontSize="small" />
             <Typography variant="body2">Create project</Typography>
           </Stack>
@@ -266,7 +278,11 @@ export function ProjectSelector() {
             margin="dense"
           />
           {createError && (
-            <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+            <Typography
+              variant="body2"
+              color="error"
+              sx={{ mt: 'var(--ob-space-100)' }}
+            >
               {createError}
             </Typography>
           )}

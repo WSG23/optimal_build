@@ -88,7 +88,7 @@ const AbsorptionTrendsChart: React.FC<AbsorptionTrendsChartProps> = ({
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        mb={2}
+        mb="var(--ob-space-200)"
       >
         <Typography variant="h6">Absorption & Demand</Typography>
         <Typography variant="caption" color="textSecondary">
@@ -97,13 +97,13 @@ const AbsorptionTrendsChart: React.FC<AbsorptionTrendsChartProps> = ({
       </Box>
 
       {!absorptionTrends ? (
-        <Paper sx={{ p: 3 }}>
+        <Paper sx={{ p: 'var(--ob-space-300)' }}>
           <Typography color="textSecondary">
             No absorption analytics available.
           </Typography>
         </Paper>
       ) : (
-        <Grid container spacing={2}>
+        <Grid container spacing="var(--ob-space-200)">
           <Grid item xs={12} md={6} lg={3}>
             <Card>
               <CardContent>
@@ -186,7 +186,7 @@ const AbsorptionTrendsChart: React.FC<AbsorptionTrendsChartProps> = ({
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <Paper sx={{ p: 2 }}>
+            <Paper sx={{ p: 'var(--ob-space-200)' }}>
               <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                 Forecast (6 months)
               </Typography>
@@ -227,7 +227,7 @@ const AbsorptionTrendsChart: React.FC<AbsorptionTrendsChartProps> = ({
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <Paper sx={{ p: 2 }}>
+            <Paper sx={{ p: 'var(--ob-space-200)' }}>
               <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                 Seasonality Snapshot
               </Typography>

@@ -9,7 +9,6 @@ import type {
   DevelopmentScenario,
   SiteAcquisitionResult,
   ConditionAttachment,
-  ChecklistCategory,
 } from '../../../api/siteAcquisition'
 
 // ============================================================================
@@ -92,22 +91,6 @@ export type QuickAnalysisSnapshot = {
   generatedAt: string
   scenarios: SiteAcquisitionResult['quickAnalysis']['scenarios']
   comparison: ScenarioComparisonDatum[]
-}
-
-// ============================================================================
-// Checklist Template Types (for offline mode)
-// ============================================================================
-
-export type OfflineChecklistTemplate = {
-  developmentScenario: DevelopmentScenario
-  category: ChecklistCategory
-  itemTitle: string
-  itemDescription?: string
-  priority: 'critical' | 'high' | 'medium' | 'low'
-  requiresProfessional: boolean
-  professionalType?: string | null
-  typicalDurationDays?: number | null
-  displayOrder: number
 }
 
 // ============================================================================

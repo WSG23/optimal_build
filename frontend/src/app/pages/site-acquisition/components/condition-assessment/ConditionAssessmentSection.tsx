@@ -164,14 +164,10 @@ export function ConditionAssessmentSection({
           </p>
         </div>
       ) : !conditionAssessment ? (
-        <div
-          className={`condition-assessment__empty-state condition-assessment__empty-panel ${(capturedProperty as { propertyId?: string })?.propertyId === 'offline-property' ? '' : 'condition-assessment__empty-state--warning'}`}
-        >
+        <div className="condition-assessment__empty-state condition-assessment__empty-panel condition-assessment__empty-state--warning">
           <p>
-            {(capturedProperty as { propertyId?: string })?.propertyId ===
-            'offline-property'
-              ? 'Condition assessment not available in offline mode. Capture a real property to access inspection data.'
-              : 'Unable to load condition assessment. Please retry after refreshing the capture.'}
+            Unable to load condition assessment. Please retry after refreshing
+            the capture.
           </p>
         </div>
       ) : (
@@ -302,7 +298,7 @@ export function ConditionAssessmentSection({
                 <Typography
                   variant="h4"
                   sx={{
-                    m: 0,
+                    m: '0',
                     fontSize: 'var(--ob-font-size-base)',
                     fontWeight: 600,
                     letterSpacing: '-0.01em',
@@ -424,7 +420,7 @@ export function ConditionAssessmentSection({
                     <Typography
                       variant="h4"
                       sx={{
-                        m: 0,
+                        m: '0',
                         fontSize: 'var(--ob-font-size-base)',
                         fontWeight: 600,
                         color: 'text.primary',
@@ -472,7 +468,7 @@ export function ConditionAssessmentSection({
                 {scenarioAssessmentsError ? (
                   <Typography
                     sx={{
-                      m: 0,
+                      m: '0',
                       fontSize: 'var(--ob-font-size-sm)',
                       color: 'error.main',
                     }}
@@ -482,7 +478,7 @@ export function ConditionAssessmentSection({
                 ) : isLoadingScenarioAssessments ? (
                   <Typography
                     sx={{
-                      m: 0,
+                      m: '0',
                       fontSize: 'var(--ob-font-size-sm)',
                       color: 'text.secondary',
                     }}
@@ -498,7 +494,7 @@ export function ConditionAssessmentSection({
                   >
                     <Typography
                       sx={{
-                        m: 0,
+                        m: '0',
                         fontSize: 'var(--ob-font-size-sm)',
                         color: 'text.secondary',
                       }}

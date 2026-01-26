@@ -37,7 +37,7 @@ export function PhotoDocumentation({
     let mounted = true
 
     async function loadPhotos() {
-      if (!propertyId || propertyId === 'offline-property') {
+      if (!propertyId) {
         setPhotos([])
         setLoading(false)
         return
@@ -106,15 +106,15 @@ export function PhotoDocumentation({
     [propertyId],
   )
 
-  const isOffline = propertyId === 'offline-property'
+  const hasPropertyId = Boolean(propertyId)
 
   return (
     <section
       style={{
-        background: '#fff',
-        border: '1px solid #e5e7eb',
-        borderRadius: '4px',
-        padding: '1.5rem',
+        background: 'var(--ob-color-bg-default)',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
+        padding: 'var(--ob-space-300)',
       }}
     >
       {/* Header */}
@@ -123,7 +123,7 @@ export function PhotoDocumentation({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '1.5rem',
+          marginBottom: 'var(--ob-space-300)',
         }}
       >
         <div>
@@ -139,9 +139,9 @@ export function PhotoDocumentation({
           </h3>
           <p
             style={{
-              margin: '0.25rem 0 0',
+              margin: 'var(--ob-space-50) 0 0',
               fontSize: '0.8125rem',
-              color: '#6b7280',
+              color: 'var(--ob-color-text-secondary)',
             }}
           >
             Capture and manage property photos with automatic watermarking
@@ -153,13 +153,13 @@ export function PhotoDocumentation({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: 'var(--ob-space-100)',
           }}
         >
           <span
             style={{
               fontSize: '0.8125rem',
-              color: '#6b7280',
+              color: 'var(--ob-color-text-secondary)',
             }}
           >
             Phase:
@@ -168,11 +168,11 @@ export function PhotoDocumentation({
             value={phase}
             onChange={(e) => setPhase(e.target.value as PropertyPhase)}
             style={{
-              padding: '0.375rem 0.75rem',
-              borderRadius: '6px',
-              border: '1px solid #d1d5db',
+              padding: 'var(--ob-space-50) 0.75rem',
+              borderRadius: 'var(--ob-radius-md)',
+              border: '1px solid var(--ob-color-border-default)',
               fontSize: '0.875rem',
-              background: '#fff',
+              background: 'var(--ob-color-bg-default)',
               cursor: 'pointer',
             }}
           >
@@ -186,44 +186,26 @@ export function PhotoDocumentation({
       {error && (
         <div
           style={{
-            padding: '0.75rem 1rem',
+            padding: 'var(--ob-space-150) 1rem',
             background: '#fef2f2',
             border: '1px solid #fecaca',
-            borderRadius: '4px',
-            color: '#dc2626',
+            borderRadius: 'var(--ob-radius-sm)',
+            color: 'var(--ob-color-error)',
             fontSize: '0.875rem',
-            marginBottom: '1rem',
+            marginBottom: 'var(--ob-space-200)',
           }}
         >
           {error}
         </div>
       )}
 
-      {/* Offline warning */}
-      {isOffline && (
-        <div
-          style={{
-            padding: '0.75rem 1rem',
-            background: '#fffbeb',
-            border: '1px solid #fcd34d',
-            borderRadius: '4px',
-            color: '#92400e',
-            fontSize: '0.875rem',
-            marginBottom: '1rem',
-          }}
-        >
-          Photo upload is not available in offline mode. Save the property first
-          to enable photo documentation.
-        </div>
-      )}
-
       {/* Upload area */}
-      <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{ marginBottom: 'var(--ob-space-300)' }}>
         <PhotoCapture
           propertyId={propertyId}
           phase={phase}
           onUpload={handleUpload}
-          disabled={isOffline}
+          disabled={!hasPropertyId}
         />
       </div>
 
@@ -233,11 +215,11 @@ export function PhotoDocumentation({
       {/* Watermark info */}
       <div
         style={{
-          marginTop: '1.5rem',
-          padding: '1rem',
-          background: '#f9fafb',
-          borderRadius: '4px',
-          border: '1px solid #e5e7eb',
+          marginTop: 'var(--ob-space-300)',
+          padding: 'var(--ob-space-200)',
+          background: 'var(--ob-color-bg-muted)',
+          borderRadius: 'var(--ob-radius-sm)',
+          border: '1px solid var(--ob-color-border-subtle)',
         }}
       >
         <h4
@@ -245,7 +227,7 @@ export function PhotoDocumentation({
             margin: '0 0 0.5rem',
             fontSize: '0.875rem',
             fontWeight: 600,
-            color: '#374151',
+            color: 'var(--ob-color-text-primary)',
           }}
         >
           Watermark Information
@@ -253,7 +235,7 @@ export function PhotoDocumentation({
         <div
           style={{
             fontSize: '0.8125rem',
-            color: '#6b7280',
+            color: 'var(--ob-color-text-secondary)',
             lineHeight: 1.5,
           }}
         >

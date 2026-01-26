@@ -202,7 +202,7 @@ function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
       container: containerRef.current,
       style: 'mapbox://styles/mapbox/light-v11',
       center: [coordinates.longitude, coordinates.latitude],
-      zoom: 15,
+      zoom: 'var(--ob-space-800)',
     })
 
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }))

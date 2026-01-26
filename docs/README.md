@@ -20,6 +20,7 @@ This is a comprehensive index of all documentation in the `docs/` directory.
 
 ### Feature-Specific Guides:
 - [agents/marketing_pack_quickstart.md](agents/marketing_pack_quickstart.md) - Agent user guide
+- [agents/agent_catalog.md](agents/agent_catalog.md) - Catalog of core agent services
 - [frontend/agents_site_capture.md](frontend/agents_site_capture.md) - Developer implementation guide
 - [demos/agents_capture_demo.md](demos/agents_capture_demo.md) - Demo script
 

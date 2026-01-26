@@ -7,6 +7,10 @@ import {
   generateProfessionalPack,
   type ProfessionalPackType,
 } from '../../api/agents'
+import {
+  fetchSmartSearchSuggestions,
+  type SmartSearchSuggestion,
+} from '../../api/geocoding'
 import { useTranslation } from '../../i18n'
 import { useRouterController, useRouterLocation } from '../../router'
 import { useProject } from '../../contexts/useProject'
@@ -63,6 +67,22 @@ interface FeasibilityWizardProps {
   withLayout?: boolean
 }
 
+function normalizeZoningLabel(value?: string | null): string {
+  if (!value) return 'Mixed Use'
+  const lower = value.toLowerCase()
+  if (lower.includes('residential')) return 'Residential'
+  if (
+    lower.includes('commercial') ||
+    lower.includes('office') ||
+    lower.includes('retail')
+  ) {
+    return 'Commercial'
+  }
+  if (lower.includes('mixed')) return 'Mixed Use'
+  if (lower.includes('raw') || lower.includes('land')) return 'Raw Land'
+  return 'Mixed Use'
+}
+
 export function FeasibilityWizard({
   generatePackFn = generateProfessionalPack,
   withLayout = true,
@@ -79,6 +99,10 @@ export function FeasibilityWizard({
   const [addressError, setAddressError] = useState<string | null>(null)
   const [siteAreaInput, setSiteAreaInput] = useState('')
   const [landUseInput, setLandUseInput] = useState('Mixed Use')
+  const [smartSuggestions, setSmartSuggestions] = useState<
+    SmartSearchSuggestion[]
+  >([])
+  const suggestionController = useRef<AbortController | null>(null)
 
   // Copy state
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>(
@@ -154,6 +178,40 @@ export function FeasibilityWizard({
     }
   }, [addressInput, captureResult, siteAreaInput])
 
+  useEffect(() => {
+    const query = addressInput.trim()
+    if (query.length < 3) {
+      suggestionController.current?.abort()
+      setSmartSuggestions([])
+      return
+    }
+
+    suggestionController.current?.abort()
+    const controller = new AbortController()
+    suggestionController.current = controller
+    const handle = window.setTimeout(async () => {
+      try {
+        const suggestions = await fetchSmartSearchSuggestions(
+          query,
+          controller.signal,
+        )
+        if (!controller.signal.aborted) {
+          setSmartSuggestions(suggestions)
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.warn('Failed to fetch smart search suggestions', error)
+          setSmartSuggestions([])
+        }
+      }
+    }, 400)
+
+    return () => {
+      clearTimeout(handle)
+      controller.abort()
+    }
+  }, [addressInput])
+
   const activeSiteLabel = useMemo(() => {
     if (captureResult?.address?.fullAddress) {
       return captureResult.address.fullAddress
@@ -165,6 +223,32 @@ export function FeasibilityWizard({
   const captureLinkLabel = captureResult?.propertyId
     ? 'View Capture'
     : 'Go to Capture'
+
+  const smartSuggestionOptions = useMemo(() => {
+    return smartSuggestions.map((suggestion) => {
+      const zoningLabel =
+        suggestion.zoningDescription || suggestion.zoning || undefined
+      const siteAreaLabel =
+        suggestion.siteArea != null && Number.isFinite(suggestion.siteArea)
+          ? `${Math.round(suggestion.siteArea)} sqm`
+          : null
+      const subtitleParts = [siteAreaLabel, zoningLabel].filter(Boolean)
+      const badgeLabel = zoningLabel ? zoningLabel.toUpperCase() : undefined
+      const badgeVariant =
+        zoningLabel && zoningLabel.toLowerCase().includes('residential')
+          ? 'warning'
+          : 'info'
+      return {
+        address: suggestion.address,
+        siteArea: suggestion.siteArea ?? undefined,
+        zoning: zoningLabel,
+        subtitle:
+          subtitleParts.length > 0 ? subtitleParts.join(' • ') : undefined,
+        badgeLabel,
+        badgeVariant,
+      }
+    })
+  }, [smartSuggestions])
 
   const handleCaptureLink = useCallback(() => {
     if (!projectId) {
@@ -731,14 +815,20 @@ export function FeasibilityWizard({
             error={addressError}
             onSuggestionSelect={(suggestion: {
               address: string
-              siteArea: number
-              zoning: string
+              siteArea?: number
+              zoning?: string
             }) => {
               setAddressInput(suggestion.address)
-              setSiteAreaInput(suggestion.siteArea.toString())
-              setLandUseInput(suggestion.zoning)
+              setSmartSuggestions([])
+              if (suggestion.siteArea != null) {
+                setSiteAreaInput(String(Math.round(suggestion.siteArea)))
+              }
+              if (suggestion.zoning) {
+                setLandUseInput(normalizeZoningLabel(suggestion.zoning))
+              }
               setAddressError(null)
             }}
+            suggestions={smartSuggestionOptions}
           />
 
           {/* Section 1: Site Details - Flat (no wrapper surface) */}
@@ -870,12 +960,12 @@ export function FeasibilityWizard({
               width: '300px',
               height: '420px',
               background: 'white',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              boxShadow: '0 20px 40px var(--ob-color-overlay-backdrop-light)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: '4px',
+              borderRadius: 'var(--ob-radius-sm)',
               position: 'relative',
               transition: 'transform 0.3s',
             }}
@@ -894,7 +984,9 @@ export function FeasibilityWizard({
               {/* Placeholder for Cover Image */}
               <span style={{ fontSize: '3rem' }}>🏢</span>
             </div>
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
+            <div
+              style={{ padding: 'var(--ob-space-400)', textAlign: 'center' }}
+            >
               <Typography variant="h6" gutterBottom>
                 {addressInput || 'Site Address'}
               </Typography>
@@ -903,7 +995,7 @@ export function FeasibilityWizard({
               </Typography>
               <div
                 style={{
-                  marginTop: '1rem',
+                  marginTop: 'var(--ob-space-200)',
                   height: '4px',
                   width: '40px',
                   background: 'var(--ob-color-brand-primary)',
@@ -914,7 +1006,7 @@ export function FeasibilityWizard({
             <div
               style={{
                 marginTop: 'auto',
-                padding: '1rem',
+                padding: 'var(--ob-space-200)',
                 width: '100%',
                 borderTop: '1px solid var(--ob-color-border-light)',
                 display: 'flex',
@@ -942,7 +1034,7 @@ export function FeasibilityWizard({
         </DialogContent>
         <DialogActions
           sx={{
-            padding: '1rem',
+            padding: 'var(--ob-space-200)',
             borderTop: '1px solid var(--ob-color-border-light)',
           }}
         >

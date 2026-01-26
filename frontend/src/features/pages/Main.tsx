@@ -1,13 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import logoSrc from '@/shared/media/yosai-logo' // TODO: Replace with proper logo asset
+import logoSrc from '@/shared/media/optimal-build-logo' // TODO: Replace with proper logo asset
 import { ViewportFrame } from '@/components/layout/ViewportFrame'
 import Panel from '@/components/layout/Panel'
 import { PanelBody } from '@/components/layout/PanelBody'
 import PageMiniNav from '@/components/layout/PageMiniNav'
 import ClockTicker from '@/shared/components/app/security/ClockTicker'
 import { useNoBodyScroll } from '@/shared/hooks/useNoBodyScroll'
-import { useFacilityLabel } from '@/shared/hooks/useFacilityLabel'
 import LiveFeedPanel from '@/shared/components/app/security/LiveFeedPanel'
 import LeftSidebar from '@/shared/components/app/security/LeftSidebar'
 import { IncidentMapView } from '@/shared/components/app/security/IncidentMapView'
@@ -17,50 +16,9 @@ import IncidentResponsePanel from '@/shared/components/app/security/IncidentResp
 import type {
   Ticket,
   TicketsByStatus,
+  ThreatData,
 } from '@/shared/components/app/security/types'
-
-const initialTickets: Ticket[] = [
-  {
-    id: 'TCK-1001',
-    title: 'Loading Dock Access',
-    description: 'Unauthorized badge scan detected at loading dock B.',
-    status: 'open',
-    location: 'Loading Dock B',
-    category: 'Access Control',
-  },
-  {
-    id: 'TCK-1002',
-    title: 'Server Room Motion',
-    description: 'Motion sensor triggered after hours in server room.',
-    status: 'locked',
-    location: 'Server Room',
-    category: 'Motion',
-  },
-  {
-    id: 'TCK-1003',
-    title: 'Thermal Spike',
-    description: 'Thermal anomaly detected in Laboratory 4.',
-    status: 'resolved_malfunction',
-    location: 'Laboratory 4',
-    category: 'Environmental',
-  },
-  {
-    id: 'TCK-1004',
-    title: 'Fire Door Forced',
-    description: 'Fire door on Level 2 forced open for 90 seconds.',
-    status: 'resolved_normal',
-    location: 'Level 2 - Fire Exit',
-    category: 'Access Control',
-  },
-  {
-    id: 'TCK-1005',
-    title: 'Network Intrusion Alert',
-    description: 'IDS flagged suspicious outbound traffic.',
-    status: 'dismissed',
-    location: 'Operations Center',
-    category: 'Network',
-  },
-]
+import { getSecurityOverview, updateSecurityTicketStatus } from '@/api/security'
 
 function computeTicketsByStatus(tickets: Ticket[]): TicketsByStatus {
   return tickets.reduce<TicketsByStatus>(
@@ -81,11 +39,47 @@ function computeTicketsByStatus(tickets: Ticket[]): TicketsByStatus {
 
 export default function Main() {
   useNoBodyScroll()
-  const facilityLabel = useFacilityLabel()
-  const [tickets, setTickets] = useState<Ticket[]>(initialTickets)
+  const [facilityLabel, setFacilityLabel] = useState<string | null>(null)
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [threatData, setThreatData] = useState<ThreatData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null)
+
+  const refreshOverview = useCallback(
+    async (options: { signal?: AbortSignal; showLoading?: boolean } = {}) => {
+      const { signal, showLoading = true } = options
+      if (showLoading) {
+        setLoading(true)
+      }
+      setLoadError(null)
+      try {
+        const overview = await getSecurityOverview(undefined, { signal })
+        setFacilityLabel(overview.facilityLabel)
+        setTickets(overview.tickets)
+        setThreatData(overview.threat)
+      } catch (error) {
+        if (signal?.aborted) {
+          return
+        }
+        console.error('Failed to load security overview', error)
+        setLoadError('Unable to load security feed. Please retry.')
+      } finally {
+        if (showLoading) {
+          setLoading(false)
+        }
+      }
+    },
+    [],
+  )
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void refreshOverview({ signal: controller.signal })
+    return () => controller.abort()
+  }, [refreshOverview])
 
   const ticketsByStatus = useMemo(
     () => computeTicketsByStatus(tickets),
@@ -100,20 +94,31 @@ export default function Main() {
     setSelectedCategory(ticket.category)
   }
 
-  const handleResolve = (ticket: Ticket) => {
-    setTickets((prev) =>
-      prev.map((item) =>
-        item.id === ticket.id ? { ...item, status: 'resolved_harmful' } : item,
-      ),
-    )
+  const handleResolve = async (ticket: Ticket) => {
+    try {
+      const updated = await updateSecurityTicketStatus(
+        ticket.id,
+        'resolved_harmful',
+      )
+      setTickets((prev) =>
+        prev.map((item) => (item.id === updated.id ? updated : item)),
+      )
+      void refreshOverview({ showLoading: false })
+    } catch (error) {
+      console.error('Failed to resolve ticket', error)
+    }
   }
 
-  const handleDismiss = (ticket: Ticket) => {
-    setTickets((prev) =>
-      prev.map((item) =>
-        item.id === ticket.id ? { ...item, status: 'dismissed' } : item,
-      ),
-    )
+  const handleDismiss = async (ticket: Ticket) => {
+    try {
+      const updated = await updateSecurityTicketStatus(ticket.id, 'dismissed')
+      setTickets((prev) =>
+        prev.map((item) => (item.id === updated.id ? updated : item)),
+      )
+      void refreshOverview({ showLoading: false })
+    } catch (error) {
+      console.error('Failed to dismiss ticket', error)
+    }
   }
 
   const handleClose = () => {
@@ -128,10 +133,9 @@ export default function Main() {
     setSelectedCategory((current) => (current === category ? null : category))
   }
 
-  const threatData = {
-    entity_id: 'ENTITY-001',
-    headline_score: 72,
-  }
+  const facilityHeading = facilityLabel
+    ? `Logged in as ${facilityLabel}`
+    : 'Facility context unavailable'
 
   return (
     <div className="bg-neutral-950 text-white">
@@ -146,7 +150,7 @@ export default function Main() {
           </div>
           <div className="col-span-6">
             <h1 className="text-center text-2xl font-semibold">
-              Logged in as {facilityLabel}
+              {facilityHeading}
             </h1>
           </div>
           <div className="col-span-3 flex items-center justify-end gap-4">
@@ -163,12 +167,17 @@ export default function Main() {
             <ClockTicker />
           </div>
         </header>
+        {loading && (
+          <div className="rounded-md border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-wide text-white/60">
+            Loading security feed…
+          </div>
+        )}
 
         <div className="grid flex-1 min-h-0 gap-6 grid-cols-[320px_minmax(0,1fr)_420px] grid-rows-[minmax(0,1fr)_320px]">
           <div className="min-h-0 col-start-1 row-start-1 row-span-2">
             <LeftSidebar
-              facilityLabel={facilityLabel}
-              threatScore={threatData.headline_score}
+              facilityLabel={facilityLabel ?? 'Facility'}
+              threatScore={threatData?.headline_score ?? 0}
               ticketsByStatus={ticketsByStatus}
             />
           </div>
@@ -176,12 +185,16 @@ export default function Main() {
           <section className="min-h-0 col-start-2 row-start-1">
             <Panel title="Floorplan Activity" className="h-full">
               <PanelBody className="h-full p-0">
-                <IncidentMapView
-                  tickets={tickets}
-                  selectedTicket={selectedTicket}
-                  onLocationClick={handleLocationClick}
-                  selectedLocation={selectedLocation}
-                />
+                {loadError ? (
+                  <div className="p-4 text-sm text-red-300">{loadError}</div>
+                ) : (
+                  <IncidentMapView
+                    tickets={tickets}
+                    selectedTicket={selectedTicket}
+                    onLocationClick={handleLocationClick}
+                    selectedLocation={selectedLocation}
+                  />
+                )}
               </PanelBody>
             </Panel>
           </section>
@@ -198,20 +211,26 @@ export default function Main() {
             <div className="grid h-full gap-6 grid-cols-[minmax(0,2.2fr)_minmax(0,1.2fr)]">
               <Panel title="Incident Detection Breakdown" className="h-full">
                 <PanelBody className="h-full overflow-y-auto p-4">
-                  <IncidentDetectionBreakdown
-                    locationFilter={selectedLocation}
-                    selectedCategory={selectedCategory}
-                    onCategoryClick={handleCategoryClick}
-                    ticketId={selectedTicket?.id ?? null}
-                    ticketLabel={selectedTicket?.title ?? null}
-                    tickets={tickets}
-                  />
+                  {loadError ? (
+                    <div className="text-sm text-red-300">{loadError}</div>
+                  ) : (
+                    <IncidentDetectionBreakdown
+                      locationFilter={selectedLocation}
+                      selectedCategory={selectedCategory}
+                      onCategoryClick={handleCategoryClick}
+                      ticketId={selectedTicket?.id ?? null}
+                      ticketLabel={selectedTicket?.title ?? null}
+                      tickets={tickets}
+                    />
+                  )}
                 </PanelBody>
               </Panel>
 
               <Panel title="Respond & Resolve" className="h-full">
                 <PanelBody className="h-full p-3">
-                  {selectedTicket ? (
+                  {loadError ? (
+                    <div className="text-sm text-red-300">{loadError}</div>
+                  ) : selectedTicket ? (
                     <IncidentResponsePanel
                       ticket={selectedTicket}
                       onResolve={handleResolve}
@@ -233,11 +252,15 @@ export default function Main() {
           <div className="col-span-6">
             <Panel title="Incident Alerts" className="h-full">
               <PanelBody className="h-full overflow-y-auto p-3">
-                <IncidentAlertsPanel
-                  ticketsByStatus={ticketsByStatus}
-                  selectedTicket={selectedTicket}
-                  onTicketSelect={handleSelectTicket}
-                />
+                {loadError ? (
+                  <div className="text-sm text-red-300">{loadError}</div>
+                ) : (
+                  <IncidentAlertsPanel
+                    ticketsByStatus={ticketsByStatus}
+                    selectedTicket={selectedTicket}
+                    onTicketSelect={handleSelectTicket}
+                  />
+                )}
               </PanelBody>
             </Panel>
           </div>
@@ -246,10 +269,12 @@ export default function Main() {
             <Panel title="Threat Score Breakdown" className="h-full">
               <PanelBody className="h-full p-4">
                 <div className="text-5xl font-semibold text-white">
-                  {threatData.headline_score}
+                  {threatData?.headline_score ?? 0}
                 </div>
                 <p className="mt-2 text-sm text-white/60">
-                  Entity {threatData.entity_id}
+                  {threatData?.entity_id
+                    ? `Entity ${threatData.entity_id}`
+                    : 'No active entity'}
                 </p>
               </PanelBody>
             </Panel>

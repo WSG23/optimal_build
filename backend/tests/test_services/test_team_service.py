@@ -16,7 +16,7 @@ import pytest
 pytest.importorskip("sqlalchemy")
 
 from app.models.team import TeamInvitation
-from app.models.users import UserRole
+from app.models.user import UserRole
 
 
 class TestInviteMember:

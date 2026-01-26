@@ -117,7 +117,7 @@ export function InteractiveFloorplate({
         >
           <defs>
             <linearGradient id="unitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="rgba(59, 130, 246, 0.1)" />
+              <stop offset="0%" stopColor="var(--ob-color-action-selected)" />
               <stop offset="100%" stopColor="rgba(59, 130, 246, 0.3)" />
             </linearGradient>
             <linearGradient
@@ -147,12 +147,12 @@ export function InteractiveFloorplate({
                 <circle
                   r="200"
                   fill="none"
-                  stroke="rgba(255, 255, 255, 0.05)"
+                  stroke="var(--ob-color-surface-overlay-light)"
                   strokeWidth="1"
                 />
                 <path
                   d="M -200 0 L 200 0 M 0 -200 L 0 200"
-                  stroke="rgba(255,255,255,0.05)"
+                  stroke="var(--ob-color-surface-overlay-light)"
                   strokeDasharray="5 5"
                 />
               </g>
@@ -163,14 +163,14 @@ export function InteractiveFloorplate({
                 <path
                   d="M100 250 L250 180 L250 50 L100 120 Z"
                   fill="none"
-                  stroke="rgba(6, 182, 212, 0.3)"
+                  stroke="var(--ob-color-neon-cyan-muted)"
                   strokeWidth="2"
                 />{' '}
                 {/* Right Face */}
                 <path
                   d="M100 250 L0 200 L0 70 L100 120 Z"
                   fill="none"
-                  stroke="rgba(6, 182, 212, 0.3)"
+                  stroke="var(--ob-color-neon-cyan-muted)"
                   strokeWidth="2"
                 />{' '}
                 {/* Left Face */}
@@ -184,12 +184,12 @@ export function InteractiveFloorplate({
                 {/* Internal Structure Lines */}
                 <path
                   d="M100 120 L100 250"
-                  stroke="rgba(6, 182, 212, 0.2)"
+                  stroke="var(--ob-color-neon-cyan-muted)"
                   strokeDasharray="4 4"
                 />
                 <path
                   d="M0 200 L100 250 L250 180"
-                  stroke="rgba(6, 182, 212, 0.2)"
+                  stroke="var(--ob-color-neon-cyan-muted)"
                 />
               </g>
 
@@ -201,7 +201,7 @@ export function InteractiveFloorplate({
                   fontSize="14"
                   fontFamily="monospace"
                   letterSpacing="4"
-                  style={{ textShadow: '0 0 10px rgba(6,182,212,0.8)' }}
+                  style={{ textShadow: '0 0 10px var(--ob-color-neon-cyan)' }}
                 >
                   {loading ? 'SCANNING_SECTORS' : 'WAITING_FOR_CAD_INPUT'}
                 </text>
@@ -287,8 +287,8 @@ export function InteractiveFloorplate({
       <Box
         sx={{
           position: 'absolute',
-          top: 0,
-          bottom: 0,
+          top: '0',
+          bottom: '0',
           width: '4px',
           background:
             'linear-gradient(to bottom, transparent, var(--ob-success-500), transparent)', // Green
@@ -304,48 +304,48 @@ export function InteractiveFloorplate({
       <Box
         sx={{
           position: 'absolute',
-          top: 20,
+          top: 'var(--ob-space-800)',
           left: 20,
           width: 20,
           height: 20,
-          borderTop: '2px solid rgba(255,255,255,0.3)',
-          borderLeft: '2px solid rgba(255,255,255,0.3)',
+          borderTop: '2px solid var(--ob-color-surface-overlay-strong)',
+          borderLeft: '2px solid var(--ob-color-surface-overlay-strong)',
           pointerEvents: 'none',
         }}
       />
       <Box
         sx={{
           position: 'absolute',
-          top: 20,
+          top: 'var(--ob-space-800)',
           right: 20,
           width: 20,
           height: 20,
-          borderTop: '2px solid rgba(255,255,255,0.3)',
-          borderRight: '2px solid rgba(255,255,255,0.3)',
+          borderTop: '2px solid var(--ob-color-surface-overlay-strong)',
+          borderRight: '2px solid var(--ob-color-surface-overlay-strong)',
           pointerEvents: 'none',
         }}
       />
       <Box
         sx={{
           position: 'absolute',
-          bottom: 20,
+          bottom: 'var(--ob-space-800)',
           left: 20,
           width: 20,
           height: 20,
-          borderBottom: '2px solid rgba(255,255,255,0.3)',
-          borderLeft: '2px solid rgba(255,255,255,0.3)',
+          borderBottom: '2px solid var(--ob-color-surface-overlay-strong)',
+          borderLeft: '2px solid var(--ob-color-surface-overlay-strong)',
           pointerEvents: 'none',
         }}
       />
       <Box
         sx={{
           position: 'absolute',
-          bottom: 20,
+          bottom: 'var(--ob-space-800)',
           right: 20,
           width: 20,
           height: 20,
-          borderBottom: '2px solid rgba(255,255,255,0.3)',
-          borderRight: '2px solid rgba(255,255,255,0.3)',
+          borderBottom: '2px solid var(--ob-color-surface-overlay-strong)',
+          borderRight: '2px solid var(--ob-color-surface-overlay-strong)',
           pointerEvents: 'none',
         }}
       />

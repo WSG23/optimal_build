@@ -184,7 +184,7 @@ export function CapitalStackChart({ scenarios }: CapitalStackChartProps) {
         })}
         <Box
           sx={{
-            borderTop: 1,
+            borderTop: 'var(--ob-space-100)',
             borderColor: 'divider',
             mt: 'var(--ob-space-050)',
             pt: 'var(--ob-space-050)',
@@ -252,7 +252,12 @@ export function CapitalStackChart({ scenarios }: CapitalStackChartProps) {
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            margin={{
+              top: 'var(--ob-space-800)',
+              right: 30,
+              left: 20,
+              bottom: 'var(--ob-space-500)',
+            }}
             barSize={chartSizes.barSize}
           >
             <CartesianGrid {...gridProps} />

@@ -9,9 +9,6 @@ interface AppThemeProviderProps {
   children: ReactNode
 }
 
-/** @deprecated Use AppThemeProviderProps instead */
-export type YosaiThemeProviderProps = AppThemeProviderProps
-
 /**
  * Inner component that uses the theme mode context
  */
@@ -40,8 +37,7 @@ export function AppThemeProvider({ children }: AppThemeProviderProps) {
   )
 }
 
-/** @deprecated Use AppThemeProvider instead */
-export const YosaiThemeProvider = AppThemeProvider
+export const OptimalBuildThemeProvider = AppThemeProvider
 
 // Re-export for convenience
 export { useThemeMode } from './ThemeContext'

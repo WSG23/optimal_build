@@ -15,12 +15,12 @@ interface GanttChartProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  not_started: '#94a3b8',
-  planning: '#3b82f6',
-  in_progress: '#f59e0b', // Changed to orange for gradient
+  not_started: 'var(--ob-color-text-tertiary)',
+  planning: 'var(--ob-color-primary)',
+  in_progress: 'var(--ob-color-warning)', // Changed to orange for gradient
   on_hold: '#ef4444',
-  completed: '#10b981',
-  cancelled: '#64748b',
+  completed: 'var(--ob-color-success)',
+  cancelled: 'var(--ob-color-text-secondary)',
 }
 
 const BAR_GRADIENTS: Record<string, string> = {
@@ -71,11 +71,11 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
   const left = startOffset * DAY_WIDTH
 
   const tooltipContent = (
-    <Box sx={{ p: 1 }}>
+    <Box sx={{ p: 'var(--ob-space-100)' }}>
       <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
         {task.name}
       </Typography>
-      <Typography variant="body2" sx={{ mt: 0.5 }}>
+      <Typography variant="body2" sx={{ mt: 'var(--ob-space-50)' }}>
         {formatDate(task.startDate)} - {formatDate(task.endDate)}
       </Typography>
       <Typography variant="body2">Duration: {task.duration} days</Typography>
@@ -88,7 +88,12 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
         </Typography>
       )}
       {task.isCritical && (
-        <Chip size="small" label="Critical Path" color="error" sx={{ mt: 1 }} />
+        <Chip
+          size="small"
+          label="Critical Path"
+          color="error"
+          sx={{ mt: 'var(--ob-space-100)' }}
+        />
       )}
     </Box>
   )
@@ -102,8 +107,8 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
           backgroundImage: `
       repeating-linear-gradient(
         45deg,
-        rgba(255, 255, 255, 0.1),
-        rgba(255, 255, 255, 0.1) 10px,
+        var(--ob-color-surface-overlay),
+        var(--ob-color-surface-overlay) 10px,
         transparent 10px,
         transparent 20px
       ),
@@ -128,19 +133,19 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
           top: '6px',
           width: `${width}px`,
           height: `${ROW_HEIGHT - 12}px`,
-          borderRadius: '4px',
+          borderRadius: 'var(--ob-radius-sm)',
           cursor: 'pointer',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           border: isSelected
             ? '2px solid #00f3ff'
             : task.isCritical
               ? '1px solid rgba(255, 51, 102, 0.5)'
-              : '1px solid rgba(255, 255, 255, 0.1)',
+              : '1px solid var(--ob-color-surface-overlay)',
           boxShadow: isSelected
-            ? '0 0 15px rgba(0, 243, 255, 0.3)'
+            ? '0 0 15px var(--ob-color-neon-cyan-muted)'
             : task.isCritical
               ? '0 2px 8px rgba(255, 51, 102, 0.2)'
-              : '0 2px 4px rgba(0,0,0,0.2)',
+              : '0 2px 4px var(--ob-color-overlay-backdrop-light)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -158,28 +163,28 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
           sx={{
             position: 'absolute',
             left: 0,
-            top: 0,
-            bottom: 0,
+            top: '0',
+            bottom: '0',
             width: `${task.progress * 100}%`,
             background:
-              'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 100%)',
-            borderRight: '1px solid rgba(255,255,255,0.4)',
+              'linear-gradient(90deg, rgba(255,255,255,0) 0%, var(--ob-color-surface-overlay-medium) 100%)',
+            borderRight: '1px solid var(--ob-color-text-tertiary)',
           }}
         />
 
         {/* Icons */}
         <Stack
           direction="row"
-          spacing={0.5}
-          sx={{ position: 'relative', zIndex: 1, px: 1 }}
+          spacing="var(--ob-space-50)"
+          sx={{ position: 'relative', zIndex: 1, px: 'var(--ob-space-100)' }}
         >
           <Typography
             variant="caption"
             sx={{
-              color: '#fff',
+              color: 'var(--ob-color-bg-default)',
               fontWeight: 600,
               fontSize: '0.7rem',
-              textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+              textShadow: '0 1px 2px var(--ob-color-overlay-backdrop)',
             }}
           >
             {task.name}
@@ -188,8 +193,8 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
             <WarningAmberIcon
               sx={{
                 fontSize: 14,
-                color: '#fff',
-                filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
+                color: 'var(--ob-color-bg-default)',
+                filter: 'drop-shadow(0 0 2px var(--ob-color-overlay-backdrop))',
               }}
             />
           )}
@@ -197,8 +202,8 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
             <AccountBalanceIcon
               sx={{
                 fontSize: 14,
-                color: '#fff',
-                filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
+                color: 'var(--ob-color-bg-default)',
+                filter: 'drop-shadow(0 0 2px var(--ob-color-overlay-backdrop))',
               }}
             />
           )}
@@ -206,8 +211,8 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
             <PeopleIcon
               sx={{
                 fontSize: 14,
-                color: '#fff',
-                filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
+                color: 'var(--ob-color-bg-default)',
+                filter: 'drop-shadow(0 0 2px var(--ob-color-overlay-backdrop))',
               }}
             />
           )}
@@ -264,11 +269,11 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
       sx={{
         height: `${HEADER_HEIGHT}px`,
         display: 'flex',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        borderBottom: '1px solid var(--ob-color-surface-overlay)',
         backgroundColor: 'rgba(30,30,30,0.9)',
         backdropFilter: 'blur(var(--ob-blur-md))',
         position: 'sticky',
-        top: 0,
+        top: '0',
         zIndex: 20,
       }}
     >
@@ -277,13 +282,16 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
         sx={{
           width: `${LEFT_PANEL_WIDTH}px`,
           minWidth: `${LEFT_PANEL_WIDTH}px`,
-          borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRight: '1px solid var(--ob-color-surface-overlay)',
           display: 'flex',
           alignItems: 'center',
-          px: 2,
+          px: 'var(--ob-space-200)',
         }}
       >
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#fff' }}>
+        <Typography
+          variant="subtitle2"
+          sx={{ fontWeight: 600, color: 'var(--ob-color-bg-default)' }}
+        >
           PHASE
         </Typography>
       </Box>
@@ -296,16 +304,16 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
               key={idx}
               sx={{
                 width: `${month.days * DAY_WIDTH}px`,
-                borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+                borderRight: '1px solid var(--ob-color-surface-overlay-light)',
                 textAlign: 'center',
-                py: 1,
+                py: 'var(--ob-space-100)',
               }}
             >
               <Typography
                 variant="caption"
                 sx={{
                   fontWeight: 600,
-                  color: 'rgba(255,255,255,0.7)',
+                  color: 'var(--ob-color-text-secondary)',
                   textTransform: 'uppercase',
                 }}
               >
@@ -345,7 +353,7 @@ export function GanttChart({
 
   if (tasks.length === 0) {
     return (
-      <Paper sx={{ p: 4, textAlign: 'center' }}>
+      <Paper sx={{ p: 'var(--ob-space-400)', textAlign: 'center' }}>
         <Typography variant="body1" color="text.secondary">
           No phases defined for this project. Add phases to see the Gantt chart.
         </Typography>
@@ -359,7 +367,7 @@ export function GanttChart({
       sx={{
         overflow: 'auto',
         maxHeight: 'calc(100vh - 300px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: '1px solid var(--ob-color-surface-overlay)',
         background: 'transparent',
       }}
     >
@@ -432,7 +440,7 @@ export function GanttChart({
                       ? '#00f3ff'
                       : isCriticalLink
                         ? 'rgba(239, 68, 68, 0.4)'
-                        : 'rgba(255, 255, 255, 0.1)'
+                        : 'var(--ob-color-surface-overlay)'
                   }
                   strokeWidth={isCriticalLink || isHighlighted ? 2 : 1}
                   style={{
@@ -452,16 +460,16 @@ export function GanttChart({
             sx={{
               display: 'flex',
               height: `${ROW_HEIGHT}px`,
-              borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+              borderBottom: '1px solid var(--ob-color-surface-overlay-light)',
               backgroundColor:
                 selectedTaskId === task.id
-                  ? 'rgba(0, 243, 255, 0.05)'
+                  ? 'var(--ob-color-table-row-hover)'
                   : 'transparent',
               '&:hover': {
                 backgroundColor:
                   selectedTaskId === task.id
-                    ? 'rgba(0, 243, 255, 0.05)'
-                    : 'rgba(255, 255, 255, 0.02)',
+                    ? 'var(--ob-color-table-row-hover)'
+                    : 'var(--ob-color-table-row-alt)',
               },
             }}
           >
@@ -470,11 +478,11 @@ export function GanttChart({
               sx={{
                 width: `${LEFT_PANEL_WIDTH}px`,
                 minWidth: `${LEFT_PANEL_WIDTH}px`,
-                borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRight: '1px solid var(--ob-color-surface-overlay)',
                 display: 'flex',
                 alignItems: 'center',
-                px: 2,
-                gap: 1,
+                px: 'var(--ob-space-200)',
+                gap: 'var(--ob-space-100)',
                 bgcolor: 'rgba(30,30,30,0.3)',
                 backdropFilter: 'blur(var(--ob-blur-sm))',
               }}
@@ -496,14 +504,14 @@ export function GanttChart({
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  color: '#fff',
+                  color: 'var(--ob-color-bg-default)',
                 }}
               >
                 {task.name}
               </Typography>
               <Typography
                 variant="caption"
-                sx={{ color: 'rgba(255,255,255,0.5)' }}
+                sx={{ color: 'var(--ob-color-border-default)' }}
               >
                 {getStatusLabel(task.status)}
               </Typography>
@@ -544,9 +552,9 @@ export function GanttChart({
                 position: 'absolute',
                 left: `${LEFT_PANEL_WIDTH + dayOffset * DAY_WIDTH}px`,
                 top: HEADER_HEIGHT,
-                bottom: 60, // Leave room for legend
+                bottom: 'var(--ob-space-800)', // Leave room for legend
                 width: '2px',
-                background: '#00f3ff',
+                background: 'var(--ob-color-neon-cyan)',
                 boxShadow: '0 0 10px #00f3ff',
                 zIndex: 15,
                 pointerEvents: 'none',
@@ -558,12 +566,12 @@ export function GanttChart({
                   top: '-24px',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  background: '#00f3ff',
-                  color: '#000',
+                  background: 'var(--ob-color-neon-cyan)',
+                  color: 'var(--ob-color-bg-inverse)',
                   fontSize: '0.65rem',
                   fontWeight: 'bold',
                   padding: '2px 6px',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-sm)',
                   boxShadow: '0 0 10px #00f3ff',
                   whiteSpace: 'nowrap',
                 }}
@@ -580,32 +588,32 @@ export function GanttChart({
       <Box
         sx={{
           display: 'flex',
-          gap: 3,
-          p: 2,
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          gap: 'var(--ob-space-300)',
+          p: 'var(--ob-space-200)',
+          borderTop: '1px solid var(--ob-color-surface-overlay)',
           background: 'rgba(20, 20, 20, 0.95)',
           flexWrap: 'wrap',
-          color: '#fff',
+          color: 'var(--ob-color-bg-default)',
         }}
       >
-        <Stack direction="row" spacing={0.5} alignItems="center">
+        <Stack direction="row" spacing="var(--ob-space-50)" alignItems="center">
           <WarningAmberIcon sx={{ fontSize: 16, color: '#ef4444' }} />
           <Typography variant="caption">Critical Path</Typography>
         </Stack>
-        <Stack direction="row" spacing={0.5} alignItems="center">
+        <Stack direction="row" spacing="var(--ob-space-50)" alignItems="center">
           <AccountBalanceIcon sx={{ fontSize: 16, color: '#666' }} />
           <Typography variant="caption">Heritage Phase</Typography>
         </Stack>
-        <Stack direction="row" spacing={0.5} alignItems="center">
+        <Stack direction="row" spacing="var(--ob-space-50)" alignItems="center">
           <PeopleIcon sx={{ fontSize: 16, color: '#666' }} />
           <Typography variant="caption">Tenant Coordination</Typography>
         </Stack>
-        <Box sx={{ display: 'flex', gap: 1, ml: 'auto' }}>
+        <Box sx={{ display: 'flex', gap: 'var(--ob-space-100)', ml: 'auto' }}>
           {Object.entries(STATUS_COLORS).map(([status, color]) => (
             <Stack
               key={status}
               direction="row"
-              spacing={0.5}
+              spacing="var(--ob-space-50)"
               alignItems="center"
             >
               <Box

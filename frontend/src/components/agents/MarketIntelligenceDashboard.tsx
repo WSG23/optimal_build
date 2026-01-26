@@ -46,7 +46,9 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`market-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && (
+        <Box sx={{ p: 'var(--ob-space-300)' }}>{children}</Box>
+      )}
     </div>
   )
 }
@@ -117,11 +119,11 @@ const MarketIntelligenceDashboard: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      {loading && <LinearProgress sx={{ mb: 2 }} />}
+    <Box sx={{ p: 'var(--ob-space-300)' }}>
+      {loading && <LinearProgress sx={{ mb: 'var(--ob-space-200)' }} />}
 
       {error && (
-        <Alert severity="warning" sx={{ mb: 2 }}>
+        <Alert severity="warning" sx={{ mb: 'var(--ob-space-200)' }}>
           {error}
         </Alert>
       )}
@@ -131,12 +133,12 @@ const MarketIntelligenceDashboard: React.FC = () => {
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        mb={3}
+        mb="var(--ob-space-300)"
       >
         <Typography variant="h4" component="h1">
           Market Intelligence Dashboard
         </Typography>
-        <Box display="flex" gap={2}>
+        <Box display="flex" gap="var(--ob-space-200)">
           <Tooltip title="Refresh data">
             <span>
               <IconButton onClick={handleRefresh} disabled={loading}>
@@ -155,8 +157,8 @@ const MarketIntelligenceDashboard: React.FC = () => {
       </Box>
 
       {/* Filters */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
+      <Paper sx={{ p: 'var(--ob-space-200)', mb: 'var(--ob-space-300)' }}>
+        <Grid container spacing="var(--ob-space-200)" alignItems="center">
           <Grid item>
             <FilterListIcon color="action" />
           </Grid>
@@ -238,7 +240,9 @@ const MarketIntelligenceDashboard: React.FC = () => {
 
       {/* Main Content Tabs */}
       <Paper sx={{ width: '100%' }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Box
+          sx={{ borderBottom: 'var(--ob-space-100)', borderColor: 'divider' }}
+        >
           <Tabs
             value={tabValue}
             onChange={handleTabChange}
@@ -253,7 +257,7 @@ const MarketIntelligenceDashboard: React.FC = () => {
         </Box>
 
         <TabPanel value={tabValue} index={0}>
-          <Grid container spacing={3}>
+          <Grid container spacing="var(--ob-space-300)">
             <Grid item xs={12} md={8}>
               <MarketHeatmap
                 transactions={comparables}

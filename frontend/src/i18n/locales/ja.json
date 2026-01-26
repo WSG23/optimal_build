@@ -464,11 +464,12 @@
     },
     "privacy": {
       "restrictedTitle": "開発者専用ワークスペース",
-      "restrictedBody": "この財務モジュールは開発者または管理者ロールのみ閲覧できます。X-Roleヘッダーを「developer」に設定した上で再読み込みしてください。",
+      "restrictedBody": "この財務モジュールは開発者または管理者ロールのみ閲覧できます。許可されたロールでサインインするか管理者にお問い合わせください。",
       "roleHint": "現在のロール: {{role}}",
-      "applyDemoIdentity": "デモ開発者の権限を設定する",
-      "applyDemoIdentityHint": "デモ用ヘッダーを保存しました。表示されない場合はページを再読み込みしてください。",
-      "applyDemoIdentityError": "ブラウザーに情報を保存できませんでした。localStorage を手動で更新してください。",
+      "roleUnknown": "現在のロール: 不明",
+      "identityDetected": "このセッションのIDヘッダーを検出しました。",
+      "identityMissing": "IDヘッダーが未設定です。アカウント設定またはサインインを行ってください。",
+      "emailHint": "ユーザー: {{email}}",
       "privateTitle": "プライベート財務シナリオ",
       "privateBody": "このシナリオは開発チーム限定です。許可されたメンバー以外との共有は控えてください。"
     }

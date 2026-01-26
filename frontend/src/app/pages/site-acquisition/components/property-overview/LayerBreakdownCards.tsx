@@ -28,21 +28,21 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
   return (
     <section
       style={{
-        marginTop: '2rem',
-        border: '1px solid #e5e7eb',
-        borderRadius: '4px',
-        padding: '1.5rem',
-        background: '#ffffff',
+        marginTop: 'var(--ob-space-400)',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
+        padding: 'var(--ob-space-300)',
+        background: 'var(--ob-color-bg-default)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '1.25rem',
+        gap: 'var(--ob-space-200)',
       }}
     >
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '0.35rem',
+          gap: 'var(--ob-space-50)',
         }}
       >
         <h4
@@ -51,7 +51,7 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
             fontSize: '1rem',
             fontWeight: 600,
             letterSpacing: '-0.01em',
-            color: '#111827',
+            color: 'var(--ob-color-bg-inverse)',
           }}
         >
           Layer breakdown
@@ -60,7 +60,7 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
           style={{
             margin: 0,
             fontSize: '0.9rem',
-            color: '#4b5563',
+            color: 'var(--ob-color-text-secondary)',
           }}
         >
           Detailed optimiser output per massing layer (allocation, GFA, NIA, and
@@ -71,31 +71,35 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '1rem',
+          gap: 'var(--ob-space-200)',
         }}
       >
         {layers.map((layer) => (
           <article
             key={layer.id}
             style={{
-              border: '1px solid #e5e7eb',
-              borderRadius: '4px',
-              padding: '1rem',
+              border: '1px solid var(--ob-color-border-subtle)',
+              borderRadius: 'var(--ob-radius-sm)',
+              padding: 'var(--ob-space-200)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.75rem',
-              background: '#f9fafb',
+              gap: 'var(--ob-space-150)',
+              background: 'var(--ob-color-bg-muted)',
             }}
           >
             <div
-              style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-150)',
+              }}
             >
               <span
                 aria-hidden="true"
                 style={{
                   width: '14px',
                   height: '14px',
-                  borderRadius: '9999px',
+                  borderRadius: 'var(--ob-radius-lg)',
                   background: layer.color,
                   boxShadow: '0 0 0 1px rgb(255 255 255 / 0.8)',
                 }}
@@ -104,19 +108,24 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.15rem',
+                  gap: 'var(--ob-space-50)',
                 }}
               >
                 <span
                   style={{
                     fontWeight: 600,
                     letterSpacing: '-0.01em',
-                    color: '#111827',
+                    color: 'var(--ob-color-bg-inverse)',
                   }}
                 >
                   {layer.label}
                 </span>
-                <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+                <span
+                  style={{
+                    fontSize: '0.85rem',
+                    color: 'var(--ob-color-text-secondary)',
+                  }}
+                >
                   {layer.subtitle}
                 </span>
               </div>
@@ -126,7 +135,7 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
                 margin: 0,
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                gap: '0.5rem',
+                gap: 'var(--ob-space-100)',
               }}
             >
               {layer.metrics.map((metric) => (
@@ -135,7 +144,7 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '0.15rem',
+                    gap: 'var(--ob-space-50)',
                   }}
                 >
                   <dt
@@ -144,7 +153,7 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
                       fontSize: '0.7rem',
                       letterSpacing: '0.08em',
                       textTransform: 'uppercase',
-                      color: '#9ca3af',
+                      color: 'var(--ob-color-text-tertiary)',
                       fontWeight: 600,
                     }}
                   >
@@ -168,7 +177,7 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
                 style={{
                   margin: 0,
                   fontSize: '0.8rem',
-                  color: '#4b5563',
+                  color: 'var(--ob-color-text-secondary)',
                 }}
               >
                 {layer.description}

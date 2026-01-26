@@ -23,7 +23,7 @@ from app.models.finance import (
     FinScenario,
     FinSchedule,
 )
-from app.models.projects import Project, ProjectPhase, ProjectType
+from app.models.project import Project, ProjectPhase, ProjectType
 from app.models.rkp import RefCostIndex
 from app.services.finance import calculator
 from sqlalchemy import select

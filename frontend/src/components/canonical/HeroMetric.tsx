@@ -52,7 +52,7 @@ export function HeroMetric({
         padding: 'var(--ob-space-300)',
         boxShadow:
           variant === 'glass'
-            ? '0 8px 32px rgba(0,0,0,0.05)'
+            ? '0 8px 32px var(--ob-color-action-hover-light)'
             : theme.shadows[2],
         opacity: 0,
         animation: `slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards ${delay}ms`,
@@ -75,7 +75,7 @@ export function HeroMetric({
             width: 100,
             height: 100,
             background:
-              'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)',
+              'radial-gradient(circle, var(--ob-color-surface-overlay) 0%, rgba(255,255,255,0) 70%)',
             borderRadius: '50%',
           }}
         />
@@ -86,7 +86,7 @@ export function HeroMetric({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          mb: 1,
+          mb: 'var(--ob-space-100)',
         }}
       >
         <Typography
@@ -118,7 +118,13 @@ export function HeroMetric({
         )}
       </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'baseline', mt: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'baseline',
+          mt: 'var(--ob-space-100)',
+        }}
+      >
         <Typography
           variant="h3"
           sx={{
@@ -134,7 +140,7 @@ export function HeroMetric({
           <Typography
             variant="h6"
             sx={{
-              ml: 0.5,
+              ml: 'var(--ob-space-50)',
               fontWeight: 'var(--ob-font-weight-regular)',
               color:
                 variant === 'primary'
@@ -149,7 +155,14 @@ export function HeroMetric({
 
       {/* Trend Indicator */}
       {trend && (
-        <Box sx={{ display: 'flex', alignItems: 'center', mt: 2, gap: 0.5 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            mt: 'var(--ob-space-200)',
+            gap: 'var(--ob-space-50)',
+          }}
+        >
           {trend.direction === 'up' ? (
             <TrendingUp fontSize="small" color="success" />
           ) : (

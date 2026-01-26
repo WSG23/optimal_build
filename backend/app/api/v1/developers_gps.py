@@ -43,7 +43,7 @@ from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.api.deps import RequestIdentity, require_reviewer
 from app.models.property import Property
-from app.models.projects import Project, ProjectPhase, ProjectType
+from app.models.project import Project, ProjectPhase, ProjectType
 from app.schemas.finance import FinanceAssetMixInput
 from app.services.finance_project_creation import (
     create_finance_project_from_capture,
@@ -358,7 +358,7 @@ async def _derive_build_envelope(
         site_coverage = rules_result.site_coverage_pct
         source_reference = rules_result.source_reference
     else:
-        # Fallback to URA service data (mocked)
+        # Fallback to URA service data
         plot_ratio = _coerce_float(
             ura_data.get("plot_ratio") or ura_data.get("plotRatio")
         )
@@ -372,7 +372,7 @@ async def _derive_build_envelope(
         site_coverage = _coerce_float(
             ura_data.get("site_coverage") or ura_data.get("siteCoverage")
         )
-        source_reference = "URA Service (Mock Data - RefRule not found)"
+        source_reference = "URA Service (RefRule not found)"
 
     site_area = _coerce_float(
         property_info.get("site_area_sqm") or property_info.get("siteAreaSqm")

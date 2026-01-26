@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import { useTranslation } from './i18n'
 import { Link } from './router'
-import { AppShell } from './components/layout/YosaiShell'
+import { AppShell } from './components/layout/OptimalBuildShell'
 
 export interface AppLayoutProps {
   title: string
@@ -40,7 +40,7 @@ export function HomeOverview() {
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '1.5rem',
+          gap: 'var(--ob-space-300)',
           maxWidth: '1600px',
           margin: '0 auto',
         }}
@@ -52,7 +52,7 @@ export function HomeOverview() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '1rem',
+              marginBottom: 'var(--ob-space-200)',
             }}
           >
             <h3>{t('nav.upload')}</h3>
@@ -62,7 +62,7 @@ export function HomeOverview() {
                 width: '40px',
                 height: '40px',
                 borderRadius: '50%',
-                background: 'rgba(59, 130, 246, 0.1)',
+                background: 'var(--ob-color-action-selected)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -75,7 +75,7 @@ export function HomeOverview() {
           <Link
             to="/cad/upload"
             className="app-home__cta"
-            style={{ marginTop: '1rem', width: '100%' }}
+            style={{ marginTop: 'var(--ob-space-200)', width: '100%' }}
           >
             {t('nav.upload')}
           </Link>
@@ -88,7 +88,7 @@ export function HomeOverview() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '1rem',
+              marginBottom: 'var(--ob-space-200)',
             }}
           >
             <h3>{t('nav.detection')}</h3>
@@ -110,7 +110,7 @@ export function HomeOverview() {
           <Link
             to="/cad/detection"
             className="app-home__cta"
-            style={{ marginTop: '1rem', width: '100%' }}
+            style={{ marginTop: 'var(--ob-space-200)', width: '100%' }}
           >
             {t('nav.detection')}
           </Link>
@@ -130,12 +130,12 @@ export function HomeOverview() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '0.5rem',
+              marginBottom: 'var(--ob-space-100)',
             }}
           >
             <h3
               style={{
-                color: '#94A3B8',
+                color: 'var(--ob-color-text-tertiary)',
                 fontSize: '0.875rem',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
@@ -145,7 +145,7 @@ export function HomeOverview() {
             </h3>
             <span
               style={{
-                color: '#10B981',
+                color: 'var(--ob-color-success)',
                 fontSize: '0.875rem',
                 fontWeight: 600,
               }}
@@ -159,21 +159,26 @@ export function HomeOverview() {
               fontWeight: 700,
               color: '#F8FAFC',
               fontFamily: 'JetBrains Mono, monospace',
-              marginBottom: '0.5rem',
+              marginBottom: 'var(--ob-space-100)',
             }}
           >
             $42.8M
           </div>
-          <p style={{ fontSize: '0.875rem', color: '#64748B' }}>
+          <p
+            style={{
+              fontSize: '0.875rem',
+              color: 'var(--ob-color-text-secondary)',
+            }}
+          >
             Weighted probability across 12 active deals.
           </p>
           {/* Sparkline Placeholder */}
           <div
             style={{
               height: '30px',
-              marginTop: '1rem',
-              background: 'rgba(255,255,255,0.05)',
-              borderRadius: '4px',
+              marginTop: 'var(--ob-space-200)',
+              background: 'var(--ob-color-surface-overlay-light)',
+              borderRadius: 'var(--ob-radius-sm)',
               position: 'relative',
               overflow: 'hidden',
             }}
@@ -181,12 +186,12 @@ export function HomeOverview() {
             <div
               style={{
                 position: 'absolute',
-                bottom: 0,
+                bottom: '0',
                 left: 0,
                 width: '100%',
                 height: '100%',
                 background:
-                  'linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.2) 100%)',
+                  'linear-gradient(90deg, transparent 0%, var(--ob-color-action-selected) 100%)',
               }}
             ></div>
             <svg width="100%" height="100%" preserveAspectRatio="none">
@@ -202,9 +207,9 @@ export function HomeOverview() {
             to="/cad/pipelines"
             className="app-home__cta"
             style={{
-              marginTop: '1rem',
+              marginTop: 'var(--ob-space-200)',
               width: '100%',
-              background: 'rgba(59,130,246,0.1)',
+              background: 'var(--ob-color-action-selected)',
               color: '#60A5FA',
             }}
           >
@@ -219,7 +224,7 @@ export function HomeOverview() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '1rem',
+              marginBottom: 'var(--ob-space-200)',
             }}
           >
             <h3>{t('nav.feasibility')}</h3>
@@ -241,7 +246,7 @@ export function HomeOverview() {
           <Link
             to="/feasibility"
             className="app-home__cta"
-            style={{ marginTop: '1rem', width: '100%' }}
+            style={{ marginTop: 'var(--ob-space-200)', width: '100%' }}
           >
             {t('nav.feasibility')}
           </Link>
@@ -254,7 +259,7 @@ export function HomeOverview() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '1rem',
+              marginBottom: 'var(--ob-space-200)',
             }}
           >
             <h3>{t('nav.finance')}</h3>
@@ -276,7 +281,7 @@ export function HomeOverview() {
           <Link
             to="/finance"
             className="app-home__cta"
-            style={{ marginTop: '1rem', width: '100%' }}
+            style={{ marginTop: 'var(--ob-space-200)', width: '100%' }}
           >
             {t('nav.finance')}
           </Link>

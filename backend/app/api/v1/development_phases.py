@@ -22,7 +22,7 @@ from app.models.development_phase import (
     PhaseMilestone,
     TenantRelocation,
 )
-from app.models.projects import Project
+from app.models.project import Project
 from app.services.development.phase_manager import (
     get_phase_manager_service,
 )

@@ -212,6 +212,37 @@ class Settings:
     SEATTLE_SODA_APP_TOKEN: str
     TORONTO_SODA_APP_TOKEN: str
     GOOGLE_MAPS_API_KEY: str
+    URA_ACCESS_KEY: str
+    URA_ACCESS_KEY_HEADER: str
+    URA_TOKEN_URL: str
+    URA_TOKEN_HEADER: str
+    URA_ZONING_URL: str
+    URA_EXISTING_USE_URL: str
+    URA_PROPERTY_URL: str
+    URA_DEVELOPMENT_PLANS_URL: str
+    URA_TRANSACTIONS_URL: str
+    URA_RENTAL_URL: str
+    URA_TIMEOUT_SECONDS: int
+    CORENET_API_KEY: str
+    CORENET_API_KEY_HEADER: str
+    CORENET_SUBMIT_URL: str
+    CORENET_STATUS_URL: str
+    CORENET_TIMEOUT_SECONDS: int
+    PROPERTYGURU_CLIENT_ID: str
+    PROPERTYGURU_CLIENT_SECRET: str
+    PROPERTYGURU_TOKEN_URL: str
+    PROPERTYGURU_LISTING_URL: str
+    EDGEPROP_CLIENT_ID: str
+    EDGEPROP_CLIENT_SECRET: str
+    EDGEPROP_TOKEN_URL: str
+    EDGEPROP_LISTING_URL: str
+    ZOHO_CLIENT_ID: str
+    ZOHO_CLIENT_SECRET: str
+    ZOHO_TOKEN_URL: str
+    ZOHO_LISTING_URL: str
+    ADV_INTELLIGENCE_BASE_URL: str
+    ADV_INTELLIGENCE_API_KEY: str
+    ADV_INTELLIGENCE_TIMEOUT_SECONDS: int
 
     BUILDABLE_TYP_FLOOR_TO_FLOOR_M: float
     BUILDABLE_EFFICIENCY_RATIO: float
@@ -313,6 +344,39 @@ class Settings:
         self.SEATTLE_SODA_APP_TOKEN = os.getenv("SEATTLE_SODA_APP_TOKEN", "public")
         self.TORONTO_SODA_APP_TOKEN = os.getenv("TORONTO_SODA_APP_TOKEN", "public")
         self.GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
+        self.URA_ACCESS_KEY = os.getenv("URA_ACCESS_KEY", "")
+        self.URA_ACCESS_KEY_HEADER = os.getenv("URA_ACCESS_KEY_HEADER", "AccessKey")
+        self.URA_TOKEN_URL = os.getenv("URA_TOKEN_URL", "")
+        self.URA_TOKEN_HEADER = os.getenv("URA_TOKEN_HEADER", "Token")
+        self.URA_ZONING_URL = os.getenv("URA_ZONING_URL", "")
+        self.URA_EXISTING_USE_URL = os.getenv("URA_EXISTING_USE_URL", "")
+        self.URA_PROPERTY_URL = os.getenv("URA_PROPERTY_URL", "")
+        self.URA_DEVELOPMENT_PLANS_URL = os.getenv("URA_DEVELOPMENT_PLANS_URL", "")
+        self.URA_TRANSACTIONS_URL = os.getenv("URA_TRANSACTIONS_URL", "")
+        self.URA_RENTAL_URL = os.getenv("URA_RENTAL_URL", "")
+        self.URA_TIMEOUT_SECONDS = _load_positive_int("URA_TIMEOUT_SECONDS", 30)
+        self.CORENET_API_KEY = os.getenv("CORENET_API_KEY", "")
+        self.CORENET_API_KEY_HEADER = os.getenv("CORENET_API_KEY_HEADER", "x-api-key")
+        self.CORENET_SUBMIT_URL = os.getenv("CORENET_SUBMIT_URL", "")
+        self.CORENET_STATUS_URL = os.getenv("CORENET_STATUS_URL", "")
+        self.CORENET_TIMEOUT_SECONDS = _load_positive_int("CORENET_TIMEOUT_SECONDS", 30)
+        self.PROPERTYGURU_CLIENT_ID = os.getenv("PROPERTYGURU_CLIENT_ID", "")
+        self.PROPERTYGURU_CLIENT_SECRET = os.getenv("PROPERTYGURU_CLIENT_SECRET", "")
+        self.PROPERTYGURU_TOKEN_URL = os.getenv("PROPERTYGURU_TOKEN_URL", "")
+        self.PROPERTYGURU_LISTING_URL = os.getenv("PROPERTYGURU_LISTING_URL", "")
+        self.EDGEPROP_CLIENT_ID = os.getenv("EDGEPROP_CLIENT_ID", "")
+        self.EDGEPROP_CLIENT_SECRET = os.getenv("EDGEPROP_CLIENT_SECRET", "")
+        self.EDGEPROP_TOKEN_URL = os.getenv("EDGEPROP_TOKEN_URL", "")
+        self.EDGEPROP_LISTING_URL = os.getenv("EDGEPROP_LISTING_URL", "")
+        self.ZOHO_CLIENT_ID = os.getenv("ZOHO_CLIENT_ID", "")
+        self.ZOHO_CLIENT_SECRET = os.getenv("ZOHO_CLIENT_SECRET", "")
+        self.ZOHO_TOKEN_URL = os.getenv("ZOHO_TOKEN_URL", "")
+        self.ZOHO_LISTING_URL = os.getenv("ZOHO_LISTING_URL", "")
+        self.ADV_INTELLIGENCE_BASE_URL = os.getenv("ADV_INTELLIGENCE_BASE_URL", "")
+        self.ADV_INTELLIGENCE_API_KEY = os.getenv("ADV_INTELLIGENCE_API_KEY", "")
+        self.ADV_INTELLIGENCE_TIMEOUT_SECONDS = _load_positive_int(
+            "ADV_INTELLIGENCE_TIMEOUT_SECONDS", 30
+        )
 
         self.BUILDABLE_TYP_FLOOR_TO_FLOOR_M = _load_positive_float(
             "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", 4.0

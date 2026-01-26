@@ -12,7 +12,7 @@ pytest.importorskip("sqlalchemy")
 
 from app.core.jwt_auth import create_tokens
 from app.models.property import Property
-from app.models.users import User
+from app.models.user import User
 from httpx import AsyncClient
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession

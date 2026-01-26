@@ -43,7 +43,7 @@ const statusColors = {
 }
 
 const sizes = {
-  sm: 6,
+  sm: 'var(--ob-space-600)',
   md: 8,
   lg: 10,
 }

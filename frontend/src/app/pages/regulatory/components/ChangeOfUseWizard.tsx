@@ -382,7 +382,11 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
             <Typography variant="h6" gutterBottom>
               What is the current use of the property?
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 'var(--ob-space-300)' }}
+            >
               Select the existing approved land use for this site.
             </Typography>
 
@@ -415,7 +419,11 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
             <Typography variant="h6" gutterBottom>
               What is the proposed new use?
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 'var(--ob-space-300)' }}
+            >
               Select the intended use after conversion. This determines the
               regulatory requirements.
             </Typography>
@@ -446,7 +454,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
             {currentUse && proposedUse && (
               <Card
                 sx={{
-                  mt: 3,
+                  mt: 'var(--ob-space-300)',
                   bgcolor: 'rgba(25, 118, 210, 0.1)',
                   border: '1px solid rgba(25, 118, 210, 0.3)',
                 }}
@@ -456,7 +464,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 2,
+                      gap: 'var(--ob-space-200)',
                       justifyContent: 'center',
                     }}
                   >
@@ -466,7 +474,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
                           ?.label
                       }
                       color="default"
-                      sx={{ fontSize: '1rem', py: 2.5 }}
+                      sx={{ fontSize: '1rem', py: 'var(--ob-space-200)' }}
                     />
                     <SwapIcon color="primary" />
                     <Chip
@@ -475,7 +483,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
                           ?.label
                       }
                       color="primary"
-                      sx={{ fontSize: '1rem', py: 2.5 }}
+                      sx={{ fontSize: '1rem', py: 'var(--ob-space-200)' }}
                     />
                   </Box>
                 </CardContent>
@@ -490,13 +498,17 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
             <Typography variant="h6" gutterBottom>
               Regulatory Requirements Analysis
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 'var(--ob-space-300)' }}
+            >
               Based on your change of use, the following approvals will be
               required:
             </Typography>
 
             {requiresDC && (
-              <Alert severity="warning" sx={{ mb: 2 }}>
+              <Alert severity="warning" sx={{ mb: 'var(--ob-space-200)' }}>
                 <Typography variant="subtitle2">
                   DC Amendment Required
                 </Typography>
@@ -508,7 +520,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
             )}
 
             {requiresPlanning && (
-              <Alert severity="info" sx={{ mb: 2 }}>
+              <Alert severity="info" sx={{ mb: 'var(--ob-space-200)' }}>
                 <Typography variant="subtitle2">
                   Planning Permission Required
                 </Typography>
@@ -521,19 +533,23 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
               </Alert>
             )}
 
-            <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid
+              container
+              spacing="var(--ob-space-200)"
+              sx={{ mt: 'var(--ob-space-100)' }}
+            >
               {requirements.map((req, index) => (
                 <Grid item xs={12} sm={6} key={index}>
                   <Paper
                     sx={{
-                      p: 2,
+                      p: 'var(--ob-space-200)',
                       height: '100%',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 1.5,
+                      gap: 'var(--ob-space-150)',
                       bgcolor: req.required
-                        ? 'rgba(255, 255, 255, 0.05)'
-                        : 'rgba(0, 0, 0, 0.2)',
+                        ? 'var(--ob-color-surface-overlay-light)'
+                        : 'var(--ob-color-overlay-backdrop-light)',
                       opacity: req.required ? 1 : 0.6,
                     }}
                   >
@@ -569,7 +585,11 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
             <Typography variant="h6" gutterBottom>
               Justification for Change of Use
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 'var(--ob-space-300)' }}
+            >
               Provide a clear justification for why this change of use is
               necessary and beneficial. URA considers market demand, urban
               planning objectives, and community impact.
@@ -596,11 +616,11 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
               disabled={isReadOnly}
             />
 
-            <Box sx={{ mt: 3 }}>
+            <Box sx={{ mt: 'var(--ob-space-300)' }}>
               <Typography variant="subtitle2" gutterBottom>
                 Tips for a Strong Justification:
               </Typography>
-              <Box component="ul" sx={{ pl: 2, m: 0 }}>
+              <Box component="ul" sx={{ pl: 'var(--ob-space-200)', m: '0' }}>
                 <Typography
                   component="li"
                   variant="body2"
@@ -640,14 +660,23 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
             <Typography variant="h6" gutterBottom>
               Review & Confirm
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 'var(--ob-space-300)' }}
+            >
               Please review your application details and confirm the
               acknowledgements below.
             </Typography>
 
-            <Card sx={{ mb: 3, bgcolor: 'rgba(255, 255, 255, 0.03)' }}>
+            <Card
+              sx={{
+                mb: 'var(--ob-space-300)',
+                bgcolor: 'var(--ob-color-table-header)',
+              }}
+            >
               <CardContent>
-                <Grid container spacing={2}>
+                <Grid container spacing="var(--ob-space-200)">
                   <Grid item xs={6}>
                     <Typography variant="caption" color="text.secondary">
                       Current Use
@@ -671,14 +700,14 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
                     </Typography>
                   </Grid>
                   <Grid item xs={12}>
-                    <Divider sx={{ my: 1 }} />
+                    <Divider sx={{ my: 'var(--ob-space-100)' }} />
                     <Typography variant="caption" color="text.secondary">
                       Justification Summary
                     </Typography>
                     <Typography
                       variant="body2"
                       sx={{
-                        mt: 0.5,
+                        mt: 'var(--ob-space-50)',
                         maxHeight: 100,
                         overflow: 'auto',
                         whiteSpace: 'pre-wrap',
@@ -695,7 +724,13 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
               Required Acknowledgements:
             </Typography>
 
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--ob-space-100)',
+              }}
+            >
               <FormControlLabel
                 control={
                   <Checkbox
@@ -767,16 +802,20 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 1,
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          gap: 'var(--ob-space-100)',
+          borderBottom: '1px solid var(--ob-color-surface-overlay)',
         }}
       >
         <SwapIcon color="primary" />
         Change of Use Application
       </DialogTitle>
 
-      <DialogContent sx={{ pt: 3 }}>
-        <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
+      <DialogContent sx={{ pt: 'var(--ob-space-300)' }}>
+        <Stepper
+          activeStep={activeStep}
+          alternativeLabel
+          sx={{ mb: 'var(--ob-space-400)' }}
+        >
           {STEPS.map((label) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
@@ -785,7 +824,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
         </Stepper>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity="error" sx={{ mb: 'var(--ob-space-300)' }}>
             {error}
           </Alert>
         )}
@@ -795,9 +834,9 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
 
       <DialogActions
         sx={{
-          px: 3,
-          py: 2,
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          px: 'var(--ob-space-300)',
+          py: 'var(--ob-space-200)',
+          borderTop: '1px solid var(--ob-color-surface-overlay)',
         }}
       >
         <Button onClick={onClose} color="inherit">

@@ -45,7 +45,11 @@ export function CorrelationHeatmap({ data }: CorrelationHeatmapProps) {
   }
 
   return (
-    <Box display="flex" gap={2} sx={{ position: 'relative', minHeight: 400 }}>
+    <Box
+      display="flex"
+      gap="var(--ob-space-200)"
+      sx={{ position: 'relative', minHeight: 400 }}
+    >
       {/* Heatmap Grid Area */}
       <Box flex={1}>
         <Typography
@@ -60,7 +64,7 @@ export function CorrelationHeatmap({ data }: CorrelationHeatmapProps) {
           Correlation Matrix (Significant Pairs)
         </Typography>
 
-        <Box display="flex" flexWrap="wrap" gap={1}>
+        <Box display="flex" flexWrap="wrap" gap="var(--ob-space-100)">
           {data.map((item) => (
             <Box
               key={item.id}
@@ -69,7 +73,7 @@ export function CorrelationHeatmap({ data }: CorrelationHeatmapProps) {
                 width: 60,
                 height: 60,
                 bgcolor: getColor(item.coefficient),
-                borderRadius: '2px', // Square Cyber-Minimalism: xs for small elements
+                borderRadius: 'var(--ob-radius-xs)', // Square Cyber-Minimalism: xs for small elements
                 cursor: 'pointer',
                 transition: 'transform 0.2s',
                 border:
@@ -108,14 +112,18 @@ export function CorrelationHeatmap({ data }: CorrelationHeatmapProps) {
             elevation={6}
             sx={{
               width: 300,
-              p: 3,
-              borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
+              p: 'var(--ob-space-300)',
+              borderRadius: 'var(--ob-radius-sm)', // Square Cyber-Minimalism: sm for panels
               bgcolor: alpha(theme.palette.background.paper, 0.8),
               backdropFilter: 'blur(var(--ob-blur-lg))',
               borderLeft: `4px solid ${getColor(selectedCorrelation.coefficient)}`,
             }}
           >
-            <Box display="flex" justifyContent="space-between" mb={2}>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              mb="var(--ob-space-200)"
+            >
               <Typography variant="h6" fontSize="1rem" fontWeight={700}>
                 Correlation Detail
               </Typography>
@@ -134,7 +142,7 @@ export function CorrelationHeatmap({ data }: CorrelationHeatmapProps) {
               {selectedCorrelation.driver}
             </Typography>
 
-            <Box my={2} textAlign="center">
+            <Box my="var(--ob-space-200)" textAlign="center">
               <Typography
                 variant="h4"
                 fontWeight={800}
@@ -159,10 +167,10 @@ export function CorrelationHeatmap({ data }: CorrelationHeatmapProps) {
             <Typography
               variant="body2"
               sx={{
-                mt: 2,
-                p: 1.5,
+                mt: 'var(--ob-space-200)',
+                p: 'var(--ob-space-150)',
                 bgcolor: alpha(theme.palette.action.hover, 0.05),
-                borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
+                borderRadius: 'var(--ob-radius-sm)', // Square Cyber-Minimalism: sm for panels
               }}
             >
               {selectedCorrelation.coefficient > 0

@@ -921,19 +921,7 @@ export class ApiClient {
     })
 
     if (suggestions.length === 0) {
-      return [
-        {
-          id: 'pipeline-default',
-          title: 'Core compliance pipeline',
-          description:
-            'Baseline review workflow across zoning, fire safety and environmental health topics.',
-          focus: 'baseline',
-          automationScore: 0.5,
-          reviewHoursSaved: 6,
-          estimatedSavingsPercent: 18,
-          relatedRuleIds: rules.slice(0, 6).map((rule) => rule.id),
-        },
-      ]
+      return []
     }
 
     return suggestions.sort((a, b) => b.automationScore - a.automationScore)

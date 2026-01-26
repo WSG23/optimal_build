@@ -73,7 +73,7 @@ function TabPanel({ children, value, index }: TabPanelProps) {
       hidden={value !== index}
       id={`heritage-tabpanel-${index}`}
       aria-labelledby={`heritage-tab-${index}`}
-      sx={{ py: 3 }}
+      sx={{ py: 'var(--ob-space-300)' }}
     >
       {value === index && children}
     </Box>
@@ -405,10 +405,16 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          borderBottom: '1px solid var(--ob-color-surface-overlay)',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--ob-space-150)',
+          }}
+        >
           <HeritageIcon color="primary" />
           <Box>
             <Typography variant="h6">
@@ -419,7 +425,13 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
             </Typography>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--ob-space-100)',
+          }}
+        >
           {activeSubmission?.stb_reference && (
             <Chip
               label={activeSubmission.stb_reference}
@@ -450,7 +462,13 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
         </Box>
       </DialogTitle>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3 }}>
+      <Box
+        sx={{
+          borderBottom: 'var(--ob-space-100)',
+          borderColor: 'divider',
+          px: 'var(--ob-space-300)',
+        }}
+      >
         <Tabs value={tabValue} onChange={handleTabChange}>
           <Tab
             label="Building Info"
@@ -471,16 +489,20 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
         </Tabs>
       </Box>
 
-      <DialogContent sx={{ px: 3 }}>
+      <DialogContent sx={{ px: 'var(--ob-space-300)' }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          <Alert
+            severity="error"
+            sx={{ mb: 'var(--ob-space-200)' }}
+            onClose={() => setError(null)}
+          >
             {error}
           </Alert>
         )}
         {successMessage && (
           <Alert
             severity="success"
-            sx={{ mb: 2 }}
+            sx={{ mb: 'var(--ob-space-200)' }}
             onClose={() => setSuccessMessage(null)}
           >
             {successMessage}
@@ -489,7 +511,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
 
         {/* Tab 0: Building Info */}
         <TabPanel value={tabValue} index={0}>
-          <Grid container spacing={3}>
+          <Grid container spacing="var(--ob-space-300)">
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
                 <InputLabel>Conservation Status</InputLabel>
@@ -539,12 +561,16 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
               >
                 <CardContent>
                   <Box
-                    sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 'var(--ob-space-100)',
+                    }}
                   >
                     <InfoIcon
                       color="primary"
                       fontSize="small"
-                      sx={{ mt: 0.5 }}
+                      sx={{ mt: 'var(--ob-space-50)' }}
                     />
                     <Box>
                       <Typography variant="subtitle2">
@@ -553,11 +579,18 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
                       <Typography
                         variant="body2"
                         color="text.secondary"
-                        sx={{ mt: 0.5 }}
+                        sx={{ mt: 'var(--ob-space-50)' }}
                       >
                         The STB reviews applications based on:
                       </Typography>
-                      <Box component="ul" sx={{ pl: 2, m: 0, mt: 1 }}>
+                      <Box
+                        component="ul"
+                        sx={{
+                          pl: 'var(--ob-space-200)',
+                          m: '0',
+                          mt: 'var(--ob-space-100)',
+                        }}
+                      >
                         <Typography
                           component="li"
                           variant="body2"
@@ -600,18 +633,26 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
           <Typography variant="subtitle1" gutterBottom>
             Select all heritage elements present in the building:
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 'var(--ob-space-300)' }}
+          >
             Identifying heritage elements helps STB understand the
             building&apos;s significance and guide appropriate conservation
             measures.
           </Typography>
 
           {['Exterior', 'Interior', 'Features'].map((category) => (
-            <Box key={category} sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" color="primary" sx={{ mb: 1.5 }}>
+            <Box key={category} sx={{ mb: 'var(--ob-space-300)' }}>
+              <Typography
+                variant="subtitle2"
+                color="primary"
+                sx={{ mb: 'var(--ob-space-150)' }}
+              >
                 {category}
               </Typography>
-              <Grid container spacing={1}>
+              <Grid container spacing="var(--ob-space-100)">
                 {HERITAGE_ELEMENTS_OPTIONS.filter(
                   (el) => el.category === category,
                 ).map((element) => (
@@ -621,24 +662,24 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
                         !isSubmitted && handleElementToggle(element.id)
                       }
                       sx={{
-                        p: 1.5,
+                        p: 'var(--ob-space-150)',
                         cursor: isSubmitted ? 'default' : 'pointer',
                         bgcolor: selectedElements.includes(element.id)
                           ? 'rgba(46, 125, 50, 0.2)'
-                          : 'rgba(255, 255, 255, 0.03)',
+                          : 'var(--ob-color-table-header)',
                         border: selectedElements.includes(element.id)
                           ? '1px solid rgba(46, 125, 50, 0.5)'
-                          : '1px solid rgba(255, 255, 255, 0.1)',
+                          : '1px solid var(--ob-color-surface-overlay)',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 1,
+                        gap: 'var(--ob-space-100)',
                         transition: 'all 0.2s',
                         '&:hover': {
                           bgcolor: isSubmitted
                             ? undefined
                             : selectedElements.includes(element.id)
                               ? 'rgba(46, 125, 50, 0.3)'
-                              : 'rgba(255, 255, 255, 0.05)',
+                              : 'var(--ob-color-surface-overlay-light)',
                         },
                       }}
                     >
@@ -646,7 +687,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
                         checked={selectedElements.includes(element.id)}
                         disabled={isSubmitted}
                         size="small"
-                        sx={{ p: 0 }}
+                        sx={{ p: '0' }}
                       />
                       <Typography variant="body2">{element.label}</Typography>
                     </Paper>
@@ -656,7 +697,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
             </Box>
           ))}
 
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: 'var(--ob-space-200)' }}>
             <Typography variant="body2" color="text.secondary">
               Selected: {selectedElements.length} element(s)
             </Typography>
@@ -670,7 +711,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              mb: 2,
+              mb: 'var(--ob-space-200)',
             }}
           >
             <Box>
@@ -696,13 +737,17 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
           {interventions.length === 0 ? (
             <Paper
               sx={{
-                p: 4,
+                p: 'var(--ob-space-400)',
                 textAlign: 'center',
-                bgcolor: 'rgba(255, 255, 255, 0.03)',
+                bgcolor: 'var(--ob-color-table-header)',
               }}
             >
               <DocumentIcon
-                sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }}
+                sx={{
+                  fontSize: 48,
+                  color: 'text.secondary',
+                  mb: 'var(--ob-space-100)',
+                }}
               />
               <Typography color="text.secondary">
                 No interventions defined yet. Click &quot;Add Intervention&quot;
@@ -710,29 +755,33 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
               </Typography>
             </Paper>
           ) : (
-            <Stack spacing={2}>
+            <Stack spacing="var(--ob-space-200)">
               {interventions.map((intervention, index) => (
                 <Paper
                   key={index}
                   sx={{
-                    p: 2,
-                    bgcolor: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    p: 'var(--ob-space-200)',
+                    bgcolor: 'var(--ob-color-table-header)',
+                    border: '1px solid var(--ob-color-surface-overlay)',
                   }}
                 >
                   <Box
                     sx={{
                       display: 'flex',
-                      gap: 2,
+                      gap: 'var(--ob-space-200)',
                       alignItems: 'flex-start',
                     }}
                   >
                     <Chip
                       label={index + 1}
                       size="small"
-                      sx={{ minWidth: 32, mt: 1 }}
+                      sx={{ minWidth: 32, mt: 'var(--ob-space-100)' }}
                     />
-                    <Grid container spacing={2} sx={{ flex: 1 }}>
+                    <Grid
+                      container
+                      spacing="var(--ob-space-200)"
+                      sx={{ flex: 1 }}
+                    >
                       <Grid item xs={12} sm={4}>
                         <FormControl fullWidth size="small">
                           <InputLabel>Type</InputLabel>
@@ -807,17 +856,21 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
           <Typography variant="subtitle1" gutterBottom>
             Required Documents
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 'var(--ob-space-300)' }}
+          >
             Upload supporting documents for your heritage submission.
           </Typography>
 
-          <Grid container spacing={2}>
+          <Grid container spacing="var(--ob-space-200)">
             <Grid item xs={12}>
               <Paper
                 sx={{
-                  p: 2,
-                  bgcolor: 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  p: 'var(--ob-space-200)',
+                  bgcolor: 'var(--ob-color-table-header)',
+                  border: '1px solid var(--ob-color-surface-overlay)',
                 }}
               >
                 <FormControlLabel
@@ -849,13 +902,13 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
               <Paper
                 onClick={handlePhotoUpload}
                 sx={{
-                  p: 3,
+                  p: 'var(--ob-space-300)',
                   textAlign: 'center',
                   border: '2px dashed',
                   borderColor:
                     uploadedPhotos.length > 0
                       ? 'success.main'
-                      : 'rgba(255, 255, 255, 0.2)',
+                      : 'var(--ob-color-surface-overlay-medium)',
                   cursor: isSubmitted ? 'default' : 'pointer',
                   bgcolor:
                     uploadedPhotos.length > 0
@@ -864,7 +917,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
                   '&:hover': isSubmitted
                     ? {}
                     : {
-                        bgcolor: 'rgba(255, 255, 255, 0.05)',
+                        bgcolor: 'var(--ob-color-surface-overlay-light)',
                         borderColor: 'primary.main',
                       },
                 }}
@@ -876,7 +929,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
                       uploadedPhotos.length > 0
                         ? 'success.main'
                         : 'text.secondary',
-                    mb: 1,
+                    mb: 'var(--ob-space-100)',
                   }}
                 />
                 <Typography variant="body2">
@@ -886,7 +939,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
                   Original photographs, archival images
                 </Typography>
                 {uploadedPhotos.length > 0 && (
-                  <Box sx={{ mt: 2, textAlign: 'left' }}>
+                  <Box sx={{ mt: 'var(--ob-space-200)', textAlign: 'left' }}>
                     {uploadedPhotos.map((file, idx) => (
                       <Chip
                         key={idx}
@@ -895,7 +948,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
                         onDelete={
                           isSubmitted ? undefined : () => handleRemovePhoto(idx)
                         }
-                        sx={{ m: 0.5 }}
+                        sx={{ m: 'var(--ob-space-50)' }}
                       />
                     ))}
                   </Box>
@@ -907,13 +960,13 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
               <Paper
                 onClick={handleDrawingUpload}
                 sx={{
-                  p: 3,
+                  p: 'var(--ob-space-300)',
                   textAlign: 'center',
                   border: '2px dashed',
                   borderColor:
                     uploadedDrawings.length > 0
                       ? 'success.main'
-                      : 'rgba(255, 255, 255, 0.2)',
+                      : 'var(--ob-color-surface-overlay-medium)',
                   cursor: isSubmitted ? 'default' : 'pointer',
                   bgcolor:
                     uploadedDrawings.length > 0
@@ -922,7 +975,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
                   '&:hover': isSubmitted
                     ? {}
                     : {
-                        bgcolor: 'rgba(255, 255, 255, 0.05)',
+                        bgcolor: 'var(--ob-color-surface-overlay-light)',
                         borderColor: 'primary.main',
                       },
                 }}
@@ -934,7 +987,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
                       uploadedDrawings.length > 0
                         ? 'success.main'
                         : 'text.secondary',
-                    mb: 1,
+                    mb: 'var(--ob-space-100)',
                   }}
                 />
                 <Typography variant="body2">
@@ -944,7 +997,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
                   Plans, elevations, sections
                 </Typography>
                 {uploadedDrawings.length > 0 && (
-                  <Box sx={{ mt: 2, textAlign: 'left' }}>
+                  <Box sx={{ mt: 'var(--ob-space-200)', textAlign: 'left' }}>
                     {uploadedDrawings.map((file, idx) => (
                       <Chip
                         key={idx}
@@ -955,7 +1008,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
                             ? undefined
                             : () => handleRemoveDrawing(idx)
                         }
-                        sx={{ m: 0.5 }}
+                        sx={{ m: 'var(--ob-space-50)' }}
                       />
                     ))}
                   </Box>
@@ -964,7 +1017,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
             </Grid>
           </Grid>
 
-          <Alert severity="info" sx={{ mt: 3 }}>
+          <Alert severity="info" sx={{ mt: 'var(--ob-space-300)' }}>
             <Typography variant="body2">
               Document upload is simulated in this demo. Files are tracked
               locally but not persisted to the server. In production, files
@@ -977,10 +1030,10 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
 
       <DialogActions
         sx={{
-          px: 3,
-          py: 2,
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-          gap: 1,
+          px: 'var(--ob-space-300)',
+          py: 'var(--ob-space-200)',
+          borderTop: '1px solid var(--ob-color-surface-overlay)',
+          gap: 'var(--ob-space-100)',
         }}
       >
         <Button onClick={onClose} color="inherit">
@@ -1029,7 +1082,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
               variant="contained"
               sx={{
                 background: 'linear-gradient(135deg, #00C9FF 0%, #92FE9D 100%)',
-                color: '#000',
+                color: 'var(--ob-color-bg-inverse)',
                 fontWeight: 'bold',
               }}
             >

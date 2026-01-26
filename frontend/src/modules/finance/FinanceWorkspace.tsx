@@ -47,7 +47,6 @@ import {
   Tab,
 } from '@mui/material'
 import {
-  Warning,
   PushPin as PushPinIcon,
   PushPinOutlined as PushPinOutlinedIcon,
 } from '@mui/icons-material'
@@ -331,7 +330,7 @@ export function FinanceWorkspace() {
   const renderEmptyPanel = useCallback(
     (title: string) => (
       <Card variant="glass" sx={{ p: 'var(--ob-space-300)' }}>
-        <Stack spacing={1} alignItems="flex-start">
+        <Stack spacing="var(--ob-space-100)" alignItems="flex-start">
           <Typography variant="h6">{title}</Typography>
           <Typography variant="body2" color="text.secondary">
             Create or import a finance scenario to populate this view.
@@ -698,7 +697,7 @@ export function FinanceWorkspace() {
         sx={{
           width: 'var(--ob-size-icon-md)',
           minWidth: 'var(--ob-size-icon-md)',
-          px: 0,
+          px: '0',
         }}
       >
         {isHeaderPinned ? (
@@ -736,7 +735,7 @@ export function FinanceWorkspace() {
               ...(isHeaderPinned
                 ? {
                     position: 'sticky',
-                    top: 0,
+                    top: '0',
                     zIndex: 'var(--ob-z-sticky)',
                   }
                 : {}),
@@ -751,7 +750,7 @@ export function FinanceWorkspace() {
               key={path}
               className="ob-page-header"
               sx={{
-                borderBottom: 1,
+                borderBottom: 'var(--ob-space-100)',
                 borderColor: 'divider',
                 animation:
                   'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
@@ -787,7 +786,7 @@ export function FinanceWorkspace() {
 
               <Box
                 sx={{
-                  borderTop: 1,
+                  borderTop: 'var(--ob-space-100)',
                   borderColor: 'divider',
                   px: 'var(--ob-space-300)',
                 }}
@@ -843,7 +842,7 @@ export function FinanceWorkspace() {
             <>
               {showProjectGate && (
                 <Card variant="glass" sx={{ p: 'var(--ob-space-200)' }}>
-                  <Stack spacing={1}>
+                  <Stack spacing="var(--ob-space-100)">
                     <Typography variant="h6">
                       Select a project to continue
                     </Typography>
@@ -962,7 +961,10 @@ export function FinanceWorkspace() {
                               textAlign: 'center',
                             }}
                           >
-                            <Stack spacing={2} alignItems="center">
+                            <Stack
+                              spacing="var(--ob-space-200)"
+                              alignItems="center"
+                            >
                               <Typography variant="h5">
                                 Start a finance model
                               </Typography>
@@ -975,7 +977,7 @@ export function FinanceWorkspace() {
                               </Typography>
                               <Stack
                                 direction={{ xs: 'column', sm: 'row' }}
-                                spacing={1}
+                                spacing="var(--ob-space-100)"
                                 justifyContent="center"
                                 alignItems="center"
                               >
@@ -1004,20 +1006,6 @@ export function FinanceWorkspace() {
                               </Stack>
                             </Stack>
                           </Card>
-                        )}
-
-                        {primaryScenario?.scenarioId === 0 && (
-                          <Alert
-                            severity="warning"
-                            icon={<Warning />}
-                            sx={{ mb: 'var(--ob-space-050)' }}
-                          >
-                            <strong>{t('finance.warnings.offlineMode')}</strong>
-                            <Typography variant="body2">
-                              {t('finance.warnings.offlineModeDetail') ||
-                                'You are viewing offline demonstration data. Changes cannot be saved correctly until the backend service is available.'}
-                            </Typography>
-                          </Alert>
                         )}
 
                         {scenarios.length > 0 && (

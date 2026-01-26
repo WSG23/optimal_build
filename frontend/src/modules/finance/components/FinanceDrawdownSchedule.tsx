@@ -126,7 +126,7 @@ export function FinanceDrawdownSchedule({
 
         {/* Right Column: Chart + Analysis */}
         <Grid item xs={12} xl={6}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
             {/* Chart/Table Toggle */}
             <Box
               sx={{

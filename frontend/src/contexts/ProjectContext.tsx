@@ -170,6 +170,12 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     if (!currentProject || isProjectLoading || projectError) {
       return
     }
+    if (
+      typeof window !== 'undefined' &&
+      window.localStorage.getItem('ob_skip_project_validation') === 'true'
+    ) {
+      return
+    }
     const exists = projects.some((project) => project.id === currentProject.id)
     if (!exists) {
       setProjectError({

@@ -78,6 +78,20 @@ export interface PhaseDependency {
   lagDays: number
 }
 
+function normalizeCompletionRatio(value: unknown): number {
+  const parsed = Number(value ?? 0)
+  if (!Number.isFinite(parsed)) return 0
+  const ratio = parsed > 1 ? parsed / 100 : parsed
+  return Math.min(1, Math.max(0, ratio))
+}
+
+function normalizeCompletionPercent(value: unknown): number {
+  const parsed = Number(value ?? 0)
+  if (!Number.isFinite(parsed)) return 0
+  const percent = parsed <= 1 ? parsed * 100 : parsed
+  return Math.min(100, Math.max(0, percent))
+}
+
 export interface GanttTask {
   id: string
   name: string
@@ -105,6 +119,7 @@ export interface GanttChart {
   projectEndDate: string | null
   totalDuration: number
   criticalPathDuration: number
+  completionPct: number
 }
 
 export interface CriticalPathResult {
@@ -229,7 +244,7 @@ function mapGanttTask(payload: Record<string, unknown>): GanttTask {
     startDate: String(payload.start_date ?? ''),
     endDate: String(payload.end_date ?? ''),
     duration: Number(payload.duration ?? 0),
-    progress: Number(payload.progress ?? 0),
+    progress: normalizeCompletionRatio(payload.progress),
     dependencies: Array.isArray(payload.dependencies)
       ? payload.dependencies.map(String)
       : [],
@@ -262,6 +277,7 @@ function mapGanttChart(payload: Record<string, unknown>): GanttChart {
         : null,
     totalDuration: Number(payload.total_duration ?? 0),
     criticalPathDuration: Number(payload.critical_path_duration ?? 0),
+    completionPct: normalizeCompletionPercent(payload.completion_pct),
   }
 }
 

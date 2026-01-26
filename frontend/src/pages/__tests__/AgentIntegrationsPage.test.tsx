@@ -45,6 +45,28 @@ describe('AgentIntegrationsPage', () => {
       if (url.includes('/accounts')) {
         return jsonResponse([])
       }
+      if (url.includes('/providers')) {
+        return jsonResponse([
+          {
+            provider: 'propertyguru',
+            label: 'PropertyGuru',
+            description: 'Singapore listings',
+            brand_color: '#00aaff',
+          },
+          {
+            provider: 'edgeprop',
+            label: 'EdgeProp',
+            description: 'EdgeProp listings',
+            brand_color: '#ff6b35',
+          },
+          {
+            provider: 'zoho_crm',
+            label: 'Zoho CRM',
+            description: 'CRM sync',
+            brand_color: '#e42527',
+          },
+        ])
+      }
       if (url.includes('/propertyguru/connect')) {
         expectJsonBody(init)
         return jsonResponse({
@@ -123,9 +145,12 @@ describe('AgentIntegrationsPage', () => {
         name: /PropertyGuru/i,
       }).parentElement as HTMLElement
 
-      fireEvent.submit(
-        propertyGuruSection.querySelector('form') as HTMLFormElement,
-      )
+      const connectForm = propertyGuruSection.querySelector('form')
+      assert.ok(connectForm)
+      const codeInput =
+        within(connectForm).getByPlaceholderText(/authorization code/i)
+      fireEvent.change(codeInput, { target: { value: 'auth-code' } })
+      fireEvent.submit(connectForm as HTMLFormElement)
       await screen.findByText(/PropertyGuru .*account linked/i, undefined, {
         timeout: 2000,
       })

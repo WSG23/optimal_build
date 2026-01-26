@@ -93,7 +93,7 @@ export function PhotoCapture({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: '1rem',
+        gap: 'var(--ob-space-200)',
       }}
     >
       {/* Notes input */}
@@ -104,8 +104,8 @@ export function PhotoCapture({
             display: 'block',
             fontSize: '0.8125rem',
             fontWeight: 600,
-            color: '#374151',
-            marginBottom: '0.25rem',
+            color: 'var(--ob-color-text-primary)',
+            marginBottom: 'var(--ob-space-50)',
           }}
         >
           Photo Notes (optional)
@@ -119,9 +119,9 @@ export function PhotoCapture({
           disabled={disabled || isUploading}
           style={{
             width: '100%',
-            padding: '0.5rem 0.75rem',
-            borderRadius: '6px',
-            border: '1px solid #d1d5db',
+            padding: 'var(--ob-space-100) 0.75rem',
+            borderRadius: 'var(--ob-radius-md)',
+            border: '1px solid var(--ob-color-border-default)',
             fontSize: '0.875rem',
             outline: 'none',
           }}
@@ -139,11 +139,15 @@ export function PhotoCapture({
         onDragOver={handleDrag}
         onDrop={handleDrop}
         style={{
-          border: `2px dashed ${dragActive ? '#3b82f6' : '#d1d5db'}`,
-          borderRadius: '4px',
-          padding: '2rem',
+          border: `2px dashed ${dragActive ? '#3b82f6' : 'var(--ob-color-border-default)'}`,
+          borderRadius: 'var(--ob-radius-sm)',
+          padding: 'var(--ob-space-400)',
           textAlign: 'center',
-          background: dragActive ? '#eff6ff' : disabled ? '#f9fafb' : '#fff',
+          background: dragActive
+            ? '#eff6ff'
+            : disabled
+              ? '#f9fafb'
+              : 'var(--ob-color-bg-default)',
           cursor: disabled || isUploading ? 'not-allowed' : 'pointer',
           transition: 'all 0.2s ease',
           opacity: disabled ? 0.6 : 1,
@@ -161,14 +165,14 @@ export function PhotoCapture({
         />
 
         {isUploading ? (
-          <div style={{ color: '#6b7280' }}>
+          <div style={{ color: 'var(--ob-color-text-secondary)' }}>
             <div
               style={{
                 width: '40px',
                 height: '40px',
                 margin: '0 auto 0.75rem',
-                border: '3px solid #e5e7eb',
-                borderTop: '3px solid #3b82f6',
+                border: '3px solid var(--ob-color-border-subtle)',
+                borderTop: '3px solid var(--ob-color-primary)',
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite',
               }}
@@ -180,7 +184,7 @@ export function PhotoCapture({
             <div
               style={{
                 fontSize: '2.5rem',
-                marginBottom: '0.5rem',
+                marginBottom: 'var(--ob-space-100)',
               }}
             >
               {'\uD83D\uDCF7'}
@@ -190,7 +194,7 @@ export function PhotoCapture({
                 margin: '0 0 0.25rem',
                 fontSize: '0.9375rem',
                 fontWeight: 600,
-                color: '#374151',
+                color: 'var(--ob-color-text-primary)',
               }}
             >
               {dragActive ? 'Drop photos here' : 'Upload Photos'}
@@ -199,16 +203,16 @@ export function PhotoCapture({
               style={{
                 margin: 0,
                 fontSize: '0.8125rem',
-                color: '#6b7280',
+                color: 'var(--ob-color-text-secondary)',
               }}
             >
               Drag and drop or click to select
             </p>
             <p
               style={{
-                margin: '0.5rem 0 0',
+                margin: 'var(--ob-space-100) 0 0',
                 fontSize: '0.75rem',
-                color: '#9ca3af',
+                color: 'var(--ob-color-text-tertiary)',
               }}
             >
               Photos will be watermarked for{' '}

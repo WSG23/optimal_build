@@ -92,7 +92,7 @@ export function MassingLayersPanel({
       </Box>
 
       {/* Layer List */}
-      <Stack spacing={0} sx={{ maxHeight: 300, overflowY: 'auto' }}>
+      <Stack spacing="0" sx={{ maxHeight: 300, overflowY: 'auto' }}>
         {layers.map((layer) => {
           const layerId = layer.id
           const isVisible = visibility[layerId] !== false

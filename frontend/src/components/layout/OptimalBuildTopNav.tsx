@@ -29,12 +29,15 @@ type NavGroup = {
 const UTILITY_BAR_HEIGHT = 'var(--ob-space-250)'
 const NAV_BAR_HEIGHT = 'var(--ob-space-300)'
 
-interface YosaiTopNavProps {
+interface OptimalBuildTopNavProps {
   isPinned: boolean
   onTogglePinned: () => void
 }
 
-export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
+export function OptimalBuildTopNav({
+  isPinned,
+  onTogglePinned,
+}: OptimalBuildTopNavProps) {
   const { t } = useTranslation()
   const path = useRouterPath()
   const theme = useTheme()
@@ -166,7 +169,7 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
           justifyContent: 'center',
           color: isActive ? 'var(--ob-color-neon-cyan)' : 'text.secondary',
           bgcolor: 'transparent', // Always transparent - no filled background
-          borderRadius: 0,
+          borderRadius: 'var(--ob-radius-none)',
           px: 'var(--ob-space-150)',
           py: 'var(--ob-space-100)',
           textTransform: 'uppercase',
@@ -183,15 +186,15 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
           // Glowing underline for active state - positioned below the nav bar
           '&::after': isActive
             ? {
-              content: '""',
-              position: 'absolute',
-              bottom: '-4px',
-              left: 0,
-              right: 0,
-              height: '2px',
-              bgcolor: 'var(--ob-color-neon-cyan)',
-              boxShadow: '0 0 8px var(--ob-color-neon-cyan)',
-            }
+                content: '""',
+                position: 'absolute',
+                bottom: '-4px',
+                left: 0,
+                right: 0,
+                height: '2px',
+                bgcolor: 'var(--ob-color-neon-cyan)',
+                boxShadow: '0 0 8px var(--ob-color-neon-cyan)',
+              }
             : {},
         }}
       >
@@ -229,7 +232,7 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
           onMouseEnter={reveal}
           sx={{
             position: 'fixed',
-            top: 0,
+            top: '0',
             left: 0,
             right: 0,
             height: 'var(--ob-space-075)',
@@ -249,7 +252,7 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
         }}
         sx={{
           position: isPinned ? 'sticky' : 'fixed',
-          top: 0,
+          top: '0',
           left: 0,
           right: 0,
           zIndex: 'var(--ob-z-fixed)',
@@ -358,7 +361,11 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
                 },
               }}
             >
-              <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing="var(--ob-space-150)"
+              >
                 {/* Neon CPU Icon */}
                 <Box
                   sx={{
@@ -384,7 +391,7 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
                     ⬡
                   </Box>
                 </Box>
-                <Stack direction="column" alignItems="flex-start" spacing={0}>
+                <Stack direction="column" alignItems="flex-start" spacing="0">
                   <Typography
                     component="span"
                     sx={{
@@ -431,8 +438,8 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
                 sx={{
                   position: 'absolute',
                   left: 0,
-                  top: 0,
-                  bottom: 0,
+                  top: '0',
+                  bottom: '0',
                   display: 'flex',
                   alignItems: 'center',
                   pr: 'var(--ob-space-075)',
@@ -495,8 +502,8 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
                 sx={{
                   position: 'absolute',
                   right: 0,
-                  top: 0,
-                  bottom: 0,
+                  top: '0',
+                  bottom: '0',
                   display: 'flex',
                   alignItems: 'center',
                   pl: 'var(--ob-space-075)',

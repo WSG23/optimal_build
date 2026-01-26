@@ -22,7 +22,6 @@ import {
   updateChecklistTemplate as updateChecklistTemplateFromAgents,
   deleteChecklistTemplate as deleteChecklistTemplateFromAgents,
   importChecklistTemplates as importChecklistTemplatesFromAgents,
-  OFFLINE_PROPERTY_ID,
   DEFAULT_SCENARIO_ORDER,
   type ChecklistItem,
   type ChecklistStatus,
@@ -1699,11 +1698,6 @@ export async function fetchConditionAssessment(
   propertyId: string,
   scenario?: DevelopmentScenario | 'all',
 ): Promise<ConditionAssessment | null> {
-  // Offline property has no backend data - return null gracefully
-  if (propertyId === 'offline-property') {
-    return null
-  }
-
   const params = new URLSearchParams()
   if (scenario && scenario !== 'all') {
     params.append('scenario', scenario)
@@ -2060,10 +2054,6 @@ function mapVoiceNote(payload: Record<string, unknown>): PropertyVoiceNote {
 export async function fetchPropertyVoiceNotes(
   propertyId: string,
 ): Promise<PropertyVoiceNote[]> {
-  if (propertyId === OFFLINE_PROPERTY_ID) {
-    return []
-  }
-
   const url = buildUrl(
     `api/v1/agents/commercial-property/properties/${propertyId}/voice-notes`,
   )
@@ -2203,10 +2193,6 @@ function mapPropertyPhoto(payload: Record<string, unknown>): PropertyPhoto {
 export async function fetchPropertyPhotos(
   propertyId: string,
 ): Promise<PropertyPhoto[]> {
-  if (propertyId === OFFLINE_PROPERTY_ID) {
-    return []
-  }
-
   const url = buildUrl(
     `api/v1/agents/commercial-property/properties/${propertyId}/photos`,
   )
@@ -2295,6 +2281,5 @@ export {
   updateChecklistTemplateFromAgents as updateChecklistTemplate,
   deleteChecklistTemplateFromAgents as deleteChecklistTemplate,
   importChecklistTemplatesFromAgents as importChecklistTemplates,
-  OFFLINE_PROPERTY_ID,
   DEFAULT_SCENARIO_ORDER,
 }

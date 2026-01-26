@@ -123,7 +123,7 @@ export function PremiumMetricCard({
             position: 'absolute',
             inset: 0,
             background:
-              'linear-gradient(120deg, transparent 30%, rgba(0, 243, 255, 0.05) 50%, transparent 70%)',
+              'linear-gradient(120deg, transparent 30%, var(--ob-color-table-row-hover) 50%, transparent 70%)',
             backgroundSize: '200% 100%',
             animation:
               'ob-holographic-shine var(--ob-motion-shine-duration) ease-in-out infinite',

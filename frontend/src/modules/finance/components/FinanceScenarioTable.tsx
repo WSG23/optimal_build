@@ -253,7 +253,7 @@ export function FinanceScenarioTable({
                 disabled={updatingScenarioId === row.id}
                 className="finance-table__primary-button" // Reusing this class for now or make a simpler icon
                 style={{
-                  padding: '4px',
+                  padding: 'var(--ob-space-50)',
                   minWidth: 'auto',
                   border: 'none',
                   color: 'var(--ob-color-text-muted)',

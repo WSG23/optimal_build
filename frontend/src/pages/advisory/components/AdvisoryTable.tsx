@@ -32,7 +32,7 @@ export function AdvisoryTable({ columns, children }: AdvisoryTableProps) {
       sx={{
         background: 'transparent',
         boxShadow: 'none',
-        borderRadius: 0,
+        borderRadius: 'var(--ob-radius-none)',
         overflow: 'hidden',
       }}
     >
@@ -63,7 +63,7 @@ export function AdvisoryTable({ columns, children }: AdvisoryTableProps) {
         <TableBody
           sx={{
             '& tr:last-child td': {
-              borderBottom: 0,
+              borderBottom: '0',
             },
             '& td': {
               borderColor: alpha(theme.palette.divider, 0.05),

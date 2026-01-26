@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { DetectedUnit, RoiMetrics } from './types'
+import { buildUrl } from '../../api/utils/baseUrl'
 
 interface FeasibilityLoopResult {
   metrics: RoiMetrics | null
@@ -8,8 +9,27 @@ interface FeasibilityLoopResult {
 }
 
 const DEBOUNCE_MS = 1000
-// Assuming backend is on localhost:8000 for dev. In prod, this should be environmental.
-const WS_URL = 'ws://localhost:8000/api/v1/feasibility/ws'
+const WS_PATH = '/api/v1/feasibility/ws'
+
+function buildWebSocketUrl(path: string): string {
+  const httpUrl = buildUrl(path)
+  if (/^https?:/i.test(httpUrl)) {
+    const url = new URL(httpUrl)
+    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
+    return url.toString()
+  }
+
+  if (typeof window !== 'undefined') {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const host = window.location.host
+    const normalizedPath = httpUrl.startsWith('/') ? httpUrl : `/${httpUrl}`
+    return `${protocol}//${host}${normalizedPath}`
+  }
+
+  return httpUrl
+}
+
+const WS_URL = buildWebSocketUrl(WS_PATH)
 
 export function useFeasibilityLoop(
   units: DetectedUnit[],
@@ -46,15 +66,20 @@ export function useFeasibilityLoop(
         // Transform backend response to UI metrics
         const summary = data.summary
         if (summary) {
+          const maxGfa = Number(summary.max_permissible_gfa_sqm || 0)
+          const achievable = Number(summary.estimated_achievable_gfa_sqm || 0)
+          const savingsPercent =
+            maxGfa > 0 ? Math.round((achievable / maxGfa) * 100) : 0
+          const automationScore =
+            typeof data.optimizer_confidence === 'number'
+              ? Math.min(1, Math.max(0, data.optimizer_confidence))
+              : 0
+
           setMetrics({
-            automationScore: 0.88, // Mock bump for WS speed
-            savingsPercent: Math.round(
-              (summary.estimated_achievable_gfa_sqm /
-                summary.max_permissible_gfa_sqm) *
-                100,
-            ),
-            reviewHoursSaved: 12,
-            paybackWeeks: 4,
+            automationScore,
+            savingsPercent,
+            reviewHoursSaved: 0,
+            paybackWeeks: 0,
           })
         }
         setLoading(false) // Request complete
@@ -78,10 +103,15 @@ export function useFeasibilityLoop(
         ws.close()
       }
     }
-  }, [])
+  }, [_zoneCode])
 
   const sendUpdate = useCallback(() => {
     if (!unitsRef.current || unitsRef.current.length === 0) return
+    const zoneCode = _zoneCode?.trim()
+    if (!zoneCode) {
+      setError(new Error('Zone code required for feasibility loop'))
+      return
+    }
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
 
     setLoading(true)
@@ -92,18 +122,20 @@ export function useFeasibilityLoop(
       (acc, unit) => acc + unit.areaSqm,
       0,
     )
+    const siteAreaSqm = totalArea
     const payload = {
       project: {
-        name: 'Live Loop WS Session',
-        siteAreaSqm: totalArea * 1.5,
-        landUse: 'mixed_use',
-        currentGfaSqm: totalArea,
+        name: zoneCode,
+        siteAddress: zoneCode,
+        siteAreaSqm,
+        landUse: zoneCode,
+        targetGrossFloorAreaSqm: totalArea,
         buildEnvelope: {
-          siteAreaSqm: totalArea * 1.5,
+          siteAreaSqm,
           currentGfaSqm: totalArea,
         },
       },
-      selectedRuleIds: ['ura-plot-ratio', 'bca-site-coverage'],
+      selectedRuleIds: [],
     }
 
     wsRef.current.send(JSON.stringify(payload))

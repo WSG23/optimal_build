@@ -1,13 +1,19 @@
-const sampleEvents = [
-  { id: 1, message: 'Camera 12 detected unusual motion', timestamp: '09:20' },
-  { id: 2, message: 'Badge rejected at Loading Dock', timestamp: '09:24' },
-  { id: 3, message: 'Thermal alert triggered in Lab 4', timestamp: '09:32' },
-]
+export interface LiveFeedEvent {
+  id: string | number
+  message: string
+  timestamp: string
+}
 
-export function LiveFeedPanel() {
+export function LiveFeedPanel({ events = [] }: { events?: LiveFeedEvent[] }) {
+  if (events.length === 0) {
+    return (
+      <div className="text-sm text-white/60">No live events available.</div>
+    )
+  }
+
   return (
     <ul className="space-y-3">
-      {sampleEvents.map((event) => (
+      {events.map((event) => (
         <li
           key={event.id}
           className="rounded-md border border-white/10 bg-white/5 p-3"

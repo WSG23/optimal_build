@@ -88,6 +88,10 @@ TAGS_METADATA: Final[list[dict[str, str]]] = [
         "name": "geocoding",
         "description": "Address lookup and reverse geocoding endpoints.",
     },
+    {
+        "name": "security",
+        "description": "Security dashboard feeds for incident monitoring.",
+    },
 ]
 
 _ROUTER_MODULES: Final[tuple[str, ...]] = (
@@ -117,8 +121,8 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "test_users",  # Simple user API for learning
     "users_secure",  # Secure user API with validation
     "users_db",  # Database-backed user API
-    "projects_api",  # Projects CRUD API
-    "singapore_property_api",  # Singapore property with BCA/URA compliance
+    "projects",  # Projects CRUD API
+    "singapore_property",  # Singapore property with BCA/URA compliance
     "market_intelligence",  # Market intelligence analytics API
     "agents",  # Commercial property advisor agent endpoints
     "deals",  # Business performance pipeline endpoints
@@ -133,6 +137,7 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "ai",  # AI services endpoints (Phase 1-4 AI rollout)
     "ai_config",  # AI configuration management endpoints
     "geocoding",  # Address lookup endpoints
+    "security",  # Security dashboard endpoints
 )
 
 

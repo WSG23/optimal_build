@@ -405,7 +405,7 @@ export function RulePackExplanationPanel({
                 </Stack>
 
                 {/* Rules Rows */}
-                <Stack sx={{ gap: 0 }}>
+                <Stack sx={{ gap: '0' }}>
                   {grouped[key].map((rule, index) => {
                     const ruleInfo = getRuleInfo(rule.parameterKey)
                     // Build the rule value string (e.g., "<= 40%")

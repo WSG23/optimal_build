@@ -154,7 +154,7 @@ export function TopUtilityMenu() {
             px: 'var(--ob-space-150)',
             py: 'var(--ob-space-100)',
             bgcolor: alpha(theme.palette.background.paper, 0.6),
-            borderBottom: 1,
+            borderBottom: 'var(--ob-space-100)',
             borderColor: alpha(theme.palette.divider, 0.12),
           }}
         >

@@ -78,16 +78,16 @@ function InspectionCard({
   formatScenarioLabel,
   formatRecordedTimestamp,
 }: InspectionCardProps) {
-  const labelColor = isCurrent ? '#0a84ff' : '#6e6e73'
+  const labelColor = isCurrent ? '#0a84ff' : 'var(--ob-color-text-secondary)'
 
   return (
     <div
       style={{
-        border: '1px solid #e5e5e7',
-        borderRadius: '4px',
-        padding: '1.25rem',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
+        padding: 'var(--ob-space-200)',
         display: 'grid',
-        gap: '0.6rem',
+        gap: 'var(--ob-space-100)',
         background: isCurrent ? '#f0f9ff' : undefined,
       }}
     >
@@ -97,7 +97,7 @@ function InspectionCard({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          gap: '0.5rem',
+          gap: 'var(--ob-space-100)',
           flexWrap: 'wrap',
         }}
       >
@@ -112,7 +112,12 @@ function InspectionCard({
         >
           {label}
         </span>
-        <span style={{ fontSize: '0.8125rem', color: '#6e6e73' }}>
+        <span
+          style={{
+            fontSize: '0.8125rem',
+            color: 'var(--ob-color-text-secondary)',
+          }}
+        >
           {formatRecordedTimestamp(entry.recordedAt)}
         </span>
       </div>
@@ -123,7 +128,9 @@ function InspectionCard({
       </strong>
 
       {/* Rating / Score / Risk */}
-      <span style={{ fontSize: '0.9rem', color: '#3a3a3c' }}>
+      <span
+        style={{ fontSize: '0.9rem', color: 'var(--ob-color-bg-elevated)' }}
+      >
         Rating {entry.overallRating} · {entry.overallScore}/100 ·{' '}
         {entry.riskLevel} risk
       </span>
@@ -134,7 +141,7 @@ function InspectionCard({
           style={{
             margin: 0,
             fontSize: '0.875rem',
-            color: '#3a3a3c',
+            color: 'var(--ob-color-bg-elevated)',
             lineHeight: 1.5,
           }}
         >
@@ -147,9 +154,9 @@ function InspectionCard({
         style={{
           display: 'flex',
           flexWrap: 'wrap',
-          gap: '0.6rem',
+          gap: 'var(--ob-space-100)',
           fontSize: '0.78rem',
-          color: '#475569',
+          color: 'var(--ob-color-text-secondary)',
         }}
       >
         <span>
@@ -160,16 +167,16 @@ function InspectionCard({
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.3rem',
-            borderRadius: '9999px',
-            padding: '0.15rem 0.6rem',
+            gap: 'var(--ob-space-50)',
+            borderRadius: 'var(--ob-radius-lg)',
+            padding: 'var(--ob-space-50) 0.6rem',
             fontWeight: 600,
             letterSpacing: '0.05em',
             textTransform: 'uppercase',
             background: entry.recordedAt
               ? '#dcfce7'
-              : 'rgba(37, 99, 235, 0.12)',
-            color: entry.recordedAt ? '#166534' : '#1d4ed8',
+              : 'var(--ob-color-action-selected)',
+            color: entry.recordedAt ? '#166534' : 'var(--ob-color-primary)',
           }}
         >
           {entry.recordedAt ? 'Manual inspection' : 'Automated baseline'}
@@ -182,17 +189,22 @@ function InspectionCard({
           <span
             style={{
               display: 'inline-block',
-              marginTop: '0.35rem',
+              marginTop: 'var(--ob-space-50)',
               fontSize: '0.75rem',
               fontWeight: 600,
               textTransform: 'uppercase',
-              color: '#6e6e73',
+              color: 'var(--ob-color-text-secondary)',
               letterSpacing: '0.06em',
             }}
           >
             Attachments
           </span>
-          <ul style={{ margin: '0.3rem 0 0', paddingLeft: '1.2rem' }}>
+          <ul
+            style={{
+              margin: 'var(--ob-space-50) 0 0',
+              paddingLeft: 'var(--ob-space-200)',
+            }}
+          >
             {entry.attachments.map((attachment, index) => (
               <li
                 key={`${isCurrent ? 'latest' : 'previous'}-attachment-${index}`}
@@ -203,7 +215,7 @@ function InspectionCard({
                     href={attachment.url}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ color: '#0a84ff' }}
+                    style={{ color: 'var(--ob-color-primary)' }}
                   >
                     {attachment.label}
                   </a>
@@ -237,22 +249,28 @@ export function HistoryCompareView({
   formatRecordedTimestamp,
 }: HistoryCompareViewProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--ob-space-300)',
+      }}
+    >
       {/* Scenario comparison table (when visible) */}
       {scenarioComparisonVisible && (
         <div ref={scenarioComparisonRef as React.RefObject<HTMLDivElement>}>
           <details
             open
             style={{
-              border: '1px solid #e5e5e7',
-              borderRadius: '4px',
+              border: '1px solid var(--ob-color-border-subtle)',
+              borderRadius: 'var(--ob-radius-sm)',
               background: 'white',
               overflow: 'hidden',
             }}
           >
             <summary
               style={{
-                padding: '0.85rem 1rem',
+                padding: 'var(--ob-space-150) 1rem',
                 fontSize: '0.85rem',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -262,7 +280,12 @@ export function HistoryCompareView({
             >
               Detailed comparison table
             </summary>
-            <div style={{ borderTop: '1px solid #e5e5e7', overflowX: 'auto' }}>
+            <div
+              style={{
+                borderTop: '1px solid var(--ob-color-border-subtle)',
+                overflowX: 'auto',
+              }}
+            >
               <table
                 style={{
                   width: '100%',
@@ -270,7 +293,7 @@ export function HistoryCompareView({
                   minWidth: '960px',
                 }}
               >
-                <thead style={{ background: '#ffffff' }}>
+                <thead style={{ background: 'var(--ob-color-bg-default)' }}>
                   <tr>
                     {[
                       'Scenario',
@@ -287,12 +310,13 @@ export function HistoryCompareView({
                         key={header}
                         style={{
                           textAlign: 'left',
-                          padding: '0.85rem 1rem',
+                          padding: 'var(--ob-space-150) 1rem',
                           fontSize: '0.75rem',
                           letterSpacing: '0.08em',
                           textTransform: 'uppercase',
-                          color: '#6e6e73',
-                          borderBottom: '1px solid #ebebf0',
+                          color: 'var(--ob-color-text-secondary)',
+                          borderBottom:
+                            '1px solid var(--ob-color-border-subtle)',
                         }}
                       >
                         {header}
@@ -305,8 +329,8 @@ export function HistoryCompareView({
                     <tr key={`comparison-table-${row.key}`}>
                       <td
                         style={{
-                          padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
+                          padding: 'var(--ob-space-150) 1rem',
+                          borderBottom: '1px solid var(--ob-color-bg-muted)',
                           whiteSpace: 'nowrap',
                         }}
                       >
@@ -314,14 +338,17 @@ export function HistoryCompareView({
                           style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '0.2rem',
+                            gap: 'var(--ob-space-50)',
                             alignItems: 'flex-start',
                           }}
                         >
                           <span style={{ fontWeight: 600 }}>{row.label}</span>
                           {row.recordedAt && (
                             <span
-                              style={{ fontSize: '0.75rem', color: '#6b7280' }}
+                              style={{
+                                fontSize: '0.75rem',
+                                color: 'var(--ob-color-text-secondary)',
+                              }}
                             >
                               {formatRecordedTimestamp(row.recordedAt)}
                             </span>
@@ -330,9 +357,9 @@ export function HistoryCompareView({
                       </td>
                       <td
                         style={{
-                          padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
-                          color: '#3a3a3c',
+                          padding: 'var(--ob-space-150) 1rem',
+                          borderBottom: '1px solid var(--ob-color-bg-muted)',
+                          color: 'var(--ob-color-bg-elevated)',
                           fontSize: '0.9rem',
                           maxWidth: '220px',
                         }}
@@ -341,9 +368,9 @@ export function HistoryCompareView({
                       </td>
                       <td
                         style={{
-                          padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
-                          color: '#3a3a3c',
+                          padding: 'var(--ob-space-150) 1rem',
+                          borderBottom: '1px solid var(--ob-color-bg-muted)',
+                          color: 'var(--ob-color-bg-elevated)',
                           fontSize: '0.9rem',
                           maxWidth: '220px',
                         }}
@@ -354,10 +381,10 @@ export function HistoryCompareView({
                           <ul
                             style={{
                               margin: 0,
-                              paddingLeft: '1.1rem',
+                              paddingLeft: 'var(--ob-space-200)',
                               display: 'flex',
                               flexDirection: 'column',
-                              gap: '0.2rem',
+                              gap: 'var(--ob-space-50)',
                             }}
                           >
                             {row.quickMetrics.map((metric) => (
@@ -370,9 +397,9 @@ export function HistoryCompareView({
                       </td>
                       <td
                         style={{
-                          padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
-                          color: '#3a3a3c',
+                          padding: 'var(--ob-space-150) 1rem',
+                          borderBottom: '1px solid var(--ob-color-bg-muted)',
+                          color: 'var(--ob-color-bg-elevated)',
                           fontSize: '0.9rem',
                           whiteSpace: 'nowrap',
                         }}
@@ -382,7 +409,7 @@ export function HistoryCompareView({
                             style={{
                               display: 'flex',
                               flexDirection: 'column',
-                              gap: '0.2rem',
+                              gap: 'var(--ob-space-50)',
                             }}
                           >
                             <strong>{row.conditionRating}</strong>
@@ -399,9 +426,9 @@ export function HistoryCompareView({
                       </td>
                       <td
                         style={{
-                          padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
-                          color: '#3a3a3c',
+                          padding: 'var(--ob-space-150) 1rem',
+                          borderBottom: '1px solid var(--ob-color-bg-muted)',
+                          color: 'var(--ob-color-bg-elevated)',
                           fontSize: '0.9rem',
                           whiteSpace: 'nowrap',
                         }}
@@ -416,9 +443,9 @@ export function HistoryCompareView({
                       </td>
                       <td
                         style={{
-                          padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
-                          color: '#3a3a3c',
+                          padding: 'var(--ob-space-150) 1rem',
+                          borderBottom: '1px solid var(--ob-color-bg-muted)',
+                          color: 'var(--ob-color-bg-elevated)',
                           fontSize: '0.9rem',
                           maxWidth: '240px',
                         }}
@@ -436,9 +463,9 @@ export function HistoryCompareView({
                       </td>
                       <td
                         style={{
-                          padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
-                          color: '#3a3a3c',
+                          padding: 'var(--ob-space-150) 1rem',
+                          borderBottom: '1px solid var(--ob-color-bg-muted)',
+                          color: 'var(--ob-color-bg-elevated)',
                           fontSize: '0.9rem',
                           maxWidth: '200px',
                         }}
@@ -447,9 +474,9 @@ export function HistoryCompareView({
                       </td>
                       <td
                         style={{
-                          padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
-                          color: '#3a3a3c',
+                          padding: 'var(--ob-space-150) 1rem',
+                          borderBottom: '1px solid var(--ob-color-bg-muted)',
+                          color: 'var(--ob-color-bg-elevated)',
                           fontSize: '0.9rem',
                           whiteSpace: 'nowrap',
                         }}
@@ -458,9 +485,9 @@ export function HistoryCompareView({
                       </td>
                       <td
                         style={{
-                          padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
-                          color: '#3a3a3c',
+                          padding: 'var(--ob-space-150) 1rem',
+                          borderBottom: '1px solid var(--ob-color-bg-muted)',
+                          color: 'var(--ob-color-bg-elevated)',
                           fontSize: '0.9rem',
                           whiteSpace: 'nowrap',
                         }}
@@ -485,13 +512,13 @@ export function HistoryCompareView({
           {comparisonSummary && (
             <div
               style={{
-                border: '1px solid #e5e5e7',
-                borderRadius: '4px',
-                padding: '1.5rem',
+                border: '1px solid var(--ob-color-border-subtle)',
+                borderRadius: 'var(--ob-radius-sm)',
+                padding: 'var(--ob-space-300)',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.75rem',
-                background: '#f0f9ff',
+                gap: 'var(--ob-space-150)',
+                background: 'var(--ob-color-action-selected)',
               }}
             >
               <div
@@ -500,7 +527,7 @@ export function HistoryCompareView({
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
                   flexWrap: 'wrap',
-                  gap: '0.5rem',
+                  gap: 'var(--ob-space-100)',
                 }}
               >
                 <span
@@ -509,12 +536,17 @@ export function HistoryCompareView({
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
-                    color: '#0a84ff',
+                    color: 'var(--ob-color-primary)',
                   }}
                 >
                   Overall score
                 </span>
-                <span style={{ fontSize: '0.8125rem', color: '#6e6e73' }}>
+                <span
+                  style={{
+                    fontSize: '0.8125rem',
+                    color: 'var(--ob-color-text-secondary)',
+                  }}
+                >
                   {formatRecordedTimestamp(latestAssessmentEntry.recordedAt)}
                 </span>
               </div>
@@ -522,13 +554,18 @@ export function HistoryCompareView({
                 style={{
                   display: 'flex',
                   alignItems: 'baseline',
-                  gap: '0.5rem',
+                  gap: 'var(--ob-space-100)',
                 }}
               >
                 <span style={{ fontSize: '2rem', fontWeight: 700 }}>
                   {latestAssessmentEntry.overallScore}
                 </span>
-                <span style={{ fontSize: '0.85rem', color: '#1d1d1f' }}>
+                <span
+                  style={{
+                    fontSize: '0.85rem',
+                    color: 'var(--ob-color-bg-inverse)',
+                  }}
+                >
                   /100
                 </span>
                 <span
@@ -540,21 +577,33 @@ export function HistoryCompareView({
                         ? '#15803d'
                         : comparisonSummary.scoreDelta < 0
                           ? '#c53030'
-                          : '#6e6e73',
+                          : 'var(--ob-color-text-secondary)',
                   }}
                 >
                   {comparisonSummary.scoreDelta > 0 ? '+' : ''}
                   {comparisonSummary.scoreDelta}
                 </span>
               </div>
-              <p style={{ margin: 0, fontSize: '0.875rem', color: '#3a3a3c' }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '0.875rem',
+                  color: 'var(--ob-color-bg-elevated)',
+                }}
+              >
                 {comparisonSummary.scoreDelta === 0
                   ? 'Overall score held steady vs previous inspection.'
                   : comparisonSummary.scoreDelta > 0
                     ? `Improved by ${comparisonSummary.scoreDelta} points from ${previousAssessmentEntry.overallScore}.`
                     : `Declined by ${Math.abs(comparisonSummary.scoreDelta)} points from ${previousAssessmentEntry.overallScore}.`}
               </p>
-              <p style={{ margin: 0, fontSize: '0.875rem', color: '#3a3a3c' }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '0.875rem',
+                  color: 'var(--ob-color-bg-elevated)',
+                }}
+              >
                 {comparisonSummary.ratingChanged
                   ? `Rating ${
                       comparisonSummary.ratingTrend === 'improved'
@@ -565,7 +614,13 @@ export function HistoryCompareView({
                     } from ${previousAssessmentEntry.overallRating} to ${latestAssessmentEntry.overallRating}.`
                   : 'Rating unchanged from previous inspection.'}
               </p>
-              <p style={{ margin: 0, fontSize: '0.875rem', color: '#3a3a3c' }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '0.875rem',
+                  color: 'var(--ob-color-bg-elevated)',
+                }}
+              >
                 {comparisonSummary.riskChanged
                   ? `Risk level ${
                       comparisonSummary.riskTrend === 'improved'
@@ -583,7 +638,7 @@ export function HistoryCompareView({
           <div
             style={{
               display: 'grid',
-              gap: '1rem',
+              gap: 'var(--ob-space-200)',
               gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             }}
           >
@@ -606,12 +661,12 @@ export function HistoryCompareView({
           {/* System comparison table */}
           <div
             style={{
-              border: '1px solid #e5e5e7',
-              borderRadius: '4px',
-              padding: '1.25rem',
+              border: '1px solid var(--ob-color-border-subtle)',
+              borderRadius: 'var(--ob-radius-sm)',
+              padding: 'var(--ob-space-200)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.75rem',
+              gap: 'var(--ob-space-150)',
             }}
           >
             <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>
@@ -628,7 +683,7 @@ export function HistoryCompareView({
                   fontWeight: 600,
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
-                  color: '#6e6e73',
+                  color: 'var(--ob-color-text-secondary)',
                 }}
               >
                 <span>System</span>
@@ -648,10 +703,10 @@ export function HistoryCompareView({
                       display: 'grid',
                       gridTemplateColumns:
                         'minmax(160px, 2fr) repeat(3, minmax(110px, 1fr))',
-                      gap: '0.4rem',
+                      gap: 'var(--ob-space-100)',
                       alignItems: 'center',
                       fontSize: '0.85rem',
-                      color: '#3a3a3c',
+                      color: 'var(--ob-color-bg-elevated)',
                     }}
                   >
                     <span style={{ fontWeight: 600 }}>{entry.name}</span>
@@ -675,7 +730,7 @@ export function HistoryCompareView({
                               ? '#15803d'
                               : scoreDeltaValue < 0
                                 ? '#c53030'
-                                : '#6e6e73',
+                                : 'var(--ob-color-text-secondary)',
                       }}
                     >
                       {scoreDeltaValue === null
@@ -693,12 +748,12 @@ export function HistoryCompareView({
           {/* Recommended action diff */}
           <div
             style={{
-              border: '1px solid #e5e5e7',
-              borderRadius: '4px',
-              padding: '1.25rem',
+              border: '1px solid var(--ob-color-border-subtle)',
+              borderRadius: 'var(--ob-radius-sm)',
+              padding: 'var(--ob-space-200)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.75rem',
+              gap: 'var(--ob-space-150)',
             }}
           >
             <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>
@@ -707,7 +762,7 @@ export function HistoryCompareView({
             <div
               style={{
                 display: 'grid',
-                gap: '0.75rem',
+                gap: 'var(--ob-space-150)',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
               }}
             >
@@ -718,7 +773,7 @@ export function HistoryCompareView({
                     fontSize: '0.85rem',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    color: '#15803d',
+                    color: 'var(--ob-color-success)',
                   }}
                 >
                   New this cycle
@@ -726,10 +781,10 @@ export function HistoryCompareView({
                 {recommendedActionDiff.newActions.length > 0 ? (
                   <ul
                     style={{
-                      margin: '0.4rem 0 0',
-                      paddingLeft: '1.1rem',
+                      margin: 'var(--ob-space-100) 0 0',
+                      paddingLeft: 'var(--ob-space-200)',
                       fontSize: '0.85rem',
-                      color: '#3a3a3c',
+                      color: 'var(--ob-color-bg-elevated)',
                       lineHeight: 1.4,
                     }}
                   >
@@ -740,9 +795,9 @@ export function HistoryCompareView({
                 ) : (
                   <p
                     style={{
-                      margin: '0.35rem 0 0',
+                      margin: 'var(--ob-space-50) 0 0',
                       fontSize: '0.825rem',
-                      color: '#6e6e73',
+                      color: 'var(--ob-color-text-secondary)',
                     }}
                   >
                     No new actions added.
@@ -765,10 +820,10 @@ export function HistoryCompareView({
                 {recommendedActionDiff.clearedActions.length > 0 ? (
                   <ul
                     style={{
-                      margin: '0.4rem 0 0',
-                      paddingLeft: '1.1rem',
+                      margin: 'var(--ob-space-100) 0 0',
+                      paddingLeft: 'var(--ob-space-200)',
                       fontSize: '0.85rem',
-                      color: '#3a3a3c',
+                      color: 'var(--ob-color-bg-elevated)',
                       lineHeight: 1.4,
                     }}
                   >
@@ -779,9 +834,9 @@ export function HistoryCompareView({
                 ) : (
                   <p
                     style={{
-                      margin: '0.35rem 0 0',
+                      margin: 'var(--ob-space-50) 0 0',
                       fontSize: '0.825rem',
-                      color: '#6e6e73',
+                      color: 'var(--ob-color-text-secondary)',
                     }}
                   >
                     No actions cleared.
@@ -795,19 +850,19 @@ export function HistoryCompareView({
           {scenarioAssessments.length > 0 && (
             <div
               style={{
-                border: '1px solid #e5e5e7',
-                borderRadius: '4px',
+                border: '1px solid var(--ob-color-border-subtle)',
+                borderRadius: 'var(--ob-radius-sm)',
                 overflow: 'hidden',
               }}
             >
               <h4
                 style={{
                   margin: 0,
-                  padding: '1rem 1.25rem',
+                  padding: 'var(--ob-space-200) 1.25rem',
                   fontSize: '0.95rem',
                   fontWeight: 600,
-                  background: '#f5f5f7',
-                  borderBottom: '1px solid #e5e5e7',
+                  background: 'var(--ob-color-bg-muted)',
+                  borderBottom: '1px solid var(--ob-color-border-subtle)',
                 }}
               >
                 Scenario assessments
@@ -834,8 +889,9 @@ export function HistoryCompareView({
                           key={header}
                           style={{
                             textAlign: 'left',
-                            padding: '0.75rem 1rem',
-                            borderBottom: '1px solid #e5e5e7',
+                            padding: 'var(--ob-space-150) 1rem',
+                            borderBottom:
+                              '1px solid var(--ob-color-border-subtle)',
                             fontWeight: 600,
                             fontSize: '0.8rem',
                             letterSpacing: '0.04em',
@@ -854,8 +910,8 @@ export function HistoryCompareView({
                       >
                         <td
                           style={{
-                            padding: '0.75rem 1rem',
-                            borderBottom: '1px solid #f4f4f8',
+                            padding: 'var(--ob-space-150) 1rem',
+                            borderBottom: '1px solid var(--ob-color-bg-muted)',
                             fontWeight: 600,
                           }}
                         >
@@ -863,9 +919,9 @@ export function HistoryCompareView({
                         </td>
                         <td
                           style={{
-                            padding: '0.75rem 1rem',
-                            borderBottom: '1px solid #f4f4f8',
-                            color: '#6e6e73',
+                            padding: 'var(--ob-space-150) 1rem',
+                            borderBottom: '1px solid var(--ob-color-bg-muted)',
+                            color: 'var(--ob-color-text-secondary)',
                             fontSize: '0.85rem',
                           }}
                         >
@@ -873,8 +929,8 @@ export function HistoryCompareView({
                         </td>
                         <td
                           style={{
-                            padding: '0.75rem 1rem',
-                            borderBottom: '1px solid #f4f4f8',
+                            padding: 'var(--ob-space-150) 1rem',
+                            borderBottom: '1px solid var(--ob-color-bg-muted)',
                             fontWeight: 600,
                           }}
                         >
@@ -882,16 +938,16 @@ export function HistoryCompareView({
                         </td>
                         <td
                           style={{
-                            padding: '0.75rem 1rem',
-                            borderBottom: '1px solid #f4f4f8',
+                            padding: 'var(--ob-space-150) 1rem',
+                            borderBottom: '1px solid var(--ob-color-bg-muted)',
                           }}
                         >
                           {assessment.overallScore}/100
                         </td>
                         <td
                           style={{
-                            padding: '0.75rem 1rem',
-                            borderBottom: '1px solid #f4f4f8',
+                            padding: 'var(--ob-space-150) 1rem',
+                            borderBottom: '1px solid var(--ob-color-bg-muted)',
                             textTransform: 'capitalize',
                           }}
                         >
@@ -899,9 +955,9 @@ export function HistoryCompareView({
                         </td>
                         <td
                           style={{
-                            padding: '0.75rem 1rem',
-                            borderBottom: '1px solid #f4f4f8',
-                            color: '#6e6e73',
+                            padding: 'var(--ob-space-150) 1rem',
+                            borderBottom: '1px solid var(--ob-color-bg-muted)',
+                            color: 'var(--ob-color-text-secondary)',
                           }}
                         >
                           {assessment.inspectorName?.trim() || '—'}

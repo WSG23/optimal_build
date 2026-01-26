@@ -59,7 +59,7 @@ export function ScenarioHistorySidebar({
       {history.length === 0 ? (
         <div
           style={{
-            padding: '2rem',
+            padding: 'var(--ob-space-400)',
             textAlign: 'center',
             color: 'var(--ob-color-text-muted)',
           }}
@@ -73,7 +73,7 @@ export function ScenarioHistorySidebar({
               key={item.id}
               disablePadding
               sx={{
-                marginBottom: 1,
+                marginBottom: 'var(--ob-space-100)',
                 background: 'var(--ob-color-bg-surface-secondary)',
                 borderRadius: 'var(--ob-radius-md)',
               }}

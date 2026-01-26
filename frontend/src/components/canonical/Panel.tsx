@@ -96,7 +96,7 @@ export const Panel = forwardRef<HTMLDivElement, PanelProps>(
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              background: 'rgba(0, 0, 0, 0.1)',
+              background: 'var(--ob-color-action-active-light)',
             }}
           >
             <Box>
@@ -118,14 +118,16 @@ export const Panel = forwardRef<HTMLDivElement, PanelProps>(
                   variant="body2"
                   sx={{
                     color: 'var(--ob-color-text-secondary)',
-                    mt: 0.25,
+                    mt: '0',
                   }}
                 >
                   {subtitle}
                 </Typography>
               )}
             </Box>
-            {headerAction && <Box sx={{ ml: 2 }}>{headerAction}</Box>}
+            {headerAction && (
+              <Box sx={{ ml: 'var(--ob-space-200)' }}>{headerAction}</Box>
+            )}
           </Box>
         )}
 

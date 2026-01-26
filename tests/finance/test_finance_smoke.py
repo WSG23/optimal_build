@@ -13,7 +13,7 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
 from app.utils import metrics
-from backend.app.models.projects import Project, ProjectPhase, ProjectType
+from backend.app.models.project import Project, ProjectPhase, ProjectType
 from backend.app.models.rkp import RefCostIndex
 from backend.app.schemas.finance import DscrInputs
 from backend.app.services.finance import calculator

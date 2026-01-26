@@ -146,14 +146,17 @@ export function AdvisoryPage() {
 
   return (
     <Box sx={{ pb: 'var(--ob-space-400)' }}>
-      <Box sx={{ p: 3 }}>
-        <Container maxWidth="xl" sx={{ mt: 3 }}>
+      <Box sx={{ p: 'var(--ob-space-300)' }}>
+        <Container maxWidth="xl" sx={{ mt: 'var(--ob-space-300)' }}>
           {/* Search Section */}
-          <Card variant="glass" sx={{ p: 3, mb: 4 }}>
+          <Card
+            variant="glass"
+            sx={{ p: 'var(--ob-space-300)', mb: 'var(--ob-space-400)' }}
+          >
             <Typography variant="h6" gutterBottom>
               Load property analysis
             </Typography>
-            <Stack direction="row" spacing={2}>
+            <Stack direction="row" spacing="var(--ob-space-200)">
               <TextField
                 fullWidth
                 variant="outlined"
@@ -181,21 +184,25 @@ export function AdvisoryPage() {
               </Button>
             </Stack>
             {error && (
-              <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+              <Typography
+                color="error"
+                variant="body2"
+                sx={{ mt: 'var(--ob-space-100)' }}
+              >
                 {error}
               </Typography>
             )}
           </Card>
 
           {summary && (
-            <Stack spacing={4}>
+            <Stack spacing="var(--ob-space-400)">
               {/* Asset Mix Strategy */}
               <Box>
                 <Stack
                   direction="row"
                   justifyContent="space-between"
                   alignItems="center"
-                  mb={2}
+                  mb="var(--ob-space-200)"
                 >
                   <Typography variant="h5" fontWeight={600}>
                     Asset Mix Strategy
@@ -209,19 +216,19 @@ export function AdvisoryPage() {
                   )}
                 </Stack>
 
-                <Grid container spacing={3}>
+                <Grid container spacing="var(--ob-space-300)">
                   {summary.asset_mix.mix_recommendations.map((segment, idx) => (
                     <Grid item xs={12} md={4} key={idx}>
                       <Card
                         variant="glass"
-                        sx={{ height: '100%', p: 3 }}
+                        sx={{ height: '100%', p: 'var(--ob-space-300)' }}
                         hover="lift"
                       >
                         <Stack
                           direction="row"
                           justifyContent="space-between"
                           alignItems="center"
-                          mb={2}
+                          mb="var(--ob-space-200)"
                         >
                           <Typography variant="h6">{segment.use}</Typography>
                           <Typography variant="h4" color="primary.main">
@@ -238,7 +245,10 @@ export function AdvisoryPage() {
                             {segment.target_gfa_sqm.toLocaleString()} m²
                           </Typography>
                         )}
-                        <Typography variant="body1" sx={{ mt: 2 }}>
+                        <Typography
+                          variant="body1"
+                          sx={{ mt: 'var(--ob-space-200)' }}
+                        >
                           {segment.rationale}
                         </Typography>
                       </Card>
@@ -252,8 +262,12 @@ export function AdvisoryPage() {
                 <Typography variant="h5" fontWeight={600} gutterBottom>
                   Market Positioning
                 </Typography>
-                <Card variant="glass" sx={{ p: 3 }}>
-                  <Stack direction="row" spacing={2} mb={3}>
+                <Card variant="glass" sx={{ p: 'var(--ob-space-300)' }}>
+                  <Stack
+                    direction="row"
+                    spacing="var(--ob-space-200)"
+                    mb="var(--ob-space-300)"
+                  >
                     <Chip
                       label={`Market Tier: ${summary.market_positioning.market_tier}`}
                       color="secondary"
@@ -264,17 +278,17 @@ export function AdvisoryPage() {
                   <Typography variant="h6" gutterBottom>
                     Pricing Guidance
                   </Typography>
-                  <Grid container spacing={2}>
+                  <Grid container spacing="var(--ob-space-200)">
                     {Object.entries(
                       summary.market_positioning.pricing_guidance,
                     ).map(([useType, pricing]) => (
                       <Grid item xs={12} sm={6} md={3} key={useType}>
                         <Box
                           sx={{
-                            p: 2,
+                            p: 'var(--ob-space-200)',
                             border: '1px solid',
                             borderColor: 'divider',
-                            borderRadius: 2,
+                            borderRadius: 'var(--ob-radius-sm)',
                           }}
                         >
                           <Typography
@@ -290,7 +304,7 @@ export function AdvisoryPage() {
                               key={key}
                               direction="row"
                               justifyContent="space-between"
-                              mb={0.5}
+                              mb="var(--ob-space-50)"
                             >
                               <Typography
                                 variant="caption"
@@ -316,7 +330,11 @@ export function AdvisoryPage() {
                 <Typography variant="h5" fontWeight={600} gutterBottom>
                   Absorption Forecast
                 </Typography>
-                <Grid container spacing={3} mb={3}>
+                <Grid
+                  container
+                  spacing="var(--ob-space-300)"
+                  mb="var(--ob-space-300)"
+                >
                   <Grid item xs={12} sm={4}>
                     <MetricTile
                       label="Time to Stabilize"
@@ -345,8 +363,15 @@ export function AdvisoryPage() {
                   </Grid>
                 </Grid>
 
-                <Card variant="glass" sx={{ p: 3, overflowX: 'auto' }}>
-                  <Stack direction="row" spacing={4} sx={{ minWidth: 600 }}>
+                <Card
+                  variant="glass"
+                  sx={{ p: 'var(--ob-space-300)', overflowX: 'auto' }}
+                >
+                  <Stack
+                    direction="row"
+                    spacing="var(--ob-space-400)"
+                    sx={{ minWidth: 600 }}
+                  >
                     {summary.absorption_forecast.timeline.map(
                       (milestone, idx) => (
                         <Box
@@ -361,7 +386,7 @@ export function AdvisoryPage() {
                             variant="caption"
                             display="block"
                             color="text.secondary"
-                            mb={1}
+                            mb="var(--ob-space-100)"
                           >
                             M{milestone.month}
                           </Typography>
@@ -372,7 +397,7 @@ export function AdvisoryPage() {
                               borderRadius: '50%',
                               bgcolor: 'primary.main',
                               mx: 'auto',
-                              mb: 1,
+                              mb: 'var(--ob-space-100)',
                             }}
                           />
                           <Typography variant="subtitle2" gutterBottom>
@@ -397,7 +422,7 @@ export function AdvisoryPage() {
                   direction="row"
                   justifyContent="space-between"
                   alignItems="center"
-                  mb={2}
+                  mb="var(--ob-space-200)"
                 >
                   <Box>
                     <Typography variant="h5" fontWeight={600}>
@@ -424,11 +449,11 @@ export function AdvisoryPage() {
                   </Button>
                 </Stack>
 
-                <Card variant="glass" sx={{ p: 3 }}>
-                  <Grid container spacing={3}>
+                <Card variant="glass" sx={{ p: 'var(--ob-space-300)' }}>
+                  <Grid container spacing="var(--ob-space-300)">
                     {/* Inputs */}
                     <Grid item xs={12} md={3}>
-                      <Stack spacing={2}>
+                      <Stack spacing="var(--ob-space-200)">
                         <TextField
                           select
                           label="Jurisdiction"
@@ -495,8 +520,8 @@ export function AdvisoryPage() {
                         <Typography color="error">{velocityError}</Typography>
                       )}
                       {velocityResult ? (
-                        <Stack spacing={3}>
-                          <Grid container spacing={2}>
+                        <Stack spacing="var(--ob-space-300)">
+                          <Grid container spacing="var(--ob-space-200)">
                             <Grid item xs={4}>
                               <MetricTile
                                 label="Velocity"
@@ -521,7 +546,10 @@ export function AdvisoryPage() {
                           </Grid>
 
                           {velocityResult.risks.length > 0 && (
-                            <Stack direction="row" spacing={1}>
+                            <Stack
+                              direction="row"
+                              spacing="var(--ob-space-100)"
+                            >
                               {velocityResult.risks.map((risk, idx) => (
                                 <Chip
                                   key={idx}
@@ -561,7 +589,7 @@ export function AdvisoryPage() {
                   direction="row"
                   justifyContent="space-between"
                   alignItems="center"
-                  mb={2}
+                  mb="var(--ob-space-200)"
                 >
                   <Typography variant="h5" fontWeight={600}>
                     Market Feedback
@@ -579,14 +607,14 @@ export function AdvisoryPage() {
                   <Card
                     variant="glass"
                     sx={{
-                      p: 3,
-                      mb: 3,
+                      p: 'var(--ob-space-300)',
+                      mb: 'var(--ob-space-300)',
                       border: '1px solid',
                       borderColor: 'primary.main',
                     }}
                   >
                     <form onSubmit={handleSubmitFeedback}>
-                      <Stack spacing={2}>
+                      <Stack spacing="var(--ob-space-200)">
                         <TextField
                           select
                           label="Sentiment"
@@ -633,9 +661,9 @@ export function AdvisoryPage() {
                   </Card>
                 )}
 
-                <Card variant="glass" sx={{ p: 0 }}>
+                <Card variant="glass" sx={{ p: '0' }}>
                   {summary.feedback.length === 0 ? (
-                    <Box p={4} textAlign="center">
+                    <Box p="var(--ob-space-400)" textAlign="center">
                       <Typography color="text.secondary">
                         No feedback recorded yet
                       </Typography>
@@ -643,11 +671,11 @@ export function AdvisoryPage() {
                   ) : (
                     <Stack divider={<Divider />}>
                       {summary.feedback.map((item) => (
-                        <Box key={item.id} p={2}>
+                        <Box key={item.id} p="var(--ob-space-200)">
                           <Stack
                             direction="row"
                             justifyContent="space-between"
-                            mb={1}
+                            mb="var(--ob-space-100)"
                           >
                             <Chip
                               label={item.sentiment}
@@ -679,8 +707,15 @@ export function AdvisoryPage() {
 
           {/* Empty State */}
           {!summary && !loading && (
-            <Card variant="glass" sx={{ p: 8, textAlign: 'center', mt: 4 }}>
-              <Typography variant="h1" sx={{ mb: 2 }}>
+            <Card
+              variant="glass"
+              sx={{
+                p: 'var(--ob-space-800)',
+                textAlign: 'center',
+                mt: 'var(--ob-space-400)',
+              }}
+            >
+              <Typography variant="h1" sx={{ mb: 'var(--ob-space-200)' }}>
                 📊
               </Typography>
               <Typography variant="h5" gutterBottom>

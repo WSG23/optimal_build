@@ -185,7 +185,7 @@ async def create_change_of_use_application(
     Automatically determines if DC amendment or planning permission is required.
     Accepts project_id as UUID string or integer string.
     """
-    from app.models.projects import Project
+    from app.models.project import Project
 
     normalized_project_id = normalise_project_id(data.project_id)
 
@@ -307,7 +307,7 @@ async def create_heritage_submission(
     Used for conservation projects requiring heritage authority approval.
     Accepts project_id as UUID string or integer string.
     """
-    from app.models.projects import Project
+    from app.models.project import Project
 
     normalized_project_id = normalise_project_id(data.project_id)
 

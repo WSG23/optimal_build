@@ -87,19 +87,29 @@ export function MarketingPage() {
   }
 
   return (
-    <Box sx={{ p: 4, maxWidth: 'var(--ob-max-width-content)', mx: 'auto' }}>
-      <Box sx={{ mb: 4 }}>
+    <Box
+      sx={{
+        p: 'var(--ob-space-400)',
+        maxWidth: 'var(--ob-max-width-content)',
+        mx: 'auto',
+      }}
+    >
+      <Box sx={{ mb: 'var(--ob-space-400)' }}>
         <Typography variant="h1">Marketing Packs</Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          sx={{ mt: 'var(--ob-space-100)' }}
+        >
           Professional materials for investors and stakeholders
         </Typography>
       </Box>
 
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h2" sx={{ mb: 2 }}>
+      <Box sx={{ mb: 'var(--ob-space-400)' }}>
+        <Typography variant="h2" sx={{ mb: 'var(--ob-space-200)' }}>
           Choose a template
         </Typography>
-        <Grid container spacing={2}>
+        <Grid container spacing="var(--ob-space-200)">
           {PACK_TYPES.map((pack) => {
             const isSelected = selectedPackType === pack.type
             const isDisabled = isGenerating
@@ -143,8 +153,12 @@ export function MarketingPage() {
                     </Box>
                   )}
 
-                  <Stack spacing={1}>
-                    <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack spacing="var(--ob-space-100)">
+                    <Stack
+                      direction="row"
+                      spacing="var(--ob-space-100)"
+                      alignItems="center"
+                    >
                       <Box
                         component="span"
                         sx={{ fontSize: 'var(--ob-font-size-2xl)' }}
@@ -158,7 +172,7 @@ export function MarketingPage() {
                       {pack.description}
                     </Typography>
 
-                    <Stack direction="row" spacing={2}>
+                    <Stack direction="row" spacing="var(--ob-space-200)">
                       <Typography variant="caption" color="text.secondary">
                         ⏱️ {pack.estimatedTime}
                       </Typography>
@@ -174,12 +188,15 @@ export function MarketingPage() {
         </Grid>
       </Box>
 
-      <Card variant="default" sx={{ p: 'var(--ob-space-200)', mb: 4 }}>
-        <Typography variant="h3" sx={{ mb: 2 }}>
+      <Card
+        variant="default"
+        sx={{ p: 'var(--ob-space-200)', mb: 'var(--ob-space-400)' }}
+      >
+        <Typography variant="h3" sx={{ mb: 'var(--ob-space-200)' }}>
           Generate {selectedPackInfo?.label}
         </Typography>
 
-        <Stack spacing={2}>
+        <Stack spacing="var(--ob-space-200)">
           <Input
             label="Property ID"
             placeholder="Enter property identifier"
@@ -215,7 +232,7 @@ export function MarketingPage() {
         direction="row"
         alignItems="baseline"
         justifyContent="space-between"
-        sx={{ mb: 2 }}
+        sx={{ mb: 'var(--ob-space-200)' }}
       >
         <Typography variant="h2">Library</Typography>
         <Typography variant="body2" color="text.secondary">
@@ -231,7 +248,7 @@ export function MarketingPage() {
           size="md"
         />
       ) : (
-        <Stack spacing={1}>
+        <Stack spacing="var(--ob-space-100)">
           {packs.map((pack, index) => (
             <Card
               key={`${pack.propertyId}-${pack.packType}-${pack.generatedAt}-${index}`}
@@ -252,7 +269,11 @@ export function MarketingPage() {
                 >
                   {formatPackLabel(pack.packType)}
                 </Typography>
-                <Stack direction="row" spacing={1} alignItems="center">
+                <Stack
+                  direction="row"
+                  spacing="var(--ob-space-100)"
+                  alignItems="center"
+                >
                   <Typography
                     variant="caption"
                     sx={{ fontFamily: 'var(--ob-font-family-mono)' }}

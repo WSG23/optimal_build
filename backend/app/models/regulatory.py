@@ -3,16 +3,14 @@ from __future__ import annotations
 import enum
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, List, Optional
-from uuid import UUID, uuid4
+from uuid import UUID as UUIDType, uuid4
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-
-from app.models.base import Base
+from app.models.base import Base, UUID as DBUUID
 
 if TYPE_CHECKING:
-    from app.models.projects import Project
+    from app.models.project import Project
 
 
 class AgencyCode(str, enum.Enum):
@@ -68,9 +66,7 @@ class SubmissionStatus(str, enum.Enum):
 class RegulatoryAgency(Base):
     __tablename__ = "regulatory_agencies"
 
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=uuid4
-    )
+    id: Mapped[UUIDType] = mapped_column(DBUUID(), primary_key=True, default=uuid4)
     # Use String instead of Enum to match VARCHAR column in database
     code: Mapped[str] = mapped_column(
         String,
@@ -101,15 +97,13 @@ class RegulatoryAgency(Base):
 class AuthoritySubmission(Base):
     __tablename__ = "authority_submissions"
 
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=uuid4
-    )
+    id: Mapped[UUIDType] = mapped_column(DBUUID(), primary_key=True, default=uuid4)
 
-    project_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False
+    project_id: Mapped[UUIDType] = mapped_column(
+        DBUUID(), ForeignKey("projects.id"), nullable=False
     )
-    agency_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("regulatory_agencies.id"), nullable=False
+    agency_id: Mapped[UUIDType] = mapped_column(
+        DBUUID(), ForeignKey("regulatory_agencies.id"), nullable=False
     )
 
     submission_type: Mapped[SubmissionType] = mapped_column(
@@ -159,11 +153,9 @@ class AuthoritySubmission(Base):
 class SubmissionDocument(Base):
     __tablename__ = "submission_documents"
 
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=uuid4
-    )
-    submission_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("authority_submissions.id"), nullable=False
+    id: Mapped[UUIDType] = mapped_column(DBUUID(), primary_key=True, default=uuid4)
+    submission_id: Mapped[UUIDType] = mapped_column(
+        DBUUID(), ForeignKey("authority_submissions.id"), nullable=False
     )
 
     document_type: Mapped[str] = mapped_column(String, nullable=False)
@@ -174,8 +166,8 @@ class SubmissionDocument(Base):
     uploaded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
-    uploaded_by_id: Mapped[Optional[UUID]] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    uploaded_by_id: Mapped[Optional[UUIDType]] = mapped_column(
+        DBUUID(), ForeignKey("users.id"), nullable=True
     )
 
     submission: Mapped["AuthoritySubmission"] = relationship(
@@ -189,11 +181,9 @@ class SubmissionDocument(Base):
 class RegulatoryRequirement(Base):
     __tablename__ = "regulatory_requirements"
 
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=uuid4
-    )
-    agency_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("regulatory_agencies.id"), nullable=False
+    id: Mapped[UUIDType] = mapped_column(DBUUID(), primary_key=True, default=uuid4)
+    agency_id: Mapped[UUIDType] = mapped_column(
+        DBUUID(), ForeignKey("regulatory_agencies.id"), nullable=False
     )
     category: Mapped[str] = mapped_column(String, nullable=False)
 
@@ -220,16 +210,14 @@ class AssetCompliancePath(Base):
 
     __tablename__ = "asset_compliance_paths"
 
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=uuid4
-    )
+    id: Mapped[UUIDType] = mapped_column(DBUUID(), primary_key=True, default=uuid4)
     # Use String instead of Enum to match VARCHAR column in database
     asset_type: Mapped[str] = mapped_column(
         String,
         nullable=False,
     )
-    agency_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("regulatory_agencies.id"), nullable=False
+    agency_id: Mapped[UUIDType] = mapped_column(
+        DBUUID(), ForeignKey("regulatory_agencies.id"), nullable=False
     )
     # Use String instead of Enum to match VARCHAR column in database
     submission_type: Mapped[str] = mapped_column(
@@ -254,11 +242,9 @@ class ChangeOfUseApplication(Base):
 
     __tablename__ = "change_of_use_applications"
 
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=uuid4
-    )
-    project_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False
+    id: Mapped[UUIDType] = mapped_column(DBUUID(), primary_key=True, default=uuid4)
+    project_id: Mapped[UUIDType] = mapped_column(
+        DBUUID(), ForeignKey("projects.id"), nullable=False
     )
     current_use: Mapped[AssetType] = mapped_column(
         Enum(AssetType, values_callable=lambda x: [e.value for e in x]),
@@ -306,11 +292,9 @@ class HeritageSubmission(Base):
 
     __tablename__ = "heritage_submissions"
 
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=uuid4
-    )
-    project_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False
+    id: Mapped[UUIDType] = mapped_column(DBUUID(), primary_key=True, default=uuid4)
+    project_id: Mapped[UUIDType] = mapped_column(
+        DBUUID(), ForeignKey("projects.id"), nullable=False
     )
     conservation_status: Mapped[str] = mapped_column(
         String, nullable=False

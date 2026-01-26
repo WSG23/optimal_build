@@ -73,7 +73,7 @@ export function ImmediateActionsGrid({
       <Typography
         variant="h4"
         sx={{
-          m: 0,
+          m: '0',
           // Additional bottom margin for visual separation from cards
           mb: 'var(--ob-space-050)',
           fontSize: 'var(--ob-font-size-sm)',
@@ -86,7 +86,7 @@ export function ImmediateActionsGrid({
         Immediate System Actions
       </Typography>
 
-      <Grid container spacing={1}>
+      <Grid container spacing="var(--ob-space-100)">
         {actions.slice(0, 4).map((action) => (
           <Grid item xs={12} sm={6} key={action.id}>
             <Box
@@ -149,7 +149,7 @@ export function ImmediateActionsGrid({
                     color: 'text.secondary',
                     lineHeight: 1.4,
                     display: '-webkit-box',
-                    WebkitLineClamp: 2,
+                    WebkitLineClamp: 'var(--ob-space-200)',
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
                   }}

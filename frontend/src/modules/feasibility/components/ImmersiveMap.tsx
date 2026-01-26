@@ -71,7 +71,7 @@ export function ImmersiveMap({
                 100% { transform: scale(1.15) translateX(-3%) translateY(-2%); }
               }
               @keyframes pulseGlow {
-                0%, 100% { box-shadow: 0 0 40px rgba(6, 182, 212, 0.3), 0 0 80px rgba(59, 130, 246, 0.2); }
+                0%, 100% { box-shadow: 0 0 40px var(--ob-color-neon-cyan-muted), 0 0 80px var(--ob-color-action-selected); }
                 50% { box-shadow: 0 0 60px rgba(6, 182, 212, 0.5), 0 0 120px rgba(59, 130, 246, 0.3); }
               }
               @keyframes floatUp {
@@ -115,13 +115,13 @@ export function ImmersiveMap({
             sx={{
               background: 'rgba(15, 23, 42, 0.85)',
               backdropFilter: 'blur(var(--ob-blur-lg))',
-              border: '1px solid rgba(6, 182, 212, 0.3)',
-              borderRadius: '4px',
+              border: '1px solid var(--ob-color-neon-cyan-muted)',
+              borderRadius: 'var(--ob-radius-sm)',
               padding: '48px 64px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '24px',
+              gap: 'var(--ob-space-300)',
               maxWidth: '500px',
               animation:
                 'floatUp 4s ease-in-out infinite, pulseGlow 3s ease-in-out infinite',
@@ -135,7 +135,7 @@ export function ImmersiveMap({
                 height: '80px',
                 borderRadius: '50%',
                 background:
-                  'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2))',
+                  'linear-gradient(135deg, var(--ob-color-neon-cyan-muted), var(--ob-color-action-selected))',
                 border: '2px solid rgba(6, 182, 212, 0.4)',
                 display: 'flex',
                 alignItems: 'center',
@@ -184,18 +184,20 @@ export function ImmersiveMap({
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: 'rgba(255,255,255,0.4)' }} />
+                    <SearchIcon
+                      sx={{ color: 'var(--ob-color-text-tertiary)' }}
+                    />
                   </InputAdornment>
                 ),
               }}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  background: 'rgba(255,255,255,0.05)',
-                  borderRadius: '6px',
+                  background: 'var(--ob-color-surface-overlay-light)',
+                  borderRadius: 'var(--ob-radius-md)',
                   color: 'white',
                   fontSize: '1rem',
                   '& fieldset': {
-                    borderColor: 'rgba(255,255,255,0.15)',
+                    borderColor: 'var(--ob-color-action-active)',
                   },
                   '&:hover fieldset': {
                     borderColor: 'rgba(6, 182, 212, 0.5)',
@@ -205,7 +207,7 @@ export function ImmersiveMap({
                   },
                 },
                 '& .MuiInputBase-input::placeholder': {
-                  color: 'rgba(255,255,255,0.4)',
+                  color: 'var(--ob-color-text-tertiary)',
                   opacity: 1,
                 },
               }}
@@ -215,7 +217,7 @@ export function ImmersiveMap({
             <Box
               sx={{
                 display: 'flex',
-                gap: '16px',
+                gap: 'var(--ob-space-200)',
                 flexWrap: 'wrap',
                 justifyContent: 'center',
               }}
@@ -226,9 +228,9 @@ export function ImmersiveMap({
                     key={feature}
                     sx={{
                       padding: '6px 12px',
-                      borderRadius: '4px',
-                      background: 'rgba(6, 182, 212, 0.1)',
-                      border: '1px solid rgba(6, 182, 212, 0.2)',
+                      borderRadius: 'var(--ob-radius-sm)',
+                      background: 'var(--ob-color-action-selected)',
+                      border: '1px solid var(--ob-color-neon-cyan-muted)',
                       color: 'rgba(6, 182, 212, 0.9)',
                       fontSize: '0.75rem',
                       fontWeight: 500,
@@ -249,19 +251,19 @@ export function ImmersiveMap({
       <div
         style={{
           position: 'absolute',
-          top: 0,
+          top: '0',
           left: 0,
           right: 0,
           height: '150px',
           background:
-            'linear-gradient(to bottom, rgba(0,0,0,0.8), transparent)',
+            'linear-gradient(to bottom, var(--ob-color-overlay-backdrop-strong), transparent)',
           pointerEvents: 'none',
         }}
       />
       <div
         style={{
           position: 'absolute',
-          bottom: 0,
+          bottom: '0',
           left: 0,
           right: 0,
           height: '300px',

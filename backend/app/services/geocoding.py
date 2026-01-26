@@ -31,92 +31,22 @@ class GeocodingService(AsyncClientService):
         self.onemap_base_url = "https://www.onemap.gov.sg/api"
         self.google_maps_base_url = "https://maps.googleapis.com/maps/api/geocode/json"
         self.google_maps_api_key = settings.GOOGLE_MAPS_API_KEY
-        self.offline_mode = settings.OFFLINE_MODE
-        if self.offline_mode:
-            logger.info(
-                "Geocoding service running in offline mode; using mock address/amenity data"
-            )
+        try:
+            self.client = httpx.AsyncClient(timeout=30.0)
+        except RuntimeError:  # pragma: no cover - httpx stub unavailable
+            logger.warning("httpx AsyncClient unavailable; geocoding disabled")
             self.client = None
-        else:
-            try:
-                self.client = httpx.AsyncClient(timeout=30.0)
-            except RuntimeError:  # pragma: no cover - httpx stub unavailable
-                logger.warning(
-                    "httpx AsyncClient unavailable; geocoding service will operate in mock mode"
-                )
-                self.client = None
 
-    @staticmethod
-    def _build_mock_address(latitude: float, longitude: float) -> Address:
-        """Return a deterministic fallback address for offline environments."""
-
-        return Address(
-            full_address=f"Mocked Address near ({latitude:.5f}, {longitude:.5f})",
-            street_name="Mock Street",
-            building_name="Mock Building",
-            block_number="000",
-            postal_code="000000",
-            district="D00 - Mock District",
-            country="Singapore",
-        )
-
-    @staticmethod
-    def _mock_amenities(
-        latitude: float = 1.3, longitude: float = 103.85
-    ) -> Dict[str, Any]:
-        """Return canned amenity data when external services are unavailable.
-
-        Includes coordinates offset from the provided location for map display.
-        """
-        return {
-            "mrt_stations": [
-                {
-                    "name": "Mock MRT",
-                    "distance_m": 250,
-                    "latitude": latitude + 0.002,
-                    "longitude": longitude + 0.001,
-                }
-            ],
-            "bus_stops": [
-                {
-                    "name": "Mock Bus Stop",
-                    "distance_m": 120,
-                    "latitude": latitude + 0.001,
-                    "longitude": longitude - 0.001,
-                }
-            ],
-            "schools": [
-                {
-                    "name": "Mock Primary School",
-                    "distance_m": 480,
-                    "latitude": latitude - 0.003,
-                    "longitude": longitude + 0.002,
-                }
-            ],
-            "shopping_malls": [
-                {
-                    "name": "Mock Mall",
-                    "distance_m": 650,
-                    "latitude": latitude + 0.004,
-                    "longitude": longitude - 0.003,
-                }
-            ],
-            "parks": [
-                {
-                    "name": "Mock Park",
-                    "distance_m": 320,
-                    "latitude": latitude - 0.002,
-                    "longitude": longitude + 0.003,
-                }
-            ],
-        }
+    def _require_client(self) -> httpx.AsyncClient:
+        if self.client is None:
+            raise RuntimeError("Geocoding client is unavailable")
+        return self.client
 
     async def reverse_geocode(
         self, latitude: float, longitude: float
     ) -> Optional[Address]:
         """Convert coordinates to address using Google Maps."""
-        if self.offline_mode:
-            return self._build_mock_address(latitude, longitude)
+        self._require_client()
 
         try:
             address = await self._google_reverse_geocode(latitude, longitude)
@@ -134,8 +64,7 @@ class GeocodingService(AsyncClientService):
 
     async def geocode(self, address: str) -> Optional[Tuple[float, float]]:
         """Convert address to coordinates using Google Maps."""
-        if self.offline_mode:
-            return (1.3000, 103.8500)
+        self._require_client()
 
         try:
             result = await self._google_geocode(address)
@@ -152,8 +81,7 @@ class GeocodingService(AsyncClientService):
 
     async def geocode_details(self, address: str) -> Optional[Tuple[float, float, str]]:
         """Return coordinates plus a formatted address for the input."""
-        if self.offline_mode:
-            return (1.3000, 103.8500, address)
+        self._require_client()
 
         result = await self._google_geocode(address)
         if result is None:
@@ -175,13 +103,7 @@ class GeocodingService(AsyncClientService):
             "parks": [],
         }
 
-        if self.offline_mode:
-            logger.warning("Geocoding offline; returning mock amenity list")
-            return self._mock_amenities(latitude, longitude)
-
-        if self.client is None:
-            logger.warning("Geocoding client unavailable; returning empty amenity list")
-            return amenities
+        client = self._require_client()
 
         # OneMap theme queries
         themes = {
@@ -194,7 +116,7 @@ class GeocodingService(AsyncClientService):
 
         for amenity_type, theme in themes.items():
             try:
-                response = await self.client.get(
+                response = await client.get(
                     f"{self.onemap_base_url}/privateapi/themesvc/retrieveTheme",
                     params={
                         "queryName": theme,

@@ -1,6 +1,6 @@
 import { ReactNode } from 'react'
 import { Box, Typography, Stack } from '@mui/material'
-import { YosaiSidebar } from './YosaiSidebar'
+import { OptimalBuildSidebar } from './OptimalBuildSidebar'
 import { useBaseLayoutContext } from '../../app/layout/useBaseLayout'
 import { HeaderUtilityCluster } from './HeaderUtilityCluster'
 import { useRouterController } from '../../router'
@@ -13,11 +13,6 @@ export interface AppShellProps {
   hideSidebar?: boolean
   hideHeader?: boolean
 }
-
-/**
- * @deprecated Use AppShell from './AppShell' instead
- */
-export type YosaiShellProps = AppShellProps
 
 /**
  * AppShell
@@ -53,7 +48,7 @@ export function AppShell({
       }}
     >
       {/* "The Wall" - Sidebar */}
-      {!shouldHideSidebar && <YosaiSidebar />}
+      {!shouldHideSidebar && <OptimalBuildSidebar />}
 
       {/* Main Content Area */}
       <Box
@@ -88,7 +83,7 @@ export function AppShell({
               className="ob-page-header"
               sx={{
                 py: 'var(--ob-space-100)', // 8px vertical - was 16px
-                px: 0, // No extra horizontal padding
+                px: '0', // No extra horizontal padding
                 display: 'flex',
                 alignItems: 'flex-start',
                 justifyContent: 'space-between',
@@ -142,7 +137,4 @@ export function AppShell({
   )
 }
 
-/**
- * @deprecated Use AppShell instead
- */
-export const YosaiShell = AppShell
+export const OptimalBuildShell = AppShell

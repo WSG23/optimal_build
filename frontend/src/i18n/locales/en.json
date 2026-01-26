@@ -505,11 +505,12 @@
     },
     "privacy": {
       "restrictedTitle": "Developer-only workspace",
-      "restrictedBody": "Finance modelling data is restricted to developer or admin roles. Update your API role (X-Role header) to \"developer\" before continuing.",
+      "restrictedBody": "Finance modelling data is restricted to developer or admin roles. Sign in with an approved role or contact your administrator to continue.",
       "roleHint": "Current role: {{role}}",
-      "applyDemoIdentity": "Use demo developer identity",
-      "applyDemoIdentityHint": "Demo finance headers stored. Reload if the data does not appear immediately.",
-      "applyDemoIdentityError": "Unable to store credentials in this browser. Please update localStorage manually.",
+      "roleUnknown": "Current role: unknown",
+      "identityDetected": "Identity headers detected for this session.",
+      "identityMissing": "No identity headers detected yet. Configure your account or sign in to continue.",
+      "emailHint": "User: {{email}}",
       "privateTitle": "Private finance scenario",
       "privateBody": "This scenario is marked as private for the developer team. Share these outputs only with authorised project members."
     },

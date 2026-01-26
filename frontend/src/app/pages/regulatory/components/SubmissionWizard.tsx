@@ -141,7 +141,11 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
     switch (step) {
       case 0: // Select Agency
         return (
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid
+            container
+            spacing="var(--ob-space-200)"
+            sx={{ mt: 'var(--ob-space-100)' }}
+          >
             {AGENCIES.map((agency) => (
               <Grid item xs={12} sm={6} key={agency.code}>
                 <Card
@@ -163,9 +167,16 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
                   >
                     <CardContent>
                       <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          mb: 'var(--ob-space-100)',
+                        }}
                       >
-                        <AgencyIcon color="primary" sx={{ mr: 1 }} />
+                        <AgencyIcon
+                          color="primary"
+                          sx={{ mr: 'var(--ob-space-100)' }}
+                        />
                         <Typography variant="h6">{agency.code}</Typography>
                       </Box>
                       <Typography variant="body2" color="text.secondary">
@@ -174,7 +185,7 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
                       <Typography
                         variant="caption"
                         display="block"
-                        sx={{ mt: 1 }}
+                        sx={{ mt: 'var(--ob-space-100)' }}
                       >
                         {agency.desc}
                       </Typography>
@@ -187,7 +198,14 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
         )
       case 1: // Submission Details
         return (
-          <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Box
+            sx={{
+              mt: 'var(--ob-space-200)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-300)',
+            }}
+          >
             <Typography variant="body1">
               Select the type of application you are submitting to{' '}
               <strong>{selectedAgency}</strong>.
@@ -206,18 +224,30 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
                 ))}
               </Select>
             </FormControl>
-            <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+            <Box
+              sx={{
+                p: 'var(--ob-space-200)',
+                bgcolor: 'background.default',
+                borderRadius: 'var(--ob-radius-sm)',
+              }}
+            >
               <Typography variant="caption" color="text.secondary">
-                Note: This simulation connects to a mock MockCorenet service. No
-                actual data will be sent to government agencies.
+                Submissions are routed through the configured regulatory
+                integration. Ensure credentials are set before submitting.
               </Typography>
             </Box>
           </Box>
         )
       case 2: // Review & Submit
         return (
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <DocIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
+          <Box sx={{ mt: 'var(--ob-space-200)', textAlign: 'center' }}>
+            <DocIcon
+              sx={{
+                fontSize: 60,
+                color: 'text.secondary',
+                mb: 'var(--ob-space-200)',
+              }}
+            />
             <Typography variant="h6" gutterBottom>
               Ready to Submit
             </Typography>
@@ -227,7 +257,7 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
               <strong>{selectedAgency}</strong>.
             </Typography>
             <Typography variant="body2" color="warning.main">
-              Please ensure all required documents (simulated) are attached.
+              Please ensure all required documents are attached.
             </Typography>
           </Box>
         )
@@ -246,7 +276,10 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
     >
       <DialogTitle>New Regulatory Submission</DialogTitle>
       <DialogContent>
-        <Stepper activeStep={activeStep} sx={{ pt: 3, pb: 5 }}>
+        <Stepper
+          activeStep={activeStep}
+          sx={{ pt: 'var(--ob-space-300)', pb: 'var(--ob-space-500)' }}
+        >
           <Step>
             <StepLabel>Select Agency</StepLabel>
           </Step>
@@ -259,7 +292,7 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
         </Stepper>
         {renderStepContent(activeStep)}
       </DialogContent>
-      <DialogActions sx={{ p: 3 }}>
+      <DialogActions sx={{ p: 'var(--ob-space-300)' }}>
         <Button onClick={onClose} disabled={submitting}>
           Cancel
         </Button>

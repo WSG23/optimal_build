@@ -22,7 +22,12 @@ export function ScenarioFAB({
 }: ScenarioFABProps) {
   return (
     <Box
-      sx={{ width: '100%', display: 'flex', justifyContent: 'center', p: 1 }}
+      sx={{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        p: 'var(--ob-space-100)',
+      }}
     >
       <Button
         onClick={onClick}
@@ -43,8 +48,8 @@ export function ScenarioFAB({
           fontWeight: 700,
           fontSize: '1rem',
           textTransform: 'none',
-          py: 1.5,
-          borderRadius: '2px', // Square Cyber-Minimalism: xs for buttons
+          py: 'var(--ob-space-150)',
+          borderRadius: 'var(--ob-radius-xs)', // Square Cyber-Minimalism: xs for buttons
           boxShadow: '0 4px 15px rgba(0, 114, 255, 0.4)',
           position: 'relative',
           overflow: 'hidden',
@@ -58,15 +63,21 @@ export function ScenarioFAB({
             transform: 'translateY(1px)',
           },
           '&.Mui-disabled': {
-            background: 'rgba(255, 255, 255, 0.12)',
-            color: 'rgba(255, 255, 255, 0.3)',
+            background: 'var(--ob-color-action-active)',
+            color: 'var(--ob-color-surface-overlay-strong)',
           },
           // Glow effect animation
           animation: !disabled && !loading ? `${pulse} 2s infinite` : 'none',
         }}
       >
         {loading ? (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-100)',
+            }}
+          >
             <span>Constructing Scenario...</span>
           </Box>
         ) : (

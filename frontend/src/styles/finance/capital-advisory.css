@@ -232,7 +232,7 @@
 
 .advisory {
     display: grid;
-    gap: 1.5rem;
+    gap: var(--ob-space-300);
     grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
     max-width: 1100px;
     margin: 0 auto;
@@ -240,13 +240,13 @@
 }
 
 .advisory__panel {
-    background: #ffffff;
+    background: var(--ob-color-bg-default);
     border-radius: 1.25rem;
     padding: 1.5rem 1.75rem;
-    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 12px 24px var(--ob-color-action-hover-light);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--ob-space-200);
 }
 
 .advisory__table {
@@ -257,7 +257,7 @@
 .advisory__table th,
 .advisory__table td {
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+    border-bottom: 1px solid var(--ob-color-border-subtle);
     text-align: left;
 }
 
@@ -270,19 +270,19 @@
     padding-left: 1.1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: var(--ob-space-50);
 }
 
 .advisory__form {
     display: grid;
-    gap: 0.75rem;
+    gap: var(--ob-space-150);
 }
 
 .advisory__form textarea,
 .advisory__form select {
     width: 100%;
     border-radius: 0.65rem;
-    border: 1px solid rgba(148, 163, 184, 0.45);
+    border: 1px solid var(--ob-color-border-default);
     padding: 0.65rem 0.85rem;
 }
 
@@ -291,14 +291,14 @@
     padding: 0.55rem 1.15rem;
     border-radius: 999px;
     border: none;
-    background: rgba(37, 99, 235, 0.12);
-    color: #1d4ed8;
+    background: var(--ob-color-action-selected);
+    color: var(--ob-color-primary);
     font-weight: 600;
 }
 
 .advisory__error {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--ob-color-error-muted);
+    color: var(--ob-color-error-dark);
     padding: 0.75rem 1rem;
     border-radius: 0.9rem;
     margin-bottom: 1rem;
@@ -307,38 +307,38 @@
 .advisory__loading,
 .advisory__notice,
 .advisory__empty {
-    background: rgba(148, 163, 184, 0.12);
+    background: var(--ob-color-action-hover-light);
     padding: 0.75rem 1rem;
     border-radius: 0.9rem;
 }
 
 .advisory__feedback-meta {
     font-size: 0.85rem;
-    color: #64748b;
+    color: var(--ob-color-text-secondary);
 }
 
 .integrations {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--ob-space-300);
     max-width: 1100px;
     margin: 0 auto;
     width: 100%;
 }
 
 .integrations__panel {
-    background: #ffffff;
+    background: var(--ob-color-bg-default);
     border-radius: 1.25rem;
     padding: 1.5rem 1.75rem;
-    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 12px 24px var(--ob-color-action-hover-light);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--ob-space-200);
 }
 
 .integrations__form {
     display: grid;
-    gap: 0.75rem;
+    gap: var(--ob-space-150);
     max-width: 420px;
 }
 
@@ -346,7 +346,7 @@
     width: 100%;
     padding: 0.6rem 0.85rem;
     border-radius: 0.7rem;
-    border: 1px solid rgba(148, 163, 184, 0.45);
+    border: 1px solid var(--ob-color-border-default);
 }
 
 .integrations__form button,
@@ -355,27 +355,27 @@
     padding: 0.55rem 1.15rem;
     border-radius: 999px;
     border: none;
-    background: rgba(37, 99, 235, 0.12);
-    color: #1d4ed8;
+    background: var(--ob-color-action-selected);
+    color: var(--ob-color-primary);
     font-weight: 600;
 }
 
 .integrations__disconnect {
-    background: rgba(220, 38, 38, 0.12);
-    color: #b91c1c;
+    background: var(--ob-color-error-muted);
+    color: var(--ob-color-error-dark);
 }
 
 .integrations__error {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--ob-color-error-muted);
+    color: var(--ob-color-error-dark);
     padding: 0.75rem 1rem;
     border-radius: 0.9rem;
     margin-bottom: 1rem;
 }
 
 .integrations__message {
-    background: rgba(22, 163, 74, 0.15);
-    color: #166534;
+    background: var(--ob-color-success-muted);
+    color: var(--ob-color-success-dark);
     padding: 0.75rem 1rem;
     border-radius: 0.9rem;
     margin-bottom: 1rem;
@@ -389,17 +389,17 @@
 .integrations__table th,
 .integrations__table td {
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+    border-bottom: 1px solid var(--ob-color-border-subtle);
     text-align: left;
 }
 
 .integrations__empty {
-    background: rgba(148, 163, 184, 0.12);
+    background: var(--ob-color-action-hover-light);
     padding: 0.75rem 1rem;
     border-radius: 0.9rem;
 }
 
 .integrations__hint {
     margin: 0;
-    color: #64748b;
+    color: var(--ob-color-text-secondary);
 }

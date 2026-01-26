@@ -1,6 +1,9 @@
-import { useCallback, useState } from 'react'
-
 import { useTranslation } from '../../../i18n'
+import {
+  resolveDefaultRole,
+  resolveDefaultUserEmail,
+  resolveDefaultUserId,
+} from '../../../api/identity'
 
 interface FinancePrivacyNoticeProps {
   projectName?: string | null
@@ -24,35 +27,6 @@ export function FinancePrivacyNotice({
   )
 }
 
-type IdentityStatus = 'idle' | 'success' | 'error'
-
-function useDemoIdentitySetter(): {
-  status: IdentityStatus
-  apply: () => void
-} {
-  const [status, setStatus] = useState<IdentityStatus>('idle')
-
-  const apply = useCallback(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-    try {
-      window.localStorage.setItem('app:api-role', 'developer')
-      window.localStorage.setItem(
-        'app:api-user-email',
-        'demo-owner@example.com',
-      )
-      window.localStorage.setItem('app:api-user-id', 'developer-owner-401')
-      setStatus('success')
-    } catch (error) {
-      console.warn('[finance] unable to persist demo finance identity', error)
-      setStatus('error')
-    }
-  }, [])
-
-  return { status, apply }
-}
-
 interface FinanceIdentityHelperProps {
   compact?: boolean
 }
@@ -61,7 +35,10 @@ export function FinanceIdentityHelper({
   compact = false,
 }: FinanceIdentityHelperProps) {
   const { t } = useTranslation()
-  const { status, apply } = useDemoIdentitySetter()
+  const role = resolveDefaultRole()
+  const email = resolveDefaultUserEmail()
+  const userId = resolveDefaultUserId()
+  const hasIdentity = Boolean(role || email || userId)
   return (
     <div
       className={
@@ -70,21 +47,19 @@ export function FinanceIdentityHelper({
           : 'finance-identity-helper'
       }
     >
-      <button
-        type="button"
-        className="finance-access-gate__action"
-        onClick={apply}
-      >
-        {t('finance.privacy.applyDemoIdentity')}
-      </button>
-      {status === 'success' && (
-        <p className="finance-access-gate__status" role="status">
-          {t('finance.privacy.applyDemoIdentityHint')}
+      <p className="finance-access-gate__status" role="status">
+        {hasIdentity
+          ? t('finance.privacy.identityDetected')
+          : t('finance.privacy.identityMissing')}
+      </p>
+      {role && (
+        <p className="finance-access-gate__status">
+          {t('finance.privacy.roleHint', { role })}
         </p>
       )}
-      {status === 'error' && (
-        <p className="finance-access-gate__status finance-access-gate__status--error">
-          {t('finance.privacy.applyDemoIdentityError')}
+      {email && (
+        <p className="finance-access-gate__status">
+          {t('finance.privacy.emailHint', { email })}
         </p>
       )}
     </div>
@@ -101,9 +76,10 @@ export function FinanceAccessGate({ role }: FinanceAccessGateProps) {
     <div className="finance-access-gate" role="alert">
       <h3>{t('finance.privacy.restrictedTitle')}</h3>
       <p>{t('finance.privacy.restrictedBody')}</p>
-      <code>localStorage.setItem('app:api-role', 'developer')</code>
       <p className="finance-access-gate__role">
-        {t('finance.privacy.roleHint', { role: role ?? 'unknown' })}
+        {role
+          ? t('finance.privacy.roleHint', { role })
+          : t('finance.privacy.roleUnknown')}
       </p>
       <FinanceIdentityHelper />
     </div>

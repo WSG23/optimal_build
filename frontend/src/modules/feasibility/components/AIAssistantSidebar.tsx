@@ -68,7 +68,7 @@ export function AIAssistantSidebar({
         {/* Header */}
         <div
           style={{
-            padding: '16px',
+            padding: 'var(--ob-space-200)',
             borderBottom: '1px solid var(--ob-color-border-light)',
             display: 'flex',
             alignItems: 'center',
@@ -77,7 +77,13 @@ export function AIAssistantSidebar({
             color: 'white',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-150)',
+            }}
+          >
             <Avatar
               sx={{ bgcolor: 'white', color: 'var(--ob-color-brand-primary)' }}
             >
@@ -103,11 +109,11 @@ export function AIAssistantSidebar({
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '16px',
-            background: '#f5f5f7',
+            padding: 'var(--ob-space-200)',
+            background: 'var(--ob-color-bg-muted)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
+            gap: 'var(--ob-space-200)',
           }}
         >
           {messages.map((msg) => {
@@ -118,7 +124,7 @@ export function AIAssistantSidebar({
                 style={{
                   display: 'flex',
                   justifyContent: isBot ? 'flex-start' : 'flex-end',
-                  marginBottom: '4px',
+                  marginBottom: 'var(--ob-space-50)',
                 }}
               >
                 <div
@@ -130,7 +136,7 @@ export function AIAssistantSidebar({
                       ? 'white'
                       : 'var(--ob-color-brand-primary)',
                     color: isBot ? 'text.primary' : 'white',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                    boxShadow: '0 1px 2px var(--ob-color-action-active-light)',
                     fontSize: '0.9rem',
                     lineHeight: 1.5,
                   }}
@@ -148,13 +154,13 @@ export function AIAssistantSidebar({
                   padding: '12px 16px',
                   borderRadius: '4px 4px 4px 2px',
                   background: 'white',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                  boxShadow: '0 1px 2px var(--ob-color-action-active-light)',
                 }}
               >
                 <div
                   style={{
                     display: 'flex',
-                    gap: '4px',
+                    gap: 'var(--ob-space-50)',
                     alignItems: 'center',
                     height: '14px',
                   }}
@@ -164,7 +170,7 @@ export function AIAssistantSidebar({
                     style={{
                       width: 6,
                       height: 6,
-                      background: '#ccc',
+                      background: 'var(--ob-color-text-tertiary)',
                       borderRadius: '50%',
                       animation: 'pulse 1s infinite',
                     }}
@@ -174,7 +180,7 @@ export function AIAssistantSidebar({
                     style={{
                       width: 6,
                       height: 6,
-                      background: '#ccc',
+                      background: 'var(--ob-color-text-tertiary)',
                       borderRadius: '50%',
                       animation: 'pulse 1s infinite 0.2s',
                     }}
@@ -184,7 +190,7 @@ export function AIAssistantSidebar({
                     style={{
                       width: 6,
                       height: 6,
-                      background: '#ccc',
+                      background: 'var(--ob-color-text-tertiary)',
                       borderRadius: '50%',
                       animation: 'pulse 1s infinite 0.4s',
                     }}
@@ -198,7 +204,7 @@ export function AIAssistantSidebar({
         {/* Input */}
         <div
           style={{
-            padding: '16px',
+            padding: 'var(--ob-space-200)',
             background: 'white',
             borderTop: '1px solid var(--ob-color-border-light)',
           }}
@@ -220,7 +226,7 @@ export function AIAssistantSidebar({
                   <Send />
                 </IconButton>
               ),
-              sx: { borderRadius: '6px' },
+              sx: { borderRadius: 'var(--ob-radius-md)' },
             }}
           />
         </div>

@@ -202,7 +202,7 @@ function ScenarioCard({
               title={
                 !canManage
                   ? t('finance.scenarios.actions.unavailableOffline', {
-                      defaultValue: 'Unavailable offline',
+                      defaultValue: 'Unavailable',
                     })
                   : scenario.isPrimary
                     ? t('finance.scenarios.actions.primary', {
@@ -266,7 +266,7 @@ function ScenarioCard({
               title={
                 !canManage
                   ? t('finance.scenarios.actions.unavailableOffline', {
-                      defaultValue: 'Unavailable offline',
+                      defaultValue: 'Unavailable',
                     })
                   : t('finance.scenarios.actions.delete', {
                       defaultValue: 'Delete scenario',

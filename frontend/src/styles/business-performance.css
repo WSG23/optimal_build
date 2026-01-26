@@ -7,7 +7,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--ob-spacing-500);
-    /* padding removed - YosaiShell provides canonical 16px layout padding */
+    /* padding removed - OptimalBuildShell provides canonical 16px layout padding */
     max-width: 1400px;
     margin: 0 auto;
     font-family: var(--ob-font-family-base);
@@ -546,7 +546,7 @@
 }
 
 .bp-deal-panel__meta {
-    gap: 0.4rem;
+    gap: var(--ob-space-100);
 }
 
 .bp-deal-panel__timeline {
@@ -562,7 +562,7 @@
 .bp-deal-panel__timeline-body {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem;
+    gap: var(--ob-space-100);
     margin-top: 0.35rem;
     color: var(--ob-neutral-600);
 }
@@ -580,9 +580,9 @@
 }
 
 .bp-benchmark-list__item {
-    background: rgba(248, 250, 252, 0.92);
+    background: var(--ob-color-bg-default);
     border-radius: 0.9rem;
-    border: 1px solid rgba(148, 163, 184, 0.18);
+    border: 1px solid var(--ob-color-border-subtle);
     margin-bottom: 0.75rem;
 }
 

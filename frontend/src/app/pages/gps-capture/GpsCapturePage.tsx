@@ -291,7 +291,7 @@ export function GpsCapturePage() {
 
     const map = new google.maps.Map(mapContainerRef.current, {
       center: { lat: initialLat, lng: initialLng },
-      zoom: 16,
+      zoom: 'var(--ob-space-800)',
       tilt: 45, // Add tilt for 3D feel
       styles: darkMapStyle,
       mapTypeControl: false,
@@ -303,9 +303,10 @@ export function GpsCapturePage() {
     pinElement.style.width = '24px'
     pinElement.style.height = '24px'
     pinElement.style.borderRadius = '50%'
-    pinElement.style.backgroundColor = '#3b82f6'
+    pinElement.style.backgroundColor = 'var(--ob-color-primary)'
     pinElement.style.border = '3px solid white'
-    pinElement.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)'
+    pinElement.style.boxShadow =
+      '0 2px 6px var(--ob-color-overlay-backdrop-light)'
     pinElement.style.cursor = 'grab'
 
     // Create draggable marker using AdvancedMarkerElement
@@ -854,11 +855,16 @@ export function GpsCapturePage() {
           <div className="gps-panel">
             <h3>Mission Log</h3>
             {capturedSites.length === 0 ? (
-              <p style={{ fontStyle: 'italic', color: '#94a3b8' }}>
+              <p
+                style={{
+                  fontStyle: 'italic',
+                  color: 'var(--ob-color-text-tertiary)',
+                }}
+              >
                 No prior missions.
               </p>
             ) : (
-              <table style={{ color: '#ccc' }}>
+              <table style={{ color: 'var(--ob-color-text-tertiary)' }}>
                 <thead>
                   <tr>
                     <th>Target</th>

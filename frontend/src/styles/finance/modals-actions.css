@@ -58,7 +58,7 @@
 
 .finance-table__actions-menu button:hover,
 .finance-table__actions-menu button:focus-visible {
-    background: rgba(0, 243, 255, 0.08);
+    background: var(--ob-color-table-row-selected);
     color: var(--ob-color-neon-cyan);
 }
 
@@ -70,7 +70,7 @@
 .finance-modal {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--ob-color-overlay-backdrop);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -120,7 +120,7 @@
 }
 
 .finance-modal__button:hover:not(:disabled) {
-    background: rgba(0, 243, 255, 0.08);
+    background: var(--ob-color-table-row-selected);
     border-color: var(--ob-color-neon-cyan);
 }
 

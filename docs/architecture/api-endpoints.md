@@ -716,7 +716,7 @@ POST /api/v1/singapore-property/calculate/buildable
   "jurisdiction": "SG"
 }
 
-Backend (singapore_property_api.py):
+Backend (singapore_property.py):
 1. Creates BuildableDefaults(site_area_m2=1500, floor_height_m=4.0, efficiency_factor=0.82)
 2. Creates ResolvedZone(zone_code="SG:residential")
 3. Calls calculate_buildable(session, resolved, defaults)

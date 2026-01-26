@@ -137,14 +137,14 @@ export function PropertyLocationMap({
     // Create map with grayscale tiles
     const map = L.map(mapContainerRef.current, {
       center: [lat, lon],
-      zoom: 15,
+      zoom: 'var(--ob-space-800)',
       zoomControl: true,
     })
 
     // Add grayscale tile layer (CartoDB Positron - clean UI style)
     L.tileLayer(CARTO_POSITRON_URL, {
       attribution: CARTO_ATTRIBUTION,
-      maxZoom: 19,
+      maxZoom: 'var(--ob-space-800)',
       subdomains: 'abcd',
     }).addTo(map)
 

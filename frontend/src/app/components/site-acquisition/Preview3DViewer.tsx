@@ -219,7 +219,7 @@ export function Preview3DViewer({
         const ground = new THREE.Mesh(
           new THREE.PlaneGeometry(footprintSpan * 1.6, footprintSpan * 1.6),
           new THREE.MeshStandardMaterial({
-            color: '#e5e7eb',
+            color: 'var(--ob-color-border-subtle)',
             roughness: 0.9,
             metalness: 0.05,
           }),
@@ -369,14 +369,20 @@ export function Preview3DViewer({
     return (
       <div
         style={{
-          border: '1px dashed #d1d5db',
-          borderRadius: '4px',
-          padding: '1.5rem',
+          border: '1px dashed var(--ob-color-border-default)',
+          borderRadius: 'var(--ob-radius-sm)',
+          padding: 'var(--ob-space-300)',
           textAlign: 'center',
-          background: '#f9fafb',
+          background: 'var(--ob-color-bg-muted)',
         }}
       >
-        <p style={{ margin: 0, fontSize: '0.95rem', color: '#6b7280' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: '0.95rem',
+            color: 'var(--ob-color-text-secondary)',
+          }}
+        >
           Preview assets are not ready yet. Status:{' '}
           <strong>{status.toUpperCase()}</strong>
         </p>
@@ -387,10 +393,10 @@ export function Preview3DViewer({
   return (
     <div
       style={{
-        border: '1px solid #e5e7eb',
-        borderRadius: '4px',
-        padding: '1rem',
-        background: '#ffffff',
+        border: '1px solid var(--ob-color-border-subtle)',
+        borderRadius: 'var(--ob-radius-sm)',
+        padding: 'var(--ob-space-200)',
+        background: 'var(--ob-color-bg-default)',
       }}
     >
       <div
@@ -398,27 +404,39 @@ export function Preview3DViewer({
         style={{
           width: '100%',
           height: `${FALLBACK_HEIGHT}px`,
-          borderRadius: '4px',
+          borderRadius: 'var(--ob-radius-sm)',
           overflow: 'hidden',
         }}
       />
       {isLoading && (
         <p
-          style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#6b7280' }}
+          style={{
+            marginTop: 'var(--ob-space-150)',
+            fontSize: '0.9rem',
+            color: 'var(--ob-color-text-secondary)',
+          }}
         >
           Loading preview assets…
         </p>
       )}
       {metadataWarning && !error && (
         <p
-          style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#b45309' }}
+          style={{
+            marginTop: 'var(--ob-space-100)',
+            fontSize: '0.85rem',
+            color: 'var(--ob-color-warning-dark)',
+          }}
         >
           {metadataWarning}
         </p>
       )}
       {error && (
         <p
-          style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#b91c1c' }}
+          style={{
+            marginTop: 'var(--ob-space-150)',
+            fontSize: '0.9rem',
+            color: 'var(--ob-color-error-dark)',
+          }}
         >
           Failed to load preview: {error}
         </p>
@@ -426,13 +444,18 @@ export function Preview3DViewer({
       {!error && !isLoading && thumbnailUrl && (
         <div
           style={{
-            marginTop: '0.75rem',
+            marginTop: 'var(--ob-space-150)',
             display: 'flex',
-            gap: '0.5rem',
+            gap: 'var(--ob-space-100)',
             alignItems: 'center',
           }}
         >
-          <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+          <span
+            style={{
+              fontSize: '0.85rem',
+              color: 'var(--ob-color-text-secondary)',
+            }}
+          >
             Thumbnail:
           </span>
           <img
@@ -441,7 +464,7 @@ export function Preview3DViewer({
             style={{
               width: '64px',
               height: '64px',
-              borderRadius: '4px',
+              borderRadius: 'var(--ob-radius-sm)',
               objectFit: 'cover',
             }}
           />

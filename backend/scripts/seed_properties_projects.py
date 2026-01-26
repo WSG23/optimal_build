@@ -15,7 +15,7 @@ import structlog
 from app.core.database import AsyncSessionLocal, engine
 from app.models.developer_checklists import DeveloperChecklistTemplate
 from app.models.market import YieldBenchmark
-from app.models.projects import ProjectPhase, ProjectType
+from app.models.project import ProjectPhase, ProjectType
 from app.models.property import (
     DevelopmentAnalysis,
     MarketTransaction,

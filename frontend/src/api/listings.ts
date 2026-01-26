@@ -31,6 +31,13 @@ export interface ListingIntegrationAccount {
   updated_at: string
 }
 
+export interface ListingProviderOption {
+  provider: string
+  label: string
+  description?: string
+  brandColor?: string
+}
+
 export interface PublishResult {
   listing_id: string
   provider_payload: Record<string, unknown>
@@ -49,13 +56,48 @@ export async function fetchListingAccounts(signal?: AbortSignal) {
   return (await response.json()) as ListingIntegrationAccount[]
 }
 
-export async function connectMockAccount(provider: string, code: string) {
+export async function fetchListingProviders(
+  signal?: AbortSignal,
+): Promise<ListingProviderOption[]> {
+  const response = await fetch(
+    buildUrl('/api/v1/integrations/listings/providers'),
+    {
+      signal,
+    },
+  )
+  if (!response.ok) {
+    throw new Error('Failed to load listing providers')
+  }
+  const payload = (await response.json()) as Array<Record<string, unknown>>
+  if (!Array.isArray(payload)) {
+    return []
+  }
+  return payload.map((entry) => ({
+    provider: String(entry.provider ?? ''),
+    label: String(entry.label ?? entry.provider ?? ''),
+    description:
+      entry.description != null ? String(entry.description) : undefined,
+    brandColor:
+      entry.brand_color != null ? String(entry.brand_color) : undefined,
+  }))
+}
+
+export async function connectListingAccount(
+  provider: string,
+  code: string,
+  redirectUri?: string,
+) {
+  const computedRedirectUri =
+    redirectUri ?? (typeof window !== 'undefined' ? window.location.origin : '')
   const response = await fetch(
     buildUrl(`/api/v1/integrations/listings/${provider}/connect`),
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ code, redirect_uri: 'http://localhost/callback' }),
+      body: JSON.stringify({
+        code,
+        redirect_uri: computedRedirectUri,
+      }),
     },
   )
   if (!response.ok) {
@@ -65,7 +107,7 @@ export async function connectMockAccount(provider: string, code: string) {
   return (await response.json()) as ListingIntegrationAccount
 }
 
-export async function publishMockListing(
+export async function publishListing(
   provider: string,
   payload: Record<string, unknown>,
 ) {
@@ -84,7 +126,7 @@ export async function publishMockListing(
   return (await response.json()) as PublishResult
 }
 
-export async function disconnectMockAccount(provider: string) {
+export async function disconnectListingAccount(provider: string) {
   const response = await fetch(
     buildUrl(`/api/v1/integrations/listings/${provider}/disconnect`),
     { method: 'POST' },

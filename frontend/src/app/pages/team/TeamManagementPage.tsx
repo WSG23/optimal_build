@@ -275,7 +275,7 @@ export const TeamManagementPage: React.FC = () => {
       {/* Tabs - Direct on Grid */}
       <Box
         sx={{
-          borderBottom: 1,
+          borderBottom: 'var(--ob-space-100)',
           borderColor: 'divider',
           mb: 'var(--ob-space-200)',
         }}

@@ -79,7 +79,7 @@ export function ResultsPanel({
             height: '100%',
             minHeight: '600px',
             overflow: 'hidden',
-            borderRadius: '4px',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           {/* The Blurred Content (Teaser) */}
@@ -89,15 +89,15 @@ export function ResultsPanel({
               opacity: 0.5,
               pointerEvents: 'none',
               display: 'grid',
-              gap: '24px',
+              gap: 'var(--ob-space-300)',
             }}
           >
             {/* Fake Header */}
             <div
               style={{
                 height: '120px',
-                background: '#e5e7eb',
-                borderRadius: '4px',
+                background: 'var(--ob-color-border-subtle)',
+                borderRadius: 'var(--ob-radius-sm)',
               }}
             />
 
@@ -106,21 +106,21 @@ export function ResultsPanel({
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
-                gap: '24px',
+                gap: 'var(--ob-space-300)',
               }}
             >
               <div
                 style={{
                   height: '200px',
-                  background: '#e5e7eb',
-                  borderRadius: '4px',
+                  background: 'var(--ob-color-border-subtle)',
+                  borderRadius: 'var(--ob-radius-sm)',
                 }}
               />
               <div
                 style={{
                   height: '200px',
-                  background: '#e5e7eb',
-                  borderRadius: '4px',
+                  background: 'var(--ob-color-border-subtle)',
+                  borderRadius: 'var(--ob-radius-sm)',
                 }}
               />
             </div>
@@ -128,8 +128,8 @@ export function ResultsPanel({
             <div
               style={{
                 height: '300px',
-                background: '#e5e7eb',
-                borderRadius: '4px',
+                background: 'var(--ob-color-border-subtle)',
+                borderRadius: 'var(--ob-radius-sm)',
               }}
             />
           </div>
@@ -143,9 +143,9 @@ export function ResultsPanel({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'flex-end', // Align to bottom for floating CTA
-              paddingBottom: '48px',
+              paddingBottom: 'var(--ob-space-600)',
               // FIXED: Semi-transparent black with blur
-              background: 'rgba(0,0,0,0.4)',
+              background: 'var(--ob-color-overlay-backdrop)',
               backdropFilter: 'blur(var(--ob-blur-sm))',
               zIndex: 10,
             }}
@@ -166,7 +166,7 @@ export function ResultsPanel({
                   style={{
                     width: '80px',
                     height: '80px',
-                    border: '4px solid #3b82f6',
+                    border: '4px solid var(--ob-color-primary)',
                     borderTopColor: 'transparent',
                     borderRadius: '50%',
                     animation: 'spin 1s linear infinite',
@@ -175,7 +175,7 @@ export function ResultsPanel({
                 <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
                 <h3
                   style={{
-                    marginTop: '24px',
+                    marginTop: 'var(--ob-space-300)',
                     fontSize: '1.25rem',
                     fontWeight: 600,
                     color: 'white',
@@ -183,7 +183,7 @@ export function ResultsPanel({
                 >
                   Analyzing Site Potential...
                 </h3>
-                <p style={{ color: 'rgba(255,255,255,0.7)' }}>
+                <p style={{ color: 'var(--ob-color-text-secondary)' }}>
                   Querying zoning, GFA caps, and market data.
                 </p>
               </div>
@@ -194,13 +194,13 @@ export function ResultsPanel({
                 style={{
                   background: 'rgba(30, 30, 30, 0.6)', // Glassmorphic dark
                   backdropFilter: 'blur(var(--ob-blur-md))',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  border: '1px solid var(--ob-color-surface-overlay)',
                   padding: '24px 32px',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-sm)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '16px',
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+                  gap: 'var(--ob-space-200)',
+                  boxShadow: '0 20px 40px var(--ob-color-overlay-backdrop)',
                   transform: 'translateY(0)',
                   animation: 'float 6s ease-in-out infinite',
                 }}
@@ -253,7 +253,7 @@ export function ResultsPanel({
                   <p
                     style={{
                       margin: '0',
-                      color: 'rgba(255,255,255,0.7)',
+                      color: 'var(--ob-color-text-secondary)',
                       fontSize: '0.875rem',
                     }}
                   >
@@ -321,7 +321,10 @@ export function ResultsPanel({
                 >
                   <span
                     className="text-eyebrow"
-                    style={{ display: 'block', marginBottom: '4px' }}
+                    style={{
+                      display: 'block',
+                      marginBottom: 'var(--ob-space-50)',
+                    }}
                   >
                     OPTIMIZED FOR
                   </span>
@@ -335,11 +338,17 @@ export function ResultsPanel({
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                     }}
+                    data-testid="zone-code"
                   >
                     {result.zoneCode ?? t('wizard.results.zoneUnknown')}
                   </h2>
                   <div
-                    style={{ marginTop: '8px', display: 'flex', gap: '8px' }}
+                    data-testid="overlay-badges"
+                    style={{
+                      marginTop: 'var(--ob-space-100)',
+                      display: 'flex',
+                      gap: 'var(--ob-space-100)',
+                    }}
                   >
                     {result.overlays.map((overlay) => (
                       <span
@@ -348,7 +357,7 @@ export function ResultsPanel({
                           fontSize: '0.7rem',
                           fontWeight: 600,
                           padding: '2px 8px',
-                          borderRadius: '4px',
+                          borderRadius: 'var(--ob-radius-sm)',
                           background: '#EFF6FF',
                           color: '#2563EB',
                           border: '1px solid #BFDBFE',
@@ -369,7 +378,7 @@ export function ResultsPanel({
                     borderRadius: 'var(--ob-radius-lg)',
                     minWidth: '200px',
                     boxShadow:
-                      '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                      '0 10px 15px -3px var(--ob-color-action-active-light), 0 4px 6px -2px var(--ob-color-action-hover-light)',
                   }}
                 >
                   <span
@@ -387,7 +396,7 @@ export function ResultsPanel({
                       fontSize: '2.25rem',
                       fontWeight: 700,
                       lineHeight: 1.1,
-                      marginTop: '4px',
+                      marginTop: 'var(--ob-space-50)',
                     }}
                   >
                     {numberFormatter.format(result.metrics.gfaCapM2)}
@@ -396,7 +405,7 @@ export function ResultsPanel({
                         fontSize: '1rem',
                         fontWeight: 400,
                         opacity: 0.6,
-                        marginLeft: '4px',
+                        marginLeft: 'var(--ob-space-50)',
                       }}
                     >
                       m²

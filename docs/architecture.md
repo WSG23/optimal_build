@@ -143,8 +143,8 @@ ui-admin/src/
 Core:
 ├── users_secure.py       # Authentication & authorization
 ├── users_db.py           # User CRUD operations
-├── projects_api.py       # Project management
-├── singapore_property_api.py  # Singapore property data
+├── projects.py           # Project management
+├── singapore_property.py  # Singapore property data
 
 Finance:
 ├── finance.py            # Financial calculations & scenarios
@@ -205,8 +205,8 @@ Intelligence:
 **Models** (`backend/app/models/`)
 ```
 ✅ Core Models (20+ tables):
-├── users.py              # User authentication & management
-├── projects.py           # Development projects (70+ columns)
+├── user.py               # User authentication & management
+├── project.py            # Development projects (70+ columns)
 ├── property.py           # Property data
 ├── singapore_property.py # Singapore-specific (ComplianceStatus enum)
 ├── preview.py            # Preview jobs (GLTF generation)
@@ -233,27 +233,29 @@ Other:
 ├── rulesets.py           # Rulesets
 ├── imports.py            # Import tracking
 ├── audit.py              # Audit trails
-├── ai_agents.py          # AI agent configurations
+├── ai_agent.py           # AI agent configurations
 ├── rkp.py                # RKP-specific
 └── types.py              # Shared types
 
-📝 Note: Naming convention inconsistent (some plural, some singular)
+📝 Note: Core entity models use singular module names; domain collections retain plural names (imports, rulesets).
 ```
 
 **Schemas** (`backend/app/schemas/`)
 ```
-✅ 15+ schema files following domain structure:
+✅ Schema files follow domain structure (representative list):
 ├── user.py
-├── project.py
 ├── property.py
 ├── market.py
 ├── finance.py
 ├── deals.py              # Business performance schemas
 ├── entitlements.py
-├── audit.py
+├── compliance.py
+├── regulatory.py
 ├── overlay.py
 ├── rulesets.py
-└── ... (10 more)
+└── ... (additional domain schemas)
+
+📝 Note: No standalone project schema; project payloads are embedded in feasibility/finance endpoints.
 ```
 
 **Services** (`backend/app/services/`)
@@ -308,6 +310,8 @@ Agents (11 AI agents - domain-specific):
     ├── universal_site_pack.py            # Site packs
     └── ura_integration.py                # URA integration
 ```
+
+See `docs/agents/agent_catalog.md` for the agent catalog and responsibilities.
 
 **Middleware** (`backend/app/middleware/`)
 ```
@@ -393,15 +397,16 @@ Core:
 ├── users                    # User authentication & management
 ├── projects                 # Development projects (70+ columns)
 ├── properties               # Property data
-├── singapore_property       # Singapore-specific regulatory data
+├── singapore_properties     # Singapore-specific regulatory data
 
 Market:
+├── market_transactions      # Transactional market data
 ├── yield_benchmarks         # Financial yield data
 ├── absorption_tracking      # Market absorption
-├── market_cycle             # Market cycle data
-├── market_index             # Market indices
-├── competitive_set          # Competition data
-├── market_alert             # Market alerts
+├── market_cycles            # Market cycle data
+├── market_indices           # Market indices
+├── competitive_sets         # Competition data
+├── market_alerts            # Market alerts
 
 Finance:
 ├── fin_scenarios            # Finance scenarios

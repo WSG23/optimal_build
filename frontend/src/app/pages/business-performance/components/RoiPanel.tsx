@@ -42,7 +42,7 @@ export function RoiPanel({ summary }: RoiPanelProps) {
         </Typography>
       </Box>
 
-      <Grid container spacing={2} className="bp-roi__grid">
+      <Grid container spacing="var(--ob-space-200)" className="bp-roi__grid">
         <Grid item xs={6} sm={4}>
           <RoiStat
             label="Projects tracked"
@@ -95,12 +95,12 @@ export function RoiPanel({ summary }: RoiPanelProps) {
         </Grid>
       </Grid>
 
-      <Box className="bp-roi__projects" sx={{ mt: 4 }}>
+      <Box className="bp-roi__projects" sx={{ mt: 'var(--ob-space-400)' }}>
         <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
           Project breakdown
         </Typography>
         {summary.projects.length === 0 ? (
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: 'var(--ob-space-200)' }}>
             <ChartPlaceholder
               height={300}
               label="No Projects Tracked"
@@ -122,7 +122,7 @@ export function RoiPanel({ summary }: RoiPanelProps) {
                      Let's add the button below the placeholder or overlay it.
                  */}
             </Box>
-            <Box sx={{ textAlign: 'center', mt: 2 }}>
+            <Box sx={{ textAlign: 'center', mt: 'var(--ob-space-200)' }}>
               <Button
                 variant="contained"
                 color="primary"
@@ -208,14 +208,17 @@ function RoiStat({ label, value, loading }: RoiStatProps) {
           <Skeleton
             width="60%"
             height={40}
-            sx={{ mt: 1, borderRadius: 1 }}
+            sx={{
+              mt: 'var(--ob-space-100)',
+              borderRadius: 'var(--ob-radius-sm)',
+            }}
             animation="wave"
           />
         ) : (
           <Typography
             variant="h4"
             className="bp-roi__stat-value"
-            sx={{ mt: 1, fontWeight: 700 }}
+            sx={{ mt: 'var(--ob-space-100)', fontWeight: 700 }}
           >
             {value}
           </Typography>

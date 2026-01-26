@@ -1,179 +1,97 @@
-"""Stubbed investigation analytics endpoints for the advanced intelligence UI."""
+"""Advanced intelligence analytics endpoints."""
 
 from __future__ import annotations
 
 from typing import Any
 
+import structlog
 from backend._compat.datetime import utcnow  # noqa: I001
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.deps import require_viewer
+from app.services.advanced_intelligence_provider import (
+    AdvancedIntelligenceProviderError,
+    get_advanced_intelligence_provider,
+)
 
 router = APIRouter(prefix="/analytics/intelligence", tags=["advanced-intelligence"])
+logger = structlog.get_logger()
 
 
 def _timestamp() -> str:
-    """Return an ISO-formatted timestamp used by the dummy payloads."""
+    """Return an ISO-formatted timestamp for generated responses."""
 
     return utcnow().isoformat(timespec="seconds") + "Z"
 
 
-def _sample_graph_payload(_: str) -> dict[str, Any]:
-    generated_at = _timestamp()
-    return {
-        "kind": "graph",
-        "status": "ok",
-        "summary": (
-            "Collaboration graph derived from recent investigations. Lead Operations, "
-            "Capital Stack Review, and Legal Counsel show the highest co-occurrence."
-        ),
-        "generatedAt": generated_at,
-        "graph": {
-            "nodes": [
-                {
-                    "id": "lead_ops",
-                    "label": "Lead Operations",
-                    "category": "team",
-                    "score": 0.92,
-                },
-                {
-                    "id": "capital_stack",
-                    "label": "Capital Stack Review",
-                    "category": "workflow",
-                    "score": 0.87,
-                },
-                {
-                    "id": "feasibility",
-                    "label": "Feasibility Analysis",
-                    "category": "workflow",
-                    "score": 0.81,
-                },
-                {
-                    "id": "legal",
-                    "label": "Legal Counsel",
-                    "category": "partner",
-                    "score": 0.76,
-                },
-                {
-                    "id": "compliance",
-                    "label": "Compliance Ops",
-                    "category": "team",
-                    "score": 0.7,
-                },
-            ],
-            "edges": [
-                {
-                    "id": "lead_ops-capital_stack",
-                    "source": "lead_ops",
-                    "target": "capital_stack",
-                    "weight": 0.8,
-                },
-                {
-                    "id": "lead_ops-feasibility",
-                    "source": "lead_ops",
-                    "target": "feasibility",
-                    "weight": 0.7,
-                },
-                {
-                    "id": "capital_stack-legal",
-                    "source": "capital_stack",
-                    "target": "legal",
-                    "weight": 0.6,
-                },
-                {
-                    "id": "feasibility-compliance",
-                    "source": "feasibility",
-                    "target": "compliance",
-                    "weight": 0.5,
-                },
-                {
-                    "id": "legal-compliance",
-                    "source": "legal",
-                    "target": "compliance",
-                    "weight": 0.4,
-                },
-            ],
-        },
-    }
+def _error_payload(kind: str, message: str) -> dict[str, Any]:
+    return {"kind": kind, "status": "error", "error": message}
 
 
-def _sample_predictive_payload(_: str) -> dict[str, Any]:
-    generated_at = _timestamp()
+def _normalize_graph_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    if payload.get("kind") == "graph" and payload.get("status"):
+        return payload
+    if payload.get("status") == "empty":
+        return {"kind": "graph", "status": "empty", "summary": payload.get("summary")}
+    graph = payload.get("graph")
+    if isinstance(graph, dict):
+        nodes = graph.get("nodes") or []
+        edges = graph.get("edges") or []
+        if not isinstance(nodes, list) or not isinstance(edges, list):
+            return _error_payload("graph", "Invalid graph payload from provider.")
+        return {
+            "kind": "graph",
+            "status": "ok",
+            "summary": str(payload.get("summary", "")),
+            "generatedAt": payload.get("generatedAt") or _timestamp(),
+            "graph": {"nodes": nodes, "edges": edges},
+        }
+    return _error_payload("graph", "Advanced intelligence payload missing graph data.")
+
+
+def _normalize_predictive_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    if payload.get("kind") == "predictive" and payload.get("status"):
+        return payload
+    if payload.get("status") == "empty":
+        return {
+            "kind": "predictive",
+            "status": "empty",
+            "summary": payload.get("summary"),
+        }
+    segments = payload.get("segments") or []
+    if not isinstance(segments, list):
+        return _error_payload("predictive", "Invalid predictive payload from provider.")
+    horizon = payload.get("horizonMonths") or payload.get("horizon_months") or 0
     return {
         "kind": "predictive",
         "status": "ok",
-        "summary": (
-            "Predictive models highlight adoption gains when capital alignment and early "
-            "legal review occur within the first two phases."
-        ),
-        "generatedAt": generated_at,
-        "horizonMonths": 6,
-        "segments": [
-            {
-                "segmentId": "ops-champions",
-                "segmentName": "Operations champions",
-                "baseline": 120,
-                "projection": 168,
-                "probability": 0.74,
-            },
-            {
-                "segmentId": "compliance-fastlane",
-                "segmentName": "Compliance fast-lane",
-                "baseline": 90,
-                "projection": 135,
-                "probability": 0.68,
-            },
-            {
-                "segmentId": "legal-momentum",
-                "segmentName": "Early legal engagement",
-                "baseline": 75,
-                "projection": 108,
-                "probability": 0.62,
-            },
-        ],
+        "summary": str(payload.get("summary", "")),
+        "generatedAt": payload.get("generatedAt") or _timestamp(),
+        "horizonMonths": int(horizon) if horizon is not None else 0,
+        "segments": segments,
     }
 
 
-def _sample_correlation_payload(_: str) -> dict[str, Any]:
-    updated_at = _timestamp()
+def _normalize_correlation_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    if payload.get("kind") == "correlation" and payload.get("status"):
+        return payload
+    if payload.get("status") == "empty":
+        return {
+            "kind": "correlation",
+            "status": "empty",
+            "summary": payload.get("summary"),
+        }
+    relationships = payload.get("relationships") or []
+    if not isinstance(relationships, list):
+        return _error_payload(
+            "correlation", "Invalid correlation payload from provider."
+        )
     return {
         "kind": "correlation",
         "status": "ok",
-        "summary": (
-            "Cross correlations show finance readiness and legal cycle time as the key drivers "
-            "for overall approval speed, while logistics planning reduces schedule risk."
-        ),
-        "updatedAt": updated_at,
-        "relationships": [
-            {
-                "pairId": "finance-readiness_approval-speed",
-                "driver": "Finance readiness score",
-                "outcome": "Approval speed (days)",
-                "coefficient": 0.68,
-                "pValue": 0.012,
-            },
-            {
-                "pairId": "legal-latency_iteration-count",
-                "driver": "Legal review latency",
-                "outcome": "Iteration count",
-                "coefficient": -0.54,
-                "pValue": 0.025,
-            },
-            {
-                "pairId": "capital-stack_alignment",
-                "driver": "Capital stack completeness",
-                "outcome": "Stakeholder alignment index",
-                "coefficient": 0.49,
-                "pValue": 0.041,
-            },
-            {
-                "pairId": "logistics_schedule-risk",
-                "driver": "Site logistics score",
-                "outcome": "Schedule risk",
-                "coefficient": -0.37,
-                "pValue": 0.09,
-            },
-        ],
+        "summary": str(payload.get("summary", "")),
+        "updatedAt": payload.get("updatedAt") or _timestamp(),
+        "relationships": relationships,
     }
 
 
@@ -182,9 +100,15 @@ async def graph_intelligence(
     workspace_id: str = Query(..., alias="workspaceId"),
     _: str = Depends(require_viewer),
 ) -> dict[str, Any]:
-    """Return stubbed relationship intelligence for the requested workspace."""
+    """Return relationship intelligence for the requested workspace."""
 
-    return _sample_graph_payload(workspace_id)
+    try:
+        provider = get_advanced_intelligence_provider()
+        payload = await provider.fetch_graph(workspace_id)
+        return _normalize_graph_payload(payload)
+    except AdvancedIntelligenceProviderError as exc:
+        logger.warning("advanced_intelligence.graph_unavailable", error=str(exc))
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
 @router.post("/ingest")
@@ -211,26 +135,28 @@ async def predictive_intelligence(
     query: str = Query(None, description="Optional natural language query"),
     _: str = Depends(require_viewer),
 ) -> dict[str, Any]:
-    """Return predictive analytics. If 'query' is provided, uses RAG agent."""
+    """Return predictive analytics for the requested workspace."""
 
     if query:
         from app.services.intelligence import intelligence_service
 
-        # Use Real AI
         answer = intelligence_service.query_agent(query)
-
         return {
-            "kind": "predictive_agent",
+            "kind": "predictive",
             "status": "ok",
             "summary": answer,
             "generatedAt": _timestamp(),
-            # Keep stubs for UI compatibility
-            "horizonMonths": 6,
+            "horizonMonths": 0,
             "segments": [],
         }
 
-    # Fallback to stub if no query
-    return _sample_predictive_payload(workspace_id)
+    try:
+        provider = get_advanced_intelligence_provider()
+        payload = await provider.fetch_predictive(workspace_id)
+        return _normalize_predictive_payload(payload)
+    except AdvancedIntelligenceProviderError as exc:
+        logger.warning("advanced_intelligence.predictive_unavailable", error=str(exc))
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
 @router.get("/cross-correlation")
@@ -238,6 +164,12 @@ async def cross_correlation_intelligence(
     workspace_id: str = Query(..., alias="workspaceId"),
     _: str = Depends(require_viewer),
 ) -> dict[str, Any]:
-    """Return stubbed cross-correlation analytics for the requested workspace."""
+    """Return cross-correlation analytics for the requested workspace."""
 
-    return _sample_correlation_payload(workspace_id)
+    try:
+        provider = get_advanced_intelligence_provider()
+        payload = await provider.fetch_correlation(workspace_id)
+        return _normalize_correlation_payload(payload)
+    except AdvancedIntelligenceProviderError as exc:
+        logger.warning("advanced_intelligence.correlation_unavailable", error=str(exc))
+        raise HTTPException(status_code=503, detail=str(exc)) from exc

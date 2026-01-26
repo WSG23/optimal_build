@@ -1,5 +1,5 @@
 /**
- * Draft builders for assessment forms and offline checklist data
+ * Draft builders for assessment forms and checklist data
  *
  * Pure functions for constructing draft objects from existing data.
  */
@@ -11,11 +11,7 @@ import type {
   DevelopmentScenario,
 } from '../../../../api/siteAcquisition'
 import type { AssessmentDraftSystem, ConditionAssessmentDraft } from '../types'
-import {
-  DEFAULT_CONDITION_SYSTEMS,
-  OFFLINE_CHECKLIST_TEMPLATES,
-} from '../constants'
-import { DEFAULT_SCENARIO_ORDER } from '../../../../api/siteAcquisition'
+import { DEFAULT_CONDITION_SYSTEMS } from '../constants'
 import { formatDateTimeLocalInput } from './formatters'
 
 // ============================================================================
@@ -80,65 +76,6 @@ export function buildAssessmentDraft(
     recordedAtLocal,
     attachmentsText,
   }
-}
-
-// ============================================================================
-// Offline Checklist Builder
-// ============================================================================
-
-/**
- * Build checklist items from offline templates for given scenarios
- * Used when backend is unavailable or for demo/testing
- */
-export function buildOfflineChecklistItems(
-  propertyId: string,
-  scenarios: DevelopmentScenario[] | null,
-): ChecklistItem[] {
-  const scenarioSet = new Set<DevelopmentScenario>(scenarios ?? [])
-  if (scenarioSet.size === 0) {
-    DEFAULT_SCENARIO_ORDER.forEach((scenario) => scenarioSet.add(scenario))
-  }
-
-  const scenarioRank = new Map(
-    DEFAULT_SCENARIO_ORDER.map((scenario, index) => [scenario, index]),
-  )
-
-  const selectedTemplates = OFFLINE_CHECKLIST_TEMPLATES.filter((template) =>
-    scenarioSet.has(template.developmentScenario),
-  )
-
-  selectedTemplates.sort((a, b) => {
-    const scenarioDiff =
-      (scenarioRank.get(a.developmentScenario) ?? Number.MAX_SAFE_INTEGER) -
-      (scenarioRank.get(b.developmentScenario) ?? Number.MAX_SAFE_INTEGER)
-    if (scenarioDiff !== 0) {
-      return scenarioDiff
-    }
-    const aOrder = a.displayOrder ?? 0
-    const bOrder = b.displayOrder ?? 0
-    return aOrder - bOrder
-  })
-
-  return selectedTemplates.map((template, index) => ({
-    id: `${template.developmentScenario}-${index}-${propertyId}`,
-    propertyId,
-    developmentScenario: template.developmentScenario,
-    category: template.category,
-    itemTitle: template.itemTitle,
-    itemDescription: template.itemDescription,
-    status: 'pending' as const,
-    priority: template.priority,
-    assignedTo: null,
-    dueDate: null,
-    completedAt: null,
-    notes: null,
-    requiresProfessional: template.requiresProfessional,
-    professionalType: template.professionalType ?? null,
-    typicalDurationDays: template.typicalDurationDays ?? null,
-    displayOrder: template.displayOrder,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }))
 }
 
 // ============================================================================

@@ -64,8 +64,8 @@ export function ProjectListPage() {
         direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
         alignItems={{ xs: 'flex-start', sm: 'center' }}
-        spacing={2}
-        sx={{ mb: 3 }}
+        spacing="var(--ob-space-200)"
+        sx={{ mb: 'var(--ob-space-300)' }}
       >
         <Box>
           <Typography variant="h4">Projects</Typography>
@@ -86,7 +86,7 @@ export function ProjectListPage() {
         <Typography color="text.secondary">No projects yet.</Typography>
       )}
 
-      <Grid container spacing={2}>
+      <Grid container spacing="var(--ob-space-200)">
         {projects.map((project) => (
           <Grid item xs={12} md={6} lg={4} key={project.id}>
             <Card variant="outlined">
@@ -123,7 +123,11 @@ export function ProjectListPage() {
             margin="dense"
           />
           {createError && (
-            <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+            <Typography
+              variant="body2"
+              color="error"
+              sx={{ mt: 'var(--ob-space-100)' }}
+            >
               {createError}
             </Typography>
           )}

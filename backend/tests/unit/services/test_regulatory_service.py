@@ -7,7 +7,7 @@ from app.models.regulatory import (
     RegulatoryAgency,
     SubmissionStatus,
 )
-from app.models.projects import Project
+from app.models.project import Project
 from app.services.regulatory_service import RegulatoryService
 from app.schemas.regulatory import AuthoritySubmissionCreate
 

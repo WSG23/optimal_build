@@ -27,7 +27,7 @@ const IsometricIcon = ({
   const baseColor = selected ? '#06b6d4' : 'var(--ob-neutral-500)'
   const highlightColor = selected ? '#22d3ee' : 'var(--ob-neutral-400)'
   const shadowColor = selected
-    ? 'rgba(6, 182, 212, 0.3)'
+    ? 'var(--ob-color-neon-cyan-muted)'
     : 'rgba(100, 116, 139, 0.2)'
   const iconSize = 32
 
@@ -251,7 +251,7 @@ export function GenerativeDesignPanel({
             height: 'var(--ob-size-icon-md)',
             borderRadius: 'var(--ob-radius-sm)',
             background:
-              'linear-gradient(135deg, var(--ob-color-brand-soft), rgba(59, 130, 246, 0.2))',
+              'linear-gradient(135deg, var(--ob-color-brand-soft), var(--ob-color-action-selected))',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -287,14 +287,14 @@ export function GenerativeDesignPanel({
         </div>
       </div>
 
-      <Grid container spacing={1}>
+      <Grid container spacing="var(--ob-space-100)">
         {GENERATIVE_OPTIONS.map((option) => {
           const isSelected = selectedStrategy === option.value
           return (
             <Grid item xs={6} sm={3} key={option.value}>
               <Tooltip
                 title={
-                  <Box sx={{ p: 1 }}>
+                  <Box sx={{ p: 'var(--ob-space-100)' }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                       {option.label}
                     </Typography>
@@ -305,7 +305,7 @@ export function GenerativeDesignPanel({
                       variant="caption"
                       sx={{
                         display: 'block',
-                        mt: 0.5,
+                        mt: 'var(--ob-space-50)',
                         color: 'var(--ob-color-brand-primary)',
                       }}
                     >
@@ -321,7 +321,7 @@ export function GenerativeDesignPanel({
                   sx={{
                     height: '100%',
                     background: isSelected
-                      ? 'linear-gradient(135deg, var(--ob-color-brand-soft), rgba(59, 130, 246, 0.1))'
+                      ? 'linear-gradient(135deg, var(--ob-color-brand-soft), var(--ob-color-action-selected))'
                       : 'var(--ob-color-bg-surface)',
                     borderColor: isSelected
                       ? 'var(--ob-color-brand-primary)'
@@ -395,7 +395,7 @@ export function GenerativeDesignPanel({
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         display: '-webkit-box',
-                        WebkitLineClamp: 2,
+                        WebkitLineClamp: 'var(--ob-space-200)',
                         WebkitBoxOrient: 'vertical',
                       }}
                     >

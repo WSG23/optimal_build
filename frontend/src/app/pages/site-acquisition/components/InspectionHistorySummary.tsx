@@ -80,7 +80,7 @@ export function InspectionHistorySummary({
         <Typography
           variant="h4"
           sx={{
-            m: 0,
+            m: '0',
             fontSize: 'var(--ob-font-size-base)',
             fontWeight: 600,
             color: 'text.primary',
@@ -124,7 +124,7 @@ export function InspectionHistorySummary({
       {error ? (
         <Typography
           sx={{
-            m: 0,
+            m: '0',
             fontSize: 'var(--ob-font-size-sm)',
             color: 'error.main',
           }}
@@ -134,7 +134,7 @@ export function InspectionHistorySummary({
       ) : isLoading ? (
         <Typography
           sx={{
-            m: 0,
+            m: '0',
             fontSize: 'var(--ob-font-size-sm)',
             color: 'text.secondary',
           }}
@@ -232,7 +232,7 @@ export function InspectionHistorySummary({
           </Box>
           <Typography
             sx={{
-              m: 0,
+              m: '0',
               fontSize: 'var(--ob-font-size-xs)',
               color: 'text.secondary',
               lineHeight: 1.4,
@@ -243,7 +243,7 @@ export function InspectionHistorySummary({
           {previousEntry && (
             <Typography
               sx={{
-                m: 0,
+                m: '0',
                 mt: 'var(--ob-space-050)',
                 fontSize: 'var(--ob-font-size-2xs)',
                 color: 'text.secondary',
@@ -266,7 +266,7 @@ export function InspectionHistorySummary({
         >
           <Typography
             sx={{
-              m: 0,
+              m: '0',
               fontSize: 'var(--ob-font-size-sm)',
               color: 'text.secondary',
             }}

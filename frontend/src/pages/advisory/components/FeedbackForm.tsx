@@ -5,7 +5,6 @@ import {
   TextField,
   MenuItem,
   CircularProgress,
-  Avatar,
   Stack,
 } from '@mui/material'
 import { GlassCard } from '../../../components/canonical/GlassCard'
@@ -33,12 +32,12 @@ export function FeedbackForm({
   onSubmit,
 }: FeedbackFormProps) {
   return (
-    <Grid container spacing={4}>
+    <Grid container spacing="var(--ob-space-400)">
       <Grid item xs={12} md={6}>
         <GlassCard className="advisory-panel" sx={{ height: '100%' }}>
           <Box
             sx={{
-              p: 2,
+              p: 'var(--ob-space-200)',
               borderBottom: '1px solid var(--ob-color-border-subtle)',
             }}
           >
@@ -46,7 +45,11 @@ export function FeedbackForm({
               Provide Feedback
             </Typography>
           </Box>
-          <Box sx={{ p: 3 }} component="form" onSubmit={onSubmit}>
+          <Box
+            sx={{ p: 'var(--ob-space-300)' }}
+            component="form"
+            onSubmit={onSubmit}
+          >
             <TextField
               select
               label="Sentiment"
@@ -54,7 +57,7 @@ export function FeedbackForm({
               value={sentiment}
               onChange={(e) => onSentimentChange(e.target.value)}
               disabled={isSubmitting}
-              sx={{ mb: 3 }}
+              sx={{ mb: 'var(--ob-space-300)' }}
               variant="outlined"
             >
               <MenuItem value="positive">Positive</MenuItem>
@@ -71,7 +74,7 @@ export function FeedbackForm({
               onChange={(e) => onNotesChange(e.target.value)}
               disabled={isSubmitting}
               placeholder="Share your thoughts on this advisory plan..."
-              sx={{ mb: 3 }}
+              sx={{ mb: 'var(--ob-space-300)' }}
               variant="outlined"
             />
 
@@ -83,7 +86,11 @@ export function FeedbackForm({
               >
                 {isSubmitting ? (
                   <>
-                    <CircularProgress size={16} sx={{ mr: 1 }} /> Submitting...
+                    <CircularProgress
+                      size={16}
+                      sx={{ mr: 'var(--ob-space-100)' }}
+                    />{' '}
+                    Submitting...
                   </>
                 ) : (
                   'Record Feedback'
@@ -98,7 +105,7 @@ export function FeedbackForm({
         <GlassCard className="advisory-panel" sx={{ height: '100%' }}>
           <Box
             sx={{
-              p: 2,
+              p: 'var(--ob-space-200)',
               borderBottom: '1px solid var(--ob-color-border-subtle)',
             }}
           >
@@ -106,27 +113,29 @@ export function FeedbackForm({
               Recent Activity
             </Typography>
           </Box>
-          <Box sx={{ p: 3, maxHeight: 400, overflowY: 'auto' }}>
+          <Box
+            sx={{ p: 'var(--ob-space-300)', maxHeight: 400, overflowY: 'auto' }}
+          >
             {feedbackHistory.length === 0 ? (
               <Typography
                 sx={{
                   color: 'var(--ob-color-text-muted)',
                   fontStyle: 'italic',
                   textAlign: 'center',
-                  mt: 4,
+                  mt: 'var(--ob-space-400)',
                 }}
               >
                 No feedback recorded yet.
               </Typography>
             ) : (
-              <Stack spacing={2}>
+              <Stack spacing="var(--ob-space-200)">
                 {feedbackHistory.map((item) => (
                   <Box
                     key={item.id}
                     sx={{
-                      p: 2,
+                      p: 'var(--ob-space-200)',
                       borderRadius: 'var(--ob-radius-sm)',
-                      bgcolor: 'rgba(255,255,255,0.03)',
+                      bgcolor: 'var(--ob-color-table-header)',
                       border: '1px solid var(--ob-color-border-subtle)',
                     }}
                   >
@@ -134,7 +143,7 @@ export function FeedbackForm({
                       sx={{
                         display: 'flex',
                         justifyContent: 'space-between',
-                        mb: 1,
+                        mb: 'var(--ob-space-100)',
                       }}
                     >
                       <Typography

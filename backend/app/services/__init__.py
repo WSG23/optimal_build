@@ -1,25 +1,9 @@
 """Service layer exports."""
 
-from . import entitlements  # noqa: F401
-from . import (
-    alerts,
-    buildable,
-    costs,
-    deals,
-    finance,
-    heritage_overlay,
-    ingestion,
-    integrations,
-    normalize,
-    overlay_ingest,
-    products,
-    pwp,
-    reference_parsers,
-    reference_sources,
-    reference_storage,
-    standards,
-    storage,
-)
+from __future__ import annotations
+
+from importlib import import_module
+from typing import Any
 
 __all__ = [
     "alerts",
@@ -41,3 +25,17 @@ __all__ = [
     "standards",
     "storage",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    """Lazily import service modules to avoid eager side effects."""
+
+    if name in __all__:
+        module = import_module(f"{__name__}.{name}")
+        globals()[name] = module
+        return module
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
+def __dir__() -> list[str]:
+    return sorted(list(globals().keys()) + __all__)

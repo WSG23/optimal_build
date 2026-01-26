@@ -191,7 +191,7 @@ export function RelationshipGraph({
         width: width,
         height: height,
         bgcolor: alpha(theme.palette.background.paper, 0.4),
-        borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
+        borderRadius: 'var(--ob-radius-sm)', // Square Cyber-Minimalism: sm for panels
         border: '1px solid',
         borderColor: alpha(theme.palette.divider, 0.1),
         position: 'relative',
@@ -276,7 +276,7 @@ export function RelationshipGraph({
                 fontWeight="500"
                 style={{
                   pointerEvents: 'none',
-                  textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                  textShadow: '0 2px 4px var(--ob-color-overlay-backdrop)',
                 }}
               >
                 {node.label}

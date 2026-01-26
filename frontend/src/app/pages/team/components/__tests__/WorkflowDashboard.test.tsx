@@ -83,13 +83,10 @@ describe('WorkflowDashboard', () => {
     vi.mocked(workflowApi.listWorkflows).mockResolvedValue(mockWorkflows)
     vi.mocked(workflowApi.createWorkflow).mockResolvedValue(mockWorkflows[0])
     vi.mocked(workflowApi.approveStep).mockResolvedValue(true)
-    // Clear localStorage
-    window.localStorage.clear()
   })
 
   afterEach(() => {
     cleanup()
-    window.localStorage.clear()
   })
 
   describe('rendering', () => {
@@ -239,40 +236,6 @@ describe('WorkflowDashboard', () => {
         )
       })
     })
-
-    it('handles mock step approval without API call', async () => {
-      const mockWorkflowWithMockStep: ApprovalWorkflow[] = [
-        {
-          ...mockWorkflows[0],
-          steps: [
-            {
-              id: 'mock-step-1',
-              workflow_id: 'workflow-1',
-              name: 'Mock Step',
-              order: 1,
-              status: 'in_review',
-              approver_role: 'developer',
-            },
-          ],
-        },
-      ]
-      vi.mocked(workflowApi.listWorkflows).mockResolvedValue(
-        mockWorkflowWithMockStep,
-      )
-
-      render(<WorkflowDashboard projectId="project-1" />)
-
-      await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /Approve/i }),
-        ).toBeInTheDocument()
-      })
-
-      fireEvent.click(screen.getByRole('button', { name: /Approve/i }))
-
-      // Should not call API for mock steps
-      expect(workflowApi.approveStep).not.toHaveBeenCalled()
-    })
   })
 
   describe('create workflow dialog', () => {
@@ -304,39 +267,6 @@ describe('WorkflowDashboard', () => {
         expect(
           screen.queryByText(/Create Approval Workflow/i),
         ).not.toBeInTheDocument()
-      })
-    })
-  })
-
-  describe('localStorage persistence', () => {
-    it('persists workflows to localStorage after fetching', async () => {
-      render(<WorkflowDashboard projectId="project-1" />)
-
-      await waitFor(() => {
-        expect(screen.getByText('Design Review Workflow')).toBeInTheDocument()
-      })
-
-      const stored = window.localStorage.getItem('ob_team_workflows:project-1')
-      expect(stored).not.toBeNull()
-      const parsed = JSON.parse(stored!)
-      expect(parsed).toHaveLength(2)
-    })
-
-    it('loads workflows from localStorage when API fails', async () => {
-      // Pre-populate localStorage
-      window.localStorage.setItem(
-        'ob_team_workflows:project-1',
-        JSON.stringify([mockWorkflows[0]]),
-      )
-
-      vi.mocked(workflowApi.listWorkflows).mockRejectedValue(
-        new Error('API Error'),
-      )
-
-      render(<WorkflowDashboard projectId="project-1" />)
-
-      await waitFor(() => {
-        expect(screen.getByText('Design Review Workflow')).toBeInTheDocument()
       })
     })
   })

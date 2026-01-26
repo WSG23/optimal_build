@@ -73,9 +73,9 @@ const statusColors = {
     dot: 'var(--ob-brand-400)',
   },
   live: {
-    bg: 'rgba(0, 243, 255, 0.1)',
+    bg: 'var(--ob-color-action-selected)',
     text: 'var(--ob-color-neon-cyan)',
-    border: 'rgba(0, 243, 255, 0.3)',
+    border: 'var(--ob-color-neon-cyan-muted)',
     dot: 'var(--ob-color-neon-cyan)',
   },
 }

@@ -26,36 +26,6 @@ interface WorkflowDashboardProps {
   projectId: string
 }
 
-const STORAGE_PREFIX = 'ob_team_workflows'
-
-const buildStorageKey = (projectId: string) => `${STORAGE_PREFIX}:${projectId}`
-
-const loadStoredWorkflows = (projectId: string): ApprovalWorkflow[] => {
-  if (typeof window === 'undefined' || !projectId) {
-    return []
-  }
-  const raw = window.localStorage.getItem(buildStorageKey(projectId))
-  if (!raw) {
-    return []
-  }
-  try {
-    const parsed = JSON.parse(raw) as ApprovalWorkflow[]
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
-
-const persistWorkflows = (projectId: string, workflows: ApprovalWorkflow[]) => {
-  if (typeof window === 'undefined' || !projectId) {
-    return
-  }
-  window.localStorage.setItem(
-    buildStorageKey(projectId),
-    JSON.stringify(workflows),
-  )
-}
-
 export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
   projectId,
 }) => {
@@ -66,26 +36,12 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
   // Fetch workflows from API
   const fetchWorkflows = React.useCallback(async () => {
     setLoading(true)
-    const stored = loadStoredWorkflows(projectId)
     try {
       const data = await workflowApi.listWorkflows(projectId)
-      if (data.length > 0) {
-        setWorkflows(data)
-        persistWorkflows(projectId, data)
-        return
-      }
-      if (stored.length > 0) {
-        setWorkflows(stored)
-        return
-      }
-      setWorkflows([])
+      setWorkflows(data)
     } catch (error) {
       console.error('Failed to fetch workflows:', error)
-      if (stored.length > 0) {
-        setWorkflows(stored)
-      } else {
-        setWorkflows([])
-      }
+      setWorkflows([])
     } finally {
       setLoading(false)
     }
@@ -101,33 +57,12 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
         newWorkflow,
         ...prev.filter((workflow) => workflow.id !== newWorkflow.id),
       ]
-      persistWorkflows(projectId, next)
       return next
     })
     setCreateOpen(false)
   }
 
   const handleApproveStep = async (stepId: string) => {
-    // Check if this is a mock step (mock IDs start with 'mock-')
-    if (stepId.startsWith('mock-')) {
-      // Optimistic update for mock data
-      setWorkflows((prev) =>
-        prev.map((w) => ({
-          ...w,
-          steps: w.steps.map((s) =>
-            s.id === stepId
-              ? {
-                  ...s,
-                  status: 'approved' as const,
-                  approved_at: new Date().toISOString(),
-                }
-              : s,
-          ),
-        })),
-      )
-      return
-    }
-
     // Real API call for non-mock steps
     try {
       await workflowApi.approveStep(stepId, true, 'Approved from dashboard')

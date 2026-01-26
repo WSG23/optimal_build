@@ -32,7 +32,7 @@
     align-items: center;
     gap: var(--ob-space-050);
     padding: var(--ob-space-050) var(--ob-space-100);
-    background: rgba(0, 243, 255, 0.1);
+    background: var(--ob-color-action-selected);
     border: 1px solid var(--ob-color-neon-cyan);
     border-radius: var(--ob-radius-xs);
     color: var(--ob-color-neon-cyan);
@@ -43,7 +43,7 @@
 }
 
 .gps-new-capture-btn:hover {
-    background: rgba(0, 243, 255, 0.2);
+    background: var(--ob-color-action-selected-strong);
     box-shadow: var(--ob-glow-neon-cyan);
 }
 
@@ -64,7 +64,7 @@
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
     overflow-x: hidden;
-    background: #000; /* Fallback for map loading */
+    background: var(--ob-color-bg-inverse); /* Fallback for map loading */
 }
 
 /* Full-screen map background */
@@ -88,8 +88,8 @@
     inset: 0;
     background: linear-gradient(
         to bottom,
-        rgba(0, 0, 0, 0.3) 0%,
-        rgba(0, 0, 0, 0.6) 100%
+        var(--ob-color-overlay-backdrop-light) 0%,
+        var(--ob-color-overlay-backdrop-strong) 100%
     );
     pointer-events: none;
 }
@@ -106,8 +106,8 @@
     background: conic-gradient(
         from 0deg,
         transparent 0deg,
-        rgba(0, 229, 255, 0.1) 60deg,
-        rgba(0, 229, 255, 0.3) 360deg
+        var(--ob-color-action-selected) 60deg,
+        var(--ob-color-neon-cyan-muted) 360deg
     );
     border-radius: 50%;
     animation: radar-sweep 4s linear infinite;
@@ -130,7 +130,7 @@
     position: relative;
     z-index: 10;
     pointer-events: none; /* Let clicks pass through to map where no content exists */
-    /* padding removed - YosaiShell provides canonical 16px layout padding */
+    /* padding removed - OptimalBuildShell provides canonical 16px layout padding */
     display: flex;
     flex-direction: column;
     gap: var(--ob-space-250);
@@ -156,16 +156,18 @@
 .capture-card-glass {
     flex: 1;
     max-width: 480px;
-    background: rgba(20, 20, 20, 0.75); /* Darker, high-contrast cockpit feel */
+    background: var(
+        --ob-color-overlay-backdrop-strong
+    ); /* Darker, high-contrast cockpit feel */
     backdrop-filter: blur(var(--ob-blur-xl));
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--ob-color-surface-overlay);
     border-radius: var(--ob-radius-sm);
     padding: var(--ob-space-200);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 32px var(--ob-color-overlay-backdrop);
     display: flex;
     flex-direction: column;
     gap: var(--ob-space-150);
-    color: #fff;
+    color: var(--ob-color-bg-default);
     transition:
         opacity 0.5s ease,
         transform 0.5s ease;
@@ -190,7 +192,7 @@
 
 .capture-card-glass p {
     margin: 0;
-    color: #94a3b8;
+    color: var(--ob-color-text-tertiary);
     font-size: var(--ob-font-size-md);
 }
 
@@ -206,12 +208,12 @@
 /* Floating HUD Card */
 .gps-hud-card {
     width: 100%;
-    background: rgba(20, 20, 20, 0.6);
+    background: var(--ob-color-overlay-backdrop);
     backdrop-filter: blur(var(--ob-blur-md));
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--ob-color-action-hover);
     border-radius: var(--ob-radius-sm);
     padding: var(--ob-space-100) var(--ob-space-125);
-    color: #fff;
+    color: var(--ob-color-bg-default);
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
@@ -227,7 +229,7 @@
     font-size: var(--ob-font-size-sm);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--ob-color-border-default);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -241,7 +243,7 @@
     justify-content: center;
     padding: var(--ob-space-100) 0;
     gap: var(--ob-space-050);
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--ob-color-text-tertiary);
 }
 
 .gps-hud-locked-overlay svg {
@@ -265,10 +267,10 @@
 .gps-input-ghost {
     background: transparent !important;
     border: none !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-bottom: 1px solid var(--ob-color-surface-overlay-medium) !important;
     border-radius: 0 !important;
     padding: 0.75rem 0 !important;
-    color: #fff !important;
+    color: var(--ob-color-bg-default) !important;
     font-size: 1rem !important;
     transition: all 0.3s ease;
     outline: none;
@@ -280,7 +282,7 @@
     background: linear-gradient(
         to bottom,
         transparent,
-        rgba(0, 243, 255, 0.05)
+        var(--ob-color-table-row-hover)
     ) !important;
 }
 
@@ -298,8 +300,8 @@
     justify-content: center;
     gap: var(--ob-space-050);
     padding: var(--ob-space-100) var(--ob-space-050);
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--ob-color-table-header);
+    border: 1px solid var(--ob-color-surface-overlay);
     border-radius: var(--ob-radius-sm);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -307,20 +309,20 @@
 }
 
 .gps-scenario-tile:hover {
-    background: rgba(0, 243, 255, 0.08);
+    background: var(--ob-color-table-row-selected);
     border-color: var(--ob-color-neon-cyan);
     box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .gps-scenario-tile--selected {
-    background: rgba(0, 243, 255, 0.15);
+    background: var(--ob-color-action-selected-strong);
     border: 1px solid var(--ob-color-neon-cyan);
     box-shadow: var(--ob-glow-neon-cyan);
 }
 
 .gps-scenario-tile span {
     font-size: var(--ob-font-size-xs);
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--ob-color-text-secondary);
 }
 
 .gps-scenario-tile--selected span {
@@ -337,10 +339,10 @@
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     background: linear-gradient(
         135deg,
-        #0096cc 0%,
+        var(--ob-color-primary) 0%,
         var(--ob-color-neon-cyan) 100%
     );
-    color: #0a1628;
+    color: var(--ob-color-bg-inverse);
     font-weight: 700;
     font-size: var(--ob-font-size-lg);
     letter-spacing: 0.02em;
@@ -359,7 +361,7 @@
     background: linear-gradient(
         135deg,
         var(--ob-color-neon-cyan) 0%,
-        #0096cc 100%
+        var(--ob-color-primary) 100%
     );
     box-shadow: var(--ob-glow-neon-cyan-strong);
 }
@@ -385,17 +387,17 @@
     justify-content: center;
     gap: var(--ob-space-050);
     padding: var(--ob-space-075);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--ob-color-surface-overlay-light);
+    border: 1px solid var(--ob-color-surface-overlay);
     border-radius: var(--ob-radius-xs);
-    color: #fff;
+    color: var(--ob-color-bg-default);
     font-size: var(--ob-font-size-sm);
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .gps-pack-btn:hover:not(:disabled) {
-    background: rgba(0, 243, 255, 0.08);
+    background: var(--ob-color-table-row-selected);
     border-color: var(--ob-color-neon-cyan);
     box-shadow: var(--ob-glow-neon-cyan);
 }
@@ -406,7 +408,7 @@
     top: var(--ob-space-200);
     left: var(--ob-space-200);
     z-index: 1000;
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--ob-color-overlay-backdrop-strong);
     padding: var(--ob-space-100);
     border-radius: var(--ob-radius-sm);
     color: var(--ob-color-error-500);
@@ -415,8 +417,8 @@
 
 /* Geocode action buttons */
 .gps-geocode-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    background: var(--ob-color-surface-overlay);
+    color: var(--ob-color-bg-default);
     border: none;
     padding: var(--ob-space-050) var(--ob-space-100);
     border-radius: var(--ob-radius-xs);
@@ -426,13 +428,13 @@
 }
 
 .gps-geocode-btn:hover {
-    background: rgba(0, 243, 255, 0.15);
+    background: var(--ob-color-action-selected-strong);
     color: var(--ob-color-neon-cyan);
 }
 
 /* Select ghost styling for dark option text */
 .gps-select-ghost {
-    color: #fff;
+    color: var(--ob-color-bg-default);
     background: transparent;
 }
 
@@ -448,7 +450,7 @@
 
 /* Capture meta styling */
 .gps-capture-meta {
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--ob-color-text-secondary);
 }
 
 /* HUD helper text */
@@ -485,15 +487,15 @@
     align-items: center;
     gap: var(--ob-space-100);
     padding: var(--ob-space-100);
-    background: rgba(0, 243, 255, 0.05);
-    border: 1px solid rgba(0, 243, 255, 0.2);
+    background: var(--ob-color-table-row-hover);
+    border: 1px solid var(--ob-color-action-selected-strong);
     border-radius: var(--ob-radius-sm);
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .gps-developer-mode-toggle:hover {
-    background: rgba(0, 243, 255, 0.1);
+    background: var(--ob-color-action-selected);
     border-color: var(--ob-color-neon-cyan);
 }
 
@@ -505,12 +507,12 @@
 }
 
 .gps-developer-mode-toggle span {
-    color: #fff;
+    color: var(--ob-color-bg-default);
     font-size: var(--ob-font-size-sm);
 }
 
 .gps-developer-mode-hint {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--ob-color-border-default);
     font-size: var(--ob-font-size-xs);
     margin-left: auto;
 }
@@ -527,7 +529,7 @@
 
 .gps-panel__list > li {
     padding: var(--ob-space-075);
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--ob-color-table-header);
     border-radius: var(--ob-radius-xs);
     border-left: 2px solid var(--ob-color-neon-cyan);
 }
@@ -536,7 +538,7 @@
 .gps-panel__headline {
     font-size: var(--ob-font-size-sm);
     font-weight: 600;
-    color: #fff;
+    color: var(--ob-color-bg-default);
     margin-bottom: var(--ob-space-050);
 }
 
@@ -560,7 +562,7 @@
 
 .gps-panel__metrics dt {
     font-size: var(--ob-font-size-2xs);
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--ob-color-border-default);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -569,17 +571,17 @@
     margin: 0;
     font-size: var(--ob-font-size-sm);
     font-weight: 600;
-    color: #fff;
+    color: var(--ob-color-bg-default);
 }
 
 /* Upsell Card */
 .gps-hud-card--upsell {
-    background: rgba(99, 102, 241, 0.1);
-    border-color: rgba(99, 102, 241, 0.3);
+    background: var(--ob-color-action-selected);
+    border-color: var(--ob-color-primary-muted);
 }
 
 .gps-hud-upsell-text {
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--ob-color-text-secondary);
     font-size: var(--ob-font-size-sm);
     margin: var(--ob-space-100) 0;
 }

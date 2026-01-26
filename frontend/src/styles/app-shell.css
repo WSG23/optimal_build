@@ -36,7 +36,7 @@
     }
 
     .app-shell__sidebar {
-        padding: 2rem 1rem;
+        padding: var(--ob-space-400) var(--ob-space-200);
     }
 
     .app-shell__main {
@@ -55,7 +55,7 @@
     padding: 2.5rem 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 2.5rem;
+    gap: var(--ob-space-500);
     z-index: 10;
 }
 
@@ -63,7 +63,7 @@
     display: flex;
     flex-direction: column;
     padding: 2.5rem 3.5rem;
-    gap: 2.5rem;
+    gap: var(--ob-space-500);
     overflow-y: auto; /* Scroll main area */
     height: 100vh;
 }
@@ -73,7 +73,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 1.5rem;
+    gap: var(--ob-space-300);
 }
 
 .app-shell__header h1 {
@@ -104,7 +104,7 @@
 
 .app-shell__actions {
     display: flex;
-    gap: 1rem;
+    gap: var(--ob-space-200);
 }
 
 /* Main content glass card */
@@ -122,13 +122,13 @@
 .app-nav {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: var(--ob-space-400);
 }
 
 .app-nav__header {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
     padding-left: 0.5rem; /* Optical alignment */
 }
 
@@ -152,7 +152,7 @@
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--ob-space-100);
 }
 
 .app-nav__item button {
@@ -164,7 +164,7 @@
     border-radius: var(--ob-radius-lg);
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: var(--ob-space-50);
     color: var(--ob-color-text-secondary);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -181,7 +181,7 @@
     background: linear-gradient(
         90deg,
         var(--ob-color-brand-muted) 0%,
-        rgba(37, 99, 235, 0.05) 100%
+        var(--ob-color-table-row-hover) 100%
     );
     color: var(--ob-color-brand-primary);
     border-color: var(--ob-color-border-brand);

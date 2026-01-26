@@ -157,7 +157,7 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        mb={2}
+        mb="var(--ob-space-200)"
       >
         <Typography variant="h6">Recent Comparables</Typography>
         <Typography variant="caption" color="textSecondary">
@@ -167,7 +167,11 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
       </Box>
 
       {statistics && (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid
+          container
+          spacing="var(--ob-space-200)"
+          sx={{ mb: 'var(--ob-space-300)' }}
+        >
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
@@ -218,8 +222,8 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
         </Grid>
       )}
 
-      <Paper sx={{ width: '100%', mb: 2 }}>
-        <Box sx={{ p: 2 }}>
+      <Paper sx={{ width: '100%', mb: 'var(--ob-space-200)' }}>
+        <Box sx={{ p: 'var(--ob-space-200)' }}>
           <TextField
             fullWidth
             variant="outlined"

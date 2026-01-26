@@ -122,7 +122,7 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        mb={2}
+        mb="var(--ob-space-200)"
       >
         <Typography variant="h6">Supply Pipeline</Typography>
         <Typography variant="caption" color="textSecondary">
@@ -131,7 +131,11 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
       </Box>
 
       {supplyByYear.length > 0 ? (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid
+          container
+          spacing="var(--ob-space-200)"
+          sx={{ mb: 'var(--ob-space-300)' }}
+        >
           {supplyByYear
             .slice(0, 3)
             .map(({ year, totalGFA, totalUnits, projectCount }) => (
@@ -148,7 +152,11 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
                     <Typography variant="h6" gutterBottom>
                       {formatGFA(totalGFA)} sqm
                     </Typography>
-                    <Box display="flex" gap={1} flexWrap="wrap">
+                    <Box
+                      display="flex"
+                      gap="var(--ob-space-100)"
+                      flexWrap="wrap"
+                    >
                       <Chip
                         size="small"
                         label={`${projectCount} projects`}
@@ -168,14 +176,14 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
             ))}
         </Grid>
       ) : (
-        <Paper sx={{ p: 3, mb: 3 }}>
+        <Paper sx={{ p: 'var(--ob-space-300)', mb: 'var(--ob-space-300)' }}>
           <Typography color="textSecondary">
             No pipeline summary is available for the selected filters.
           </Typography>
         </Paper>
       )}
 
-      <Paper sx={{ p: 3 }}>
+      <Paper sx={{ p: 'var(--ob-space-300)' }}>
         <Typography variant="h6" gutterBottom>
           Major Developments
         </Typography>
@@ -219,7 +227,12 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
                             {project.developer}
                           </Typography>
                         )}
-                        <Box display="flex" gap={1} flexWrap="wrap" mb={1}>
+                        <Box
+                          display="flex"
+                          gap="var(--ob-space-100)"
+                          flexWrap="wrap"
+                          mb="var(--ob-space-100)"
+                        >
                           <Chip
                             size="small"
                             label={project.status.replace(/_/g, ' ')}

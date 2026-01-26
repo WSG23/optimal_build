@@ -105,7 +105,7 @@ function CircularGauge({
       <Box
         sx={{
           position: 'absolute',
-          top: 0,
+          top: '0',
           left: 0,
           width: '100%',
           height: '100%',
@@ -155,7 +155,7 @@ export function RoiSummary({
         sx={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: 2,
+          gap: 'var(--ob-space-200)',
           mb: isGlass ? 0 : 4,
         }}
       >
@@ -177,7 +177,14 @@ export function RoiSummary({
   return (
     <Box sx={{ mb: isGlass ? 0 : 6 }}>
       {!isGlass && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--ob-space-200)',
+            mb: 'var(--ob-space-300)',
+          }}
+        >
           <Typography variant="h5" sx={{ fontWeight: 700, color: 'white' }}>
             {t('panels.roiTitle')}
           </Typography>
@@ -187,8 +194,8 @@ export function RoiSummary({
                 background: 'var(--ob-success-muted)',
                 color: 'var(--ob-success-400)',
                 border: '1px solid var(--ob-success-600)',
-                px: 1,
-                py: 0.25,
+                px: 'var(--ob-space-100)',
+                py: '0',
                 borderRadius: 'var(--ob-radius-xs)',
                 fontSize: 'var(--ob-font-size-xs)',
                 fontWeight: 'bold',
@@ -214,7 +221,7 @@ export function RoiSummary({
             xs: '1fr',
             md: isGlass ? 'repeat(4, 140px)' : 'repeat(4, 1fr)',
           }, // Compact width for glass HUD
-          gap: 2,
+          gap: 'var(--ob-space-200)',
         }}
       >
         {/* 1. Automation Score - Gauge */}
@@ -227,7 +234,7 @@ export function RoiSummary({
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
               fontSize: '0.65rem',
-              mb: 1,
+              mb: 'var(--ob-space-100)',
             }}
           >
             {t('pipelines.automationScore')}
@@ -321,7 +328,7 @@ export function RoiSummary({
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
               fontSize: '0.65rem',
-              mb: 1,
+              mb: 'var(--ob-space-100)',
             }}
           >
             {t('pipelines.payback')}
@@ -331,7 +338,7 @@ export function RoiSummary({
               sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                mb: 0.5,
+                mb: 'var(--ob-space-50)',
                 alignItems: 'flex-end',
               }}
             >
@@ -345,7 +352,7 @@ export function RoiSummary({
                     fontSize: 'var(--ob-font-size-sm)',
                     color: 'var(--ob-neutral-400)',
                     fontWeight: 'normal',
-                    marginLeft: '2px',
+                    marginLeft: 'var(--ob-space-50)',
                   }}
                 >
                   w
