@@ -112,12 +112,16 @@ export function DueDiligenceChecklistSection({
             Capture a property to view the comprehensive due diligence checklist
           </p>
           <p className="due-diligence__empty-subtitle">
-            Automatically generated based on selected development scenarios
+            Add checklist templates after saving the capture to a project
           </p>
         </div>
       ) : checklistItems.length === 0 ? (
         <div className="site-acquisition__empty-state">
-          <p>No checklist items found for this property.</p>
+          <p>No checklist items yet for this property.</p>
+          <p className="due-diligence__empty-subtitle">
+            Save the capture as a project and include checklist templates to
+            generate site-specific tasks.
+          </p>
         </div>
       ) : filteredChecklistItems.length === 0 ? (
         <div className="site-acquisition__empty-state">

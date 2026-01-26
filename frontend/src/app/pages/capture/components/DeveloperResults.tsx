@@ -17,6 +17,8 @@
 import { useState, useMemo, useCallback } from 'react'
 import {
   Box,
+  Checkbox,
+  FormControlLabel,
   Typography,
   Select,
   MenuItem,
@@ -90,6 +92,7 @@ export function DeveloperResults({
   const [saveMode, setSaveMode] = useState<'new' | 'existing'>('new')
   const [projectNameInput, setProjectNameInput] = useState('')
   const [existingProjectId, setExistingProjectId] = useState('')
+  const [includeChecklist, setIncludeChecklist] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [savingProject, setSavingProject] = useState(false)
 
@@ -98,6 +101,15 @@ export function DeveloperResults({
     () => new Map(SCENARIO_OPTIONS.map((option) => [option.value, option])),
     [],
   )
+  const checklistScenarios = useMemo(() => {
+    const quickAnalysisScenarios =
+      result.quickAnalysis?.scenarios
+        ?.map((scenario) => scenario.scenario)
+        .filter(Boolean) ?? []
+    return quickAnalysisScenarios.length > 0
+      ? quickAnalysisScenarios
+      : selectedScenarios
+  }, [result.quickAnalysis?.scenarios, selectedScenarios])
 
   // Preview job state - use hook with options object
   const {
@@ -152,6 +164,7 @@ export function DeveloperResults({
     displaySummary,
     activeScenarioDetails,
     scenarioChecklistProgress,
+    refreshChecklist,
   } = useChecklist({ capturedProperty: result })
 
   // Condition assessment state - extract all required values
@@ -185,6 +198,7 @@ export function DeveloperResults({
 
   const handleOpenSaveDialog = useCallback(() => {
     setSaveError(null)
+    setIncludeChecklist(false)
     void refreshProjects()
     if (currentProject) {
       setSaveMode('existing')
@@ -203,6 +217,10 @@ export function DeveloperResults({
     setSaveError(null)
     setSavingProject(true)
     try {
+      if (includeChecklist && checklistScenarios.length === 0) {
+        setSaveError('Select at least one scenario to add a checklist.')
+        return
+      }
       if (saveMode === 'existing') {
         if (!existingProjectId) {
           setSaveError('Select an existing project.')
@@ -211,6 +229,12 @@ export function DeveloperResults({
         const linked = await linkCaptureToProject(
           result.propertyId,
           existingProjectId,
+          {
+            includeChecklist,
+            developmentScenarios: includeChecklist
+              ? checklistScenarios
+              : undefined,
+          },
         )
         setCurrentProject({ id: linked.projectId, name: linked.projectName })
         saveCaptureForProject(linked.projectId, result)
@@ -222,9 +246,16 @@ export function DeveloperResults({
         }
         const created = await saveProjectFromCapture(result.propertyId, {
           projectName: name,
+          includeChecklist,
+          developmentScenarios: includeChecklist
+            ? checklistScenarios
+            : undefined,
         })
         setCurrentProject({ id: created.projectId, name: created.projectName })
         saveCaptureForProject(created.projectId, result)
+      }
+      if (includeChecklist) {
+        await refreshChecklist()
       }
       await refreshProjects()
       setSaveDialogOpen(false)
@@ -243,6 +274,9 @@ export function DeveloperResults({
     saveMode,
     savingProject,
     setCurrentProject,
+    includeChecklist,
+    checklistScenarios,
+    refreshChecklist,
   ])
 
   // Scenario comparison state - pass required options object and extract all values
@@ -810,6 +844,16 @@ export function DeveloperResults({
               </Select>
             </FormControl>
           )}
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={includeChecklist}
+                onChange={(event) => setIncludeChecklist(event.target.checked)}
+              />
+            }
+            label="Include due diligence checklist from templates"
+            sx={{ mt: 'var(--ob-space-200)' }}
+          />
           {saveError && (
             <Typography
               color="error"

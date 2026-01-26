@@ -19,10 +19,6 @@ from backend._compat.datetime import utcnow
 
 from app.models.property import Property, PropertyStatus, PropertyType
 from app.services.agents.ura_integration import URAIntegrationService
-from app.services.developer_checklist_service import (
-    DEFAULT_TEMPLATE_DEFINITIONS,
-    DeveloperChecklistService,
-)
 from app.services.geocoding import Address, GeocodingService
 from app.services.heritage_overlay import HeritageOverlayService
 from sqlalchemy import insert, select
@@ -359,30 +355,6 @@ class GPSPropertyLogger:
                 source = heritage_overlay.get("source")
                 if source:
                     property_info_payload.setdefault("heritage_overlay_source", source)
-
-            scenario_slugs = [
-                (
-                    scenario.value
-                    if isinstance(scenario, DevelopmentScenario)
-                    else str(scenario)
-                )
-                for scenario in (scenarios or DevelopmentScenario.default_set())
-            ]
-            if not scenario_slugs:
-                scenario_slugs = sorted(
-                    {
-                        str(definition["development_scenario"])
-                        for definition in DEFAULT_TEMPLATE_DEFINITIONS
-                    }
-                )
-
-            await DeveloperChecklistService.ensure_templates_seeded(session)
-            await DeveloperChecklistService.auto_populate_checklist(
-                session=session,
-                property_id=property_id,
-                development_scenarios=scenario_slugs,
-            )
-            await session.commit()
 
             # Return comprehensive result
             return PropertyLogResult(

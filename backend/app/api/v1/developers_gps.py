@@ -53,6 +53,7 @@ from app.services.agents.gps_property_logger import (
     GPSPropertyLogger,
     PropertyLogResult,
 )
+from app.services.developer_checklist_service import DeveloperChecklistService
 from app.services.agents.ura_integration import URAIntegrationService
 from app.services.asset_mix import AssetOptimizationOutcome, build_asset_mix
 from app.services import preview_generator
@@ -1017,6 +1018,14 @@ class CaptureProjectCreateRequest(BaseModel):
     project_name: str | None = Field(
         default=None, validation_alias=AliasChoices("project_name", "projectName")
     )
+    include_checklist: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("include_checklist", "includeChecklist"),
+    )
+    development_scenarios: list[CaptureScenario] | None = Field(
+        default=None,
+        validation_alias=AliasChoices("development_scenarios", "developmentScenarios"),
+    )
 
 
 class CaptureProjectLinkRequest(BaseModel):
@@ -1024,6 +1033,14 @@ class CaptureProjectLinkRequest(BaseModel):
 
     project_id: UUID = Field(
         ..., validation_alias=AliasChoices("project_id", "projectId")
+    )
+    include_checklist: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("include_checklist", "includeChecklist"),
+    )
+    development_scenarios: list[CaptureScenario] | None = Field(
+        default=None,
+        validation_alias=AliasChoices("development_scenarios", "developmentScenarios"),
     )
 
 
@@ -1327,6 +1344,26 @@ async def save_project_from_capture(
     if owner_email and not property_record.owner_email:
         property_record.owner_email = owner_email
 
+    if request_payload.include_checklist:
+        checklist_scenarios = [
+            (scenario.value if isinstance(scenario, CaptureScenario) else str(scenario))
+            for scenario in (request_payload.development_scenarios or [])
+        ]
+        checklist_scenarios = [
+            scenario.strip() for scenario in checklist_scenarios if scenario.strip()
+        ]
+        if not checklist_scenarios:
+            raise HTTPException(
+                status_code=400,
+                detail="development_scenarios is required when include_checklist is true",
+            )
+        await DeveloperChecklistService.ensure_templates_seeded(session)
+        await DeveloperChecklistService.auto_populate_checklist(
+            session=session,
+            property_id=property_id,
+            development_scenarios=checklist_scenarios,
+        )
+
     await session.commit()
 
     return CaptureProjectLinkResponse(
@@ -1359,6 +1396,26 @@ async def link_capture_to_project(
     property_record.project_id = project.id
     if identity.email and not property_record.owner_email:
         property_record.owner_email = identity.email
+
+    if payload.include_checklist:
+        checklist_scenarios = [
+            (scenario.value if isinstance(scenario, CaptureScenario) else str(scenario))
+            for scenario in (payload.development_scenarios or [])
+        ]
+        checklist_scenarios = [
+            scenario.strip() for scenario in checklist_scenarios if scenario.strip()
+        ]
+        if not checklist_scenarios:
+            raise HTTPException(
+                status_code=400,
+                detail="development_scenarios is required when include_checklist is true",
+            )
+        await DeveloperChecklistService.ensure_templates_seeded(session)
+        await DeveloperChecklistService.auto_populate_checklist(
+            session=session,
+            property_id=property_id,
+            development_scenarios=checklist_scenarios,
+        )
 
     await session.commit()
 

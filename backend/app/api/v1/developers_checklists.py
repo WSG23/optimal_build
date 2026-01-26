@@ -13,10 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.developer_checklists import ChecklistStatus, DeveloperChecklistTemplate
-from app.services.developer_checklist_service import (
-    DEFAULT_TEMPLATE_DEFINITIONS,
-    DeveloperChecklistService,
-)
+from app.services.developer_checklist_service import DeveloperChecklistService
 
 router = APIRouter(prefix="/developers", tags=["developers"])
 
@@ -361,30 +358,6 @@ async def get_property_checklists(
         development_scenario=development_scenario,
         status=checklist_status,
     )
-
-    if not items:
-        if development_scenario:
-            scenarios_to_seed = [development_scenario]
-        else:
-            scenarios_to_seed = sorted(
-                {
-                    str(defn["development_scenario"])
-                    for defn in DEFAULT_TEMPLATE_DEFINITIONS
-                }
-            )
-        created = await DeveloperChecklistService.auto_populate_checklist(
-            session=session,
-            property_id=property_id,
-            development_scenarios=scenarios_to_seed,
-        )
-        if created:
-            await session.commit()
-            items = await DeveloperChecklistService.get_property_checklist(
-                session,
-                property_id,
-                development_scenario=development_scenario,
-                status=checklist_status,
-            )
 
     payloads = DeveloperChecklistService.format_property_checklist_items(items)
     response_items = [ChecklistItemResponse(**payload) for payload in payloads]

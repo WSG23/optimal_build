@@ -123,6 +123,7 @@ vi.mock('../../site-acquisition/hooks/useChecklist', () => ({
     displaySummary: {},
     activeScenarioDetails: null,
     scenarioChecklistProgress: {},
+    refreshChecklist: vi.fn(),
   }),
 }))
 

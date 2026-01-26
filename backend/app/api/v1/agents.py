@@ -16,6 +16,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from app.api.deps import Role, get_request_role, require_reviewer
+from app.core.config import settings
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.property import Property, PropertyType
@@ -483,10 +484,158 @@ async def log_property_by_gps(
             latitude=request.latitude,
             longitude=request.longitude,
         )
-        raise HTTPException(
-            status_code=503,
-            detail="GPS capture unavailable: geocoding failed",
-        ) from exc
+        if not settings.OFFLINE_MODE:
+            raise HTTPException(
+                status_code=503,
+                detail="GPS capture unavailable: geocoding failed",
+            ) from exc
+
+        fallback = _build_mock_gps_response(
+            latitude=request.latitude,
+            longitude=request.longitude,
+            scenarios=request.development_scenarios,
+            jurisdiction_code=request.jurisdiction_code,
+        )
+        return fallback
+
+
+def _build_mock_gps_response(
+    *,
+    latitude: float,
+    longitude: float,
+    scenarios: Optional[list[DevelopmentScenario]],
+    jurisdiction_code: str | None = None,
+) -> GPSLogResponse:
+    """Return a deterministic sample response when live services are unavailable."""
+
+    from uuid import uuid4
+
+    from app.services.jurisdictions import get_jurisdiction_config
+
+    generated_at = utcnow()
+    resolved_scenarios = scenarios or DevelopmentScenario.default_set()
+    jurisdiction = get_jurisdiction_config(jurisdiction_code)
+
+    quick_scenarios: list[QuickAnalysisScenario] = []
+    for scenario in resolved_scenarios:
+        if scenario == DevelopmentScenario.RAW_LAND:
+            quick_scenarios.append(
+                QuickAnalysisScenario(
+                    scenario=scenario,
+                    headline="Estimated max GFA ≈ 18,000 sqm using plot ratio 3.6",
+                    metrics={
+                        "site_area_sqm": 5000,
+                        "plot_ratio": 3.6,
+                        "potential_gfa_sqm": 18000,
+                        "nearby_development_count": 3,
+                        "nearest_completion": "2026",
+                    },
+                    notes=[
+                        "Mixed-use zoning permits office and hospitality",
+                        "3 upcoming projects detected within 2 km",
+                    ],
+                )
+            )
+        elif scenario == DevelopmentScenario.EXISTING_BUILDING:
+            quick_scenarios.append(
+                QuickAnalysisScenario(
+                    scenario=scenario,
+                    headline="Existing approvals within 12% of zoning limit",
+                    metrics={
+                        "approved_gfa_sqm": 15800,
+                        "scenario_gfa_sqm": 18000,
+                        "gfa_uplift_sqm": 2200,
+                        "recent_transaction_count": 14,
+                        "average_psf_price": 2480,
+                    },
+                    notes=["Consider light retrofit to unlock unused GFA"],
+                )
+            )
+        elif scenario == DevelopmentScenario.HERITAGE_PROPERTY:
+            quick_scenarios.append(
+                QuickAnalysisScenario(
+                    scenario=scenario,
+                    headline="Heritage risk assessment: MEDIUM",
+                    metrics={"completion_year": 1984, "heritage_risk": "medium"},
+                    notes=[
+                        "Check URA conservation portal for obligations",
+                        "Nearby redevelopment pipeline may tighten regulators' scrutiny",
+                    ],
+                )
+            )
+        elif scenario == DevelopmentScenario.UNDERUSED_ASSET:
+            quick_scenarios.append(
+                QuickAnalysisScenario(
+                    scenario=scenario,
+                    headline="Under-utilised logistics hub with strong transit access",
+                    metrics={
+                        "nearby_mrt_count": 2,
+                        "average_monthly_rent": 7.5,
+                        "rental_comparable_count": 9,
+                        "building_height_m": 18,
+                    },
+                    notes=[
+                        "Strong transit presence supports repositioning",
+                        "Explore vertical expansion subject to mixed-use guidelines",
+                    ],
+                )
+            )
+
+    quick_analysis = QuickAnalysisEnvelope(
+        generated_at=generated_at,
+        scenarios=quick_scenarios,
+    )
+
+    address = Address(
+        full_address=f"Sample Address near ({latitude:.4f}, {longitude:.4f})",
+        street_name="Harbourfront Ave",
+        building_name="Sample Tower",
+        block_number="88",
+        postal_code="098633",
+        district="D04 - Harbourfront",
+        country="Singapore",
+    )
+
+    nearby_amenities = {
+        "mrt_stations": [{"name": "HarbourFront MRT", "distance_m": 240}],
+        "bus_stops": [{"name": "Telok Blangah Rd - Opp VivoCity", "distance_m": 110}],
+        "schools": [{"name": "Radin Mas Primary", "distance_m": 620}],
+        "shopping_malls": [{"name": "VivoCity", "distance_m": 150}],
+        "parks": [{"name": "Mount Faber Park", "distance_m": 480}],
+    }
+
+    property_info = {
+        "property_name": "Sample Tower",
+        "tenure": "99-year leasehold",
+        "site_area_sqm": 5050.0,
+        "gfa_approved": 15800.0,
+        "building_height": 58.0,
+        "completion_year": 2012,
+        "last_transaction_date": date(2022, 11, 4).isoformat(),
+        "last_transaction_price": 168_000_000.0,
+    }
+
+    return GPSLogResponse(
+        property_id=uuid4(),
+        address=address,
+        coordinates=CoordinatePair(latitude=latitude, longitude=longitude),
+        ura_zoning={
+            "zone_code": "MU",
+            "zone_description": "Mixed Use",
+            "plot_ratio": 3.6,
+            "building_height_limit": 120.0,
+            "site_coverage": 70.0,
+            "use_groups": ["Commercial", "Residential", "Office"],
+            "special_conditions": "Minimum 40% residential component",
+        },
+        existing_use="Mixed Development",
+        property_info=property_info,
+        nearby_amenities=nearby_amenities,
+        quick_analysis=quick_analysis,
+        timestamp=generated_at,
+        jurisdiction_code=jurisdiction.code,
+        currency_symbol=jurisdiction.currency_symbol,
+    )
 
 
 @router.get(

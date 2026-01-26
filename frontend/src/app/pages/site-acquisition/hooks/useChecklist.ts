@@ -63,6 +63,7 @@ export interface UseChecklistResult {
     itemId: string,
     newStatus: 'pending' | 'in_progress' | 'completed' | 'not_applicable',
   ) => Promise<void>
+  refreshChecklist: () => Promise<void>
 }
 
 // ============================================================================
@@ -96,63 +97,63 @@ export function useChecklist({
   // Load Checklist Effect
   // ============================================================================
 
-  useEffect(() => {
-    async function loadChecklist() {
-      if (!capturedProperty) {
-        setChecklistItems([])
-        setChecklistSummary(null)
-        setAvailableChecklistScenarios([])
-        setActiveScenario('all')
-        setSelectedCategory(null)
-        return
-      }
-
-      setIsLoadingChecklist(true)
-      try {
-        const [items, summary] = await Promise.all([
-          fetchPropertyChecklist(capturedProperty.propertyId),
-          fetchChecklistSummary(capturedProperty.propertyId),
-        ])
-        const sortedItems = [...items].sort((a, b) => {
-          const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER
-          const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER
-          if (orderA !== orderB) {
-            return orderA - orderB
-          }
-          return a.itemTitle.localeCompare(b.itemTitle)
-        })
-        setChecklistItems(sortedItems)
-        setChecklistSummary(summary)
-        const scenarioSet = new Set<DevelopmentScenario>()
-        sortedItems.forEach((item) => {
-          if (scenarioLookup.has(item.developmentScenario)) {
-            scenarioSet.add(item.developmentScenario)
-          }
-        })
-        const scenarios = Array.from(scenarioSet)
-        setAvailableChecklistScenarios(scenarios)
-        setActiveScenario((prev: 'all' | DevelopmentScenario) => {
-          if (scenarios.length === 0) {
-            return 'all'
-          }
-          if (prev !== 'all' && scenarios.includes(prev)) {
-            return prev
-          }
-          if (scenarios.length === 1) {
-            return scenarios[0]
-          }
-          return 'all'
-        })
-        setSelectedCategory(null)
-      } catch (err) {
-        console.error('Failed to load checklist:', err)
-      } finally {
-        setIsLoadingChecklist(false)
-      }
+  const loadChecklist = useCallback(async () => {
+    if (!capturedProperty) {
+      setChecklistItems([])
+      setChecklistSummary(null)
+      setAvailableChecklistScenarios([])
+      setActiveScenario('all')
+      setSelectedCategory(null)
+      return
     }
 
-    loadChecklist()
+    setIsLoadingChecklist(true)
+    try {
+      const [items, summary] = await Promise.all([
+        fetchPropertyChecklist(capturedProperty.propertyId),
+        fetchChecklistSummary(capturedProperty.propertyId),
+      ])
+      const sortedItems = [...items].sort((a, b) => {
+        const orderA = a.displayOrder ?? Number.MAX_SAFE_INTEGER
+        const orderB = b.displayOrder ?? Number.MAX_SAFE_INTEGER
+        if (orderA !== orderB) {
+          return orderA - orderB
+        }
+        return a.itemTitle.localeCompare(b.itemTitle)
+      })
+      setChecklistItems(sortedItems)
+      setChecklistSummary(summary)
+      const scenarioSet = new Set<DevelopmentScenario>()
+      sortedItems.forEach((item) => {
+        if (scenarioLookup.has(item.developmentScenario)) {
+          scenarioSet.add(item.developmentScenario)
+        }
+      })
+      const scenarios = Array.from(scenarioSet)
+      setAvailableChecklistScenarios(scenarios)
+      setActiveScenario((prev: 'all' | DevelopmentScenario) => {
+        if (scenarios.length === 0) {
+          return 'all'
+        }
+        if (prev !== 'all' && scenarios.includes(prev)) {
+          return prev
+        }
+        if (scenarios.length === 1) {
+          return scenarios[0]
+        }
+        return 'all'
+      })
+      setSelectedCategory(null)
+    } catch (err) {
+      console.error('Failed to load checklist:', err)
+    } finally {
+      setIsLoadingChecklist(false)
+    }
   }, [capturedProperty, scenarioLookup])
+
+  useEffect(() => {
+    void loadChecklist()
+  }, [loadChecklist])
 
   // ============================================================================
   // Derived Values
@@ -268,5 +269,6 @@ export function useChecklist({
 
     // Actions
     handleChecklistUpdate,
+    refreshChecklist: loadChecklist,
   }
 }

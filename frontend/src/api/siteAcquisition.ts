@@ -1627,7 +1627,11 @@ export async function createFinanceProjectFromCapture(
 
 export async function saveProjectFromCapture(
   propertyId: string,
-  payload: { projectName?: string } = {},
+  payload: {
+    projectName?: string
+    includeChecklist?: boolean
+    developmentScenarios?: DevelopmentScenario[]
+  } = {},
   signal?: AbortSignal,
 ): Promise<CaptureProjectLinkResult> {
   const response = await fetch(
@@ -1637,6 +1641,8 @@ export async function saveProjectFromCapture(
       headers: applyIdentityHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         projectName: payload.projectName ?? undefined,
+        includeChecklist: payload.includeChecklist ?? false,
+        developmentScenarios: payload.developmentScenarios ?? undefined,
       }),
       signal,
     },
@@ -1662,6 +1668,10 @@ export async function saveProjectFromCapture(
 export async function linkCaptureToProject(
   propertyId: string,
   projectId: string,
+  payload: {
+    includeChecklist?: boolean
+    developmentScenarios?: DevelopmentScenario[]
+  } = {},
   signal?: AbortSignal,
 ): Promise<CaptureProjectLinkResult> {
   const response = await fetch(
@@ -1669,7 +1679,11 @@ export async function linkCaptureToProject(
     {
       method: 'POST',
       headers: applyIdentityHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ projectId }),
+      body: JSON.stringify({
+        projectId,
+        includeChecklist: payload.includeChecklist ?? false,
+        developmentScenarios: payload.developmentScenarios ?? undefined,
+      }),
       signal,
     },
   )

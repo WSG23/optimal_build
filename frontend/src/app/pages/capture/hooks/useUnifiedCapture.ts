@@ -149,6 +149,9 @@ export function useUnifiedCapture({
 
   // Geocoding
   const [geocodeError, setGeocodeError] = useState<string | null>(null)
+  const [_isGeocoding, setIsGeocoding] = useState(false)
+  // Track the address that was last geocoded to avoid redundant calls
+  const lastGeocodedAddressRef = useRef<string>('')
 
   // Map
   const [mapError, setMapError] = useState<string | null>(null)
@@ -173,34 +176,47 @@ export function useUnifiedCapture({
   }, [])
 
   // Forward geocode (address → coordinates)
-  const handleForwardGeocode = useCallback(async () => {
-    if (!address.trim()) {
-      setGeocodeError('Please enter an address to geocode.')
-      return
-    }
-    try {
-      setGeocodeError(null)
-      const result = await forwardGeocodeAddress(address.trim())
-      setLatitude(result.latitude.toString())
-      setLongitude(result.longitude.toString())
-
-      if (mapInstanceRef.current && mapMarkerRef.current) {
-        mapInstanceRef.current.setCenter({
-          lat: result.latitude,
-          lng: result.longitude,
-        })
-        mapMarkerRef.current.setPosition({
-          lat: result.latitude,
-          lng: result.longitude,
-        })
+  // Returns the coordinates if geocoding succeeded, null otherwise
+  const handleForwardGeocode = useCallback(
+    async (
+      addressToGeocode?: string,
+    ): Promise<{ latitude: number; longitude: number } | null> => {
+      const targetAddress = addressToGeocode ?? address
+      if (!targetAddress.trim()) {
+        setGeocodeError('Please enter an address to geocode.')
+        return null
       }
-    } catch (error) {
-      console.error('Forward geocode failed', error)
-      setGeocodeError(
-        error instanceof Error ? error.message : 'Unable to geocode address.',
-      )
-    }
-  }, [address])
+      try {
+        setGeocodeError(null)
+        setIsGeocoding(true)
+        const result = await forwardGeocodeAddress(targetAddress.trim())
+        setLatitude(result.latitude.toString())
+        setLongitude(result.longitude.toString())
+        lastGeocodedAddressRef.current = targetAddress.trim()
+
+        if (mapInstanceRef.current && mapMarkerRef.current) {
+          mapInstanceRef.current.setCenter({
+            lat: result.latitude,
+            lng: result.longitude,
+          })
+          mapMarkerRef.current.setPosition({
+            lat: result.latitude,
+            lng: result.longitude,
+          })
+        }
+        return { latitude: result.latitude, longitude: result.longitude }
+      } catch (error) {
+        console.error('Forward geocode failed', error)
+        setGeocodeError(
+          error instanceof Error ? error.message : 'Unable to geocode address.',
+        )
+        return null
+      } finally {
+        setIsGeocoding(false)
+      }
+    },
+    [address],
+  )
 
   // Reverse geocode (coordinates → address)
   const handleReverseGeocode = useCallback(async () => {
@@ -223,6 +239,28 @@ export function useUnifiedCapture({
       )
     }
   }, [latitude, longitude])
+
+  // Auto-geocode when address changes (debounced)
+  // This provides Google Maps-like behavior where typing an address
+  // automatically updates the map location
+  useEffect(() => {
+    const trimmedAddress = address.trim()
+
+    // Skip if address is empty or hasn't changed from last geocoded address
+    if (!trimmedAddress || trimmedAddress === lastGeocodedAddressRef.current) {
+      return
+    }
+
+    // Debounce: wait 800ms after user stops typing before geocoding
+    const timeoutId = setTimeout(() => {
+      // Only auto-geocode if the address looks complete (has at least a few characters)
+      if (trimmedAddress.length >= 5) {
+        handleForwardGeocode(trimmedAddress)
+      }
+    }, 800)
+
+    return () => clearTimeout(timeoutId)
+  }, [address, handleForwardGeocode])
 
   // Load Google Maps script
   useEffect(() => {
@@ -385,13 +423,6 @@ export function useUnifiedCapture({
   const handleCapture = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault()
-      const parsedLat = Number(latitude)
-      const parsedLon = Number(longitude)
-
-      if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLon)) {
-        setCaptureError('Please provide valid coordinates.')
-        return
-      }
 
       try {
         setIsCapturing(true)
@@ -400,6 +431,38 @@ export function useUnifiedCapture({
         setMarketSummary(null)
         setDeveloperFeatures(null)
         setSiteAcquisitionResult(null)
+
+        // If address is provided and hasn't been geocoded yet, geocode it first
+        // This ensures the coordinates match the entered address
+        const trimmedAddress = address.trim()
+        let finalLat = Number(latitude)
+        let finalLon = Number(longitude)
+
+        if (
+          trimmedAddress &&
+          trimmedAddress !== lastGeocodedAddressRef.current
+        ) {
+          // Address has changed since last geocode - geocode it now
+          const geocodeResult = await handleForwardGeocode(trimmedAddress)
+          if (!geocodeResult) {
+            setCaptureError(
+              'Unable to geocode the address. Please check the address and try again.',
+            )
+            setIsCapturing(false)
+            setIsScanning(false)
+            return
+          }
+          // Use the newly geocoded coordinates directly from the result
+          finalLat = geocodeResult.latitude
+          finalLon = geocodeResult.longitude
+        }
+
+        if (!Number.isFinite(finalLat) || !Number.isFinite(finalLon)) {
+          setCaptureError('Please provide valid coordinates.')
+          setIsCapturing(false)
+          setIsScanning(false)
+          return
+        }
 
         // Artificial delay for radar scanning effect
         await new Promise((resolve) => setTimeout(resolve, 1500))
@@ -414,8 +477,8 @@ export function useUnifiedCapture({
           try {
             result = await capturePropertyForDevelopment(
               {
-                latitude: parsedLat,
-                longitude: parsedLon,
+                latitude: finalLat,
+                longitude: finalLon,
                 developmentScenarios:
                   selectedScenarios.length > 0 ? selectedScenarios : [],
                 jurisdictionCode: jurisdictionCode || undefined,
@@ -450,7 +513,7 @@ export function useUnifiedCapture({
               address:
                 result.address?.fullAddress ||
                 address ||
-                `Captured site (${parsedLat.toFixed(5)}, ${parsedLon.toFixed(5)})`,
+                `Captured site (${finalLat.toFixed(5)}, ${finalLon.toFixed(5)})`,
               district: result.address?.district,
               scenario: selectedScenarios[0] ?? null,
               capturedAt: new Date().toISOString(),
@@ -460,8 +523,8 @@ export function useUnifiedCapture({
         } else {
           // Agent flow - use GPS capture API
           const summary = await logPropertyByGpsWithFeatures({
-            latitude: parsedLat,
-            longitude: parsedLon,
+            latitude: finalLat,
+            longitude: finalLon,
             developmentScenarios:
               selectedScenarios.length > 0 ? selectedScenarios : undefined,
             jurisdictionCode: jurisdictionCode || undefined,
@@ -481,7 +544,7 @@ export function useUnifiedCapture({
               propertyId: summary.propertyId,
               address: summary.address.fullAddress.startsWith('Mocked Address')
                 ? address ||
-                  `Captured site (${parsedLat.toFixed(5)}, ${parsedLon.toFixed(5)})`
+                  `Captured site (${finalLat.toFixed(5)}, ${finalLon.toFixed(5)})`
                 : summary.address.fullAddress,
               district: summary.address.district,
               scenario: summary.quickAnalysis.scenarios[0]?.scenario ?? null,
@@ -520,6 +583,7 @@ export function useUnifiedCapture({
       jurisdictionCode,
       selectedScenarios,
       isDeveloperMode,
+      handleForwardGeocode,
     ],
   )
 
@@ -538,6 +602,9 @@ export function useUnifiedCapture({
     setLongitude('103.8500')
     setAddress('')
     setSelectedScenarios([...DEFAULT_SCENARIO_ORDER])
+
+    // Reset geocoding tracking
+    lastGeocodedAddressRef.current = ''
 
     // Clear sessionStorage
     sessionStorage.removeItem('site-acquisition:captured-property')
