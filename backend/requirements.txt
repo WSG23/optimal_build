@@ -12,7 +12,7 @@ python-multipart==0.0.20
 sqlalchemy[asyncio,mypy]==2.0.23
 # Downgraded 2025-11-23: prefect 2.20.17 requires asyncpg<0.30.0
 asyncpg==0.29.0
-alembic==1.13.0
+alembic==1.17.2
 
 # GIS and spatial data
 geoalchemy2==0.14.2
