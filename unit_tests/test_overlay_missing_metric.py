@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import uuid
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
@@ -30,13 +29,6 @@ from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
 app = None
 
 SCHEMA_NAME = "__ob_overlay_test__"
-
-
-@pytest.fixture(scope="module")
-def event_loop() -> asyncio.AbstractEventLoop:
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest.fixture(scope="module")

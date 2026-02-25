@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 from app.models.team import UserRole, InvitationStatus
 
 
@@ -16,8 +16,7 @@ class TeamMemberRead(TeamMemberBase):
     joined_at: datetime
     last_active_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TeamMemberActivityRead(BaseModel):
@@ -36,8 +35,7 @@ class TeamMemberActivityRead(BaseModel):
     pending_tasks: int = 0
     completed_tasks: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TeamActivityStatsResponse(BaseModel):
@@ -66,5 +64,4 @@ class InvitationRead(InvitationBase):
     expires_at: datetime
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

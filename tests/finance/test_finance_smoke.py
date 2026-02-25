@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import io
 import uuid
+import zipfile
 from collections.abc import Iterable
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -282,9 +284,9 @@ async def test_finance_feasibility_and_export_metrics(
         headers=REVIEWER_HEADERS,
     )
     assert export_response.status_code == 200
-    assert export_response.headers["content-type"].startswith("text/csv")
-
-    csv_content = export_response.text
+    assert export_response.headers["content-type"].startswith("application/zip")
+    with zipfile.ZipFile(io.BytesIO(export_response.content)) as archive:
+        csv_content = archive.read("scenario.csv").decode("utf-8")
     assert csv_content.splitlines()[0].startswith("Metric,Value,Unit")
 
     export_total = metrics.counter_value(metrics.FINANCE_EXPORT_TOTAL, {})

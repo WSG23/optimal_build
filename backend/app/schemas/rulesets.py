@@ -78,12 +78,10 @@ class RulesetValidationRequest(BaseModel):
     geometry: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
-    def _check_identifier(
-        cls, values: RulesetValidationRequest
-    ) -> RulesetValidationRequest:
-        if values.ruleset_id is None and not values.ruleset_slug:
+    def _check_identifier(self) -> RulesetValidationRequest:
+        if self.ruleset_id is None and not self.ruleset_slug:
             raise ValueError("Either ruleset_id or ruleset_slug must be provided")
-        return values
+        return self
 
 
 class ViolationFact(BaseModel):

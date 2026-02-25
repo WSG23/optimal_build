@@ -1,4 +1,4 @@
-import { assert, describe, it } from 'vitest'
+import { assert, describe, expect, it } from 'vitest'
 
 import {
   type DevelopmentScenario,
@@ -164,8 +164,7 @@ describe('agents API mapping', () => {
     })) as typeof globalThis.fetch
 
     try {
-      await assert.rejects(
-        fetchPropertyMarketIntelligence('abc123'),
+      await expect(fetchPropertyMarketIntelligence('abc123')).rejects.toThrow(
         /service unavailable/,
       )
     } finally {
@@ -236,10 +235,9 @@ describe('agents API mapping', () => {
     })) as typeof globalThis.fetch
 
     try {
-      await assert.rejects(
+      await expect(
         generateProfessionalPack('abc123', 'investment'),
-        /generation throttled/,
-      )
+      ).rejects.toThrow(/generation throttled/)
     } finally {
       globalThis.fetch = originalFetch
     }
@@ -247,11 +245,10 @@ describe('agents API mapping', () => {
 
   it('throws when the GPS capture request fails', async () => {
     const request = { latitude: 1.301, longitude: 103.832 }
-    await assert.rejects(
+    await expect(
       logPropertyByGps(request, async () => {
         throw new TypeError('Network timeout')
       }),
-      /Network timeout/,
-    )
+    ).rejects.toThrow(/Network timeout/)
   })
 })

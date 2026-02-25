@@ -161,13 +161,19 @@ describe('TeamManagementPage', () => {
   describe('when project is selected', () => {
     it('renders page header with project name', async () => {
       renderWithProviders(<TeamManagementPage />)
+      await waitFor(() => {
+        expect(teamApi.listMembers).toHaveBeenCalledWith('project-1')
+      })
 
       expect(screen.getByText(/Team Management/i)).toBeInTheDocument()
       expect(screen.getByText(/Project: Test Project/i)).toBeInTheDocument()
     })
 
-    it('renders three tabs', () => {
+    it('renders three tabs', async () => {
       renderWithProviders(<TeamManagementPage />)
+      await waitFor(() => {
+        expect(teamApi.listMembers).toHaveBeenCalledWith('project-1')
+      })
 
       expect(
         screen.getByRole('tab', { name: /Team Members/i }),
@@ -180,8 +186,11 @@ describe('TeamManagementPage', () => {
       ).toBeInTheDocument()
     })
 
-    it('shows Invite Member button on Team Members tab', () => {
+    it('shows Invite Member button on Team Members tab', async () => {
       renderWithProviders(<TeamManagementPage />)
+      await waitFor(() => {
+        expect(teamApi.listMembers).toHaveBeenCalledWith('project-1')
+      })
 
       expect(screen.getByText(/Invite Member/i)).toBeInTheDocument()
     })

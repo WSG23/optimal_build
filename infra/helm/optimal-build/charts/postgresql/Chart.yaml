@@ -1,0 +1,6 @@
+apiVersion: v2
+name: postgresql
+description: Local stub dependency chart for offline lint/template checks
+type: application
+version: 13.0.0
+appVersion: "13.0.0"

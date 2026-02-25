@@ -100,7 +100,7 @@ function renderHookHarness(
 describe('useUnifiedCapture', () => {
   afterEach(() => {
     vi.useRealTimers()
-    vi.clearAllMocks()
+    vi.resetAllMocks()
     sessionStorage.clear()
     delete (window as { google?: unknown }).google
   })
@@ -311,7 +311,7 @@ describe('useUnifiedCapture', () => {
         preventDefault: vi.fn(),
       } as unknown as React.FormEvent<HTMLFormElement>
       const promise = hookRef.current!.handleCapture(event)
-      vi.advanceTimersByTime(1500)
+      await vi.advanceTimersByTimeAsync(2500)
       await promise
     })
 
@@ -350,8 +350,10 @@ describe('useUnifiedCapture', () => {
   })
 
   it('runs the agent capture flow and fetches market intelligence', async () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date('2026-01-06T10:00:00.000Z'))
+    mockForwardGeocodeAddress.mockResolvedValue({
+      latitude: 1.1111,
+      longitude: 103.2222,
+    })
 
     mockLogPropertyByGpsWithFeatures.mockResolvedValue({
       propertyId: 'gps-777',
@@ -374,9 +376,7 @@ describe('useUnifiedCapture', () => {
       const event = {
         preventDefault: vi.fn(),
       } as unknown as React.FormEvent<HTMLFormElement>
-      const promise = hookRef.current!.handleCapture(event)
-      vi.advanceTimersByTime(1500)
-      await promise
+      await hookRef.current!.handleCapture(event)
     })
 
     expect(mockLogPropertyByGpsWithFeatures).toHaveBeenCalledWith(

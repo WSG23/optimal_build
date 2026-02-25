@@ -196,6 +196,9 @@ describe('RegulatoryDashboardPage', () => {
   describe('when project is selected', () => {
     it('renders page header with project name', async () => {
       renderWithProviders(<RegulatoryDashboardPage />)
+      await waitFor(() => {
+        expect(regulatoryApi.listSubmissions).toHaveBeenCalledWith('project-1')
+      })
 
       expect(screen.getByText(/Regulatory Dashboard/i)).toBeInTheDocument()
       expect(
@@ -203,8 +206,11 @@ describe('RegulatoryDashboardPage', () => {
       ).toBeInTheDocument()
     })
 
-    it('renders two tabs', () => {
+    it('renders two tabs', async () => {
       renderWithProviders(<RegulatoryDashboardPage />)
+      await waitFor(() => {
+        expect(regulatoryApi.listSubmissions).toHaveBeenCalledWith('project-1')
+      })
 
       expect(
         screen.getByRole('tab', { name: /Submissions/i }),
@@ -214,14 +220,22 @@ describe('RegulatoryDashboardPage', () => {
       ).toBeInTheDocument()
     })
 
-    it('shows New Submission button', () => {
+    it('shows New Submission button', async () => {
       renderWithProviders(<RegulatoryDashboardPage />)
+      await waitFor(() => {
+        expect(regulatoryApi.listSubmissions).toHaveBeenCalledWith('project-1')
+      })
 
-      expect(screen.getByText(/New Submission/i)).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /^New Submission$/i }),
+      ).toBeInTheDocument()
     })
 
-    it('shows Check Status button', () => {
+    it('shows Check Status button', async () => {
       renderWithProviders(<RegulatoryDashboardPage />)
+      await waitFor(() => {
+        expect(regulatoryApi.listSubmissions).toHaveBeenCalledWith('project-1')
+      })
 
       expect(screen.getByText(/Check Status/i)).toBeInTheDocument()
     })
@@ -230,6 +244,9 @@ describe('RegulatoryDashboardPage', () => {
   describe('Quick Actions section', () => {
     it('displays Change of Use action card', async () => {
       renderWithProviders(<RegulatoryDashboardPage />)
+      await waitFor(() => {
+        expect(regulatoryApi.listSubmissions).toHaveBeenCalledWith('project-1')
+      })
 
       // Use getAllByText since the text may appear in multiple places
       const changeOfUseTexts = screen.getAllByText(/Change of Use/i)
@@ -241,6 +258,9 @@ describe('RegulatoryDashboardPage', () => {
 
     it('displays Heritage Submission action card', async () => {
       renderWithProviders(<RegulatoryDashboardPage />)
+      await waitFor(() => {
+        expect(regulatoryApi.listSubmissions).toHaveBeenCalledWith('project-1')
+      })
 
       // Use getAllByText since the text appears multiple times
       const heritageTexts = screen.getAllByText(/Heritage Submission/i)
@@ -252,6 +272,9 @@ describe('RegulatoryDashboardPage', () => {
 
     it('displays Compliance Timeline action card', async () => {
       renderWithProviders(<RegulatoryDashboardPage />)
+      await waitFor(() => {
+        expect(regulatoryApi.listSubmissions).toHaveBeenCalledWith('project-1')
+      })
 
       // Use getAllByText since the text may appear in tabs and action cards
       const timelineTexts = screen.getAllByText(/Compliance/i)

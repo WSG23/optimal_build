@@ -183,12 +183,12 @@ class BuildableRequest(BaseModel):
         return max(0.0, min(value, 1.0)) or None
 
     @model_validator(mode="after")
-    def _require_location(cls, instance: BuildableRequest) -> BuildableRequest:
+    def _require_location(self) -> BuildableRequest:
         """Ensure an address or geometry payload is supplied."""
 
-        if not instance.address and not instance.geometry:
+        if not self.address and not self.geometry:
             raise ValueError("Either address or geometry must be provided")
-        return instance
+        return self
 
 
 class BuildableMetrics(BaseModel):

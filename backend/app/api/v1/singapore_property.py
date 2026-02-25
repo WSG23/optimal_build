@@ -14,7 +14,7 @@ from decimal import Decimal
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -73,8 +73,7 @@ class PropertyCreate(BaseModel):
     # Optional: Link to project
     project_id: str | None = None
 
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class PropertyUpdate(BaseModel):
@@ -98,8 +97,7 @@ class PropertyUpdate(BaseModel):
     expected_revenue: Decimal | None = Field(None, ge=0)
     project_id: str | None = None
 
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class PropertyResponse(BaseModel):
@@ -146,8 +144,7 @@ class PropertyResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     @classmethod
     def from_orm(cls, obj: Any) -> PropertyResponse:

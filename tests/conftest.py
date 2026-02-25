@@ -591,15 +591,18 @@ else:  # pragma: no cover - default to lightweight stubs
     )
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest.fixture(scope="session")
 def event_loop():
     """Provide a session-scoped event loop compatible with session fixtures."""
 
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     try:
         yield loop
     finally:
-        loop.close()
+        asyncio.set_event_loop(None)
+        if not loop.is_closed():
+            loop.close()
 
 
 def _missing_fixture(*_args, **_kwargs):

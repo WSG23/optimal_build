@@ -307,7 +307,11 @@ describe('CompliancePathTimeline', () => {
 
       render(<CompliancePathTimeline projectId="project-1" />)
 
-      expect(screen.getByText(/Loading compliance path/i)).toBeInTheDocument()
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Loading compliance path/i),
+        ).toBeInTheDocument()
+      })
     })
   })
 

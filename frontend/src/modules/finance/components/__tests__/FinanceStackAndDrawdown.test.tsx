@@ -1,4 +1,4 @@
-import { afterEach, assert, beforeEach, describe, it } from 'vitest'
+import { afterEach, assert, beforeEach, describe, it, vi } from 'vitest'
 import { ThemeModeProvider } from '../../../../theme/ThemeContext'
 
 import { cleanup, render, screen } from '@testing-library/react'
@@ -9,6 +9,28 @@ import i18n from '../../../../i18n'
 import { TranslationProvider } from '../../../../i18n'
 import { FinanceCapitalStack } from '../FinanceCapitalStack'
 import { FinanceDrawdownSchedule } from '../FinanceDrawdownSchedule'
+
+type ResponsiveContainerChild =
+  | React.ReactNode
+  | ((size: { width: number; height: number }) => React.ReactNode)
+
+vi.mock('recharts', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('recharts')>()
+  return {
+    ...actual,
+    ResponsiveContainer: ({
+      children,
+    }: {
+      children?: ResponsiveContainerChild
+    }) => (
+      <div style={{ width: 800, height: 400 }}>
+        {typeof children === 'function'
+          ? children({ width: 800, height: 400 })
+          : children}
+      </div>
+    ),
+  }
+})
 
 describe('Finance capital stack and drawdown components', () => {
   beforeEach(() => {

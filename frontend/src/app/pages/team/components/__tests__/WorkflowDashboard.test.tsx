@@ -92,12 +92,18 @@ describe('WorkflowDashboard', () => {
   describe('rendering', () => {
     it('renders the section header', async () => {
       render(<WorkflowDashboard projectId="project-1" />)
+      await waitFor(() => {
+        expect(workflowApi.listWorkflows).toHaveBeenCalledWith('project-1')
+      })
 
       expect(screen.getByText(/Approval Workflows/i)).toBeInTheDocument()
     })
 
     it('renders New Workflow button', async () => {
       render(<WorkflowDashboard projectId="project-1" />)
+      await waitFor(() => {
+        expect(workflowApi.listWorkflows).toHaveBeenCalledWith('project-1')
+      })
 
       expect(screen.getByText(/New Workflow/i)).toBeInTheDocument()
     })

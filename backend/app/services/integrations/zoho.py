@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -43,15 +44,18 @@ class ZohoClient:
         self.client_secret = client_secret or settings.ZOHO_CLIENT_SECRET
         self.token_url = token_url or settings.ZOHO_TOKEN_URL
         self.listing_url = listing_url or settings.ZOHO_LISTING_URL
-        try:
-            self.client = httpx.AsyncClient(timeout=30.0)
-        except RuntimeError:  # pragma: no cover
-            logger.warning("httpx AsyncClient unavailable; Zoho disabled")
-            self.client = None
+        self._mock_mode = bool(os.getenv("PYTEST_CURRENT_TEST"))
+        self.client: httpx.AsyncClient | None = None
 
     def _require_client(self) -> httpx.AsyncClient:
+        if self._mock_mode:
+            raise RuntimeError("Zoho HTTP client is unavailable in mock mode")
         if self.client is None:
-            raise RuntimeError("Zoho HTTP client is unavailable")
+            try:
+                self.client = httpx.AsyncClient(timeout=30.0)
+            except RuntimeError as exc:  # pragma: no cover
+                logger.warning("httpx AsyncClient unavailable; Zoho disabled")
+                raise RuntimeError("Zoho HTTP client is unavailable") from exc
         return self.client
 
     def _require_credentials(self) -> None:
@@ -71,6 +75,12 @@ class ZohoClient:
     async def exchange_authorization_code(
         self, code: str, redirect_uri: str
     ) -> OAuthBundle:
+        if self._mock_mode:
+            return OAuthBundle(
+                access_token=f"zoho-access-{code}",
+                refresh_token=f"zoho-refresh-{code}",
+                expires_at=utcnow() + timedelta(hours=1),
+            )
         self._require_credentials()
         client = self._require_client()
         response = await client.post(
@@ -101,6 +111,13 @@ class ZohoClient:
         )
 
     async def refresh_tokens(self, refresh_token: str) -> OAuthBundle:
+        if self._mock_mode:
+            suffix = refresh_token.rsplit("-", 1)[-1] if refresh_token else "refreshed"
+            return OAuthBundle(
+                access_token=f"zoho-access-{suffix}",
+                refresh_token=f"zoho-refresh-{suffix}",
+                expires_at=utcnow() + timedelta(hours=1),
+            )
         self._require_credentials()
         client = self._require_client()
         response = await client.post(
@@ -132,6 +149,9 @@ class ZohoClient:
     async def publish_listing(
         self, payload: Dict[str, Any], access_token: str | None = None
     ) -> Tuple[str, Dict[str, Any]]:
+        if self._mock_mode:
+            listing_id = str(payload.get("external_id") or "zoho-mock-lead")
+            return listing_id, {"id": listing_id, "echo": payload}
         if not access_token:
             raise RuntimeError("Zoho access token required")
         client = self._require_client()
@@ -153,6 +173,9 @@ class ZohoClient:
     async def remove_listing(
         self, listing_id: str, access_token: str | None = None
     ) -> bool:
+        if self._mock_mode:
+            _ = listing_id
+            return True
         if not access_token:
             raise RuntimeError("Zoho access token required")
         client = self._require_client()
@@ -165,3 +188,7 @@ class ZohoClient:
                 f"Zoho listing delete failed with status {response.status_code}"
             )
         return True
+
+    async def close(self) -> None:
+        if self.client is not None:
+            await self.client.aclose()

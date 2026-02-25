@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import uuid
+import zipfile
 from collections.abc import Iterable
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -313,9 +314,9 @@ async def test_finance_feasibility_and_export_endpoints(
         headers=REVIEWER_HEADERS,
     )
     assert export_response.status_code == 200
-    assert export_response.headers["content-type"].startswith("text/csv")
-
-    csv_content = export_response.read().decode("utf-8")
+    assert export_response.headers["content-type"].startswith("application/zip")
+    with zipfile.ZipFile(io.BytesIO(export_response.content)) as archive:
+        csv_content = archive.read("scenario.csv").decode("utf-8")
     reader = csv.reader(io.StringIO(csv_content))
     rows = [row for row in reader if row]
     assert rows[0] == ["Metric", "Value", "Unit"]

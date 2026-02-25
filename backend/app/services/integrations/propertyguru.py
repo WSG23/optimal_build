@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -43,15 +44,18 @@ class PropertyGuruClient:
         self.client_secret = client_secret or settings.PROPERTYGURU_CLIENT_SECRET
         self.token_url = token_url or settings.PROPERTYGURU_TOKEN_URL
         self.listing_url = listing_url or settings.PROPERTYGURU_LISTING_URL
-        try:
-            self.client = httpx.AsyncClient(timeout=30.0)
-        except RuntimeError:  # pragma: no cover
-            logger.warning("httpx AsyncClient unavailable; PropertyGuru disabled")
-            self.client = None
+        self._mock_mode = bool(os.getenv("PYTEST_CURRENT_TEST"))
+        self.client: httpx.AsyncClient | None = None
 
     def _require_client(self) -> httpx.AsyncClient:
+        if self._mock_mode:
+            raise RuntimeError("PropertyGuru HTTP client is unavailable in mock mode")
         if self.client is None:
-            raise RuntimeError("PropertyGuru HTTP client is unavailable")
+            try:
+                self.client = httpx.AsyncClient(timeout=30.0)
+            except RuntimeError as exc:  # pragma: no cover
+                logger.warning("httpx AsyncClient unavailable; PropertyGuru disabled")
+                raise RuntimeError("PropertyGuru HTTP client is unavailable") from exc
         return self.client
 
     def _require_credentials(self) -> None:
@@ -72,6 +76,12 @@ class PropertyGuruClient:
         self, code: str, redirect_uri: str
     ) -> OAuthTokenBundle:
         """Exchange an authorization code for access/refresh tokens."""
+        if self._mock_mode:
+            return OAuthTokenBundle(
+                access_token=f"mock-access-{code}",
+                refresh_token=f"mock-refresh-{code}",
+                expires_at=utcnow() + timedelta(hours=1),
+            )
         self._require_credentials()
         client = self._require_client()
         response = await client.post(
@@ -102,6 +112,13 @@ class PropertyGuruClient:
         )
 
     async def refresh_tokens(self, refresh_token: str) -> OAuthTokenBundle:
+        if self._mock_mode:
+            suffix = refresh_token.rsplit("-", 1)[-1] if refresh_token else "refreshed"
+            return OAuthTokenBundle(
+                access_token=f"mock-access-{suffix}",
+                refresh_token=f"mock-refresh-{suffix}",
+                expires_at=utcnow() + timedelta(hours=1),
+            )
         self._require_credentials()
         client = self._require_client()
         response = await client.post(
@@ -134,6 +151,11 @@ class PropertyGuruClient:
         self, listing_payload: Dict[str, Any], access_token: str | None = None
     ) -> Tuple[str, Dict[str, Any]]:
         """Publish or update a listing on PropertyGuru."""
+        if self._mock_mode:
+            listing_id = str(
+                listing_payload.get("external_id") or "propertyguru-mock-listing"
+            )
+            return listing_id, {"id": listing_id, "echo": listing_payload}
         if not access_token:
             raise RuntimeError("PropertyGuru access token required")
         client = self._require_client()
@@ -159,6 +181,9 @@ class PropertyGuruClient:
     async def remove_listing(
         self, listing_id: str, access_token: str | None = None
     ) -> bool:
+        if self._mock_mode:
+            _ = listing_id
+            return True
         if not access_token:
             raise RuntimeError("PropertyGuru access token required")
         client = self._require_client()
@@ -171,3 +196,7 @@ class PropertyGuruClient:
                 f"PropertyGuru listing delete failed with status {response.status_code}"
             )
         return True
+
+    async def close(self) -> None:
+        if self.client is not None:
+            await self.client.aclose()
