@@ -2,74 +2,30 @@
 # Pre-push hook to enforce code quality before pushing
 # Install: ln -sf ../../.git-hooks/pre-push .git/hooks/pre-push
 
-set -e
+set -euo pipefail
 
-echo "🔍 Running pre-push quality checks..."
-echo ""
-
-# Allow bypass with environment variable
-if [ "$SKIP_PRE_PUSH_CHECKS" = "1" ]; then
+if [ "${SKIP_PRE_PUSH_CHECKS:-0}" = "1" ]; then
     echo "⚠️  Skipping pre-push checks (SKIP_PRE_PUSH_CHECKS=1)"
-    echo "⚠️  Make sure you know what you're doing!"
     exit 0
 fi
 
-# Check if we're on a branch that requires checks
-current_branch=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$current_branch" == "main" ]] || [[ "$current_branch" == "develop" ]] || [[ "$current_branch" =~ ^(feature|fix|chore)/.* ]]; then
-    echo "📋 Checking branch: $current_branch"
+BASE_SHA=$(git merge-base HEAD origin/main 2>/dev/null || git rev-parse HEAD~1)
+HEAD_SHA=$(git rev-parse HEAD)
+CHANGED_FILES=$(git diff --name-only "${BASE_SHA}" "${HEAD_SHA}" | tr '\n' ',' | sed 's/,$//')
+DIFF_HASH=$(git diff "${BASE_SHA}" "${HEAD_SHA}" | shasum -a 256 | awk '{print $1}')
+
+mkdir -p metrics
+export AGENT_BASE_SHA="${BASE_SHA}"
+export AGENT_HEAD_SHA="${HEAD_SHA}"
+export AGENT_CHANGED_FILES="${CHANGED_FILES}"
+export AGENT_DIFF_HASH="${DIFF_HASH}"
+export AGENT_RUNS_FILE="metrics/agent_runs.jsonl"
+export AGENT_MEMORY_FILE="metrics/agent_memory.jsonl"
+
+if [ -x ".venv/bin/python" ]; then
+    RUNNER_PY=".venv/bin/python"
 else
-    echo "ℹ️  Skipping checks for branch: $current_branch"
-    exit 0
+    RUNNER_PY="python3"
 fi
 
-# Run formatting check
-echo "1️⃣  Checking code formatting..."
-if ! make format-check > /dev/null 2>&1; then
-    echo ""
-    echo "❌ Code formatting check failed!"
-    echo ""
-    echo "Fix it by running:"
-    echo "  make format"
-    echo ""
-    echo "Then try pushing again."
-    echo ""
-    echo "To bypass this check (not recommended):"
-    echo "  SKIP_PRE_PUSH_CHECKS=1 git push"
-    echo ""
-    exit 1
-fi
-echo "   ✅ Formatting OK"
-
-# Run linting
-echo "2️⃣  Running linters..."
-if ! make lint > /dev/null 2>&1; then
-    echo ""
-    echo "❌ Linting failed!"
-    echo ""
-    echo "Fix violations and try again."
-    echo "Run 'make lint' to see details."
-    echo ""
-    exit 1
-fi
-echo "   ✅ Linting OK"
-
-# Run coding rules check
-echo "3️⃣  Checking coding rules..."
-if ! make check-coding-rules > /dev/null 2>&1; then
-    echo ""
-    echo "❌ Coding rules violations detected!"
-    echo ""
-    echo "Run 'make check-coding-rules' to see violations."
-    echo "Run 'make format && make verify' to fix most issues."
-    echo ""
-    exit 1
-fi
-echo "   ✅ Coding rules OK"
-
-echo ""
-echo "✅ All pre-push checks passed!"
-echo "   Pushing to remote..."
-echo ""
-
-exit 0
+"${RUNNER_PY}" scripts/agents/runner.py verify --mode pre-pr --fail-fast

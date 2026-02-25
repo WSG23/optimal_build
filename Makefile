@@ -1,4 +1,4 @@
-.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset docker dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-backend typecheck-all typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean check-ui-canon fix-ui-canon fix-ui-canon-dry \
+.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset docker dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-backend typecheck-all typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean check-ui-canon fix-ui-canon fix-ui-canon-dry verify-autonomy memory-list memory-report memory-compact \
 	prod-test prod-status prod-logs prod-stop prod-health prod-readiness-check \
 	check-ports kill-ports ports dev-safe \
 	docker-cleanup-light docker-cleanup-standard docker-cleanup-deep docker-cleanup-emergency docker-status \
@@ -342,6 +342,18 @@ verify: ## Run formatting checks, linting, type checking, coding rules, roadmap/
 	$(MAKE) check-coding-rules
 	$(MAKE) validate-delivery-plan
 	$(MAKE) test
+
+verify-autonomy: ## Run canonical agent verify loop in full mode
+	@$(PY) scripts/agents/runner.py verify --mode full --fail-fast
+
+memory-list: ## List agent memory entries (optional LIMIT=50 CATEGORY=verify_failure)
+	@$(PY) scripts/agents/runner.py memory-list --limit $${LIMIT:-25} $${CATEGORY:+--category "$$CATEGORY"}
+
+memory-report: ## Summarize agent memory entries (optional TOP=10)
+	@$(PY) scripts/agents/runner.py memory-report --top $${TOP:-10}
+
+memory-compact: ## Compact agent memory entries (optional KEEP_LAST=200)
+	@$(PY) scripts/agents/runner.py memory-compact --keep-last $${KEEP_LAST:-200}
 
 quick-check: ## Fast pre-commit checks (format + typecheck + lint)
 	@echo "⚡ Running quick checks..."

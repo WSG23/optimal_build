@@ -226,6 +226,8 @@ jobs:
       PYTHONPATH: backend
       CI_ARTIFACTS: ${{ github.workspace }}/artifacts
       REFERENCE_STORAGE: ${{ github.workspace }}/artifacts/reference_storage
+      AGENT_RUNS_FILE: ${{ github.workspace }}/metrics/agent_runs.jsonl
+      AGENT_MEMORY_FILE: ${{ github.workspace }}/metrics/agent_memory.jsonl
       VITE_API_BASE_URL: http://127.0.0.1:8000/
       CI: 'true'
     steps:
@@ -323,6 +325,18 @@ jobs:
         run: |
           mkdir -p "$CI_ARTIFACTS"
           mkdir -p "$REFERENCE_STORAGE"
+          mkdir -p "$(dirname "$AGENT_RUNS_FILE")"
+
+      - name: Run canonical agent verify
+        run: |
+          set -euo pipefail
+          BASE_SHA=$(git merge-base HEAD origin/main 2>/dev/null || git rev-parse HEAD~1)
+          HEAD_SHA=$(git rev-parse HEAD)
+          export AGENT_BASE_SHA="$BASE_SHA"
+          export AGENT_HEAD_SHA="$HEAD_SHA"
+          export AGENT_CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | tr '\n' ',' | sed 's/,$//')"
+          export AGENT_DIFF_HASH="$(git diff "$BASE_SHA" "$HEAD_SHA" | sha256sum | awk '{print $1}')"
+          python scripts/agents/runner.py verify --mode integration --fail-fast
 
       - name: Run database migrations
         run: make db.upgrade
@@ -523,6 +537,16 @@ jobs:
         with:
           name: backend-artifacts
           path: artifacts
+          if-no-files-found: warn
+
+      - name: Upload agent runner artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-runner-artifacts
+          path: |
+            metrics/agent_runs.jsonl
+            metrics/agent_memory.jsonl
           if-no-files-found: warn
 
       - name: Upload Playwright artifacts

@@ -16,8 +16,21 @@
 | [MCP_GUARDRAILS.md](docs/mcp/MCP_GUARDRAILS.md) | Security, performance, testing standards |
 | [CLAUDE.md](CLAUDE.md) | Claude-specific detailed instructions |
 | [docs/ai-agents/](docs/ai-agents/README.md) | Persona playbooks (28 specialized agents) |
+| [AGENT_MEMORY.md](docs/ai/AGENT_MEMORY.md) | Canonical verify + memory loop commands |
 
 ---
+
+## Canonical Agent Memory Loop
+
+Use the shared runner for verification and learning loop operations:
+
+```bash
+python scripts/agents/runner.py verify --mode pre-pr --fail-fast
+python scripts/agents/runner.py memory-list --limit 20
+python scripts/agents/runner.py memory-report --top 10
+```
+
+Reference: [docs/ai/AGENT_MEMORY.md](docs/ai/AGENT_MEMORY.md)
 
 ## 1. Core Directives (The Constitution)
 

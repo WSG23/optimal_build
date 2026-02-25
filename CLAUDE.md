@@ -113,6 +113,24 @@ make verify
 make hooks
 ```
 
+### Canonical Memory Loop
+
+Use the shared runner for verify + memory behavior:
+
+```bash
+python scripts/agents/runner.py verify --mode pre-pr --fail-fast
+python scripts/agents/runner.py memory-list --limit 20
+python scripts/agents/runner.py memory-report --top 10
+python scripts/agents/runner.py memory-compact --keep-last 200
+```
+
+Behavior:
+- Verify failures emit `TRIAGE_JSON` and auto-write `verify_failure` memory entries.
+- Successful reruns on prior failure signatures auto-write `verify_resolution` entries.
+- Failures print `Memory Hints` from similar prior entries.
+
+Reference: [docs/ai/AGENT_MEMORY.md](docs/ai/AGENT_MEMORY.md)
+
 ---
 
 ## Communication Style

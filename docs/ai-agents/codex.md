@@ -23,6 +23,25 @@ This ensures you pick up exactly where the previous agent left off.
 
 ---
 
+## Canonical Agent Memory Loop
+
+Use the same runner as Claude and Gemini:
+
+```bash
+python scripts/agents/runner.py verify --mode pre-pr --fail-fast
+python scripts/agents/runner.py memory-list --limit 20
+python scripts/agents/runner.py memory-report --top 10
+```
+
+Behavior:
+- Verify failures output `TRIAGE_JSON` and write `verify_failure` entries.
+- When a prior failure signature passes, the runner writes `verify_resolution`.
+- On failure, the runner prints `Memory Hints` from similar history.
+
+Reference: [../ai/AGENT_MEMORY.md](../ai/AGENT_MEMORY.md)
+
+---
+
 ## 1. Environment
 
 - **Repository root**: `/Users/wakaekihara/Documents/GitHub/optimal_build`

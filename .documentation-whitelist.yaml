@@ -68,6 +68,7 @@ allowed_files:
   # Agent catalog and AI documentation
   - docs/agents/agent_catalog.md
   - docs/ai/SHARED_CORE.md
+  - docs/ai/AGENT_MEMORY.md
 
   # MCP documentation
   - docs/mcp/MCP_GUARDRAILS.md
