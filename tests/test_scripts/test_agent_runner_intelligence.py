@@ -12,9 +12,21 @@ from scripts.agents import runner
 def runner_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Path]:
     runs_path = tmp_path / "agent_runs.jsonl"
     memory_path = tmp_path / "agent_memory.jsonl"
+    db_path = tmp_path / "agent_memory.db"
+    audit_path = tmp_path / "agent_audit.jsonl"
+    model_path = tmp_path / "agent_embedding_model.pkl"
     monkeypatch.setenv("AGENT_RUNS_FILE", str(runs_path))
     monkeypatch.setenv("AGENT_MEMORY_FILE", str(memory_path))
-    return {"runs": runs_path, "memory": memory_path}
+    monkeypatch.setenv("AGENT_DB_FILE", str(db_path))
+    monkeypatch.setenv("AGENT_AUDIT_FILE", str(audit_path))
+    monkeypatch.setenv("AGENT_EMBED_MODEL_FILE", str(model_path))
+    return {
+        "runs": runs_path,
+        "memory": memory_path,
+        "db": db_path,
+        "audit": audit_path,
+        "model": model_path,
+    }
 
 
 def _read_jsonl(path: Path) -> list[dict[str, object]]:
@@ -293,3 +305,134 @@ def test_outcome_feedback_marks_hint_useful_after_resolution(
     )
     metadata = resolution_entry.get("metadata", {})
     assert metadata.get("hintAssisted") is True
+
+
+def test_governance_redacts_pii_and_writes_audit(
+    runner_env: dict[str, Path],
+) -> None:
+    runner._add_memory_entry(
+        title="PII leak incident",
+        details="Contact john.doe@example.com or +1 (415) 555-1212 and SSN 123-45-6789",
+        category="verify_failure",
+        source="runner.verify",
+        fingerprint="pii-fp",
+        evidence="Sensitive identifier",
+    )
+
+    raw_line = runner_env["memory"].read_text(encoding="utf-8").splitlines()[0]
+    assert "john.doe@example.com" not in raw_line
+    assert "123-45-6789" not in raw_line
+    assert "[REDACTED_EMAIL]" in raw_line
+    assert "[REDACTED_PHONE]" in raw_line
+
+    assert runner_env["audit"].exists()
+    audit_entries = _read_jsonl(runner_env["audit"])
+    assert audit_entries
+    assert str(audit_entries[-1].get("action")) in {"create", "update"}
+
+
+def test_hint_scores_include_explainability_breakdown(
+    runner_env: dict[str, Path],
+) -> None:
+    runner._add_memory_entry(
+        title="Backend import failure",
+        details="Mypy import contract mismatch in backend handlers",
+        category="verify_failure",
+        source="runner.verify",
+        fingerprint="fp-breakdown",
+        metadata={"triage": {"failingComponent": "backend"}},
+    )
+    records = runner._load_jsonl(runner_env["memory"], kind="memory")
+    assert isinstance(records, list)
+
+    hints = runner._find_memory_hints(
+        records,
+        fingerprint="fp-breakdown",
+        failing_component="backend",
+        query_text="mypy import contract mismatch",
+        runs_records=[],
+        limit=1,
+    )
+    assert hints
+    breakdown = hints[0].get("scoreBreakdown")
+    assert isinstance(breakdown, dict)
+    assert "semantic" in breakdown
+    assert "recency" in breakdown
+    assert "confidence" in breakdown
+    assert "usefulness" in breakdown
+    assert "impact" in breakdown
+
+
+def test_memory_dashboard_once_writes_html(
+    runner_env: dict[str, Path], capsys: pytest.CaptureFixture[str]
+) -> None:
+    runner._add_memory_entry(
+        title="Lint drift",
+        details="Formatter mismatch in CI",
+        category="verify_failure",
+        source="runner.verify",
+        fingerprint="fp-dashboard",
+    )
+    output_path = runner_env["memory"].parent / "dashboard.html"
+    assert (
+        runner.main(
+            [
+                "memory-dashboard",
+                "--top",
+                "5",
+                "--once",
+                "--output",
+                str(output_path),
+            ]
+        )
+        == 0
+    )
+    payload = json.loads(capsys.readouterr().out.strip())
+    assert payload["status"] == "rendered"
+    assert output_path.exists()
+    html_doc = output_path.read_text(encoding="utf-8")
+    assert "Agent Memory Dashboard" in html_doc
+    assert "/api/report" in html_doc
+
+
+def test_ranking_weights_update_from_feedback(runner_env: dict[str, Path]) -> None:
+    _ = runner_env
+    baseline = runner._load_ranking_weights()
+    runner._update_ranking_from_feedback(
+        [
+            {
+                "semanticSimilarity": 0.8,
+                "recencyWeight": 0.6,
+                "confidence": 0.7,
+                "usefulness": 0.5,
+                "impactWeight": 0.4,
+            }
+        ],
+        reward=1.0,
+    )
+    updated = runner._load_ranking_weights()
+    assert updated != baseline
+    assert abs(sum(updated) - 1.0) < 1e-6
+
+
+def test_causal_evaluation_reports_holdout_uplift(runner_env: dict[str, Path]) -> None:
+    _ = runner_env
+    runner._record_experiment(
+        signature="sig-treatment",
+        assignment="treatment",
+        hint_ids=["a"],
+        hint_features=[{"semanticSimilarity": 0.9}],
+    )
+    runner._record_experiment(
+        signature="sig-control",
+        assignment="control",
+        hint_ids=["b"],
+        hint_features=[{"semanticSimilarity": 0.2}],
+    )
+    runner._resolve_experiment("sig-treatment", ttr_seconds=40.0)
+    runner._resolve_experiment("sig-control", ttr_seconds=110.0)
+
+    causal = runner._causal_evaluation(5)
+    assert causal["sampleSize"] >= 2
+    assert "uplift" in causal
+    assert "resolutionRateDelta" in causal["uplift"]

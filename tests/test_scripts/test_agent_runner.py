@@ -12,9 +12,21 @@ from scripts.agents import runner
 def runner_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Path]:
     runs_path = tmp_path / "agent_runs.jsonl"
     memory_path = tmp_path / "agent_memory.jsonl"
+    db_path = tmp_path / "agent_memory.db"
+    audit_path = tmp_path / "agent_audit.jsonl"
+    model_path = tmp_path / "agent_embedding_model.pkl"
     monkeypatch.setenv("AGENT_RUNS_FILE", str(runs_path))
     monkeypatch.setenv("AGENT_MEMORY_FILE", str(memory_path))
-    return {"runs": runs_path, "memory": memory_path}
+    monkeypatch.setenv("AGENT_DB_FILE", str(db_path))
+    monkeypatch.setenv("AGENT_AUDIT_FILE", str(audit_path))
+    monkeypatch.setenv("AGENT_EMBED_MODEL_FILE", str(model_path))
+    return {
+        "runs": runs_path,
+        "memory": memory_path,
+        "db": db_path,
+        "audit": audit_path,
+        "model": model_path,
+    }
 
 
 def _read_jsonl(path: Path) -> list[dict[str, object]]:
@@ -241,3 +253,40 @@ def test_verify_failure_prints_memory_hints(
     output = capsys.readouterr().out
     assert "Memory Hints" in output
     assert "Previous frontend lint issue" in output
+
+
+def test_verify_control_holdout_does_not_print_memory_hints(
+    runner_env: dict[str, Path],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _ = runner_env
+    runner._add_memory_entry(
+        title="Prior backend hint",
+        details="Mypy import contract mismatch",
+        category="verify_failure",
+        source="runner.verify",
+        fingerprint="fp-control-holdout",
+        metadata={"triage": {"failingComponent": "backend"}},
+    )
+
+    phase = runner.VerifyPhase(
+        name="backend-typecheck",
+        command="make typecheck-backend",
+        failing_component="backend",
+        likely_root_cause="Mypy import contract mismatch",
+        recommended_rerun_command="make typecheck-backend",
+    )
+    monkeypatch.setitem(runner.VERIFY_PHASES_BY_MODE, "quick", [phase])
+    monkeypatch.setattr(
+        runner,
+        "_execute_command",
+        lambda command, *, dry_run: (1, "", "typecheck failed"),
+    )
+    monkeypatch.setattr(
+        runner, "_assign_ab_group", lambda signature, context: "control"
+    )
+
+    assert runner.main(["verify", "--mode", "quick", "--fail-fast"]) == 1
+    output = capsys.readouterr().out
+    assert "Memory Hints" not in output

@@ -1,4 +1,4 @@
-.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset docker dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-backend typecheck-all typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean check-ui-canon fix-ui-canon fix-ui-canon-dry verify-autonomy memory-list memory-report memory-compact \
+.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset docker dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-backend typecheck-all typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean check-ui-canon fix-ui-canon fix-ui-canon-dry verify-autonomy memory-list memory-report memory-compact memory-dashboard \
 	prod-test prod-status prod-logs prod-stop prod-health prod-readiness-check \
 	check-ports kill-ports ports dev-safe \
 	docker-cleanup-light docker-cleanup-standard docker-cleanup-deep docker-cleanup-emergency docker-status \
@@ -354,6 +354,9 @@ memory-report: ## Summarize agent memory entries (optional TOP=10)
 
 memory-compact: ## Compact agent memory entries (optional KEEP_LAST=200)
 	@$(PY) scripts/agents/runner.py memory-compact --keep-last $${KEEP_LAST:-200}
+
+memory-dashboard: ## Launch live agent memory dashboard (optional TOP=10 PORT=8765)
+	@$(PY) scripts/agents/runner.py memory-dashboard --top $${TOP:-10} --port $${PORT:-8765}
 
 quick-check: ## Fast pre-commit checks (format + typecheck + lint)
 	@echo "⚡ Running quick checks..."

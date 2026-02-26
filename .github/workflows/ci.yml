@@ -228,6 +228,9 @@ jobs:
       REFERENCE_STORAGE: ${{ github.workspace }}/artifacts/reference_storage
       AGENT_RUNS_FILE: ${{ github.workspace }}/metrics/agent_runs.jsonl
       AGENT_MEMORY_FILE: ${{ github.workspace }}/metrics/agent_memory.jsonl
+      AGENT_DB_FILE: ${{ github.workspace }}/metrics/agent_memory.db
+      AGENT_AUDIT_FILE: ${{ github.workspace }}/metrics/agent_audit.jsonl
+      AGENT_EMBED_MODEL_FILE: ${{ github.workspace }}/metrics/agent_embedding_model.pkl
       VITE_API_BASE_URL: http://127.0.0.1:8000/
       CI: 'true'
     steps:
@@ -547,6 +550,9 @@ jobs:
           path: |
             metrics/agent_runs.jsonl
             metrics/agent_memory.jsonl
+            metrics/agent_memory.db
+            metrics/agent_audit.jsonl
+            metrics/agent_embedding_model.pkl
           if-no-files-found: warn
 
       - name: Upload Playwright artifacts

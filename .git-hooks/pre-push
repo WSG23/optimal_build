@@ -21,6 +21,9 @@ export AGENT_CHANGED_FILES="${CHANGED_FILES}"
 export AGENT_DIFF_HASH="${DIFF_HASH}"
 export AGENT_RUNS_FILE="metrics/agent_runs.jsonl"
 export AGENT_MEMORY_FILE="metrics/agent_memory.jsonl"
+export AGENT_DB_FILE="metrics/agent_memory.db"
+export AGENT_AUDIT_FILE="metrics/agent_audit.jsonl"
+export AGENT_EMBED_MODEL_FILE="metrics/agent_embedding_model.pkl"
 
 if [ -x ".venv/bin/python" ]; then
     RUNNER_PY=".venv/bin/python"

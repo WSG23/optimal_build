@@ -121,6 +121,7 @@ Use the shared runner for verify + memory behavior:
 python scripts/agents/runner.py verify --mode pre-pr --fail-fast
 python scripts/agents/runner.py memory-list --limit 20
 python scripts/agents/runner.py memory-report --top 10
+python scripts/agents/runner.py memory-dashboard --top 10 --port 8765
 python scripts/agents/runner.py memory-compact --keep-last 200
 ```
 
