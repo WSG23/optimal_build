@@ -69,6 +69,7 @@ allowed_files:
   - docs/planning/features.md
   - docs/planning/ui-status.md
   - docs/planning/advanced-intelligence-data-sources.md
+  - docs/user-flow.md
 
   # Observability
   - docs/observability/preview_generation_monitoring.md
