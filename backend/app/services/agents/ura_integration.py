@@ -1,5 +1,6 @@
 """URA (Urban Redevelopment Authority) integration service for Singapore property data."""
 
+from functools import lru_cache
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
@@ -268,4 +269,18 @@ class URAIntegrationService(AsyncClientService):
 
 
 # Singleton instance
-ura_service = URAIntegrationService()
+
+
+@lru_cache(maxsize=1)
+def get_ura_service() -> URAIntegrationService:
+    """Return the shared URA integration client on first use."""
+
+    return URAIntegrationService()
+
+
+def __getattr__(name: str) -> object:
+    """Provide lazy backward-compatible access to the shared URA client."""
+
+    if name == "ura_service":
+        return get_ura_service()
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

@@ -1,5 +1,6 @@
 """API v1 router registration."""
 
+from functools import lru_cache
 from types import ModuleType
 from typing import Callable, Final, Protocol, cast
 
@@ -167,9 +168,24 @@ def _load_router(module_name: str) -> Router:
 
 
 _APIRouter: Final[Callable[[], Router]] = _router_factory()
-api_router: Final[Router] = _APIRouter()
-for _module_name in _ROUTER_MODULES:
-    api_router.include_router(_load_router(_module_name))
 
 
-__all__: Final[tuple[str, ...]] = ("api_router", "TAGS_METADATA")
+@lru_cache(maxsize=1)
+def build_api_router() -> Router:
+    """Build and cache the aggregated API router."""
+
+    api_router: Router = _APIRouter()
+    for module_name in _ROUTER_MODULES:
+        api_router.include_router(_load_router(module_name))
+    return api_router
+
+
+def __getattr__(name: str) -> object:
+    """Preserve lazy backward-compatible access to the aggregated router."""
+
+    if name == "api_router":
+        return build_api_router()
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
+__all__: Final[tuple[str, ...]] = ("api_router", "build_api_router", "TAGS_METADATA")

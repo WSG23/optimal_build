@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from importlib import import_module
 import logging
 import unicodedata
 from typing import Any
@@ -12,19 +13,40 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
-from app.core.export import (
-    DEFAULT_PENDING_WATERMARK,
-    ExportFormat,
-    ExportOptions,
-    LayerMapping,
-    LocalExportStorage,
-    ProjectGeometryMissing,
-    generate_project_export,
-)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/export", tags=["export"])
 logger = logging.getLogger(__name__)
+
+_UNRESOLVED = object()
+_EXPORT_SYMBOLS = {
+    "DEFAULT_PENDING_WATERMARK",
+    "ExportFormat",
+    "ExportOptions",
+    "LayerMapping",
+    "LocalExportStorage",
+    "ProjectGeometryMissing",
+    "generate_project_export",
+}
+
+
+def _load_export_symbol(name: str) -> Any:
+    """Resolve export-core symbols lazily so route import stays lightweight."""
+
+    existing = globals().get(name, _UNRESOLVED)
+    if existing is not _UNRESOLVED:
+        return existing
+
+    module = import_module("app.core.export")
+    resolved = getattr(module, name)
+    globals()[name] = resolved
+    return resolved
+
+
+def __getattr__(name: str) -> Any:
+    if name not in _EXPORT_SYMBOLS:
+        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    return _load_export_symbol(name)
 
 
 class LayerMapPayload(BaseModel):
@@ -57,11 +79,12 @@ class ExportRequestPayload(BaseModel):
         return cleaned
 
 
-def _build_layer_mapping(payload: LayerMapPayload | None) -> LayerMapping:
-    base_mapping = LayerMapping()
+def _build_layer_mapping(payload: LayerMapPayload | None) -> Any:
+    layer_mapping_cls = _load_export_symbol("LayerMapping")
+    base_mapping = layer_mapping_cls()
     if payload is None:
         return base_mapping
-    return LayerMapping(
+    return layer_mapping_cls(
         source=dict(payload.source),
         overlays=dict(payload.overlays),
         styles={key: dict(value) for key, value in payload.styles.items()},
@@ -81,33 +104,38 @@ async def export_project(
 ) -> FileResponse:
     """Generate and stream a CAD/BIM export for the given project."""
 
+    export_format_cls = _load_export_symbol("ExportFormat")
     try:
-        fmt = ExportFormat(payload.format)
+        fmt = export_format_cls(payload.format)
     except ValueError as exc:
         raise HTTPException(
             status_code=400, detail="Unsupported export format"
         ) from exc
 
     layer_mapping = _build_layer_mapping(payload.layer_map)
-    options = ExportOptions(
+    options_cls = _load_export_symbol("ExportOptions")
+    default_pending_watermark = _load_export_symbol("DEFAULT_PENDING_WATERMARK")
+    options = options_cls(
         format=fmt,
         include_source=payload.include_source,
         include_approved_overlays=payload.include_approved_overlays,
         include_pending_overlays=payload.include_pending_overlays,
         include_rejected_overlays=payload.include_rejected_overlays,
         layer_mapping=layer_mapping,
-        pending_watermark=payload.pending_watermark or DEFAULT_PENDING_WATERMARK,
+        pending_watermark=payload.pending_watermark or default_pending_watermark,
     )
 
-    storage = LocalExportStorage()
+    storage = _load_export_symbol("LocalExportStorage")()
+    project_geometry_missing = _load_export_symbol("ProjectGeometryMissing")
+    generate_project_export_fn = _load_export_symbol("generate_project_export")
     try:
-        artifact = await generate_project_export(
+        artifact = await generate_project_export_fn(
             session,
             project_id=project_id,
             options=options,
             storage=storage,
         )
-    except ProjectGeometryMissing as exc:
+    except project_geometry_missing as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     response = FileResponse(

@@ -1092,7 +1092,6 @@ async def export_finance_scenario(
 ) -> StreamingResponse:
     """Stream a ZIP bundle with CSV/JSON finance scenario artefacts."""
 
-    metrics.REQUEST_COUNTER.labels(endpoint="finance_export").inc()
     metrics.FINANCE_EXPORT_TOTAL.inc()
     start_time = perf_counter()
     response: StreamingResponse | None = None

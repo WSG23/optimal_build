@@ -624,6 +624,7 @@ if _backend_flow_session_factory in (None, _missing_fixture):
     ):
         pytest.skip("SQLAlchemy is required for test fixtures", allow_module_level=True)
 
+    import app.models as _app_models
     import app.utils.metrics as _metrics_module
     from app.core.database import get_session as _get_session
     from app.models.base import BaseModel as _FallbackBaseModel
@@ -649,6 +650,7 @@ if _backend_flow_session_factory in (None, _missing_fixture):
 
             pass
 
+    _app_models.load_model_modules()
     _SORTED_TABLES = tuple(_FallbackBaseModel.metadata.sorted_tables)
 
     async def _truncate_all(session: AsyncSession) -> None:

@@ -93,6 +93,12 @@ AsyncSessionLocal = async_sessionmaker[AsyncSession](
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """Get database session."""
 
+    # Import the full model registry on first real DB access so mapper
+    # relationships resolve correctly without making ``import app.main`` heavy.
+    from app.models import load_model_modules
+
+    load_model_modules()
+
     async with AsyncSessionLocal() as session:
         try:
             yield session

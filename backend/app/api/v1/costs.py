@@ -9,7 +9,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefCostIndex
-from app.utils import metrics
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +24,6 @@ async def latest_index(
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
 ) -> dict[str, Any]:
-    metrics.REQUEST_COUNTER.labels(endpoint="cost_index_latest").inc()
     lookup_name = index_name or series_name
     if lookup_name is None:
         raise HTTPException(

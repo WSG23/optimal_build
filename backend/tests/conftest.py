@@ -63,12 +63,24 @@ _REPO_ROOT = _find_repo_root(Path(__file__).resolve())
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-try:
-    asyncio.get_event_loop()
-except RuntimeError:
-    asyncio.set_event_loop(asyncio.new_event_loop())
 
-_ORIGINAL_ASYNCIO_GET_EVENT_LOOP = asyncio.get_event_loop
+def _ensure_event_loop() -> asyncio.AbstractEventLoop:
+    """Return the current loop, creating one without deprecated APIs if needed."""
+
+    global _FALLBACK_EVENT_LOOP
+    policy = asyncio.get_event_loop_policy()
+    try:
+        return asyncio.get_running_loop()
+    except RuntimeError:
+        if _FALLBACK_EVENT_LOOP is None or _FALLBACK_EVENT_LOOP.is_closed():
+            _FALLBACK_EVENT_LOOP = policy.new_event_loop()
+        policy.set_event_loop(_FALLBACK_EVENT_LOOP)
+        return _FALLBACK_EVENT_LOOP
+
+
+_FALLBACK_EVENT_LOOP: asyncio.AbstractEventLoop | None = None
+_ensure_event_loop()
+_ORIGINAL_ASYNCIO_GET_EVENT_LOOP = _ensure_event_loop
 
 
 def _patched_get_event_loop() -> asyncio.AbstractEventLoop:
@@ -205,8 +217,8 @@ if _SQLALCHEMY_AVAILABLE:
 
     app = _app
 
-    # Importing app.models ensures metadata is registered on BaseModel.
-    _ = app_models
+    # Tests exercise real metadata creation, so load the full ORM registry once.
+    app_models.load_model_modules()
 
     if not concurrency.have_greenlet:  # pragma: no cover - environment specific
 

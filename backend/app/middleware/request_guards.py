@@ -12,9 +12,9 @@ from typing import Any, Awaitable, Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import JSONResponse
 
 from app.utils.logging import get_logger, log_event
+from app.utils.problem_details import problem_response
 
 logger = get_logger(__name__)
 
@@ -81,11 +81,14 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
                         path=request.url.path,
                         client=request.client.host if request.client else "unknown",
                     )
-                    return JSONResponse(
+                    return problem_response(
+                        request=request,
                         status_code=413,
-                        content={
-                            "detail": f"Request body too large. Maximum allowed: {self._max_size} bytes."
-                        },
+                        detail=(
+                            "Request body too large. Maximum allowed: "
+                            f"{self._max_size} bytes."
+                        ),
+                        code="request_entity_too_large",
                     )
             except ValueError:
                 # Invalid content-length header, let it through
@@ -136,6 +139,7 @@ class CorrelationIdMiddleware:
 
         # Store in context for loggers
         token = correlation_id_var.set(correlation_id)
+        scope["correlation_id"] = correlation_id
 
         # Get request info for logging
         method = scope.get("method", "UNKNOWN")

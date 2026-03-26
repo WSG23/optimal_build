@@ -12,18 +12,18 @@ from app.core.database import get_session
 from app.core.metrics import MetricsCollector
 from app.models.property import PropertyType
 from app.schemas.market import MarketPeriod, MarketReportPayload, MarketReportResponse
-from app.services.agents.market_data_service import MarketDataService
-from app.services.agents.market_intelligence_analytics import (
-    MarketIntelligenceAnalytics,
-)
+from app.utils.lazy import LazyProxy
 from app.utils.logging import get_logger, log_event
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/market-intelligence", tags=["market-intelligence"])
 logger = get_logger(__name__)
 
-_market_data_service = MarketDataService()
 _metrics_collector = MetricsCollector()
+
+
+class MarketIntelligenceUnavailable(RuntimeError):
+    """Raised when optional analytics dependencies are not available."""
 
 
 def _dependency_available(module_name: str) -> bool:
@@ -31,10 +31,20 @@ def _dependency_available(module_name: str) -> bool:
     return spec is not None
 
 
-def _build_market_analytics() -> MarketIntelligenceAnalytics | None:
+def _create_market_data_service() -> object:
+    from app.services.agents.market_data_service import MarketDataService
+
+    return MarketDataService()
+
+
+def _build_market_analytics() -> object:
     try:
+        from app.services.agents.market_intelligence_analytics import (
+            MarketIntelligenceAnalytics,
+        )
+
         return MarketIntelligenceAnalytics(
-            _market_data_service,
+            _market_data_service.instance,
             metrics_collector=_metrics_collector,
         )
     except ImportError as exc:  # pragma: no cover - exercised when deps missing
@@ -43,10 +53,13 @@ def _build_market_analytics() -> MarketIntelligenceAnalytics | None:
             "market_intelligence_dependencies_missing",
             error=str(exc),
         )
-        return None
+        raise MarketIntelligenceUnavailable(
+            "market intelligence analytics unavailable"
+        ) from exc
 
 
-_market_analytics = _build_market_analytics()
+_market_data_service = LazyProxy(_create_market_data_service)
+_market_analytics = LazyProxy(_build_market_analytics)
 
 
 def _analytics_status() -> dict[str, object]:
@@ -54,7 +67,7 @@ def _analytics_status() -> dict[str, object]:
         "numpy": _dependency_available("numpy"),
         "pandas": _dependency_available("pandas"),
     }
-    ready = _market_analytics is not None and all(dependency_state.values())
+    ready = all(dependency_state.values())
     return {
         "status": "ready" if ready else "degraded",
         "dependencies": dependency_state,
@@ -76,14 +89,6 @@ async def generate_market_report(
 ) -> MarketReportResponse:
     """Return a comprehensive market intelligence report for the requested segment."""
 
-    if _market_analytics is None:
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Market intelligence analytics unavailable; ensure numpy and pandas are installed."
-            ),
-        )
-
     try:
         report = await _market_analytics.generate_market_report(
             property_type=property_type,
@@ -92,6 +97,13 @@ async def generate_market_report(
             session=session,
             competitive_set_id=competitive_set_id,
         )
+    except MarketIntelligenceUnavailable as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Market intelligence analytics unavailable; ensure numpy and pandas are installed."
+            ),
+        ) from exc
     except Exception as exc:  # pragma: no cover - defensive guard
         log_event(
             logger,

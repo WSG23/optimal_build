@@ -1,41 +1,44 @@
 """AI Services Package - Phases 1-4 of AI Rollout Plan."""
 
-from app.services.ai.natural_language_query import NaturalLanguageQueryService
-from app.services.ai.document_extractor import DocumentExtractionService
-from app.services.ai.anomaly_detector import AnomalyDetectionService
-from app.services.ai.rag_knowledge_base import RAGKnowledgeBaseService
-from app.services.ai.deal_scoring import DealScoringService
-from app.services.ai.scenario_optimizer import ScenarioOptimizerService
-from app.services.ai.market_predictor import MarketPredictorService
-from app.services.ai.compliance_predictor import CompliancePredictorService
-from app.services.ai.due_diligence_generator import DueDiligenceService
-from app.services.ai.report_generator import AIReportGenerator
-from app.services.ai.communication_drafter import CommunicationDrafterService
-from app.services.ai.workflow_engine import WorkflowEngineService
-from app.services.ai.conversational_assistant import ConversationalAssistantService
-from app.services.ai.multi_modal_analyzer import MultiModalAnalyzerService
-from app.services.ai.portfolio_optimizer import PortfolioOptimizerService
-from app.services.ai.competitive_intelligence import CompetitiveIntelligenceService
+from __future__ import annotations
 
-__all__ = [
+from importlib import import_module
+from typing import Final
+
+_EXPORTS: Final[dict[str, str]] = {
     # Phase 1: Foundation
-    "NaturalLanguageQueryService",
-    "DocumentExtractionService",
-    "AnomalyDetectionService",
-    "RAGKnowledgeBaseService",
+    "NaturalLanguageQueryService": ".natural_language_query",
+    "DocumentExtractionService": ".document_extractor",
+    "AnomalyDetectionService": ".anomaly_detector",
+    "RAGKnowledgeBaseService": ".rag_knowledge_base",
     # Phase 2: Predictive
-    "DealScoringService",
-    "ScenarioOptimizerService",
-    "MarketPredictorService",
-    "CompliancePredictorService",
+    "DealScoringService": ".deal_scoring",
+    "ScenarioOptimizerService": ".scenario_optimizer",
+    "MarketPredictorService": ".market_predictor",
+    "CompliancePredictorService": ".compliance_predictor",
     # Phase 3: Automation
-    "DueDiligenceService",
-    "AIReportGenerator",
-    "CommunicationDrafterService",
-    "WorkflowEngineService",
+    "DueDiligenceService": ".due_diligence_generator",
+    "AIReportGenerator": ".report_generator",
+    "CommunicationDrafterService": ".communication_drafter",
+    "WorkflowEngineService": ".workflow_engine",
     # Phase 4: Advanced
-    "ConversationalAssistantService",
-    "MultiModalAnalyzerService",
-    "PortfolioOptimizerService",
-    "CompetitiveIntelligenceService",
-]
+    "ConversationalAssistantService": ".conversational_assistant",
+    "MultiModalAnalyzerService": ".multi_modal_analyzer",
+    "PortfolioOptimizerService": ".portfolio_optimizer",
+    "CompetitiveIntelligenceService": ".competitive_intelligence",
+}
+
+
+def __getattr__(name: str) -> object:
+    """Lazy-load exported AI service classes on first access."""
+
+    module_name = _EXPORTS.get(name)
+    if module_name is None:
+        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+    value = getattr(import_module(module_name, __name__), name)
+    globals()[name] = value
+    return value
+
+
+__all__ = list(_EXPORTS)

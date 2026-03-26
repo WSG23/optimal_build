@@ -86,6 +86,7 @@ def configure_logging() -> None:
         processors=[
             structlog.processors.add_log_level,
             timestamper,
+            _inject_correlation_id,
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
             structlog.processors.JSONRenderer(),
@@ -101,6 +102,25 @@ def get_logger(name: str | None = None) -> BoundLogger:
 
     logger = structlog.get_logger(name)
     return logger.bind(app=settings.PROJECT_NAME)
+
+
+def _inject_correlation_id(
+    _: Any, __: str, event_dict: dict[str, Any]
+) -> dict[str, Any]:
+    """Attach the active correlation ID to every structured log event."""
+
+    if "correlation_id" in event_dict:
+        return event_dict
+
+    try:
+        from app.middleware.request_guards import get_correlation_id
+    except Exception:
+        return event_dict
+
+    correlation_id = get_correlation_id().strip()
+    if correlation_id:
+        event_dict["correlation_id"] = correlation_id
+    return event_dict
 
 
 def _serialise_for_logging(value: Any) -> Any:

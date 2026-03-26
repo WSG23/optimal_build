@@ -92,9 +92,10 @@ def test_configure_logging_respects_log_level(monkeypatch: pytest.MonkeyPatch) -
     processors = list(configure_kwargs["processors"])
     assert processors[0] is logging_utils.structlog.processors.add_log_level
     assert processors[1] == ("timestamper", "iso", True)
-    assert processors[2] == "stack-info"
-    assert processors[3] is logging_utils.structlog.processors.format_exc_info
-    assert processors[4] == "json-renderer"
+    assert processors[2] is logging_utils._inject_correlation_id
+    assert processors[3] == "stack-info"
+    assert processors[4] is logging_utils.structlog.processors.format_exc_info
+    assert processors[5] == "json-renderer"
 
 
 def test_configure_logging_with_debug_level(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -271,6 +272,40 @@ def test_configure_logging_sets_json_renderer(monkeypatch: pytest.MonkeyPatch) -
     configure_kwargs = captured["configure"]
     processors = list(configure_kwargs["processors"])
     assert processors[-1] == "json-renderer"
+
+
+def test_inject_correlation_id_adds_request_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Log events should inherit the active request correlation ID."""
+
+    monkeypatch.setattr(
+        "app.middleware.request_guards.get_correlation_id",
+        lambda: "cid-123",
+    )
+
+    event = logging_utils._inject_correlation_id(None, "info", {"event": "demo"})
+
+    assert event["correlation_id"] == "cid-123"
+
+
+def test_inject_correlation_id_preserves_explicit_value(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Explicit correlation IDs should not be overwritten by context."""
+
+    monkeypatch.setattr(
+        "app.middleware.request_guards.get_correlation_id",
+        lambda: "cid-123",
+    )
+
+    event = logging_utils._inject_correlation_id(
+        None,
+        "info",
+        {"event": "demo", "correlation_id": "already-set"},
+    )
+
+    assert event["correlation_id"] == "already-set"
 
 
 # ============================================================================

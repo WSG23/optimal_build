@@ -5,6 +5,9 @@ This module exposes the 16 AI services implemented in Phase 1-4 of the AI rollou
 
 from __future__ import annotations
 
+import sys
+from functools import lru_cache
+from importlib import import_module
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -93,31 +96,114 @@ from app.schemas.ai import (
     AIServiceStatsResponse,
 )
 
-# Import AI services
-from app.services.ai.natural_language_query import nl_query_service
-from app.services.ai.rag_knowledge_base import rag_knowledge_base_service
-from app.services.ai.deal_scoring import deal_scoring_service
-from app.services.ai.scenario_optimizer import scenario_optimizer_service
-from app.services.ai.market_predictor import market_predictor_service
-from app.services.ai.compliance_predictor import compliance_predictor_service
-from app.services.ai.due_diligence_generator import due_diligence_service
-from app.services.ai.report_generator import (
-    ai_report_generator as report_generator_service,
-)
-from app.services.ai.communication_drafter import communication_drafter_service
-from app.services.ai.conversational_assistant import conversational_assistant_service
-from app.services.ai.portfolio_optimizer import portfolio_optimizer_service
-from app.services.ai.multi_modal_analyzer import multi_modal_analyzer_service
-from app.services.ai.competitive_intelligence import competitive_intelligence_service
-from app.services.ai.workflow_engine import workflow_engine_service
-from app.services.ai.anomaly_detector import (
-    anomaly_detection_service as anomaly_detector_service,
-)
-from app.services.ai.document_extractor import (
-    document_extraction_service as document_extractor_service,
-)
-
 router = APIRouter(prefix="/ai", tags=["AI Services"])
+
+_AI_SERVICE_REGISTRY: dict[str, tuple[str, str, bool]] = {
+    "natural_language_query": (
+        "app.services.ai.natural_language_query",
+        "nl_query_service",
+        False,
+    ),
+    "knowledge_base": (
+        "app.services.ai.rag_knowledge_base",
+        "rag_knowledge_base_service",
+        False,
+    ),
+    "deal_scoring": ("app.services.ai.deal_scoring", "deal_scoring_service", True),
+    "scenario_optimizer": (
+        "app.services.ai.scenario_optimizer",
+        "scenario_optimizer_service",
+        False,
+    ),
+    "market_predictor": (
+        "app.services.ai.market_predictor",
+        "market_predictor_service",
+        True,
+    ),
+    "compliance_predictor": (
+        "app.services.ai.compliance_predictor",
+        "compliance_predictor_service",
+        True,
+    ),
+    "due_diligence": (
+        "app.services.ai.due_diligence_generator",
+        "due_diligence_service",
+        True,
+    ),
+    "report_generator": (
+        "app.services.ai.report_generator",
+        "ai_report_generator",
+        False,
+    ),
+    "communication_drafter": (
+        "app.services.ai.communication_drafter",
+        "communication_drafter_service",
+        False,
+    ),
+    "conversational_assistant": (
+        "app.services.ai.conversational_assistant",
+        "conversational_assistant_service",
+        False,
+    ),
+    "portfolio_optimizer": (
+        "app.services.ai.portfolio_optimizer",
+        "portfolio_optimizer_service",
+        False,
+    ),
+    "multi_modal_analyzer": (
+        "app.services.ai.multi_modal_analyzer",
+        "multi_modal_analyzer_service",
+        False,
+    ),
+    "competitive_intelligence": (
+        "app.services.ai.competitive_intelligence",
+        "competitive_intelligence_service",
+        False,
+    ),
+    "workflow_engine": (
+        "app.services.ai.workflow_engine",
+        "workflow_engine_service",
+        True,
+    ),
+    "anomaly_detector": (
+        "app.services.ai.anomaly_detector",
+        "anomaly_detection_service",
+        True,
+    ),
+    "document_extractor": (
+        "app.services.ai.document_extractor",
+        "document_extraction_service",
+        False,
+    ),
+}
+
+
+@lru_cache(maxsize=None)
+def _load_service(module_name: str, attribute: str) -> Any:
+    """Import and return a singleton AI service on first use."""
+
+    module = import_module(module_name)
+    return getattr(module, attribute)
+
+
+def _service(service_name: str) -> Any:
+    """Return the configured AI service singleton."""
+
+    module_name, attribute, _ = _AI_SERVICE_REGISTRY[service_name]
+    return _load_service(module_name, attribute)
+
+
+def _service_initialized(service_name: str) -> bool:
+    """Return the best-known initialization state without forcing imports."""
+
+    module_name, attribute, fallback = _AI_SERVICE_REGISTRY[service_name]
+    module = sys.modules.get(module_name)
+    if module is None:
+        return fallback
+    service = getattr(module, attribute, None)
+    if service is None:
+        return fallback
+    return bool(getattr(service, "_initialized", fallback))
 
 
 # ============================================================================
@@ -136,7 +222,7 @@ async def process_natural_language_query(
     Converts natural language questions into structured database queries
     and returns relevant information.
     """
-    result = await nl_query_service.process_query(
+    result = await _service("natural_language_query").process_query(
         query=request.query,
         user_id=request.user_id,
         db=db,
@@ -172,7 +258,7 @@ async def search_knowledge_base(
         "keyword": ServiceSearchMode.KEYWORD,
         "hybrid": ServiceSearchMode.HYBRID,
     }
-    result = await rag_knowledge_base_service.search(
+    result = await _service("knowledge_base").search(
         query=request.query,
         mode=mode_map.get(request.mode.value, ServiceSearchMode.HYBRID),
         source_types=None,  # Would map from request.source_types
@@ -205,7 +291,7 @@ async def ingest_property(
     db: AsyncSession = Depends(get_db),
 ) -> IngestionResponse:
     """Ingest a property into the knowledge base for semantic search."""
-    result = await rag_knowledge_base_service.ingest_property(
+    result = await _service("knowledge_base").ingest_property(
         property_id=request.property_id,
         db=db,
     )
@@ -225,7 +311,7 @@ async def ingest_deal(
     db: AsyncSession = Depends(get_db),
 ) -> IngestionResponse:
     """Ingest a deal into the knowledge base for semantic search."""
-    result = await rag_knowledge_base_service.ingest_deal(
+    result = await _service("knowledge_base").ingest_deal(
         deal_id=request.deal_id,
         db=db,
     )
@@ -244,7 +330,7 @@ async def ingest_document(
     _: Role = Depends(require_reviewer),
 ) -> IngestionResponse:
     """Ingest a document into the knowledge base for semantic search."""
-    result = await rag_knowledge_base_service.ingest_document(
+    result = await _service("knowledge_base").ingest_document(
         document_id=request.document_id,
         content=request.content,
         metadata=request.metadata,
@@ -263,7 +349,7 @@ async def get_knowledge_stats(
     _: Role = Depends(require_viewer),
 ) -> AIServiceStatsResponse:
     """Get statistics about the knowledge base."""
-    stats = rag_knowledge_base_service.get_stats()
+    stats = _service("knowledge_base").get_stats()
     return AIServiceStatsResponse(
         service_name="RAGKnowledgeBase",
         initialized=stats.get("initialized", False),
@@ -286,7 +372,7 @@ async def score_deal(
 
     Returns an overall score, grade, and breakdown by factors.
     """
-    result = await deal_scoring_service.score_deal(
+    result = await _service("deal_scoring").score_deal(
         deal_id=request.deal_id,
         db=db,
     )
@@ -353,7 +439,7 @@ async def optimize_scenarios(
         target_irr=request.target_irr,
         max_leverage=request.max_leverage,
     )
-    result = await scenario_optimizer_service.optimize(opt_request, db)
+    result = await _service("scenario_optimizer").optimize(opt_request, db)
 
     return ScenarioOptimizeResponse(
         project_id=result.project_id,
@@ -416,7 +502,7 @@ async def predict_market(
         prediction_types=prediction_types,
         forecast_months=request.forecast_months,
     )
-    result = await market_predictor_service.predict(pred_request, db)
+    result = await _service("market_predictor").predict(pred_request, db)
 
     return MarketPredictionResponse(
         predictions=[
@@ -457,7 +543,7 @@ async def predict_compliance(
         project_id=request.project_id,
         submission_types=request.submission_types,
     )
-    result = await compliance_predictor_service.predict(pred_request, db)
+    result = await _service("compliance_predictor").predict(pred_request, db)
 
     return CompliancePredictionResponse(
         project_id=result.project_id,
@@ -495,7 +581,7 @@ async def generate_due_diligence(
 
     Returns customized checklist items based on deal type and property.
     """
-    result = await due_diligence_service.generate_checklist(
+    result = await _service("due_diligence").generate_checklist(
         deal_id=request.deal_id,
         db=db,
     )
@@ -553,7 +639,7 @@ async def generate_ic_memo(
 
     Returns a structured memo with executive summary, analysis, and recommendations.
     """
-    result = await report_generator_service.generate_ic_memo(
+    result = await _service("report_generator").generate_ic_memo(
         deal_id=request.deal_id,
         db=db,
     )
@@ -593,7 +679,7 @@ async def generate_portfolio_report(
 
     Returns portfolio metrics, deal breakdown, and performance analysis.
     """
-    result = await report_generator_service.generate_portfolio_report(
+    result = await _service("report_generator").generate_portfolio_report(
         user_id=request.user_id,
         db=db,
     )
@@ -684,7 +770,10 @@ async def draft_communication(
         additional_context=request.additional_context,
         include_alternatives=request.include_alternatives,
     )
-    result = await communication_drafter_service.draft_communication(draft_request, db)
+    result = await _service("communication_drafter").draft_communication(
+        draft_request,
+        db,
+    )
 
     if not result.success or result.draft is None:
         raise HTTPException(
@@ -721,7 +810,7 @@ async def chat_message(
     Maintains conversation context and can perform actions like searching
     and analyzing deals.
     """
-    result = await conversational_assistant_service.process_message(
+    result = await _service("conversational_assistant").process_message(
         message=request.message,
         conversation_id=request.conversation_id,
         user_id=request.user_id or "anonymous",
@@ -747,7 +836,7 @@ async def list_conversations(
     _: Role = Depends(require_viewer),
 ) -> list[ConversationListItem]:
     """List all conversations for a user."""
-    conversations = conversational_assistant_service.list_conversations(user_id)
+    conversations = _service("conversational_assistant").list_conversations(user_id)
     return [
         ConversationListItem(
             conversation_id=c.conversation_id,
@@ -766,7 +855,7 @@ async def clear_conversation(
     _: Role = Depends(require_reviewer),
 ) -> dict[str, bool]:
     """Clear a conversation history."""
-    success = conversational_assistant_service.clear_conversation(conversation_id)
+    success = _service("conversational_assistant").clear_conversation(conversation_id)
     return {"success": success}
 
 
@@ -811,7 +900,7 @@ async def optimize_portfolio(
         max_concentration=request.max_concentration,
         min_liquidity=request.min_liquidity,
     )
-    result = await portfolio_optimizer_service.optimize(opt_request, db)
+    result = await _service("portfolio_optimizer").optimize(opt_request, db)
 
     return PortfolioOptimizeResponse(
         id=result.id,
@@ -906,7 +995,7 @@ async def analyze_image(
         analysis_types=analysis_types,
         property_id=request.property_id,
     )
-    result = await multi_modal_analyzer_service.analyze(analysis_request)
+    result = await _service("multi_modal_analyzer").analyze(analysis_request)
 
     space_metrics = None
     if result.space_metrics:
@@ -966,7 +1055,7 @@ async def track_competitor(
     }
     comp_type = type_map.get(request.competitor_type.lower(), CompetitorType.DEVELOPER)
 
-    competitor = competitive_intelligence_service.track_competitor(
+    competitor = _service("competitive_intelligence").track_competitor(
         name=request.name,
         competitor_type=comp_type,
         focus_sectors=request.focus_sectors,
@@ -988,7 +1077,7 @@ async def list_competitors(
     _: Role = Depends(require_viewer),
 ) -> list[CompetitorResponse]:
     """List all tracked competitors."""
-    competitors = competitive_intelligence_service.list_competitors()
+    competitors = _service("competitive_intelligence").list_competitors()
     return [
         CompetitorResponse(
             id=c.id,
@@ -1012,7 +1101,7 @@ async def gather_intelligence(
 
     Returns competitor activities, alerts, and market insights.
     """
-    result = await competitive_intelligence_service.gather_intelligence(
+    result = await _service("competitive_intelligence").gather_intelligence(
         user_id=request.user_id,
         db=db,
     )
@@ -1086,7 +1175,7 @@ async def trigger_workflow(
         "market_alert": ServiceTrigger.MARKET_ALERT,
     }
 
-    results = await workflow_engine_service.trigger_workflow(
+    results = await _service("workflow_engine").trigger_workflow(
         trigger=trigger_map[request.trigger.value],
         event_data=request.event_data,
         db=db,
@@ -1121,7 +1210,7 @@ async def list_workflows(
     _: Role = Depends(require_viewer),
 ) -> list[WorkflowDefinitionResponse]:
     """List all workflow definitions."""
-    workflows = workflow_engine_service.list_workflows()
+    workflows = _service("workflow_engine").list_workflows()
     return [
         WorkflowDefinitionResponse(
             id=w.id,
@@ -1141,7 +1230,7 @@ async def check_deadlines(
     db: AsyncSession = Depends(get_db),
 ) -> list[WorkflowResultResponse]:
     """Check for approaching deadlines and trigger notifications."""
-    results = await workflow_engine_service.check_deadlines(db)
+    results = await _service("workflow_engine").check_deadlines(db)
     return [
         WorkflowResultResponse(
             workflow_id=r.workflow_id,
@@ -1182,7 +1271,7 @@ async def detect_anomalies(
 
     Returns alerts for unusual patterns or values.
     """
-    result = await anomaly_detector_service.detect_anomalies(
+    result = await _service("anomaly_detector").detect_anomalies(
         deal_id=request.deal_id,
         property_id=request.property_id,
         project_id=request.project_id,
@@ -1233,7 +1322,7 @@ async def extract_document(
         extract_tables=request.extract_tables,
         extract_clauses=request.extract_clauses,
     )
-    result = await document_extractor_service.extract(extract_request)
+    result = await _service("document_extractor").extract(extract_request)
 
     return DocumentExtractionResponse(
         document_type=result.document_type,
@@ -1272,24 +1361,7 @@ async def ai_health_check() -> dict[str, Any]:
     """Check health status of AI services."""
     return {
         "status": "ok",
-        "services": {
-            "natural_language_query": nl_query_service._initialized,
-            "knowledge_base": rag_knowledge_base_service._initialized,
-            "deal_scoring": deal_scoring_service._initialized,
-            "scenario_optimizer": scenario_optimizer_service._initialized,
-            "market_predictor": market_predictor_service._initialized,
-            "compliance_predictor": compliance_predictor_service._initialized,
-            "due_diligence": True,  # No LLM dependency
-            "report_generator": report_generator_service._initialized,
-            "communication_drafter": communication_drafter_service._initialized,
-            "conversational_assistant": conversational_assistant_service._initialized,
-            "portfolio_optimizer": portfolio_optimizer_service._initialized,
-            "multi_modal_analyzer": multi_modal_analyzer_service._initialized,
-            "competitive_intelligence": competitive_intelligence_service._initialized,
-            "workflow_engine": True,  # No LLM dependency
-            "anomaly_detector": True,  # No LLM dependency
-            "document_extractor": document_extractor_service._initialized,
-        },
+        "services": {name: _service_initialized(name) for name in _AI_SERVICE_REGISTRY},
     }
 
 

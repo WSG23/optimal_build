@@ -4,15 +4,19 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from functools import lru_cache
 from pathlib import Path
+from threading import Lock
 from typing import Any
 
 from fastapi import Depends, FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 try:  # pragma: no cover - prefer real slowapi when available
     from slowapi import Limiter
@@ -56,7 +60,12 @@ except Exception:  # pragma: no cover - fallback for stubbed environments
 
 
 from app.api.deps import require_viewer
-from app.api.v1 import TAGS_METADATA, api_router
+from app.api.error_handlers import (
+    http_exception_handler,
+    unhandled_exception_handler,
+    validation_exception_handler,
+)
+from app.api.v1 import TAGS_METADATA, build_api_router
 from app.core.config import settings
 from app.core.database import engine, get_session
 from app.middleware.observability import (
@@ -68,12 +77,6 @@ from app.middleware.request_guards import (
     RequestSizeLimitMiddleware,
 )
 from app.middleware.security import SecurityHeadersMiddleware
-from app.models.rkp import RefRule
-from app.schemas.buildable import BUILDABLE_REQUEST_EXAMPLE, BUILDABLE_RESPONSE_EXAMPLE
-from app.schemas.finance import (
-    FINANCE_FEASIBILITY_REQUEST_EXAMPLE,
-    FINANCE_FEASIBILITY_RESPONSE_EXAMPLE,
-)
 from app.utils import metrics
 from app.utils.logging import configure_logging, get_logger, log_event
 from sqlalchemy import func, select, text
@@ -81,6 +84,83 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 configure_logging()
 logger = get_logger(__name__)
+_api_router_lock = Lock()
+_api_router_loaded = False
+
+
+@lru_cache(maxsize=1)
+def _load_ref_rule_model() -> Any:
+    """Import the RKP rule model only for endpoints that query it."""
+
+    from app.models.rkp import RefRule
+
+    return RefRule
+
+
+@lru_cache(maxsize=1)
+def _load_openapi_examples() -> dict[str, Any]:
+    """Load heavyweight request/response examples only when generating OpenAPI."""
+
+    from app.schemas.buildable import (
+        BUILDABLE_REQUEST_EXAMPLE,
+        BUILDABLE_RESPONSE_EXAMPLE,
+    )
+    from app.schemas.finance import (
+        FINANCE_FEASIBILITY_REQUEST_EXAMPLE,
+        FINANCE_FEASIBILITY_RESPONSE_EXAMPLE,
+    )
+
+    return {
+        "buildable_request": BUILDABLE_REQUEST_EXAMPLE,
+        "buildable_response": BUILDABLE_RESPONSE_EXAMPLE,
+        "finance_request": FINANCE_FEASIBILITY_REQUEST_EXAMPLE,
+        "finance_response": FINANCE_FEASIBILITY_RESPONSE_EXAMPLE,
+    }
+
+
+def _request_needs_api_router(path: str) -> bool:
+    """Return whether the current path needs the API v1 router tree loaded."""
+
+    if path == "/openapi.json":
+        return True
+    if path == "/docs" or path.startswith("/docs/"):
+        return True
+    if path == "/redoc" or path.startswith("/redoc/"):
+        return True
+    if path == settings.API_V1_STR:
+        return True
+    return path.startswith(f"{settings.API_V1_STR}/")
+
+
+def _ensure_api_router_loaded() -> None:
+    """Load and register the API v1 router once on first real use."""
+
+    global _api_router_loaded
+
+    if _api_router_loaded:
+        return
+
+    with _api_router_lock:
+        if _api_router_loaded:
+            return
+        app.include_router(build_api_router(), prefix=settings.API_V1_STR)
+        app.openapi_schema = None
+        _api_router_loaded = True
+
+
+class ApiRouterLoaderMiddleware:
+    """Load API routes lazily so importing ``app.main`` stays cheap."""
+
+    def __init__(self, app: Any) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+        path = str(scope.get("path", ""))
+        if scope.get("type") in {"http", "websocket"} and _request_needs_api_router(
+            path
+        ):
+            _ensure_api_router_loaded()
+        await self.app(scope, receive, send)
 
 
 @asynccontextmanager
@@ -92,7 +172,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # For SQLite dev mode, create all tables on startup
     if "sqlite" in str(engine.url):
         from app.models.base import BaseModel
+        from app.models import load_model_modules
 
+        load_model_modules()
         async with engine.begin() as conn:
             await conn.run_sync(BaseModel.metadata.create_all)
         log_event(logger, "sqlite_tables_created")
@@ -113,6 +195,7 @@ app = FastAPI(
     openapi_tags=TAGS_METADATA,
 )
 
+app.add_middleware(ApiRouterLoaderMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=500)
 # CORS configuration - restrict headers in production
@@ -181,38 +264,18 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONRe
         client_host=request.client.host if request.client else "unknown",
         path=request.url.path,
     )
-    return JSONResponse(
-        status_code=429,
-        content={
-            "detail": "Request rate limit exceeded. Please retry later.",
-        },
+    return await http_exception_handler(
+        request,
+        StarletteHTTPException(
+            status_code=429,
+            detail="Request rate limit exceeded. Please retry later.",
+        ),
     )
 
 
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Handle uncaught exceptions and return a JSON response with CORS headers.
-
-    This ensures that unhandled exceptions still return proper JSON responses
-    that the CORS middleware can process, preventing CORS errors on 500 responses.
-    """
-    log_event(
-        logger,
-        "unhandled_exception",
-        client_host=request.client.host if request.client else "unknown",
-        path=request.url.path,
-        error=str(exc),
-        error_type=type(exc).__name__,
-    )
-    return JSONResponse(
-        status_code=500,
-        content={
-            "detail": "Internal server error",
-        },
-    )
-
-
-app.include_router(api_router, prefix=settings.API_V1_STR)
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(Exception, unhandled_exception_handler)
 
 static_root = Path(__file__).resolve().parents[2] / "static"
 if static_root.exists():
@@ -234,6 +297,9 @@ async def prometheus_metrics() -> Response:
 def custom_openapi() -> dict[str, Any]:
     """Generate OpenAPI schema while injecting request/response examples."""
 
+    _ensure_api_router_loaded()
+    examples = _load_openapi_examples()
+
     if app.openapi_schema:
         schema = app.openapi_schema
     else:
@@ -254,7 +320,7 @@ def custom_openapi() -> dict[str, Any]:
         .get("application/json", {})
     )
     if isinstance(request_content, dict):
-        request_content["example"] = BUILDABLE_REQUEST_EXAMPLE
+        request_content["example"] = examples["buildable_request"]
 
     response_content = (
         buildable_post.get("responses", {})
@@ -263,7 +329,7 @@ def custom_openapi() -> dict[str, Any]:
         .get("application/json", {})
     )
     if isinstance(response_content, dict):
-        response_content["example"] = BUILDABLE_RESPONSE_EXAMPLE
+        response_content["example"] = examples["buildable_response"]
 
     finance_post = (
         schema.get("paths", {}).get("/api/v1/finance/feasibility", {}).get("post", {})
@@ -274,7 +340,7 @@ def custom_openapi() -> dict[str, Any]:
         .get("application/json", {})
     )
     if isinstance(finance_request, dict):
-        finance_request["example"] = FINANCE_FEASIBILITY_REQUEST_EXAMPLE
+        finance_request["example"] = examples["finance_request"]
 
     finance_response = (
         finance_post.get("responses", {})
@@ -283,7 +349,7 @@ def custom_openapi() -> dict[str, Any]:
         .get("application/json", {})
     )
     if isinstance(finance_response, dict):
-        finance_response["example"] = FINANCE_FEASIBILITY_RESPONSE_EXAMPLE
+        finance_response["example"] = examples["finance_response"]
 
     app.openapi_schema = schema
     return schema
@@ -297,7 +363,6 @@ app.openapi_schema = None
 async def root() -> dict[str, str]:
     """Root endpoint."""
 
-    metrics.REQUEST_COUNTER.labels(endpoint="root").inc()
     log_event(logger, "root_endpoint")
     return {
         "message": "Building Compliance Platform API",
@@ -310,10 +375,10 @@ async def root() -> dict[str, str]:
 async def health_check(session: AsyncSession = Depends(get_session)) -> dict[str, Any]:
     """Health check endpoint with database connectivity."""
 
-    metrics.REQUEST_COUNTER.labels(endpoint="health").inc()
+    ref_rule_model = _load_ref_rule_model()
     try:
         rules_count_result = await session.execute(
-            select(func.count()).select_from(RefRule)
+            select(func.count()).select_from(ref_rule_model)
         )
         rules_count = rules_count_result.scalar_one()
         payload = {
@@ -346,7 +411,6 @@ async def health_metrics() -> Response:
 async def test_endpoint(_: str = Depends(require_viewer)) -> dict[str, str]:
     """Test endpoint."""
 
-    metrics.REQUEST_COUNTER.labels(endpoint="test").inc()
     return {"message": "API is working", "version": settings.VERSION}
 
 
@@ -357,17 +421,17 @@ async def rules_count(
 ) -> dict[str, Any]:
     """Get count of rules in database."""
 
-    metrics.REQUEST_COUNTER.labels(endpoint="rules_count").inc()
+    ref_rule_model = _load_ref_rule_model()
     try:
         total_rules_result = await session.execute(
-            select(func.count()).select_from(RefRule)
+            select(func.count()).select_from(ref_rule_model)
         )
         total_rules = int(total_rules_result.scalar_one() or 0)
 
         by_authority_result = await session.execute(
-            select(RefRule.authority, func.count())
-            .group_by(RefRule.authority)
-            .order_by(RefRule.authority)
+            select(ref_rule_model.authority, func.count())
+            .group_by(ref_rule_model.authority)
+            .order_by(ref_rule_model.authority)
         )
         by_authority: dict[str, int] = {}
         for authority, count in by_authority_result.all():
@@ -375,8 +439,12 @@ async def rules_count(
             by_authority[key] = int(count or 0)
 
         sample_rule_result = await session.execute(
-            select(RefRule.parameter_key, RefRule.value, RefRule.unit)
-            .order_by(RefRule.id)
+            select(
+                ref_rule_model.parameter_key,
+                ref_rule_model.value,
+                ref_rule_model.unit,
+            )
+            .order_by(ref_rule_model.id)
             .limit(1)
         )
         sample_rule = sample_rule_result.mappings().first()
@@ -405,7 +473,7 @@ async def database_status(
 ) -> dict[str, Any]:
     """Get database status and table information."""
 
-    metrics.REQUEST_COUNTER.labels(endpoint="database_status").inc()
+    ref_rule_model = _load_ref_rule_model()
     try:
         tables_result = await session.execute(
             text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
@@ -413,9 +481,9 @@ async def database_status(
         tables = [row[0] for row in tables_result.fetchall()]
 
         rules_by_topic_result = await session.execute(
-            select(RefRule.topic, func.count())
-            .group_by(RefRule.topic)
-            .order_by(RefRule.topic)
+            select(ref_rule_model.topic, func.count())
+            .group_by(ref_rule_model.topic)
+            .order_by(ref_rule_model.topic)
         )
         by_topic: dict[str, int] = {}
         total_rules = 0

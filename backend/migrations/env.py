@@ -15,7 +15,7 @@ from alembic import context
 from app.core.config import settings
 
 # Import your models
-from app.models import Base
+from app.models import Base, load_model_modules
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -31,6 +31,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
+load_model_modules()
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

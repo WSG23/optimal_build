@@ -54,19 +54,39 @@ from app.services.agents.gps_property_logger import (
     PropertyLogResult,
 )
 from app.services.developer_checklist_service import DeveloperChecklistService
-from app.services.agents.ura_integration import URAIntegrationService
 from app.services.asset_mix import AssetOptimizationOutcome, build_asset_mix
 from app.services import preview_generator
-from app.services.geocoding import Address, GeocodingService
+from app.services.geocoding import Address
 from app.services.jurisdictions import get_jurisdiction_config
 from app.services.preview_jobs import PreviewJobService, PreviewJobStatus
+from app.utils.lazy import LazyProxy
 
 router = APIRouter(prefix="/developers", tags=["developers"])
 logger = structlog.get_logger()
 
-_developer_geocoding = GeocodingService()
-_developer_ura = URAIntegrationService()
-developer_gps_logger = GPSPropertyLogger(_developer_geocoding, _developer_ura)
+
+def _create_developer_geocoding() -> object:
+    from app.services.geocoding import GeocodingService
+
+    return GeocodingService()
+
+
+def _create_developer_ura() -> object:
+    from app.services.agents.ura_integration import URAIntegrationService
+
+    return URAIntegrationService()
+
+
+def _create_developer_gps_logger() -> object:
+    return GPSPropertyLogger(
+        _developer_geocoding.instance,
+        _developer_ura.instance,
+    )
+
+
+_developer_geocoding = LazyProxy(_create_developer_geocoding)
+_developer_ura = LazyProxy(_create_developer_ura)
+developer_gps_logger = LazyProxy(_create_developer_gps_logger)
 
 
 # =============================================================================

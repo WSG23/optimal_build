@@ -38,6 +38,6 @@ async def test_standards_lookup(app_client, session):
     assert payload[0]["section"] == "4.2"
 
     count = metrics.counter_value(
-        metrics.REQUEST_COUNTER, {"endpoint": "standards_lookup"}
+        metrics.REQUEST_COUNTER, {"endpoint": "/api/v1/standards"}
     )
     assert count == 1.0

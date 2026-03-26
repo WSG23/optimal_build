@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.models.workflow import StepStatus, WorkflowStatus
 
@@ -25,8 +25,7 @@ class ApprovalStepRead(BaseModel):
     approved_at: Optional[datetime] = None  # Aliased from decision_at
     comments: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     @classmethod
     def from_orm_step(cls, step: Any) -> "ApprovalStepRead":
@@ -79,8 +78,7 @@ class ApprovalWorkflowRead(BaseModel):
     updated_at: datetime
     steps: List[ApprovalStepRead]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     @classmethod
     def from_orm_workflow(cls, workflow: Any) -> "ApprovalWorkflowRead":

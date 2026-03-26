@@ -15,12 +15,19 @@ from app.schemas.performance import (
     BenchmarkResponse,
     SnapshotRequest,
 )
-from app.services.deals import AgentPerformanceService
+from app.utils.lazy import LazyProxy
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/performance", tags=["Business Performance"])
 
-service = AgentPerformanceService()
+
+def _create_performance_service() -> object:
+    from app.services.deals import AgentPerformanceService
+
+    return AgentPerformanceService()
+
+
+service = LazyProxy(_create_performance_service)
 
 
 @router.get("/summary", response_model=AgentPerformanceSnapshotResponse)

@@ -9,7 +9,6 @@ from fastapi import APIRouter, Depends, Query
 from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.models.rkp import RefMaterialStandard
-from app.utils import metrics
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,7 +24,6 @@ async def list_standards(
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
 ) -> list[dict[str, Any]]:
-    metrics.REQUEST_COUNTER.labels(endpoint="standards_lookup").inc()
     stmt = select(RefMaterialStandard)
     if property_key:
         stmt = stmt.where(RefMaterialStandard.property_key == property_key)

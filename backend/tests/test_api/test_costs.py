@@ -54,7 +54,7 @@ async def test_latest_cost_index(app_client, session):
     assert float(payload["value"]) == pytest.approx(1.10)
 
     count = metrics.counter_value(
-        metrics.REQUEST_COUNTER, {"endpoint": "cost_index_latest"}
+        metrics.REQUEST_COUNTER, {"endpoint": "/api/v1/costs/indices/latest"}
     )
     assert count == 1.0
 

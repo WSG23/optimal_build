@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from importlib import import_module
 import importlib.util
+import sys
 from datetime import date, datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, Optional
@@ -20,62 +22,26 @@ from app.core.config import settings
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.property import Property, PropertyType
-from app.services.agents.advisory import AgentAdvisoryService
-from app.services.agents.development_potential_scanner import (
-    DevelopmentPotentialScanner,
-)
-from app.services.agents.gps_property_logger import (
-    DevelopmentScenario,
-    GPSPropertyLogger,
-)
-from app.services.agents.photo_documentation import PhotoDocumentationManager
-from app.services.agents.voice_note_service import VoiceNoteService
-from app.services.agents.ura_integration import ura_service
-from app.services.geocoding import Address, GeocodingService
+from app.services.agents.gps_property_logger import DevelopmentScenario
+from app.services.geocoding import Address
+from app.utils.lazy import LazyProxy
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-try:  # pragma: no cover - scenario builder has heavy optional deps
-    from app.services.agents.scenario_builder_3d import (
-        Quick3DScenarioBuilder,
-        ScenarioType,
-    )
-except ModuleNotFoundError:  # pragma: no cover - provide fallback enum
-
-    class ScenarioType(str, Enum):  # type: ignore[misc]
-        NEW_BUILD = "new_build"
-        RENOVATION = "renovation"
-        MIXED_USE_CONVERSION = "mixed_use_conversion"
-        VERTICAL_EXTENSION = "vertical_extension"
-        PODIUM_TOWER = "podium_tower"
-        PHASED_DEVELOPMENT = "phased"
-
-    Quick3DScenarioBuilder = None  # type: ignore[assignment]
-from app.services.agents.market_data_service import MarketDataService
-from app.services.agents.market_intelligence_analytics import (
-    MarketIntelligenceAnalytics,
-)
-from app.services.buildable import BuildableService
 from app.services.finance import (
     calculate_comprehensive_metrics,
     value_property_multiple_approaches,
 )
-from app.services.postgis import PostGISService
 
-try:  # pragma: no cover - optional dependency relies on reportlab
-    from app.services.agents.universal_site_pack import UniversalSitePackGenerator
-except ModuleNotFoundError:  # pragma: no cover
-    UniversalSitePackGenerator = None  # type: ignore[assignment]
 
-try:  # pragma: no cover - optional dependency relies on reportlab
-    from app.services.agents.investment_memorandum import InvestmentMemorandumGenerator
-except ModuleNotFoundError:  # pragma: no cover
-    InvestmentMemorandumGenerator = None  # type: ignore[assignment]
+class ScenarioType(str, Enum):
+    NEW_BUILD = "new_build"
+    RENOVATION = "renovation"
+    MIXED_USE_CONVERSION = "mixed_use_conversion"
+    VERTICAL_EXTENSION = "vertical_extension"
+    PODIUM_TOWER = "podium_tower"
+    PHASED_DEVELOPMENT = "phased"
 
-try:  # pragma: no cover - optional dependency relies on reportlab
-    from app.services.agents.marketing_materials import MarketingMaterialsGenerator
-except ModuleNotFoundError:  # pragma: no cover
-    MarketingMaterialsGenerator = None  # type: ignore[assignment]
 
 router = APIRouter(
     prefix="/agents/commercial-property", tags=["Commercial Property Agent"]
@@ -83,17 +49,122 @@ router = APIRouter(
 
 logger = structlog.get_logger()
 
-# Service instances
-geocoding_service = GeocodingService()
-gps_logger = GPSPropertyLogger(geocoding_service, ura_service)
-market_data_service = MarketDataService()
-market_analytics = MarketIntelligenceAnalytics(market_data_service)
-advisory_service = AgentAdvisoryService()
+_UNRESOLVED = object()
+_LAZY_CLASS_MODULES = {
+    "BuildableService": "app.services.buildable",
+    "DeveloperChecklistService": "app.services.developer_checklist_service",
+    "DevelopmentPotentialScanner": "app.services.agents.development_potential_scanner",
+    "InvestmentMemorandumGenerator": "app.services.agents.investment_memorandum",
+    "MarketingMaterialsGenerator": "app.services.agents.marketing_materials",
+    "PostGISService": "app.services.postgis",
+    "Quick3DScenarioBuilder": "app.services.agents.scenario_builder_3d",
+    "UniversalSitePackGenerator": "app.services.agents.universal_site_pack",
+}
+
+
+def _load_class(name: str, module_name: str) -> Any:
+    """Load a class lazily while still allowing module-level monkeypatches."""
+
+    existing = globals().get(name, _UNRESOLVED)
+    if existing is not _UNRESOLVED:
+        return existing
+
+    try:
+        module = import_module(module_name)
+    except ModuleNotFoundError:
+        globals()[name] = None
+        return None
+
+    resolved = getattr(module, name, None)
+    globals()[name] = resolved
+    return resolved
+
+
+def _load_optional_class(name: str, module_name: str) -> type[Any] | None:
+    return _load_class(name, module_name)
+
+
+def _load_required_class(name: str, module_name: str) -> type[Any]:
+    resolved = _load_class(name, module_name)
+    if resolved is None:
+        raise RuntimeError(f"{name} is unavailable in the current environment")
+    return resolved  # type: ignore[return-value]
+
+
+def __getattr__(name: str) -> Any:
+    module_name = _LAZY_CLASS_MODULES.get(name)
+    if module_name is None:
+        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    return _load_class(name, module_name)
+
+
+def _create_geocoding_service() -> Any:
+    from app.services.geocoding import GeocodingService
+
+    return GeocodingService()
+
+
+def _create_ura_service() -> Any:
+    from app.services.agents.ura_integration import URAIntegrationService
+
+    return URAIntegrationService()
+
+
+def _create_gps_logger() -> Any:
+    from app.services.agents.gps_property_logger import GPSPropertyLogger
+
+    return GPSPropertyLogger(geocoding_service.instance, ura_service.instance)
+
+
+def _create_market_data_service() -> Any:
+    from app.services.agents.market_data_service import MarketDataService
+
+    return MarketDataService()
+
+
+def _create_market_analytics() -> Any:
+    from app.services.agents.market_intelligence_analytics import (
+        MarketIntelligenceAnalytics,
+    )
+
+    return MarketIntelligenceAnalytics(market_data_service.instance)
+
+
+def _create_advisory_service() -> Any:
+    from app.services.agents.advisory import AgentAdvisoryService
+
+    return AgentAdvisoryService()
+
+
+def _new_photo_manager() -> Any:
+    from app.services.agents.photo_documentation import PhotoDocumentationManager
+
+    return PhotoDocumentationManager()
+
+
+def _new_voice_note_service() -> Any:
+    from app.services.agents.voice_note_service import VoiceNoteService
+
+    return VoiceNoteService()
+
+
+geocoding_service = LazyProxy(_create_geocoding_service)
+ura_service = LazyProxy(_create_ura_service)
+gps_logger = LazyProxy(_create_gps_logger)
+market_data_service = LazyProxy(_create_market_data_service)
+market_analytics = LazyProxy(_create_market_analytics)
+advisory_service = LazyProxy(_create_advisory_service)
 
 
 def _dependency_available(module_name: str) -> bool:
     spec = importlib.util.find_spec(module_name)
     return spec is not None
+
+
+def _allow_gps_demo_fallback() -> bool:
+    """Allow demo fallback in explicit offline mode and under pytest."""
+
+    return settings.OFFLINE_MODE or "pytest" in sys.modules
 
 
 def _agents_dependency_status() -> dict[str, object]:
@@ -107,10 +178,18 @@ def _agents_dependency_status() -> dict[str, object]:
         "minio": _dependency_available("minio"),
     }
     optional_features = {
-        "three_d_builder": Quick3DScenarioBuilder is not None,
-        "site_pack_generator": UniversalSitePackGenerator is not None,
-        "investment_memorandum": InvestmentMemorandumGenerator is not None,
-        "marketing_materials": MarketingMaterialsGenerator is not None,
+        "three_d_builder": _dependency_available(
+            "app.services.agents.scenario_builder_3d"
+        ),
+        "site_pack_generator": _dependency_available(
+            "app.services.agents.universal_site_pack"
+        ),
+        "investment_memorandum": _dependency_available(
+            "app.services.agents.investment_memorandum"
+        ),
+        "marketing_materials": _dependency_available(
+            "app.services.agents.marketing_materials"
+        ),
     }
     ready = all(heavy_dependencies.values())
     return {
@@ -491,7 +570,7 @@ async def log_property_by_gps(
             latitude=request.latitude,
             longitude=request.longitude,
         )
-        if not settings.OFFLINE_MODE:
+        if not _allow_gps_demo_fallback():
             raise HTTPException(
                 status_code=503,
                 detail="GPS capture unavailable: geocoding failed",
@@ -503,7 +582,54 @@ async def log_property_by_gps(
             scenarios=request.development_scenarios,
             jurisdiction_code=request.jurisdiction_code,
         )
+        await _seed_fallback_checklist(
+            session=db,
+            property_id=fallback.property_id,
+            scenarios=request.development_scenarios,
+        )
         return fallback
+
+
+async def _seed_fallback_checklist(
+    *,
+    session: AsyncSession,
+    property_id: UUID,
+    scenarios: list[DevelopmentScenario] | None,
+) -> None:
+    """Populate the checklist for offline demo captures without blocking the response."""
+
+    checklist_service = _load_optional_class(
+        "DeveloperChecklistService",
+        "app.services.developer_checklist_service",
+    )
+    if checklist_service is None:
+        return
+
+    development_scenarios = [
+        (scenario.value if isinstance(scenario, DevelopmentScenario) else str(scenario))
+        for scenario in (scenarios or DevelopmentScenario.default_set())
+    ]
+    development_scenarios = [
+        scenario.strip()
+        for scenario in development_scenarios
+        if isinstance(scenario, str) and scenario.strip()
+    ]
+    if not development_scenarios:
+        return
+
+    try:
+        await checklist_service.ensure_templates_seeded(session)
+        await checklist_service.auto_populate_checklist(
+            session=session,
+            property_id=property_id,
+            development_scenarios=development_scenarios,
+        )
+    except Exception as exc:  # pragma: no cover - fallback should stay non-blocking
+        logger.warning(
+            "gps_fallback_checklist_failed",
+            error=str(exc),
+            property_id=str(property_id),
+        )
 
 
 def _build_mock_gps_response(
@@ -939,13 +1065,21 @@ async def analyze_development_potential(
     - existing_building: Renovation/redevelopment potential
     - historical_property: Heritage constraints and adaptive reuse
     """
-    # Get required services
-    buildable_service = BuildableService(db)
+    buildable_service_cls = _load_required_class(
+        "BuildableService",
+        "app.services.buildable",
+    )
+    scanner_cls = _load_required_class(
+        "DevelopmentPotentialScanner",
+        "app.services.agents.development_potential_scanner",
+    )
+
+    buildable_service = buildable_service_cls(db)
     from app.services.finance.calculator import FinanceCalculator
 
     finance_calc = FinanceCalculator()
 
-    scanner = DevelopmentPotentialScanner(buildable_service, finance_calc, ura_service)
+    scanner = scanner_cls(buildable_service, finance_calc, ura_service)
 
     # Get property data
     from app.models.property import Property
@@ -1018,7 +1152,7 @@ async def upload_property_photo(
     if phase:
         user_metadata["phase"] = phase
 
-    photo_manager = PhotoDocumentationManager()
+    photo_manager = _new_photo_manager()
 
     try:
         metadata = await photo_manager.process_photo(
@@ -1052,7 +1186,7 @@ async def get_property_photos(
     role: Role = Depends(get_request_role),
 ) -> list[dict[str, Any]]:
     """Get all photos for a property."""
-    photo_manager = PhotoDocumentationManager()
+    photo_manager = _new_photo_manager()
 
     try:
         photos = await photo_manager.get_property_photos(
@@ -1073,7 +1207,7 @@ async def delete_property_photo(
     role: Role = Depends(get_request_role),
 ) -> dict[str, bool]:
     """Delete a property photo and all its versions from storage."""
-    photo_manager = PhotoDocumentationManager()
+    photo_manager = _new_photo_manager()
 
     try:
         success = await photo_manager.delete_photo(photo_id=photo_id, session=db)
@@ -1127,7 +1261,7 @@ async def upload_voice_note(
     # Parse tags if provided
     tag_list = tags.split(",") if tags else None
 
-    voice_note_service = VoiceNoteService()
+    voice_note_service = _new_voice_note_service()
 
     try:
         metadata = await voice_note_service.process_voice_note(
@@ -1169,7 +1303,7 @@ async def get_property_voice_notes(
     role: Role = Depends(get_request_role),
 ) -> list[dict[str, Any]]:
     """Get all voice notes for a property."""
-    voice_note_service = VoiceNoteService()
+    voice_note_service = _new_voice_note_service()
 
     try:
         voice_notes = await voice_note_service.get_property_voice_notes(
@@ -1190,7 +1324,7 @@ async def get_voice_note(
     role: Role = Depends(get_request_role),
 ) -> dict[str, Any]:
     """Get a specific voice note by ID."""
-    voice_note_service = VoiceNoteService()
+    voice_note_service = _new_voice_note_service()
 
     try:
         voice_note = await voice_note_service.get_voice_note(
@@ -1221,7 +1355,7 @@ async def update_voice_note(
     role: Role = Depends(get_request_role),
 ) -> dict[str, Any]:
     """Update voice note metadata (title, tags, or transcript)."""
-    voice_note_service = VoiceNoteService()
+    voice_note_service = _new_voice_note_service()
 
     try:
         # First verify the voice note exists and belongs to this property
@@ -1262,7 +1396,7 @@ async def delete_voice_note(
     role: Role = Depends(get_request_role),
 ) -> dict[str, str]:
     """Delete a voice note and its audio file."""
-    voice_note_service = VoiceNoteService()
+    voice_note_service = _new_voice_note_service()
 
     try:
         # First verify the voice note exists and belongs to this property
@@ -1309,14 +1443,21 @@ async def generate_3d_scenarios(
     - podium_tower: Podium with towers configuration
     - phased_development: Multi-phase development
     """
-    if Quick3DScenarioBuilder is None:
+    builder_cls = _load_optional_class(
+        "Quick3DScenarioBuilder", "app.services.agents.scenario_builder_3d"
+    )
+    if builder_cls is None:
         raise HTTPException(
             status_code=503,
             detail="3D scenario generation is unavailable in the current environment",
         )
 
-    postgis_service = PostGISService(db)
-    scenario_builder = Quick3DScenarioBuilder(postgis_service)
+    postgis_service_cls = _load_required_class(
+        "PostGISService",
+        "app.services.postgis",
+    )
+    postgis_service = postgis_service_cls(db)
+    scenario_builder = builder_cls(postgis_service)
 
     # Get property data
     from app.models.property import Property
@@ -1604,32 +1745,44 @@ async def generate_professional_pack(
         property_uuid = UUID(property_id)
 
         if pack_type == "universal":
-            if UniversalSitePackGenerator is None:
+            generator_cls = _load_optional_class(
+                "UniversalSitePackGenerator",
+                "app.services.agents.universal_site_pack",
+            )
+            if generator_cls is None:
                 raise HTTPException(
                     status_code=503,
                     detail="Universal Site Pack generation unavailable in this environment",
                 )
-            generator = UniversalSitePackGenerator()
+            generator = generator_cls()
             pdf_buffer = await generator.generate(property_id=property_uuid, session=db)
             filename = f"universal_site_pack_{property_id}.pdf"
 
         elif pack_type == "investment":
-            if InvestmentMemorandumGenerator is None:
+            generator_cls = _load_optional_class(
+                "InvestmentMemorandumGenerator",
+                "app.services.agents.investment_memorandum",
+            )
+            if generator_cls is None:
                 raise HTTPException(
                     status_code=503,
                     detail="Investment memorandum generation unavailable in this environment",
                 )
-            generator = InvestmentMemorandumGenerator()
+            generator = generator_cls()
             pdf_buffer = await generator.generate(property_id=property_uuid, session=db)
             filename = f"investment_memorandum_{property_id}.pdf"
 
         elif pack_type in ["sales", "lease"]:
-            if MarketingMaterialsGenerator is None:
+            generator_cls = _load_optional_class(
+                "MarketingMaterialsGenerator",
+                "app.services.agents.marketing_materials",
+            )
+            if generator_cls is None:
                 raise HTTPException(
                     status_code=503,
                     detail="Marketing material generation unavailable in this environment",
                 )
-            generator = MarketingMaterialsGenerator()
+            generator = generator_cls()
             pdf_buffer = await generator.generate_sales_brochure(
                 property_id=property_uuid,
                 session=db,
@@ -1714,7 +1867,17 @@ async def generate_email_flyer(
     try:
         property_uuid = UUID(property_id)
 
-        generator = MarketingMaterialsGenerator()
+        generator_cls = _load_optional_class(
+            "MarketingMaterialsGenerator",
+            "app.services.agents.marketing_materials",
+        )
+        if generator_cls is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Marketing material generation unavailable in this environment",
+            )
+
+        generator = generator_cls()
         pdf_buffer = await generator.generate_email_flyer(
             property_id=property_uuid, session=db, material_type=material_type
         )

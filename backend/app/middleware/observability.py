@@ -14,6 +14,16 @@ from app.utils import metrics
 from app.utils.logging import get_logger, log_event
 
 
+def _request_metric_endpoint(request: Request) -> str:
+    """Return a stable route label for request-level metrics."""
+
+    route = request.scope.get("route")
+    route_path = getattr(route, "path", None)
+    if isinstance(route_path, str) and route_path:
+        return route_path
+    return "unmatched"
+
+
 class ApiErrorLoggingMiddleware(BaseHTTPMiddleware):
     """Capture unhandled exceptions and 5xx responses for monitoring."""
 
@@ -63,7 +73,6 @@ class RequestMetricsMiddleware(BaseHTTPMiddleware):
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Any:
         start = perf_counter()
-        endpoint = request.url.path
         status_code: int | None = None
 
         try:
@@ -75,6 +84,7 @@ class RequestMetricsMiddleware(BaseHTTPMiddleware):
             raise
         finally:
             duration_ms = (perf_counter() - start) * 1000.0
+            endpoint = _request_metric_endpoint(request)
             metrics.REQUEST_COUNTER.labels(endpoint=endpoint).inc()
             metrics.REQUEST_LATENCY_MS.labels(endpoint=endpoint).observe(duration_ms)
             resolved_status = status_code or 500

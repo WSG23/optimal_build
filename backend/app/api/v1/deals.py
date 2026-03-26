@@ -24,13 +24,26 @@ from app.schemas.deals import (
     DealUpdate,
     DealWithTimelineSchema,
 )
-from app.services.deals import AgentCommissionService, AgentDealService
+from app.utils.lazy import LazyProxy
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/deals", tags=["Business Performance"])
 
-service = AgentDealService()
-commission_service = AgentCommissionService()
+
+def _create_deal_service() -> object:
+    from app.services.deals import AgentDealService
+
+    return AgentDealService()
+
+
+def _create_commission_service() -> object:
+    from app.services.deals import AgentCommissionService
+
+    return AgentCommissionService()
+
+
+service = LazyProxy(_create_deal_service)
+commission_service = LazyProxy(_create_commission_service)
 
 
 def _resolve_agent_id(

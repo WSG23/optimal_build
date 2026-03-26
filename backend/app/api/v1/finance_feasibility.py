@@ -197,7 +197,6 @@ async def run_finance_feasibility(
     located.
     """
 
-    metrics.REQUEST_COUNTER.labels(endpoint="finance_feasibility").inc()
     metrics.FINANCE_FEASIBILITY_TOTAL.inc()
     start_time = perf_counter()
     response: FinanceFeasibilityResponse | None = None

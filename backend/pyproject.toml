@@ -88,7 +88,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v -p pytest_cov"
+addopts = "-v --import-mode=importlib -p pytest_cov"
 asyncio_mode = "auto"
 filterwarnings = [
     "ignore:.*`example` has been deprecated, please use `examples` instead:DeprecationWarning",

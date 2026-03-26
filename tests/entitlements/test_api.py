@@ -240,7 +240,8 @@ async def test_entitlements_export_smoke(
         metrics.ENTITLEMENTS_EXPORT_COUNTER, {"format": "csv"}
     )
     request_counter = metrics.counter_value(
-        metrics.REQUEST_COUNTER, {"endpoint": "entitlements_export"}
+        metrics.REQUEST_COUNTER,
+        {"endpoint": "/api/v1/entitlements/{project_id}/export"},
     )
     assert export_counter == pytest.approx(1.0)
     assert request_counter == pytest.approx(1.0)

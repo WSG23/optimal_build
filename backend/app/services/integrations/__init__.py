@@ -1,21 +1,32 @@
 """Integration service exports."""
 
-from .accounts import ListingIntegrationAccountService
-from .edgeprop import EdgePropClient
-from .hubspot import HubSpotClient
-from .loopnet import LoopNetClient
-from .propertyguru import PropertyGuruClient
-from .salesforce import SalesforceClient
-from .zillow import ZillowClient
-from .zoho import ZohoClient
+from __future__ import annotations
 
-__all__ = [
-    "ListingIntegrationAccountService",
-    "PropertyGuruClient",
-    "EdgePropClient",
-    "ZohoClient",
-    "ZillowClient",
-    "LoopNetClient",
-    "SalesforceClient",
-    "HubSpotClient",
-]
+from importlib import import_module
+from typing import Final
+
+_EXPORTS: Final[dict[str, str]] = {
+    "ListingIntegrationAccountService": ".accounts",
+    "PropertyGuruClient": ".propertyguru",
+    "EdgePropClient": ".edgeprop",
+    "ZohoClient": ".zoho",
+    "ZillowClient": ".zillow",
+    "LoopNetClient": ".loopnet",
+    "SalesforceClient": ".salesforce",
+    "HubSpotClient": ".hubspot",
+}
+
+
+def __getattr__(name: str) -> object:
+    """Lazy-load integration helpers on first access."""
+
+    module_name = _EXPORTS.get(name)
+    if module_name is None:
+        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+    value = getattr(import_module(module_name, __name__), name)
+    globals()[name] = value
+    return value
+
+
+__all__ = list(_EXPORTS)

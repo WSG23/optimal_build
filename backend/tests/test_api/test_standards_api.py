@@ -63,7 +63,7 @@ async def test_list_standards_filters_by_property_key(client, standards_seed):
     assert payload[0]["value"] == "40"
 
     counter_value = prometheus_metrics.counter_value(
-        prometheus_metrics.REQUEST_COUNTER, {"endpoint": "standards_lookup"}
+        prometheus_metrics.REQUEST_COUNTER, {"endpoint": "/api/v1/standards"}
     )
     assert counter_value >= 1
 

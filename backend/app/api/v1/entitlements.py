@@ -79,7 +79,6 @@ async def list_roadmap_items(
 ) -> EntRoadmapCollection:
     """Return paginated roadmap items for the supplied project."""
 
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_roadmap_list").inc()
     metrics.ENTITLEMENTS_ROADMAP_COUNTER.labels(operation="list").inc()
     limit_value, offset_value = _normalise_pagination(limit, offset)
     service = EntitlementsService(session)
@@ -128,7 +127,6 @@ async def create_roadmap_item(
     await session.commit()
     await session.refresh(item)
 
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_roadmap_create").inc()
     metrics.ENTITLEMENTS_ROADMAP_COUNTER.labels(operation="create").inc()
     return EntRoadmapItemSchema.model_validate(item, from_attributes=True)
 
@@ -157,7 +155,6 @@ async def update_roadmap_item(
     await session.commit()
     await session.refresh(item)
 
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_roadmap_update").inc()
     metrics.ENTITLEMENTS_ROADMAP_COUNTER.labels(operation="update").inc()
     return EntRoadmapItemSchema.model_validate(item, from_attributes=True)
 
@@ -178,7 +175,6 @@ async def delete_roadmap_item(
     service = EntitlementsService(session)
     await service.delete_roadmap_item(item_id=item_id, project_id=project_id)
     await session.commit()
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_roadmap_delete").inc()
     metrics.ENTITLEMENTS_ROADMAP_COUNTER.labels(operation="delete").inc()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -197,7 +193,6 @@ async def list_studies(
 ) -> EntStudyCollection:
     """Return paginated entitlement studies."""
 
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_study_list").inc()
     metrics.ENTITLEMENTS_STUDY_COUNTER.labels(operation="list").inc()
     limit_value, offset_value = _normalise_pagination(limit, offset)
     service = EntitlementsService(session)
@@ -232,7 +227,6 @@ async def create_study(
     record = await service.create_study(**payload.model_dump())
     await session.commit()
     await session.refresh(record)
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_study_create").inc()
     metrics.ENTITLEMENTS_STUDY_COUNTER.labels(operation="create").inc()
     return EntStudySchema.model_validate(record, from_attributes=True)
 
@@ -260,7 +254,6 @@ async def update_study(
     )
     await session.commit()
     await session.refresh(record)
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_study_update").inc()
     metrics.ENTITLEMENTS_STUDY_COUNTER.labels(operation="update").inc()
     return EntStudySchema.model_validate(record, from_attributes=True)
 
@@ -281,7 +274,6 @@ async def delete_study(
     service = EntitlementsService(session)
     await service.delete_study(study_id=study_id, project_id=project_id)
     await session.commit()
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_study_delete").inc()
     metrics.ENTITLEMENTS_STUDY_COUNTER.labels(operation="delete").inc()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -300,7 +292,6 @@ async def list_engagements(
 ) -> EntEngagementCollection:
     """Return stakeholder engagements for the project."""
 
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_engagement_list").inc()
     metrics.ENTITLEMENTS_ENGAGEMENT_COUNTER.labels(operation="list").inc()
     limit_value, offset_value = _normalise_pagination(limit, offset)
     service = EntitlementsService(session)
@@ -335,7 +326,6 @@ async def create_engagement(
     record = await service.create_engagement(**payload.model_dump())
     await session.commit()
     await session.refresh(record)
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_engagement_create").inc()
     metrics.ENTITLEMENTS_ENGAGEMENT_COUNTER.labels(operation="create").inc()
     return EntEngagementSchema.model_validate(record, from_attributes=True)
 
@@ -363,7 +353,6 @@ async def update_engagement(
     )
     await session.commit()
     await session.refresh(record)
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_engagement_update").inc()
     metrics.ENTITLEMENTS_ENGAGEMENT_COUNTER.labels(operation="update").inc()
     return EntEngagementSchema.model_validate(record, from_attributes=True)
 
@@ -384,7 +373,6 @@ async def delete_engagement(
     service = EntitlementsService(session)
     await service.delete_engagement(engagement_id=engagement_id, project_id=project_id)
     await session.commit()
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_engagement_delete").inc()
     metrics.ENTITLEMENTS_ENGAGEMENT_COUNTER.labels(operation="delete").inc()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -403,7 +391,6 @@ async def list_legal_instruments(
 ) -> EntLegalInstrumentCollection:
     """Return paginated legal instruments."""
 
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_legal_list").inc()
     metrics.ENTITLEMENTS_LEGAL_COUNTER.labels(operation="list").inc()
     limit_value, offset_value = _normalise_pagination(limit, offset)
     service = EntitlementsService(session)
@@ -438,7 +425,6 @@ async def create_legal_instrument(
     record = await service.create_legal_instrument(**payload.model_dump())
     await session.commit()
     await session.refresh(record)
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_legal_create").inc()
     metrics.ENTITLEMENTS_LEGAL_COUNTER.labels(operation="create").inc()
     return EntLegalInstrumentSchema.model_validate(record, from_attributes=True)
 
@@ -466,7 +452,6 @@ async def update_legal_instrument(
     )
     await session.commit()
     await session.refresh(record)
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_legal_update").inc()
     metrics.ENTITLEMENTS_LEGAL_COUNTER.labels(operation="update").inc()
     return EntLegalInstrumentSchema.model_validate(record, from_attributes=True)
 
@@ -489,7 +474,6 @@ async def delete_legal_instrument(
         instrument_id=instrument_id, project_id=project_id
     )
     await session.commit()
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_legal_delete").inc()
     metrics.ENTITLEMENTS_LEGAL_COUNTER.labels(operation="delete").inc()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -507,7 +491,6 @@ async def export_entitlements(
 ) -> StreamingResponse:
     """Export entitlement information in CSV, HTML, or PDF formats."""
 
-    metrics.REQUEST_COUNTER.labels(endpoint="entitlements_export").inc()
     metrics.ENTITLEMENTS_EXPORT_COUNTER.labels(format=format.value).inc()
     payload, media_type, filename = await generate_entitlements_export(
         session, project_id=project_id, fmt=format

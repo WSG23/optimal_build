@@ -112,7 +112,7 @@ async def test_roadmap_creation_requires_reviewer_and_records_metrics(
         next_sequence = roadmap_page.total + 1
 
     counter_labels = {"operation": "create"}
-    request_labels = {"endpoint": "entitlements_roadmap_create"}
+    request_labels = {"endpoint": "/api/v1/entitlements/{project_id}/roadmap"}
     counter_before = metrics.counter_value(
         metrics.ENTITLEMENTS_ROADMAP_COUNTER, counter_labels
     )
@@ -136,7 +136,7 @@ async def test_roadmap_creation_requires_reviewer_and_records_metrics(
     ) == pytest.approx(counter_before)
     assert metrics.counter_value(
         metrics.REQUEST_COUNTER, request_labels
-    ) == pytest.approx(request_before)
+    ) == pytest.approx(request_before + 1.0)
 
     reviewer_response = await app_client.post(
         f"/api/v1/entitlements/{PROJECT_ID}/roadmap",
@@ -153,4 +153,4 @@ async def test_roadmap_creation_requires_reviewer_and_records_metrics(
     ) == pytest.approx(counter_before + 1.0)
     assert metrics.counter_value(
         metrics.REQUEST_COUNTER, request_labels
-    ) == pytest.approx(request_before + 1.0)
+    ) == pytest.approx(request_before + 2.0)
