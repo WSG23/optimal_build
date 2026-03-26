@@ -74,16 +74,16 @@ App Launch
    └── POST-CAPTURE  (role-split)
            │
            ├── AGENT MODE  (Developer Mode OFF)
-           │       ├── Right panel: Agent Results  (capture summary, market data)
-           │       ├── "Enable Developer Mode" CTA
-           │       └── Mission Log  (history of captured sites)
+           │       ├── Right panel: Agent Results  (capture summary, market data,
+           │       │                                marketing packs)
+           │       └── "Enable Developer Mode" CTA
            │
            └── DEVELOPER MODE  (Developer Mode ON)
-                   ├── Developer workspace section (below map):
-                   │       └── DeveloperResults  (Property Overview, 3D Preview,
-                   │                              Condition Assessment, Scenario Comparison,
-                   │                              Due Diligence Checklist, etc.)
-                   └── Mission Log
+                   └── Developer workspace section (below map):
+                           └── DeveloperResults  (Property Overview, AI Insight,
+                                                  3D Preview, Scenario Focus,
+                                                  Scenario Comparison,
+                                                  Save as Project / Open Finance)
 ```
 
 ---
@@ -184,7 +184,7 @@ App Launch
 
 | User Type | Primary Flow | Key Distinction |
 |---|---|---|
-| **Agent** | Capture → Mission Log → Advisory | HUD-only results, no developer workspace |
+| **Agent** | Capture → Advisory | HUD-only results, no developer workspace |
 | **Developer** | Capture → Full Workspace → Feasibility → Finance | Full workspace, scenario modeling |
 | **Developer (project-centric)** | Projects → Hub → Modules | All modules accessible via project context |
 

@@ -179,6 +179,16 @@ _No active tasks. Pull from the Ready queue below._
 > ✅ **Spec Status:** All 32 features now documented in `docs/planning/features.md` (2025-11-29)
 > 📋 **Implementation Status:** Queued for development — see phase-specific sections below for details
 
+**Capture: Deferred Non-Analysis Features (removed from UI 2026-02-28):**
+
+> These features were removed from the Capture tab UI because they do not contribute to site or project analysis. Components are preserved in the codebase. Re-integrate only after the backend property memory layer (org-scoped scan history) is built, as all three depend on it.
+
+- [ ] **Mission Log → Site Visit History page** — Session-only history table removed from Agent Mode and Developer Mode post-capture UI (`UnifiedCapturePage.tsx:362`, `MissionLog.tsx`). To be rebuilt as a standalone page or top-nav drawer backed by real org-scoped scan history. Requires: backend append-only scan history table queryable by property/project/user/date range; duplicate scan detection (pre-capture inline warning when property already scanned by anyone in the org).
+- [ ] **Due Diligence Checklist** — Task-tracking workflow tool removed from Developer Mode post-capture UI (`DeveloperResults.tsx`, `DueDiligenceChecklistSection`). Belongs in Project Hub under regulatory or phases module, not in site analysis results. To be reintegrated there once project context is established post-capture. **Note:** Project Hub (`/projects/:id`) is not yet exposed in the top navigation — see "Project Hub UI Exposure" item below.
+- [ ] **Condition Assessment** — Physical inspection tracking removed from Developer Mode post-capture UI (`DeveloperResults.tsx`, `ConditionAssessmentSection`). Requires manually logged inspections over time — empty at capture time, so not a product of the scan. Belongs in Project Hub alongside Due Diligence Checklist. To be reintegrated once Project Hub is in the main navigation. **Note:** same Project Hub dependency as above.
+- [ ] **Project Hub UI Exposure** — `/projects/:id` (Project Hub) exists in the codebase and is accessible via `/projects` list, but is **not in the top navigation**. Before Due Diligence Checklist and Condition Assessment can be re-integrated into Project Hub, Project Hub must be a first-class navigation destination. Requires: adding Project Hub to top nav, confirming module card routing (`capture`, `feasibility`, `finance`, `phases`, `team`, `regulatory`) all work correctly in project context.
+- [ ] **Voice Address Input (rebuild required)** — Current `VoiceObservationsPanel` records field observation audio and uploads `.webm` files to a property — it does **not** populate the address field. Must be rebuilt as a speech-to-text input that transcribes spoken address/coordinates directly into the capture form fields, with the map updating on recognition. The existing observation recording capability should be deferred to the Site Visit History feature above.
+
 **Agent Enhancements (Phase 1 additions):**
 - ✅ Voice notes on site capture (add to Phase 1A GPS capture) — *spec: features.md line 32* — **IMPLEMENTED 2025-11-29**
 - ✅ Accuracy bands display (±8-15% by asset class) on quick analysis — *spec: features.md line 31* — **IMPLEMENTED 2025-11-29**

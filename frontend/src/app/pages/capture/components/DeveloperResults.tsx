@@ -17,8 +17,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import {
   Box,
-  Checkbox,
-  FormControlLabel,
   Typography,
   Select,
   MenuItem,
@@ -47,13 +45,11 @@ import { saveCaptureForProject } from '../utils/captureStorage'
 import { PropertyOverviewSection } from '../../site-acquisition/components/property-overview/PropertyOverviewSection'
 import { Preview3DViewer } from '../../../components/site-acquisition/Preview3DViewer'
 import { PreviewLayersTable } from '../../site-acquisition/components/property-overview/PreviewLayersTable'
-import { DueDiligenceChecklistSection } from '../../site-acquisition/components/checklist/DueDiligenceChecklistSection'
 import { MultiScenarioComparisonSection } from '../../site-acquisition/components/multi-scenario-comparison/MultiScenarioComparisonSection'
 import { ConditionAssessmentSection } from '../../site-acquisition/components/condition-assessment/ConditionAssessmentSection'
 
 // Import Site Acquisition hooks
 import { usePreviewJob } from '../../site-acquisition/hooks/usePreviewJob'
-import { useChecklist } from '../../site-acquisition/hooks/useChecklist'
 import { useConditionAssessment } from '../../site-acquisition/hooks/useConditionAssessment'
 import { useScenarioComparison } from '../../site-acquisition/hooks/useScenarioComparison'
 
@@ -92,7 +88,6 @@ export function DeveloperResults({
   const [saveMode, setSaveMode] = useState<'new' | 'existing'>('new')
   const [projectNameInput, setProjectNameInput] = useState('')
   const [existingProjectId, setExistingProjectId] = useState('')
-  const [includeChecklist, setIncludeChecklist] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [savingProject, setSavingProject] = useState(false)
 
@@ -101,16 +96,6 @@ export function DeveloperResults({
     () => new Map(SCENARIO_OPTIONS.map((option) => [option.value, option])),
     [],
   )
-  const checklistScenarios = useMemo(() => {
-    const quickAnalysisScenarios =
-      result.quickAnalysis?.scenarios
-        ?.map((scenario) => scenario.scenario)
-        .filter(Boolean) ?? []
-    return quickAnalysisScenarios.length > 0
-      ? quickAnalysisScenarios
-      : selectedScenarios
-  }, [result.quickAnalysis?.scenarios, selectedScenarios])
-
   // Preview job state - use hook with options object
   const {
     previewJob,
@@ -153,20 +138,6 @@ export function DeveloperResults({
     [handleToggleLayerVisibility, handleSoloPreviewLayer, handleFocusLayer],
   )
 
-  // Checklist state - pass options object matching the hook signature
-  const {
-    checklistItems,
-    filteredChecklistItems,
-    selectedCategory,
-    isLoadingChecklist: checklistLoading,
-    setSelectedCategory,
-    handleChecklistUpdate,
-    displaySummary,
-    activeScenarioDetails,
-    scenarioChecklistProgress,
-    refreshChecklist,
-  } = useChecklist({ capturedProperty: result })
-
   // Condition assessment state - extract all required values
   const {
     conditionAssessment,
@@ -198,7 +169,6 @@ export function DeveloperResults({
 
   const handleOpenSaveDialog = useCallback(() => {
     setSaveError(null)
-    setIncludeChecklist(false)
     void refreshProjects()
     if (currentProject) {
       setSaveMode('existing')
@@ -217,10 +187,6 @@ export function DeveloperResults({
     setSaveError(null)
     setSavingProject(true)
     try {
-      if (includeChecklist && checklistScenarios.length === 0) {
-        setSaveError('Select at least one scenario to add a checklist.')
-        return
-      }
       if (saveMode === 'existing') {
         if (!existingProjectId) {
           setSaveError('Select an existing project.')
@@ -229,12 +195,7 @@ export function DeveloperResults({
         const linked = await linkCaptureToProject(
           result.propertyId,
           existingProjectId,
-          {
-            includeChecklist,
-            developmentScenarios: includeChecklist
-              ? checklistScenarios
-              : undefined,
-          },
+          {},
         )
         setCurrentProject({ id: linked.projectId, name: linked.projectName })
         saveCaptureForProject(linked.projectId, result)
@@ -246,16 +207,9 @@ export function DeveloperResults({
         }
         const created = await saveProjectFromCapture(result.propertyId, {
           projectName: name,
-          includeChecklist,
-          developmentScenarios: includeChecklist
-            ? checklistScenarios
-            : undefined,
         })
         setCurrentProject({ id: created.projectId, name: created.projectName })
         saveCaptureForProject(created.projectId, result)
-      }
-      if (includeChecklist) {
-        await refreshChecklist()
       }
       await refreshProjects()
       setSaveDialogOpen(false)
@@ -274,9 +228,6 @@ export function DeveloperResults({
     saveMode,
     savingProject,
     setCurrentProject,
-    includeChecklist,
-    checklistScenarios,
-    refreshChecklist,
   ])
 
   // Scenario comparison state - pass required options object and extract all values
@@ -298,8 +249,8 @@ export function DeveloperResults({
     conditionAssessment,
     assessmentHistory: assessmentHistory ?? [],
     scenarioAssessments: scenarioAssessments ?? [],
-    scenarioChecklistProgress: scenarioChecklistProgress ?? {},
-    displaySummary,
+    scenarioChecklistProgress: {},
+    displaySummary: null,
     currencySymbol,
   })
 
@@ -675,20 +626,6 @@ export function DeveloperResults({
         </Box>
       </section>
 
-      {/* Due Diligence Checklist */}
-      <DueDiligenceChecklistSection
-        capturedProperty={result}
-        checklistItems={checklistItems}
-        filteredChecklistItems={filteredChecklistItems}
-        displaySummary={displaySummary}
-        activeScenario={activeScenario}
-        activeScenarioDetails={activeScenarioDetails}
-        selectedCategory={selectedCategory}
-        isLoadingChecklist={checklistLoading}
-        setSelectedCategory={setSelectedCategory}
-        handleChecklistUpdate={handleChecklistUpdate}
-      />
-
       {/* Multi-Scenario Comparison */}
       <MultiScenarioComparisonSection
         capturedProperty={result}
@@ -840,16 +777,6 @@ export function DeveloperResults({
               </Select>
             </FormControl>
           )}
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={includeChecklist}
-                onChange={(event) => setIncludeChecklist(event.target.checked)}
-              />
-            }
-            label="Include due diligence checklist from templates"
-            sx={{ mt: 2 }}
-          />
           {saveError && (
             <Typography color="error" variant="body2" sx={{ mt: 1 }}>
               {saveError}
