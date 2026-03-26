@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from importlib import import_module
 import json
 from collections import Counter
 from collections.abc import Iterable, Mapping
@@ -12,12 +13,6 @@ from uuid import uuid4
 
 from backend._compat.datetime import UTC
 from backend.jobs import job_queue
-from backend.jobs.parse_cad import (
-    detect_dxf_metadata,
-    detect_ifc_metadata,
-    parse_import_job,
-)
-from backend.jobs.raster_vector import vectorize_floorplan
 from fastapi import (
     APIRouter,
     Depends,
@@ -56,8 +51,36 @@ class MetricOverridePayload(BaseModel):
 router = APIRouter()
 logger = get_logger(__name__)
 
+_UNRESOLVED = object()
+_JOB_SYMBOL_MODULES = {
+    "detect_dxf_metadata": "backend.jobs.parse_cad",
+    "detect_ifc_metadata": "backend.jobs.parse_cad",
+    "parse_import_job": "backend.jobs.parse_cad",
+    "vectorize_floorplan": "backend.jobs.raster_vector",
+}
+
 SUPPORTED_IMPORT_SUFFIXES: tuple[str, ...] = (".dxf", ".ifc", ".json")
 SUPPORTED_IMPORT_MEDIA_HINTS: tuple[str, ...] = ("dxf", "ifc", "json")
+
+
+def _load_job_symbol(name: str) -> Any:
+    """Resolve heavyweight job helpers lazily while preserving monkeypatch hooks."""
+
+    existing = globals().get(name, _UNRESOLVED)
+    if existing is not _UNRESOLVED:
+        return existing
+
+    module_name = _JOB_SYMBOL_MODULES[name]
+    module = import_module(module_name)
+    resolved = getattr(module, name)
+    globals()[name] = resolved
+    return resolved
+
+
+def __getattr__(name: str) -> Any:
+    if name not in _JOB_SYMBOL_MODULES:
+        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    return _load_job_symbol(name)
 
 
 def _extract_unit_id(unit: Any) -> str | None:
@@ -208,13 +231,13 @@ def _detect_import_metadata(
 
     if name.endswith(".dxf") or "dxf" in media_type:
         try:
-            return detect_dxf_metadata(payload)
+            return _load_job_symbol("detect_dxf_metadata")(payload)
         except Exception:  # pragma: no cover - optional dependency guard
             return [], [], []
 
     if name.endswith(".ifc") or "ifc" in media_type:
         try:
-            return detect_ifc_metadata(payload)
+            return _load_job_symbol("detect_ifc_metadata")(payload)
         except Exception:  # pragma: no cover - optional dependency guard
             return [], [], []
 
@@ -490,8 +513,9 @@ async def _vectorize_payload_if_requested(
     safe_content_type = content_type or ""
 
     try:
+        vectorize = _load_job_symbol("vectorize_floorplan")
         dispatch = await job_queue.enqueue(
-            vectorize_floorplan,
+            vectorize,
             payload=raw_payload,
             content_type=safe_content_type,
             filename=filename,
@@ -500,7 +524,7 @@ async def _vectorize_payload_if_requested(
         if dispatch.result and isinstance(dispatch.result, Mapping):
             vector_payload = dict(dispatch.result)
         elif dispatch.status != "completed":
-            inline_result = await vectorize_floorplan(
+            inline_result = await vectorize(
                 raw_payload,
                 content_type=safe_content_type,
                 filename=filename,
@@ -745,7 +769,8 @@ async def enqueue_parse(
     await session.commit()
 
     try:
-        dispatch = await job_queue.enqueue(parse_import_job, import_id=import_id)
+        parse_job = _load_job_symbol("parse_import_job")
+        dispatch = await job_queue.enqueue(parse_job, import_id=import_id)
     except Exception as exc:  # pragma: no cover - defensive inline failure path
         logger.exception(
             "parse_enqueue_failed",
@@ -795,7 +820,7 @@ async def enqueue_parse(
         response.job_id = None
         return response
 
-    result = await parse_import_job(import_id=import_id)
+    result = await parse_job(import_id=import_id)
     await session.refresh(record)
     response.status = record.parse_status or "completed"
     response.completed_at = record.parse_completed_at

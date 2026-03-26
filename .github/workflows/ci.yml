@@ -165,6 +165,9 @@ jobs:
         run: |
           pip install -r backend/requirements.txt
 
+      - name: Enforce backend import budgets
+        run: python backend/scripts/check_import_budget.py
+
       - name: Compile backend sources
         run: python -m compileall backend
 

@@ -62,6 +62,7 @@ def test_main_import_does_not_eagerly_load_ai_services() -> None:
         "app.api.v1.deals",
         "app.api.v1.developers_gps",
         "app.api.v1.export",
+        "app.api.v1.imports",
         "app.api.v1.market_intelligence",
     ]
     heavy_main_modules = [
@@ -131,6 +132,7 @@ def test_non_api_request_does_not_load_api_router_tree() -> None:
         "app.api.v1.deals",
         "app.api.v1.developers_gps",
         "app.api.v1.market_intelligence",
+        "app.api.v1.imports",
     ]
     script = f"""
 import asyncio

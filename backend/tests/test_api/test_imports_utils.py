@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime
 from types import SimpleNamespace
 
 import pytest
@@ -137,7 +137,7 @@ def test_zone_normalisation_and_positive_coercion():
 
 
 def test_import_result_from_record_and_parse_summary():
-    uploaded_at = datetime.utcnow()
+    uploaded_at = datetime.now(UTC)
     record = SimpleNamespace(
         id="imp-1",
         filename="model.dxf",
