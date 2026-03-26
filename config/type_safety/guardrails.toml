@@ -1,0 +1,143 @@
+[type_ignore]
+backend_baseline = 199
+required_metadata_keys = ["owner", "expires", "reason"]
+
+[[pyproject_ignore_errors]]
+module = "fastapi"
+owner = "platform"
+rationale = "Third-party FastAPI stubs remain partially incompatible with the repo strictness."
+
+[[pyproject_ignore_errors]]
+module = "fastapi.*"
+owner = "platform"
+rationale = "Third-party FastAPI stubs remain partially incompatible with the repo strictness."
+
+[[pyproject_ignore_errors]]
+module = "starlette"
+owner = "platform"
+rationale = "Third-party Starlette stubs remain partially incompatible with the repo strictness."
+
+[[pyproject_ignore_errors]]
+module = "starlette.*"
+owner = "platform"
+rationale = "Third-party Starlette stubs remain partially incompatible with the repo strictness."
+
+[[pyproject_ignore_errors]]
+module = "sqlalchemy"
+owner = "platform"
+rationale = "Vendor SQLAlchemy typing exclusions remain intentional in backend/pyproject.toml."
+
+[[pyproject_ignore_errors]]
+module = "sqlalchemy.*"
+owner = "platform"
+rationale = "Vendor SQLAlchemy typing exclusions remain intentional in backend/pyproject.toml."
+
+[[pyproject_ignore_errors]]
+module = "uvicorn_app"
+owner = "platform"
+rationale = "Legacy uvicorn app shim remains excluded from strict type checking."
+
+[[pyproject_ignore_errors]]
+module = "uvicorn_app.*"
+owner = "platform"
+rationale = "Legacy uvicorn app shim remains excluded from strict type checking."
+
+[[pyproject_ignore_errors]]
+module = "httpx"
+owner = "platform"
+rationale = "Vendored httpx compatibility shims remain excluded from strict type checking."
+
+[[pyproject_ignore_errors]]
+module = "httpx.*"
+owner = "platform"
+rationale = "Vendored httpx compatibility shims remain excluded from strict type checking."
+
+[[pyproject_ignore_errors]]
+module = "backend.sqlalchemy_pkg_backup"
+owner = "platform"
+rationale = "Legacy compatibility backup package remains excluded from strict type checking."
+
+[[pyproject_ignore_errors]]
+module = "backend.sqlalchemy_pkg_backup.*"
+owner = "platform"
+rationale = "Legacy compatibility backup package remains excluded from strict type checking."
+
+[[pyproject_ignore_errors]]
+module = "backend._vendor"
+owner = "platform"
+rationale = "Vendored compatibility modules remain excluded from strict type checking."
+
+[[pyproject_ignore_errors]]
+module = "backend._vendor.*"
+owner = "platform"
+rationale = "Vendored compatibility modules remain excluded from strict type checking."
+
+[[pyproject_ignore_errors]]
+module = "backend.migrations"
+owner = "platform"
+rationale = "Alembic migrations are intentionally excluded from strict type checking."
+
+[[pyproject_ignore_errors]]
+module = "backend.migrations.*"
+owner = "platform"
+rationale = "Alembic migrations are intentionally excluded from strict type checking."
+
+[[mypy_ini_ignore_errors]]
+section = "mypy.fastapi"
+owner = "platform"
+rationale = "Third-party FastAPI stubs are incomplete in the current strict configuration."
+
+[[mypy_ini_ignore_errors]]
+section = "mypy.fastapi.*"
+owner = "platform"
+rationale = "Third-party FastAPI stubs are incomplete in the current strict configuration."
+
+[[mypy_ini_ignore_errors]]
+section = "mypy.sqlalchemy"
+owner = "platform"
+rationale = "SQLAlchemy typing remains partially vendor-driven under the current mypy scope."
+
+[[mypy_ini_ignore_errors]]
+section = "mypy.sqlalchemy.*"
+owner = "platform"
+rationale = "SQLAlchemy typing remains partially vendor-driven under the current mypy scope."
+
+[[mypy_ini_ignore_errors]]
+section = "mypy-backend.app.services.developer_checklist_service"
+owner = "backend"
+rationale = "Service typing debt remains outstanding and is explicitly tracked."
+
+[[mypy_ini_ignore_errors]]
+section = "mypy-app.services.developer_checklist_service"
+owner = "backend"
+rationale = "Service typing debt remains outstanding and is explicitly tracked."
+
+[[mypy_ini_ignore_errors]]
+section = "mypy-backend.app.schemas.*"
+owner = "backend"
+rationale = "Schema typing debt from the Pydantic migration is still being reduced."
+
+[[mypy_ini_ignore_errors]]
+section = "mypy-app.schemas.*"
+owner = "backend"
+rationale = "Schema typing debt from the Pydantic migration is still being reduced."
+
+[[mypy_ini_ignore_errors]]
+section = "mypy-backend.app.api.v1.*"
+owner = "backend"
+rationale = "API route typing debt remains while request/response models are tightened."
+
+[[mypy_ini_ignore_errors]]
+section = "mypy-app.api.v1.*"
+owner = "backend"
+rationale = "API route typing debt remains while request/response models are tightened."
+
+[[mypy_ini_ignore_errors]]
+section = "mypy.httpx"
+owner = "platform"
+rationale = "Vendored httpx compatibility shims are outside the current strict cleanup pass."
+
+[[mypy_ini_ignore_errors]]
+section = "mypy.httpx.*"
+owner = "platform"
+rationale = "Vendored httpx compatibility shims are outside the current strict cleanup pass."

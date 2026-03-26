@@ -1,0 +1,7 @@
+PYSEC-2022-43012 | platform | 2026-06-30 | The repo already requires urllib3 versions newer than the affected advisory range.
+GHSA-4v9f-r55g-g6hc | platform | 2026-06-30 | Prefect upgrade is a separate breaking-change project and the current pinned version is still under active migration review.
+GHSA-2c2j-9gv5-cj73 | platform | 2026-06-30 | Starlette advisory is not actionable under the current FastAPI compatibility matrix.
+GHSA-7f5h-v6xp-fcq8 | platform | 2026-06-30 | Starlette advisory is not actionable under the current FastAPI compatibility matrix.
+CVE-2026-25990 | platform | 2026-06-30 | Pillow upgrade needs coordinated PDF and image-regression validation across the agent export pipeline before the runtime pin is moved.
+CVE-2026-26013 | platform | 2026-05-31 | LangChain is upgraded off the legacy 0.1 line, but the remaining 0.3-core advisory only affects remote image fetching during token counting. This repo refuses remote image URLs in backend/app/services/ai/multi_modal_analyzer.py and only sends data URLs to ChatOpenAI.
+CVE-2026-4539 | platform | 2026-06-30 | Pygments is a transitive tooling dependency with no upstream fix version yet and the advisory requires local crafted input rather than a production request path.

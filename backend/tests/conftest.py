@@ -60,6 +60,10 @@ def _find_repo_root(current: Path) -> Path:
 
 
 _REPO_ROOT = _find_repo_root(Path(__file__).resolve())
+_REAL_MIDDLEWARE_STACK_AVAILABLE = (
+    importlib.util.find_spec("fastapi") is not None
+    and importlib.util.find_spec("starlette.middleware.base") is not None
+)
 
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
@@ -457,6 +461,11 @@ def pytest_collection_modifyitems(
         nodeid = item.nodeid
         path = str(getattr(item, "fspath", ""))
         for pattern, reason in _SKIPPED_TEST_PATTERNS.items():
+            if (
+                pattern == "backend/tests/test_middleware/"
+                and _REAL_MIDDLEWARE_STACK_AVAILABLE
+            ):
+                continue
             if pattern in nodeid or pattern in path:
                 item.add_marker(pytest.mark.skip(reason=reason))
                 break

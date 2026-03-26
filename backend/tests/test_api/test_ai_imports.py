@@ -54,6 +54,101 @@ def test_ai_router_import_does_not_eagerly_load_ai_services() -> None:
         assert module_name not in sys.modules
 
 
+def test_rulesets_router_import_does_not_eagerly_load_geometry_or_rules_engine() -> (
+    None
+):
+    """The rulesets router should defer geometry/rules engine imports until use."""
+
+    helper_modules = [
+        "app.core.geometry.serializer",
+        "app.core.geometry.builder",
+        "app.core.rules.engine",
+    ]
+    script = f"""
+import importlib
+import json
+import sys
+
+helper_modules = {json.dumps(helper_modules)}
+for name in helper_modules + ["app.api.v1.rulesets"]:
+    sys.modules.pop(name, None)
+
+rulesets_module = importlib.import_module("app.api.v1.rulesets")
+print(
+    json.dumps(
+        {{
+            "has_router": hasattr(rulesets_module, "router"),
+            "loaded_helpers": [name for name in helper_modules if name in sys.modules],
+        }}
+    )
+)
+"""
+
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        check=False,
+        env={
+            **os.environ,
+            "PYTHONPATH": _pythonpath(),
+            "SECRET_KEY": os.environ.get("SECRET_KEY", "test-secret"),
+        },
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout.strip().splitlines()[-1])
+    assert payload == {"has_router": True, "loaded_helpers": []}
+
+
+def test_projects_router_import_does_not_eagerly_load_finance_or_team_helpers() -> None:
+    """Projects router import should stay off finance/team helper stacks."""
+
+    helper_modules = [
+        "app.api.v1.finance_common",
+        "app.models.development_phase",
+        "app.models.finance",
+        "app.models.workflow",
+        "app.services.team.team_service",
+        "app.schemas.finance",
+    ]
+    script = f"""
+import importlib
+import json
+import sys
+
+helper_modules = {json.dumps(helper_modules)}
+for name in helper_modules + ["app.api.v1.projects_api"]:
+    sys.modules.pop(name, None)
+
+projects_module = importlib.import_module("app.api.v1.projects_api")
+print(
+    json.dumps(
+        {{
+            "has_router": hasattr(projects_module, "router"),
+            "loaded_helpers": [name for name in helper_modules if name in sys.modules],
+        }}
+    )
+)
+"""
+
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        check=False,
+        env={
+            **os.environ,
+            "PYTHONPATH": _pythonpath(),
+            "SECRET_KEY": os.environ.get("SECRET_KEY", "test-secret"),
+        },
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout.strip().splitlines()[-1])
+    assert payload == {"has_router": True, "loaded_helpers": []}
+
+
 def test_main_import_does_not_eagerly_load_ai_services() -> None:
     """Importing the full app should not pre-initialize heavyweight AI modules."""
 

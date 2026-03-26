@@ -1,0 +1,41 @@
+name: Production Readiness Gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/production-readiness-gate.yml"
+      - "scripts/validate_production_security.sh"
+      - "backend/app/main.py"
+      - "backend/app/core/config.py"
+      - "infra/**"
+      - ".env.production"
+      - ".env.production.template"
+      - "backend/.env.production"
+      - "backend/.env.production.template"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/production-readiness-gate.yml"
+      - "scripts/validate_production_security.sh"
+      - "backend/app/main.py"
+      - "backend/app/core/config.py"
+      - "infra/**"
+      - ".env.production"
+      - ".env.production.template"
+      - "backend/.env.production"
+      - "backend/.env.production.template"
+
+jobs:
+  readiness-gate:
+    name: Production Security Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate production security posture
+        run: bash scripts/validate_production_security.sh

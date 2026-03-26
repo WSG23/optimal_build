@@ -97,10 +97,12 @@ jobs:
       - name: Install pip-audit
         run: pip install pip-audit
 
-      - name: Run pip-audit
+      - name: Run pip-audit with expiring allowlist
         run: |
-          pip-audit -r backend/requirements.txt --format json > pip-audit-report.json || true
-          pip-audit -r backend/requirements.txt --desc
+          mkdir -p security/reports
+          python scripts/run_pip_audit_with_allowlist.py \
+            --requirements backend/requirements.txt \
+            --json-output security/reports/pip-audit-report.json
         continue-on-error: true
 
       # Enable corepack for pnpm
@@ -119,7 +121,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pip-audit-report
-          path: pip-audit-report.json
+          path: security/reports/pip-audit-report.json
           if-no-files-found: ignore
 
       - name: Upload npm audit Report

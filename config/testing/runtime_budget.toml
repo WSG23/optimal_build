@@ -1,0 +1,4 @@
+[pytest]
+max_total_seconds = 240.0
+default_test_case_seconds = 60.0
+max_slowest_tests = 10

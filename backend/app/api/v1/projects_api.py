@@ -1,22 +1,22 @@
 """Projects API with CRUD operations using PostgreSQL."""
 
+from __future__ import annotations
+
 import uuid
-from typing import Any, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api import deps
-from app.api.v1.finance_common import normalise_project_id
 from app.core.database import get_session
-from app.models.development_phase import DevelopmentPhase, PhaseStatus
-from app.models.finance import FinProject, FinScenario
 from app.models.projects import Project, ProjectPhase, ProjectType
-from app.models.workflow import ApprovalStep, ApprovalWorkflow, StepStatus
-from app.services.team.team_service import TeamService
+
+if TYPE_CHECKING:
+    from app.models.development_phase import PhaseStatus
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -59,7 +59,7 @@ class ProjectResponse(BaseModel):
     updated_at: str
     is_active: bool
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProgressProject(BaseModel):
@@ -218,21 +218,22 @@ def _phase_display_name(phase: ProjectPhase) -> str:
 def _phase_status_from_development(status: PhaseStatus | None) -> str:
     if status is None:
         return "not_started"
+    normalized = str(getattr(status, "value", status)).lower()
     mapping = {
-        PhaseStatus.NOT_STARTED: "not_started",
-        PhaseStatus.PLANNING: "not_started",
-        PhaseStatus.IN_PROGRESS: "in_progress",
-        PhaseStatus.ON_HOLD: "delayed",
-        PhaseStatus.DELAYED: "delayed",
-        PhaseStatus.COMPLETED: "completed",
-        PhaseStatus.CANCELLED: "delayed",
+        "not_started": "not_started",
+        "planning": "not_started",
+        "in_progress": "in_progress",
+        "on_hold": "delayed",
+        "delayed": "delayed",
+        "completed": "completed",
+        "cancelled": "delayed",
     }
-    return mapping.get(status, "not_started")
+    return mapping.get(normalized, "not_started")
 
 
 def _workflow_step_status(status: str | None) -> str:
     if not status:
-        return StepStatus.PENDING.value
+        return "pending"
     return status.lower()
 
 
@@ -496,6 +497,11 @@ async def get_project_progress(
     identity: deps.RequestIdentity = Depends(deps.require_viewer),
 ) -> ProjectProgressResponse:
     """Get progress details for a project."""
+    from app.api.v1.finance_common import normalise_project_id
+    from app.models.development_phase import DevelopmentPhase
+    from app.models.workflow import ApprovalStep, ApprovalWorkflow
+    from app.services.team.team_service import TeamService
+
     project_uuid = normalise_project_id(project_id)
     result = await db.execute(
         select(Project).where(
@@ -599,9 +605,9 @@ async def get_project_progress(
         for step in workflow.steps:
             total_steps += 1
             status_value = _workflow_step_status(step.status)
-            if status_value == StepStatus.APPROVED.value:
+            if status_value == "approved":
                 approved_steps += 1
-            if status_value in (StepStatus.PENDING.value, StepStatus.IN_REVIEW.value):
+            if status_value in ("pending", "in_review"):
                 pending_steps += 1
                 required_by = "Any team member"
                 if step.required_user and step.required_user.full_name:
@@ -667,6 +673,9 @@ async def get_project_dashboard(
     identity: deps.RequestIdentity = Depends(deps.require_viewer),
 ) -> ProjectDashboardResponse:
     """Get dashboard data including KPIs and available modules."""
+    from app.api.v1.finance_common import normalise_project_id
+    from app.models.finance import FinProject, FinScenario
+
     try:
         project_uuid = normalise_project_id(project_id)
     except HTTPException as exc:

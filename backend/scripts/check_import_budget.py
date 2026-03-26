@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import statistics
 import subprocess
 import sys
 from typing import Any
@@ -28,6 +29,7 @@ HEAVY_MAIN_MODULES = [
 ]
 DEFAULT_MAIN_IMPORT_BUDGET_SECONDS = 2.0
 DEFAULT_API_ROUTER_BUDGET_SECONDS = 4.0
+DEFAULT_IMPORT_BUDGET_SAMPLES = 3
 
 
 def _child_environment() -> dict[str, str]:
@@ -41,7 +43,7 @@ def _child_environment() -> dict[str, str]:
     return env
 
 
-def _measure_startup() -> dict[str, Any]:
+def _run_probe() -> dict[str, Any]:
     script = f"""
 import importlib
 import json
@@ -94,6 +96,30 @@ print(
     if not lines:
         raise SystemExit("import budget probe returned no output")
     return json.loads(lines[-1])
+
+
+def _measure_startup() -> dict[str, Any]:
+    sample_count = int(
+        os.getenv("IMPORT_BUDGET_SAMPLES", str(DEFAULT_IMPORT_BUDGET_SAMPLES))
+    )
+    if sample_count < 1:
+        raise SystemExit("IMPORT_BUDGET_SAMPLES must be >= 1")
+
+    samples = [_run_probe() for _ in range(sample_count)]
+    return {
+        "main_import_s": round(
+            statistics.median(float(sample["main_import_s"]) for sample in samples), 3
+        ),
+        "build_api_router_s": round(
+            statistics.median(
+                float(sample["build_api_router_s"]) for sample in samples
+            ),
+            3,
+        ),
+        "loaded_after_main": samples[0]["loaded_after_main"],
+        "route_count": samples[0]["route_count"],
+        "samples": samples,
+    }
 
 
 def main() -> int:

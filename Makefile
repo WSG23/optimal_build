@@ -1,4 +1,4 @@
-.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset docker dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-backend typecheck-all typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean
+.PHONY: help help-dev install format format-check lint lint-prod test test-all test-cov smoke-buildable clean clean-ui build deploy init-db db.revision db.upgrade seed-data seed-properties-projects logs down reset docker dev stop import-sample run-overlay export-approved test-aec seed-nonreg sync-products venv env-check verify check-coding-rules check-tool-versions ai-preflight status hooks ui-stop typecheck typecheck-backend typecheck-all typecheck-watch quick-check pre-commit-full pre-deploy coverage-report db-backup db-restore docker-clean type-guardrails type-ignore-budget mypy-baseline warning-allowlist pip-audit-guard validate-production-security runtime-budget
 
 DEV_RUNTIME_DIR ?= .devstack
 DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
@@ -107,6 +107,10 @@ help-dev: ## Show comprehensive development workflow guide
 	@echo "  make hooks              Run pre-commit hooks on all files"
 	@echo "  make pre-commit-full    Comprehensive pre-commit validation"
 	@echo "  make ai-preflight       AI agent pre-flight checks"
+	@echo "  make type-guardrails    Validate mypy suppression policy"
+	@echo "  make warning-allowlist  Validate pytest warning allowlist expiry"
+	@echo "  make validate-production-security  Validate production deployment posture"
+	@echo "  make runtime-budget     Validate backend pytest runtime budgets from JUnit XML"
 	@echo ""
 	@echo "━━━ Type Checking ━━━"
 	@echo "  make typecheck          Run TypeScript type checking (frontend)"
@@ -172,9 +176,8 @@ venv: ## Create venv & install backend+frontend deps
 		if [ -n "$(PIP_INSTALL_FLAGS)" ]; then \
 			$(PIP) install $(PIP_INSTALL_FLAGS) sqlalchemy[asyncio]==2.0.23; \
 			$(PIP) install $(PIP_INSTALL_FLAGS) --no-deps alembic==1.13.0; \
-			$(PIP) install $(PIP_INSTALL_FLAGS) python-multipart==0.0.6; \
-			$(PIP) install $(PIP_INSTALL_FLAGS) python-jose==3.3.0; \
-			$(PIP) install $(PIP_INSTALL_FLAGS) passlib==1.7.4; \
+			$(PIP) install $(PIP_INSTALL_FLAGS) python-multipart==0.0.22; \
+			$(PIP) install $(PIP_INSTALL_FLAGS) bcrypt==5.0.0; \
 $(PIP) install $(PIP_INSTALL_FLAGS) python-dateutil==2.8.2; \
 $(PIP) install $(PIP_INSTALL_FLAGS) prometheus-client==0.19.0; \
 $(PIP) install $(PIP_INSTALL_FLAGS) aiosqlite==0.21.0; \
@@ -278,6 +281,27 @@ typecheck-all: ## Run both TypeScript and Python type checking
 	@$(MAKE) typecheck
 	@$(MAKE) typecheck-backend
 
+type-guardrails: ## Validate mypy suppression policy and new type-ignore metadata
+	@$(PY) scripts/check_type_guardrails.py --config-only
+
+type-ignore-budget: ## Enforce backend type-ignore baseline
+	@$(PY) scripts/check_type_ignore_budget.py
+
+mypy-baseline: ## Ensure current mypy output does not regress from baseline
+	@$(PY) scripts/check_mypy_baseline.py
+
+warning-allowlist: ## Validate pytest warning allowlist metadata and expiry
+	@$(PY) scripts/check_warning_allowlist.py --fail-on-expired
+
+pip-audit-guard: ## Run pip-audit with the repository allowlist policy
+	@$(PRE_COMMIT) run pip-audit --all-files
+
+validate-production-security: ## Validate production deployment posture and secret handling
+	@bash scripts/validate_production_security.sh
+
+runtime-budget: ## Validate backend pytest runtime budgets from the latest JUnit artifact
+	@$(PY) backend/scripts/check_runtime_budget.py
+
 typecheck-watch: ## Watch mode for TypeScript type checking
 	@echo "👀 Watching TypeScript files for type errors..."
 	@cd frontend && npx tsc --noEmit --watch
@@ -329,6 +353,10 @@ verify: ## Run formatting checks, linting, type checking, coding rules, roadmap/
 	$(MAKE) format-check
 	$(MAKE) lint
 	$(MAKE) lint-ui-standards
+	$(MAKE) type-guardrails
+	$(MAKE) type-ignore-budget
+	$(MAKE) mypy-baseline
+	$(MAKE) warning-allowlist
 	$(MAKE) typecheck-backend
 	$(MAKE) check-coding-rules
 	$(MAKE) validate-delivery-plan
@@ -337,6 +365,8 @@ verify: ## Run formatting checks, linting, type checking, coding rules, roadmap/
 quick-check: ## Fast pre-commit checks (format + typecheck + lint)
 	@echo "⚡ Running quick checks..."
 	@$(MAKE) format-check
+	@$(MAKE) type-guardrails
+	@$(MAKE) warning-allowlist
 	@npm run --prefix frontend typecheck
 	@$(MAKE) lint
 	@$(MAKE) lint-ui-standards
@@ -344,6 +374,11 @@ quick-check: ## Fast pre-commit checks (format + typecheck + lint)
 
 pre-commit-full: ## Comprehensive pre-commit checks
 	@echo "🔍 Running comprehensive pre-commit checks..."
+	@$(MAKE) type-guardrails
+	@$(MAKE) type-ignore-budget
+	@$(MAKE) mypy-baseline
+	@$(MAKE) warning-allowlist
+	@$(MAKE) pip-audit-guard
 	@$(MAKE) lint
 	@npm run --prefix frontend typecheck
 	@$(MAKE) check-coding-rules
@@ -353,6 +388,7 @@ pre-commit-full: ## Comprehensive pre-commit checks
 pre-deploy: ## Pre-deployment verification
 	@echo "🚀 Running pre-deployment checks..."
 	@$(MAKE) verify
+	@$(MAKE) validate-production-security
 	@$(MAKE) test-all
 	@$(MAKE) validate-delivery-plan
 	@echo "✅ Ready for deployment"

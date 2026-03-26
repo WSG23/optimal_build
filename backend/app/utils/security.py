@@ -51,21 +51,29 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return False
 
 
+def password_needs_rehash(hashed_password: str) -> bool:
+    """Return ``True`` when a verified password should be upgraded in storage."""
+
+    if not hashed_password:
+        return False
+    if hashed_password.startswith(f"{LEGACY_SHA256_SCHEME}$"):
+        return True
+    if hashed_password.startswith(_BCRYPT_PREFIXES):
+        return True
+    if not hashed_password.startswith(f"{PBKDF2_SCHEME}$"):
+        return False
+    iteration_count, salt_hex, digest_hex = _parse_pbkdf2_hash(hashed_password)
+    if iteration_count is None or salt_hex is None or digest_hex is None:
+        return False
+    return iteration_count < PBKDF2_ITERATIONS
+
+
 def _verify_pbkdf2_password(plain_password: str, hashed_password: str) -> bool:
-    try:
-        scheme, iterations, salt_hex, digest_hex = hashed_password.split("$", 3)
-    except ValueError:
+    iteration_count, salt_hex, digest_hex = _parse_pbkdf2_hash(hashed_password)
+    if iteration_count is None or salt_hex is None or digest_hex is None:
         return False
-
-    if scheme != PBKDF2_SCHEME:
-        return False
-
-    try:
-        salt = bytes.fromhex(salt_hex)
-        expected_digest = bytes.fromhex(digest_hex)
-        iteration_count = int(iterations)
-    except ValueError:
-        return False
+    salt = bytes.fromhex(salt_hex)
+    expected_digest = bytes.fromhex(digest_hex)
 
     computed_digest = hashlib.pbkdf2_hmac(
         "sha256",
@@ -101,11 +109,32 @@ def _verify_legacy_bcrypt_password(plain_password: str, hashed_password: str) ->
         return False
 
 
+def _parse_pbkdf2_hash(
+    hashed_password: str,
+) -> tuple[int | None, str | None, str | None]:
+    try:
+        scheme, iterations, salt_hex, digest_hex = hashed_password.split("$", 3)
+    except ValueError:
+        return None, None, None
+
+    if scheme != PBKDF2_SCHEME:
+        return None, None, None
+
+    try:
+        bytes.fromhex(salt_hex)
+        bytes.fromhex(digest_hex)
+        iteration_count = int(iterations)
+    except ValueError:
+        return None, None, None
+    return iteration_count, salt_hex, digest_hex
+
+
 __all__ = [
     "LEGACY_SHA256_SCHEME",
     "PBKDF2_ITERATIONS",
     "PBKDF2_SCHEME",
     "PBKDF2_SALT_BYTES",
     "hash_password",
+    "password_needs_rehash",
     "verify_password",
 ]

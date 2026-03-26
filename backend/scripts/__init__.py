@@ -8,8 +8,13 @@ from pathlib import Path
 from typing import Any
 
 _BACKEND_ROOT = Path(__file__).resolve().parent.parent
+_ROOT_SCRIPTS = _BACKEND_ROOT.parent / "scripts"
 if str(_BACKEND_ROOT) not in sys.path:
     sys.path.append(str(_BACKEND_ROOT))
+if _ROOT_SCRIPTS.exists():
+    root_scripts_str = str(_ROOT_SCRIPTS)
+    if root_scripts_str not in __path__:
+        __path__.append(root_scripts_str)
 
 _IMPORTS = {
     "SeedSummary": (".seed_screening", "SeedSummary"),

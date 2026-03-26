@@ -1,0 +1,11 @@
+ignore:.*`example` has been deprecated, please use `examples` instead:DeprecationWarning | backend | 2026-06-30 | FastAPI and Pydantic examples metadata still emits deprecations during migration.
+ignore:'crypt' is deprecated and slated for removal in Python 3.13:DeprecationWarning | backend | 2026-06-30 | Third-party auth and hashing dependencies still import crypt on older code paths.
+ignore:datetime.datetime.utcfromtimestamp\(\) is deprecated and scheduled for removal.*:DeprecationWarning | backend | 2026-06-30 | Upstream libraries still emit utcfromtimestamp deprecation warnings.
+ignore:'addParseAction' deprecated - use 'add_parse_action':DeprecationWarning | backend | 2026-06-30 | Pyparsing transitive dependencies still rely on deprecated parser helpers.
+ignore:'oneOf' deprecated - use 'one_of':DeprecationWarning | backend | 2026-06-30 | Pyparsing transitive dependencies still rely on deprecated parser helpers.
+ignore:'setResultsName' deprecated - use 'set_results_name':DeprecationWarning | backend | 2026-06-30 | Pyparsing transitive dependencies still rely on deprecated parser helpers.
+ignore:'infixNotation' deprecated - use 'infix_notation':DeprecationWarning | backend | 2026-06-30 | Pyparsing transitive dependencies still rely on deprecated parser helpers.
+ignore:'pkgutil.find_loader' is deprecated and slated for removal in Python 3.14.*:DeprecationWarning | backend | 2026-06-30 | Third-party import shims still call pkgutil.find_loader.
+ignore:ast.NameConstant is deprecated and will be removed in Python 3.14; use ast.Constant instead:DeprecationWarning | backend | 2026-06-30 | Legacy parser dependencies still emit deprecated AST node warnings.
+ignore:Support for class-based `config` is deprecated:DeprecationWarning | backend | 2026-06-30 | Remaining third-party and compatibility models still emit Pydantic config warnings.
+ignore:The ``declarative_base\(\)`` function is now available as sqlalchemy.orm.declarative_base:DeprecationWarning | backend | 2026-06-30 | SQLAlchemy compatibility layers still trigger declarative_base deprecations.

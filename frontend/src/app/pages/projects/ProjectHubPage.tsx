@@ -138,7 +138,14 @@ export function ProjectHubPage() {
   const renderKPIs = (kpis: DashboardKPI[]) => (
     <Grid container spacing={3} mb={5}>
       {kpis.map((kpi) => (
-        <Grid item xs={12} sm={6} md={3} key={kpi.label} sx={{ display: 'flex' }}>
+        <Grid
+          item
+          xs={12}
+          sm={6}
+          md={3}
+          key={kpi.label}
+          sx={{ display: 'flex' }}
+        >
           <MetricTile
             label={kpi.label}
             value={kpi.value}
@@ -215,7 +222,12 @@ export function ProjectHubPage() {
         <Grid item xs={12} md={6} lg={4} key={i}>
           <GlassCard sx={{ height: '100%' }}>
             <Stack direction="row" justifyContent="space-between" mb={2}>
-              <Skeleton variant="rectangular" width={48} height={48} sx={{ borderRadius: 2 }} />
+              <Skeleton
+                variant="rectangular"
+                width={48}
+                height={48}
+                sx={{ borderRadius: 2 }}
+              />
             </Stack>
             <Skeleton variant="text" width="60%" height={32} sx={{ mb: 1 }} />
             <Skeleton variant="text" width="80%" />

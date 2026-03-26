@@ -17,7 +17,7 @@ class IntelligenceService:
         try:
             self.rag_engine = get_rag_engine()
             self.vector_store = self.rag_engine.get_vector_store()
-            self.llm = ChatOpenAI(model_name="gpt-4-turbo", temperature=0)
+            self.llm = ChatOpenAI(model="gpt-4-turbo", temperature=0)
         except Exception:
             logger.warning("RAG Engine not initialized (missing API key?)")
             self.rag_engine = None

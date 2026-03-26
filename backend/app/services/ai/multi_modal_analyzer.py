@@ -207,7 +207,8 @@ class MultiModalAnalyzerService:
                 return base64.b64encode(path.read_bytes()).decode("utf-8")
 
         if request.image_url:
-            # In production, would fetch from URL
+            # Refuse remote URL fetching so downstream vision/token-counting paths
+            # never trigger outbound requests for user-supplied image locations.
             return None
 
         return None

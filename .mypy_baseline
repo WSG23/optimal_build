@@ -1,0 +1,14 @@
+{
+  "files": {},
+  "metadata": {
+    "command": [
+      "/Users/tb/Projects/optimal_build/.venv/bin/python",
+      "-m",
+      "mypy",
+      "--config-file",
+      "/Users/tb/Projects/optimal_build/mypy.ini"
+    ],
+    "generated_at": "2026-03-26T21:00:35.963457+00:00"
+  },
+  "total_errors": 0
+}

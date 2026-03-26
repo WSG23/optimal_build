@@ -13,10 +13,31 @@ from pathlib import Path
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _BACKEND_ROOT = _PROJECT_ROOT / "backend"
+_ROOT_SCRIPTS_DIR = _PROJECT_ROOT / "scripts"
+_BACKEND_SCRIPTS_DIR = _BACKEND_ROOT / "scripts"
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 if str(_BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(_BACKEND_ROOT))
+
+_ROOT_SCRIPTS_INIT = _ROOT_SCRIPTS_DIR / "__init__.py"
+_existing_scripts = sys.modules.get("scripts")
+_existing_scripts_path = Path(
+    getattr(_existing_scripts, "__file__", "") or ""
+).resolve()
+if _existing_scripts is None or _existing_scripts_path != _ROOT_SCRIPTS_INIT.resolve():
+    spec = importlib.util.spec_from_file_location(
+        "scripts",
+        _ROOT_SCRIPTS_INIT,
+        submodule_search_locations=[
+            str(_ROOT_SCRIPTS_DIR),
+            str(_BACKEND_SCRIPTS_DIR),
+        ],
+    )
+    if spec is not None and spec.loader is not None:
+        scripts_module = importlib.util.module_from_spec(spec)
+        sys.modules["scripts"] = scripts_module
+        spec.loader.exec_module(scripts_module)
 
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 
@@ -527,28 +548,6 @@ if "app.services.agents.scenario_builder_3d" not in sys.modules and (
     scenario_builder_stub.BuildingMassing = BuildingMassing
 
     sys.modules["app.services.agents.scenario_builder_3d"] = scenario_builder_stub
-
-# Jose stubs
-try:
-    from jose import JWTError, jwt  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover
-    jose_stub = ModuleType("jose")
-
-    class JWTError(Exception):
-        pass
-
-    def _encode(payload, *_args, **_kwargs):
-        return "token"
-
-    def _decode(token, *_args, **_kwargs):
-        return {}
-
-    jose_stub.JWTError = JWTError
-    jose_stub.jwt = SimpleNamespace(encode=_encode, decode=_decode)
-    sys.modules.setdefault("jose", jose_stub)
-else:
-    JWTError = JWTError  # re-export for callers
-    jwt = jwt  # re-export for callers
 
 import importlib
 from importlib import import_module

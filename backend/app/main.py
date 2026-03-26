@@ -16,6 +16,7 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 try:  # pragma: no cover - prefer real slowapi when available
@@ -76,7 +77,7 @@ from app.middleware.request_guards import (
     CorrelationIdMiddleware,
     RequestSizeLimitMiddleware,
 )
-from app.middleware.security import SecurityHeadersMiddleware
+from app.middleware.security import SecurityHeadersConfig, SecurityHeadersMiddleware
 from app.utils import metrics
 from app.utils.logging import configure_logging, get_logger, log_event
 from sqlalchemy import func, select, text
@@ -130,6 +131,48 @@ def _request_needs_api_router(path: str) -> bool:
     if path == settings.API_V1_STR:
         return True
     return path.startswith(f"{settings.API_V1_STR}/")
+
+
+def _resolve_allowed_hosts() -> list[str]:
+    """Return the effective TrustedHost allowlist for this app instance."""
+
+    allowed_hosts = [host.strip() for host in settings.ALLOWED_HOSTS if host.strip()]
+    strict_environment = settings.ENVIRONMENT.strip().lower() in {
+        "production",
+        "staging",
+    }
+
+    if not allowed_hosts:
+        return ["localhost", "127.0.0.1", "testserver", "test"]
+
+    if not strict_environment:
+        for test_host in ("testserver", "test"):
+            if test_host not in allowed_hosts:
+                allowed_hosts.append(test_host)
+
+    if strict_environment and "*" in allowed_hosts:
+        filtered_hosts = [host for host in allowed_hosts if host != "*"]
+        if filtered_hosts:
+            allowed_hosts = filtered_hosts
+        else:
+            allowed_hosts = ["localhost", "127.0.0.1"]
+        log_event(
+            logger,
+            "trusted_host_wildcard_removed",
+            environment=settings.ENVIRONMENT,
+            allowed_hosts=allowed_hosts,
+        )
+
+    return allowed_hosts
+
+
+def _build_security_headers_config() -> SecurityHeadersConfig:
+    """Return the shared edge-hardening configuration."""
+
+    return SecurityHeadersConfig(
+        environment=settings.ENVIRONMENT,
+        allowed_origins=tuple(settings.ALLOWED_ORIGINS),
+    )
 
 
 def _ensure_api_router_loaded() -> None:
@@ -196,7 +239,11 @@ app = FastAPI(
 )
 
 app.add_middleware(ApiRouterLoaderMiddleware)
-app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=_resolve_allowed_hosts())
+app.add_middleware(
+    SecurityHeadersMiddleware,
+    config=_build_security_headers_config(),
+)
 app.add_middleware(GZipMiddleware, minimum_size=500)
 # CORS configuration - restrict headers in production
 _ALLOWED_HEADERS = [

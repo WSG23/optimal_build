@@ -1,38 +1,79 @@
 """Tests for security headers middleware."""
 
+from __future__ import annotations
+
+import json
+from collections.abc import Awaitable, Callable
+
 import pytest
 from fastapi import Request, Response
 
 from app.middleware.security import SecurityHeadersConfig, SecurityHeadersMiddleware
 
 
-@pytest.mark.asyncio
-async def test_dispatch_adds_security_headers():
-    """Test that dispatch method adds security headers."""
+def _build_request(
+    *,
+    method: str = "GET",
+    path: str = "/",
+    scheme: str = "http",
+    headers: dict[str, str] | None = None,
+    host: str = "testserver",
+) -> Request:
+    merged_headers = {"host": host}
+    if headers:
+        merged_headers.update(headers)
+    return Request(
+        scope={
+            "type": "http",
+            "method": method,
+            "path": path,
+            "headers": [
+                (key.lower().encode("utf-8"), value.encode("utf-8"))
+                for key, value in merged_headers.items()
+            ],
+            "scheme": scheme,
+            "server": ("testserver", 443 if scheme == "https" else 80),
+            "client": ("testclient", 123),
+            "root_path": "",
+            "query_string": b"",
+            "state": {},
+        }
+    )
 
-    # Create a mock call_next function that returns a response
-    async def mock_call_next(request: Request) -> Response:
+
+async def _dummy_app(*_args: object, **_kwargs: object) -> Response:
+    return Response(content="stub", media_type="text/plain")
+
+
+def _build_middleware(
+    config: SecurityHeadersConfig | None = None,
+) -> SecurityHeadersMiddleware:
+    app: Callable[..., Awaitable[Response]] = _dummy_app
+    return SecurityHeadersMiddleware(app=app, config=config)
+
+
+@pytest.mark.asyncio
+async def test_dispatch_adds_security_headers_for_secure_requests() -> None:
+    """Secure responses should receive the full default header set."""
+
+    async def mock_call_next(_: Request) -> Response:
         return Response(content="test", media_type="text/plain")
 
-    # Create middleware instance (we don't need a real app for unit testing)
     config = SecurityHeadersConfig(environment="production")
-    middleware = SecurityHeadersMiddleware(app=None, config=config)  # type: ignore
+    middleware = _build_middleware(config)
 
-    # Create a mock request
-    request = Request(scope={"type": "http", "method": "GET", "path": "/"})
-
-    # Call dispatch
+    request = _build_request(scheme="https")
     response = await middleware.dispatch(request, mock_call_next)
 
-    # Verify all security headers are present
-    assert "Strict-Transport-Security" in response.headers
     assert response.headers["Strict-Transport-Security"] == config.production_hsts
-
     assert response.headers["X-Content-Type-Options"] == config.x_content_type_options
     assert response.headers["X-Frame-Options"] == config.x_frame_options
     assert response.headers["Referrer-Policy"] == config.referrer_policy
     assert response.headers["X-XSS-Protection"] == config.x_xss_protection
-    assert response.headers["Content-Security-Policy"] == config.content_security_policy
+    assert (
+        response.headers["Content-Security-Policy"]
+        == config.api_content_security_policy
+    )
     assert response.headers["Permissions-Policy"] == config.permissions_policy
     assert (
         response.headers["Cross-Origin-Opener-Policy"]
@@ -45,113 +86,182 @@ async def test_dispatch_adds_security_headers():
 
 
 @pytest.mark.asyncio
-async def test_dispatch_adds_development_hsts():
-    """Non-production environments should emit the development HSTS directive."""
+async def test_dispatch_skips_hsts_for_insecure_requests() -> None:
+    """HSTS should not be emitted when the request is not HTTPS."""
 
-    async def mock_call_next(request: Request) -> Response:
+    async def mock_call_next(_: Request) -> Response:
         return Response(content="test", media_type="text/plain")
 
-    config = SecurityHeadersConfig(environment="development")
-    middleware = SecurityHeadersMiddleware(app=None, config=config)  # type: ignore
+    config = SecurityHeadersConfig(environment="production")
+    middleware = _build_middleware(config)
 
-    request = Request(scope={"type": "http", "method": "GET", "path": "/"})
+    request = _build_request(scheme="http")
     response = await middleware.dispatch(request, mock_call_next)
 
-    if config.development_hsts is None:
-        assert "Strict-Transport-Security" not in response.headers
-    else:
-        assert response.headers["Strict-Transport-Security"] == config.development_hsts
+    assert "Strict-Transport-Security" not in response.headers
 
 
 @pytest.mark.asyncio
-async def test_dispatch_preserves_existing_headers():
-    """Test that dispatch doesn't overwrite existing headers."""
+async def test_dispatch_preserves_existing_headers() -> None:
+    """Pre-existing headers should not be overwritten."""
 
-    # Create a mock call_next that returns a response with existing headers
-    async def mock_call_next(request: Request) -> Response:
+    async def mock_call_next(_: Request) -> Response:
         response = Response(content="test", media_type="text/plain")
         response.headers["Strict-Transport-Security"] = "max-age=31536000"
         response.headers["Custom-Header"] = "custom-value"
         return response
 
     config = SecurityHeadersConfig(environment="production")
-    middleware = SecurityHeadersMiddleware(app=None, config=config)  # type: ignore
-    request = Request(scope={"type": "http", "method": "GET", "path": "/"})
+    middleware = _build_middleware(config)
+    request = _build_request(scheme="https")
 
     response = await middleware.dispatch(request, mock_call_next)
 
-    # Existing HSTS header should NOT be overwritten
     assert response.headers["Strict-Transport-Security"] == "max-age=31536000"
-
-    # Custom header should be preserved
     assert response.headers["Custom-Header"] == "custom-value"
-
-    # Other security headers should still be added
     assert response.headers["X-Content-Type-Options"] == config.x_content_type_options
     assert response.headers["X-Frame-Options"] == config.x_frame_options
 
 
 @pytest.mark.asyncio
-async def test_dispatch_preserves_existing_csp():
-    """Test that existing Content-Security-Policy is not overwritten."""
+async def test_dispatch_preserves_existing_csp() -> None:
+    """A response that already set CSP should keep its own policy."""
 
-    async def mock_call_next(request: Request) -> Response:
+    async def mock_call_next(_: Request) -> Response:
         response = Response(content="test", media_type="text/plain")
         response.headers["Content-Security-Policy"] = "default-src 'self'"
         return response
 
     config = SecurityHeadersConfig(environment="production")
-    middleware = SecurityHeadersMiddleware(app=None, config=config)  # type: ignore
-    request = Request(scope={"type": "http", "method": "GET", "path": "/"})
+    middleware = _build_middleware(config)
+    request = _build_request(scheme="https")
 
     response = await middleware.dispatch(request, mock_call_next)
 
-    # Custom CSP should be preserved
     assert response.headers["Content-Security-Policy"] == "default-src 'self'"
-
-    # Other security headers should still be added
     assert response.headers["Strict-Transport-Security"] == config.production_hsts
     assert response.headers["X-Content-Type-Options"] == config.x_content_type_options
 
 
 @pytest.mark.asyncio
-async def test_dispatch_uses_setdefault():
-    """Test that setdefault is used so existing values aren't changed."""
+async def test_dispatch_uses_setdefault() -> None:
+    """Headers already present should keep their original values."""
 
-    async def mock_call_next(request: Request) -> Response:
+    async def mock_call_next(_: Request) -> Response:
         response = Response(content="test", media_type="text/plain")
-        # Pre-set multiple headers
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
         response.headers["Referrer-Policy"] = "no-referrer"
         return response
 
     config = SecurityHeadersConfig(environment="production")
-    middleware = SecurityHeadersMiddleware(app=None, config=config)  # type: ignore
-    request = Request(scope={"type": "http", "method": "GET", "path": "/"})
+    middleware = _build_middleware(config)
+    request = _build_request(scheme="https")
 
     response = await middleware.dispatch(request, mock_call_next)
 
-    # Pre-existing values should be preserved
     assert response.headers["X-Frame-Options"] == "SAMEORIGIN"
     assert response.headers["Referrer-Policy"] == "no-referrer"
-
-    # Headers not pre-set should be added with default values
     assert response.headers["X-Content-Type-Options"] == "nosniff"
 
 
 @pytest.mark.asyncio
-async def test_dispatch_with_empty_response():
-    """Test that headers are added even to empty responses."""
+async def test_dispatch_injects_nonce_for_html_responses() -> None:
+    """HTML responses should receive a per-request nonce in the body and CSP."""
 
-    async def mock_call_next(request: Request) -> Response:
+    async def mock_call_next(_: Request) -> Response:
+        return Response(
+            content="<html><style>body{}</style><script>console.log('x')</script></html>",
+            media_type="text/html",
+        )
+
+    config = SecurityHeadersConfig(environment="production")
+    middleware = _build_middleware(config)
+    request = _build_request(scheme="https")
+
+    response = await middleware.dispatch(request, mock_call_next)
+
+    nonce = request.state.csp_nonce
+    assert f"'nonce-{nonce}'" in response.headers["Content-Security-Policy"]
+    body = response.body.decode("utf-8")
+    assert f'<style nonce="{nonce}">' in body
+    assert f'<script nonce="{nonce}">' in body
+
+
+@pytest.mark.asyncio
+async def test_dispatch_rejects_invalid_cookie_origin() -> None:
+    """Cross-site mutating browser requests with cookies should be rejected."""
+
+    async def mock_call_next(_: Request) -> Response:
+        return Response(content="ok", media_type="text/plain")
+
+    config = SecurityHeadersConfig(
+        environment="production",
+        allowed_origins=("https://app.example.com",),
+    )
+    middleware = _build_middleware(config)
+    request = _build_request(
+        method="POST",
+        path="/session/update",
+        scheme="https",
+        host="api.example.com",
+        headers={
+            "origin": "https://evil.example.com",
+            "cookie": "session=abc123",
+            "x-correlation-id": "cid-browser",
+        },
+    )
+
+    response = await middleware.dispatch(request, mock_call_next)
+
+    assert response.status_code == 403
+    assert response.headers["content-type"].startswith("application/problem+json")
+    assert response.headers["Strict-Transport-Security"] == config.production_hsts
+    payload = json.loads(response.body)
+    assert payload["code"] == "origin_validation_failed"
+    assert payload["correlation_id"] == "cid-browser"
+
+
+@pytest.mark.asyncio
+async def test_dispatch_allows_cookie_origin_from_allowlist() -> None:
+    """Explicitly allowed browser origins should pass through."""
+
+    async def mock_call_next(_: Request) -> Response:
+        return Response(content="ok", media_type="text/plain")
+
+    config = SecurityHeadersConfig(
+        environment="production",
+        allowed_origins=("https://app.example.com",),
+    )
+    middleware = _build_middleware(config)
+    request = _build_request(
+        method="POST",
+        path="/session/update",
+        scheme="https",
+        host="api.example.com",
+        headers={
+            "origin": "https://app.example.com",
+            "cookie": "session=abc123",
+        },
+    )
+
+    response = await middleware.dispatch(request, mock_call_next)
+
+    assert response.status_code == 200
+    assert response.body == b"ok"
+
+
+@pytest.mark.asyncio
+async def test_dispatch_with_empty_response() -> None:
+    """Security headers should still be applied to empty responses."""
+
+    async def mock_call_next(_: Request) -> Response:
         return Response(content="", status_code=204)
 
-    middleware = SecurityHeadersMiddleware(app=None)  # type: ignore
-    request = Request(scope={"type": "http", "method": "GET", "path": "/"})
+    middleware = _build_middleware()
+    request = _build_request(scheme="https")
 
     response = await middleware.dispatch(request, mock_call_next)
 
     assert response.status_code == 204
-    # Security headers should still be present
     assert "X-Content-Type-Options" in response.headers
     assert "X-Frame-Options" in response.headers

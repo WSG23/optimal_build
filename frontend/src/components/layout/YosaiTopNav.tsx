@@ -183,15 +183,15 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
           // Glowing underline for active state - positioned below the nav bar
           '&::after': isActive
             ? {
-              content: '""',
-              position: 'absolute',
-              bottom: '-4px',
-              left: 0,
-              right: 0,
-              height: '2px',
-              bgcolor: 'var(--ob-color-neon-cyan)',
-              boxShadow: '0 0 8px var(--ob-color-neon-cyan)',
-            }
+                content: '""',
+                position: 'absolute',
+                bottom: '-4px',
+                left: 0,
+                right: 0,
+                height: '2px',
+                bgcolor: 'var(--ob-color-neon-cyan)',
+                boxShadow: '0 0 8px var(--ob-color-neon-cyan)',
+              }
             : {},
         }}
       >

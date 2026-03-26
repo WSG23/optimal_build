@@ -94,6 +94,33 @@ def test_verify_password_supports_legacy_sha256_hashes():
     assert verify_password("wrong-password", legacy_hash) is False
 
 
+def test_password_needs_rehash_for_legacy_hashes():
+    """Legacy password schemes should be upgraded after successful login."""
+    from app.utils.security import password_needs_rehash
+
+    salt = "1234abcd5678ef901234abcd5678ef90"
+    digest = hashlib.sha256((salt + "password").encode("utf-8")).hexdigest()
+
+    assert password_needs_rehash(f"sha256${salt}${digest}") is True
+    assert (
+        password_needs_rehash(
+            "$2b$12$abcdefghijklmnopqrstuuH2xD4Q6t2zY9d1A1m8tK9L5g6q7r8s"
+        )
+        is True
+    )
+
+
+def test_password_needs_rehash_for_old_pbkdf2_iterations():
+    """PBKDF2 hashes below the current work factor should be rotated."""
+    from app.utils.security import hash_password, password_needs_rehash
+
+    assert password_needs_rehash(hash_password("password")) is False
+    assert (
+        password_needs_rehash(hash_password("password").replace("310000", "1000", 1))
+        is True
+    )
+
+
 def test_verify_password_invalid_format():
     """Malformed hashes should fail verification cleanly."""
     from app.utils.security import verify_password

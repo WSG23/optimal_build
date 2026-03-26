@@ -8,8 +8,6 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
-from app.core.geometry import GeometrySerializer
-from app.core.rules import RulesEngine
 from app.models.rulesets import RulePack
 from app.schemas.rulesets import (
     RuleEvaluationResult,
@@ -74,6 +72,9 @@ async def validate_ruleset(
 
     if not payload.geometry:
         raise HTTPException(status_code=400, detail="Geometry payload is required")
+
+    from app.core.geometry.serializer import GeometrySerializer
+    from app.core.rules.engine import RulesEngine
 
     try:
         graph = GeometrySerializer.from_export(payload.geometry)

@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Literal, AsyncGenerator, cast
+from typing import TYPE_CHECKING, AsyncGenerator, Literal, cast
 
 from dataclasses import dataclass
 from fastapi import Depends, Header, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.database import AsyncSessionLocal
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 Role = Literal["viewer", "developer", "reviewer", "admin"]
 
@@ -92,6 +93,8 @@ async def require_reviewer(
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency for getting async database session."""
+    from app.core.database import AsyncSessionLocal
+
     async with AsyncSessionLocal() as session:
         yield session
 

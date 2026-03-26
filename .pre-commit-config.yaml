@@ -54,16 +54,29 @@ repos:
         pass_filenames: false
         files: ^frontend/src/.*\.(tsx|css)$
 
+      - id: type-guardrails
+        name: Type guardrails
+        entry: python3 scripts/check_type_guardrails.py --config-only --staged
+        language: system
+        pass_filenames: false
+
+      - id: type-ignore-budget
+        name: Type ignore budget
+        entry: python3 scripts/check_type_ignore_budget.py
+        language: system
+        pass_filenames: false
+
+      - id: warning-allowlist
+        name: Warning allowlist policy
+        entry: python3 scripts/check_warning_allowlist.py --fail-on-expired
+        language: system
+        pass_filenames: false
+
       - id: pip-audit
         name: Dependency vulnerability scan (pip-audit)
-        # Ignored CVEs:
-        # - PYSEC-2022-43012: Old urllib3 issue, we require >=2.0.0
-        # - GHSA-4v9f-r55g-g6hc: Prefect 2.20.17 requires major upgrade (breaking changes)
-        # - GHSA-2c2j-9gv5-cj73: Starlette 0.47.2 incompatible with FastAPI 0.115.x
-        # - GHSA-7f5h-v6xp-fcq8: Starlette 0.49.1 incompatible with FastAPI 0.115.x
-        # - GHSA-wj6h-64fc-37mp: ecdsa issue in python-jose transitive deps (no fix available)
-        entry: bash -c 'cd backend && ../.venv/bin/pip-audit -r requirements.txt --ignore-vuln PYSEC-2022-43012 --ignore-vuln GHSA-4v9f-r55g-g6hc --ignore-vuln GHSA-2c2j-9gv5-cj73 --ignore-vuln GHSA-7f5h-v6xp-fcq8 --ignore-vuln GHSA-wj6h-64fc-37mp 2>/dev/null || echo "pip-audit check completed"'
-        language: system
+        entry: python3 scripts/run_pip_audit_with_allowlist.py --requirements backend/requirements.txt
+        language: python
+        additional_dependencies: ["pip-audit>=2.7,<3"]
         pass_filenames: false
         files: ^backend/requirements.*\.txt$
 
@@ -82,6 +95,8 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-yaml
+        args: [--allow-multiple-documents, --unsafe]
+        exclude: ^infra/helm/
       - id: check-merge-conflict
 
   - repo: https://github.com/psf/black
@@ -122,19 +137,18 @@ repos:
         args: [--config-file=mypy.ini]
         pass_filenames: false
         additional_dependencies:
-          - fastapi==0.104.1
+          - fastapi==0.121.3
           - uvicorn[standard]==0.24.0
-          - pydantic[email]==2.5.0
-          - pydantic==2.5.0
+          - pydantic[email]==2.12.5
+          - pydantic==2.12.5
           - sqlalchemy[asyncio]==2.0.23
           - asyncpg==0.29.0
           - alembic==1.13.0
-          - python-multipart==0.0.6
-          - python-jose[cryptography]==3.3.0
-          - passlib[bcrypt]==1.7.4
+          - python-multipart==0.0.22
+          - bcrypt==5.0.0
           - httpx==0.25.2
           - python-dateutil==2.8.2
-          - prefect==2.14.10
+          - prefect==2.20.17
           - structlog==23.2.0
           - prometheus-client==0.19.0
 
@@ -167,7 +181,7 @@ repos:
         entry: npx --prefix ui-admin eslint
         language: system
         files: ^ui-admin/.*\.(js|jsx|ts|tsx)$
-        exclude: ^ui-admin/node_modules/
+        exclude: ^ui-admin/(node_modules/|eslint\.config\.js$)
 # Temporarily disabled due to SSL certificate issues
 # - repo: https://github.com/gitleaks/gitleaks
 #   rev: v8.18.4

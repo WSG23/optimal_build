@@ -15,12 +15,12 @@ from typing import TYPE_CHECKING, Any, Iterable, Literal, Optional, Protocol
 from backend._compat.datetime import UTC, utcnow
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
 from pydantic import BaseModel
 from sqlalchemy import Boolean, Column, DateTime, String
 from sqlalchemy.orm import DeclarativeBase, Session
 
 from app.core.config import settings
+from app.core.jwt_codec import JWTError, jwt
 from app.schemas.user import UserSignupBase
 from app.utils.logging import get_logger, log_event
 
@@ -48,12 +48,22 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return verify_password(plain_password, hashed_password)
 
 
+def password_needs_rehash(hashed_password: str) -> bool:
+    from app.utils.security import password_needs_rehash
+
+    return password_needs_rehash(hashed_password)
+
+
 def _hash_password(password: str) -> str:
     return hash_password(password)
 
 
 def _verify_password(plain_password: str, hashed_password: str) -> bool:
     return verify_password(plain_password, hashed_password)
+
+
+def _password_needs_rehash(hashed_password: str) -> bool:
+    return password_needs_rehash(hashed_password)
 
 
 # ---------------------------------------------------------------------------
@@ -232,6 +242,8 @@ class AuthRepository(Protocol):
         self, payload: UserSignupBase, hashed_password: str
     ) -> AuthUser: ...
 
+    def update_password_hash(self, user_id: str, hashed_password: str) -> AuthUser: ...
+
     def list_users(self) -> Iterable[AuthUser]: ...
 
 
@@ -261,6 +273,24 @@ class InMemoryAuthRepository(AuthRepository):
         )
         self._users[payload.email] = user
         return user
+
+    def update_password_hash(self, user_id: str, hashed_password: str) -> AuthUser:
+        for email, user in self._users.items():
+            if user.id != user_id:
+                continue
+            updated_user = AuthUser(
+                id=user.id,
+                email=user.email,
+                username=user.username,
+                full_name=user.full_name,
+                company_name=user.company_name,
+                hashed_password=hashed_password,
+                created_at=user.created_at,
+                is_active=user.is_active,
+            )
+            self._users[email] = updated_user
+            return updated_user
+        raise LookupError(f"User {user_id} not found")
 
     def list_users(self) -> Iterable[AuthUser]:
         return list(self._users.values())
@@ -298,6 +328,15 @@ class SqlAlchemyAuthRepository(AuthRepository):
         self.session.commit()
         self.session.refresh(record)
         # record is guaranteed to exist after refresh, use non-None overload
+        return self._to_user_required(record)
+
+    def update_password_hash(self, user_id: str, hashed_password: str) -> AuthUser:
+        record = self.session.query(UserRecord).filter(UserRecord.id == user_id).first()
+        if record is None:
+            raise LookupError(f"User {user_id} not found")
+        record.hashed_password = hashed_password
+        self.session.commit()
+        self.session.refresh(record)
         return self._to_user_required(record)
 
     def list_users(self) -> Iterable[AuthUser]:
@@ -396,6 +435,7 @@ class AuthService:
                 )
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
+        user = self._rehash_password_on_login(user=user, password=password, repo=repo)
         lockout.record_successful_login(email)
         tokens = create_tokens(user.public_dict)
         return AuthResult(user=user, tokens=tokens)
@@ -408,6 +448,28 @@ class AuthService:
         if user is None:
             raise HTTPException(status_code=404, detail="User not found")
         return user
+
+    def _rehash_password_on_login(
+        self, *, user: AuthUser, password: str, repo: AuthRepository
+    ) -> AuthUser:
+        """Upgrade legacy password hashes after a successful authentication."""
+
+        if not _password_needs_rehash(user.hashed_password):
+            return user
+
+        try:
+            upgraded_user = repo.update_password_hash(user.id, _hash_password(password))
+        except Exception as exc:  # pragma: no cover - defensive hardening
+            log_event(
+                logger,
+                "auth_password_rehash_failed",
+                email=user.email,
+                error=str(exc),
+            )
+            return user
+
+        log_event(logger, "auth_password_rehashed", email=upgraded_user.email)
+        return upgraded_user
 
 
 # ---------------------------------------------------------------------------
