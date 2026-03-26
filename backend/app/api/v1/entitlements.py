@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import StreamingResponse
 
 from app.api.deps import require_reviewer, require_viewer
 from app.core.database import get_session
-from app.core.export.entitlements import (
-    EntitlementsExportFormat,
-    generate_entitlements_export,
-)
 from app.schemas.entitlements import (
     EntEngagementCollection,
     EntEngagementCreate,
@@ -35,7 +31,30 @@ from app.services.entitlements import EntitlementsService
 from app.utils import metrics
 from sqlalchemy.ext.asyncio import AsyncSession
 
+if TYPE_CHECKING:
+    from app.core.export.entitlements import EntitlementsExportFormat
+
 router = APIRouter(prefix="/entitlements", tags=["entitlements"])
+
+ExportFormatParam = Literal["csv", "html", "pdf"]
+
+
+def _load_export_symbol(name: str) -> Any:
+    from app.core.export import entitlements as export_module
+
+    return getattr(export_module, name)
+
+
+def _coerce_export_format(value: ExportFormatParam) -> EntitlementsExportFormat:
+    export_format = _load_export_symbol("EntitlementsExportFormat")
+    return export_format(value)
+
+
+async def generate_entitlements_export(
+    *args: Any, **kwargs: Any
+) -> tuple[bytes, str, str]:
+    export_fn = _load_export_symbol("generate_entitlements_export")
+    return await export_fn(*args, **kwargs)
 
 
 def _normalise_pagination(limit: int, offset: int) -> tuple[int, int]:
@@ -485,15 +504,16 @@ async def delete_legal_instrument(
 )
 async def export_entitlements(
     project_id: int,
-    format: EntitlementsExportFormat = Query(EntitlementsExportFormat.CSV),
+    format: ExportFormatParam = Query("csv"),
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
 ) -> StreamingResponse:
     """Export entitlement information in CSV, HTML, or PDF formats."""
 
-    metrics.ENTITLEMENTS_EXPORT_COUNTER.labels(format=format.value).inc()
+    fmt = _coerce_export_format(format)
+    metrics.ENTITLEMENTS_EXPORT_COUNTER.labels(format=format).inc()
     payload, media_type, filename = await generate_entitlements_export(
-        session, project_id=project_id, fmt=format
+        session, project_id=project_id, fmt=fmt
     )
     response = StreamingResponse(iter([payload]), media_type=media_type)
     disposition = f"attachment; filename={filename}"

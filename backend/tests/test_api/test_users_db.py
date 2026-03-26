@@ -218,7 +218,7 @@ async def test_user_response_from_auth_user():
         email="dbresponse@example.com",
         username="dbresponseuser",
         full_name="DB Response User",
-        password_hash="hashed",
+        hashed_password="hashed",
         company_name="DB Co",
         created_at=datetime(2024, 2, 1, 12, 0, 0, tzinfo=timezone.utc),
         is_active=True,

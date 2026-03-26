@@ -5,51 +5,107 @@ from __future__ import annotations
 import hashlib
 import hmac
 import secrets
+from typing import Any
 
-try:  # pragma: no cover - prefer passlib when available
-    from passlib.context import CryptContext  # type: ignore[import-untyped]
+_bcrypt_module: Any = None
 
-    _HAS_PASSLIB = True
-except ModuleNotFoundError:  # pragma: no cover - fallback implementation
-    _HAS_PASSLIB = False
+try:  # pragma: no cover - optional legacy verifier
+    import bcrypt as _bcrypt
+except ModuleNotFoundError:  # pragma: no cover - bcrypt is optional
+    pass
+else:  # pragma: no cover - imported only when bcrypt is installed
+    _bcrypt_module = _bcrypt
+
+PBKDF2_SCHEME = "pbkdf2_sha256"
+PBKDF2_ITERATIONS = 310_000
+PBKDF2_SALT_BYTES = 16
+LEGACY_SHA256_SCHEME = "sha256"
+_BCRYPT_PREFIXES = ("$2a$", "$2b$", "$2y$")
 
 
-if _HAS_PASSLIB:
-    # Use bcrypt as primary scheme (more secure than sha256_crypt)
-    # Keep sha256_crypt as deprecated for backward compatibility with existing hashes
-    pwd_context = CryptContext(
-        schemes=["bcrypt", "sha256_crypt"],
-        default="bcrypt",
-        deprecated=["sha256_crypt"],
+def hash_password(password: str) -> str:
+    """Hash a password for storage using PBKDF2-HMAC-SHA256."""
+
+    salt = secrets.token_bytes(PBKDF2_SALT_BYTES)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt,
+        PBKDF2_ITERATIONS,
     )
+    return f"{PBKDF2_SCHEME}${PBKDF2_ITERATIONS}$" f"{salt.hex()}${digest.hex()}"
 
-    def hash_password(password: str) -> str:
-        """Hash a password for storing using passlib."""
-        result: str = pwd_context.hash(password)
-        return result
 
-    def verify_password(plain_password: str, hashed_password: str) -> bool:
-        """Verify a password against its hash using passlib."""
-        result: bool = pwd_context.verify(plain_password, hashed_password)
-        return result
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against PBKDF2 and legacy hash formats."""
 
-else:
+    if not hashed_password:
+        return False
 
-    def hash_password(password: str) -> str:
-        """Fallback password hashing using salted SHA256."""
+    if hashed_password.startswith(f"{PBKDF2_SCHEME}$"):
+        return _verify_pbkdf2_password(plain_password, hashed_password)
+    if hashed_password.startswith(f"{LEGACY_SHA256_SCHEME}$"):
+        return _verify_legacy_sha256_password(plain_password, hashed_password)
+    if hashed_password.startswith(_BCRYPT_PREFIXES):
+        return _verify_legacy_bcrypt_password(plain_password, hashed_password)
+    return False
 
-        salt = secrets.token_hex(16)
-        digest = hashlib.sha256((salt + password).encode("utf-8")).hexdigest()
-        return f"sha256${salt}${digest}"
 
-    def verify_password(plain_password: str, hashed_password: str) -> bool:
-        """Fallback verification matching the salted SHA256 format."""
+def _verify_pbkdf2_password(plain_password: str, hashed_password: str) -> bool:
+    try:
+        scheme, iterations, salt_hex, digest_hex = hashed_password.split("$", 3)
+    except ValueError:
+        return False
 
-        try:
-            scheme, salt, digest = hashed_password.split("$", 2)
-        except ValueError:
-            return False
-        if scheme != "sha256":
-            return False
-        computed = hashlib.sha256((salt + plain_password).encode("utf-8")).hexdigest()
-        return hmac.compare_digest(computed, digest)
+    if scheme != PBKDF2_SCHEME:
+        return False
+
+    try:
+        salt = bytes.fromhex(salt_hex)
+        expected_digest = bytes.fromhex(digest_hex)
+        iteration_count = int(iterations)
+    except ValueError:
+        return False
+
+    computed_digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        plain_password.encode("utf-8"),
+        salt,
+        iteration_count,
+    )
+    return hmac.compare_digest(computed_digest, expected_digest)
+
+
+def _verify_legacy_sha256_password(plain_password: str, hashed_password: str) -> bool:
+    try:
+        scheme, salt, digest = hashed_password.split("$", 2)
+    except ValueError:
+        return False
+    if scheme != LEGACY_SHA256_SCHEME:
+        return False
+    computed = hashlib.sha256((salt + plain_password).encode("utf-8")).hexdigest()
+    return hmac.compare_digest(computed, digest)
+
+
+def _verify_legacy_bcrypt_password(plain_password: str, hashed_password: str) -> bool:
+    if _bcrypt_module is None:
+        return False
+    try:
+        return bool(
+            _bcrypt_module.checkpw(
+                plain_password.encode("utf-8"),
+                hashed_password.encode("utf-8"),
+            )
+        )
+    except ValueError:
+        return False
+
+
+__all__ = [
+    "LEGACY_SHA256_SCHEME",
+    "PBKDF2_ITERATIONS",
+    "PBKDF2_SCHEME",
+    "PBKDF2_SALT_BYTES",
+    "hash_password",
+    "verify_password",
+]

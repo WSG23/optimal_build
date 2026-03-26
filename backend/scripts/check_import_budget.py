@@ -26,8 +26,8 @@ HEAVY_MAIN_MODULES = [
     "app.schemas.buildable",
     "app.schemas.finance",
 ]
-DEFAULT_MAIN_IMPORT_BUDGET_SECONDS = 2.5
-DEFAULT_API_ROUTER_BUDGET_SECONDS = 5.0
+DEFAULT_MAIN_IMPORT_BUDGET_SECONDS = 2.0
+DEFAULT_API_ROUTER_BUDGET_SECONDS = 4.0
 
 
 def _child_environment() -> dict[str, str]:

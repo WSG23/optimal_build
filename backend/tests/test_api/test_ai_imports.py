@@ -189,3 +189,60 @@ asyncio.run(_run())
     payload = json.loads(completed.stdout.strip().splitlines()[-1])
 
     assert payload == {"status_code": 200, "loaded_routes": []}
+
+
+def test_build_api_router_does_not_eagerly_load_auth_or_entitlements_helpers() -> None:
+    """Route registration should stay light and avoid request-time helper imports."""
+
+    route_modules = [
+        "app.api.v1.entitlements",
+        "app.api.v1.users_db",
+        "app.api.v1.users_secure",
+    ]
+    helper_modules = [
+        "app.core.export.entitlements",
+        "app.services.account_lockout",
+        "app.utils.security",
+    ]
+    script = f"""
+import importlib
+import json
+import sys
+
+route_modules = {json.dumps(route_modules)}
+helper_modules = {json.dumps(helper_modules)}
+
+for name in route_modules + helper_modules + ["app.api.v1"]:
+    sys.modules.pop(name, None)
+
+api_module = importlib.import_module("app.api.v1")
+router = api_module.build_api_router()
+print(
+    json.dumps(
+        {{
+            "route_count": len(router.routes),
+            "loaded_helpers": [name for name in helper_modules if name in sys.modules],
+            "loaded_routes": [name for name in route_modules if name in sys.modules],
+        }}
+    )
+)
+"""
+
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        check=False,
+        env={
+            **os.environ,
+            "PYTHONPATH": _pythonpath(),
+            "SECRET_KEY": os.environ.get("SECRET_KEY", "test-secret"),
+        },
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    payload = json.loads(completed.stdout.strip().splitlines()[-1])
+
+    assert payload["route_count"] > 0
+    assert payload["loaded_routes"] == route_modules
+    assert payload["loaded_helpers"] == []

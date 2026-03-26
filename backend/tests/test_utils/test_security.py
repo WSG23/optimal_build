@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import sys
-from unittest.mock import patch
+import hashlib
 
 import pytest
 
 
-def test_hash_password_with_passlib():
-    """Test password hashing with passlib (normal case)."""
+def test_hash_password_uses_pbkdf2_format():
+    """New password hashes should use the PBKDF2 format."""
     from app.utils.security import hash_password
 
     password = "test_password_123"
@@ -18,9 +17,14 @@ def test_hash_password_with_passlib():
     assert hashed is not None
     assert len(hashed) > 0
     assert hashed != password
+    scheme, iterations, salt, digest = hashed.split("$", 3)
+    assert scheme == "pbkdf2_sha256"
+    assert int(iterations) > 0
+    assert len(salt) == 32
+    assert len(digest) == 64
 
 
-def test_verify_password_with_passlib_success():
+def test_verify_password_success():
     """Test password verification with correct password."""
     from app.utils.security import hash_password, verify_password
 
@@ -30,7 +34,7 @@ def test_verify_password_with_passlib_success():
     assert verify_password(password, hashed) is True
 
 
-def test_verify_password_with_passlib_failure():
+def test_verify_password_failure():
     """Test password verification with incorrect password."""
     from app.utils.security import hash_password, verify_password
 
@@ -70,106 +74,41 @@ def test_hash_password_produces_unique_salts():
     hash1 = hash_password(password)
     hash2 = hash_password(password)
 
-    # Same password should produce different hashes due to random salt
-    # Note: This is true for the fallback implementation, passlib may vary
-    # but both should work for verification
+    # Same password should produce different hashes due to random salt.
     from app.utils.security import verify_password
 
     assert verify_password(password, hash1) is True
     assert verify_password(password, hash2) is True
+    assert hash1 != hash2
 
 
-def test_fallback_hash_password_format():
-    """Test fallback hash_password format without passlib."""
-    # Temporarily hide passlib
-    with patch.dict(sys.modules, {"passlib": None, "passlib.context": None}):
-        # Force reload to use fallback
-        import importlib
+def test_verify_password_supports_legacy_sha256_hashes():
+    """Legacy sha256 hashes should continue to verify after the PBKDF2 migration."""
+    from app.utils.security import verify_password
 
-        import app.utils.security
+    salt = "1234abcd5678ef901234abcd5678ef90"
+    digest = hashlib.sha256((salt + "password").encode("utf-8")).hexdigest()
+    legacy_hash = f"sha256${salt}${digest}"
 
-        importlib.reload(app.utils.security)
-
-        from app.utils.security import hash_password
-
-        password = "test_fallback"
-        hashed = hash_password(password)
-
-        # Fallback format should be: sha256$salt$digest
-        assert hashed.startswith("sha256$")
-        parts = hashed.split("$")
-        assert len(parts) == 3
-        assert parts[0] == "sha256"
-        assert len(parts[1]) == 32  # 16 bytes hex = 32 chars
-        assert len(parts[2]) == 64  # SHA256 hex = 64 chars
+    assert verify_password("password", legacy_hash) is True
+    assert verify_password("wrong-password", legacy_hash) is False
 
 
-def test_fallback_verify_password_success():
-    """Test fallback verify_password with correct password."""
-    with patch.dict(sys.modules, {"passlib": None, "passlib.context": None}):
-        import importlib
+def test_verify_password_invalid_format():
+    """Malformed hashes should fail verification cleanly."""
+    from app.utils.security import verify_password
 
-        import app.utils.security
-
-        importlib.reload(app.utils.security)
-
-        from app.utils.security import hash_password, verify_password
-
-        password = "test_fallback_verify"
-        hashed = hash_password(password)
-
-        assert verify_password(password, hashed) is True
+    assert verify_password("password", "invalid_hash") is False
+    assert verify_password("password", "sha256$only_two_parts") is False
+    assert verify_password("password", "") is False
 
 
-def test_fallback_verify_password_failure():
-    """Test fallback verify_password with incorrect password."""
-    with patch.dict(sys.modules, {"passlib": None, "passlib.context": None}):
-        import importlib
+def test_verify_password_wrong_scheme():
+    """Unknown schemes should be rejected."""
+    from app.utils.security import verify_password
 
-        import app.utils.security
-
-        importlib.reload(app.utils.security)
-
-        from app.utils.security import hash_password, verify_password
-
-        password = "test_fallback_wrong"
-        wrong_password = "wrong_password"
-        hashed = hash_password(password)
-
-        assert verify_password(wrong_password, hashed) is False
-
-
-def test_fallback_verify_password_invalid_format():
-    """Test fallback verify_password with malformed hash."""
-    with patch.dict(sys.modules, {"passlib": None, "passlib.context": None}):
-        import importlib
-
-        import app.utils.security
-
-        importlib.reload(app.utils.security)
-
-        from app.utils.security import verify_password
-
-        # Test various invalid formats
-        assert verify_password("password", "invalid_hash") is False
-        assert verify_password("password", "sha256$only_two_parts") is False
-        assert verify_password("password", "") is False
-
-
-def test_fallback_verify_password_wrong_scheme():
-    """Test fallback verify_password rejects non-sha256 scheme."""
-    with patch.dict(sys.modules, {"passlib": None, "passlib.context": None}):
-        import importlib
-
-        import app.utils.security
-
-        importlib.reload(app.utils.security)
-
-        from app.utils.security import verify_password
-
-        # Hash with wrong scheme
-        wrong_scheme_hash = "md5$somesalt$somedigest"
-        assert verify_password("password", wrong_scheme_hash) is False
+    wrong_scheme_hash = "md5$somesalt$somedigest"
+    assert verify_password("password", wrong_scheme_hash) is False
 
 
 def test_empty_password_handling():

@@ -10,7 +10,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Iterable, Literal, Optional, Protocol
+from typing import TYPE_CHECKING, Any, Iterable, Literal, Optional, Protocol
 
 from backend._compat.datetime import UTC, utcnow
 from fastapi import Depends, HTTPException, status
@@ -22,11 +22,31 @@ from sqlalchemy.orm import DeclarativeBase, Session
 
 from app.core.config import settings
 from app.schemas.user import UserSignupBase
-from app.services.account_lockout import AccountLockoutService, get_lockout_service
 from app.utils.logging import get_logger, log_event
-from app.utils.security import hash_password, verify_password
+
+if TYPE_CHECKING:
+    from app.services.account_lockout import AccountLockoutService
 
 logger = get_logger(__name__)
+
+
+def _get_lockout_service() -> AccountLockoutService:
+    from app.services.account_lockout import get_lockout_service
+
+    return get_lockout_service()
+
+
+def _hash_password(password: str) -> str:
+    from app.utils.security import hash_password
+
+    return hash_password(password)
+
+
+def _verify_password(plain_password: str, hashed_password: str) -> bool:
+    from app.utils.security import verify_password
+
+    return verify_password(plain_password, hashed_password)
+
 
 # ---------------------------------------------------------------------------
 # Token models and helpers
@@ -312,7 +332,13 @@ class AuthService:
     """High-level orchestration for authentication flows."""
 
     def __init__(self, lockout_service: AccountLockoutService | None = None) -> None:
-        self.lockout_service = lockout_service or get_lockout_service()
+        self._lockout_service = lockout_service
+
+    @property
+    def lockout_service(self) -> AccountLockoutService:
+        if self._lockout_service is None:
+            self._lockout_service = _get_lockout_service()
+        return self._lockout_service
 
     def register_user(
         self, user_data: UserSignupBase, repo: AuthRepository
@@ -324,7 +350,7 @@ class AuthService:
         if repo.get_by_username(user_data.username):
             raise HTTPException(status_code=400, detail="Username already taken")
 
-        hashed = hash_password(user_data.password)
+        hashed = _hash_password(user_data.password)
         user = repo.create_user(user_data, hashed_password=hashed)
         log_event(logger, "auth_user_registered", email=user.email)
         return user
@@ -352,7 +378,7 @@ class AuthService:
             lockout.record_failed_attempt(email)
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
-        if not verify_password(password, user.hashed_password):
+        if not _verify_password(password, user.hashed_password):
             is_locked = lockout.record_failed_attempt(email)
             if is_locked:
                 remaining = lockout.get_lockout_remaining_seconds(email)

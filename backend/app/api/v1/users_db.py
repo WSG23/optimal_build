@@ -30,7 +30,6 @@ from app.core.auth import (
     get_current_user,
 )
 from app.schemas.user import UserSignupBase
-from app.services.account_lockout import get_lockout_service
 from app.utils.db import session_dependency
 
 # Database setup
@@ -47,7 +46,7 @@ router = APIRouter(prefix="/users-db", tags=["Database Users"])
 
 # Dependency to get DB session
 get_db = session_dependency(SessionLocal)
-auth_service = AuthService(lockout_service=get_lockout_service())
+auth_service = AuthService()
 
 
 # Pydantic models

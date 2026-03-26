@@ -27,6 +27,8 @@ from app.core.auth.service import (  # noqa: F401
     watermark_text,
 )
 
+UserORM = UserRecord
+
 __all__ = [
     "AuthRepository",
     "AuthResult",
@@ -39,6 +41,7 @@ __all__ = [
     "TokenData",
     "TokenResponse",
     "UserORMBase",
+    "UserORM",
     "UserRecord",
     "WorkspaceRole",
     "can_export_permit_ready",

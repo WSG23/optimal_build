@@ -26,11 +26,10 @@ from app.core.auth import (
     get_current_user,
 )
 from app.schemas.user import UserSignupBase
-from app.services.account_lockout import get_lockout_service
 
 router = APIRouter(prefix="/secure-users", tags=["Secure Users"])
 
-auth_service = AuthService(lockout_service=get_lockout_service())
+auth_service = AuthService()
 memory_repo = InMemoryAuthRepository()
 
 
@@ -97,12 +96,10 @@ def signup(user_data: UserSignup) -> UserResponse:
 def login(credentials: UserLogin) -> LoginResponse:
     """Login with email and password, returns JWT tokens."""
 
-    lockout_service = get_lockout_service()
     result = auth_service.login(
         email=credentials.email,
         password=credentials.password,
         repo=memory_repo,
-        lockout_service=lockout_service,
     )
     return LoginResponse(
         message="Login successful",
@@ -120,7 +117,7 @@ def test() -> Dict[str, Any]:
         "features": [
             "Email validation",
             "Password requirements (8+ chars, uppercase, lowercase, number)",
-            "Password hashing with bcrypt",
+            "Password hashing with PBKDF2-SHA256",
             "Username validation",
             "Login endpoint",
         ],
