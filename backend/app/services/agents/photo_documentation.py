@@ -28,6 +28,15 @@ from app.services.minio_service import MinIOService
 
 logger = structlog.get_logger()
 
+PHOTO_VERSION_NAMES = (
+    "original",
+    "thumbnail",
+    "medium",
+    "web",
+    "web_watermarked",
+    "marketing",
+)
+
 
 class PhotoMetadata:
     """Photo metadata and analysis results."""
@@ -603,9 +612,7 @@ class PhotoDocumentationManager:
 
         # Delete from storage
         base_key = photo.storage_key.replace("/original.jpg", "")
-        versions = ["original", "thumbnail", "medium", "web"]
-
-        for version in versions:
+        for version in PHOTO_VERSION_NAMES:
             key = f"{base_key}/{version}.jpg"
             try:
                 await self.storage.remove_object(settings.S3_BUCKET, key)

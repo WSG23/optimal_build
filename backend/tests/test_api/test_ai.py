@@ -15,7 +15,9 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
 from app.api import deps
+from app.api.v1 import ai as ai_api
 from app.main import app
+from app.services.ai.natural_language_query import QueryResult, QueryType
 from httpx import AsyncClient
 
 pytestmark = pytest.mark.asyncio
@@ -105,6 +107,38 @@ async def test_nl_query_success(client: AsyncClient) -> None:
         assert "intent" in data
         assert "entities" in data
         assert "confidence" in data
+
+
+async def test_nl_query_success_with_query_result_shape(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The endpoint should adapt the service's QueryResult dataclass."""
+
+    class _StubService:
+        async def process_query(self, *, query, user_id, db):
+            return QueryResult(
+                success=True,
+                query_type=QueryType.SEARCH_PROPERTIES,
+                natural_response="Found matching properties",
+                sql_executed="SELECT * FROM properties",
+                suggestions=["Review the shortlist"],
+            )
+
+    monkeypatch.setattr(ai_api, "_service", lambda _name: _StubService())
+
+    response = await client.post(
+        "/api/v1/ai/query", json={"query": "Show me all properties in District 1"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["query"] == "Show me all properties in District 1"
+    assert data["intent"] == "search_properties"
+    assert data["structured_query"]["query_type"] == "search_properties"
+    assert data["structured_query"]["sql_executed"] == "SELECT * FROM properties"
+    assert data["suggested_action"] == "Review the shortlist"
+    assert data["confidence"] == 1.0
+    assert data["entities"] == {}
 
 
 async def test_nl_query_with_user_id(client: AsyncClient) -> None:

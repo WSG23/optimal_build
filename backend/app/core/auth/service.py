@@ -36,15 +36,23 @@ def _get_lockout_service() -> AccountLockoutService:
     return get_lockout_service()
 
 
-def _hash_password(password: str) -> str:
+def hash_password(password: str) -> str:
     from app.utils.security import hash_password
 
     return hash_password(password)
 
 
-def _verify_password(plain_password: str, hashed_password: str) -> bool:
+def verify_password(plain_password: str, hashed_password: str) -> bool:
     from app.utils.security import verify_password
 
+    return verify_password(plain_password, hashed_password)
+
+
+def _hash_password(password: str) -> str:
+    return hash_password(password)
+
+
+def _verify_password(plain_password: str, hashed_password: str) -> bool:
     return verify_password(plain_password, hashed_password)
 
 
@@ -492,6 +500,8 @@ __all__ = [
     "create_tokens",
     "create_access_token",
     "create_refresh_token",
+    "hash_password",
+    "verify_password",
     "verify_token",
     "get_current_user",
     "get_optional_user",

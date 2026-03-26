@@ -498,7 +498,9 @@ class AgentAdvisoryService:
             risks.append({"label": "Price sensitivity", "level": "medium"})
 
         recommendations: list[str] = []
-        if absorption_months and absorption_months > 9:
+        if (absorption_months and absorption_months > 9) or (
+            inventory_months and inventory_months >= 18
+        ):
             recommendations.append(
                 "Phase launch in 2-3 tranches to avoid flooding supply."
             )

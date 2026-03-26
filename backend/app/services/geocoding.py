@@ -117,6 +117,13 @@ class GeocodingService(AsyncClientService):
         """Convert coordinates to address using Google Maps."""
         if self.offline_mode:
             return self._build_mock_address(latitude, longitude)
+        if not self.google_maps_api_key:
+            logger.warning(
+                "reverse_geocode_mock_fallback",
+                latitude=latitude,
+                longitude=longitude,
+            )
+            return self._build_mock_address(latitude, longitude)
 
         try:
             address = await self._google_reverse_geocode(latitude, longitude)
@@ -136,6 +143,9 @@ class GeocodingService(AsyncClientService):
         """Convert address to coordinates using Google Maps."""
         if self.offline_mode:
             return (1.3000, 103.8500)
+        if not self.google_maps_api_key:
+            logger.warning("geocode_mock_fallback", address=address)
+            return (1.3000, 103.8500)
 
         try:
             result = await self._google_geocode(address)
@@ -153,6 +163,9 @@ class GeocodingService(AsyncClientService):
     async def geocode_details(self, address: str) -> Optional[Tuple[float, float, str]]:
         """Return coordinates plus a formatted address for the input."""
         if self.offline_mode:
+            return (1.3000, 103.8500, address)
+        if not self.google_maps_api_key:
+            logger.warning("geocode_details_mock_fallback", address=address)
             return (1.3000, 103.8500, address)
 
         result = await self._google_geocode(address)

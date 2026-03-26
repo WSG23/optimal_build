@@ -7,6 +7,7 @@ import importlib.util
 import inspect
 import sys
 import uuid
+from unittest import mock
 from collections.abc import AsyncGenerator, Callable, Iterator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from functools import wraps
@@ -93,6 +94,38 @@ def _patched_get_event_loop() -> asyncio.AbstractEventLoop:
 
 
 asyncio.get_event_loop = _patched_get_event_loop
+
+
+class _SimpleMocker:
+    """Small pytest-mock compatible shim for the local test suite."""
+
+    MagicMock = mock.MagicMock
+    AsyncMock = mock.AsyncMock
+    Mock = mock.Mock
+    call = mock.call
+    ANY = mock.ANY
+
+    def __init__(self) -> None:
+        self._patches: list[mock._patch] = []
+
+    def patch(self, target: str, *args: Any, **kwargs: Any) -> Any:
+        patcher = mock.patch(target, *args, **kwargs)
+        self._patches.append(patcher)
+        return patcher.start()
+
+    def stopall(self) -> None:
+        for patcher in reversed(self._patches):
+            patcher.stop()
+        self._patches.clear()
+
+
+@pytest.fixture
+def mocker() -> Iterator[_SimpleMocker]:
+    helper = _SimpleMocker()
+    try:
+        yield helper
+    finally:
+        helper.stopall()
 
 
 _FixtureFunc = TypeVar("_FixtureFunc", bound=Callable[..., Any])

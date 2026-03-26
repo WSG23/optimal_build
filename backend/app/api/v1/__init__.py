@@ -1,5 +1,6 @@
 """API v1 router registration."""
 
+import importlib
 from functools import lru_cache
 from types import ModuleType
 from typing import Callable, Final, Protocol, cast
@@ -136,6 +137,16 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "geocoding",  # Address lookup endpoints
 )
 
+_LAZY_SUBMODULES: Final[tuple[str, ...]] = (
+    *_ROUTER_MODULES,
+    "developers_checklists",
+    "developers_common",
+    "developers_conditions",
+    "developers_gps",
+    "finance_common",
+    "notifications",
+)
+
 
 def _router_factory() -> Callable[[], Router]:
     """Return a callable that produces FastAPI router instances."""
@@ -185,7 +196,16 @@ def __getattr__(name: str) -> object:
 
     if name == "api_router":
         return build_api_router()
+    if name in _LAZY_SUBMODULES:
+        module = importlib.import_module(f"{__name__}.{name}")
+        globals()[name] = module
+        return module
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
-__all__: Final[tuple[str, ...]] = ("api_router", "build_api_router", "TAGS_METADATA")
+__all__: Final[tuple[str, ...]] = (
+    "api_router",
+    "build_api_router",
+    "TAGS_METADATA",
+    *_LAZY_SUBMODULES,
+)

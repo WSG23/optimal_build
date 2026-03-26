@@ -56,9 +56,11 @@ _LAZY_CLASS_MODULES = {
     "DevelopmentPotentialScanner": "app.services.agents.development_potential_scanner",
     "InvestmentMemorandumGenerator": "app.services.agents.investment_memorandum",
     "MarketingMaterialsGenerator": "app.services.agents.marketing_materials",
+    "PhotoDocumentationManager": "app.services.agents.photo_documentation",
     "PostGISService": "app.services.postgis",
     "Quick3DScenarioBuilder": "app.services.agents.scenario_builder_3d",
     "UniversalSitePackGenerator": "app.services.agents.universal_site_pack",
+    "VoiceNoteService": "app.services.agents.voice_note_service",
 }
 
 
@@ -137,15 +139,17 @@ def _create_advisory_service() -> Any:
 
 
 def _new_photo_manager() -> Any:
-    from app.services.agents.photo_documentation import PhotoDocumentationManager
-
-    return PhotoDocumentationManager()
+    manager_cls = _load_required_class(
+        "PhotoDocumentationManager", "app.services.agents.photo_documentation"
+    )
+    return manager_cls()
 
 
 def _new_voice_note_service() -> Any:
-    from app.services.agents.voice_note_service import VoiceNoteService
-
-    return VoiceNoteService()
+    service_cls = _load_required_class(
+        "VoiceNoteService", "app.services.agents.voice_note_service"
+    )
+    return service_cls()
 
 
 geocoding_service = LazyProxy(_create_geocoding_service)

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import importlib
 from datetime import date, datetime
 from typing import Any
 
+import sqlalchemy as sa
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -22,6 +24,16 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from backend._compat.datetime import utcnow
 from pydantic import BaseModel, Field
+
+
+def _ensure_sqlalchemy_dialects() -> None:
+    module = getattr(sa, "dialects", None)
+    if module is None:
+        module = importlib.import_module("sqlalchemy.dialects")
+        sa.dialects = module
+
+
+_ensure_sqlalchemy_dialects()
 
 
 class RegstackBase(DeclarativeBase):

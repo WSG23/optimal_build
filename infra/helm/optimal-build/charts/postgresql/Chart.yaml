@@ -1,0 +1,6 @@
+apiVersion: v2
+name: postgresql
+description: Local placeholder dependency for offline Helm validation
+type: application
+version: 13.0.0
+appVersion: "16.0.0"

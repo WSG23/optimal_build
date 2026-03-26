@@ -196,7 +196,7 @@ def test_users_secure_signup_validation_and_listing():
 
     payload = users_secure.UserSignup(
         email="good@example.com",
-        username="good-user",
+        username="good_user",
         full_name="Good User",
         password="Password123!",
     )
@@ -228,7 +228,7 @@ def test_users_secure_signup_validation_and_listing():
 async def test_users_secure_get_me_returns_current_user():
     payload = users_secure.UserSignup(
         email="me@example.com",
-        username="me-user",
+        username="me_user",
         full_name="Me User",
         password="Password123!",
     )
@@ -246,7 +246,7 @@ async def test_users_db_signup_login_and_me(users_db_module):
     try:
         payload = users_db_module.UserSignup(
             email="db@example.com",
-            username="db-user",
+            username="db_user",
             full_name="DB User",
             password="Password123!",
         )

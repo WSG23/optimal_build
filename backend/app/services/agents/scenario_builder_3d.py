@@ -611,7 +611,13 @@ class Quick3DScenarioBuilder:
 
         # Create mesh
         mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
-        mesh.fix_normals()
+        try:
+            mesh.fix_normals()
+        except ModuleNotFoundError as exc:
+            logger.warning(
+                "scenario_builder_fix_normals_skipped",
+                missing_dependency=str(exc),
+            )
 
         return mesh
 

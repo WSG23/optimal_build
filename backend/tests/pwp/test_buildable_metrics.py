@@ -7,6 +7,7 @@ from importlib import import_module
 from types import ModuleType
 
 import pytest
+import pytest_asyncio
 
 pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
@@ -68,9 +69,19 @@ except ModuleNotFoundError:  # pragma: no cover - fallback stub for offline test
 from backend.tests.pwp.test_buildable_golden import (
     DEFAULT_REQUEST_DEFAULTS,
     DEFAULT_REQUEST_OVERRIDES,
+    _seed_reference_data,
 )
 
+from app.core.config import settings
 from app.utils import metrics
+
+
+@pytest_asyncio.fixture
+async def buildable_client(async_session_factory, monkeypatch, app_client):
+    await _seed_reference_data(async_session_factory)
+    monkeypatch.setattr(settings, "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", 4.0)
+    monkeypatch.setattr(settings, "BUILDABLE_EFFICIENCY_RATIO", 0.82)
+    return app_client, {}
 
 
 @pytest.mark.asyncio

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import importlib
+import importlib.util
 import inspect
 import json
 import os
@@ -15,6 +17,8 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 if str(_BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(_BACKEND_ROOT))
+
+os.environ.setdefault("SECRET_KEY", "test-secret-key")
 
 
 class AttrDict(dict):
@@ -70,9 +74,18 @@ if SQLiteTypeCompiler is not None:
         SQLiteTypeCompiler.visit_JSONB = _visit_JSONB
 
 # FastAPI stubs for environments without the dependency installed.
-import importlib.util
 import math
 from types import ModuleType, SimpleNamespace
+
+
+def _module_available(name: str) -> bool:
+    if name in sys.modules:
+        return True
+    try:
+        return importlib.util.find_spec(name) is not None
+    except ModuleNotFoundError:
+        return False
+
 
 if importlib.util.find_spec("fastapi") is not None:  # pragma: no cover
     pass  # FastAPI available, no stub needed
@@ -355,13 +368,16 @@ else:  # pragma: no cover
     sys.modules.setdefault("fastapi.responses", responses_mod)
 
 # Optional heavy deps used in import-time guards
-if "numpy" not in sys.modules:
+if _module_available("numpy"):
+    import numpy as numpy_stub
+else:
     numpy_stub = ModuleType("numpy")
     numpy_stub.sqrt = math.sqrt
     numpy_stub.float64 = float
     numpy_stub.int64 = int
     numpy_stub.int32 = int
     numpy_stub.int8 = int
+    numpy_stub.ndarray = list
     numpy_stub.array = lambda data, dtype=None: list(data)
     numpy_stub.asarray = lambda data, dtype=None: list(data)
     numpy_stub.mean = lambda data, axis=None: (sum(data) / len(data)) if data else 0
@@ -369,14 +385,14 @@ if "numpy" not in sys.modules:
     numpy_stub.isscalar = lambda obj: isinstance(obj, int | float | bool | str)
     sys.modules["numpy"] = numpy_stub
 
-if "pandas" not in sys.modules:
+if not _module_available("pandas"):
     pandas_stub = ModuleType("pandas")
     pandas_stub.DataFrame = object
     pandas_stub.Series = object
     sys.modules["pandas"] = pandas_stub
 
 # Lightweight shapely stub to avoid heavy geometry dependency during unit tests.
-if "shapely" not in sys.modules:
+if not _module_available("shapely"):
     shapely_stub = ModuleType("shapely")
     shapely_stub.__path__ = []
 
@@ -397,6 +413,15 @@ if "shapely" not in sys.modules:
             self.x = x
             self.y = y
 
+    class Polygon(_Geometry):
+        pass
+
+    class MultiPolygon(_Geometry):
+        pass
+
+    class GeometryCollection(_Geometry):
+        pass
+
     def shape(_geometry):
         return _Geometry()
 
@@ -409,6 +434,9 @@ if "shapely" not in sys.modules:
 
     geometry_mod = ModuleType("shapely.geometry")
     geometry_mod.Point = Point
+    geometry_mod.Polygon = Polygon
+    geometry_mod.MultiPolygon = MultiPolygon
+    geometry_mod.GeometryCollection = GeometryCollection
     geometry_mod.shape = shape
 
     strtree_mod = ModuleType("shapely.strtree")
@@ -422,17 +450,16 @@ if "shapely" not in sys.modules:
 
 for _optional_pkg in (
     "ezdxf",
-    "ifcopenshell",
     "reportlab",
     "reportlab.pdfgen",
     "reportlab.pdfgen.canvas",
 ):
-    if _optional_pkg not in sys.modules:
+    if not _module_available(_optional_pkg):
         stub = ModuleType(_optional_pkg)
         stub.__path__ = []
         sys.modules[_optional_pkg] = stub
 
-if "trimesh" not in sys.modules:
+if not _module_available("trimesh"):
     trimesh_stub = ModuleType("trimesh")
     trimesh_stub.__path__ = []
 
@@ -464,8 +491,12 @@ if "trimesh" not in sys.modules:
     sys.modules["trimesh.exchange"] = exchange_mod
     sys.modules["trimesh.exchange.obj"] = obj_mod
 
-# Stub heavy scenario builder to avoid importing optional 3D deps
-if "app.services.agents.scenario_builder_3d" not in sys.modules:
+# Stub heavy scenario builder only when its optional runtime deps are unavailable.
+if "app.services.agents.scenario_builder_3d" not in sys.modules and (
+    not _module_available("numpy")
+    or not _module_available("trimesh")
+    or not _module_available("geoalchemy2")
+):
     from enum import Enum
 
     scenario_builder_stub = ModuleType("app.services.agents.scenario_builder_3d")
@@ -485,8 +516,15 @@ if "app.services.agents.scenario_builder_3d" not in sys.modules:
         async def generate_massing_scenarios(self, *_args, **_kwargs):
             return []
 
+    class BuildingMassing:
+        def __init__(self, *_, **__):
+            self.mesh = None
+            self.volume = None
+            self.gfa = None
+
     scenario_builder_stub.ScenarioType = ScenarioType
     scenario_builder_stub.Quick3DScenarioBuilder = Quick3DScenarioBuilder
+    scenario_builder_stub.BuildingMassing = BuildingMassing
 
     sys.modules["app.services.agents.scenario_builder_3d"] = scenario_builder_stub
 
@@ -517,7 +555,20 @@ from importlib import import_module
 
 import pytest
 
+
+def _ensure_sqlalchemy_dialects() -> None:
+    """Ensure SQLAlchemy exposes its dialect registry."""
+
+    import sqlalchemy
+
+    module = getattr(sqlalchemy, "dialects", None)
+    if module is None:
+        module = importlib.import_module("sqlalchemy.dialects")
+        sqlalchemy.dialects = module
+
+
 if _SQLALCHEMY_AVAILABLE:
+    _ensure_sqlalchemy_dialects()
     try:
         from sqlalchemy.dialects.postgresql import UUID as PGUUID  # type: ignore
     except ImportError:  # pragma: no cover

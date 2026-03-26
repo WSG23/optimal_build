@@ -5,13 +5,19 @@ This module exposes the 16 AI services implemented in Phase 1-4 of the AI rollou
 
 from __future__ import annotations
 
+import base64
 import sys
+from datetime import timedelta
 from functools import lru_cache
 from importlib import import_module
 from typing import Any
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend._compat.datetime import utcnow
 
 from app.api.deps import Role, require_reviewer, require_viewer, get_db
 from app.schemas.ai import (
@@ -90,9 +96,6 @@ from app.schemas.ai import (
     # Document Extraction
     DocumentExtractionRequest,
     DocumentExtractionResponse,
-    ExtractedClause,
-    ExtractedTable,
-    # Stats
     AIServiceStatsResponse,
 )
 
@@ -206,6 +209,115 @@ def _service_initialized(service_name: str) -> bool:
     return bool(getattr(service, "_initialized", fallback))
 
 
+def _natural_language_response(result: Any, request: NLQueryRequest) -> NLQueryResponse:
+    """Normalise legacy and current NL query service payloads for the API contract."""
+
+    query_type = getattr(result, "query_type", None)
+    intent = getattr(result, "intent", None)
+    if intent is None and query_type is not None:
+        intent = getattr(query_type, "value", str(query_type))
+
+    structured_query = getattr(result, "structured_query", None)
+    if structured_query is None and query_type is not None:
+        structured_query = {"query_type": getattr(query_type, "value", str(query_type))}
+        sql_executed = getattr(result, "sql_executed", None)
+        if sql_executed:
+            structured_query["sql_executed"] = sql_executed
+
+    confidence = getattr(result, "confidence", None)
+    if confidence is None:
+        confidence = 1.0 if getattr(result, "success", False) else 0.0
+
+    suggested_action = getattr(result, "suggested_action", None)
+    if suggested_action is None:
+        suggestions = getattr(result, "suggestions", None) or []
+        suggested_action = suggestions[0] if suggestions else None
+
+    entities = getattr(result, "entities", None)
+    if entities is None:
+        entities = {}
+
+    return NLQueryResponse(
+        query=getattr(result, "original_query", request.query),
+        intent=intent or "general_question",
+        entities=entities,
+        structured_query=structured_query,
+        confidence=confidence,
+        suggested_action=suggested_action,
+    )
+
+
+def _identity_user_id(identity: Any) -> str:
+    return str(getattr(identity, "user_id", None) or "anonymous")
+
+
+def _confidence_score(value: Any) -> float:
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    name = getattr(value, "value", value)
+    if isinstance(name, str):
+        normalized = name.lower()
+        return {
+            "high": 0.9,
+            "medium": 0.6,
+            "low": 0.3,
+            "critical": 0.2,
+        }.get(normalized, 0.5)
+
+    return 0.5
+
+
+def _score_grade(score: float) -> str:
+    if score >= 85:
+        return "A"
+    if score >= 70:
+        return "B"
+    if score >= 55:
+        return "C"
+    if score >= 40:
+        return "D"
+    return "F"
+
+
+def _tracked_since(competitor: Any):
+    tracked_since = getattr(competitor, "tracked_since", None)
+    if tracked_since is None:
+        tracked_since = utcnow()
+        try:
+            competitor.tracked_since = tracked_since
+        except Exception:
+            pass
+    return tracked_since
+
+
+def _workflow_response(result: Any) -> WorkflowResultResponse | None:
+    instance = getattr(result, "instance", None)
+    if instance is None:
+        return None
+
+    return WorkflowResultResponse(
+        workflow_id=instance.workflow_id,
+        workflow_name=instance.workflow_name,
+        instance_id=instance.id,
+        status=instance.status.value,
+        started_at=instance.started_at,
+        completed_at=instance.completed_at,
+        steps=[
+            WorkflowStepResponse(
+                action_id=step.action_id,
+                action_type=step.action_type.value,
+                status=step.status.value,
+                started_at=step.started_at,
+                completed_at=step.completed_at,
+                result=step.result,
+                error=step.error,
+            )
+            for step in instance.steps
+        ],
+    )
+
+
 # ============================================================================
 # Natural Language Query Endpoints
 # ============================================================================
@@ -227,14 +339,7 @@ async def process_natural_language_query(
         user_id=request.user_id,
         db=db,
     )
-    return NLQueryResponse(
-        query=result.original_query,
-        intent=result.intent,
-        entities=result.entities,
-        structured_query=result.structured_query,
-        confidence=result.confidence,
-        suggested_action=result.suggested_action,
-    )
+    return _natural_language_response(result, request)
 
 
 # ============================================================================
@@ -365,40 +470,61 @@ async def get_knowledge_stats(
 @router.post("/deals/score", response_model=DealScoreResponse)
 async def score_deal(
     request: DealScoreRequest,
-    _: Role = Depends(require_viewer),
+    identity: Role = Depends(require_viewer),
     db: AsyncSession = Depends(get_db),
 ) -> DealScoreResponse:
     """Score a deal using AI-powered multi-factor analysis.
 
     Returns an overall score, grade, and breakdown by factors.
     """
-    result = await _service("deal_scoring").score_deal(
-        deal_id=request.deal_id,
-        db=db,
-    )
-    if result is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Deal not found or could not be scored",
+    try:
+        result = await _service("deal_scoring").score_deal(
+            deal_id=request.deal_id,
+            db=db,
+            user_id=_identity_user_id(identity),
         )
-    return DealScoreResponse(
-        deal_id=result.deal_id,
-        overall_score=result.overall_score,
-        grade=result.grade,
-        factor_scores=[
-            FactorScoreItem(
-                factor=f.factor,
-                score=f.score,
-                weight=f.weight,
-                weighted_score=f.weighted_score,
-                rationale=f.rationale,
+        if result is None or (
+            getattr(result, "score", 0) <= 0
+            and "not found" in (getattr(result, "recommendation", "") or "").lower()
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Deal not found or could not be scored",
             )
-            for f in result.factor_scores
-        ],
-        recommendation=result.recommendation,
-        confidence=result.confidence,
-        scored_at=result.scored_at,
-    )
+
+        raw_factors = (
+            list(getattr(result, "positive_factors", []))
+            + list(getattr(result, "neutral_factors", []))
+            + list(getattr(result, "risk_factors", []))
+        )
+        total_factors = len(raw_factors) or 1
+        factor_scores = [
+            FactorScoreItem(
+                factor=f.name,
+                score=abs(float(f.impact_score)) * 100,
+                weight=1 / total_factors,
+                weighted_score=float(f.impact_score) * 100 / total_factors,
+                rationale=f.evidence or f.description,
+            )
+            for f in raw_factors
+        ]
+
+        return DealScoreResponse(
+            deal_id=request.deal_id,
+            overall_score=float(result.score),
+            grade=_score_grade(float(result.score)),
+            factor_scores=factor_scores,
+            recommendation=result.recommendation,
+            confidence=_confidence_score(result.confidence),
+            scored_at=result.scored_at,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
 
 
 # ============================================================================
@@ -416,51 +542,95 @@ async def optimize_scenarios(
 
     Returns multiple financing options with recommendations.
     """
-    from app.services.ai.scenario_optimizer import (
-        FinancingType as ServiceFinancingType,
-        OptimizationRequest,
-    )
+    try:
+        from app.services.ai.scenario_optimizer import (
+            OptimizationConstraints,
+            RiskTolerance,
+        )
 
-    type_map = {
-        FinancingType.CONVENTIONAL: ServiceFinancingType.CONVENTIONAL,
-        FinancingType.CONSTRUCTION: ServiceFinancingType.CONSTRUCTION,
-        FinancingType.BRIDGE: ServiceFinancingType.BRIDGE,
-        FinancingType.MEZZANINE: ServiceFinancingType.MEZZANINE,
-    }
-    financing_types = (
-        [type_map[ft] for ft in request.financing_types]
-        if request.financing_types
-        else None
-    )
+        constraints = OptimizationConstraints()
+        if request.target_irr is not None:
+            constraints.target_irr = request.target_irr
+        if request.max_leverage is not None:
+            constraints.max_ltv = request.max_leverage
+            constraints.max_leverage_ratio = request.max_leverage
+        if request.financing_types and (
+            FinancingType.BRIDGE in request.financing_types
+            or FinancingType.MEZZANINE in request.financing_types
+        ):
+            constraints.risk_tolerance = RiskTolerance.AGGRESSIVE
 
-    opt_request = OptimizationRequest(
-        project_id=request.project_id,
-        financing_types=financing_types,
-        target_irr=request.target_irr,
-        max_leverage=request.max_leverage,
-    )
-    result = await _service("scenario_optimizer").optimize(opt_request, db)
-
-    return ScenarioOptimizeResponse(
-        project_id=result.project_id,
-        scenarios=[
-            FinancingScenario(
-                id=s.id,
-                financing_type=s.financing_type.value,
-                loan_amount=s.loan_amount,
-                ltv_ratio=s.ltv_ratio,
-                interest_rate=s.interest_rate,
-                debt_service_coverage=s.debt_service_coverage,
-                projected_irr=s.projected_irr,
-                projected_equity_multiple=s.projected_equity_multiple,
-                total_interest_cost=s.total_interest_cost,
-                recommendation_score=s.recommendation_score,
+        result = await _service("scenario_optimizer").optimize(
+            project_id=request.project_id,
+            constraints=constraints,
+            db=db,
+        )
+        if not result.success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=result.error or "Failed to optimize scenarios",
             )
-            for s in result.scenarios
-        ],
-        recommended_scenario_id=result.recommended_scenario_id,
-        analysis_summary=result.analysis_summary,
-    )
+
+        recommended_id = None
+        scenarios: list[FinancingScenario] = []
+        for index, scenario in enumerate(result.scenarios, start=1):
+            debt_components = [
+                component
+                for component in scenario.financing_structure
+                if component.interest_rate is not None
+            ]
+            loan_amount = sum(component.amount for component in debt_components)
+            total_cost = scenario.total_project_cost or 1.0
+            ltv_ratio = loan_amount / total_cost
+            weighted_rate = (
+                sum(
+                    component.amount * float(component.interest_rate or 0.0)
+                    for component in debt_components
+                )
+                / loan_amount
+                if loan_amount
+                else 0.0
+            )
+            total_interest_cost = sum(
+                component.amount
+                * float(component.interest_rate or 0.0)
+                * float(component.term_years or 0)
+                for component in debt_components
+            )
+            scenario_id = f"scenario_{index}"
+            if scenario.name == result.recommended_scenario:
+                recommended_id = scenario_id
+
+            scenarios.append(
+                FinancingScenario(
+                    id=scenario_id,
+                    financing_type=scenario.scenario_type.value,
+                    loan_amount=loan_amount,
+                    ltv_ratio=ltv_ratio,
+                    interest_rate=weighted_rate,
+                    debt_service_coverage=constraints.min_dscr,
+                    projected_irr=scenario.projected_returns.equity_irr,
+                    projected_equity_multiple=(
+                        scenario.projected_returns.equity_multiple
+                    ),
+                    total_interest_cost=total_interest_cost,
+                    recommendation_score=max(0.0, 1 - (scenario.risk_score / 10)),
+                )
+            )
+
+        return ScenarioOptimizeResponse(
+            project_id=request.project_id,
+            scenarios=scenarios,
+            recommended_scenario_id=recommended_id,
+            analysis_summary=result.optimization_notes,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
 
 
 # ============================================================================
@@ -478,48 +648,123 @@ async def predict_market(
 
     Returns forecasts with confidence levels and contributing factors.
     """
-    from app.services.ai.market_predictor import (
-        PredictionType as ServicePredictionType,
-        PredictionRequest,
-    )
+    try:
+        from app.models.property import Property, PropertyType
 
-    type_map = {
-        PredictionType.RENTAL: ServicePredictionType.RENTAL,
-        PredictionType.CAPITAL_VALUE: ServicePredictionType.CAPITAL_VALUE,
-        PredictionType.SUPPLY: ServicePredictionType.SUPPLY,
-        PredictionType.DEMAND: ServicePredictionType.DEMAND,
-    }
-    prediction_types = (
-        [type_map[pt] for pt in request.prediction_types]
-        if request.prediction_types
-        else None
-    )
+        property_type = request.property_type
+        location = request.district
 
-    pred_request = PredictionRequest(
-        property_id=request.property_id,
-        district=request.district,
-        property_type=request.property_type,
-        prediction_types=prediction_types,
-        forecast_months=request.forecast_months,
-    )
-    result = await _service("market_predictor").predict(pred_request, db)
+        if request.property_id and (property_type is None or location is None):
+            property_row = (
+                await db.execute(
+                    select(Property).where(Property.id == request.property_id)
+                )
+            ).scalar_one_or_none()
+            if property_row is not None:
+                if property_type is None and property_row.property_type is not None:
+                    property_type = property_row.property_type.value
+                if location is None:
+                    location = property_row.address
 
-    return MarketPredictionResponse(
-        predictions=[
-            PredictionItem(
-                prediction_type=p.prediction_type.value,
-                current_value=p.current_value,
-                predicted_value=p.predicted_value,
-                change_percentage=p.change_percentage,
-                confidence=p.confidence,
-                factors=p.factors,
+        if not property_type or not location:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Market prediction requires a district and property_type",
             )
-            for p in result.predictions
-        ],
-        forecast_months=result.forecast_months,
-        generated_at=result.generated_at,
-        summary=result.summary,
-    )
+
+        try:
+            property_type_enum = next(
+                item for item in PropertyType if item.value == property_type
+            )
+        except StopIteration as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Unsupported property type: {property_type}",
+            ) from exc
+
+        result = await _service("market_predictor").predict_market(
+            property_type=property_type_enum,
+            location=location,
+            db=db,
+        )
+        if not result.success or result.forecast is None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=result.error or "Failed to generate market prediction",
+            )
+
+        forecast = result.forecast
+        prediction_types = request.prediction_types or [PredictionType.RENTAL]
+        factors = [driver.name for driver in forecast.key_drivers[:3]]
+        predictions: list[PredictionItem] = []
+
+        for prediction_type in prediction_types:
+            if prediction_type == PredictionType.RENTAL:
+                predictions.append(
+                    PredictionItem(
+                        prediction_type=prediction_type.value,
+                        current_value=forecast.rental_forecast.current_psf,
+                        predicted_value=forecast.rental_forecast.forecast_12m_psf,
+                        change_percentage=forecast.rental_forecast.change_12m_percent,
+                        confidence=_confidence_score(
+                            forecast.rental_forecast.confidence
+                        ),
+                        factors=factors,
+                    )
+                )
+            elif prediction_type == PredictionType.CAPITAL_VALUE:
+                predictions.append(
+                    PredictionItem(
+                        prediction_type=prediction_type.value,
+                        current_value=forecast.rental_forecast.current_psf,
+                        predicted_value=forecast.rental_forecast.forecast_12m_psf,
+                        change_percentage=forecast.rental_forecast.change_12m_percent,
+                        confidence=_confidence_score(forecast.confidence),
+                        factors=factors,
+                    )
+                )
+            elif prediction_type == PredictionType.SUPPLY:
+                predictions.append(
+                    PredictionItem(
+                        prediction_type=prediction_type.value,
+                        current_value=forecast.supply_demand.pipeline_sqft,
+                        predicted_value=forecast.supply_demand.projected_absorption_sqft,
+                        change_percentage=None,
+                        confidence=_confidence_score(forecast.confidence),
+                        factors=factors,
+                    )
+                )
+            elif prediction_type == PredictionType.DEMAND:
+                predictions.append(
+                    PredictionItem(
+                        prediction_type=prediction_type.value,
+                        current_value=forecast.supply_demand.current_vacancy,
+                        predicted_value=forecast.supply_demand.projected_vacancy,
+                        change_percentage=(
+                            (
+                                forecast.supply_demand.projected_vacancy
+                                - forecast.supply_demand.current_vacancy
+                            )
+                            * 100
+                        ),
+                        confidence=_confidence_score(forecast.confidence),
+                        factors=factors,
+                    )
+                )
+
+        return MarketPredictionResponse(
+            predictions=predictions,
+            forecast_months=request.forecast_months,
+            generated_at=forecast.as_of_date,
+            summary=forecast.recommendation,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
 
 
 # ============================================================================
@@ -537,33 +782,59 @@ async def predict_compliance(
 
     Returns milestone predictions with confidence and risk factors.
     """
-    from app.services.ai.compliance_predictor import PredictionRequest
+    try:
+        submission_type_map = {
+            "planning": "development_control",
+            "building": "building_plan",
+        }
+        submission_types = request.submission_types or ["development_control"]
+        primary_submission = submission_type_map.get(
+            submission_types[0], submission_types[0]
+        )
 
-    pred_request = PredictionRequest(
-        project_id=request.project_id,
-        submission_types=request.submission_types,
-    )
-    result = await _service("compliance_predictor").predict(pred_request, db)
-
-    return CompliancePredictionResponse(
-        project_id=result.project_id,
-        milestones=[
-            RegulatoryMilestone(
-                milestone=m.milestone,
-                agency=m.agency,
-                predicted_date=(
-                    m.predicted_date.isoformat() if m.predicted_date else None
-                ),
-                confidence=m.confidence,
-                dependencies=m.dependencies,
-                risk_factors=m.risk_factors,
+        result = await _service("compliance_predictor").predict_compliance_risk(
+            property_id=request.project_id,
+            submission_type=primary_submission,
+            db=db,
+            context={},
+        )
+        if not result.success or result.assessment is None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=result.error or "Failed to predict compliance risk",
             )
-            for m in result.milestones
-        ],
-        critical_path_days=result.critical_path_days,
-        risk_assessment=result.risk_assessment,
-        recommendations=result.recommendations,
-    )
+
+        assessment = result.assessment
+        predicted_date = (
+            utcnow() + timedelta(weeks=assessment.timeline_estimate.most_likely_weeks)
+        ).date()
+        milestone = RegulatoryMilestone(
+            milestone=assessment.submission_type,
+            agency=(
+                assessment.required_consultations[0]
+                if assessment.required_consultations
+                else "URA"
+            ),
+            predicted_date=predicted_date.isoformat(),
+            confidence=_confidence_score(assessment.overall_risk),
+            dependencies=assessment.required_consultations,
+            risk_factors=[factor.name for factor in assessment.risk_factors],
+        )
+
+        return CompliancePredictionResponse(
+            project_id=request.project_id,
+            milestones=[milestone],
+            critical_path_days=assessment.timeline_estimate.most_likely_weeks * 7,
+            risk_assessment=assessment.overall_risk.value,
+            recommendations=assessment.recommendations,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
 
 
 # ============================================================================
@@ -810,24 +1081,44 @@ async def chat_message(
     Maintains conversation context and can perform actions like searching
     and analyzing deals.
     """
-    result = await _service("conversational_assistant").process_message(
-        message=request.message,
-        conversation_id=request.conversation_id,
-        user_id=request.user_id or "anonymous",
-        db=db,
-    )
-    if not result.success or result.response is None:
+    try:
+        service = _service("conversational_assistant")
+        user_id = request.user_id or "anonymous"
+        result = await service.process_message(
+            message=request.message,
+            conversation_id=request.conversation_id,
+            user_id=user_id,
+            db=db,
+        )
+        if not result.success or result.response is None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=result.error or "Failed to process message",
+            )
+
+        conversation_id = request.conversation_id or ""
+        if not conversation_id:
+            conversations = getattr(service, "_conversations", {}).values()
+            matching = [ctx for ctx in conversations if ctx.user_id == user_id]
+            if matching:
+                conversation_id = max(
+                    matching, key=lambda ctx: ctx.last_activity
+                ).conversation_id
+
+        return ChatMessageResponse(
+            conversation_id=conversation_id,
+            message=result.response.message,
+            suggestions=result.response.suggestions,
+            actions_taken=result.response.actions_taken,
+            context_updates=result.response.context_updates,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process message",
-        )
-    return ChatMessageResponse(
-        conversation_id=result.response.conversation_id or "",
-        message=result.response.message,
-        suggestions=result.response.suggestions,
-        actions_taken=result.response.actions_taken,
-        context_updates=result.response.context_updates,
-    )
+            detail=str(exc),
+        ) from exc
 
 
 @router.get("/chat/conversations", response_model=list[ConversationListItem])
@@ -960,77 +1251,75 @@ async def analyze_image(
 
     Supports floor plans, site photos, building facades, and documents.
     """
-    from app.services.ai.multi_modal_analyzer import (
-        ImageType as ServiceImageType,
-        AnalysisType as ServiceAnalysisType,
-        AnalysisRequest,
-    )
-
-    image_type_map = {
-        "floor_plan": ServiceImageType.FLOOR_PLAN,
-        "site_photo": ServiceImageType.SITE_PHOTO,
-        "aerial_view": ServiceImageType.AERIAL_VIEW,
-        "building_facade": ServiceImageType.BUILDING_FACADE,
-        "interior": ServiceImageType.INTERIOR,
-        "document": ServiceImageType.DOCUMENT,
-        "map": ServiceImageType.MAP,
-    }
-    analysis_type_map = {
-        "space_analysis": ServiceAnalysisType.SPACE_ANALYSIS,
-        "condition_assessment": ServiceAnalysisType.CONDITION_ASSESSMENT,
-        "layout_extraction": ServiceAnalysisType.LAYOUT_EXTRACTION,
-        "text_extraction": ServiceAnalysisType.TEXT_EXTRACTION,
-    }
-
-    analysis_types = (
-        [analysis_type_map[at.value] for at in request.analysis_types]
-        if request.analysis_types
-        else None
-    )
-
-    analysis_request = AnalysisRequest(
-        image_base64=request.image_base64,
-        image_url=request.image_url,
-        image_type=image_type_map[request.image_type.value],
-        analysis_types=analysis_types,
-        property_id=request.property_id,
-    )
-    result = await _service("multi_modal_analyzer").analyze(analysis_request)
-
-    space_metrics = None
-    if result.space_metrics:
-        space_metrics = SpaceMetricsResponse(
-            total_area_sqm=result.space_metrics.total_area_sqm,
-            usable_area_sqm=result.space_metrics.usable_area_sqm,
-            room_count=result.space_metrics.room_count,
-            efficiency_ratio=result.space_metrics.efficiency_ratio,
-            parking_spaces=result.space_metrics.parking_spaces,
-            floors_detected=result.space_metrics.floors_detected,
+    try:
+        from app.services.ai.multi_modal_analyzer import (
+            AnalysisRequest,
+            AnalysisType as ServiceAnalysisType,
+            ImageType as ServiceImageType,
         )
 
-    condition = None
-    if result.condition:
-        condition = ConditionAssessmentResponse(
-            overall_condition=result.condition.overall_condition,
-            condition_score=result.condition.condition_score,
-            issues_detected=result.condition.issues_detected,
-            maintenance_recommendations=result.condition.maintenance_recommendations,
-            estimated_capex=result.condition.estimated_capex,
-            age_assessment=result.condition.age_assessment,
+        analysis_types = (
+            [ServiceAnalysisType(item.value) for item in request.analysis_types]
+            if request.analysis_types
+            else []
         )
+        image_data = (
+            base64.b64decode(request.image_base64)
+            if request.image_base64 is not None
+            else None
+        )
+        analysis_request = AnalysisRequest(
+            image_data=image_data,
+            image_url=request.image_url,
+            image_type=ServiceImageType(request.image_type.value),
+            analysis_types=analysis_types,
+            context=(
+                {"property_id": request.property_id}
+                if request.property_id is not None
+                else {}
+            ),
+        )
+        result = await _service("multi_modal_analyzer").analyze(analysis_request)
 
-    return ImageAnalysisResponse(
-        id=result.id,
-        image_type=result.image_type.value,
-        analysis_type=result.analysis_type.value,
-        space_metrics=space_metrics,
-        condition=condition,
-        extracted_text=(
-            result.extracted_text.raw_text if result.extracted_text else None
-        ),
-        confidence=result.confidence,
-        processing_time_ms=result.processing_time_ms,
-    )
+        space_metrics = None
+        if result.space_metrics:
+            space_metrics = SpaceMetricsResponse(
+                total_area_sqm=result.space_metrics.total_area_sqm,
+                usable_area_sqm=result.space_metrics.usable_area_sqm,
+                room_count=result.space_metrics.room_count,
+                efficiency_ratio=result.space_metrics.efficiency_ratio,
+                parking_spaces=result.space_metrics.parking_spaces,
+                floors_detected=result.space_metrics.floors_detected,
+            )
+
+        condition = None
+        if result.condition:
+            condition = ConditionAssessmentResponse(
+                overall_condition=result.condition.overall_condition,
+                condition_score=result.condition.condition_score,
+                issues_detected=result.condition.visible_issues,
+                maintenance_recommendations=result.condition.maintenance_recommendations,
+                estimated_capex=result.condition.estimated_capex,
+                age_assessment=result.condition.age_assessment,
+            )
+
+        return ImageAnalysisResponse(
+            id=result.id,
+            image_type=result.image_type.value,
+            analysis_type=result.analysis_type.value,
+            space_metrics=space_metrics,
+            condition=condition,
+            extracted_text=(
+                result.extracted_text.raw_text if result.extracted_text else None
+            ),
+            confidence=result.confidence,
+            processing_time_ms=result.processing_time_ms,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
 
 
 # ============================================================================
@@ -1044,32 +1333,40 @@ async def track_competitor(
     _: Role = Depends(require_reviewer),
 ) -> CompetitorResponse:
     """Start tracking a competitor."""
-    from app.services.ai.competitive_intelligence import CompetitorType
+    try:
+        from app.services.ai.competitive_intelligence import Competitor, CompetitorType
 
-    type_map = {
-        "developer": CompetitorType.DEVELOPER,
-        "investor": CompetitorType.INVESTOR,
-        "reit": CompetitorType.REIT,
-        "agency": CompetitorType.AGENCY,
-        "fund": CompetitorType.FUND,
-    }
-    comp_type = type_map.get(request.competitor_type.lower(), CompetitorType.DEVELOPER)
-
-    competitor = _service("competitive_intelligence").track_competitor(
-        name=request.name,
-        competitor_type=comp_type,
-        focus_sectors=request.focus_sectors,
-        focus_districts=request.focus_districts,
-        notes=request.notes,
-    )
-    return CompetitorResponse(
-        id=competitor.id,
-        name=competitor.name,
-        competitor_type=competitor.competitor_type.value,
-        focus_sectors=competitor.focus_sectors,
-        focus_districts=competitor.focus_districts,
-        tracked_since=competitor.tracked_since,
-    )
+        type_map = {
+            "developer": CompetitorType.DEVELOPER,
+            "investor": CompetitorType.INVESTOR,
+            "reit": CompetitorType.REIT,
+            "fund": CompetitorType.FUND,
+            "family_office": CompetitorType.FAMILY_OFFICE,
+        }
+        competitor = Competitor(
+            id=str(uuid4()),
+            name=request.name,
+            competitor_type=type_map.get(
+                request.competitor_type.lower(), CompetitorType.DEVELOPER
+            ),
+            focus_sectors=request.focus_sectors,
+            focus_districts=request.focus_districts,
+        )
+        competitor.tracked_since = utcnow()
+        _service("competitive_intelligence").track_competitor(competitor)
+        return CompetitorResponse(
+            id=competitor.id,
+            name=competitor.name,
+            competitor_type=competitor.competitor_type.value,
+            focus_sectors=competitor.focus_sectors,
+            focus_districts=competitor.focus_districts,
+            tracked_since=_tracked_since(competitor),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
 
 
 @router.get("/competitors", response_model=list[CompetitorResponse])
@@ -1085,7 +1382,7 @@ async def list_competitors(
             competitor_type=c.competitor_type.value,
             focus_sectors=c.focus_sectors,
             focus_districts=c.focus_districts,
-            tracked_since=c.tracked_since,
+            tracked_since=_tracked_since(c),
         )
         for c in competitors
     ]
@@ -1101,51 +1398,57 @@ async def gather_intelligence(
 
     Returns competitor activities, alerts, and market insights.
     """
-    result = await _service("competitive_intelligence").gather_intelligence(
-        user_id=request.user_id,
-        db=db,
-    )
-    return CompetitiveIntelligenceResponse(
-        competitors=[
-            CompetitorResponse(
-                id=c.id,
-                name=c.name,
-                competitor_type=c.competitor_type.value,
-                focus_sectors=c.focus_sectors,
-                focus_districts=c.focus_districts,
-                tracked_since=c.tracked_since,
-            )
-            for c in result.competitors
-        ],
-        activities=[
-            CompetitorActivityResponse(
-                id=a.id,
-                competitor_id=a.competitor_id,
-                competitor_name=a.competitor_name,
-                category=a.category.value,
-                title=a.title,
-                description=a.description,
-                location=a.location,
-                relevance_score=a.relevance_score,
-                detected_at=a.detected_at,
-            )
-            for a in result.activities
-        ],
-        alerts=[
-            CompetitiveAlertResponse(
-                id=a.id,
-                priority=a.priority.value,
-                title=a.title,
-                description=a.description,
-                competitor_id=a.competitor_id,
-                competitor_name=a.competitor_name,
-                action_required=a.action_required,
-                expires_at=a.expires_at,
-            )
-            for a in result.alerts
-        ],
-        summary=result.summary,
-    )
+    try:
+        dashboard = await _service("competitive_intelligence").get_dashboard(
+            user_id=request.user_id,
+            db=db,
+        )
+        return CompetitiveIntelligenceResponse(
+            competitors=[
+                CompetitorResponse(
+                    id=c.id,
+                    name=c.name,
+                    competitor_type=c.competitor_type.value,
+                    focus_sectors=c.focus_sectors,
+                    focus_districts=c.focus_districts,
+                    tracked_since=_tracked_since(c),
+                )
+                for c in dashboard.competitors
+            ],
+            activities=[
+                CompetitorActivityResponse(
+                    id=a.id,
+                    competitor_id=a.competitor_id,
+                    competitor_name=a.competitor_name,
+                    category=a.category.value,
+                    title=a.title,
+                    description=a.description,
+                    location=a.location,
+                    relevance_score=a.relevance_score,
+                    detected_at=a.detected_at,
+                )
+                for a in dashboard.recent_activities
+            ],
+            alerts=[
+                CompetitiveAlertResponse(
+                    id=a.id,
+                    priority=a.priority.value,
+                    title=a.title,
+                    description=a.description,
+                    competitor_id=a.competitor_id or "",
+                    competitor_name=a.competitor_name or "",
+                    action_required=a.action_required or "",
+                    expires_at=a.expires_at or utcnow(),
+                )
+                for a in dashboard.alerts
+            ],
+            summary=dashboard.summary,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
 
 
 # ============================================================================
@@ -1163,46 +1466,34 @@ async def trigger_workflow(
 
     Returns results from all matching workflows.
     """
-    from app.services.ai.workflow_engine import WorkflowTrigger as ServiceTrigger
+    try:
+        from app.services.ai.workflow_engine import WorkflowTrigger as ServiceTrigger
 
-    trigger_map = {
-        "deal_created": ServiceTrigger.DEAL_CREATED,
-        "deal_stage_changed": ServiceTrigger.DEAL_STAGE_CHANGED,
-        "deadline_approaching": ServiceTrigger.DEADLINE_APPROACHING,
-        "document_uploaded": ServiceTrigger.DOCUMENT_UPLOADED,
-        "approval_required": ServiceTrigger.APPROVAL_REQUIRED,
-        "compliance_flag": ServiceTrigger.COMPLIANCE_FLAG,
-        "market_alert": ServiceTrigger.MARKET_ALERT,
-    }
+        trigger_map = {
+            "deal_created": ServiceTrigger.DEAL_CREATED,
+            "deal_stage_changed": ServiceTrigger.DEAL_STAGE_CHANGED,
+            "deadline_approaching": ServiceTrigger.DEADLINE_APPROACHING,
+            "document_uploaded": ServiceTrigger.DOCUMENT_UPLOADED,
+            "approval_required": ServiceTrigger.MANUAL,
+            "compliance_flag": ServiceTrigger.MANUAL,
+            "market_alert": ServiceTrigger.MANUAL,
+        }
 
-    results = await _service("workflow_engine").trigger_workflow(
-        trigger=trigger_map[request.trigger.value],
-        event_data=request.event_data,
-        db=db,
-    )
-    return [
-        WorkflowResultResponse(
-            workflow_id=r.workflow_id,
-            workflow_name=r.workflow_name,
-            instance_id=r.instance_id,
-            status=r.status.value,
-            started_at=r.started_at,
-            completed_at=r.completed_at,
-            steps=[
-                WorkflowStepResponse(
-                    action_id=s.action_id,
-                    action_type=s.action_type.value,
-                    status=s.status.value,
-                    started_at=s.started_at,
-                    completed_at=s.completed_at,
-                    result=s.result,
-                    error=s.error,
-                )
-                for s in r.steps
-            ],
+        results = await _service("workflow_engine").trigger_workflow(
+            trigger=trigger_map[request.trigger.value],
+            event_data=request.event_data,
+            db=db,
         )
-        for r in results
-    ]
+        return [
+            response
+            for response in (_workflow_response(result) for result in results)
+            if response is not None
+        ]
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
 
 
 @router.get("/workflows", response_model=list[WorkflowDefinitionResponse])
@@ -1230,30 +1521,18 @@ async def check_deadlines(
     db: AsyncSession = Depends(get_db),
 ) -> list[WorkflowResultResponse]:
     """Check for approaching deadlines and trigger notifications."""
-    results = await _service("workflow_engine").check_deadlines(db)
-    return [
-        WorkflowResultResponse(
-            workflow_id=r.workflow_id,
-            workflow_name=r.workflow_name,
-            instance_id=r.instance_id,
-            status=r.status.value,
-            started_at=r.started_at,
-            completed_at=r.completed_at,
-            steps=[
-                WorkflowStepResponse(
-                    action_id=s.action_id,
-                    action_type=s.action_type.value,
-                    status=s.status.value,
-                    started_at=s.started_at,
-                    completed_at=s.completed_at,
-                    result=s.result,
-                    error=s.error,
-                )
-                for s in r.steps
-            ],
-        )
-        for r in results
-    ]
+    try:
+        results = await _service("workflow_engine").check_deadlines(db)
+        return [
+            response
+            for response in (_workflow_response(result) for result in results)
+            if response is not None
+        ]
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
 
 
 # ============================================================================
@@ -1264,39 +1543,61 @@ async def check_deadlines(
 @router.post("/anomalies/detect", response_model=AnomalyDetectionResponse)
 async def detect_anomalies(
     request: AnomalyDetectionRequest,
-    _: Role = Depends(require_viewer),
+    identity: Role = Depends(require_viewer),
     db: AsyncSession = Depends(get_db),
 ) -> AnomalyDetectionResponse:
     """Detect anomalies in deals, properties, or projects.
 
     Returns alerts for unusual patterns or values.
     """
-    result = await _service("anomaly_detector").detect_anomalies(
-        deal_id=request.deal_id,
-        property_id=request.property_id,
-        project_id=request.project_id,
-        db=db,
-    )
-    return AnomalyDetectionResponse(
-        alerts=[
-            AnomalyAlert(
-                id=a.id,
-                alert_type=a.alert_type.value,
-                severity=a.severity.value,
-                title=a.title,
-                description=a.description,
-                entity_type=a.entity_type,
-                entity_id=a.entity_id,
-                detected_value=a.detected_value,
-                expected_range=a.expected_range,
-                recommendation=a.recommendation,
-                detected_at=a.detected_at,
-            )
-            for a in result.alerts
-        ],
-        entities_scanned=result.entities_scanned,
-        scan_time_ms=result.scan_time_ms,
-    )
+    try:
+        alerts = await _service("anomaly_detector").run_detection_cycle(
+            db=db,
+            user_id=_identity_user_id(identity),
+            context={
+                "deal_id": request.deal_id,
+                "property_id": request.property_id,
+                "project_id": request.project_id,
+            },
+        )
+        return AnomalyDetectionResponse(
+            alerts=[
+                AnomalyAlert(
+                    id=alert.id,
+                    alert_type=alert.category.value,
+                    severity=alert.priority.value,
+                    title=alert.title,
+                    description=alert.message,
+                    entity_type=alert.entity_type or "unknown",
+                    entity_id=alert.entity_id or "",
+                    detected_value=alert.data,
+                    expected_range=None,
+                    recommendation=(
+                        alert.suggested_actions[0] if alert.suggested_actions else ""
+                    ),
+                    detected_at=alert.created_at,
+                )
+                for alert in alerts
+            ],
+            entities_scanned=(
+                sum(
+                    1
+                    for value in (
+                        request.deal_id,
+                        request.property_id,
+                        request.project_id,
+                    )
+                    if value
+                )
+                or 1
+            ),
+            scan_time_ms=0.0,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
 
 
 # ============================================================================
@@ -1313,42 +1614,79 @@ async def extract_document(
 
     Supports contracts, leases, and legal documents.
     """
-    from app.services.ai.document_extractor import ExtractionRequest
+    try:
+        from app.services.ai.document_extractor import DocumentType
 
-    extract_request = ExtractionRequest(
-        document_base64=request.document_base64,
-        document_url=request.document_url,
-        document_type=request.document_type,
-        extract_tables=request.extract_tables,
-        extract_clauses=request.extract_clauses,
-    )
-    result = await _service("document_extractor").extract(extract_request)
+        document_type_map = {
+            "contract": DocumentType.SALE_PURCHASE_AGREEMENT,
+            "lease": DocumentType.TENANCY_AGREEMENT,
+        }
+        service = _service("document_extractor")
+        document_type = document_type_map.get(
+            request.document_type.lower(), DocumentType.UNKNOWN
+        )
 
-    return DocumentExtractionResponse(
-        document_type=result.document_type,
-        clauses=[
-            ExtractedClause(
-                clause_type=c.clause_type,
-                text=c.text,
-                page_number=c.page_number,
-                confidence=c.confidence,
+        if request.document_base64:
+            raw_bytes = base64.b64decode(request.document_base64)
+            if raw_bytes.startswith(b"%PDF"):
+                result = await service.extract_from_pdf(raw_bytes, document_type)
+            else:
+                try:
+                    text = raw_bytes.decode("utf-8")
+                except UnicodeDecodeError:
+                    result = await service.extract_from_image(raw_bytes, document_type)
+                else:
+                    result = await service.extract_from_text(text, document_type)
+        elif request.document_url:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Remote document fetching is unavailable in this environment",
             )
-            for c in result.clauses
-        ],
-        tables=[
-            ExtractedTable(
-                table_id=t.table_id,
-                headers=t.headers,
-                rows=t.rows,
-                page_number=t.page_number,
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Document source is required",
             )
-            for t in result.tables
-        ],
-        key_dates=result.key_dates,
-        parties=result.parties,
-        summary=result.summary,
-        processing_time_ms=result.processing_time_ms,
-    )
+
+        if not result.success:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=result.error or "Failed to extract document",
+            )
+
+        extracted_data = result.extracted_data or {}
+        parties = [
+            value
+            for key, value in extracted_data.items()
+            if key.endswith("_name") and isinstance(value, str) and value
+        ]
+        key_dates = {
+            key: str(value)
+            for key, value in extracted_data.items()
+            if "date" in key and value is not None
+        }
+        summary = (
+            result.raw_text
+            or extracted_data.get("raw_response")
+            or "Document processed successfully."
+        )
+
+        return DocumentExtractionResponse(
+            document_type=result.document_type.value,
+            clauses=[],
+            tables=[],
+            key_dates=key_dates,
+            parties=parties,
+            summary=str(summary),
+            processing_time_ms=result.processing_time_ms,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
+        ) from exc
 
 
 # ============================================================================

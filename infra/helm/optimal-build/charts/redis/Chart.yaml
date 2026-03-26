@@ -1,0 +1,6 @@
+apiVersion: v2
+name: redis
+description: Local placeholder dependency for offline Helm validation
+type: application
+version: 18.0.0
+appVersion: "7.2.0"

@@ -21,6 +21,18 @@ pytestmark = [
 ]
 
 _ROOT = Path(__file__).resolve().parents[3]
+_ORIGINAL_MODULES = {
+    name: sys.modules.get(name)
+    for name in (
+        "sqlalchemy",
+        "sqlalchemy.ext",
+        "sqlalchemy.ext.asyncio",
+        "app.models",
+        "app.models.audit",
+        "app.models.imports",
+        "app.models.overlay",
+    )
+}
 
 
 def _load_module(name: str, relative_path: str):
@@ -143,13 +155,11 @@ overlay_ingest = _load_module(
     "overlay_ingest_stub", "backend/app/services/overlay_ingest.py"
 )
 
-sys.modules.pop("sqlalchemy", None)
-sys.modules.pop("sqlalchemy.ext", None)
-sys.modules.pop("sqlalchemy.ext.asyncio", None)
-sys.modules.pop("app.models", None)
-sys.modules.pop("app.models.audit", None)
-sys.modules.pop("app.models.imports", None)
-sys.modules.pop("app.models.overlay", None)
+for _name, _module in _ORIGINAL_MODULES.items():
+    if _module is None:
+        sys.modules.pop(_name, None)
+    else:
+        sys.modules[_name] = _module
 
 
 @dataclass

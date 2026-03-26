@@ -97,6 +97,7 @@ class MinIOService:
         self.secret_key = secret_key or settings.S3_SECRET_KEY
         self.secure = secure
         self.client = None
+        self._ensured_buckets: set[str] = set()
 
         if Minio is not None:
             self.client = Minio(
@@ -105,14 +106,8 @@ class MinIOService:
                 secret_key=self.secret_key,
                 secure=self.secure,
             )
-            for bucket in {
-                settings.S3_BUCKET,
-                settings.IMPORTS_BUCKET_NAME,
-                settings.EXPORTS_BUCKET_NAME,
-                settings.DOCUMENTS_BUCKET_NAME,
-            }:
-                if bucket:
-                    self._ensure_bucket(bucket)
+            if settings.S3_BUCKET:
+                self._ensure_bucket(settings.S3_BUCKET)
         else:  # pragma: no cover - warn in reduced environments
             logger.warning(
                 "MinIO client unavailable; storage operations will be no-ops"
@@ -120,10 +115,15 @@ class MinIOService:
 
     def _ensure_bucket(self, bucket_name: str) -> None:
         """Ensure bucket exists, create if not."""
+        if not bucket_name or bucket_name in self._ensured_buckets:
+            return
         try:
+            if self.client is None:
+                return
             if not self.client.bucket_exists(bucket_name):
                 self.client.make_bucket(bucket_name)
                 logger.info(f"Created bucket: {bucket_name}")
+            self._ensured_buckets.add(bucket_name)
         except MinioException as e:
             logger.error(f"Error ensuring bucket {bucket_name}: {str(e)}")
         except Exception as e:
@@ -163,6 +163,7 @@ class MinIOService:
 
         # Sanitize object name to prevent path traversal
         safe_object_name = sanitize_object_name(object_name)
+        self._ensure_bucket(bucket_name)
 
         try:
             # Convert bytes to BytesIO if needed

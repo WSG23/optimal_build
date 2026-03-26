@@ -108,7 +108,14 @@ async def test_analyze_and_generate_versions(manager):
     assert "wide_angle_shot" in tags
 
     versions = await manager._generate_image_versions(image, uuid4())
-    assert set(versions.keys()) == {"original", "thumbnail", "medium", "web"}
+    assert set(versions.keys()) == {
+        "original",
+        "thumbnail",
+        "medium",
+        "web",
+        "web_watermarked",
+        "marketing",
+    }
     for buffer in versions.values():
         assert isinstance(buffer, BytesIO)
         assert buffer.getbuffer().nbytes > 0
@@ -122,7 +129,7 @@ async def test_store_versions_and_create_record(manager):
         versions, property_id="PROP", photo_id=uuid4()
     )
     assert storage_key.endswith("original.jpg")
-    assert len(manager.storage.uploads) == 4
+    assert len(manager.storage.uploads) == len(versions)
 
     session = _SessionStub()
     await manager._create_photo_record(

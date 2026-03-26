@@ -26,10 +26,10 @@ class PageNumberCanvas(canvas.Canvas):
     """Custom canvas to add page numbers and headers/footers."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.company_name = kwargs.pop("company_name", "Commercial Property Advisors")
+        self.document_title = kwargs.pop("document_title", "Professional Pack")
         canvas.Canvas.__init__(self, *args, **kwargs)
         self._saved_page_states: list[dict[str, Any]] = []
-        self.company_name = kwargs.get("company_name", "Commercial Property Advisors")
-        self.document_title = kwargs.get("document_title", "Professional Pack")
 
     def showPage(self) -> None:
         self._saved_page_states.append(dict(self.__dict__))

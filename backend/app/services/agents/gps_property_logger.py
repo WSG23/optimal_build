@@ -27,6 +27,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 logger = structlog.get_logger()
 
 
+def _get_developer_checklist_service():
+    from app.services.developer_checklist_service import DeveloperChecklistService
+
+    return DeveloperChecklistService
+
+
+def __getattr__(name: str) -> Any:
+    if name == "DeveloperChecklistService":
+        return _get_developer_checklist_service()
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
 class DevelopmentScenario(str, Enum):
     """Supported development scenarios for quick GPS analysis."""
 
@@ -305,6 +317,25 @@ class GPSPropertyLogger:
                     property_info,
                     jurisdiction,
                 )
+
+            checklist_service = _get_developer_checklist_service()
+            checklist_scenarios = [
+                (
+                    scenario.value
+                    if isinstance(scenario, DevelopmentScenario)
+                    else str(scenario)
+                )
+                for scenario in (scenarios or DevelopmentScenario.default_set())
+            ]
+            checklist_scenarios = [
+                scenario.strip() for scenario in checklist_scenarios if scenario.strip()
+            ]
+            await checklist_service.ensure_templates_seeded(session)
+            await checklist_service.auto_populate_checklist(
+                session=session,
+                property_id=property_id,
+                development_scenarios=checklist_scenarios,
+            )
 
             await session.commit()
 

@@ -113,12 +113,14 @@ class ProjectProgressResponse(BaseModel):
 class DashboardKPI(BaseModel):
     label: str
     value: str
+    raw_value: float | None = None
     sub_value: Optional[str] = None
-    trend: Optional[str] = None
+    trend: dict[str, str] | None = None
     trend_direction: Optional[str] = None  # up, down, neutral
 
 
 class DashboardModule(BaseModel):
+    key: str
     label: str
     path: str
     enabled: bool
@@ -126,8 +128,63 @@ class DashboardModule(BaseModel):
 
 
 class ProjectDashboardResponse(BaseModel):
+    project_id: str
+    project_name: str
+    status: str
     kpis: List[DashboardKPI]
     modules: List[DashboardModule]
+
+
+def _format_currency(value: float | int | None) -> str:
+    """Format large currency values for dashboard display."""
+
+    if value is None:
+        return "—"
+
+    numeric = float(value)
+    sign = "-" if numeric < 0 else ""
+    absolute = abs(numeric)
+    for divisor, suffix in (
+        (1_000_000_000, "B"),
+        (1_000_000, "M"),
+        (1_000, "K"),
+    ):
+        if absolute >= divisor:
+            formatted = f"{absolute / divisor:.1f}".rstrip("0").rstrip(".")
+            return f"{sign}${formatted}{suffix}"
+
+    if absolute.is_integer():
+        return f"{sign}${absolute:,.0f}"
+    formatted = f"{absolute:.2f}".rstrip("0").rstrip(".")
+    return f"{sign}${formatted}"
+
+
+def _format_area(value: float | int | None) -> str:
+    """Format square metre values for dashboard display."""
+
+    if value is None:
+        return "—"
+    numeric = float(value)
+    if numeric.is_integer():
+        return f"{numeric:,.0f} m²"
+    formatted = f"{numeric:,.1f}".rstrip("0").rstrip(".")
+    return f"{formatted} m²"
+
+
+def _format_percentage(value: float | int | None) -> str:
+    """Format percentage values for dashboard display."""
+
+    if value is None:
+        return "—"
+    numeric = float(value)
+    return f"{numeric:.1f}".rstrip("0").rstrip(".") + "%"
+
+
+def _kpi(label: str, raw_value: float | int | None, formatter: Any) -> DashboardKPI:
+    if raw_value is None:
+        return DashboardKPI(label=label, value="—", raw_value=None)
+    numeric = float(raw_value)
+    return DashboardKPI(label=label, value=formatter(numeric), raw_value=numeric)
 
 
 def _project_to_response(project: Project) -> ProjectResponse:
@@ -611,12 +668,14 @@ async def get_project_dashboard(
 ) -> ProjectDashboardResponse:
     """Get dashboard data including KPIs and available modules."""
     try:
-        project_uuid = uuid.UUID(project_id)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid project ID format. Expected UUID.",
-        ) from e
+        project_uuid = normalise_project_id(project_id)
+    except HTTPException as exc:
+        if exc.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid project ID format. Expected UUID.",
+            ) from exc
+        raise
 
     # Fetch Project with Financial Data
     stmt = select(Project).where(
@@ -643,87 +702,68 @@ async def get_project_dashboard(
     fin_result = await db.execute(fin_stmt)
     primary_scenario = fin_result.scalars().first()
 
-    # Calculate KPIs
-    kpis: List[DashboardKPI] = []
+    results = list(primary_scenario.results) if primary_scenario else []
 
-    # 1. GFA
-    gfa_val = (
-        f"{project.proposed_gfa_sqm:,.0f} m²" if project.proposed_gfa_sqm else "0 m²"
-    )
-    kpis.append(DashboardKPI(label="Total GFA", value=gfa_val))
+    def _result_value(*names: str) -> float | None:
+        lowered = {name.lower() for name in names}
+        for result_entry in results:
+            result_name = (result_entry.name or "").lower()
+            if result_name in lowered or any(name in result_name for name in lowered):
+                if result_entry.value is None:
+                    return None
+                return float(result_entry.value)
+        return None
 
-    # 2. Development Cost (Est)
-    cost_val = (
-        f"${project.estimated_cost_sgd / 1_000_000:.1f}M"
-        if project.estimated_cost_sgd
-        else "$0.0M"
-    )
-    kpis.append(DashboardKPI(label="Development Cost", value=cost_val))
+    projected_revenue = _result_value("projected_revenue", "total_revenue", "revenue")
+    irr_value = _result_value("irr")
 
-    # 3. Projected Revenue (from Finance)
-    revenue_val = "$0.0M"
-    if primary_scenario:
-        # Try to find revenue in results
-        # Assuming there's a result named 'Total Revenue' or similar
-        rev_res = next(
-            (r for r in primary_scenario.results if "Revenue" in r.name), None
-        )
-        if rev_res and rev_res.value:
-            revenue_val = f"${float(rev_res.value) / 1_000_000:.1f}M"
+    kpis: List[DashboardKPI] = [
+        _kpi("Total GFA", project.proposed_gfa_sqm, _format_area),
+        _kpi("Development Cost", project.estimated_cost_sgd, _format_currency),
+        _kpi("Projected Revenue", projected_revenue, _format_currency),
+        _kpi("IRR", irr_value, _format_percentage),
+    ]
 
-    kpis.append(
-        DashboardKPI(
-            label="Projected Revenue",
-            value=revenue_val,
-            # trend="12% vs target",  # Placeholder logic for now
-            # trend_direction="up",
-        )
-    )
-
-    # 4. IRR (from Finance)
-    irr_val = "0.0%"
-    if primary_scenario:
-        irr_res = next((r for r in primary_scenario.results if "IRR" in r.name), None)
-        if irr_res and irr_res.value:
-            irr_val = f"{float(irr_res.value):.1f}%"
-
-    kpis.append(DashboardKPI(label="IRR", value=irr_val))
-
-    # Modules (Dynamic based on logic, currently static list logic mapped to dynamic)
-    # Could be based on user permissions or project type
+    # Modules
     base_path = f"/projects/{project_id}"
     modules = [
         DashboardModule(
+            key="capture",
             label="Capture Results",
             path=f"{base_path}/capture",
             enabled=True,
             description="Site analysis and capture data",
         ),
         DashboardModule(
+            key="feasibility",
             label="Feasibility",
             path=f"{base_path}/feasibility",
             enabled=True,
             description="Financial modeling and feasibility",
         ),
         DashboardModule(
+            key="finance",
             label="Finance",
             path=f"{base_path}/finance",
             enabled=True,
             description="Detailed financial control",
         ),
         DashboardModule(
+            key="phases",
             label="Phase Management",
             path=f"{base_path}/phases",
             enabled=True,
             description="Manage project phases",
         ),
         DashboardModule(
+            key="team",
             label="Team",
             path=f"{base_path}/team",
             enabled=True,
             description="Team members and roles",
         ),
         DashboardModule(
+            key="regulatory",
             label="Regulatory",
             path=f"{base_path}/regulatory",
             enabled=True,
@@ -731,4 +771,10 @@ async def get_project_dashboard(
         ),
     ]
 
-    return ProjectDashboardResponse(kpis=kpis, modules=modules)
+    return ProjectDashboardResponse(
+        project_id=str(project.id),
+        project_name=project.project_name,
+        status=project.current_phase.value if project.current_phase else "planning",
+        kpis=kpis,
+        modules=modules,
+    )

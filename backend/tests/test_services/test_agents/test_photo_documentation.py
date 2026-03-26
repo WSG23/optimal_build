@@ -947,7 +947,7 @@ async def test_delete_photo_success(db_session: AsyncSession):
 
     assert result is True
     # Verify storage calls
-    assert mock_storage.remove_object.call_count == 4  # 4 versions
+    assert mock_storage.remove_object.call_count == 6
 
 
 @pytest.mark.asyncio

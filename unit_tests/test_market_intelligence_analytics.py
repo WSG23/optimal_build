@@ -17,6 +17,16 @@ import importlib
 import sys
 import types
 
+_ORIGINAL_MODULES = {
+    name: sys.modules.get(name)
+    for name in (
+        "app.services.agents.market_data_service",
+        "backend.app.services.agents.market_data_service",
+        "app.core.metrics",
+        "backend.app.core.metrics",
+    )
+}
+
 models_base = importlib.import_module("app.models.base")
 sys.modules.setdefault("backend.app.models.base", models_base)
 
@@ -85,6 +95,12 @@ from app.services.agents.market_intelligence_analytics import (
     MarketIntelligenceAnalytics,
     MarketReport,
 )
+
+for _name, _module in _ORIGINAL_MODULES.items():
+    if _module is None:
+        sys.modules.pop(_name, None)
+    else:
+        sys.modules[_name] = _module
 
 
 @pytest.fixture

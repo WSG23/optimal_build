@@ -88,40 +88,37 @@ class FinanceSensitivityRunPayload(BaseModel):
 
 
 def normalise_project_id(project_id: str | int | UUID) -> UUID:
-    """Convert the externally supplied project identifier into a UUID.
-
-    For integer IDs (like 191), creates a zero-padded UUID string format:
-    191 -> 00000000-0000-0000-0000-000000000191
-
-    This matches the convention used in the database for simple integer IDs.
-    """
+    """Convert the externally supplied project identifier into a UUID."""
     if isinstance(project_id, UUID):
         return project_id
 
-    # Helper to create zero-padded UUID from integer
-    def int_to_padded_uuid(val: int) -> UUID:
+    def int_to_uuid(val: int) -> UUID:
         if val < 0:
             raise HTTPException(
                 status_code=422, detail="project_id must be non-negative"
             )
-        # Create zero-padded UUID: 00000000-0000-0000-0000-XXXXXXXXXXXX
-        # where X is the zero-padded decimal representation
-        padded = str(val).zfill(12)
-        uuid_str = f"00000000-0000-0000-0000-{padded}"
-        return UUID(uuid_str)
+        try:
+            return UUID(int=val)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=422, detail="project_id must be a valid UUID"
+            ) from exc
 
     if isinstance(project_id, int):
-        return int_to_padded_uuid(project_id)
+        return int_to_uuid(project_id)
 
-    # For strings, first try to parse as integer
+    candidate = project_id.strip()
+    if not candidate:
+        raise HTTPException(status_code=422, detail="project_id must be a valid UUID")
+
     try:
-        int_val = int(project_id)
-        return int_to_padded_uuid(int_val)
+        return UUID(candidate)
     except ValueError:
-        pass  # Not an integer string, try as UUID
+        if candidate.isdigit():
+            return int_to_uuid(int(candidate))
 
     try:
-        return UUID(project_id)
+        return UUID(candidate)
     except (AttributeError, TypeError, ValueError) as e:
         raise HTTPException(
             status_code=422, detail="project_id must be a valid UUID"

@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import sys
 from collections.abc import Iterable, Mapping
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -191,10 +192,23 @@ class StorageService:
 _storage_service: StorageService | None = None
 
 
+def _iter_storage_module_aliases():
+    for module_name in ("app.services.storage", "backend.app.services.storage"):
+        module = sys.modules.get(module_name)
+        if module is not None:
+            yield module
+
+
 def get_storage_service() -> StorageService:
     """Retrieve a singleton storage service instance configured from the environment."""
 
     global _storage_service
+    if _storage_service is None:
+        for module in _iter_storage_module_aliases():
+            alias_service = getattr(module, "_storage_service", None)
+            if alias_service is not None:
+                _storage_service = alias_service
+                break
     if _storage_service is None:
         bucket = os.getenv("STORAGE_BUCKET", "local-imports")
         prefix = os.getenv("STORAGE_PREFIX", "uploads")
@@ -206,6 +220,8 @@ def get_storage_service() -> StorageService:
             local_base_path=base_path,
             endpoint_url=endpoint_url,
         )
+    for module in _iter_storage_module_aliases():
+        module._storage_service = _storage_service
     return _storage_service
 
 
@@ -214,6 +230,8 @@ def reset_storage_service() -> None:
 
     global _storage_service
     _storage_service = None
+    for module in _iter_storage_module_aliases():
+        module._storage_service = None
 
 
 __all__ = [

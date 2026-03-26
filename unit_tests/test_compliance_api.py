@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+import sqlalchemy.ext.asyncio as sa_asyncio
 
 pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
@@ -45,9 +46,7 @@ def _load_router(monkeypatch):
     project_root = Path(__file__).resolve().parents[1]
     module_path = project_root / "backend" / "app" / "api" / "v1" / "compliance.py"
 
-    monkeypatch.setattr(
-        "sqlalchemy.ext.asyncio.create_async_engine", lambda *_, **__: object()
-    )
+    monkeypatch.setattr(sa_asyncio, "create_async_engine", lambda *_, **__: object())
 
     class _SessionFactory:
         async def __aenter__(self):
@@ -63,9 +62,7 @@ def _load_router(monkeypatch):
         def __call__(self, *_, **__):
             return _SessionFactory()
 
-    monkeypatch.setattr(
-        "sqlalchemy.ext.asyncio.async_sessionmaker", _AsyncSessionMakerStub()
-    )
+    monkeypatch.setattr(sa_asyncio, "async_sessionmaker", _AsyncSessionMakerStub())
     app_base = importlib.import_module("app.models.base")
     app_property = importlib.import_module("app.models.property")
     monkeypatch.setitem(sys.modules, "backend.app.models.base", app_base)

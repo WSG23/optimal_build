@@ -4,7 +4,6 @@ from uuid import UUID
 
 from backend._compat.datetime import utcnow
 
-from app.core.config import settings
 from app.models.team import TeamMember
 from app.models.workflow import (
     ApprovalStep,
@@ -60,7 +59,7 @@ class WorkflowService:
             member = result.scalar_one_or_none()
 
             if not member:
-                return settings.ENVIRONMENT != "production"
+                return False
 
             # Check if member's role matches required role
             # Handle both enum and string comparisons

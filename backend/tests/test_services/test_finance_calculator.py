@@ -13,6 +13,14 @@ from typing import Iterable
 import pytest
 
 _ROOT = Path(__file__).resolve().parents[3]
+_ORIGINAL_MODULES = {
+    name: sys.modules.get(name)
+    for name in (
+        "app.models",
+        "app.models.rkp",
+        "app.services",
+    )
+}
 
 
 def _load_module(name: str, relative_path: str):
@@ -75,9 +83,11 @@ calculator = _load_module(
     "finance_calculator_stub", "backend/app/services/finance/calculator.py"
 )
 
-sys.modules.pop("app.models", None)
-sys.modules.pop("app.models.rkp", None)
-sys.modules.pop("app.services", None)
+for _name, _module in _ORIGINAL_MODULES.items():
+    if _module is None:
+        sys.modules.pop(_name, None)
+    else:
+        sys.modules[_name] = _module
 
 
 def test_npv_basic_case() -> None:
