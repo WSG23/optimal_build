@@ -4,11 +4,6 @@ from uuid import UUID
 
 import pytest
 
-pytest.skip(
-    "Agent advisory API requires seeded market intelligence data not yet available in tests",
-    allow_module_level=True,
-)
-
 pytest.importorskip("sqlalchemy")
 
 from app.models.property import Property

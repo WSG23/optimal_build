@@ -4,10 +4,6 @@ from pathlib import Path
 
 import pytest
 
-pytestmark = pytest.mark.skip(
-    reason="Overlay optimisation pipeline requires scenario synthesis not yet implemented for tests"
-)
-
 pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")

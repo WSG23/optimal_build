@@ -864,6 +864,7 @@ if _SQLALCHEMY_AVAILABLE:
     def _force_inline_job_queue(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
         """Ensure background jobs run inline so tests avoid external brokers."""
 
+        from app.jobs_registry import enlist_default_jobs
         import backend.jobs as jobs_module
 
         original_backend = jobs_module.job_queue._backend
@@ -872,6 +873,7 @@ if _SQLALCHEMY_AVAILABLE:
         for name, (func, queue) in registry.items():
             inline_backend.register(func, name, queue)
         monkeypatch.setattr(jobs_module.job_queue, "_backend", inline_backend)
+        enlist_default_jobs()
         yield
 
     @pytest_asyncio.fixture  # type: ignore[misc]

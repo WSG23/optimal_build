@@ -4,10 +4,6 @@ from uuid import UUID, uuid4
 
 import pytest
 
-pytestmark = pytest.mark.skip(
-    reason="Listing integrations rely on vendor APIs that are not stubbed in the current suite"
-)
-
 pytest.importorskip("sqlalchemy")
 
 from app.core.jwt_auth import create_tokens
