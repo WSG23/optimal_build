@@ -30,7 +30,7 @@ def _to_mapping(value: Any) -> Mapping[str, Any] | None:
             return None
     if hasattr(value, "dict"):
         try:
-            return value.dict()
+            return value.model_dump()
         except Exception:  # pragma: no cover - defensive
             return None
     return None

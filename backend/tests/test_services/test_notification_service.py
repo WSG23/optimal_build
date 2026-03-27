@@ -18,14 +18,19 @@ from app.models.notification import (
 )
 
 
+def _build_mock_session() -> AsyncMock:
+    session = AsyncMock()
+    session.add = MagicMock()
+    return session
+
+
 class TestNotificationServiceCreate:
     """Test NotificationService.create_notification."""
 
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.fixture
     def notification_service(self, mock_session):
@@ -89,8 +94,7 @@ class TestNotificationServiceMarkAsRead:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.fixture
     def notification_service(self, mock_session):
@@ -162,8 +166,7 @@ class TestNotificationServiceDismiss:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.fixture
     def notification_service(self, mock_session):
@@ -232,8 +235,7 @@ class TestNotificationServiceConvenienceMethods:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.fixture
     def notification_service(self, mock_session):
@@ -394,8 +396,7 @@ class TestNotificationServiceEmailLog:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.fixture
     def notification_service(self, mock_session):
@@ -494,8 +495,7 @@ class TestNotificationServiceMarkAllAsRead:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.fixture
     def notification_service(self, mock_session):

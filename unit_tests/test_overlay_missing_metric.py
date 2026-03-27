@@ -35,8 +35,12 @@ SCHEMA_NAME = "__ob_overlay_test__"
 @pytest.fixture(scope="module")
 def event_loop() -> asyncio.AbstractEventLoop:
     loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
+    asyncio.set_event_loop(loop)
+    try:
+        yield loop
+    finally:
+        asyncio.set_event_loop(None)
+        loop.close()
 
 
 @pytest.fixture(scope="module")

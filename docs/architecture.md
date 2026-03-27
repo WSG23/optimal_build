@@ -553,8 +553,8 @@ User (Developer Site Acquisition)
 
 ### Authentication & Authorization — ⚙️ Partial
 
-**Method:** JWT (JSON Web Tokens) via python-jose
-**Password Hashing:** bcrypt (passlib)
+**Method:** JWT (JSON Web Tokens) via the local HS256 codec in `app/core/jwt_codec.py`
+**Password Hashing:** PBKDF2-HMAC-SHA256 for new hashes, with legacy bcrypt verification support
 **Token Storage:** ⚙️ Documented as HTTP-only cookies (not verified in code)
 **RBAC:** ⚙️ Roles mentioned (admin/user/developer/consultant) but not fully verified
 **Auth Logic:** Centralised in `app/core/auth/service.py` (legacy wrappers for compatibility)
@@ -645,10 +645,10 @@ User (Developer Site Acquisition)
 | Database ORM | SQLAlchemy | 2.0.23 | ✅ |
 | DB Driver | asyncpg | 0.29.0 | ✅ |
 | Migrations | Alembic | 1.13.0 | ✅ |
-| Validation | Pydantic | 2.5.0 | ✅ |
-| Task Queue | Prefect | 2.14.10 | ✅ |
+| Validation | Pydantic | 2.12.5 | ✅ |
+| Task Queue | Prefect | 2.20.17 | ✅ |
 | Data Analysis | pandas, numpy, scikit-learn | Latest | ✅ |
-| Auth | python-jose, passlib | Latest | ✅ |
+| Auth | local HS256 codec, PBKDF2/bcrypt legacy verify | Current | ✅ |
 | Storage Client | minio | 7.2.0 | ✅ |
 | Logging | structlog | 23.2.0 | ✅ |
 | Metrics | prometheus-client | 0.19.0 | ❌ Not instrumented |

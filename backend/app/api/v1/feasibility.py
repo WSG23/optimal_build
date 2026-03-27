@@ -54,7 +54,7 @@ async def ws_feasibility(websocket: WebSocket) -> None:
                 response = run_feasibility_assessment(request)
 
                 # Send back response
-                await websocket.send_json(response.dict())
+                await websocket.send_json(response.model_dump())
 
             except ValidationError as e:
                 await websocket.send_json(

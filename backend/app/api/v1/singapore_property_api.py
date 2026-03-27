@@ -358,7 +358,7 @@ async def update_property(
         raise HTTPException(status_code=404, detail="Property not found")
 
     # Update fields
-    update_data = property_update.dict(exclude_unset=True)
+    update_data = property_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(property_obj, field, value)
 

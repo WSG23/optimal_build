@@ -19,10 +19,6 @@ from app.models.property import (
 from app.services.agents.universal_site_pack import UniversalSitePackGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
 
-pytestmark = pytest.mark.skip(
-    reason="PDF rendering dependencies (WeasyPrint/Cairo) are unavailable in the audit sandbox"
-)
-
 
 @pytest_asyncio.fixture
 async def test_property(session: AsyncSession) -> Property:
@@ -36,6 +32,7 @@ async def test_property(session: AsyncSession) -> Property:
         name="Test Property Tower",
         address="123 Test Street, Singapore",
         property_type=PropertyType.OFFICE,
+        location="POINT(103.851959 1.290270)",
         district="D01",
         land_area_sqm=5000,
         gross_floor_area_sqm=45000,
@@ -46,6 +43,7 @@ async def test_property(session: AsyncSession) -> Property:
     # Create development analysis
     analysis = DevelopmentAnalysis(
         property_id=property_obj.id,
+        analysis_type="existing_building",
         analysis_date=date.today(),
         gfa_potential_sqm=50000,
         optimal_use_mix={"office": 60, "retail": 40},
@@ -176,6 +174,7 @@ async def test_universal_site_pack_with_minimal_data(session: AsyncSession):
         name="Minimal Property",
         address="1 Minimal St",
         property_type=PropertyType.RESIDENTIAL,
+        location="POINT(103.852500 1.295000)",
         district="D02",
     )
     session.add(property_obj)

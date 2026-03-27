@@ -646,9 +646,11 @@ def event_loop():
     """Provide a session-scoped event loop compatible with session fixtures."""
 
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     try:
         yield loop
     finally:
+        asyncio.set_event_loop(None)
         loop.close()
 
 

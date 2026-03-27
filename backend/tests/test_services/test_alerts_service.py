@@ -14,14 +14,19 @@ pytest.importorskip("sqlalchemy")
 from app.models.rkp import RefAlert
 
 
+def _build_mock_session() -> AsyncMock:
+    session = AsyncMock()
+    session.add = MagicMock()
+    return session
+
+
 class TestCreateAlert:
     """Test create_alert function."""
 
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.mark.asyncio
     async def test_create_alert_adds_record_to_session(self, mock_session):
@@ -120,8 +125,7 @@ class TestListAlerts:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.mark.asyncio
     async def test_list_alerts_returns_all_alerts(self, mock_session):
@@ -175,8 +179,7 @@ class TestAcknowledgeAlert:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.mark.asyncio
     async def test_acknowledge_alert_updates_record(self, mock_session):

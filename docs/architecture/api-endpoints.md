@@ -759,7 +759,7 @@ Frontend displays:
 - `email`: string (unique, indexed)
 - `username`: string (unique)
 - `full_name`: string
-- `password_hash`: string (hashed with sha256_crypt)
+- `password_hash`: string (hashed with PBKDF2-HMAC-SHA256 for new passwords; legacy hashes may still exist until login rehash)
 - `company_name`: string (optional)
 - `created_at`: datetime
 - `is_active`: boolean
@@ -845,7 +845,7 @@ Frontend displays:
 
 ### Authentication
 - **JWT tokens**: Access token (24h), refresh token (7d)
-- **Password hashing**: sha256_crypt via passlib
+- **Password hashing**: PBKDF2-HMAC-SHA256 for new hashes, with legacy bcrypt verification support
 - **Token claims**: email, username, user_id, expiry
 
 ### Database

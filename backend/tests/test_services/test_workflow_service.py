@@ -25,14 +25,19 @@ from app.models.workflow import (
 )
 
 
+def _build_mock_session() -> AsyncMock:
+    session = AsyncMock()
+    session.add = MagicMock()
+    return session
+
+
 class TestCheckStepPermission:
     """Test WorkflowService._check_step_permission."""
 
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.fixture
     def workflow_service(self, mock_session):
@@ -225,8 +230,7 @@ class TestApproveStep:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.fixture
     def workflow_service(self, mock_session):
@@ -305,8 +309,7 @@ class TestCreateWorkflow:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.fixture
     def workflow_service(self, mock_session):

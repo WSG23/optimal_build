@@ -306,8 +306,8 @@ backend/app/core/
 ## 🔐 Security Architecture
 
 ### Authentication & Authorization — ⚙️ Partial
-- **JWT**: ✅ python-jose 3.3.0
-- **Password Hashing**: ✅ bcrypt via passlib 1.7.4
+- **JWT**: ✅ local HS256 codec in `app/core/jwt_codec.py`
+- **Password Hashing**: ✅ PBKDF2-HMAC-SHA256 for new hashes, with legacy bcrypt verification support
 - **Token Storage**: ⚙️ Documented as HTTP-only cookies (not verified in code)
 - **RBAC**: ⚙️ Roles mentioned (admin/user/developer/consultant) but not fully verified
 - **Auth Logic**: Centralised in `app/core/auth/service.py` (legacy wrappers kept for backwards compatibility)
@@ -403,11 +403,11 @@ Managed services:
 | Database ORM | SQLAlchemy | 2.0.23 | ✅ |
 | DB Driver | asyncpg | 0.29.0 | ✅ |
 | Migrations | Alembic | 1.13.0 | ❌ Not initialized |
-| Validation | Pydantic | 2.5.0 | ✅ |
-| Task Queue | Prefect | 2.14.10 | ✅ |
+| Validation | Pydantic | 2.12.5 | ✅ |
+| Task Queue | Prefect | 2.20.17 | ✅ |
 | Data Analysis | pandas, numpy, scikit-learn | Latest | ✅ |
-| Auth | python-jose | 3.3.0 | ✅ |
-| Auth | passlib | 1.7.4 | ✅ |
+| Auth | local HS256 codec | Current | ✅ |
+| Auth | PBKDF2-HMAC-SHA256, bcrypt legacy verify | Current | ✅ |
 | Storage Client | minio | 7.2.0 | ✅ |
 | Logging | structlog | 23.2.0 | ✅ |
 | Metrics | prometheus-client | 0.19.0 | ❌ Not instrumented |

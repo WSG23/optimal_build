@@ -13,8 +13,8 @@ try:  # pragma: no cover - shapely is optional in lightweight environments
 
     _SHAPELY_AVAILABLE = True
 except ModuleNotFoundError:  # pragma: no cover - fall back when shapely missing
-    Point = Any  # type: ignore
-    STRtree = None  # type: ignore
+    Point = Any
+    STRtree: Any = None
     _SHAPELY_AVAILABLE = False
 
     def shape(_geometry: Any) -> None:

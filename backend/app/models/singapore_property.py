@@ -27,6 +27,8 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency fallback
     class Geometry(UserDefinedType):  # type: ignore[misc]
         """Minimal stub emulating geoalchemy2.Geometry for test environments."""
 
+        cache_ok = True
+
         def __init__(self, *args: object, **kwargs: object) -> None:
             self.args = args
             self.kwargs = kwargs

@@ -74,7 +74,6 @@ minio==7.2.0
 mypy==1.7.1
 ├── typing_extensions [required: >=4.1.0, installed: 4.15.0]
 └── mypy_extensions [required: >=1.0.0, installed: 1.1.0]
-passlib==1.7.4
 pipdeptree==2.29.0
 ├── packaging [required: >=25, installed: 25.0]
 └── pip [required: >=25.2, installed: 25.2]
@@ -271,7 +270,6 @@ pytest-cov==4.1.0
 │   └── pluggy [required: >=0.12,<2.0, installed: 1.6.0]
 └── coverage [required: >=5.2.1, installed: 7.10.7]
 python-dotenv==1.1.1
-python-jose==3.3.0
 ├── ecdsa [required: !=0.15, installed: 0.19.1]
 │   └── six [required: >=1.9.0, installed: 1.17.0]
 ├── rsa [required: Any, installed: 4.9.1]

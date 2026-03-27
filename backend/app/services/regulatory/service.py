@@ -73,7 +73,7 @@ class RegulatoryService:
     async def update_submission(
         db: AsyncSession, submission: AuthoritySubmission, update_in: SubmissionUpdate
     ) -> AuthoritySubmission:
-        for field, value in update_in.dict(exclude_unset=True).items():
+        for field, value in update_in.model_dump(exclude_unset=True).items():
             setattr(submission, field, value)
 
         await db.commit()

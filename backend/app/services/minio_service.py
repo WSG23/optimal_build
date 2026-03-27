@@ -2,13 +2,15 @@
 
 import io
 import re
-from typing import BinaryIO, Optional, Union
+from typing import Any, BinaryIO, Optional, Union
 
+Minio: Any = None
 try:  # pragma: no cover - optional runtime dependency
-    from minio import Minio
+    from minio import Minio as _Minio
     from minio.error import MinioException
+
+    Minio = _Minio
 except ModuleNotFoundError:  # pragma: no cover - provide lightweight stub
-    Minio = None  # type: ignore[assignment]
 
     class MinioException(Exception):
         """Fallback MinIO exception type."""

@@ -19,20 +19,25 @@ from app.models.team import TeamInvitation
 from app.models.users import UserRole
 
 
+def _build_mock_session() -> AsyncMock:
+    session = AsyncMock()
+    session.add = MagicMock()
+    return session
+
+
 class TestInviteMember:
     """Test TeamService.invite_member with email integration."""
 
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.fixture
     def mock_email_service(self):
         """Create a mock email service."""
         email_service = MagicMock()
-        email_service.send_team_invitation = AsyncMock()
+        email_service.send_team_invitation = MagicMock()
         return email_service
 
     @pytest.fixture
@@ -252,8 +257,7 @@ class TestTeamServiceWithoutEmailService:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.fixture
     def team_service_no_email(self, mock_session):
@@ -304,8 +308,7 @@ class TestGetTeamMembers:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.fixture
     def team_service(self, mock_session):
@@ -342,8 +345,7 @@ class TestRemoveMember:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.fixture
     def team_service(self, mock_session):

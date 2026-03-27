@@ -90,6 +90,7 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --import-mode=importlib -p pytest_cov"
 asyncio_mode = "auto"
+markers = ["integration: exercises multi-step integration flows that are slower than the default unit path"]
 filterwarnings = [
     "ignore:.*`example` has been deprecated, please use `examples` instead:DeprecationWarning",
     "ignore:'crypt' is deprecated and slated for removal in Python 3.13:DeprecationWarning",

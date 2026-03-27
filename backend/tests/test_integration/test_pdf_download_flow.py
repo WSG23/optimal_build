@@ -24,10 +24,6 @@ from app.models.property import (
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-pytestmark = pytest.mark.skip(
-    reason="PDF rendering dependencies (WeasyPrint/Cairo) are unavailable in the audit sandbox"
-)
-
 
 @pytest_asyncio.fixture
 async def integration_test_property(session: AsyncSession) -> Property:
@@ -38,6 +34,7 @@ async def integration_test_property(session: AsyncSession) -> Property:
         name="Integration Test Tower",
         address="999 Integration Ave, Singapore",
         property_type=PropertyType.OFFICE,
+        location="POINT(103.851959 1.290270)",
         district="D01",
         land_area_sqm=6000,
         gross_floor_area_sqm=48000,
@@ -48,6 +45,7 @@ async def integration_test_property(session: AsyncSession) -> Property:
     # Create development analysis
     analysis = DevelopmentAnalysis(
         property_id=property_obj.id,
+        analysis_type="existing_building",
         analysis_date=date.today(),
         gfa_potential_sqm=55000,
         optimal_use_mix={"office": 70, "retail": 30},
@@ -110,8 +108,10 @@ async def test_full_pdf_generation_download_flow(
         "http://"
     ), f"download_url should be absolute, got: {download_url}"
     assert (
-        "localhost:9400" in download_url or "127.0.0.1:9400" in download_url
-    ), f"download_url should point to backend port 9400, got: {download_url}"
+        "localhost:9400" in download_url
+        or "127.0.0.1:9400" in download_url
+        or "testserver" in download_url
+    ), f"download_url should point to an application origin, got: {download_url}"
 
     # Step 3: Verify PDF size is reasonable
     size_bytes = data["size_bytes"]
@@ -120,7 +120,15 @@ async def test_full_pdf_generation_download_flow(
 
     # Step 4: Download PDF from the provided URL
     # Extract the path from the absolute URL
-    download_path = download_url.split("localhost:9400")[-1]
+    download_path = download_url
+    for origin in (
+        "http://localhost:9400",
+        "http://127.0.0.1:9400",
+        "http://testserver",
+    ):
+        if download_url.startswith(origin):
+            download_path = download_url.removeprefix(origin)
+            break
     download_response = await client.get(download_path)
 
     # Verify download succeeded
@@ -135,9 +143,14 @@ async def test_full_pdf_generation_download_flow(
 
     # Verify content-length matches reported size
     content_length = int(download_response.headers.get("content-length", 0))
+    actual_size = len(download_response.content)
     assert (
-        content_length == size_bytes
-    ), f"Content-Length ({content_length}) doesn't match size_bytes ({size_bytes})"
+        actual_size == size_bytes
+    ), f"Downloaded PDF size ({actual_size}) doesn't match size_bytes ({size_bytes})"
+    if content_length:
+        assert (
+            content_length == size_bytes
+        ), f"Content-Length ({content_length}) doesn't match size_bytes ({size_bytes})"
 
     # Step 5: Verify PDF has actual content
     pytest.importorskip("pypdf")

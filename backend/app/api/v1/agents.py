@@ -968,7 +968,7 @@ async def compute_sales_velocity(
 ) -> SalesVelocityResponse:
     """Return a lightweight sales velocity forecast using market defaults and optional overrides."""
 
-    result = advisory_service.build_sales_velocity(payload.dict())
+    result = advisory_service.build_sales_velocity(payload.model_dump())
 
     return SalesVelocityResponse(
         forecast=SalesVelocityForecast(**result["forecast"]),

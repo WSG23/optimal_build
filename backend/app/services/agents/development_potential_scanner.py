@@ -529,7 +529,8 @@ class DevelopmentPotentialScanner:
                 )
             },
             "development_scenarios": [
-                s.dict() for s in getattr(analysis_result, "development_scenarios", [])
+                s.model_dump()
+                for s in getattr(analysis_result, "development_scenarios", [])
             ],
             "value_add_potential": financial_summary,
             "recommended_scenario": recommended_scenario,

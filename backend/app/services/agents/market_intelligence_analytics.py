@@ -12,10 +12,13 @@ try:  # pragma: no cover - optional dependency
 except ModuleNotFoundError:  # pragma: no cover - fallback when pandas missing
     pd = None
 
+np: Any = None
 try:  # pragma: no cover - optional dependency
-    import numpy as np
+    import numpy as _np
 except ModuleNotFoundError:  # pragma: no cover - fallback when numpy missing
-    np = None  # type: ignore[assignment]
+    pass
+else:
+    np = _np
 from backend._compat.datetime import utcnow
 
 from app.models.market import (
@@ -34,7 +37,7 @@ try:  # pragma: no cover - optional metrics dependency
     from app.core.metrics import MetricsCollector
 except ImportError:  # pragma: no cover - fallback stub
 
-    class MetricsCollector:  # type: ignore
+    class MetricsCollector:
         """Fallback metrics collector that performs no operations."""
 
         def record(self, *args: Any, **kwargs: Any) -> None:

@@ -14,14 +14,19 @@ pytest.importorskip("sqlalchemy")
 from app.models.rkp import RefMaterialStandard
 
 
+def _build_mock_session() -> AsyncMock:
+    session = AsyncMock()
+    session.add = MagicMock()
+    return session
+
+
 class TestUpsertMaterialStandard:
     """Test upsert_material_standard function."""
 
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.mark.asyncio
     async def test_upsert_creates_new_record_when_not_exists(self, mock_session):
@@ -136,8 +141,7 @@ class TestLookupMaterialStandards:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.mark.asyncio
     async def test_lookup_returns_all_when_no_filters(self, mock_session):

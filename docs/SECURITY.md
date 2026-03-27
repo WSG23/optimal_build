@@ -177,17 +177,15 @@ Supported import formats are validated by extension:
 
 ### Hashing Algorithm
 
-Passwords are hashed using **bcrypt** (upgraded from SHA256):
+Passwords are hashed using **PBKDF2-HMAC-SHA256** for new credentials, with legacy
+SHA256 and bcrypt verification retained only for rolling migration:
 
 ```python
-pwd_context = CryptContext(
-    schemes=["bcrypt", "sha256_crypt"],
-    default="bcrypt",
-    deprecated=["sha256_crypt"],
-)
+pbkdf2_sha256$<iterations>$<salt_hex>$<digest_hex>
 ```
 
-- New passwords use bcrypt
+- New passwords use PBKDF2-HMAC-SHA256
+- Existing legacy SHA256 or bcrypt hashes are upgraded on successful login
 - Existing SHA256 hashes are accepted but marked deprecated
 - Passwords are automatically rehashed on next login
 

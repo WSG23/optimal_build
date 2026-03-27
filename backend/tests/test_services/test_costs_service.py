@@ -15,14 +15,19 @@ pytest.importorskip("sqlalchemy")
 from app.models.rkp import RefCostCatalog, RefCostIndex
 
 
+def _build_mock_session() -> AsyncMock:
+    session = AsyncMock()
+    session.add = MagicMock()
+    return session
+
+
 class TestUpsertCostIndex:
     """Test upsert_cost_index function."""
 
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.mark.asyncio
     async def test_upsert_creates_new_record_when_not_exists(self, mock_session):
@@ -143,8 +148,7 @@ class TestGetLatestCostIndex:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.mark.asyncio
     async def test_get_latest_returns_record(self, mock_session):
@@ -219,8 +223,7 @@ class TestAddCostCatalogItem:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.mark.asyncio
     async def test_add_cost_catalog_item_creates_record(self, mock_session):
@@ -273,8 +276,7 @@ class TestListCostCatalog:
     @pytest.fixture
     def mock_session(self):
         """Create a mock database session."""
-        session = AsyncMock()
-        return session
+        return _build_mock_session()
 
     @pytest.mark.asyncio
     async def test_list_cost_catalog_returns_all(self, mock_session):
