@@ -20,14 +20,6 @@ from app.models.property import (
 from app.services.agents.universal_site_pack import UniversalSitePackGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
 
-pytestmark = pytest.mark.skip(
-    reason=(
-        "Universal site pack generator depends on SQLAlchemy ordering and related "
-        "records that are not supported by the stubbed ORM."
-    )
-)
-
-
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================

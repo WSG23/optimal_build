@@ -87,6 +87,13 @@ class CoverPage(Flowable):
         self.width = A4[0]
         self.height = A4[1]
 
+    def wrap(self, availWidth: float, availHeight: float) -> tuple[float, float]:
+        """Resize the cover to the available frame instead of the full page."""
+
+        self.width = availWidth
+        self.height = availHeight
+        return availWidth, availHeight
+
     def draw(self) -> None:
         """Draw the cover page."""
         canvas = self.canv

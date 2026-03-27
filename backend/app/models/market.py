@@ -179,6 +179,11 @@ class AbsorptionTracking(BaseModel):
     velocity_trend = Column(String(20))  # accelerating, stable, decelerating
 
     __table_args__ = (
+        UniqueConstraint(
+            "project_id",
+            "tracking_date",
+            name="uq_absorption_project_date",
+        ),
         Index("idx_absorption_project_date", "project_id", "tracking_date"),
         Index("idx_absorption_type_date", "property_type", "tracking_date"),
     )

@@ -113,19 +113,9 @@ owner = "backend"
 rationale = "Service typing debt remains outstanding and is explicitly tracked."
 
 [[mypy_ini_ignore_errors]]
-section = "mypy-backend.app.schemas.*"
-owner = "backend"
-rationale = "Schema typing debt from the Pydantic migration is still being reduced."
-
-[[mypy_ini_ignore_errors]]
 section = "mypy-app.schemas.*"
 owner = "backend"
 rationale = "Schema typing debt from the Pydantic migration is still being reduced."
-
-[[mypy_ini_ignore_errors]]
-section = "mypy-backend.app.api.v1.*"
-owner = "backend"
-rationale = "API route typing debt remains while request/response models are tightened."
 
 [[mypy_ini_ignore_errors]]
 section = "mypy-app.api.v1.*"

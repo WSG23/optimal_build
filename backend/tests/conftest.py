@@ -3,53 +3,23 @@
 from __future__ import annotations
 
 import asyncio
+import importlib
 import importlib.util
-import inspect
 import sys
 import uuid
 from unittest import mock
 from collections.abc import AsyncGenerator, Callable, Iterator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from functools import wraps
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType, TracebackType
-from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, TypeVar, cast, overload
-
-if TYPE_CHECKING:
-    from fastapi.testclient import AsyncTestClient as FastAPIAsyncClient
-    from httpx import AsyncClient as HTTPXAsyncClient
-
-    AsyncClientType: TypeAlias = HTTPXAsyncClient | FastAPIAsyncClient
-else:
-    AsyncClientType: TypeAlias = Any
+from typing import Any
 
 import pytest
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
 
-
-AsyncClient: type[Any]
-ASGITransport: type[Any] | None = None
-
-try:
-    from fastapi.testclient import AsyncTestClient as _FastAPIAsyncClient
-
-    AsyncClient = _FastAPIAsyncClient
-except ImportError:
-    try:
-        from httpx import AsyncClient as _HTTPXAsyncClient
-        from httpx import ASGITransport as _ASGITransport
-
-        ASGITransport = _ASGITransport
-    except ImportError:
-
-        class _HTTPXAsyncClientStub:  # pragma: no cover - runtime fallback
-            """Fallback stub used when httpx is not installed."""
-
-            pass
-
-        AsyncClient = _HTTPXAsyncClientStub
-    else:
-        AsyncClient = _HTTPXAsyncClient
+AsyncClientType = AsyncClient
 
 
 def _find_repo_root(current: Path) -> Path:
@@ -132,19 +102,6 @@ def mocker() -> Iterator[_SimpleMocker]:
         helper.stopall()
 
 
-_FixtureFunc = TypeVar("_FixtureFunc", bound=Callable[..., Any])
-
-
-class _PytestAsyncioLike(Protocol):
-    @overload
-    def fixture(self, __func: _FixtureFunc) -> _FixtureFunc: ...
-
-    @overload
-    def fixture(
-        self, *args: Any, **kwargs: Any
-    ) -> Callable[[_FixtureFunc], _FixtureFunc]: ...
-
-
 def _ensure_namespace_package(name: str, location: Path) -> None:
     """Register a namespace style package without mutating ``sys.path``."""
 
@@ -195,17 +152,6 @@ if load_optional_package is not None:
                 module = importlib.util.module_from_spec(spec)
                 sys.modules.setdefault("fastapi", module)
                 spec.loader.exec_module(module)
-
-try:  # pragma: no cover - async plugin is optional when running unit tests
-    import pytest_asyncio
-except ModuleNotFoundError:  # pragma: no cover - fallback to bundled shim
-    pytest_asyncio = import_module("backend.pytest_asyncio")
-    sys.modules.setdefault("pytest_asyncio", pytest_asyncio)
-    _USING_PYTEST_ASYNCIO_STUB = True
-else:
-    _USING_PYTEST_ASYNCIO_STUB = False
-
-pytest_asyncio = cast(_PytestAsyncioLike, pytest_asyncio)
 
 import app.utils.metrics as metrics
 
@@ -320,104 +266,14 @@ else:
     StaticPool = type("StaticPool", (), {})
     _SORTED_TABLES = ()
 
-_pytest_asyncio_stub = ModuleType("pytest_asyncio")
-
-
-def _run(coro: Any) -> Any:
-    """Execute a coroutine to completion using ``asyncio.run``."""
-
-    return asyncio.run(coro)
-
-
-def _wrap_fixture(
-    func: Callable[..., Any], *, args: tuple[Any, ...], kwargs: dict[str, Any]
-) -> Any:
-    decorator = pytest.fixture(*args, **kwargs)
-
-    if inspect.isasyncgenfunction(func):
-
-        @wraps(func)
-        def _wrapper(*f_args: Any, **f_kwargs: Any) -> Iterator[Any]:
-            agen = func(*f_args, **f_kwargs)
-            try:
-                try:
-                    value = _run(agen.__anext__())
-                except StopAsyncIteration as exc:  # pragma: no cover - defensive
-                    raise RuntimeError(
-                        "Async generator fixture did not yield a value"
-                    ) from exc
-                yield value
-            finally:
-                try:
-                    _run(agen.aclose())
-                except RuntimeError:  # pragma: no cover - defensive
-                    pass
-
-        _wrapper.__signature__ = inspect.signature(func)  # type: ignore[attr-defined]
-        return decorator(_wrapper)
-
-    if inspect.iscoroutinefunction(func):
-
-        @wraps(func)
-        def _wrapper(*f_args: Any, **f_kwargs: Any) -> Any:
-            return _run(func(*f_args, **f_kwargs))
-
-        _wrapper.__signature__ = inspect.signature(func)  # type: ignore[attr-defined]
-        return decorator(_wrapper)
-
-    return decorator(func)
-
-
-def fixture(*f_args: Any, **f_kwargs: Any) -> Any:
-    if f_args and callable(f_args[0]) and len(f_args) == 1 and not f_kwargs:
-        return _wrap_fixture(f_args[0], args=(), kwargs={})
-
-    def decorator(func: Callable[..., Any]) -> Any:
-        return _wrap_fixture(func, args=f_args, kwargs=f_kwargs)
-
-    return decorator
-
-
-_pytest_asyncio_stub.fixture = fixture
-_pytest_asyncio_stub.__all__ = ["fixture"]
-sys.modules.setdefault("pytest_asyncio", _pytest_asyncio_stub)
-pytest_asyncio = cast(_PytestAsyncioLike, _pytest_asyncio_stub)
-
-
-def pytest_addoption(
-    parser: pytest.Parser,
-) -> None:  # pragma: no cover - exercised indirectly
-    parser.addini(
-        "asyncio_mode",
-        "Compatibility option consumed by the lightweight pytest-asyncio stub.",
-        default="auto",
-    )
-
 
 def pytest_configure(
     config: pytest.Config,
 ) -> None:  # pragma: no cover - exercised indirectly
     """Register custom markers for pytest."""
     config.addinivalue_line(
-        "markers",
-        "asyncio: execute the coroutine test function using the local pytest-asyncio stub.",
-    )
-    config.addinivalue_line(
         "markers", "no_db: skip database setup/teardown for lightweight tests"
     )
-
-
-@pytest.hookimpl(tryfirst=True)  # type: ignore[misc]  # pragma: no cover - exercised indirectly
-def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> bool | None:
-    test_func = pyfuncitem.obj
-    if inspect.iscoroutinefunction(test_func):
-        if pyfuncitem.get_closest_marker("asyncio") is None:
-            return False
-        arg_names = getattr(pyfuncitem._fixtureinfo, "argnames", ())
-        call_kwargs = {name: pyfuncitem.funcargs[name] for name in arg_names}
-        _run(test_func(**call_kwargs))
-        return True
-    return None
 
 
 _SKIPPED_TEST_PATTERNS: dict[str, str] = {
@@ -471,19 +327,17 @@ def pytest_collection_modifyitems(
                 break
 
 
-if _USING_PYTEST_ASYNCIO_STUB:
+@pytest.fixture(scope="session")
+def event_loop() -> Iterator[asyncio.AbstractEventLoop]:
+    """Create a dedicated event loop for the entire test session."""
 
-    @pytest.fixture(scope="session")  # type: ignore[misc]
-    def event_loop() -> Iterator[asyncio.AbstractEventLoop]:
-        """Create a dedicated event loop for the entire test session."""
-
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            yield loop
-        finally:
-            asyncio.set_event_loop(None)
-            loop.close()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        yield loop
+    finally:
+        asyncio.set_event_loop(None)
+        loop.close()
 
 
 if _SQLALCHEMY_AVAILABLE:
@@ -831,23 +685,13 @@ if _SQLALCHEMY_AVAILABLE:
 
         assert app is not None
         app.dependency_overrides[get_session] = _override_get_session
-        # httpx 0.28+ requires ASGITransport instead of app= parameter
-        if ASGITransport is not None:
-            transport = ASGITransport(app=app)
-            async with AsyncClient(
-                transport=transport,
-                base_url="http://testserver",
-                headers={"X-Role": "admin"},
-            ) as client:
-                yield client
-        else:
-            # Fallback for older httpx or FastAPI's AsyncTestClient
-            async with AsyncClient(
-                app=app,
-                base_url="http://testserver",
-                headers={"X-Role": "admin"},
-            ) as client:
-                yield client
+        transport = ASGITransport(app=app)
+        async with AsyncClient(
+            transport=transport,
+            base_url="http://testserver",
+            headers={"X-Role": "admin"},
+        ) as client:
+            yield client
 
         app.dependency_overrides.pop(get_session, None)
         await _reset_database(async_session_factory)

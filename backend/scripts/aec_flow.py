@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from httpx import ASGITransport, AsyncClient
 import structlog
 
 # Configure runtime directories before importing the application settings.
@@ -39,8 +40,6 @@ from app.main import app
 from app.models.base import BaseModel
 from app.models.overlay import OverlaySourceGeometry
 from sqlalchemy import select
-
-from ..httpx import AsyncClient
 
 logger = structlog.get_logger(__name__)
 
@@ -288,7 +287,10 @@ async def import_sample(
         "infer_walls": "true" if infer_walls else "false",
     }
 
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
         upload_response = await client.post(
             "/api/v1/import", files=files, data=form_data
         )
@@ -354,7 +356,10 @@ async def run_overlay(project_id: int) -> dict[str, Any]:
     """Execute the overlay engine and return suggestion summaries."""
 
     await ensure_schema()
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
         response = await client.post(f"/api/v1/overlay/{project_id}/run")
         if response.status_code != 200:
             raise RuntimeError(
@@ -401,7 +406,10 @@ async def approve_overlay(
     decided_by: str,
     notes: str,
 ) -> Mapping[str, Any]:
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
         response = await client.post(
             f"/api/v1/overlay/{project_id}/decision",
             json={
@@ -440,7 +448,10 @@ async def export_approved(
     """Generate an export containing approved overlays for ``project_id``."""
 
     await ensure_schema()
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
         listing = await client.get(f"/api/v1/overlay/{project_id}")
         if listing.status_code != 200:
             raise RuntimeError(

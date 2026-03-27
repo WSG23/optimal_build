@@ -11,17 +11,11 @@ import pytest
 
 from app.models.property import Property, PropertyPhoto, PropertyStatus, PropertyType
 from app.services.agents.photo_documentation import (
+    PHOTO_VERSION_NAMES,
     PhotoDocumentationManager,
     PhotoMetadata,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-
-pytestmark = pytest.mark.skip(
-    reason=(
-        "Photo documentation manager requires SQLAlchemy insert/delete support and "
-        "image processing dependencies not present in the stub environment."
-    )
-)
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -61,7 +55,8 @@ def _create_test_image(width=800, height=600, mode="RGB"):
     try:
         from PIL import Image
 
-        return Image.new(mode, (width, height), color=(128, 128, 128))
+        color = (128, 128, 128) if mode in {"RGB", "RGBA"} else 128
+        return Image.new(mode, (width, height), color=color)
     except ImportError:
         pytest.skip("PIL/Pillow not installed")
 
@@ -1009,8 +1004,7 @@ async def test_process_photo_success(db_session: AsyncSession):
     assert isinstance(result, PhotoMetadata)
     assert result.property_id == prop.id
     assert result.file_size == len(photo_data)
-    # Verify storage was called for 4 versions
-    assert mock_storage.upload_file.call_count == 4
+    assert mock_storage.upload_file.call_count == len(PHOTO_VERSION_NAMES)
 
 
 @pytest.mark.asyncio

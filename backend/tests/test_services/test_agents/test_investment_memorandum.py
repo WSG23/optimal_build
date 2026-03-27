@@ -23,14 +23,6 @@ from app.services.agents.investment_memorandum import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-pytestmark = pytest.mark.skip(
-    reason=(
-        "Investment memorandum service requires SQLAlchemy expressions and richer "
-        "session features not provided by the lightweight stub backend."
-    )
-)
-
-
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================

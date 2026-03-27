@@ -553,6 +553,7 @@ import importlib
 from importlib import import_module
 
 import pytest
+import pytest_asyncio
 
 
 def _ensure_sqlalchemy_dialects() -> None:
@@ -606,13 +607,6 @@ if _geo_sqlite is not None:
             return None
 
     _geo_sqlite.select_dialect = lambda name: _NoopDialect()
-
-try:  # pragma: no cover - optional dependency for async fixtures
-    import pytest_asyncio
-except ModuleNotFoundError:  # pragma: no cover - fallback stub when plugin missing
-    pytest_asyncio = ModuleType("pytest_asyncio")
-    pytest_asyncio.fixture = pytest.fixture  # type: ignore[attr-defined]
-    sys.modules.setdefault("pytest_asyncio", pytest_asyncio)
 
 if os.environ.get("ENABLE_BACKEND_TEST_FIXTURES") == "1":
     try:
@@ -691,7 +685,7 @@ if _backend_flow_session_factory in (None, _missing_fixture):
         create_async_engine,
     )
 
-    from httpx import AsyncClient as _AsyncClient
+    from httpx import ASGITransport as _ASGITransport, AsyncClient as _AsyncClient
 
     try:
         from sqlalchemy.pool import StaticPool as _StaticPool
@@ -809,8 +803,9 @@ if _backend_flow_session_factory in (None, _missing_fixture):
                 yield db_session
 
         _fastapi_app.dependency_overrides[_get_session] = _override_get_session
+        transport = _ASGITransport(app=_fastapi_app)
         async with _AsyncClient(
-            app=_fastapi_app,
+            transport=transport,
             base_url="http://testserver",
             headers={"X-Role": "admin"},
         ) as client_instance:

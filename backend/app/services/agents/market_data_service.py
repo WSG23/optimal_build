@@ -13,6 +13,7 @@ from backend._compat.datetime import utcnow
 from app.models.market import AbsorptionTracking, MarketIndex
 from app.models.property import MarketTransaction, Property, PropertyType, RentalListing
 from sqlalchemy import insert, select
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -145,6 +146,13 @@ class MarketDataService:
         self.providers[name] = provider
         logger.info(f"Registered market data provider: {name}")
 
+    def _dialect_name(self, session: AsyncSession) -> str:
+        get_bind = getattr(session, "get_bind", None)
+        if get_bind is None:
+            return ""
+        bind = get_bind()
+        return bind.dialect.name if bind is not None else ""
+
     async def sync_all_providers(
         self, session: AsyncSession, property_types: Optional[List[PropertyType]] = None
     ) -> Dict[str, Any]:
@@ -237,12 +245,19 @@ class MarketDataService:
 
         await session.commit()
 
-        return {
-            "status": "success",
+        status = "error" if sync_results["errors"] else "success"
+
+        payload = {
+            "status": status,
             "provider": provider_name,
             "sync_time": sync_start.isoformat(),
             "results": sync_results,
         }
+
+        if sync_results["errors"]:
+            payload["error"] = "; ".join(sync_results["errors"])
+
+        return payload
 
     async def _store_transactions(
         self, transactions: List[Dict[str, Any]], source: str, session: AsyncSession
@@ -270,8 +285,11 @@ class MarketDataService:
                 }
 
                 # Upsert transaction
-                stmt = pg_insert(MarketTransaction).values(**transaction)
-                stmt = stmt.on_conflict_do_nothing()
+                if self._dialect_name(session) == "postgresql":
+                    stmt = pg_insert(MarketTransaction).values(**transaction)
+                    stmt = stmt.on_conflict_do_nothing()
+                else:
+                    stmt = insert(MarketTransaction).values(**transaction)
 
                 await session.execute(stmt)
                 stored += 1
@@ -317,8 +335,11 @@ class MarketDataService:
                 }
 
                 # Upsert rental
-                stmt = pg_insert(RentalListing).values(**rental)
-                stmt = stmt.on_conflict_do_nothing()
+                if self._dialect_name(session) == "postgresql":
+                    stmt = pg_insert(RentalListing).values(**rental)
+                    stmt = stmt.on_conflict_do_nothing()
+                else:
+                    stmt = insert(RentalListing).values(**rental)
 
                 await session.execute(stmt)
                 stored += 1
@@ -347,11 +368,28 @@ class MarketDataService:
                     "data_source": source,
                 }
 
-                stmt = pg_insert(MarketIndex).values(**index_record)
-                stmt = stmt.on_conflict_do_update(
-                    index_elements=["index_date", "index_name"],
-                    set_={"index_value": index_record["index_value"]},
-                )
+                if self._dialect_name(session) == "postgresql":
+                    stmt = pg_insert(MarketIndex).values(**index_record)
+                    stmt = stmt.on_conflict_do_update(
+                        index_elements=["index_date", "index_name"],
+                        set_={
+                            "index_value": index_record["index_value"],
+                            "mom_change": index_record["mom_change"],
+                            "yoy_change": index_record["yoy_change"],
+                            "data_source": index_record["data_source"],
+                        },
+                    )
+                else:
+                    stmt = sqlite_insert(MarketIndex).values(**index_record)
+                    stmt = stmt.on_conflict_do_update(
+                        index_elements=["index_date", "index_name"],
+                        set_={
+                            "index_value": index_record["index_value"],
+                            "mom_change": index_record["mom_change"],
+                            "yoy_change": index_record["yoy_change"],
+                            "data_source": index_record["data_source"],
+                        },
+                    )
 
                 await session.execute(stmt)
                 stored += 1
@@ -379,8 +417,6 @@ class MarketDataService:
         # Create new property
         from uuid import uuid4
 
-        from geoalchemy2.elements import WKTElement
-
         property_id = uuid4()
 
         # Create mock location (in production, geocode the address)
@@ -388,7 +424,7 @@ class MarketDataService:
 
         lat = 1.3521 + random.uniform(-0.1, 0.1)  # Singapore latitude
         lon = 103.8198 + random.uniform(-0.1, 0.1)  # Singapore longitude
-        point = WKTElement(f"POINT({lon} {lat})", srid=4326)
+        point = f"POINT({lon} {lat})"
 
         property_type_map = {
             "office": PropertyType.OFFICE,
@@ -422,6 +458,8 @@ class MarketDataService:
     async def _calculate_yield_benchmarks(self, session: AsyncSession) -> None:
         """Calculate and update yield benchmarks."""
         # This is a simplified version - in production, implement full calculation
+        if self._dialect_name(session) == "sqlite":
+            return
 
         # Get recent transactions grouped by property type and district
         cutoff_date = date.today() - timedelta(days=30)
@@ -489,11 +527,26 @@ class MarketDataService:
                     "sales_absorption_rate": Decimal(str(absorption_rate)),
                 }
 
-                stmt = pg_insert(AbsorptionTracking).values(**tracking)
-                stmt = stmt.on_conflict_do_update(
-                    index_elements=["project_id", "tracking_date"],
-                    set_={"sales_absorption_rate": tracking["sales_absorption_rate"]},
-                )
+                if self._dialect_name(session) == "postgresql":
+                    stmt = pg_insert(AbsorptionTracking).values(**tracking)
+                    stmt = stmt.on_conflict_do_update(
+                        index_elements=["project_id", "tracking_date"],
+                        set_={
+                            "sales_absorption_rate": tracking["sales_absorption_rate"],
+                            "units_sold_cumulative": tracking["units_sold_cumulative"],
+                            "total_units": tracking["total_units"],
+                        },
+                    )
+                else:
+                    stmt = sqlite_insert(AbsorptionTracking).values(**tracking)
+                    stmt = stmt.on_conflict_do_update(
+                        index_elements=["project_id", "tracking_date"],
+                        set_={
+                            "sales_absorption_rate": tracking["sales_absorption_rate"],
+                            "units_sold_cumulative": tracking["units_sold_cumulative"],
+                            "total_units": tracking["total_units"],
+                        },
+                    )
 
                 await session.execute(stmt)
 
