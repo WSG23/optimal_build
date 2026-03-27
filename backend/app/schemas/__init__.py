@@ -147,7 +147,7 @@ def __getattr__(name: str) -> ModuleType | object:
     if module_name is None:
         raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
     module = _load_submodule(module_name)
-    value = getattr(module, name)
+    value: object = getattr(module, name)
     globals()[name] = value
     return value
 

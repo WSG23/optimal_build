@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from pydantic import (
     BaseModel,
@@ -81,7 +81,9 @@ class BuildableDefaults(BaseModel):
 
     model_config = ConfigDict(
         populate_by_name=True,
-        json_schema_extra={"example": _BUILDABLE_DEFAULTS_EXAMPLE},
+        json_schema_extra=cast(
+            dict[str, Any], {"example": _BUILDABLE_DEFAULTS_EXAMPLE}
+        ),
     )
 
     plot_ratio: float = Field(default=3.5, gt=0, alias="plotRatio")
@@ -120,7 +122,7 @@ class BuildableRequest(BaseModel):
 
     model_config = ConfigDict(
         populate_by_name=True,
-        json_schema_extra={"example": _BUILDABLE_REQUEST_EXAMPLE},
+        json_schema_extra=cast(dict[str, Any], {"example": _BUILDABLE_REQUEST_EXAMPLE}),
     )
 
     address: str | None = None
@@ -240,7 +242,8 @@ class BuildableCalculation(BaseModel):
     zone_source: ZoneSource
     rules: list[BuildableRule]
 
-    @computed_field  # type: ignore[prop-decorator]
+    # type-ignore-meta: owner=backend expires=2026-06-30 reason=Pydantic computed_field decorator typing remains incomplete under strict mypy
+    @computed_field  # type: ignore[misc]
     @property
     def gfa_total(self) -> float:
         """Total gross floor area permitted by the calculation."""
@@ -251,7 +254,7 @@ class BuildableResponse(BaseModel):
     """Response payload returned by the buildable screening endpoint."""
 
     model_config = ConfigDict(
-        json_schema_extra={"example": _BUILDABLE_RESPONSE_EXAMPLE}
+        json_schema_extra=cast(dict[str, Any], {"example": _BUILDABLE_RESPONSE_EXAMPLE})
     )
 
     input_kind: Literal["address", "geometry"]

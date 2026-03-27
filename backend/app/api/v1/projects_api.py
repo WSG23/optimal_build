@@ -212,7 +212,7 @@ def _generate_project_code() -> str:
 
 
 def _phase_display_name(phase: ProjectPhase) -> str:
-    return phase.value.replace("_", " ").title()
+    return str(phase.value).replace("_", " ").title()
 
 
 def _phase_status_from_development(status: PhaseStatus | None) -> str:

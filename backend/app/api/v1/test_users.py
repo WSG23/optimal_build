@@ -1,6 +1,6 @@
 """Simple test API for users - learning exercise."""
 
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -8,7 +8,7 @@ from pydantic import BaseModel
 router = APIRouter(prefix="/users", tags=["Users"])
 
 # Simple in-memory storage (will reset when server restarts)
-fake_users_db: Dict[str, dict] = {}
+fake_users_db: dict[str, dict[str, str]] = {}
 
 
 class UserSignup(BaseModel):
@@ -30,7 +30,7 @@ class UserResponse(BaseModel):
 
 
 @router.get("/test")
-def test_endpoint() -> Dict[str, str]:
+def test_endpoint() -> dict[str, str]:
     """Super simple test to make sure API works."""
     return {"message": "Users API is working!", "status": "success"}
 
@@ -60,7 +60,7 @@ def signup(user: UserSignup) -> UserResponse:
 
 
 @router.get("/list")
-def list_users() -> Dict[str, Any]:
+def list_users() -> dict[str, Any]:
     """List all registered users (for testing)."""
     # Remove passwords from response
     safe_users = []

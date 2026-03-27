@@ -6,7 +6,7 @@ import copy
 import os
 from collections.abc import Iterable
 from datetime import datetime
-from typing import Literal
+from typing import Literal, cast
 
 from backend._compat.datetime import UTC
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -60,6 +60,10 @@ def _normalize_review_status(
                 seen.add(value)
                 statuses.append(value)
     return statuses
+
+
+def _zone_codes_for_rules(rules: Iterable[RefRule]) -> list[str]:
+    return [zone_code for rule in rules if (zone_code := _extract_zone_code(rule))]
 
 
 def _serialise_rule(
@@ -158,7 +162,7 @@ async def list_rules(
 
     cached_payload = await _RULES_CACHE.get(cache_key)
     if cached_payload is not None:
-        return cached_payload
+        return cast(dict[str, object], cached_payload)
 
     stmt = select(RefRule)
     filter_conditions: list[object] = []
@@ -217,7 +221,7 @@ async def list_rules(
             result = await session.execute(fallback_filtered)
             rules = result.scalars().all()
 
-    zone_codes = [_extract_zone_code(rule) for rule in rules]
+    zone_codes = _zone_codes_for_rules(rules)
     zoning_lookup = await _load_zoning_lookup(session, zone_codes)
     normalizer = RuleNormalizer()
     items = [_serialise_rule(rule, normalizer, zoning_lookup) for rule in rules]
@@ -265,7 +269,7 @@ async def review_rule(
     await session.refresh(rule)
     await _RULES_CACHE.clear()
 
-    zoning_lookup = await _load_zoning_lookup(session, [_extract_zone_code(rule)])
+    zoning_lookup = await _load_zoning_lookup(session, _zone_codes_for_rules([rule]))
     normalizer = RuleNormalizer()
     return {"item": _serialise_rule(rule, normalizer, zoning_lookup)}
 
@@ -277,9 +281,7 @@ async def review_queue(
 ) -> dict[str, object]:
     stmt = select(RefRule).where(RefRule.review_status == "needs_review")
     rules = (await session.execute(stmt)).scalars().all()
-    zoning_lookup = await _load_zoning_lookup(
-        session, [_extract_zone_code(rule) for rule in rules]
-    )
+    zoning_lookup = await _load_zoning_lookup(session, _zone_codes_for_rules(rules))
     normalizer = RuleNormalizer()
     items = [_serialise_rule(rule, normalizer, zoning_lookup) for rule in rules]
     return {"items": items, "count": len(items)}

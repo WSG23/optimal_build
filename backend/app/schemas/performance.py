@@ -45,7 +45,7 @@ class AgentPerformanceSnapshotResponse(BaseModel):
 
     @classmethod
     def from_orm_snapshot(cls, snapshot: AgentPerformanceSnapshot) -> Self:
-        return cls.model_validate(snapshot)  # type: ignore[return-value]
+        return cls.model_validate(snapshot)
 
 
 class BenchmarkResponse(BaseModel):
@@ -68,7 +68,7 @@ class BenchmarkResponse(BaseModel):
 
     @classmethod
     def from_orm_benchmark(cls, benchmark: PerformanceBenchmark) -> Self:
-        return cls.model_validate(benchmark)  # type: ignore[return-value]
+        return cls.model_validate(benchmark)
 
 
 __all__ = [

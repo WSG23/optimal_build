@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
-from typing import Any, Mapping, Optional
+from typing import Any, Mapping, Optional, cast
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -25,12 +25,18 @@ def _to_mapping(value: Any) -> Mapping[str, Any] | None:
         return value
     if hasattr(value, "model_dump"):
         try:
-            return value.model_dump()
+            dumped = value.model_dump()
+            return (
+                cast(Mapping[str, Any], dumped) if isinstance(dumped, Mapping) else None
+            )
         except Exception:  # pragma: no cover - defensive
             return None
     if hasattr(value, "dict"):
         try:
-            return value.model_dump()
+            dumped = value.dict()
+            return (
+                cast(Mapping[str, Any], dumped) if isinstance(dumped, Mapping) else None
+            )
         except Exception:  # pragma: no cover - defensive
             return None
     return None

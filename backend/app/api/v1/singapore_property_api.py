@@ -11,7 +11,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
@@ -37,6 +37,12 @@ from app.utils.singapore_compliance import (
 from backend._compat.datetime import utcnow
 
 router = APIRouter(prefix="/singapore-property", tags=["Singapore Property"])
+
+
+def _enum_value(value: object) -> object:
+    if hasattr(value, "value"):
+        return value.value
+    return value
 
 
 # Pydantic Request/Response Models
@@ -242,16 +248,8 @@ async def create_property(
         gross_floor_area_sqm=property_data.gross_floor_area_sqm,
         building_height_m=property_data.building_height_m,
         num_storeys=property_data.num_storeys,
-        acquisition_status=(
-            property_data.acquisition_status.value
-            if hasattr(property_data.acquisition_status, "value")
-            else property_data.acquisition_status
-        ),
-        feasibility_status=(
-            property_data.feasibility_status.value
-            if hasattr(property_data.feasibility_status, "value")
-            else property_data.feasibility_status
-        ),
+        acquisition_status=_enum_value(property_data.acquisition_status),
+        feasibility_status=_enum_value(property_data.feasibility_status),
         estimated_acquisition_cost=property_data.estimated_acquisition_cost,
         estimated_development_cost=property_data.estimated_development_cost,
         expected_revenue=property_data.expected_revenue,
@@ -449,7 +447,7 @@ async def calculate_property_gfa(
         float(property_obj.gross_plot_ratio) if property_obj.gross_plot_ratio else None
     )
 
-    return result
+    return cast(Dict[str, Any], result)
 
 
 @router.post("/calculate/buildable")
@@ -488,9 +486,9 @@ async def calculate_buildable_metrics(
 
     # Create buildable defaults
     defaults = BuildableDefaults(
-        siteAreaM2=float(land_area),
-        floorHeightM=4.0,  # Building science constant
-        efficiencyFactor=0.82,  # 82% efficiency
+        site_area_m2=float(land_area),
+        floor_height_m=4.0,  # Building science constant
+        efficiency_factor=0.82,  # 82% efficiency
     )
 
     # Create resolved zone for jurisdiction-agnostic lookup

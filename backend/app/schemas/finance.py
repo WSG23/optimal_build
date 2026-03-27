@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from pydantic import (
@@ -306,7 +306,9 @@ class FinanceFeasibilityRequest(BaseModel):
     """Payload accepted by the finance feasibility endpoint."""
 
     model_config = ConfigDict(
-        json_schema_extra={"example": FINANCE_FEASIBILITY_REQUEST_EXAMPLE}
+        json_schema_extra=cast(
+            dict[str, Any], {"example": FINANCE_FEASIBILITY_REQUEST_EXAMPLE}
+        )
     )
 
     project_id: str | int | UUID
@@ -326,7 +328,9 @@ class FinanceFeasibilityRequest(BaseModel):
             if not stripped:
                 raise ValueError("project_id cannot be blank")
             return stripped
-        return value
+        if isinstance(value, (int, UUID)):
+            return value
+        return str(value)
 
 
 class DscrEntrySchema(BaseModel):
@@ -510,7 +514,9 @@ class FinanceFeasibilityResponse(BaseModel):
     """Response payload returned by the finance feasibility endpoint."""
 
     model_config = ConfigDict(
-        json_schema_extra={"example": FINANCE_FEASIBILITY_RESPONSE_EXAMPLE},
+        json_schema_extra=cast(
+            dict[str, Any], {"example": FINANCE_FEASIBILITY_RESPONSE_EXAMPLE}
+        ),
         from_attributes=True,
     )
 

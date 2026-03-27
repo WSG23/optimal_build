@@ -200,8 +200,8 @@ def _serialize_condition_assessment(
         systems=[_serialize_condition_system(system) for system in assessment.systems],
         recommended_actions=assessment.recommended_actions,
         recorded_at=recorded_at,
-        inspectorName=assessment.inspector_name,
-        recordedBy=str(assessment.recorded_by) if assessment.recorded_by else None,
+        inspector_name=assessment.inspector_name,
+        recorded_by=str(assessment.recorded_by) if assessment.recorded_by else None,
         attachments=list(assessment.attachments or []),
         insights=[
             _serialize_condition_insight(insight) for insight in assessment.insights
@@ -281,33 +281,33 @@ def _build_scenario_comparison_entries(
         entry = ScenarioComparisonEntryResponse(
             scenario=scenario_key,
             label=label,
-            recordedAt=(
+            recorded_at=(
                 assessment.recorded_at.isoformat() if assessment.recorded_at else None
             ),
-            overallScore=assessment.overall_score,
-            overallRating=assessment.overall_rating,
-            riskLevel=assessment.risk_level,
-            checklistCompleted=(
+            overall_score=assessment.overall_score,
+            overall_rating=assessment.overall_rating,
+            risk_level=assessment.risk_level,
+            checklist_completed=(
                 checklist_progress["completed"] if checklist_progress else None
             ),
-            checklistTotal=(
+            checklist_total=(
                 checklist_progress["total"] if checklist_progress else None
             ),
-            checklistPercent=(
+            checklist_percent=(
                 checklist_progress["percent"] if checklist_progress else None
             ),
-            primaryInsight=(
+            primary_insight=(
                 _serialize_condition_insight(primary_insight)
                 if primary_insight
                 else None
             ),
-            insightCount=len(assessment.insights),
-            recommendedAction=(
+            insight_count=len(assessment.insights),
+            recommended_action=(
                 assessment.recommended_actions[0]
                 if assessment.recommended_actions
                 else None
             ),
-            inspectorName=assessment.inspector_name,
+            inspector_name=assessment.inspector_name,
             source="manual" if assessment.recorded_at else "heuristic",
         )
         entries.append(entry)
@@ -662,28 +662,28 @@ async def export_condition_report(
     )
 
     report = ConditionReportResponse(
-        propertyId=str(property_id),
-        propertyName=property_record.name,
+        property_id=str(property_id),
+        property_name=property_record.name,
         address=property_record.address,
-        generatedAt=datetime.utcnow().isoformat(),
-        scenarioAssessments=[
+        generated_at=datetime.utcnow().isoformat(),
+        scenario_assessments=[
             _serialize_condition_assessment(assessment)
             for assessment in scenario_assessments
         ],
         history=[_serialize_condition_assessment(assessment) for assessment in history],
-        checklistSummary=(
+        checklist_summary=(
             ChecklistProgressResponse(
                 total=checklist_summary_raw["total"],
                 completed=checklist_summary_raw["completed"],
-                inProgress=checklist_summary_raw["in_progress"],
+                in_progress=checklist_summary_raw["in_progress"],
                 pending=checklist_summary_raw["pending"],
-                notApplicable=checklist_summary_raw["not_applicable"],
-                completionPercentage=checklist_summary_raw["completion_percentage"],
+                not_applicable=checklist_summary_raw["not_applicable"],
+                completion_percentage=checklist_summary_raw["completion_percentage"],
             )
             if checklist_summary_raw
             else None
         ),
-        scenarioComparison=scenario_comparison,
+        scenario_comparison=scenario_comparison,
     )
 
     if report_format == "pdf":

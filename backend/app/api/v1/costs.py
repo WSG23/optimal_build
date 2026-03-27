@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -48,4 +48,4 @@ async def latest_index(
         return (0, str(period))
 
     record = max(rows, key=sort_key)
-    return record.as_dict()
+    return cast(dict[str, Any], record.as_dict())

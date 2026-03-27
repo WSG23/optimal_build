@@ -309,7 +309,11 @@ async def summarise_persisted_scenario(
         )
         for entry in ordered:
             facility_key = normalise_facility_key(entry.name)
-            facility_meta = facility_metadata_map.get(facility_key)
+            facility_meta = (
+                facility_metadata_map.get(facility_key)
+                if facility_key is not None
+                else None
+            )
             metadata = merge_facility_metadata(entry.metadata, facility_meta)
             capital_stack_inputs.append(
                 {
@@ -325,7 +329,11 @@ async def summarise_persisted_scenario(
         for item in capital_stack_config:
             slice_payload = item.model_dump(mode="json")
             facility_key = normalise_facility_key(slice_payload.get("name"))
-            facility_meta = facility_metadata_map.get(facility_key)
+            facility_meta = (
+                facility_metadata_map.get(facility_key)
+                if facility_key is not None
+                else None
+            )
             metadata = merge_facility_metadata(
                 slice_payload.get("metadata"), facility_meta
             )
@@ -471,11 +479,15 @@ async def summarise_persisted_scenario(
     sensitivity_metadata_rows: list[dict[str, Any]] | None = None
     analytics_overview_result: FinResult | None = None
     for stored in ordered_results:
-        metadata: dict[str, Any] | None = (
+        result_metadata: dict[str, Any] | None = (
             stored.metadata if isinstance(stored.metadata, dict) else None
         )
-        if stored.name == "asset_financials" and metadata and not asset_processed:
-            summary_meta = metadata.get("summary")
+        if (
+            stored.name == "asset_financials"
+            and result_metadata
+            and not asset_processed
+        ):
+            summary_meta = result_metadata.get("summary")
             if summary_meta:
                 try:
                     asset_mix_summary_schema = (
@@ -483,7 +495,7 @@ async def summarise_persisted_scenario(
                     )
                 except Exception:  # pragma: no cover - defensive for historical data
                     asset_mix_summary_schema = None
-            breakdown_meta = metadata.get("breakdowns")
+            breakdown_meta = result_metadata.get("breakdowns")
             if isinstance(breakdown_meta, list) and not asset_breakdown_schemas:
                 converted: list[FinanceAssetBreakdownSchema] = []
                 for entry in breakdown_meta:
@@ -499,8 +511,8 @@ async def summarise_persisted_scenario(
             asset_processed = True
             continue
 
-        if stored.name == "sensitivity_analysis" and metadata:
-            bands_meta = metadata.get("bands")
+        if stored.name == "sensitivity_analysis" and result_metadata:
+            bands_meta = result_metadata.get("bands")
             if isinstance(bands_meta, list):
                 parsed_entries: list[FinanceSensitivityOutcomeSchema] = []
                 cleaned_metadata: list[dict[str, Any]] = []
@@ -522,12 +534,12 @@ async def summarise_persisted_scenario(
                     sensitivity_metadata_rows = cleaned_metadata
             continue
 
-        if stored.name == "construction_loan_interest" and metadata:
+        if stored.name == "construction_loan_interest" and result_metadata:
             try:
                 construction_interest_schema = (
-                    ConstructionLoanInterestSchema.model_validate(metadata)
+                    ConstructionLoanInterestSchema.model_validate(result_metadata)
                 )
-                construction_interest_metadata = metadata
+                construction_interest_metadata = result_metadata
                 construction_interest_value = stored.value
             except Exception:  # pragma: no cover - defensive for historical data
                 construction_interest_schema = None

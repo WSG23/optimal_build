@@ -208,7 +208,7 @@ async def delete_notification(
     notification_id: UUID,
     db: AsyncSession = Depends(get_db),
     user_id: str | None = Query(None, alias="user_id"),
-) -> dict:
+) -> dict[str, bool | str]:
     """Delete a notification permanently."""
     if not user_id:
         raise HTTPException(status_code=400, detail="user_id is required")

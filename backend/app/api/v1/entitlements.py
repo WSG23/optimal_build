@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Literal, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import StreamingResponse
@@ -53,7 +53,10 @@ def _coerce_export_format(value: ExportFormatParam) -> EntitlementsExportFormat:
 async def generate_entitlements_export(
     *args: Any, **kwargs: Any
 ) -> tuple[bytes, str, str]:
-    export_fn = _load_export_symbol("generate_entitlements_export")
+    export_fn = cast(
+        Callable[..., Awaitable[tuple[bytes, str, str]]],
+        _load_export_symbol("generate_entitlements_export"),
+    )
     return await export_fn(*args, **kwargs)
 
 

@@ -59,13 +59,14 @@ class SingaporePropertySchema(BaseModel):
         return value
 
 
-def _as_string(obj: Any) -> str | None:
+def _as_string(obj: object) -> str | None:
     if obj is None:
         return None
     if isinstance(obj, ComplianceStatus):
-        return obj.value
-    if hasattr(obj, "value"):
         return str(obj.value)
+    value_attr: object | None = getattr(obj, "value", None)
+    if value_attr is not None:
+        return str(value_attr)
     return str(obj)
 
 

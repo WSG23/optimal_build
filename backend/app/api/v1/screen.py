@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from time import perf_counter
-from typing import Any
+from typing import Any, Literal, cast
 
 import structlog
 from fastapi import APIRouter, Body, Depends
@@ -42,7 +42,7 @@ class ZoneResolution:
     zone_code: str | None
     parcel: RefParcel | None
     geometry_properties: dict[str, Any] | None
-    input_kind: str
+    input_kind: Literal["address", "geometry"]
 
 
 @router.post(
@@ -55,7 +55,12 @@ class ZoneResolution:
 async def screen_buildable(
     payload: BuildableRequest = Body(
         ...,
-        examples={"default": BUILDABLE_REQUEST_EXAMPLE},
+        openapi_examples={
+            "default": {
+                "summary": "Default buildable request",
+                "value": BUILDABLE_REQUEST_EXAMPLE,
+            }
+        },
     ),
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
@@ -109,7 +114,9 @@ async def screen_buildable(
 async def _resolve_zone_resolution(
     session: AsyncSession, payload: BuildableRequest
 ) -> ZoneResolution:
-    input_kind = "address" if payload.address else "geometry"
+    input_kind = cast(
+        Literal["address", "geometry"], "address" if payload.address else "geometry"
+    )
     parcel: RefParcel | None = None
     zone_code: str | None = None
 
@@ -156,7 +163,9 @@ def _collect_zone_metadata(
 def _build_mock_buildable_response(payload: BuildableRequest) -> BuildableResponse:
     """Provide a deterministic response for offline/demo environments."""
 
-    input_kind = "address" if payload.address else "geometry"
+    input_kind = cast(
+        Literal["address", "geometry"], "address" if payload.address else "geometry"
+    )
     zone_code = "MU"
     overlays = [
         "Transit-Oriented Development Overlay",
@@ -170,7 +179,7 @@ def _build_mock_buildable_response(payload: BuildableRequest) -> BuildableRespon
     metrics = BuildableMetrics(
         gfa_cap_m2=19000,
         floors_max=15,
-        footprint_m2=payload.defaults.site_area_m2 if payload.defaults else 1200,
+        footprint_m2=int(payload.defaults.site_area_m2) if payload.defaults else 1200,
         nsa_est_m2=14250,
     )
 

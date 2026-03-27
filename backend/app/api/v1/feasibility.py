@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
@@ -74,7 +74,7 @@ async def get_defaults(
     _: str = Depends(require_viewer),
 ) -> EngineeringDefaultsResponse:
     """Get global engineering defaults by jurisdiction."""
-    return get_engineering_defaults()
+    return cast(EngineeringDefaultsResponse, get_engineering_defaults())
 
 
 @router.post("/rules", response_model=FeasibilityRulesResponse)
@@ -85,7 +85,7 @@ async def fetch_feasibility_rules(
     """Fetch applicable feasibility rules for the project."""
     normalised = normalise_project_payload(payload)
     project = NewFeasibilityProjectInput(**normalised)
-    return generate_feasibility_rules(project)
+    return cast(FeasibilityRulesResponse, generate_feasibility_rules(project))
 
 
 @router.post("/assessment", response_model=FeasibilityAssessmentResponse)
@@ -96,7 +96,7 @@ async def submit_assessment(
     """Evaluate the feasibility assessment for the selected rules."""
     # Request model validation happens here via normaliser
     request = FeasibilityAssessmentRequest(**normalise_assessment_payload(payload))
-    return run_feasibility_assessment(request)
+    return cast(FeasibilityAssessmentResponse, run_feasibility_assessment(request))
 
 
 __all__ = ["router"]

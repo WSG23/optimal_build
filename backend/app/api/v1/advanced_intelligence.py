@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from backend._compat.datetime import utcnow  # noqa: I001
 from fastapi import APIRouter, Depends, Query
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/analytics/intelligence", tags=["advanced-intelligenc
 def _timestamp() -> str:
     """Return an ISO-formatted timestamp used by the dummy payloads."""
 
-    return utcnow().isoformat(timespec="seconds") + "Z"
+    return cast(str, utcnow().isoformat(timespec="seconds")) + "Z"
 
 
 def _sample_graph_payload(_: str) -> dict[str, Any]:

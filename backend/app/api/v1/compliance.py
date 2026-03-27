@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -31,7 +32,7 @@ async def check_property_compliance(
         result = await service.run_for_property(payload.property_id)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return result.response
+    return cast(ComplianceCheckResponse, result.response)
 
 
 __all__ = ["router"]
