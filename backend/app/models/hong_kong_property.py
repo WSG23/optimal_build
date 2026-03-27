@@ -20,7 +20,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 try:
-    from geoalchemy2 import Geometry
+    from geoalchemy2 import Geometry as _Geometry
+
+    class Geometry(_Geometry):
+        cache_ok = True
+
 except ModuleNotFoundError:  # pragma: no cover - optional dependency fallback
     from sqlalchemy.types import UserDefinedType
 

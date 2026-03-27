@@ -30,7 +30,7 @@ class ListingIntegrationAccountService:
     ) -> list[ListingIntegrationAccount]:
         stmt = (
             select(ListingIntegrationAccount)
-            .where(ListingIntegrationAccount.user_id == str(user_id))
+            .where(ListingIntegrationAccount.user_id == user_id)
             .order_by(ListingIntegrationAccount.provider)
         )
         result = await session.execute(stmt)
@@ -60,7 +60,7 @@ class ListingIntegrationAccountService:
         session: AsyncSession,
     ) -> Optional[ListingIntegrationAccount]:
         stmt = select(ListingIntegrationAccount).where(
-            ListingIntegrationAccount.user_id == str(user_id),
+            ListingIntegrationAccount.user_id == user_id,
             ListingIntegrationAccount.provider == provider,
         )
         result = await session.execute(stmt)
@@ -82,7 +82,7 @@ class ListingIntegrationAccountService:
         )
         if account is None:
             account = ListingIntegrationAccount(
-                user_id=str(user_id),
+                user_id=user_id,
                 provider=provider,
                 status=ListingAccountStatus.CONNECTED,
             )

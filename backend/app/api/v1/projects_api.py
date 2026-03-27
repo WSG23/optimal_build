@@ -679,7 +679,7 @@ async def get_project_dashboard(
     try:
         project_uuid = normalise_project_id(project_id)
     except HTTPException as exc:
-        if exc.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY:
+        if exc.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid project ID format. Expected UUID.",

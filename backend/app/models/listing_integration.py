@@ -50,9 +50,7 @@ class ListingIntegrationAccount(BaseModel):
 
     __tablename__ = "listing_integration_accounts"
 
-    id: Mapped[str] = mapped_column(
-        UUID(), primary_key=True, default=lambda: str(uuid4())
-    )
+    id: Mapped[str] = mapped_column(UUID(), primary_key=True, default=uuid4)
     user_id: Mapped[str] = mapped_column(
         UUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -107,9 +105,7 @@ class ListingPublication(BaseModel):
 
     __tablename__ = "listing_publications"
 
-    id: Mapped[str] = mapped_column(
-        UUID(), primary_key=True, default=lambda: str(uuid4())
-    )
+    id: Mapped[str] = mapped_column(UUID(), primary_key=True, default=uuid4)
     property_id: Mapped[str] = mapped_column(
         UUID(),
         ForeignKey("properties.id", ondelete="CASCADE"),
