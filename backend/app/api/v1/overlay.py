@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime
+from importlib import import_module
+from types import ModuleType
+from typing import Any, Awaitable, Callable, Protocol, cast
 
 from backend._compat.datetime import UTC
-from backend.jobs import job_queue
-from backend.jobs.overlay_run import run_overlay_for_project, run_overlay_job
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.deps import require_reviewer, require_viewer
@@ -26,6 +27,55 @@ from sqlalchemy.orm import selectinload
 router = APIRouter(prefix="/overlay")
 
 
+class _JobDispatchLike(Protocol):
+    result: Any | None
+    task_id: str | None
+
+
+class _JobQueueLike(Protocol):
+    async def enqueue(
+        self, func: Callable[..., Any], /, *args: Any, **kwargs: Any
+    ) -> _JobDispatchLike: ...
+
+
+class _OverlayRunResultLike(Protocol):
+    def as_dict(self) -> dict[str, object]: ...
+
+
+def _load_overlay_module(name: str) -> ModuleType:
+    return import_module(name)
+
+
+def _get_job_queue() -> _JobQueueLike:
+    module = _load_overlay_module("backend.jobs")
+    return cast(_JobQueueLike, module.job_queue)
+
+
+def _get_run_overlay_job() -> Callable[..., Any]:
+    module = _load_overlay_module("backend.jobs.overlay_run")
+    return cast(Callable[..., Any], module.run_overlay_job)
+
+
+def _get_run_overlay_for_project() -> Callable[..., Awaitable[_OverlayRunResultLike]]:
+    module = _load_overlay_module("backend.jobs.overlay_run")
+    return cast(
+        Callable[..., Awaitable[_OverlayRunResultLike]],
+        module.run_overlay_for_project,
+    )
+
+
+class _JobQueueProxy:
+    async def enqueue(
+        self, func: Callable[..., Any], /, *args: Any, **kwargs: Any
+    ) -> _JobDispatchLike:
+        return await _get_job_queue().enqueue(func, *args, **kwargs)
+
+
+job_queue = _JobQueueProxy()
+run_overlay_job = _get_run_overlay_job()
+run_overlay_for_project = _get_run_overlay_for_project()
+
+
 @router.post("/{project_id}/run")
 async def run_overlay(
     project_id: int,
@@ -36,13 +86,15 @@ async def run_overlay(
 
     dispatch = await job_queue.enqueue(run_overlay_job, project_id=project_id)
     if dispatch.result and isinstance(dispatch.result, dict):
-        payload = dict(dispatch.result)
-        if "project_id" in payload:
+        result_payload: dict[str, object] = dict(dispatch.result)
+        if "project_id" in result_payload:
             try:
-                payload["project_id"] = int(payload["project_id"])
+                project_value = result_payload["project_id"]
+                if isinstance(project_value, (str, int, float)):
+                    result_payload["project_id"] = int(project_value)
             except (TypeError, ValueError):
                 pass
-        return payload
+        return result_payload
 
     fallback = await run_overlay_for_project(session, project_id=project_id)
     payload: dict[str, object] = {"status": "completed", **fallback.as_dict()}
@@ -175,7 +227,7 @@ def _serialise_suggestion(
 ) -> dict[str, object]:
     """Convert overlay suggestion model into a JSON-ready dict."""
 
-    payload = item.model_dump(mode="json")
+    payload = cast(dict[str, object], item.model_dump(mode="json"))
     decision = payload.get("decision")
     if decision is None or isinstance(decision, Mapping):
         return payload

@@ -123,46 +123,6 @@ owner = "platform"
 rationale = "Third-party Pydantic internals are followed for BaseModel typing but should not fail repo checks."
 
 [[mypy_ini_ignore_errors]]
-section = "mypy-app.api.v1.developers_checklists"
-owner = "backend"
-rationale = "Checklist route typing still needs schema alias cleanup for camelCase response constructors."
-
-[[mypy_ini_ignore_errors]]
-section = "mypy-app.api.v1.overlay"
-owner = "backend"
-rationale = "Overlay routes still depend on unresolved backend.jobs import paths and a small local payload refactor."
-
-[[mypy_ini_ignore_errors]]
-section = "mypy-app.api.v1.imports"
-owner = "backend"
-rationale = "Import routes still depend on backend.jobs import aliases and helper return-type cleanup."
-
-[[mypy_ini_ignore_errors]]
-section = "mypy-app.api.v1.ai"
-owner = "backend"
-rationale = "The legacy AI route surface still needs targeted typing cleanup across a large number of handlers."
-
-[[mypy_ini_ignore_errors]]
-section = "mypy-app.api.v1.agents"
-owner = "backend"
-rationale = "Agent routes still contain several Any-return helper paths and media payload typing issues."
-
-[[mypy_ini_ignore_errors]]
-section = "mypy-app.api.v1.developers_gps"
-owner = "backend"
-rationale = "Developer GPS routes still carry dynamic alias patterns and input coercion debt."
-
-[[mypy_ini_ignore_errors]]
-section = "mypy-app.api.v1.finance_export"
-owner = "backend"
-rationale = "Finance export routes still depend on unresolved backend.jobs imports and a tuple shape mismatch."
-
-[[mypy_ini_ignore_errors]]
-section = "mypy-app.api.v1.finance_feasibility"
-owner = "backend"
-rationale = "Finance feasibility routes still depend on unresolved backend.jobs imports and payload typing cleanup."
-
-[[mypy_ini_ignore_errors]]
 section = "mypy.httpx"
 owner = "platform"
 rationale = "Vendored httpx compatibility shims are outside the current strict cleanup pass."

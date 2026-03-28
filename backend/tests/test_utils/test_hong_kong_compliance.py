@@ -10,13 +10,6 @@ import pytest
 # Ensure the app configuration loads without failing on SECRET_KEY.
 os.environ.setdefault("SECRET_KEY", "test-secret")
 
-pytestmark = pytest.mark.skip(
-    reason=(
-        "Hong Kong compliance helpers rely on SQLAlchemy metadata removal APIs that "
-        "are not available in the stubbed ORM."
-    )
-)
-
 from app.models.hong_kong_property import (
     HKComplianceStatus,
     HKPropertyTenure,
@@ -32,12 +25,12 @@ def _make_property(**overrides) -> HongKongProperty:
     defaults = dict(
         property_name="Test Property",
         address="1 Example Street, Central",
-        zoning=HKPropertyZoning.R_A,
-        tenure=HKPropertyTenure.GOVERNMENT_LEASE,
-        site_area_sqft=Decimal("10000"),
+        zoning=HKPropertyZoning.RESIDENTIAL_A,
+        tenure=HKPropertyTenure.GOVERNMENT_LEASE_50,
+        land_area_sqft=Decimal("10000"),
         plot_ratio=Decimal("8.0"),
         gross_floor_area_sqft=Decimal("50000"),
-        building_height_mpd=Decimal("80"),
+        building_height_m=Decimal("80"),
         num_storeys=20,
     )
     defaults.update(overrides)
@@ -45,13 +38,13 @@ def _make_property(**overrides) -> HongKongProperty:
 
 
 def test_calculate_gfa_utilization_requires_site_area_and_plot_ratio() -> None:
-    property = _make_property(site_area_sqft=None)
+    property = _make_property(land_area_sqft=None)
 
     result = compliance.calculate_gfa_utilization(property)
 
-    assert result["error"] == "Site area and plot ratio required for GFA calculation"
+    assert result["error"] == "Land area and plot ratio required for GFA calculation"
     assert result["max_gfa_sqft"] is None
-    assert "Specify site area and plot ratio" in result["recommendations"][0]
+    assert "Specify land area and plot ratio" in result["recommendations"][0]
 
 
 def test_calculate_gfa_utilization_returns_expected_metrics() -> None:
@@ -68,7 +61,7 @@ def test_calculate_gfa_utilization_returns_expected_metrics() -> None:
     assert result["potential_units"] is not None
     assert "saleable_area_sqft" in result["buildable_metrics"]
     # Recommendations should highlight additional GFA potential.
-    assert any("Maximum GFA" in item for item in result["recommendations"])
+    assert any("build up to" in item for item in result["recommendations"])
 
 
 @pytest.mark.asyncio
@@ -76,7 +69,8 @@ async def test_calculate_gfa_utilization_async_fallback() -> None:
     """Async helper should fall back to simple math when no session is provided."""
 
     property = _make_property(
-        zoning=HKPropertyZoning.C, gross_floor_area_sqft=Decimal("0")
+        zoning=HKPropertyZoning.COMMERCIAL,
+        gross_floor_area_sqft=Decimal("0"),
     )
 
     result = await compliance.calculate_gfa_utilization_async(property, session=None)
@@ -101,7 +95,7 @@ async def test_check_tpb_compliance_pending_without_zoning(db_session) -> None:
 
 @pytest.mark.asyncio
 async def test_check_tpb_compliance_warns_when_rules_missing(db_session) -> None:
-    property = _make_property(zoning=HKPropertyZoning.OU)
+    property = _make_property(zoning=HKPropertyZoning.OTHER_SPECIFIED_USES)
 
     result = await compliance.check_tpb_compliance(property, db_session)
 
@@ -115,9 +109,9 @@ async def test_check_bd_compliance_warns_when_rules_missing(db_session) -> None:
 
     property = _make_property(
         property_name="Industrial Building",
-        zoning=HKPropertyZoning.I,
+        zoning=HKPropertyZoning.INDUSTRIAL,
         gross_floor_area_sqft=Decimal("100000"),
-        site_area_sqft=Decimal("10000"),
+        land_area_sqft=Decimal("10000"),
         num_storeys=10,
     )
 
@@ -132,9 +126,9 @@ async def test_run_full_compliance_check_compiles_summary(db_session) -> None:
     property = _make_property(
         property_name="Summary Tower",
         plot_ratio=Decimal("10.0"),
-        building_height_mpd=Decimal("150"),
+        building_height_m=Decimal("150"),
         gross_floor_area_sqft=Decimal("100000"),
-        site_area_sqft=Decimal("10000"),
+        land_area_sqft=Decimal("10000"),
         num_storeys=30,
     )
 
@@ -168,9 +162,9 @@ async def test_update_property_compliance_sets_fields(db_session) -> None:
     property = _make_property(
         property_name="Compliance Update",
         plot_ratio=Decimal("8.0"),
-        building_height_mpd=Decimal("100"),
+        building_height_m=Decimal("100"),
         gross_floor_area_sqft=Decimal("60000"),
-        site_area_sqft=Decimal("8000"),
+        land_area_sqft=Decimal("8000"),
         num_storeys=25,
     )
 

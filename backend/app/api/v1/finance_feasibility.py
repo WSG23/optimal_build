@@ -11,11 +11,11 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+from importlib import import_module
 from time import perf_counter
-from typing import Any
+from types import ModuleType
+from typing import Any, Callable, Protocol, TypedDict, cast
 
-import backend.jobs.finance_sensitivity  # noqa: F401
-from backend.jobs import JobDispatch, job_queue
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -82,6 +82,42 @@ router = APIRouter(prefix="/finance", tags=["finance"])
 logger = get_logger(__name__)
 
 
+class _JobDispatchLike(Protocol):
+    backend: str
+    queue: str | None
+    status: str
+    task_id: str | None
+
+
+class _JobQueueLike(Protocol):
+    async def enqueue(
+        self,
+        job: str | Callable[..., Any],
+        *args: Any,
+        queue: str | None = None,
+        **kwargs: Any,
+    ) -> _JobDispatchLike: ...
+
+
+class _DscrBucket(TypedDict):
+    key: str
+    label: str
+    count: int
+    periods: list[str]
+
+
+def _load_finance_jobs_module(name: str) -> ModuleType:
+    return import_module(name)
+
+
+def _ensure_finance_sensitivity_loaded() -> None:
+    _load_finance_jobs_module("backend.jobs.finance_sensitivity")
+
+
+job_queue = cast(_JobQueueLike, _load_finance_jobs_module("backend.jobs").job_queue)
+_ensure_finance_sensitivity_loaded()
+
+
 # ---------------------------------------------------------------------------
 # Helper Functions
 # ---------------------------------------------------------------------------
@@ -111,16 +147,16 @@ def _build_finance_analytics_summary(
         moic_value = distributions / invested
     equity_multiple = moic_value
 
-    dscr_buckets: list[dict[str, Any]] = []
+    dscr_buckets: list[_DscrBucket] = []
     dscr_bucket_defs: list[tuple[str, str, Decimal | None, Decimal | None]] = [
         ("lt_1", "< 1.00x", None, Decimal("1.0")),
         ("range_1_125", "1.00x – 1.25x", Decimal("1.0"), Decimal("1.25")),
         ("range_125_150", "1.25x – 1.50x", Decimal("1.25"), Decimal("1.5")),
         ("gte_150", "≥ 1.50x", Decimal("1.5"), None),
     ]
-    bucket_counters: dict[str, dict[str, Any]] = {}
+    bucket_counters: dict[str, _DscrBucket] = {}
     for key, label, _lower, _upper in dscr_bucket_defs:
-        bucket = {"key": key, "label": label, "count": 0, "periods": []}
+        bucket: _DscrBucket = {"key": key, "label": label, "count": 0, "periods": []}
         bucket_counters[key] = bucket
         dscr_buckets.append(bucket)
 
@@ -358,7 +394,11 @@ async def run_finance_feasibility(
             stack_inputs: list[dict[str, Any]] = []
             for slice_input in payload.scenario.capital_stack:
                 facility_key = normalise_facility_key(slice_input.name)
-                facility_meta = facility_metadata_map.get(facility_key)
+                facility_meta = (
+                    facility_metadata_map.get(facility_key)
+                    if facility_key is not None
+                    else None
+                )
                 metadata = merge_facility_metadata(slice_input.metadata, facility_meta)
                 stack_inputs.append(
                     {
@@ -622,7 +662,7 @@ async def run_finance_feasibility(
                         else []
                     ),
                 }
-                dispatch: JobDispatch = await job_queue.enqueue(
+                dispatch: _JobDispatchLike = await job_queue.enqueue(
                     "finance.sensitivity",
                     scenario.id,
                     bands=[band.model_dump(mode="json") for band in sensitivity_bands],

@@ -8,11 +8,10 @@ import json
 from collections import Counter
 from collections.abc import Iterable, Mapping
 from datetime import datetime
-from typing import Any
+from typing import Any, Callable, Protocol, cast
 from uuid import uuid4
 
 from backend._compat.datetime import UTC
-from backend.jobs import job_queue
 from fastapi import (
     APIRouter,
     Depends,
@@ -63,6 +62,23 @@ SUPPORTED_IMPORT_SUFFIXES: tuple[str, ...] = (".dxf", ".ifc", ".json")
 SUPPORTED_IMPORT_MEDIA_HINTS: tuple[str, ...] = ("dxf", "ifc", "json")
 
 
+class _JobDispatchLike(Protocol):
+    result: Any | None
+    status: str
+    task_id: str | None
+
+
+class _JobQueueLike(Protocol):
+    async def enqueue(
+        self, func: Callable[..., Any], /, *args: Any, **kwargs: Any
+    ) -> _JobDispatchLike: ...
+
+
+_DetectImportMetadataFn = Callable[
+    [bytes], tuple[list[dict[str, Any]], list[str], list[dict[str, Any]]]
+]
+
+
 def _load_job_symbol(name: str) -> Any:
     """Resolve heavyweight job helpers lazily while preserving monkeypatch hooks."""
 
@@ -75,6 +91,21 @@ def _load_job_symbol(name: str) -> Any:
     resolved = getattr(module, name)
     globals()[name] = resolved
     return resolved
+
+
+def _get_job_queue() -> _JobQueueLike:
+    module = import_module("backend.jobs")
+    return cast(_JobQueueLike, module.job_queue)
+
+
+class _JobQueueProxy:
+    async def enqueue(
+        self, func: Callable[..., Any], /, *args: Any, **kwargs: Any
+    ) -> _JobDispatchLike:
+        return await _get_job_queue().enqueue(func, *args, **kwargs)
+
+
+job_queue = _JobQueueProxy()
 
 
 def __getattr__(name: str) -> Any:
@@ -231,13 +262,19 @@ def _detect_import_metadata(
 
     if name.endswith(".dxf") or "dxf" in media_type:
         try:
-            return _load_job_symbol("detect_dxf_metadata")(payload)
+            detect_dxf_metadata = cast(
+                _DetectImportMetadataFn, _load_job_symbol("detect_dxf_metadata")
+            )
+            return detect_dxf_metadata(payload)
         except Exception:  # pragma: no cover - optional dependency guard
             return [], [], []
 
     if name.endswith(".ifc") or "ifc" in media_type:
         try:
-            return _load_job_symbol("detect_ifc_metadata")(payload)
+            detect_ifc_metadata = cast(
+                _DetectImportMetadataFn, _load_job_symbol("detect_ifc_metadata")
+            )
+            return detect_ifc_metadata(payload)
         except Exception:  # pragma: no cover - optional dependency guard
             return [], [], []
 

@@ -7,10 +7,10 @@ from __future__ import annotations
 
 import base64
 import sys
-from datetime import timedelta
+from datetime import datetime, timedelta
 from functools import lru_cache
 from importlib import import_module
-from typing import Any
+from typing import Any, cast
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -280,7 +280,7 @@ def _score_grade(score: float) -> str:
     return "F"
 
 
-def _tracked_since(competitor: Any):
+def _tracked_since(competitor: Any) -> datetime:
     tracked_since = getattr(competitor, "tracked_since", None)
     if tracked_since is None:
         tracked_since = utcnow()
@@ -288,7 +288,7 @@ def _tracked_since(competitor: Any):
             competitor.tracked_since = tracked_since
         except Exception:
             pass
-    return tracked_since
+    return cast(datetime, tracked_since)
 
 
 def _workflow_response(result: Any) -> WorkflowResultResponse | None:

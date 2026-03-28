@@ -507,6 +507,11 @@ def calculate_gfa_utilization(property: TorontoProperty) -> Dict[str, Any]:
             recommendations.append(
                 f"Potential for approximately {potential_units} additional units"
             )
+        if property.iz_area and potential_units:
+            affordable_units = int(potential_units * 0.10)  # Assume 10% IZ
+            recommendations.append(
+                f"Note: ~{affordable_units} units may need to be affordable (IZ area)"
+            )
     else:
         recommendations.append("Maximum GFA utilization reached")
 

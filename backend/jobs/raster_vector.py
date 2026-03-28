@@ -447,7 +447,7 @@ def _vectorize_bitmap_image(
         walls: list[WallCandidate] = []
         if options.infer_walls and width > 0 and height > 0:
             threshold = int(255 * options.bitmap_threshold)
-            data = list(grayscale.getdata())
+            data = list(grayscale.get_flattened_data())
             binary: list[list[bool]] = []
             for y in range(height):
                 offset = y * width

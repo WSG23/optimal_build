@@ -9,7 +9,7 @@ from uuid import UUID, uuid4
 import structlog
 from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import AliasChoices, BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -288,6 +288,8 @@ def _collect_quick_metrics(
 
     def _coerce_float_inner(value: object) -> float | None:
         if value is None:
+            return None
+        if not isinstance(value, (str, bytes, bytearray, int, float)):
             return None
         try:
             return float(value)
@@ -903,6 +905,8 @@ def _summarise_financials(
 class DeveloperGPSLogRequest(BaseModel):
     """GPS capture request tailored for developers."""
 
+    model_config = {"populate_by_name": True}
+
     latitude: float = Field(..., ge=-90, le=90)
     longitude: float = Field(..., ge=-180, le=180)
     development_scenarios: list[CaptureScenario] | None = Field(
@@ -919,7 +923,6 @@ class DeveloperGPSLogRequest(BaseModel):
     jurisdiction_code: str | None = Field(
         default="SG",
         alias="jurisdictionCode",
-        validation_alias=AliasChoices("jurisdictionCode", "jurisdiction_code"),
         description="Jurisdiction code for the captured property (e.g. 'SG', 'HK').",
     )
 
@@ -997,30 +1000,42 @@ DeveloperGPSLogResponse.model_rebuild()
 class FinanceProjectCreateRequest(BaseModel):
     """Request body for creating a finance project/scenario from a GPS capture."""
 
-    project_name: str | None = Field(
-        default=None, validation_alias=AliasChoices("project_name", "projectName")
-    )
-    scenario_name: str | None = Field(
-        default=None, validation_alias=AliasChoices("scenario_name", "scenarioName")
-    )
+    model_config = {"populate_by_name": True}
+
+    project_name: str | None = Field(default=None, alias="projectName")
+    scenario_name: str | None = Field(default=None, alias="scenarioName")
     total_estimated_capex_sgd: float | None = Field(
         default=None,
-        validation_alias=AliasChoices(
-            "total_estimated_capex_sgd",
-            "totalEstimatedCapexSgd",
-            "total_estimated_capex",
-            "totalEstimatedCapex",
-        ),
+        alias="totalEstimatedCapexSgd",
     )
     total_estimated_revenue_sgd: float | None = Field(
         default=None,
-        validation_alias=AliasChoices(
-            "total_estimated_revenue_sgd",
-            "totalEstimatedRevenueSgd",
-            "total_estimated_revenue",
-            "totalEstimatedRevenue",
-        ),
+        alias="totalEstimatedRevenueSgd",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalise_legacy_keys(cls, value: Any) -> Any:
+        if not isinstance(value, dict):
+            return value
+        payload = dict(value)
+        if (
+            "total_estimated_capex_sgd" not in payload
+            and "totalEstimatedCapexSgd" not in payload
+        ):
+            for legacy_key in ("total_estimated_capex", "totalEstimatedCapex"):
+                if legacy_key in payload:
+                    payload["total_estimated_capex_sgd"] = payload[legacy_key]
+                    break
+        if (
+            "total_estimated_revenue_sgd" not in payload
+            and "totalEstimatedRevenueSgd" not in payload
+        ):
+            for legacy_key in ("total_estimated_revenue", "totalEstimatedRevenue"):
+                if legacy_key in payload:
+                    payload["total_estimated_revenue_sgd"] = payload[legacy_key]
+                    break
+        return payload
 
 
 class FinanceProjectCreateResponse(BaseModel):
@@ -1035,32 +1050,32 @@ class FinanceProjectCreateResponse(BaseModel):
 class CaptureProjectCreateRequest(BaseModel):
     """Request body for saving a capture as a project."""
 
-    project_name: str | None = Field(
-        default=None, validation_alias=AliasChoices("project_name", "projectName")
-    )
+    model_config = {"populate_by_name": True}
+
+    project_name: str | None = Field(default=None, alias="projectName")
     include_checklist: bool = Field(
         default=False,
-        validation_alias=AliasChoices("include_checklist", "includeChecklist"),
+        alias="includeChecklist",
     )
     development_scenarios: list[CaptureScenario] | None = Field(
         default=None,
-        validation_alias=AliasChoices("development_scenarios", "developmentScenarios"),
+        alias="developmentScenarios",
     )
 
 
 class CaptureProjectLinkRequest(BaseModel):
     """Request body for linking a capture to an existing project."""
 
-    project_id: UUID = Field(
-        ..., validation_alias=AliasChoices("project_id", "projectId")
-    )
+    model_config = {"populate_by_name": True}
+
+    project_id: UUID = Field(..., alias="projectId")
     include_checklist: bool = Field(
         default=False,
-        validation_alias=AliasChoices("include_checklist", "includeChecklist"),
+        alias="includeChecklist",
     )
     development_scenarios: list[CaptureScenario] | None = Field(
         default=None,
-        validation_alias=AliasChoices("development_scenarios", "developmentScenarios"),
+        alias="developmentScenarios",
     )
 
 

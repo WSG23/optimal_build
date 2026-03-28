@@ -11,9 +11,10 @@ from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 try:  # pragma: no cover - optional runtime dependency
-    from PIL import Image
+    from PIL import Image, ImageStat
 except ModuleNotFoundError:  # pragma: no cover
     Image = None
+    ImageStat = None
 
 try:  # pragma: no cover - optional runtime dependency
     import exifread  # type: ignore[import-untyped]
@@ -371,8 +372,8 @@ class PhotoDocumentationManager:
             image = image.convert("RGB")
 
         # Get color statistics
-        pixels = list(image.getdata())
-        avg_brightness = sum(sum(pixel) for pixel in pixels) / (len(pixels) * 3)
+        channel_means = ImageStat.Stat(image).mean
+        avg_brightness = sum(channel_means) / len(channel_means)
 
         # Basic condition detection based on brightness
         if avg_brightness > 200:

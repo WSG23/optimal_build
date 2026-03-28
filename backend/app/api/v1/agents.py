@@ -7,7 +7,7 @@ import importlib.util
 import sys
 from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 from uuid import UUID, uuid4
 
 import structlog
@@ -83,14 +83,14 @@ def _load_class(name: str, module_name: str) -> Any:
 
 
 def _load_optional_class(name: str, module_name: str) -> type[Any] | None:
-    return _load_class(name, module_name)
+    return cast(type[Any] | None, _load_class(name, module_name))
 
 
 def _load_required_class(name: str, module_name: str) -> type[Any]:
     resolved = _load_class(name, module_name)
     if resolved is None:
         raise RuntimeError(f"{name} is unavailable in the current environment")
-    return resolved  # type: ignore[return-value]
+    return cast(type[Any], resolved)
 
 
 def __getattr__(name: str) -> Any:
@@ -1148,7 +1148,7 @@ async def upload_property_photo(
     photo_data = await file.read()
 
     # Prepare user metadata
-    user_metadata = {}
+    user_metadata: dict[str, Any] = {}
     if notes:
         user_metadata["notes"] = notes
     if tags:
@@ -1197,7 +1197,7 @@ async def get_property_photos(
             property_id=property_id, session=db, include_urls=True
         )
 
-        return photos
+        return cast(list[dict[str, Any]], photos)
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -1314,7 +1314,7 @@ async def get_property_voice_notes(
             property_id=property_id, session=db, include_urls=True
         )
 
-        return voice_notes
+        return cast(list[dict[str, Any]], voice_notes)
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -1342,7 +1342,7 @@ async def get_voice_note(
         if voice_note["property_id"] != property_id:
             raise HTTPException(status_code=404, detail="Voice note not found")
 
-        return voice_note
+        return cast(dict[str, Any], voice_note)
 
     except HTTPException:
         raise
@@ -1384,7 +1384,7 @@ async def update_voice_note(
         if not updated:
             raise HTTPException(status_code=404, detail="Voice note not found")
 
-        return updated
+        return cast(dict[str, Any], updated)
 
     except HTTPException:
         raise
@@ -1536,7 +1536,7 @@ async def generate_market_report(
             ),
         )
 
-        return report.to_dict()
+        return cast(dict[str, Any], report.to_dict())
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e

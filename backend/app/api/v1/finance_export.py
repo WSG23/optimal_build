@@ -10,16 +10,16 @@ from __future__ import annotations
 
 import csv
 import io
+from importlib import import_module
 import json
+from types import ModuleType
 import zipfile
 from collections.abc import Iterator, Mapping, Sequence
 from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from time import perf_counter
-from typing import Any
+from typing import Any, Callable, Protocol, cast
 
-import backend.jobs.finance_sensitivity  # noqa: F401
-from backend.jobs import JobDispatch, job_queue
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
@@ -66,6 +66,35 @@ from .finance_scenarios import (
 
 router = APIRouter(prefix="/finance", tags=["finance"])
 logger = get_logger(__name__)
+
+
+class _JobDispatchLike(Protocol):
+    backend: str
+    queue: str | None
+    status: str
+    task_id: str | None
+
+
+class _JobQueueLike(Protocol):
+    async def enqueue(
+        self,
+        job: str | Callable[..., Any],
+        *args: Any,
+        queue: str | None = None,
+        **kwargs: Any,
+    ) -> _JobDispatchLike: ...
+
+
+def _load_finance_jobs_module(name: str) -> ModuleType:
+    return import_module(name)
+
+
+def _ensure_finance_sensitivity_loaded() -> None:
+    _load_finance_jobs_module("backend.jobs.finance_sensitivity")
+
+
+job_queue = cast(_JobQueueLike, _load_finance_jobs_module("backend.jobs").job_queue)
+_ensure_finance_sensitivity_loaded()
 
 
 # ---------------------------------------------------------------------------
@@ -600,7 +629,7 @@ def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes
                 yield chunk
             summary_meta = metadata.get("summary")
             if isinstance(summary_meta, dict):
-                summary_rows = (
+                asset_summary_rows = (
                     (
                         "Total Estimated Revenue",
                         summary_meta.get("total_estimated_revenue_sgd"),
@@ -617,7 +646,7 @@ def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes
                         "",
                     ),
                 )
-                for label, value, unit in summary_rows:
+                for label, value, unit in asset_summary_rows:
                     if value is None:
                         continue
                     writer.writerow([label, _stringify(value), unit])
@@ -683,7 +712,7 @@ def _iter_results_csv(scenario: FinScenario, *, currency: str) -> Iterator[bytes
             chunk = _flush_buffer(buffer)
             if chunk:
                 yield chunk
-            summary_rows = (
+            summary_rows: tuple[tuple[str, Any | None, str], ...] = (
                 ("Base Interest Rate", metadata.get("interest_rate"), "ratio"),
                 ("Total Interest", metadata.get("total_interest"), currency),
                 ("Upfront Fees", metadata.get("upfront_fee_total"), currency),
@@ -1046,7 +1075,7 @@ async def rerun_finance_sensitivity(
             drawdown_summary=drawdown_summary,
             loan_config=loan_config,
         )
-        dispatch: JobDispatch = await job_queue.enqueue(
+        dispatch: _JobDispatchLike = await job_queue.enqueue(
             "finance.sensitivity",
             scenario.id,
             bands=[band.model_dump(mode="json") for band in payload.sensitivity_bands],

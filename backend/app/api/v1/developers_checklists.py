@@ -39,7 +39,7 @@ class ChecklistItemResponse(BaseModel):
     completed_date: Optional[str]
     completed_by: Optional[str]
     notes: Optional[str]
-    metadata: dict
+    metadata: dict[str, Any]
     created_at: str
     updated_at: str
     requires_professional: Optional[bool] = None
@@ -182,17 +182,17 @@ def _serialize_checklist_template(
 ) -> ChecklistTemplateResponse:
     return ChecklistTemplateResponse(
         id=str(template.id),
-        developmentScenario=template.development_scenario,
+        development_scenario=template.development_scenario,
         category=template.category.value,
-        itemTitle=template.item_title,
-        itemDescription=template.item_description,
+        item_title=template.item_title,
+        item_description=template.item_description,
         priority=template.priority.value,
-        typicalDurationDays=template.typical_duration_days,
-        requiresProfessional=template.requires_professional,
-        professionalType=template.professional_type,
-        displayOrder=template.display_order,
-        createdAt=template.created_at.isoformat(),
-        updatedAt=template.updated_at.isoformat(),
+        typical_duration_days=template.typical_duration_days,
+        requires_professional=template.requires_professional,
+        professional_type=template.professional_type,
+        display_order=template.display_order,
+        created_at=template.created_at.isoformat(),
+        updated_at=template.updated_at.isoformat(),
     )
 
 
@@ -211,17 +211,14 @@ async def list_checklist_templates(
     ),
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-) -> List[dict[str, Any]]:
+) -> List[ChecklistTemplateResponse]:
     """Return checklist templates, optionally filtered by development scenario."""
 
     await DeveloperChecklistService.ensure_templates_seeded(session)
     templates = await DeveloperChecklistService.list_templates(
         session, development_scenario=development_scenario
     )
-    return [
-        _serialize_checklist_template(template).model_dump(by_alias=True)
-        for template in templates
-    ]
+    return [_serialize_checklist_template(template) for template in templates]
 
 
 @router.post(
@@ -233,7 +230,7 @@ async def create_checklist_template(
     request: ChecklistTemplateCreateRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-) -> dict[str, Any]:
+) -> ChecklistTemplateResponse:
     """Create a new checklist template definition."""
 
     try:
@@ -244,7 +241,7 @@ async def create_checklist_template(
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     await session.commit()
-    return _serialize_checklist_template(template).model_dump(by_alias=True)
+    return _serialize_checklist_template(template)
 
 
 @router.put(
@@ -256,7 +253,7 @@ async def update_checklist_template(
     request: ChecklistTemplateUpdateRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
-) -> dict[str, Any]:
+) -> ChecklistTemplateResponse:
     """Update an existing checklist template definition."""
 
     try:
@@ -270,7 +267,7 @@ async def update_checklist_template(
         raise HTTPException(status_code=404, detail="Template not found")
 
     await session.commit()
-    return _serialize_checklist_template(template).model_dump(by_alias=True)
+    return _serialize_checklist_template(template)
 
 
 @router.delete(

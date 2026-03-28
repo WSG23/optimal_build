@@ -4,11 +4,6 @@ from __future__ import annotations
 
 import pytest
 
-pytest.skip(
-    "SQLAlchemy stub lacks metadata.remove, pending full SQLAlchemy port",
-    allow_module_level=True,
-)
-
 import json
 from collections.abc import Iterable
 from datetime import datetime, timedelta

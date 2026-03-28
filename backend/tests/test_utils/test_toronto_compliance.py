@@ -10,13 +10,6 @@ import pytest
 # Ensure the app configuration loads without failing on SECRET_KEY.
 os.environ.setdefault("SECRET_KEY", "test-secret")
 
-pytestmark = pytest.mark.skip(
-    reason=(
-        "Toronto compliance helpers rely on SQLAlchemy metadata removal APIs that "
-        "are not available in the stubbed ORM."
-    )
-)
-
 from app.models.toronto_property import (
     TorontoComplianceStatus,
     TorontoPropertyTenure,
@@ -196,11 +189,9 @@ def test_inclusionary_zoning_calculation() -> None:
 
     # IZ info should be present for applicable properties
     assert result is not None
-    # IZ recommendations should mention affordable housing if in IZ area
-    if property.iz_area and result.get("potential_units"):
-        assert any(
-            "affordable" in item.lower() for item in result.get("recommendations", [])
-        )
+    assert any(
+        "affordable" in item.lower() for item in result.get("recommendations", [])
+    )
 
 
 @pytest.mark.asyncio

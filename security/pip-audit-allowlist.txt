@@ -1,3 +1,2 @@
-CVE-2026-25990 | platform | 2026-06-30 | Pillow is pinned at 10.4.0; the repo does not accept PSD uploads on the backend photo/document pipeline and the 12.1.1 upgrade still needs coordinated image/PDF regression validation.
 CVE-2026-26013 | platform | 2026-05-31 | langchain-core is flagged via vision token counting SSRF, but this repo refuses remote image URLs and only passes controlled data URLs in backend/app/services/ai/multi_modal_analyzer.py while the 1.x LangChain upgrade remains a larger compatibility project.
 CVE-2026-4539 | platform | 2026-06-30 | Pygments is a transitive tooling dependency with no upstream fix version yet; the advisory requires local crafted input rather than a production request path.

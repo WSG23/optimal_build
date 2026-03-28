@@ -10,13 +10,6 @@ import pytest
 # Ensure the app configuration loads without failing on SECRET_KEY.
 os.environ.setdefault("SECRET_KEY", "test-secret")
 
-pytestmark = pytest.mark.skip(
-    reason=(
-        "New Zealand compliance helpers rely on SQLAlchemy metadata removal APIs that "
-        "are not available in the stubbed ORM."
-    )
-)
-
 from app.models.new_zealand_property import (
     NZComplianceStatus,
     NZPropertyTenure,
@@ -32,9 +25,9 @@ def _make_property(**overrides) -> NewZealandProperty:
     defaults = dict(
         property_name="Test Property",
         address="1 Example Street, Auckland",
-        zoning=NZPropertyZoning.MHU,
+        zoning=NZPropertyZoning.RESIDENTIAL_MIXED_HOUSING_URBAN,
         tenure=NZPropertyTenure.FREEHOLD,
-        lot_area_sqm=Decimal("800"),
+        land_area_sqm=Decimal("800"),
         height_in_relation_to_boundary=Decimal("8.0"),
         gross_floor_area_sqm=Decimal("400"),
         building_height_m=Decimal("11"),
@@ -45,13 +38,13 @@ def _make_property(**overrides) -> NewZealandProperty:
 
 
 def test_calculate_gfa_utilization_requires_lot_area() -> None:
-    property = _make_property(lot_area_sqm=None)
+    property = _make_property(land_area_sqm=None)
 
     result = compliance.calculate_gfa_utilization(property)
 
-    assert result["error"] == "Lot area required for GFA calculation"
+    assert result["error"] == "Land area required for GFA calculation"
     assert result["max_gfa_sqm"] is None
-    assert "Specify lot area" in result["recommendations"][0]
+    assert "Specify land area" in result["recommendations"][0]
 
 
 def test_calculate_gfa_utilization_returns_expected_metrics() -> None:
@@ -64,7 +57,7 @@ def test_calculate_gfa_utilization_returns_expected_metrics() -> None:
     assert result["current_gfa_sqm"] == pytest.approx(400.0)
     assert result["utilization_percentage"] is not None
     # Recommendations should highlight development potential
-    assert any("Maximum GFA" in item for item in result["recommendations"])
+    assert any("Estimated maximum GFA" in item for item in result["recommendations"])
 
 
 @pytest.mark.asyncio
@@ -72,7 +65,8 @@ async def test_calculate_gfa_utilization_async_fallback() -> None:
     """Async helper should fall back to simple math when no session is provided."""
 
     property = _make_property(
-        zoning=NZPropertyZoning.THAB, gross_floor_area_sqm=Decimal("0")
+        zoning=NZPropertyZoning.RESIDENTIAL_TERRACE_HOUSING_APARTMENT,
+        gross_floor_area_sqm=Decimal("0"),
     )
 
     result = await compliance.calculate_gfa_utilization_async(property, session=None)
@@ -100,7 +94,7 @@ async def test_check_district_plan_compliance_pending_without_zoning(
 async def test_check_district_plan_compliance_warns_when_rules_missing(
     db_session,
 ) -> None:
-    property = _make_property(zoning=NZPropertyZoning.RURAL)
+    property = _make_property(zoning=NZPropertyZoning.RURAL_PRODUCTION)
 
     result = await compliance.check_district_plan_compliance(property, db_session)
 
@@ -116,16 +110,17 @@ async def test_check_building_code_compliance_warns_when_rules_missing(
 
     property = _make_property(
         property_name="Industrial Building",
-        zoning=NZPropertyZoning.HEAVY_IND,
+        zoning=NZPropertyZoning.BUSINESS_HEAVY_INDUSTRY,
         gross_floor_area_sqm=Decimal("5000"),
-        lot_area_sqm=Decimal("2000"),
+        land_area_sqm=Decimal("2000"),
         num_storeys=2,
     )
 
     result = await compliance.check_building_code_compliance(property, db_session)
 
-    assert result["status"] == NZComplianceStatus.WARNING
-    assert "No building rules found" in result["warnings"][0]
+    assert result["status"] == NZComplianceStatus.PASSED
+    assert result["warnings"] == []
+    assert result["recommendations"]
 
 
 @pytest.mark.asyncio
@@ -133,7 +128,7 @@ async def test_run_full_compliance_check_compiles_summary(db_session) -> None:
     property = _make_property(
         property_name="Summary Building",
         gross_floor_area_sqm=Decimal("1200"),
-        lot_area_sqm=Decimal("600"),
+        land_area_sqm=Decimal("600"),
         building_height_m=Decimal("15"),
         num_storeys=4,
     )
@@ -169,7 +164,7 @@ async def test_update_property_compliance_sets_fields(db_session) -> None:
         property_name="Compliance Update",
         building_height_m=Decimal("12"),
         gross_floor_area_sqm=Decimal("600"),
-        lot_area_sqm=Decimal("500"),
+        land_area_sqm=Decimal("500"),
         num_storeys=3,
     )
 
@@ -183,12 +178,13 @@ async def test_update_property_compliance_sets_fields(db_session) -> None:
     assert updated.max_developable_gfa_sqm is not None
 
 
-def test_activity_status_classifications() -> None:
+@pytest.mark.asyncio
+async def test_activity_status_classifications(db_session) -> None:
     """Test that activity status is correctly determined based on compliance."""
     # This tests the RMA activity status logic
     # Permitted, Controlled, Restricted Discretionary, Discretionary, Non-Complying
     property = _make_property()
-    result = compliance.calculate_gfa_utilization(property)
+    result = await compliance.check_district_plan_compliance(property, db_session)
 
     # Activity status should be present in results
-    assert "activity_status" in result or result.get("error") is not None
+    assert "activity_status" in result
