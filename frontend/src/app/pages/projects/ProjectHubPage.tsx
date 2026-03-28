@@ -115,8 +115,6 @@ export function ProjectHubPage() {
     )
   }
 
-  const basePath = `/projects/${currentProject.id}`
-
   // Render KPI skeleton using MetricTile loading state for exact sizing match
   const renderKPISkeleton = () => (
     <Grid container spacing={3} mb={5}>
@@ -150,8 +148,7 @@ export function ProjectHubPage() {
             label={kpi.label}
             value={kpi.value}
             variant="default"
-            trend={kpi.trend?.value}
-            trendLabel={kpi.trend?.label}
+            trend={kpi.trend ?? undefined}
             sx={{ width: '100%', height: '100%' }}
           />
         </Grid>
@@ -179,7 +176,7 @@ export function ProjectHubPage() {
                     borderColor: color,
                   },
                 }}
-                hover="lift"
+                hoverEffect
                 onClick={() => navigate(item.path)}
                 role="button"
               >

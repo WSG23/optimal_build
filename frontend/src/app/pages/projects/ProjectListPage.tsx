@@ -14,7 +14,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import { FolderOpenOutlined } from '@mui/icons-material'
 
+import { EmptyState } from '../../../components/canonical'
 import { useProject } from '../../../contexts/useProject'
 import { useRouterController } from '../../../router'
 
@@ -83,7 +85,15 @@ export function ProjectListPage() {
       )}
 
       {!isProjectLoading && projects.length === 0 && (
-        <Typography color="text.secondary">No projects yet.</Typography>
+        <EmptyState
+          icon={<FolderOpenOutlined />}
+          title="No projects yet"
+          description="Create a project to start feasibility, finance, and intelligence workflows."
+          actionLabel="Create project"
+          onAction={() => setCreateOpen(true)}
+          size="lg"
+          sx={{ py: 8, mb: 3 }}
+        />
       )}
 
       <Grid container spacing={2}>

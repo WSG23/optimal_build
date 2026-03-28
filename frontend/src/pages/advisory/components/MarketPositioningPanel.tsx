@@ -1,10 +1,10 @@
 import { Box, Typography, Grid, Chip } from '@mui/material'
 import { GlassCard } from '../../../components/canonical/GlassCard'
 import { StatusChip } from '../../../components/canonical/StatusChip'
-import type { MarketPositioning } from '../../api/advisory'
+import type { AdvisoryMarketPositioning } from '../../../api/advisory'
 
 interface MarketPositioningPanelProps {
-  data: MarketPositioning
+  data: AdvisoryMarketPositioning
 }
 
 export function MarketPositioningPanel({ data }: MarketPositioningPanelProps) {
@@ -51,7 +51,7 @@ export function MarketPositioningPanel({ data }: MarketPositioningPanelProps) {
               >
                 {data.market_tier}
               </Typography>
-              <StatusChip status="active" label="Strategic Fit" />
+              <StatusChip status="brand">Strategic Fit</StatusChip>
             </Box>
           </Grid>
 

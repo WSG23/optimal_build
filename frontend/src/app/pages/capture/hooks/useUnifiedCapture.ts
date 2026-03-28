@@ -102,7 +102,9 @@ export interface UseUnifiedCaptureReturn {
 
   // Geocoding
   geocodeError: string | null
-  handleForwardGeocode: () => Promise<void>
+  handleForwardGeocode: (
+    addressToGeocode?: string,
+  ) => Promise<{ latitude: number; longitude: number } | null>
   handleReverseGeocode: () => Promise<void>
 
   // Map

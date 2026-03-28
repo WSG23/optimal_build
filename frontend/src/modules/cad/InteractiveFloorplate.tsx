@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Box, useTheme, Fade } from '@mui/material'
 import { keyframes } from '@emotion/react'
+import { AutoFixHigh, Autorenew } from '@mui/icons-material'
 import { DetectedUnit } from './types'
 
 // Vertical Radar Sweep Animation
@@ -65,7 +66,11 @@ export function InteractiveFloorplate({
     })
   }, [units])
 
-  const isEmpty = units.length === 0 || loading
+  const displayState = loading
+    ? 'loading'
+    : units.length === 0
+      ? 'empty'
+      : 'ready'
 
   return (
     <Box
@@ -109,121 +114,38 @@ export function InteractiveFloorplate({
       </svg>
 
       {/* Main Content */}
-      <Fade in={true} timeout={1000}>
-        <svg
-          viewBox="0 0 800 600"
-          preserveAspectRatio="xMidYMid meet"
-          style={{ width: '100%', height: '100%' }}
-        >
-          <defs>
-            <linearGradient id="unitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="rgba(59, 130, 246, 0.1)" />
-              <stop offset="100%" stopColor="rgba(59, 130, 246, 0.3)" />
-            </linearGradient>
-            <linearGradient
-              id="unitGradHover"
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="100%"
-            >
-              <stop offset="0%" stopColor="rgba(59, 130, 246, 0.3)" />
-              <stop offset="100%" stopColor="rgba(59, 130, 246, 0.6)" />
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
-              <feMerge>
-                <feMergeNode in="coloredBlur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
+      {displayState === 'ready' ? (
+        <Fade in={true} timeout={1000}>
+          <svg
+            viewBox="0 0 800 600"
+            preserveAspectRatio="xMidYMid meet"
+            style={{ width: '100%', height: '100%' }}
+          >
+            <defs>
+              <linearGradient id="unitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="rgba(59, 130, 246, 0.1)" />
+                <stop offset="100%" stopColor="rgba(59, 130, 246, 0.3)" />
+              </linearGradient>
+              <linearGradient
+                id="unitGradHover"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="100%"
+              >
+                <stop offset="0%" stopColor="rgba(59, 130, 246, 0.3)" />
+                <stop offset="100%" stopColor="rgba(59, 130, 246, 0.6)" />
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
 
-          {isEmpty ? (
-            // Empty State: "Living Blueprint" Wireframe
-            <g transform="translate(400, 300)">
-              {/* Rotating Outer Ring */}
-              <g style={{ animation: `${rotate} 60s linear infinite` }}>
-                <circle
-                  r="200"
-                  fill="none"
-                  stroke="rgba(255, 255, 255, 0.05)"
-                  strokeWidth="1"
-                />
-                <path
-                  d="M -200 0 L 200 0 M 0 -200 L 0 200"
-                  stroke="rgba(255,255,255,0.05)"
-                  strokeDasharray="5 5"
-                />
-              </g>
-
-              {/* Wireframe Building Placeholder */}
-              <g transform="translate(-100, -140) scale(0.8)">
-                {/* 3D loose Isometric-ish wireframe */}
-                <path
-                  d="M100 250 L250 180 L250 50 L100 120 Z"
-                  fill="none"
-                  stroke="rgba(6, 182, 212, 0.3)"
-                  strokeWidth="2"
-                />{' '}
-                {/* Right Face */}
-                <path
-                  d="M100 250 L0 200 L0 70 L100 120 Z"
-                  fill="none"
-                  stroke="rgba(6, 182, 212, 0.3)"
-                  strokeWidth="2"
-                />{' '}
-                {/* Left Face */}
-                <path
-                  d="M100 120 L250 50 L150 0 L0 70 Z"
-                  fill="none"
-                  stroke="rgba(6, 182, 212, 0.5)"
-                  strokeWidth="2"
-                />{' '}
-                {/* Top Face */}
-                {/* Internal Structure Lines */}
-                <path
-                  d="M100 120 L100 250"
-                  stroke="rgba(6, 182, 212, 0.2)"
-                  strokeDasharray="4 4"
-                />
-                <path
-                  d="M0 200 L100 250 L250 180"
-                  stroke="rgba(6, 182, 212, 0.2)"
-                />
-              </g>
-
-              {/* Status Indicator */}
-              <g transform="translate(0, 180)">
-                <text
-                  textAnchor="middle"
-                  fill="var(--ob-brand-400)"
-                  fontSize="14"
-                  fontFamily="monospace"
-                  letterSpacing="4"
-                  style={{ textShadow: '0 0 10px rgba(6,182,212,0.8)' }}
-                >
-                  {loading ? 'SCANNING_SECTORS' : 'WAITING_FOR_CAD_INPUT'}
-                </text>
-                <rect
-                  x="-10"
-                  y="20"
-                  width="20"
-                  height="4"
-                  fill="var(--ob-brand-400)"
-                >
-                  <animate
-                    attributeName="opacity"
-                    values="0;1;0"
-                    dur="1s"
-                    repeatCount="indefinite"
-                  />
-                </rect>
-              </g>
-            </g>
-          ) : (
-            // Units view remains same
-            layout.map((unit) => {
+            {layout.map((unit) => {
               const isHovered = hoveredUnitId === unit.id
               return (
                 <g
@@ -278,10 +200,109 @@ export function InteractiveFloorplate({
                   )}
                 </g>
               )
-            })
-          )}
-        </svg>
-      </Fade>
+            })}
+          </svg>
+        </Fade>
+      ) : (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 4,
+            zIndex: 5,
+          }}
+        >
+          <Box
+            sx={{
+              width: 'min(480px, 100%)',
+              borderRadius: 'var(--ob-radius-sm)',
+              border: '1px solid var(--ob-border-fine)',
+              background:
+                'radial-gradient(circle at top, rgba(0, 214, 255, 0.14), transparent 65%), rgba(10, 22, 40, 0.82)',
+              backdropFilter: 'blur(var(--ob-blur-md))',
+              boxShadow: '0 0 36px rgba(0, 214, 255, 0.08)',
+              textAlign: 'center',
+              px: 4,
+              py: 5,
+            }}
+          >
+            <Box
+              sx={{
+                width: 72,
+                height: 72,
+                mx: 'auto',
+                mb: 2,
+                borderRadius: '50%',
+                border: '1px solid rgba(0, 214, 255, 0.28)',
+                background: 'rgba(0, 214, 255, 0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 0 24px rgba(0, 214, 255, 0.12)',
+              }}
+            >
+              {displayState === 'loading' ? (
+                <Autorenew
+                  sx={{
+                    color: 'var(--ob-brand-400)',
+                    fontSize: 36,
+                    animation: `${rotate} 2.4s linear infinite`,
+                  }}
+                />
+              ) : (
+                <AutoFixHigh
+                  sx={{
+                    color: 'var(--ob-brand-400)',
+                    fontSize: 36,
+                  }}
+                />
+              )}
+            </Box>
+            <Box
+              sx={{
+                color: 'var(--ob-brand-400)',
+                fontSize: 'var(--ob-font-size-xs)',
+                fontWeight: 700,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                mb: 1.5,
+              }}
+            >
+              {displayState === 'loading'
+                ? 'Scanning sectors'
+                : 'CAD detection ready'}
+            </Box>
+            <Box
+              sx={{
+                color: 'var(--ob-color-text-primary)',
+                fontSize: 'var(--ob-font-size-xl)',
+                fontWeight: 700,
+                lineHeight: 1.2,
+                mb: 1,
+              }}
+            >
+              {displayState === 'loading'
+                ? 'Preparing detection overlays'
+                : 'Upload a CAD file to see detection results'}
+            </Box>
+            <Box
+              sx={{
+                color: 'var(--ob-color-text-secondary)',
+                fontSize: 'var(--ob-font-size-sm)',
+                maxWidth: 360,
+                mx: 'auto',
+              }}
+            >
+              {displayState === 'loading'
+                ? 'We are mapping floors, unit boundaries, and review overlays before the interactive floorplate comes online.'
+                : 'Detection layers, floor segmentation, and feasibility overlays will appear here once source plans are processed.'}
+            </Box>
+          </Box>
+        </Box>
+      )}
 
       {/* Vertical Green Radar Sweep */}
       <Box

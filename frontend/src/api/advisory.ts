@@ -35,10 +35,20 @@ export interface AdvisoryAssetMix {
   notes: string[]
 }
 
+export interface AdvisoryPricingGuidanceRange {
+  target_min: number
+  target_max: number
+}
+
+export interface AdvisoryTargetSegment {
+  segment: string
+  weight_pct: number
+}
+
 export interface AdvisoryMarketPositioning {
   market_tier: string
-  pricing_guidance: Record<string, Record<string, number>>
-  target_segments: Array<Record<string, unknown>>
+  pricing_guidance: Record<string, AdvisoryPricingGuidanceRange>
+  target_segments: AdvisoryTargetSegment[]
   messaging: string[]
 }
 

@@ -9,11 +9,11 @@ import {
 } from 'recharts'
 import { GlassCard } from '../../../components/canonical/GlassCard'
 import { AdvisoryTable } from './AdvisoryTable'
-import type { AdvisoryMixRecommendation } from '../../api/advisory'
+import type { AdvisoryAssetMixSegment } from '../../../api/advisory'
 
 interface AssetMixPanelProps {
   totalGfa: number | null
-  recommendations: AdvisoryMixRecommendation[]
+  recommendations: AdvisoryAssetMixSegment[]
   notes: string[]
 }
 
@@ -87,7 +87,7 @@ export function AssetMixPanel({
                 dataKey="value"
                 stroke="none"
               >
-                {chartData.map((entry, index) => (
+                {chartData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={getFill(index)} />
                 ))}
               </Pie>

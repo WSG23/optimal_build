@@ -5,12 +5,11 @@ import {
   TextField,
   MenuItem,
   CircularProgress,
-  Avatar,
   Stack,
 } from '@mui/material'
 import { GlassCard } from '../../../components/canonical/GlassCard'
 import { GlassButton } from '../../../components/canonical/GlassButton'
-import type { AdvisoryFeedbackItem } from '../../api/advisory'
+import type { AdvisoryFeedbackItem } from '../../../api/advisory'
 import type { FormEvent } from 'react'
 
 interface FeedbackFormProps {
@@ -78,7 +77,7 @@ export function FeedbackForm({
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <GlassButton
                 type="submit"
-                variant="glow"
+                variant="primary"
                 disabled={isSubmitting || !notes.trim()}
               >
                 {isSubmitting ? (

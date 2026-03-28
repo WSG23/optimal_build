@@ -13,7 +13,7 @@
  *   - inBaseLayout: true (default) - Skips HeaderUtilityCluster rendering
  *   - inBaseLayout: false - Full app shell with header cluster
  */
-import React, { ReactElement, ReactNode } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import { render, RenderOptions, RenderResult } from '@testing-library/react'
 import { ThemeModeProvider } from '../theme/ThemeContext'
 import { TranslationProvider } from '../i18n'

@@ -1,9 +1,19 @@
-import { useCallback, useMemo } from 'react'
+import { ReactNode, useCallback, useMemo } from 'react'
 import { Box, Grid, Typography, useTheme } from '@mui/material'
+import {
+  AccountTreeOutlined,
+  AutoGraph,
+  ErrorOutline,
+  HubOutlined,
+} from '@mui/icons-material'
 
 import { AppLayout } from '../../App'
+import { EmptyState, Skeleton, SkeletonText } from '../../components/canonical'
 import {
+  type CrossCorrelationIntelligenceState,
+  type GraphIntelligenceState,
   type InvestigationAnalyticsServices,
+  type PredictiveIntelligenceState,
   useInvestigationAnalytics,
 } from '../../hooks/useInvestigationAnalytics'
 import { KPITickerCard } from './components/KPITickerCard'
@@ -17,6 +27,182 @@ export interface AdvancedIntelligencePageProps {
 }
 
 const DEFAULT_WORKSPACE_ID = 'default-investigation'
+
+interface IntelligenceStatusPanelProps {
+  status: 'loading' | 'empty' | 'error'
+  icon: ReactNode
+  loadingLabel: string
+  emptyTitle: string
+  emptyDescription?: string
+  errorTitle: string
+  errorMessage?: string
+  minHeight?: number
+}
+
+type GraphOkState = Extract<GraphIntelligenceState, { status: 'ok' }>
+type GraphEmptyState = Extract<GraphIntelligenceState, { status: 'empty' }>
+type GraphErrorState = Extract<GraphIntelligenceState, { status: 'error' }>
+type PredictiveOkState = Extract<PredictiveIntelligenceState, { status: 'ok' }>
+type PredictiveEmptyState = Extract<
+  PredictiveIntelligenceState,
+  { status: 'empty' }
+>
+type PredictiveErrorState = Extract<
+  PredictiveIntelligenceState,
+  { status: 'error' }
+>
+type CorrelationOkState = Extract<
+  CrossCorrelationIntelligenceState,
+  { status: 'ok' }
+>
+type CorrelationEmptyState = Extract<
+  CrossCorrelationIntelligenceState,
+  { status: 'empty' }
+>
+type CorrelationErrorState = Extract<
+  CrossCorrelationIntelligenceState,
+  { status: 'error' }
+>
+
+function IntelligenceStatusPanel({
+  status,
+  icon,
+  loadingLabel,
+  emptyTitle,
+  emptyDescription,
+  errorTitle,
+  errorMessage,
+  minHeight = 280,
+}: IntelligenceStatusPanelProps) {
+  if (status === 'loading') {
+    return (
+      <Box
+        sx={{
+          minHeight,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: 'var(--ob-space-150)',
+          px: 'var(--ob-space-150)',
+          py: 'var(--ob-space-200)',
+          borderRadius: 'var(--ob-radius-sm)',
+          border: '1px solid var(--ob-border-fine)',
+          background:
+            'radial-gradient(circle at top, rgba(0, 214, 255, 0.08), transparent 65%), var(--ob-surface-glass-1)',
+        }}
+      >
+        <Typography
+          sx={{
+            color: 'var(--ob-color-text-secondary)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            fontSize: 'var(--ob-font-size-xs)',
+            fontWeight: 'var(--ob-font-weight-semibold)',
+          }}
+        >
+          {loadingLabel}
+        </Typography>
+        <Skeleton variant="rounded" width="38%" height={18} />
+        <Skeleton
+          variant="rounded"
+          width="100%"
+          height={minHeight > 400 ? 320 : 120}
+        />
+        <SkeletonText lines={2} lastLineWidth="72%" />
+      </Box>
+    )
+  }
+
+  const isError = status === 'error'
+
+  return (
+    <EmptyState
+      icon={icon}
+      title={isError ? errorTitle : emptyTitle}
+      description={
+        isError
+          ? (errorMessage ?? 'Try refreshing the workspace.')
+          : emptyDescription
+      }
+      size={minHeight > 400 ? 'lg' : 'md'}
+      sx={{
+        minHeight,
+        border: isError
+          ? '1px solid rgba(255, 99, 132, 0.28)'
+          : '1px dashed rgba(255, 255, 255, 0.12)',
+        background: isError
+          ? 'radial-gradient(circle at top, rgba(255, 99, 132, 0.08), transparent 65%), var(--ob-surface-glass-1)'
+          : 'radial-gradient(circle at top, rgba(0, 214, 255, 0.08), transparent 65%), var(--ob-surface-glass-1)',
+      }}
+    />
+  )
+}
+
+function getGraphStatus(
+  graph: GraphIntelligenceState,
+): IntelligenceStatusPanelProps['status'] | 'ok' {
+  return graph.status
+}
+
+function getPredictiveStatus(
+  predictive: PredictiveIntelligenceState,
+): IntelligenceStatusPanelProps['status'] | 'ok' {
+  return predictive.status
+}
+
+function getCorrelationStatus(
+  correlation: CrossCorrelationIntelligenceState,
+): IntelligenceStatusPanelProps['status'] | 'ok' {
+  return correlation.status
+}
+
+function isGraphOk(graph: GraphIntelligenceState): graph is GraphOkState {
+  return graph.status === 'ok'
+}
+
+function isGraphEmpty(graph: GraphIntelligenceState): graph is GraphEmptyState {
+  return graph.status === 'empty'
+}
+
+function isGraphError(graph: GraphIntelligenceState): graph is GraphErrorState {
+  return graph.status === 'error'
+}
+
+function isPredictiveOk(
+  predictive: PredictiveIntelligenceState,
+): predictive is PredictiveOkState {
+  return predictive.status === 'ok'
+}
+
+function isPredictiveEmpty(
+  predictive: PredictiveIntelligenceState,
+): predictive is PredictiveEmptyState {
+  return predictive.status === 'empty'
+}
+
+function isPredictiveError(
+  predictive: PredictiveIntelligenceState,
+): predictive is PredictiveErrorState {
+  return predictive.status === 'error'
+}
+
+function isCorrelationOk(
+  correlation: CrossCorrelationIntelligenceState,
+): correlation is CorrelationOkState {
+  return correlation.status === 'ok'
+}
+
+function isCorrelationEmpty(
+  correlation: CrossCorrelationIntelligenceState,
+): correlation is CorrelationEmptyState {
+  return correlation.status === 'empty'
+}
+
+function isCorrelationError(
+  correlation: CrossCorrelationIntelligenceState,
+): correlation is CorrelationErrorState {
+  return correlation.status === 'error'
+}
 
 // --- Mock Data Generators (until API provides trends) ---
 function generateSparkline(seedValue: number, length = 20): number[] {
@@ -61,6 +247,26 @@ export function AdvancedIntelligencePage({
   // Mock trends for the Hero Cards
   const adoptionTrend = 12.5 // Fixed mock for demo
   const upliftTrend = 44.7
+  const graphStatus = getGraphStatus(graph)
+  const predictiveStatus = getPredictiveStatus(predictive)
+  const correlationStatus = getCorrelationStatus(correlation)
+  const graphData = isGraphOk(graph) ? graph : null
+  const predictiveData = isPredictiveOk(predictive) ? predictive : null
+  const correlationData = isCorrelationOk(correlation) ? correlation : null
+  const graphEmptySummary = isGraphEmpty(graph) ? graph.summary : undefined
+  const graphErrorMessage = isGraphError(graph) ? graph.error : undefined
+  const predictiveEmptySummary = isPredictiveEmpty(predictive)
+    ? predictive.summary
+    : undefined
+  const predictiveErrorMessage = isPredictiveError(predictive)
+    ? predictive.error
+    : undefined
+  const correlationEmptySummary = isCorrelationEmpty(correlation)
+    ? correlation.summary
+    : undefined
+  const correlationErrorMessage = isCorrelationError(correlation)
+    ? correlation.error
+    : undefined
 
   return (
     <AppLayout
@@ -162,15 +368,15 @@ export function AdvancedIntelligencePage({
               >
                 Relationship Intelligence
               </Typography>
-              {graph.status === 'ok' ? (
+              {graphStatus === 'ok' ? (
                 <RelationshipGraph
-                  nodes={graph.graph.nodes.map((n) => ({
+                  nodes={graphData!.graph.nodes.map((n) => ({
                     id: n.id,
                     label: n.label,
                     category: n.category as 'Team' | 'Workflow',
                     weight: n.score,
                   }))}
-                  links={graph.graph.edges.map((e) => ({
+                  links={graphData!.graph.edges.map((e) => ({
                     source: e.source,
                     target: e.target,
                     strength: e.weight ?? 1,
@@ -178,22 +384,26 @@ export function AdvancedIntelligencePage({
                   height={600}
                 />
               ) : (
-                <Box
-                  sx={{
-                    height: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: '1px dashed grey',
-                    borderRadius: '4px', // Square Cyber-Minimalism: sm
-                  }}
-                >
-                  <Typography color="text.secondary">
-                    {graph.status === 'loading'
-                      ? 'Mapping organization network...'
-                      : 'No relationship data available'}
-                  </Typography>
-                </Box>
+                <IntelligenceStatusPanel
+                  status={graphStatus}
+                  icon={
+                    graphStatus === 'error' ? (
+                      <ErrorOutline
+                        sx={{ color: 'var(--ob-color-status-error-text)' }}
+                      />
+                    ) : (
+                      <HubOutlined
+                        sx={{ color: 'var(--ob-color-brand-primary)' }}
+                      />
+                    )
+                  }
+                  loadingLabel="Mapping organization network..."
+                  emptyTitle="Awaiting investigation metadata to construct intelligence graph"
+                  emptyDescription={graphEmptySummary}
+                  errorTitle="Unable to load intelligence graph"
+                  errorMessage={graphErrorMessage}
+                  minHeight={600}
+                />
               )}
             </Box>
           </Grid>
@@ -212,8 +422,8 @@ export function AdvancedIntelligencePage({
               >
                 Predictive Forecast
               </Typography>
-              {predictive.status === 'ok' ? (
-                predictive.segments
+              {predictiveStatus === 'ok' ? (
+                predictiveData!.segments
                   .slice(0, 5)
                   .map((segment) => (
                     <ConfidenceGauge
@@ -224,9 +434,26 @@ export function AdvancedIntelligencePage({
                     />
                   ))
               ) : (
-                <Typography color="text.secondary">
-                  Loading forecasts...
-                </Typography>
+                <IntelligenceStatusPanel
+                  status={predictiveStatus}
+                  icon={
+                    predictiveStatus === 'error' ? (
+                      <ErrorOutline
+                        sx={{ color: 'var(--ob-color-status-error-text)' }}
+                      />
+                    ) : (
+                      <AutoGraph
+                        sx={{ color: 'var(--ob-color-brand-primary)' }}
+                      />
+                    )
+                  }
+                  loadingLabel="Running predictive models..."
+                  emptyTitle="No predictive signals available for this workspace yet"
+                  emptyDescription={predictiveEmptySummary}
+                  errorTitle="Unable to load predictive forecast"
+                  errorMessage={predictiveErrorMessage}
+                  minHeight={280}
+                />
               )}
             </Box>
 
@@ -242,9 +469,9 @@ export function AdvancedIntelligencePage({
               >
                 Cross-Correlation
               </Typography>
-              {correlation.status === 'ok' ? (
+              {correlationStatus === 'ok' ? (
                 <CorrelationHeatmap
-                  data={correlation.relationships.map((r) => ({
+                  data={correlationData!.relationships.map((r) => ({
                     id: r.pairId,
                     driver: r.driver,
                     outcome: r.outcome,
@@ -253,9 +480,26 @@ export function AdvancedIntelligencePage({
                   }))}
                 />
               ) : (
-                <Typography color="text.secondary">
-                  Analyzing correlations...
-                </Typography>
+                <IntelligenceStatusPanel
+                  status={correlationStatus}
+                  icon={
+                    correlationStatus === 'error' ? (
+                      <ErrorOutline
+                        sx={{ color: 'var(--ob-color-status-error-text)' }}
+                      />
+                    ) : (
+                      <AccountTreeOutlined
+                        sx={{ color: 'var(--ob-color-brand-primary)' }}
+                      />
+                    )
+                  }
+                  loadingLabel="Analyzing correlations..."
+                  emptyTitle="No significant cross-correlations detected yet"
+                  emptyDescription={correlationEmptySummary}
+                  errorTitle="Unable to load correlation analysis"
+                  errorMessage={correlationErrorMessage}
+                  minHeight={280}
+                />
               )}
             </Box>
           </Grid>

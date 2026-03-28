@@ -82,9 +82,9 @@ function formatPercent(value: number | null | undefined): string {
   return `${value.toFixed(1)}%`
 }
 
-function sumMetric(
-  items: Array<Record<string, unknown>>,
-  key: string,
+function sumMetric<K extends string>(
+  items: Array<Partial<Record<K, number | null | undefined>>>,
+  key: K,
 ): number | null {
   let total = 0
   let hasValue = false

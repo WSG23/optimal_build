@@ -11,10 +11,10 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { GlassCard } from '../../../components/canonical/GlassCard'
-import type { AbsorptionForecast } from '../../api/advisory'
+import type { AdvisoryAbsorptionForecast } from '../../../api/advisory'
 
 interface AbsorptionChartProps {
-  data: AbsorptionForecast
+  data: AdvisoryAbsorptionForecast
 }
 
 export function AbsorptionChart({ data }: AbsorptionChartProps) {

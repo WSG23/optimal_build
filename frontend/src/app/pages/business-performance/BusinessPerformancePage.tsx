@@ -55,6 +55,23 @@ const EMPTY_ROI_SUMMARY: RoiSummary = {
 }
 
 const NOT_AVAILABLE_TEXT = 'Not available yet'
+export const OPEN_PIPELINE_PENDING_COPY = 'Waiting for data...'
+
+export function getOpenPipelineMetricDisplay(
+  pipelineLoading: boolean,
+  totalPipelineValue: number | null,
+) {
+  if (pipelineLoading) {
+    return { kind: 'loading' as const, text: '-' }
+  }
+  if (totalPipelineValue === null) {
+    return { kind: 'pending' as const, text: OPEN_PIPELINE_PENDING_COPY }
+  }
+  return {
+    kind: 'value' as const,
+    text: formatCurrency(totalPipelineValue),
+  }
+}
 
 export function BusinessPerformancePage() {
   const [deals, setDeals] = useState<DealSummary[]>([])
@@ -359,6 +376,10 @@ export function BusinessPerformancePage() {
   )
 
   const totalPipelineValue = useMemo(() => totalPipeline(columns), [columns])
+  const openPipelineMetric = getOpenPipelineMetricDisplay(
+    pipelineLoading,
+    totalPipelineValue,
+  )
   // Reserved for weighted pipeline display (future feature)
   // const weightPipelineValue = useMemo(() => totalWeightedPipeline(columns), [columns])
 
@@ -420,10 +441,29 @@ export function BusinessPerformancePage() {
           <Grid item xs={12} md={4}>
             <MetricTile
               label="Open Pipeline Value"
-              value={pipelineLoading ? '-' : formatCurrency(totalPipelineValue)}
+              value={
+                openPipelineMetric.kind === 'pending' ? (
+                  <Box
+                    component="span"
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      color: 'var(--ob-color-text-secondary)',
+                      fontSize: '0.34em',
+                      fontWeight: 'var(--ob-font-weight-semibold)',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {openPipelineMetric.text}
+                  </Box>
+                ) : (
+                  openPipelineMetric.text
+                )
+              }
               icon={<AttachMoney fontSize="small" />}
               variant="hero"
-              trend={!pipelineLoading ? '+12%' : undefined}
+              trend={openPipelineMetric.kind === 'value' ? '+12%' : undefined}
             />
           </Grid>
           <Grid item xs={12} md={4}>

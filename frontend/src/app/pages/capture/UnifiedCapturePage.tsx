@@ -173,7 +173,9 @@ export function UnifiedCapturePage() {
                     <button
                       type="button"
                       className="gps-geocode-btn"
-                      onClick={handleForwardGeocode}
+                      onClick={() => {
+                        void handleForwardGeocode()
+                      }}
                       title="Geocode address"
                     >
                       →

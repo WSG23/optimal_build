@@ -96,13 +96,13 @@ export function AgentAdvisoryPage() {
       >
         <Container maxWidth="xl" sx={{ py: 4 }}>
           <Stack spacing={3}>
-            <Skeleton height={300} variant="glass" />
+            <Skeleton height={300} variant="rounded" />
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
-                <Skeleton height={200} variant="glass" />
+                <Skeleton height={200} variant="rounded" />
               </Grid>
               <Grid item xs={12} md={6}>
-                <Skeleton height={200} variant="glass" />
+                <Skeleton height={200} variant="rounded" />
               </Grid>
             </Grid>
           </Stack>
