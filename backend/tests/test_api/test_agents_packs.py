@@ -8,6 +8,7 @@ import pytest
 from fastapi import HTTPException
 
 from app.api.v1 import agents as agents_api
+from app.api.v1 import commercial_property_packs as packs_api
 from app.main import app
 
 
@@ -50,7 +51,7 @@ async def test_generate_professional_pack_universal_success(client, monkeypatch)
     property_id = uuid4()
     generator = _StubPackGenerator()
 
-    app.dependency_overrides[agents_api.get_session] = _override_session(
+    app.dependency_overrides[packs_api.get_session] = _override_session(
         SimpleNamespace(id=property_id)
     )
     monkeypatch.setattr(agents_api, "UniversalSitePackGenerator", lambda: generator)
@@ -64,7 +65,7 @@ async def test_generate_professional_pack_universal_success(client, monkeypatch)
         assert payload["pack_type"] == "universal"
         assert generator.saved is True
     finally:
-        app.dependency_overrides.pop(agents_api.get_session, None)
+        app.dependency_overrides.pop(packs_api.get_session, None)
 
 
 @pytest.mark.asyncio
@@ -72,7 +73,7 @@ async def test_generate_professional_pack_503_when_generator_missing(
     client, monkeypatch
 ):
     property_id = uuid4()
-    app.dependency_overrides[agents_api.get_session] = _override_session(
+    app.dependency_overrides[packs_api.get_session] = _override_session(
         SimpleNamespace(id=property_id)
     )
     monkeypatch.setattr(agents_api, "InvestmentMemorandumGenerator", None)
@@ -83,7 +84,7 @@ async def test_generate_professional_pack_503_when_generator_missing(
         )
         assert response.status_code == 400
     finally:
-        app.dependency_overrides.pop(agents_api.get_session, None)
+        app.dependency_overrides.pop(packs_api.get_session, None)
 
 
 @pytest.mark.asyncio
@@ -91,7 +92,7 @@ async def test_generate_professional_pack_invalid_type_direct(monkeypatch):
     property_id = uuid4()
     session = _StubSession(SimpleNamespace(id=property_id))
     with pytest.raises(HTTPException) as exc:
-        await agents_api.generate_professional_pack(
+        await packs_api.generate_professional_pack(
             property_id=str(property_id),
             pack_type="unknown",
             db=session,

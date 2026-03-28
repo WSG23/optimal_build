@@ -11,10 +11,9 @@ from typing import Any, Dict, Optional, cast
 from uuid import UUID, uuid4
 
 import structlog
-from fastapi import APIRouter, Depends, File, HTTPException, Path, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 
 from backend._compat.datetime import utcnow  # isort: skip (backend._compat ordering)
-from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from app.api.deps import Role, get_request_role, require_reviewer
@@ -1727,137 +1726,6 @@ async def value_property(
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
-
-
-@router.post("/properties/{property_id}/generate-pack/{pack_type}")
-async def generate_professional_pack(
-    property_id: str,
-    pack_type: str = Path(..., pattern="^(universal|investment|sales|lease)$"),
-    db: AsyncSession = Depends(get_session),
-    role: Role = Depends(get_request_role),
-) -> dict[str, Any]:
-    """
-    Generate professional PDF packs.
-
-    Pack types:
-    - universal: 20-page Universal Site Pack
-    - investment: Institutional-grade Investment Memorandum
-    - sales: Sales marketing brochure
-    - lease: Leasing marketing brochure
-    """
-    try:
-        property_uuid = UUID(property_id)
-
-        if pack_type == "universal":
-            generator_cls = _load_optional_class(
-                "UniversalSitePackGenerator",
-                "app.services.agents.universal_site_pack",
-            )
-            if generator_cls is None:
-                raise HTTPException(
-                    status_code=503,
-                    detail="Universal Site Pack generation unavailable in this environment",
-                )
-            generator = generator_cls()
-            pdf_buffer = await generator.generate(property_id=property_uuid, session=db)
-            filename = f"universal_site_pack_{property_id}.pdf"
-
-        elif pack_type == "investment":
-            generator_cls = _load_optional_class(
-                "InvestmentMemorandumGenerator",
-                "app.services.agents.investment_memorandum",
-            )
-            if generator_cls is None:
-                raise HTTPException(
-                    status_code=503,
-                    detail="Investment memorandum generation unavailable in this environment",
-                )
-            generator = generator_cls()
-            pdf_buffer = await generator.generate(property_id=property_uuid, session=db)
-            filename = f"investment_memorandum_{property_id}.pdf"
-
-        elif pack_type in ["sales", "lease"]:
-            generator_cls = _load_optional_class(
-                "MarketingMaterialsGenerator",
-                "app.services.agents.marketing_materials",
-            )
-            if generator_cls is None:
-                raise HTTPException(
-                    status_code=503,
-                    detail="Marketing material generation unavailable in this environment",
-                )
-            generator = generator_cls()
-            pdf_buffer = await generator.generate_sales_brochure(
-                property_id=property_uuid,
-                session=db,
-                material_type="sale" if pack_type == "sales" else "lease",
-            )
-            filename = f"{pack_type}_brochure_{property_id}.pdf"
-
-        else:
-            raise HTTPException(status_code=400, detail="Invalid pack type")
-
-        # Save to storage (for record keeping)
-        await generator.save_to_storage(
-            pdf_buffer=pdf_buffer, filename=filename, property_id=property_id
-        )
-
-        # Convert to API download URL (absolute URL for cross-origin requests)
-        # Use the backend's base URL so frontend can access it regardless of its port
-        download_url = f"http://localhost:9400/api/v1/agents/commercial-property/files/{property_id}/{filename}"
-
-        return {
-            "pack_type": pack_type,
-            "property_id": property_id,
-            "filename": filename,
-            "download_url": download_url,
-            "generated_at": utcnow().isoformat(),
-            "size_bytes": len(pdf_buffer.getvalue()),
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-
-
-@router.get("/files/{property_id}/{filename}")
-async def download_generated_file(
-    property_id: str,
-    filename: str,
-) -> FileResponse:
-    """
-    Download a generated PDF file from storage.
-
-    This endpoint serves files that were previously generated and stored.
-    """
-    import os
-    from pathlib import Path as PathLib
-
-    # Construct the file path in storage
-    storage_base = PathLib(os.getenv("STORAGE_LOCAL_PATH", ".storage"))
-    storage_prefix = os.getenv("STORAGE_PREFIX", "uploads")
-    file_path = storage_base / storage_prefix / "reports" / property_id / filename
-
-    # Security check: ensure the resolved path is within storage directory
-    try:
-        file_path = file_path.resolve()
-        storage_base_resolved = (storage_base / storage_prefix).resolve()
-        if not str(file_path).startswith(str(storage_base_resolved)):
-            raise HTTPException(status_code=403, detail="Access denied")
-    except HTTPException:
-        raise
-    except Exception:
-        raise HTTPException(status_code=403, detail="Invalid file path") from None
-
-    # Check if file exists
-    if not file_path.exists() or not file_path.is_file():
-        raise HTTPException(status_code=404, detail="File not found")
-
-    # Return the file
-    return FileResponse(
-        path=str(file_path),
-        media_type="application/pdf",
-        filename=filename,
-    )
 
 
 @router.post("/properties/{property_id}/generate-flyer")

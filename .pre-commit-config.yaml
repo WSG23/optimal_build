@@ -19,7 +19,7 @@ repos:
         entry: python3 scripts/smoke_test_pdfs.py
         language: system
         pass_filenames: false
-        files: ^backend/app/(services/agents|api/v1/agents).*\.(py)$
+        files: ^backend/app/(services/agents/.*|api/v1/commercial_property_packs\.py)$
 
       - id: phase-gate
         name: Phase 2D gate enforcement

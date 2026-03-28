@@ -27,7 +27,7 @@ def is_pdf_related(filepath):
         "investment_memorandum",
         "pdf_generator",
         "marketing_materials",
-        "/agents.py",  # API endpoints
+        "/commercial_property_packs.py",  # API endpoints
     ]
     return any(pattern in filepath for pattern in pdf_patterns)
 

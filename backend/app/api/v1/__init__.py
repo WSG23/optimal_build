@@ -123,6 +123,7 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "singapore_property_api",  # Singapore property with BCA/URA compliance
     "market_intelligence",  # Market intelligence analytics API
     "agents",  # Commercial property advisor agent endpoints
+    "commercial_property_packs",  # PDF pack generation/download endpoints
     "deals",  # Business performance pipeline endpoints
     "performance",  # Agent performance analytics endpoints
     "advanced_intelligence",  # Investigation analytics stubs
@@ -142,6 +143,7 @@ _LAZY_SUBMODULES: Final[tuple[str, ...]] = (
     "developers_checklists",
     "developers_common",
     "developers_conditions",
+    "commercial_property_packs",
     "developers_gps",
     "finance_common",
     "notifications",
