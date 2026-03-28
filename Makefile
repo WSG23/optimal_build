@@ -565,24 +565,29 @@ docker: ## Start supporting services with Docker, the backend API, and frontends
 
 dev: ## Start local development (no Docker, SQLite only)
 	@mkdir -p $(DEV_RUNTIME_DIR_ABS)
-	@echo "🏠 Starting local development (no Docker)..."
-	@echo "🧹 Cleaning up any existing processes on ports..."
+	@echo ""
+	@echo "┌──────────────────────────────────────────────────────────┐"
+	@echo "│         🏗️  Optimal Build — Dev Server                    │"
+	@echo "└──────────────────────────────────────────────────────────┘"
+	@echo ""
+	@echo "  Cleaning up stale processes..."
 	@-pids=$$(lsof -ti:$(BACKEND_PORT) 2>/dev/null); [ "$$pids" ] && kill $$pids 2>/dev/null || true
 	@-pids=$$(lsof -ti:$(FRONTEND_PORT) 2>/dev/null); [ "$$pids" ] && kill $$pids 2>/dev/null || true
 	@-pids=$$(lsof -ti:$(ADMIN_PORT) 2>/dev/null); [ "$$pids" ] && kill $$pids 2>/dev/null || true
 	@rm -f $(DEV_BACKEND_PID) $(DEV_FRONTEND_PID) $(DEV_ADMIN_PID)
 	@sleep 1
-	@if [ -d uvicorn ]; then echo "WARNING: './uvicorn/' package detected; it will shadow the real uvicorn. Rename or remove it." >&2; fi
-	@$(MAKE) _dev-services
+	@if [ -d uvicorn ]; then echo "  ⚠  WARNING: './uvicorn/' directory detected — it will shadow the real uvicorn." >&2; fi
+	@$(MAKE) --no-print-directory _dev-services
 
 _dev-services: ## Internal target to start backend, frontend, and admin UI
-	@if [ -f $(DEV_BACKEND_PID) ] && kill -0 $$(cat $(DEV_BACKEND_PID)) 2>/dev/null; then \
-		echo "Backend API already running (PID $$(cat $(DEV_BACKEND_PID)))."; \
-		echo "✅ API running on port $(BACKEND_PORT)."; \
+	@BACKEND_STATUS=""; FRONTEND_STATUS=""; ADMIN_STATUS=""; \
+	BACKEND_PID_VAL="-"; FRONTEND_PID_VAL="-"; ADMIN_PID_VAL="-"; \
+	if [ -f $(DEV_BACKEND_PID) ] && kill -0 $$(cat $(DEV_BACKEND_PID)) 2>/dev/null; then \
+		BACKEND_STATUS="reused"; \
+		BACKEND_PID_VAL=$$(cat $(DEV_BACKEND_PID)); \
 	else \
 		rm -f $(DEV_BACKEND_PID); \
-	                : > $(DEV_BACKEND_LOG); \
-	                : "Prefer an externally provided DATABASE_URL; otherwise fall back to local SQLite file."; \
+		: > $(DEV_BACKEND_LOG); \
 		( \
 			set -a; [ -f .env ] && . ./.env; set +a; \
 			EFFECTIVE_DB_URL=$${DATABASE_URL:-$(DEV_SQLITE_URL)}; \
@@ -591,33 +596,53 @@ _dev-services: ## Internal target to start backend, frontend, and admin UI
 				nohup $(BACKEND_CMD) > "$(DEV_BACKEND_LOG)" 2>&1 & \
 			echo $$! > "$(DEV_BACKEND_PID)" \
 		); \
-		echo "Backend API started (PID $$(cat $(DEV_BACKEND_PID))). Logs: $(DEV_BACKEND_LOG)"; \
-		echo "✅ API running on port $(BACKEND_PORT)."; \
-	fi
-	@if [ -f $(DEV_FRONTEND_PID) ] && kill -0 $$(cat $(DEV_FRONTEND_PID)) 2>/dev/null; then \
-		echo "Frontend app already running (PID $$(cat $(DEV_FRONTEND_PID)))."; \
-		echo "✅ UI running on port $(FRONTEND_PORT). Check $(DEV_FRONTEND_LOG) for details."; \
+		BACKEND_STATUS="started"; \
+		BACKEND_PID_VAL=$$(cat $(DEV_BACKEND_PID)); \
+	fi; \
+	if [ -f $(DEV_FRONTEND_PID) ] && kill -0 $$(cat $(DEV_FRONTEND_PID)) 2>/dev/null; then \
+		FRONTEND_STATUS="reused"; \
+		FRONTEND_PID_VAL=$$(cat $(DEV_FRONTEND_PID)); \
 	else \
 		rm -f $(DEV_FRONTEND_PID); \
 		: > $(DEV_FRONTEND_LOG); \
 		(cd frontend && VITE_API_BASE=http://localhost:$(BACKEND_PORT) nohup $(FRONTEND_CMD) > $(DEV_FRONTEND_LOG) 2>&1 & echo $$! > $(DEV_FRONTEND_PID)); \
-		echo "Frontend app started (PID $$(cat $(DEV_FRONTEND_PID))). Logs: $(DEV_FRONTEND_LOG)"; \
-		echo "✅ UI running on port $(FRONTEND_PORT). Check $(DEV_FRONTEND_LOG) for actual port if reassigned."; \
-	fi
-	@if [ "$(INCLUDE_ADMIN)" != "0" ]; then \
+		FRONTEND_STATUS="started"; \
+		FRONTEND_PID_VAL=$$(cat $(DEV_FRONTEND_PID)); \
+	fi; \
+	if [ "$(INCLUDE_ADMIN)" != "0" ]; then \
 		if [ -f $(DEV_ADMIN_PID) ] && kill -0 $$(cat $(DEV_ADMIN_PID)) 2>/dev/null; then \
-			echo "Admin UI already running (PID $$(cat $(DEV_ADMIN_PID)))."; \
-			echo "✅ Admin UI running on port $(ADMIN_PORT). Check $(DEV_ADMIN_LOG) for details."; \
+			ADMIN_STATUS="reused"; \
+			ADMIN_PID_VAL=$$(cat $(DEV_ADMIN_PID)); \
 		else \
 			rm -f $(DEV_ADMIN_PID); \
 			: > $(DEV_ADMIN_LOG); \
 			(cd ui-admin && VITE_API_BASE=http://localhost:$(BACKEND_PORT) VITE_API_URL=http://localhost:$(BACKEND_PORT)/api/v1 nohup $(ADMIN_CMD) > $(DEV_ADMIN_LOG) 2>&1 & echo $$! > $(DEV_ADMIN_PID)); \
-			echo "Admin UI started (PID $$(cat $(DEV_ADMIN_PID))). Logs: $(DEV_ADMIN_LOG)"; \
-			echo "✅ Admin UI running on port $(ADMIN_PORT). Check $(DEV_ADMIN_LOG) for actual port if reassigned."; \
+			ADMIN_STATUS="started"; \
+			ADMIN_PID_VAL=$$(cat $(DEV_ADMIN_PID)); \
 		fi; \
 	else \
-		echo "Skipping admin UI (INCLUDE_ADMIN=0)."; \
-	fi
+		ADMIN_STATUS="skipped"; \
+	fi; \
+	echo ""; \
+	echo "  SERVICE            URL                              PID      STATUS"; \
+	echo "  ─────────────────  ───────────────────────────────  ───────  ─────────"; \
+	printf "  %-18s  %-31s  %-7s  ✅ %s\n" "Backend API" "http://localhost:$(BACKEND_PORT)" "$$BACKEND_PID_VAL" "$$BACKEND_STATUS"; \
+	printf "  %-18s  %-31s  %-7s  ✅ %s\n" "Frontend" "http://localhost:$(FRONTEND_PORT)" "$$FRONTEND_PID_VAL" "$$FRONTEND_STATUS"; \
+	if [ "$$ADMIN_STATUS" = "skipped" ]; then \
+		printf "  %-18s  %-31s  %-7s  ⏹  %s\n" "Admin UI" "-" "-" "$$ADMIN_STATUS"; \
+	else \
+		printf "  %-18s  %-31s  %-7s  ✅ %s\n" "Admin UI" "http://localhost:$(ADMIN_PORT)" "$$ADMIN_PID_VAL" "$$ADMIN_STATUS"; \
+	fi; \
+	echo ""; \
+	echo "  API Docs:  http://localhost:$(BACKEND_PORT)/docs"; \
+	echo "  Logs:      $(DEV_RUNTIME_DIR_ABS)/{backend,frontend,ui-admin}.log"; \
+	echo "  Stop:      make stop"; \
+	echo ""; \
+	echo "  Opening browser..."; \
+	sleep 2; \
+	open -a "Google Chrome" "http://localhost:$(FRONTEND_PORT)" 2>/dev/null \
+		|| open "http://localhost:$(FRONTEND_PORT)" 2>/dev/null \
+		|| true
 
 status: ## Show running status for dev services
 	@echo ""
