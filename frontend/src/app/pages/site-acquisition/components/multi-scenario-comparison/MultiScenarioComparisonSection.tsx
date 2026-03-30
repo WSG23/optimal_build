@@ -13,9 +13,9 @@
  * Phase 5 Transformation:
  * - "Asset Path Modules" with vertical glow-bar for focus indicator
  * - Scenario-coded system markers (PATH_RAW, PATH_ENBLOC, etc.)
- * - "Diligence Gauge" with 8 segmented blocks (machined edge style)
+ * - "Analysis Coverage" with 8 segmented blocks (machined edge style)
  * - "Intel Tapes" for Feasibility Signals with telemetry headers + signal strength
- * - "Data Export Console" at bottom for export actions
+ * - "Intel Feed" at bottom for navigation into deeper feasibility workflows
  * - "Matrix Summary" footer with tactical labels
  */
 
@@ -32,7 +32,7 @@ import { SegmentedGauge } from '../../../../../components/canonical/SegmentedGau
 import { SystemMarker } from '../../../../../components/canonical/SystemMarker'
 import { Link } from '../../../../../router'
 import type {
-  ScenarioComparisonDatum,
+  CaptureScenarioComparisonDatum,
   FeasibilitySignalEntry,
   ScenarioOption,
 } from '../../types'
@@ -49,30 +49,190 @@ import {
 // ============================================================================
 
 interface SummaryStats {
-  avgCondition: number | null
+  avgCoverage: number | null
   totalRisks: number
   totalOpportunities: number
   scenariosTracked: number
+}
+
+type CaptureMetricDisplay = {
+  label: string
+  value: string
+}
+
+const CAPTURE_METRIC_PRIORITY = [
+  'potential_gfa_sqm',
+  'gfa_uplift_sqm',
+  'plot_ratio',
+  'site_area_sqm',
+  'conservation_status',
+] as const
+
+const CAPTURE_METRIC_LABELS: Record<string, string> = {
+  potential_gfa_sqm: 'BUILDABLE GFA',
+  gfa_uplift_sqm: 'GFA UPLIFT',
+  plot_ratio: 'PLOT RATIO',
+  site_area_sqm: 'SITE AREA',
+  conservation_status: 'CONSERVATION',
+}
+
+function formatCountMetric(value: number): string {
+  return new Intl.NumberFormat('en-SG', {
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+function formatAreaMetric(value: number): string {
+  return `${formatCountMetric(value)} sqm`
+}
+
+function formatPercentMetric(value: number): string {
+  return `${formatCountMetric(value)}%`
+}
+
+function findCaptureMetric(
+  row: CaptureScenarioComparisonDatum,
+): CaptureScenarioComparisonDatum['quickMetrics'][number] | null {
+  for (const key of CAPTURE_METRIC_PRIORITY) {
+    const match = row.quickMetrics.find((metric) => metric.key === key)
+    if (match) {
+      return match
+    }
+  }
+  return null
+}
+
+function getPrimaryCaptureMetric(
+  row: CaptureScenarioComparisonDatum,
+  capturedProperty: CapturedProperty | null,
+): CaptureMetricDisplay {
+  const quickMetric = findCaptureMetric(row)
+  if (quickMetric) {
+    return {
+      label: CAPTURE_METRIC_LABELS[quickMetric.key] ?? quickMetric.label,
+      value: quickMetric.value,
+    }
+  }
+
+  const envelope = capturedProperty?.buildEnvelope
+  const heritageContext = capturedProperty?.heritageContext
+  switch (row.key) {
+    case 'existing_building':
+    case 'underused_asset':
+      if (envelope?.additionalPotentialGfaSqm != null) {
+        return {
+          label: 'GFA UPLIFT',
+          value: formatAreaMetric(envelope.additionalPotentialGfaSqm),
+        }
+      }
+      if (envelope?.currentGfaSqm != null) {
+        return {
+          label: 'CURRENT GFA',
+          value: formatAreaMetric(envelope.currentGfaSqm),
+        }
+      }
+      break
+    case 'heritage_property':
+      if (heritageContext?.risk) {
+        return {
+          label: 'HERITAGE RISK',
+          value: heritageContext.risk.toUpperCase(),
+        }
+      }
+      if (heritageContext?.overlay?.name) {
+        return {
+          label: 'OVERLAY',
+          value: heritageContext.overlay.name,
+        }
+      }
+      break
+    default:
+      break
+  }
+
+  if (envelope?.maxBuildableGfaSqm != null) {
+    return {
+      label: 'BUILDABLE GFA',
+      value: formatAreaMetric(envelope.maxBuildableGfaSqm),
+    }
+  }
+  if (envelope?.allowablePlotRatio != null) {
+    return {
+      label: 'PLOT RATIO',
+      value: envelope.allowablePlotRatio.toFixed(2),
+    }
+  }
+  if (envelope?.buildingHeightLimitM != null) {
+    return {
+      label: 'HEIGHT LIMIT',
+      value: `${formatCountMetric(envelope.buildingHeightLimitM)} m`,
+    }
+  }
+  if (envelope?.siteCoveragePct != null) {
+    return {
+      label: 'SITE COVERAGE',
+      value: formatPercentMetric(envelope.siteCoveragePct),
+    }
+  }
+
+  return {
+    label: 'ENVELOPE',
+    value: 'PENDING',
+  }
+}
+
+function getConstraintDisplay(
+  scenarioSignals: FeasibilitySignalEntry | undefined,
+): string {
+  if (!scenarioSignals || scenarioSignals.risks.length === 0) {
+    return 'CLEAR'
+  }
+  return scenarioSignals.risks.length === 1
+    ? '1 FLAG'
+    : `${scenarioSignals.risks.length} FLAGS`
+}
+
+function getAnalysisCoverage(
+  row: CaptureScenarioComparisonDatum,
+  capturedProperty: CapturedProperty | null,
+  quickAnalysisTimestamp: string | null,
+): number {
+  const envelope = capturedProperty?.buildEnvelope
+  const baseChecks = [
+    !!quickAnalysisTimestamp,
+    !!row.quickHeadline,
+    !!findCaptureMetric(row),
+    envelope?.zoneCode !== null && envelope?.zoneCode !== undefined,
+    envelope?.allowablePlotRatio !== null &&
+      envelope?.allowablePlotRatio !== undefined,
+    envelope?.maxBuildableGfaSqm !== null &&
+      envelope?.maxBuildableGfaSqm !== undefined,
+    envelope?.buildingHeightLimitM !== null &&
+      envelope?.buildingHeightLimitM !== undefined,
+    envelope?.siteCoveragePct !== null &&
+      envelope?.siteCoveragePct !== undefined,
+    !!capturedProperty?.visualization?.status,
+  ]
+  if (row.key === 'heritage_property') {
+    baseChecks.push(!!capturedProperty?.heritageContext)
+  }
+  const presentCount = baseChecks.filter(Boolean).length
+  return Math.round((presentCount / baseChecks.length) * 100)
 }
 
 export interface MultiScenarioComparisonSectionProps {
   // Data
   capturedProperty: CapturedProperty | null
   quickAnalysisScenariosCount: number
-  scenarioComparisonData: ScenarioComparisonDatum[]
+  scenarioComparisonData: CaptureScenarioComparisonDatum[]
   feasibilitySignals: FeasibilitySignalEntry[]
   comparisonScenariosCount: number
   activeScenario: 'all' | DevelopmentScenario
   scenarioLookup: Map<DevelopmentScenario, ScenarioOption>
   propertyId: string | null
 
-  // Export state
-  isExportingReport: boolean
-  reportExportMessage: string | null
-
   // Callbacks
   setActiveScenario: (scenario: 'all' | DevelopmentScenario) => void
-  handleReportExport: (format: 'json' | 'pdf') => void
   formatRecordedTimestamp: (timestamp: string | null | undefined) => string
 }
 
@@ -89,24 +249,34 @@ export function MultiScenarioComparisonSection({
   activeScenario,
   scenarioLookup,
   propertyId,
-  isExportingReport,
-  reportExportMessage,
   setActiveScenario,
-  handleReportExport,
   formatRecordedTimestamp,
 }: MultiScenarioComparisonSectionProps) {
+  const scenarioSignalsByKey = useMemo(
+    () =>
+      new Map(
+        feasibilitySignals.map((entry) => [entry.scenario, entry] as const),
+      ),
+    [feasibilitySignals],
+  )
+
   // Calculate summary stats for footer (AI Studio: Summary Footer pattern)
   const summaryStats = useMemo((): SummaryStats => {
     const scenarioData = scenarioComparisonData.filter(
       (row) => row.key !== 'all',
     )
-    const conditionScores = scenarioData
-      .map((row) => row.conditionScore)
-      .filter((score): score is number => score !== null)
-    const avgCondition =
-      conditionScores.length > 0
+    const coverageScores = scenarioData.map((row) =>
+      getAnalysisCoverage(
+        row,
+        capturedProperty,
+        capturedProperty?.quickAnalysis?.generatedAt ?? null,
+      ),
+    )
+    const avgCoverage =
+      coverageScores.length > 0
         ? Math.round(
-            conditionScores.reduce((a, b) => a + b, 0) / conditionScores.length,
+            coverageScores.reduce((sum, score) => sum + score, 0) /
+              coverageScores.length,
           )
         : null
 
@@ -120,12 +290,12 @@ export function MultiScenarioComparisonSection({
     )
 
     return {
-      avgCondition,
+      avgCoverage,
       totalRisks,
       totalOpportunities,
       scenariosTracked: scenarioData.length,
     }
-  }, [scenarioComparisonData, feasibilitySignals])
+  }, [capturedProperty, scenarioComparisonData, feasibilitySignals])
 
   const quickAnalysisTimestamp = useMemo(() => {
     if (!capturedProperty) {
@@ -143,12 +313,11 @@ export function MultiScenarioComparisonSection({
         <div className="site-acquisition__empty-state site-acquisition__empty-state--prominent">
           <div className="multi-scenario__empty-icon">📊</div>
           <p className="multi-scenario__empty-title">
-            Capture a property to review scenario economics and development
+            Capture a property to review instant zoning, envelope, and code
             posture
           </p>
           <p className="multi-scenario__empty-subtitle">
-            Financial and planning metrics for each developer scenario appear
-            here.
+            Address-based constraints and quick scenario analysis appear here.
           </p>
         </div>
       ) : quickAnalysisScenariosCount === 0 ? (
@@ -166,20 +335,19 @@ export function MultiScenarioComparisonSection({
               .filter((row) => row.key !== 'all') // Skip aggregate row for path modules
               .map((row) => {
                 const isActive = activeScenario === row.key
-                const progressPercent = row.checklistPercent ?? 0
-
-                // Extract revenue from quickMetrics or use placeholder
-                const revenueMetric = row.quickMetrics.find(
-                  (m) =>
-                    m.label.toLowerCase().includes('revenue') ||
-                    m.label.toLowerCase().includes('rev'),
+                const scenarioSignals = scenarioSignalsByKey.get(
+                  row.key as DevelopmentScenario,
                 )
-                const revenueDisplay = revenueMetric?.value ?? '—'
-
-                // Risk profile from riskLevel
-                const riskDisplay = row.riskLevel
-                  ? row.riskLevel.toUpperCase()
-                  : '—'
+                const analysisCoverage = getAnalysisCoverage(
+                  row,
+                  capturedProperty,
+                  quickAnalysisTimestamp,
+                )
+                const primaryMetric = getPrimaryCaptureMetric(
+                  row,
+                  capturedProperty,
+                )
+                const constraintDisplay = getConstraintDisplay(scenarioSignals)
 
                 return (
                   <article
@@ -198,41 +366,39 @@ export function MultiScenarioComparisonSection({
                         </SystemMarker>
                         <div className="multi-scenario__path-timestamp">
                           <span className="multi-scenario__path-timestamp-label">
-                            RECORDED
+                            ANALYZED
                           </span>
                           <span className="multi-scenario__path-timestamp-value">
-                            {row.recordedAt
-                              ? formatRecordedTimestamp(row.recordedAt)
-                              : '—'}
+                            {quickAnalysisTimestamp ?? '—'}
                           </span>
                         </div>
                       </div>
 
-                      {/* Metrics Grid: Yield + Risk Vector */}
+                      {/* Metrics Grid: envelope/code capture metrics */}
                       <div className="multi-scenario__path-metrics">
                         <div className="multi-scenario__path-metric">
                           <span className="multi-scenario__path-metric-label">
-                            EST. YIELD
+                            {primaryMetric.label}
                           </span>
                           <span className="multi-scenario__path-metric-value multi-scenario__path-metric-value--cyan">
-                            {revenueDisplay}
+                            {primaryMetric.value}
                           </span>
                         </div>
                         <div className="multi-scenario__path-metric">
                           <span className="multi-scenario__path-metric-label">
-                            RISK VECTOR
+                            CODE CONSTRAINTS
                           </span>
                           <span className="multi-scenario__path-metric-value">
-                            {riskDisplay}
+                            {constraintDisplay}
                           </span>
                         </div>
                       </div>
 
-                      {/* Diligence Gauge - Segmented */}
+                      {/* Analysis Coverage - Segmented */}
                       <SegmentedGauge
-                        label="DILIGENCE GAUGE"
-                        value={progressPercent}
-                        valueLabel={`${progressPercent}%`}
+                        label="ANALYSIS COVERAGE"
+                        value={analysisCoverage}
+                        valueLabel={`${analysisCoverage}%`}
                         segments={8}
                       />
 
@@ -271,7 +437,7 @@ export function MultiScenarioComparisonSection({
                   className="multi-scenario__full-feasibility-link"
                 >
                   <Button variant="primary" size="sm">
-                    FULL FEASIBILITY →
+                    OPEN FEASIBILITY →
                   </Button>
                 </Link>
               )}
@@ -290,12 +456,12 @@ export function MultiScenarioComparisonSection({
                 </div>
                 <div className="multi-scenario__matrix-stat">
                   <span className="multi-scenario__matrix-value">
-                    {summaryStats.avgCondition !== null
-                      ? `${summaryStats.avgCondition}/100`
+                    {summaryStats.avgCoverage !== null
+                      ? `${summaryStats.avgCoverage}%`
                       : '—'}
                   </span>
                   <span className="multi-scenario__matrix-label">
-                    AVG_CONDITION
+                    AVG_COVERAGE
                   </span>
                 </div>
                 <div className="multi-scenario__matrix-stat multi-scenario__matrix-stat--opportunity">
@@ -311,7 +477,7 @@ export function MultiScenarioComparisonSection({
                     {summaryStats.totalRisks}
                   </span>
                   <span className="multi-scenario__matrix-label">
-                    RISKS_FLAGGED
+                    CONSTRAINTS_FLAGGED
                   </span>
                 </div>
               </div>
@@ -320,31 +486,8 @@ export function MultiScenarioComparisonSection({
             <div className="multi-scenario__intel-feed">
               <div className="multi-scenario__intel-feed-subheader">
                 <span className="multi-scenario__intel-feed-subtitle">
-                  DETAILED_INSIGHTS ({feasibilitySignals.length})
+                  INSTANT_SIGNALS ({feasibilitySignals.length})
                 </span>
-                <div className="multi-scenario__intel-feed-actions">
-                  {reportExportMessage && (
-                    <span className="multi-scenario__matrix-status">
-                      {reportExportMessage}
-                    </span>
-                  )}
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleReportExport('json')}
-                    disabled={isExportingReport}
-                  >
-                    {isExportingReport ? 'PREPARING…' : 'JSON'}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleReportExport('pdf')}
-                    disabled={isExportingReport}
-                  >
-                    {isExportingReport ? 'PREPARING…' : 'PDF'}
-                  </Button>
-                </div>
               </div>
 
               {feasibilitySignals.length > 0 ? (

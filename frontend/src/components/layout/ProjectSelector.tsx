@@ -66,6 +66,7 @@ export function ProjectSelector() {
       const moduleSegment = segments[2] ?? ''
       const moduleFallbacks: Record<string, string> = {
         capture: '/app/capture',
+        'due-diligence': '/app/due-diligence',
         feasibility: '/app/asset-feasibility',
         finance: '/app/financial-control',
         phases: '/app/phase-management',

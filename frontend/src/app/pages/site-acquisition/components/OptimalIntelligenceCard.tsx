@@ -2,7 +2,7 @@
  * Optimal Intelligence Card Component
  *
  * AI insight card with gradient background for Site Acquisition sidebar.
- * Displays key insights and provides access to detailed reports.
+ * Displays key insights and can optionally link to deeper analysis.
  *
  * Design Principles:
  * - Square Cyber-Minimalism: 4px radius
@@ -21,9 +21,9 @@ export interface OptimalIntelligenceCardProps {
   insight: string | null
   /** Whether the property has been captured */
   hasProperty: boolean
-  /** Callback when "Generate Report" is clicked */
+  /** Optional callback when a deeper analysis CTA should be shown */
   onGenerateReport?: () => void
-  /** Whether report generation is in progress */
+  /** Whether the optional CTA is in progress */
   isGenerating?: boolean
 }
 

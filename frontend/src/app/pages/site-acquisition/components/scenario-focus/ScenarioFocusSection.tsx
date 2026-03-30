@@ -13,9 +13,6 @@ import type { ScenarioOption } from '../../types'
 // Types
 // ============================================================================
 
-/** Simple progress stats shape returned by useScenarioComparison hook */
-type ProgressStats = { total: number; completed: number } | null | undefined
-
 export interface ScenarioFocusSectionProps {
   // Data
   scenarioFocusOptions: Array<'all' | DevelopmentScenario>
@@ -26,11 +23,6 @@ export interface ScenarioFocusSectionProps {
     headline: string
     detail?: string | null
   }
-  scenarioChecklistProgress: Record<
-    string,
-    { total: number; completed: number }
-  >
-  displaySummary: ProgressStats
 
   // History state
   quickAnalysisHistoryCount: number
@@ -40,7 +32,7 @@ export interface ScenarioFocusSectionProps {
   setActiveScenario: (scenario: 'all' | DevelopmentScenario) => void
   onCompareScenarios: () => void
   onOpenQuickAnalysisHistory: () => void
-  onOpenInspectionHistory: () => void
+  onOpenDueDiligence: () => void
   formatScenarioLabel: (
     scenario: DevelopmentScenario | 'all' | null | undefined,
   ) => string
@@ -55,14 +47,12 @@ export function ScenarioFocusSection({
   scenarioLookup,
   activeScenario,
   activeScenarioSummary,
-  scenarioChecklistProgress,
-  displaySummary,
   quickAnalysisHistoryCount,
   scenarioComparisonVisible,
   setActiveScenario,
   onCompareScenarios,
   onOpenQuickAnalysisHistory,
-  onOpenInspectionHistory,
+  onOpenDueDiligence,
   formatScenarioLabel,
 }: ScenarioFocusSectionProps) {
   return (
@@ -70,8 +60,8 @@ export function ScenarioFocusSection({
       {/* Header on background - Content vs Context pattern */}
       <h3 className="scenario-focus__title">Scenario Focus</h3>
       <p className="scenario-focus__description">
-        Switch context to see checklist, feasibility, and inspections for the
-        selected development path.
+        Switch context to review instant zoning, envelope, and scenario analysis
+        for the selected development path.
       </p>
 
       {/* Content - seamless glass surface */}
@@ -109,10 +99,10 @@ export function ScenarioFocusSection({
             </button>
             <button
               type="button"
-              onClick={onOpenInspectionHistory}
+              onClick={onOpenDueDiligence}
               className="scenario-focus__action-btn"
             >
-              Inspection history
+              Open Due Diligence
             </button>
           </div>
         </div>
@@ -127,19 +117,6 @@ export function ScenarioFocusSection({
                 : (option?.label ?? formatScenarioLabel(scenarioKey))
             const icon = scenarioKey === 'all' ? '🌐' : (option?.icon ?? '🏗️')
             const isActive = activeScenario === scenarioKey
-            const progressStats =
-              scenarioKey === 'all'
-                ? displaySummary
-                : scenarioChecklistProgress[scenarioKey]
-            const progressLabel = progressStats
-              ? `${progressStats.completed}/${progressStats.total || 0}`
-              : null
-            const progressPercent =
-              progressStats && progressStats.total > 0
-                ? Math.round(
-                    (progressStats.completed / progressStats.total) * 100,
-                  )
-                : null
 
             return (
               <button
@@ -151,20 +128,6 @@ export function ScenarioFocusSection({
               >
                 <span className="scenario-focus__option-icon">{icon}</span>
                 <span>{label}</span>
-                {progressLabel && (
-                  <span
-                    className={`scenario-focus__option-progress ${isActive ? 'scenario-focus__option-progress--active' : ''}`}
-                    title={
-                      progressPercent !== null
-                        ? `${progressStats?.completed ?? 0} of ${
-                            progressStats?.total ?? 0
-                          } items completed (${progressPercent}%)`
-                        : undefined
-                    }
-                  >
-                    {progressLabel}
-                  </span>
-                )}
               </button>
             )
           })}

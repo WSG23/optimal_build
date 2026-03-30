@@ -6,10 +6,9 @@
  * - Development Preview (3D Viewer + Asset Mix)
  * - Preview Layers Table
  * - Scenario Focus Section
- * - Due Diligence Checklist
  * - Multi-Scenario Comparison
- * - Condition Assessment
- * - Finance Project CTA
+ * - Due Diligence handoff
+ * - Project save CTA
  *
  * This component should be lazy-loaded to avoid bundle bloat for agent users.
  */
@@ -46,25 +45,17 @@ import { PropertyOverviewSection } from '../../site-acquisition/components/prope
 import { Preview3DViewer } from '../../../components/site-acquisition/Preview3DViewer'
 import { PreviewLayersTable } from '../../site-acquisition/components/property-overview/PreviewLayersTable'
 import { MultiScenarioComparisonSection } from '../../site-acquisition/components/multi-scenario-comparison/MultiScenarioComparisonSection'
-import { ConditionAssessmentSection } from '../../site-acquisition/components/condition-assessment/ConditionAssessmentSection'
 
 // Import Site Acquisition hooks
 import { usePreviewJob } from '../../site-acquisition/hooks/usePreviewJob'
-import { useConditionAssessment } from '../../site-acquisition/hooks/useConditionAssessment'
-import { useScenarioComparison } from '../../site-acquisition/hooks/useScenarioComparison'
+import { useCaptureScenarioComparison } from '../../site-acquisition/hooks/useCaptureScenarioComparison'
+import { buildFeasibilitySignals } from '../../site-acquisition/utils/signals'
 
 // Import constants for scenario lookup
-import {
-  SCENARIO_OPTIONS,
-  CONDITION_RATINGS,
-  CONDITION_RISK_LEVELS,
-} from '../../site-acquisition/constants'
+import { SCENARIO_OPTIONS } from '../../site-acquisition/constants'
 
 // Import card builder utility
 import { buildPropertyOverviewCards } from '../../site-acquisition/utils/cardBuilders'
-
-// Import InspectionHistorySummary for inline usage
-import { InspectionHistorySummary } from '../../site-acquisition/components/InspectionHistorySummary'
 
 // Import OptimalIntelligenceCard for AI insights
 import { OptimalIntelligenceCard } from '../../site-acquisition/components/OptimalIntelligenceCard'
@@ -90,6 +81,9 @@ export function DeveloperResults({
   const [existingProjectId, setExistingProjectId] = useState('')
   const [saveError, setSaveError] = useState<string | null>(null)
   const [savingProject, setSavingProject] = useState(false)
+  const dueDiligencePath = currentProject
+    ? `/projects/${currentProject.id}/due-diligence`
+    : '/app/due-diligence'
 
   // Scenario lookup map for labels
   const scenarioLookup = useMemo(
@@ -137,28 +131,6 @@ export function DeveloperResults({
     },
     [handleToggleLayerVisibility, handleSoloPreviewLayer, handleFocusLayer],
   )
-
-  // Condition assessment state - extract all required values
-  const {
-    conditionAssessment,
-    latestAssessmentEntry,
-    previousAssessmentEntry,
-    isLoadingCondition,
-    isExportingReport,
-    reportExportMessage,
-    handleReportExport,
-    assessmentHistory,
-    scenarioAssessments,
-    isLoadingAssessmentHistory,
-    assessmentHistoryError,
-    isLoadingScenarioAssessments,
-    scenarioAssessmentsError,
-    assessmentSaveMessage,
-    openAssessmentEditor,
-  } = useConditionAssessment({ capturedProperty: result, activeScenario })
-
-  // History modal state (for Inspection History Summary)
-  const [_historyModalOpen, setHistoryModalOpen] = useState(false)
 
   // Currency symbol for formatting
   const currencySymbol = result.currencySymbol ?? 'S$'
@@ -236,59 +208,11 @@ export function DeveloperResults({
     comparisonScenarios,
     scenarioComparisonData,
     formatScenarioLabel,
-    combinedConditionInsights,
-    insightSubtitle,
-    systemComparisonMap,
-    scenarioOverrideEntries,
-    baseScenarioAssessment,
-    scenarioComparisonEntries,
-    setScenarioComparisonBase,
-  } = useScenarioComparison({
+  } = useCaptureScenarioComparison({
     capturedProperty: result,
     activeScenario,
-    conditionAssessment,
-    assessmentHistory: assessmentHistory ?? [],
-    scenarioAssessments: scenarioAssessments ?? [],
-    scenarioChecklistProgress: {},
-    displaySummary: null,
     currencySymbol,
   })
-
-  // Compute feasibility signals from quick analysis scenarios
-  const feasibilitySignals = useMemo(() => {
-    if (!quickAnalysisScenarios.length) {
-      return []
-    }
-    return quickAnalysisScenarios.map((entry) => {
-      const scenario =
-        typeof entry.scenario === 'string' && entry.scenario
-          ? (entry.scenario as DevelopmentScenario)
-          : 'raw_land'
-      const label =
-        scenarioLookup.get(scenario)?.label ??
-        formatScenarioLabel(scenario as DevelopmentScenario | 'all' | null)
-      // Extract signals from quick analysis entry
-      const opportunities: string[] = []
-      const risks: string[] = []
-      // Add opportunity/risk signals based on metrics
-      const estIrr =
-        typeof entry.metrics?.['est_irr'] === 'number'
-          ? entry.metrics['est_irr']
-          : null
-      if (estIrr !== null && estIrr > 15) {
-        opportunities.push(`Strong IRR: ${estIrr.toFixed(1)}%`)
-      }
-      if (estIrr !== null && estIrr < 10) {
-        risks.push(`Low IRR: ${estIrr.toFixed(1)}%`)
-      }
-      return {
-        scenario,
-        label,
-        opportunities,
-        risks,
-      }
-    })
-  }, [quickAnalysisScenarios, scenarioLookup, formatScenarioLabel])
 
   // Format timestamp helper
   const formatRecordedTimestamp = useCallback(
@@ -329,108 +253,38 @@ export function DeveloperResults({
     [currencySymbol, formatNumber],
   )
 
-  // Rating change description for condition assessment
-  const describeRatingChange = useCallback(
-    (current: string, reference: string) => {
-      type Rating = (typeof CONDITION_RATINGS)[number]
-      const currentIndex = CONDITION_RATINGS.indexOf(current as Rating)
-      const referenceIndex = CONDITION_RATINGS.indexOf(reference as Rating)
-      if (currentIndex === -1 || referenceIndex === -1) {
-        if (current === reference) {
-          return { text: 'Rating unchanged.', tone: 'neutral' as const }
-        }
-        return {
-          text: `Rating changed from ${reference} to ${current}.`,
-          tone: 'neutral' as const,
-        }
+  // Compute feasibility signals from quick analysis scenarios
+  const feasibilitySignals = useMemo(() => {
+    if (!quickAnalysisScenarios.length) {
+      return []
+    }
+    return quickAnalysisScenarios.map((entry) => {
+      const scenario =
+        typeof entry.scenario === 'string' && entry.scenario
+          ? (entry.scenario as DevelopmentScenario)
+          : 'raw_land'
+      const label =
+        scenarioLookup.get(scenario)?.label ??
+        formatScenarioLabel(scenario as DevelopmentScenario | 'all' | null)
+      const signals = buildFeasibilitySignals({
+        entry,
+        capturedProperty: result,
+        formatNumber,
+      })
+      return {
+        scenario,
+        label,
+        opportunities: signals.opportunities,
+        risks: signals.risks,
       }
-      if (currentIndex < referenceIndex) {
-        return {
-          text: `Rating improved from ${reference} to ${current}.`,
-          tone: 'positive' as const,
-        }
-      }
-      if (currentIndex > referenceIndex) {
-        return {
-          text: `Rating declined from ${reference} to ${current}.`,
-          tone: 'negative' as const,
-        }
-      }
-      return { text: 'Rating unchanged.', tone: 'neutral' as const }
-    },
-    [],
-  )
-
-  // Risk change description for condition assessment
-  const describeRiskChange = useCallback(
-    (current: string, reference: string) => {
-      type RiskLevel = (typeof CONDITION_RISK_LEVELS)[number]
-      const currentIndex = CONDITION_RISK_LEVELS.indexOf(current as RiskLevel)
-      const referenceIndex = CONDITION_RISK_LEVELS.indexOf(
-        reference as RiskLevel,
-      )
-      if (currentIndex === -1 || referenceIndex === -1) {
-        if (current === reference) {
-          return { text: 'Risk level unchanged.', tone: 'neutral' as const }
-        }
-        return {
-          text: `Risk level changed from ${reference} to ${current}.`,
-          tone: 'neutral' as const,
-        }
-      }
-      if (currentIndex < referenceIndex) {
-        return {
-          text: `Risk level improved from ${reference} to ${current}.`,
-          tone: 'positive' as const,
-        }
-      }
-      if (currentIndex > referenceIndex) {
-        return {
-          text: `Risk level worsened from ${reference} to ${current}.`,
-          tone: 'negative' as const,
-        }
-      }
-      return { text: 'Risk level unchanged.', tone: 'neutral' as const }
-    },
-    [],
-  )
-
-  // Adapter to match InspectionHistorySummary's expected signature
-  const formatScenarioAdapter = useCallback(
-    (scenario: string | null | undefined): string => {
-      return formatScenarioLabel(
-        scenario as DevelopmentScenario | 'all' | null | undefined,
-      )
-    },
-    [formatScenarioLabel],
-  )
-
-  // Inline Inspection History Summary component (rendered inline within section)
-  const InlineInspectionHistorySummaryComponent = useCallback(
-    () => (
-      <InspectionHistorySummary
-        hasProperty={!!result}
-        isLoading={isLoadingAssessmentHistory}
-        error={assessmentHistoryError}
-        latestEntry={latestAssessmentEntry}
-        previousEntry={previousAssessmentEntry}
-        formatScenario={formatScenarioAdapter}
-        formatTimestamp={formatRecordedTimestamp}
-        onViewTimeline={() => setHistoryModalOpen(true)}
-        onLogInspection={() => openAssessmentEditor('new')}
-      />
-    ),
-    [
-      result,
-      isLoadingAssessmentHistory,
-      assessmentHistoryError,
-      latestAssessmentEntry,
-      previousAssessmentEntry,
-      formatScenarioAdapter,
-      formatRecordedTimestamp,
-      openAssessmentEditor,
-    ],
-  )
+    })
+  }, [
+    quickAnalysisScenarios,
+    scenarioLookup,
+    formatNumber,
+    formatScenarioLabel,
+    result,
+  ])
 
   // Build overview cards from result using the official card builder
   const overviewCards = useMemo(() => {
@@ -454,26 +308,44 @@ export function DeveloperResults({
     currencySymbol,
   ])
 
-  // State for AI insight generation
-  const [isGeneratingInsight, setIsGeneratingInsight] = useState(false)
-
-  // Mock AI insight based on captured property data
+  // Instant capture insight based on captured property data
   const aiInsight = useMemo(() => {
     if (!result) return null
     const scenarios = selectedScenarios
       .map((s) => scenarioLookup.get(s)?.label ?? s)
       .join(', ')
-    return `Based on ${result.address?.district ?? 'this location'}'s zoning profile and ${scenarios} development scenarios, this site shows strong potential for mixed-use redevelopment with an estimated IRR of 12-18%. Key considerations include heritage overlay compliance and traffic impact assessments.`
-  }, [result, selectedScenarios, scenarioLookup])
-
-  // Handler for generating full report
-  const handleGenerateReport = useCallback(async () => {
-    setIsGeneratingInsight(true)
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setIsGeneratingInsight(false)
-    // In production, this would trigger a full AI report generation
-  }, [])
+    const envelope = result.buildEnvelope
+    const analysisPoints = [
+      envelope.allowablePlotRatio !== null
+        ? `plot ratio ${formatNumber(envelope.allowablePlotRatio, {
+            maximumFractionDigits: 2,
+          })}`
+        : null,
+      envelope.maxBuildableGfaSqm !== null
+        ? `max buildable GFA ${formatNumber(envelope.maxBuildableGfaSqm, {
+            maximumFractionDigits: 0,
+          })} sqm`
+        : null,
+      envelope.buildingHeightLimitM !== null
+        ? `height limit ${formatNumber(envelope.buildingHeightLimitM, {
+            maximumFractionDigits: 0,
+          })} m`
+        : null,
+      envelope.siteCoveragePct !== null
+        ? `site coverage ${formatNumber(envelope.siteCoveragePct, {
+            maximumFractionDigits: 0,
+          })}%`
+        : null,
+    ].filter(Boolean)
+    const previewStatus =
+      result.visualization?.status?.replace(/_/g, ' ').toLowerCase() ??
+      'pending'
+    const analysisSummary =
+      analysisPoints.length > 0
+        ? analysisPoints.slice(0, 3).join(', ')
+        : 'zoning and envelope controls are still resolving'
+    return `Instant capture analysis for ${result.address?.district ?? 'this location'} highlights ${analysisSummary}. Active scenarios: ${scenarios}. Preview status: ${previewStatus}.`
+  }, [formatNumber, result, selectedScenarios, scenarioLookup])
 
   return (
     <div className="site-acquisition__developer-results">
@@ -481,12 +353,7 @@ export function DeveloperResults({
       <PropertyOverviewSection cards={overviewCards} />
 
       {/* AI Insight Card - Key intelligence from Optimal AI */}
-      <OptimalIntelligenceCard
-        insight={aiInsight}
-        hasProperty={!!result}
-        onGenerateReport={handleGenerateReport}
-        isGenerating={isGeneratingInsight}
-      />
+      <OptimalIntelligenceCard insight={aiInsight} hasProperty={!!result} />
 
       {/* Development Preview Section */}
       <section className="site-acquisition__preview">
@@ -636,44 +503,25 @@ export function DeveloperResults({
         activeScenario={activeScenario}
         scenarioLookup={scenarioLookup}
         propertyId={result.propertyId}
-        isExportingReport={isExportingReport}
-        reportExportMessage={reportExportMessage}
         setActiveScenario={setActiveScenario}
-        handleReportExport={handleReportExport}
         formatRecordedTimestamp={formatRecordedTimestamp}
       />
 
-      {/* Condition Assessment */}
-      <ConditionAssessmentSection
-        capturedProperty={result}
-        conditionAssessment={conditionAssessment}
-        isLoadingCondition={isLoadingCondition}
-        latestAssessmentEntry={latestAssessmentEntry}
-        previousAssessmentEntry={previousAssessmentEntry}
-        assessmentHistoryError={assessmentHistoryError}
-        isLoadingAssessmentHistory={isLoadingAssessmentHistory}
-        assessmentSaveMessage={assessmentSaveMessage}
-        scenarioAssessments={scenarioAssessments ?? []}
-        isLoadingScenarioAssessments={isLoadingScenarioAssessments}
-        scenarioAssessmentsError={scenarioAssessmentsError}
-        scenarioOverrideEntries={scenarioOverrideEntries}
-        baseScenarioAssessment={baseScenarioAssessment}
-        scenarioComparisonEntries={scenarioComparisonEntries}
-        combinedConditionInsights={combinedConditionInsights}
-        insightSubtitle={insightSubtitle}
-        systemComparisonMap={systemComparisonMap}
-        isExportingReport={isExportingReport}
-        scenarioLookup={scenarioLookup}
-        formatRecordedTimestamp={formatRecordedTimestamp}
-        formatScenarioLabel={formatScenarioLabel}
-        describeRatingChange={describeRatingChange}
-        describeRiskChange={describeRiskChange}
-        openAssessmentEditor={openAssessmentEditor}
-        setScenarioComparisonBase={setScenarioComparisonBase}
-        handleReportExport={handleReportExport}
-        setHistoryModalOpen={setHistoryModalOpen}
-        InlineInspectionHistorySummary={InlineInspectionHistorySummaryComponent}
-      />
+      <section className="site-acquisition__finance-cta">
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            py: 'var(--ob-space-100)',
+          }}
+        >
+          <Link to={dueDiligencePath}>
+            <Button variant="secondary" size="lg">
+              View Due Diligence →
+            </Button>
+          </Link>
+        </Box>
+      </section>
 
       {/* Project Save CTA */}
       <section className="site-acquisition__finance-cta">
@@ -695,29 +543,6 @@ export function DeveloperResults({
                 View Project Hub →
               </Button>
             </Link>
-          )}
-        </Box>
-      </section>
-
-      {/* Finance CTA */}
-      <section className="site-acquisition__finance-cta">
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            py: 'var(--ob-space-200)',
-          }}
-        >
-          {currentProject ? (
-            <Link to={`/projects/${currentProject.id}/finance`}>
-              <Button variant="primary" size="lg">
-                Open Finance →
-              </Button>
-            </Link>
-          ) : (
-            <Button variant="primary" size="lg" disabled>
-              Save project to open Finance →
-            </Button>
           )}
         </Box>
       </section>

@@ -65,6 +65,10 @@ const MarketingPage = React.lazy(async () => {
   const module = await import('./app/pages/marketing/MarketingPage')
   return { default: module.MarketingPage }
 })
+const DueDiligencePage = React.lazy(async () => {
+  const module = await import('./app/pages/due-diligence/DueDiligencePage')
+  return { default: module.DueDiligencePage }
+})
 const AdvisoryPage = React.lazy(async () => {
   const module = await import('./app/pages/advisory/AdvisoryPage')
   return { default: module.AdvisoryPage }
@@ -173,6 +177,17 @@ const checklistTemplateManagerElement = (
     hideSidebar
   >
     {suspense(<ChecklistTemplateManager />)}
+  </AppShell>
+)
+
+const dueDiligenceElement = (
+  <AppShell
+    activeItem="dueDiligence"
+    title="Property due diligence"
+    description="Review condition assessments, inspection history, checklist progress, and scenario overrides."
+    hideSidebar
+  >
+    {suspense(<DueDiligencePage />)}
   </AppShell>
 )
 
@@ -296,6 +311,10 @@ const router = createBrowserRouter([
     element: checklistTemplateManagerElement,
   },
   {
+    path: '/app/due-diligence',
+    element: dueDiligenceElement,
+  },
+  {
     path: '/app/asset-feasibility',
     element: developerFeasibilityElement,
   },
@@ -350,6 +369,10 @@ const router = createBrowserRouter([
   {
     path: '/projects/:projectId/capture',
     element: unifiedCaptureElement,
+  },
+  {
+    path: '/projects/:projectId/due-diligence',
+    element: dueDiligenceElement,
   },
   {
     path: '/projects/:projectId/feasibility',

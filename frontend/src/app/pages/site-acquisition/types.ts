@@ -80,6 +80,14 @@ export type ScenarioComparisonDatum = {
   source: 'manual' | 'heuristic'
 }
 
+export type CaptureScenarioComparisonDatum = {
+  key: ScenarioComparisonKey
+  label: string
+  icon: string
+  quickHeadline: string | null
+  quickMetrics: ScenarioComparisonMetric[]
+}
+
 // ============================================================================
 // Quick Analysis Types
 // ============================================================================
@@ -92,6 +100,13 @@ export type QuickAnalysisSnapshot = {
   generatedAt: string
   scenarios: SiteAcquisitionResult['quickAnalysis']['scenarios']
   comparison: ScenarioComparisonDatum[]
+}
+
+export type CaptureQuickAnalysisSnapshot = {
+  propertyId: string
+  generatedAt: string
+  scenarios: SiteAcquisitionResult['quickAnalysis']['scenarios']
+  comparison: CaptureScenarioComparisonDatum[]
 }
 
 // ============================================================================

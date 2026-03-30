@@ -85,6 +85,12 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
       groups.push({
         items: [
           {
+            path: projectBase
+              ? `${projectBase}/due-diligence`
+              : '/app/due-diligence',
+            label: t('nav.dueDiligence'),
+          },
+          {
             path: projectBase ? `${projectBase}/feasibility` : '/projects',
             label: t('nav.assetFeasibility'),
           },

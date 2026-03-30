@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import React from 'react'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 
 import type { SiteAcquisitionResult } from '../../../../api/siteAcquisition'
 import type { DevelopmentScenario } from '../../../../api/agents'
 import { DeveloperResults } from './DeveloperResults'
 
+let currentProjectValue: { id: string; name: string } | null = null
+
 vi.mock('../../../../contexts/useProject', () => ({
   useProject: () => ({
-    currentProject: null,
+    currentProject: currentProjectValue,
     projects: [],
     setCurrentProject: vi.fn(),
     refreshProjects: vi.fn(),
@@ -59,15 +61,60 @@ const mockHandleSoloPreviewLayer = vi.fn()
 const mockHandleFocusLayer = vi.fn()
 const mockSetPreviewDetailLevel = vi.fn()
 
-const mockHandleChecklistUpdate = vi.fn()
-const mockHandleReportExport = vi.fn()
-const mockOpenAssessmentEditor = vi.fn()
-
 let previewMetadataErrorValue: string | null = null
 let lastMultiScenarioProps: unknown = null
 let lastInsightProps: unknown = null
 
-const mockUseScenarioComparison = vi.fn()
+const mockUseCaptureScenarioComparison = vi.fn()
+
+function buildResult(): SiteAcquisitionResult {
+  return {
+    propertyId: 'prop-123',
+    currencySymbol: 'S$',
+    address: { fullAddress: '1 Cyber Ave', district: 'Downtown' },
+    quickAnalysis: {
+      generatedAt: '2026-01-06T10:00:00Z',
+      scenarios: [],
+    },
+    buildEnvelope: {
+      zoneCode: 'C',
+      zoneDescription: 'Commercial',
+      siteAreaSqm: 5000,
+      allowablePlotRatio: 4.2,
+      maxBuildableGfaSqm: 21000,
+      currentGfaSqm: 18000,
+      additionalPotentialGfaSqm: 3000,
+      buildingHeightLimitM: 120,
+      siteCoveragePct: 80,
+      assumptions: [],
+      sourceReference: null,
+    },
+    visualization: {
+      status: 'queued',
+      previewAvailable: false,
+      notes: [],
+      conceptMeshUrl: null,
+      previewMetadataUrl: null,
+      thumbnailUrl: null,
+      cameraOrbitHint: null,
+      previewSeed: null,
+      previewJobId: null,
+      massingLayers: [],
+      colorLegend: [],
+    },
+    optimizations: [],
+    financialSummary: {
+      totalEstimatedRevenueSgd: null,
+      totalEstimatedCapexSgd: null,
+      dominantRiskProfile: null,
+      notes: [],
+      financeBlueprint: null,
+    },
+    heritageContext: null,
+    previewJobs: [],
+    previewJob: null,
+  } as SiteAcquisitionResult
+}
 
 vi.mock('../../site-acquisition/utils/cardBuilders', () => ({
   buildPropertyOverviewCards: ({
@@ -112,44 +159,9 @@ vi.mock('../../site-acquisition/hooks/usePreviewJob', () => ({
   }),
 }))
 
-vi.mock('../../site-acquisition/hooks/useChecklist', () => ({
-  useChecklist: () => ({
-    checklistItems: [],
-    filteredChecklistItems: [],
-    selectedCategory: null,
-    isLoadingChecklist: false,
-    setSelectedCategory: vi.fn(),
-    handleChecklistUpdate: mockHandleChecklistUpdate,
-    displaySummary: {},
-    activeScenarioDetails: null,
-    scenarioChecklistProgress: {},
-    refreshChecklist: vi.fn(),
-  }),
-}))
-
-vi.mock('../../site-acquisition/hooks/useConditionAssessment', () => ({
-  useConditionAssessment: () => ({
-    conditionAssessment: null,
-    latestAssessmentEntry: null,
-    previousAssessmentEntry: null,
-    isLoadingCondition: false,
-    isExportingReport: false,
-    reportExportMessage: null,
-    handleReportExport: mockHandleReportExport,
-    assessmentHistory: [],
-    scenarioAssessments: [],
-    isLoadingAssessmentHistory: false,
-    assessmentHistoryError: null,
-    isLoadingScenarioAssessments: false,
-    scenarioAssessmentsError: null,
-    assessmentSaveMessage: null,
-    openAssessmentEditor: mockOpenAssessmentEditor,
-  }),
-}))
-
-vi.mock('../../site-acquisition/hooks/useScenarioComparison', () => ({
-  useScenarioComparison: (...args: unknown[]) =>
-    mockUseScenarioComparison(...args),
+vi.mock('../../site-acquisition/hooks/useCaptureScenarioComparison', () => ({
+  useCaptureScenarioComparison: (...args: unknown[]) =>
+    mockUseCaptureScenarioComparison(...args),
 }))
 
 vi.mock(
@@ -189,86 +201,6 @@ vi.mock(
     ),
   }),
 )
-vi.mock(
-  '../../site-acquisition/components/checklist/DueDiligenceChecklistSection',
-  () => ({
-    DueDiligenceChecklistSection: ({
-      handleChecklistUpdate,
-    }: {
-      handleChecklistUpdate: (
-        itemId: string,
-        status: 'pending' | 'in_progress' | 'completed' | 'not_applicable',
-      ) => void
-    }) => (
-      <div data-testid="checklist">
-        <button
-          type="button"
-          onClick={() => handleChecklistUpdate('item-123', 'completed')}
-        >
-          checklist-complete
-        </button>
-      </div>
-    ),
-  }),
-)
-vi.mock(
-  '../../site-acquisition/components/condition-assessment/ConditionAssessmentSection',
-  () => ({
-    ConditionAssessmentSection: ({
-      handleReportExport,
-      describeRatingChange,
-      describeRiskChange,
-      formatRecordedTimestamp,
-      InlineInspectionHistorySummary,
-    }: {
-      handleReportExport: (format: 'json' | 'pdf') => void
-      describeRatingChange: (
-        current: string,
-        reference: string,
-      ) => { text: string; tone: 'positive' | 'negative' | 'neutral' }
-      describeRiskChange: (
-        current: string,
-        reference: string,
-      ) => { text: string; tone: 'positive' | 'negative' | 'neutral' }
-      formatRecordedTimestamp: (timestamp?: string | null) => string
-      InlineInspectionHistorySummary: React.ComponentType
-    }) => (
-      <div data-testid="condition-assessment">
-        <button type="button" onClick={() => handleReportExport('pdf')}>
-          export-pdf
-        </button>
-        <div data-testid="rating-change">
-          {describeRatingChange('A', 'B').text}
-        </div>
-        <div data-testid="risk-change">
-          {describeRiskChange('Low', 'High').text}
-        </div>
-        <div data-testid="formatted-timestamp">
-          {formatRecordedTimestamp('not-a-real-date')}
-        </div>
-        <InlineInspectionHistorySummary />
-      </div>
-    ),
-  }),
-)
-vi.mock('../../site-acquisition/components/InspectionHistorySummary', () => ({
-  InspectionHistorySummary: ({
-    onLogInspection,
-    onViewTimeline,
-  }: {
-    onLogInspection: () => void
-    onViewTimeline: () => void
-  }) => (
-    <div data-testid="inspection-history">
-      <button type="button" onClick={onLogInspection}>
-        log-inspection
-      </button>
-      <button type="button" onClick={onViewTimeline}>
-        view-timeline
-      </button>
-    </div>
-  ),
-}))
 
 vi.mock('../../site-acquisition/components/OptimalIntelligenceCard', () => ({
   OptimalIntelligenceCard: ({
@@ -278,7 +210,7 @@ vi.mock('../../site-acquisition/components/OptimalIntelligenceCard', () => ({
   }: {
     insight: string | null
     isGenerating: boolean
-    onGenerateReport: () => Promise<void>
+    onGenerateReport?: () => Promise<void>
   }) => {
     lastInsightProps = { insight, isGenerating }
     return (
@@ -287,9 +219,11 @@ vi.mock('../../site-acquisition/components/OptimalIntelligenceCard', () => ({
         <div data-testid="ai-is-generating">
           {isGenerating ? 'generating' : 'idle'}
         </div>
-        <button type="button" onClick={() => void onGenerateReport()}>
-          generate-report
-        </button>
+        {onGenerateReport ? (
+          <button type="button" onClick={() => void onGenerateReport()}>
+            generate-report
+          </button>
+        ) : null}
       </div>
     )
   },
@@ -324,49 +258,44 @@ vi.mock(
 describe('DeveloperResults', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    currentProjectValue = null
     previewMetadataErrorValue = null
     lastMultiScenarioProps = null
     lastInsightProps = null
 
-    mockUseScenarioComparison.mockImplementation(() => ({
+    mockUseCaptureScenarioComparison.mockImplementation(() => ({
       quickAnalysisScenarios: [
-        { scenario: 'raw_land', metrics: { est_irr: 16 } },
-        { scenario: 'en_bloc', metrics: { est_irr: 8 } },
+        {
+          scenario: 'raw_land',
+          metrics: {
+            potential_gfa_sqm: 20000,
+            plot_ratio: 4,
+            site_area_sqm: 5000,
+          },
+        },
+        {
+          scenario: 'existing_building',
+          metrics: { gfa_uplift_sqm: 1800 },
+        },
       ],
       comparisonScenarios: [],
       scenarioComparisonData: [],
       formatScenarioLabel: (scenario: string) =>
         scenario === 'raw_land'
           ? 'Raw Land'
-          : scenario === 'en_bloc'
-            ? 'En Bloc'
+          : scenario === 'existing_building'
+            ? 'Renovation'
             : scenario,
-      combinedConditionInsights: [],
-      insightSubtitle: null,
-      systemComparisonMap: new Map(),
-      scenarioOverrideEntries: [],
-      baseScenarioAssessment: null,
-      scenarioComparisonEntries: [],
-      setScenarioComparisonBase: vi.fn(),
     }))
   })
 
-  it('wires preview, checklist, and export handlers to child sections', () => {
+  it('wires preview handlers and shows the due diligence handoff', () => {
     render(
       <DeveloperResults
-        result={
-          {
-            propertyId: 'prop-123',
-            currencySymbol: 'S$',
-            address: { fullAddress: '1 Cyber Ave', district: 'Downtown' },
-            quickAnalysis: {
-              generatedAt: '2026-01-06T10:00:00Z',
-              scenarios: [],
-            },
-            previewJob: null,
-          } as SiteAcquisitionResult
+        result={buildResult()}
+        selectedScenarios={
+          ['raw_land', 'existing_building'] as DevelopmentScenario[]
         }
-        selectedScenarios={['raw_land', 'en_bloc'] as DevelopmentScenario[]}
       />,
     )
 
@@ -387,41 +316,38 @@ describe('DeveloperResults', () => {
     fireEvent.click(screen.getByRole('button', { name: /layer-focus/i }))
     expect(mockHandleFocusLayer).toHaveBeenCalledWith('layer-3')
 
-    fireEvent.click(screen.getByRole('button', { name: /checklist-complete/i }))
-    expect(mockHandleChecklistUpdate).toHaveBeenCalledWith(
-      'item-123',
-      'completed',
+    const dueDiligenceLink = screen.getByRole('link', {
+      name: /view due diligence/i,
+    })
+    expect(dueDiligenceLink).toHaveAttribute('href', '/app/due-diligence')
+  })
+
+  it('uses the project-scoped due diligence path when a project is active', () => {
+    currentProjectValue = { id: 'proj-9', name: 'Project Nine' }
+
+    render(
+      <DeveloperResults
+        result={buildResult()}
+        selectedScenarios={['raw_land'] as DevelopmentScenario[]}
+      />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /export-pdf/i }))
-    expect(mockHandleReportExport).toHaveBeenCalledWith('pdf')
-
-    fireEvent.click(screen.getByRole('button', { name: /log-inspection/i }))
-    expect(mockOpenAssessmentEditor).toHaveBeenCalledWith('new')
-
-    expect(screen.getByTestId('rating-change').textContent).toMatch(/Rating/i)
-    expect(screen.getByTestId('risk-change').textContent).toMatch(/Risk level/i)
-    expect(screen.getByTestId('formatted-timestamp').textContent).toBe(
-      'Invalid Date',
+    const dueDiligenceLink = screen.getByRole('link', {
+      name: /view due diligence/i,
+    })
+    expect(dueDiligenceLink).toHaveAttribute(
+      'href',
+      '/projects/proj-9/due-diligence',
     )
   })
 
-  it('derives feasibility signals from scenario IRR and passes them to MultiScenarioComparisonSection', () => {
+  it('derives capture feasibility signals from instant envelope metrics and passes them to MultiScenarioComparisonSection', () => {
     render(
       <DeveloperResults
-        result={
-          {
-            propertyId: 'prop-123',
-            currencySymbol: 'S$',
-            address: { fullAddress: '1 Cyber Ave', district: 'Downtown' },
-            quickAnalysis: {
-              generatedAt: '2026-01-06T10:00:00Z',
-              scenarios: [],
-            },
-            previewJob: null,
-          } as SiteAcquisitionResult
+        result={buildResult()}
+        selectedScenarios={
+          ['raw_land', 'existing_building'] as DevelopmentScenario[]
         }
-        selectedScenarios={['raw_land', 'en_bloc'] as DevelopmentScenario[]}
       />,
     )
 
@@ -440,45 +366,31 @@ describe('DeveloperResults', () => {
     expect(props?.feasibilitySignals[0]?.opportunities.length).toBeGreaterThan(
       0,
     )
-    expect(props?.feasibilitySignals[1]?.scenario).toBe('en_bloc')
-    expect(props?.feasibilitySignals[1]?.risks.length).toBeGreaterThan(0)
+    expect(props?.feasibilitySignals[1]?.scenario).toBe('existing_building')
+    expect(props?.feasibilitySignals[1]?.opportunities.length).toBeGreaterThan(
+      0,
+    )
   })
 
   it('passes no feasibility signals when quick analysis scenarios are missing', () => {
-    mockUseScenarioComparison.mockImplementationOnce(() => ({
+    mockUseCaptureScenarioComparison.mockImplementationOnce(() => ({
       quickAnalysisScenarios: [],
       comparisonScenarios: [],
       scenarioComparisonData: [],
       formatScenarioLabel: (scenario: string) =>
         scenario === 'raw_land'
           ? 'Raw Land'
-          : scenario === 'en_bloc'
-            ? 'En Bloc'
+          : scenario === 'existing_building'
+            ? 'Renovation'
             : scenario,
-      combinedConditionInsights: [],
-      insightSubtitle: null,
-      systemComparisonMap: new Map(),
-      scenarioOverrideEntries: [],
-      baseScenarioAssessment: null,
-      scenarioComparisonEntries: [],
-      setScenarioComparisonBase: vi.fn(),
     }))
 
     render(
       <DeveloperResults
-        result={
-          {
-            propertyId: 'prop-123',
-            currencySymbol: 'S$',
-            address: { fullAddress: '1 Cyber Ave', district: 'Downtown' },
-            quickAnalysis: {
-              generatedAt: '2026-01-06T10:00:00Z',
-              scenarios: [],
-            },
-            previewJob: null,
-          } as SiteAcquisitionResult
+        result={buildResult()}
+        selectedScenarios={
+          ['raw_land', 'existing_building'] as DevelopmentScenario[]
         }
-        selectedScenarios={['raw_land', 'en_bloc'] as DevelopmentScenario[]}
       />,
     )
 
@@ -487,51 +399,24 @@ describe('DeveloperResults', () => {
     ).toBe('0')
   })
 
-  it('generates an AI insight and toggles generating state while creating a report', async () => {
-    vi.useFakeTimers()
-    try {
-      render(
-        <DeveloperResults
-          result={
-            {
-              propertyId: 'prop-123',
-              currencySymbol: 'S$',
-              address: { fullAddress: '1 Cyber Ave', district: 'Downtown' },
-              quickAnalysis: {
-                generatedAt: '2026-01-06T10:00:00Z',
-                scenarios: [],
-              },
-              previewJob: null,
-            } as SiteAcquisitionResult
-          }
-          selectedScenarios={['raw_land', 'en_bloc'] as DevelopmentScenario[]}
-        />,
-      )
+  it('renders instant capture insight text without a report CTA', () => {
+    render(
+      <DeveloperResults
+        result={buildResult()}
+        selectedScenarios={
+          ['raw_land', 'existing_building'] as DevelopmentScenario[]
+        }
+      />,
+    )
 
-      expect(screen.getByTestId('ai-insight-text').textContent).toContain(
-        "Downtown's zoning profile",
-      )
-      expect(screen.getByTestId('ai-is-generating').textContent).toBe('idle')
-
-      await act(async () => {
-        fireEvent.click(
-          screen.getByRole('button', { name: /generate-report/i }),
-        )
-      })
-
-      expect(screen.getByTestId('ai-is-generating').textContent).toBe(
-        'generating',
-      )
-
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(2000)
-      })
-
-      expect(screen.getByTestId('ai-is-generating').textContent).toBe('idle')
-      expect(lastInsightProps).toBeTruthy()
-    } finally {
-      vi.useRealTimers()
-    }
+    expect(screen.getByTestId('ai-insight-text').textContent).toContain(
+      'Instant capture analysis for Downtown highlights',
+    )
+    expect(screen.getByTestId('ai-is-generating').textContent).toBe('idle')
+    expect(
+      screen.queryByRole('button', { name: /generate-report/i }),
+    ).not.toBeInTheDocument()
+    expect(lastInsightProps).toBeTruthy()
   })
 
   it('renders preview metadata errors when present', () => {
@@ -539,19 +424,10 @@ describe('DeveloperResults', () => {
 
     render(
       <DeveloperResults
-        result={
-          {
-            propertyId: 'prop-123',
-            currencySymbol: 'S$',
-            address: { fullAddress: '1 Cyber Ave', district: 'Downtown' },
-            quickAnalysis: {
-              generatedAt: '2026-01-06T10:00:00Z',
-              scenarios: [],
-            },
-            previewJob: null,
-          } as SiteAcquisitionResult
+        result={buildResult()}
+        selectedScenarios={
+          ['raw_land', 'existing_building'] as DevelopmentScenario[]
         }
-        selectedScenarios={['raw_land', 'en_bloc'] as DevelopmentScenario[]}
       />,
     )
 
@@ -561,29 +437,20 @@ describe('DeveloperResults', () => {
   it('updates active scenario and propagates it to MultiScenarioComparisonSection', () => {
     render(
       <DeveloperResults
-        result={
-          {
-            propertyId: 'prop-123',
-            currencySymbol: 'S$',
-            address: { fullAddress: '1 Cyber Ave', district: 'Downtown' },
-            quickAnalysis: {
-              generatedAt: '2026-01-06T10:00:00Z',
-              scenarios: [],
-            },
-            previewJob: null,
-          } as SiteAcquisitionResult
+        result={buildResult()}
+        selectedScenarios={
+          ['raw_land', 'existing_building'] as DevelopmentScenario[]
         }
-        selectedScenarios={['raw_land', 'en_bloc'] as DevelopmentScenario[]}
       />,
     )
 
     const module = screen.getByTestId('multi-scenario')
     expect(module.getAttribute('data-active')).toBe('raw_land')
 
-    fireEvent.click(screen.getByRole('button', { name: /All Scenarios/i }))
+    fireEvent.click(screen.getByRole('button', { name: /all scenarios/i }))
     expect(module.getAttribute('data-active')).toBe('all')
 
-    fireEvent.click(screen.getByRole('button', { name: /En Bloc/i }))
-    expect(module.getAttribute('data-active')).toBe('en_bloc')
+    fireEvent.click(screen.getByRole('button', { name: /renovation/i }))
+    expect(module.getAttribute('data-active')).toBe('existing_building')
   })
 })

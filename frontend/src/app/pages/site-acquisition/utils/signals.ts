@@ -96,14 +96,17 @@ function buildRawLandSignals(
 
 function buildExistingBuildingSignals(
   entry: QuickAnalysisEntry,
+  capturedProperty: SiteAcquisitionResult | null | undefined,
   formatNumber: NumberFormatter,
 ): FeasibilitySignals {
   const opportunities: string[] = []
   const risks: string[] = []
   const metrics = entry.metrics ?? {}
 
-  const uplift = safeNumber(metrics['gfa_uplift_sqm'])
-  const averagePsf = safeNumber(metrics['average_psf_price'])
+  const uplift =
+    safeNumber(metrics['gfa_uplift_sqm']) ??
+    capturedProperty?.buildEnvelope?.additionalPotentialGfaSqm
+  const currentGfa = capturedProperty?.buildEnvelope?.currentGfaSqm
 
   if (uplift && uplift > 0) {
     opportunities.push(
@@ -112,10 +115,16 @@ function buildExistingBuildingSignals(
       })} sqm of additional GFA.`,
     )
   } else {
-    risks.push('Limited GFA uplift — focus on retrofit efficiency.')
+    risks.push(
+      'Limited code headroom detected — validate retrofit scope against current approvals.',
+    )
   }
-  if (!averagePsf) {
-    risks.push('No recent transaction comps — check market data sources.')
+  if (currentGfa && currentGfa > 0) {
+    opportunities.push(
+      `Existing approvals already cover ≈ ${formatNumber(currentGfa, {
+        maximumFractionDigits: 0,
+      })} sqm of GFA.`,
+    )
   }
 
   return { opportunities, risks }
@@ -144,6 +153,7 @@ function buildHeritagePropertySignals(
 
 function buildUnderusedAssetSignals(
   entry: QuickAnalysisEntry,
+  capturedProperty: SiteAcquisitionResult | null | undefined,
   formatNumber: NumberFormatter,
 ): FeasibilitySignals {
   const opportunities: string[] = []
@@ -151,7 +161,6 @@ function buildUnderusedAssetSignals(
   const metrics = entry.metrics ?? {}
 
   const mrtCount = safeNumber(metrics['nearby_mrt_count'])
-  const averageRent = safeNumber(metrics['average_monthly_rent'])
   const buildingHeight = safeNumber(metrics['building_height_m'])
 
   if (mrtCount && mrtCount > 0) {
@@ -159,15 +168,20 @@ function buildUnderusedAssetSignals(
   } else {
     risks.push('Limited transit access — budget for last-mile improvements.')
   }
-  if (buildingHeight && buildingHeight < 20) {
+  const heightLimit = capturedProperty?.buildEnvelope?.buildingHeightLimitM
+  if (buildingHeight && heightLimit && buildingHeight < heightLimit) {
     opportunities.push('Low-rise profile — vertical expansion is feasible.')
   }
-  if (!averageRent) {
-    risks.push('Missing rental comps — collect updated leasing benchmarks.')
+  if (capturedProperty?.buildEnvelope?.siteCoveragePct) {
+    opportunities.push(
+      `Site coverage control at ${formatNumber(
+        capturedProperty.buildEnvelope.siteCoveragePct,
+        {
+          maximumFractionDigits: 0,
+        },
+      )}% frames the reuse envelope.`,
+    )
   }
-
-  // formatNumber is available for future use but not currently needed
-  void formatNumber
 
   return { opportunities, risks }
 }
@@ -239,33 +253,27 @@ export function buildFeasibilitySignals(
       signals = buildRawLandSignals(entry, capturedProperty, formatNumber)
       break
     case 'existing_building':
-      signals = buildExistingBuildingSignals(entry, formatNumber)
+      signals = buildExistingBuildingSignals(
+        entry,
+        capturedProperty,
+        formatNumber,
+      )
       break
     case 'heritage_property':
       signals = buildHeritagePropertySignals(entry)
       break
     case 'underused_asset':
-      signals = buildUnderusedAssetSignals(entry, formatNumber)
+      signals = buildUnderusedAssetSignals(
+        entry,
+        capturedProperty,
+        formatNumber,
+      )
       break
     case 'mixed_use_redevelopment':
       signals = buildMixedUseSignals(entry, formatNumber)
       break
     default:
       signals = buildDefaultSignals(entry)
-  }
-
-  // Append optimization insight if available
-  if (capturedProperty?.optimizations?.length) {
-    const lead = capturedProperty.optimizations[0]
-    const mixLabel = lead.assetType.replace(/_/g, ' ')
-    signals.opportunities.push(
-      `${mixLabel.charAt(0).toUpperCase()}${mixLabel.slice(1)} holds ${formatNumber(
-        lead.allocationPct,
-        {
-          maximumFractionDigits: 0,
-        },
-      )}% of the suggested programme, aligning with the current envelope.`,
-    )
   }
 
   return signals

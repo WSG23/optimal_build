@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 // createPortal is used by modal components
 import {
   capturePropertyForDevelopment,
-  createFinanceProjectFromCapture,
   type DevelopmentScenario,
   type SiteAcquisitionResult,
   type GeometryDetailLevel,
@@ -15,8 +14,6 @@ import { useFeaturePreferences } from '../../../hooks/useFeaturePreferences'
 import type { QuickAnalysisEntry } from './types'
 import {
   SCENARIO_OPTIONS,
-  CONDITION_RATINGS,
-  CONDITION_RISK_LEVELS,
   PREVIEW_DETAIL_OPTIONS,
   PREVIEW_DETAIL_LABELS,
 } from './constants'
@@ -27,13 +24,7 @@ import {
 } from './utils'
 // formatCategoryName and getSeverityVisuals are used by child components
 import { usePreviewJob } from './hooks/usePreviewJob'
-import { useChecklist } from './hooks/useChecklist'
-import { useConditionAssessment } from './hooks/useConditionAssessment'
-import { useScenarioComparison } from './hooks/useScenarioComparison'
-import { DueDiligenceChecklistSection } from './components/checklist/DueDiligenceChecklistSection'
-import { InspectionHistorySummary } from './components/InspectionHistorySummary'
-import { ConditionAssessmentSection } from './components/condition-assessment'
-import { SalesVelocityCard } from './components/advisory/SalesVelocityCard'
+import { useCaptureScenarioComparison } from './hooks/useCaptureScenarioComparison'
 // InspectionHistoryContent is used by InspectionHistoryModal component
 import {
   PropertyOverviewSection,
@@ -124,9 +115,10 @@ export function SiteAcquisitionPage() {
   const [selectedScenarios, setSelectedScenarios] = useState<
     DevelopmentScenario[]
   >([])
+  const [activeScenario, setActiveScenario] = useState<
+    DevelopmentScenario | 'all'
+  >('all')
   const [isCapturing, setIsCapturing] = useState(false)
-  const [isCreatingFinanceProject, setIsCreatingFinanceProject] =
-    useState(false)
   const [error, setError] = useState<string | null>(null)
   const [capturedProperty, setCapturedProperty] =
     useState<SiteAcquisitionResult | null>(null)
@@ -211,156 +203,52 @@ export function SiteAcquisitionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only run on mount
 
-  // Checklist state - managed by useChecklist hook
-  // Note: scenarioFilterOptions is computed locally (includes scenarioOverrideEntries)
-  const {
-    checklistItems,
-    isLoadingChecklist,
-    selectedCategory,
-    setSelectedCategory,
-    activeScenario,
-    setActiveScenario,
-    availableChecklistScenarios,
-    filteredChecklistItems,
-    displaySummary,
-    activeScenarioDetails,
-    scenarioChecklistProgress,
-    scenarioLookup,
-    handleChecklistUpdate,
-  } = useChecklist({ capturedProperty })
+  const scenarioLookup = useMemo(
+    () => new Map(SCENARIO_OPTIONS.map((option) => [option.value, option])),
+    [],
+  )
 
-  // Condition assessment state from hook
-  const {
-    conditionAssessment,
-    isLoadingCondition,
-    isEditingAssessment,
-    assessmentEditorMode: _assessmentEditorMode,
-    assessmentDraft: _assessmentDraft,
-    isSavingAssessment: _isSavingAssessment,
-    assessmentSaveMessage,
-    assessmentHistory,
-    isLoadingAssessmentHistory,
-    assessmentHistoryError,
-    historyViewMode: _historyViewMode,
-    setHistoryViewMode: _setHistoryViewMode,
-    scenarioAssessments,
-    isLoadingScenarioAssessments,
-    scenarioAssessmentsError,
-    isExportingReport,
-    reportExportMessage,
-    latestAssessmentEntry,
-    previousAssessmentEntry,
-    openAssessmentEditor,
-    closeAssessmentEditor,
-    handleAssessmentFieldChange: _handleAssessmentFieldChange,
-    handleAssessmentSystemChange: _handleAssessmentSystemChange,
-    handleAssessmentSubmit: _handleAssessmentSubmit,
-    resetAssessmentDraft: _resetAssessmentDraft,
-    handleReportExport,
-  } = useConditionAssessment({ capturedProperty, activeScenario })
-
-  // Currency symbol for formatting (needed by useScenarioComparison)
   const currencySymbol = capturedProperty?.currencySymbol || 'S$'
 
-  // Scenario comparison state from hook
   const {
     quickAnalysisScenarios,
     comparisonScenarios,
-    scenarioOverrideEntries,
     scenarioComparisonData,
-    scenarioComparisonTableRows: _scenarioComparisonTableRows,
     scenarioComparisonVisible,
     activeScenarioSummary,
-    baseScenarioAssessment,
-    setScenarioComparisonBase,
-    scenarioComparisonEntries,
-    systemComparisons: _systemComparisons,
-    systemComparisonMap,
-    combinedConditionInsights,
-    insightSubtitle,
-    recommendedActionDiff: _recommendedActionDiff,
-    comparisonSummary: _comparisonSummary,
     quickAnalysisHistory,
-    formatScenarioMetricValue: _formatScenarioMetricValue,
-    summariseScenarioMetrics: _summariseScenarioMetrics,
     formatScenarioLabel,
     formatNumberMetric,
     formatCurrency,
-  } = useScenarioComparison({
+  } = useCaptureScenarioComparison({
     capturedProperty,
     activeScenario,
-    conditionAssessment,
-    assessmentHistory,
-    scenarioAssessments,
-    scenarioChecklistProgress,
-    displaySummary,
     currencySymbol,
   })
 
-  const [isHistoryModalOpen, setHistoryModalOpen] = useState(false)
   const [isQuickAnalysisHistoryOpen, setQuickAnalysisHistoryOpen] =
     useState(false)
+  const dueDiligencePath = '/app/due-diligence'
   useEffect(() => {
     if (quickAnalysisHistory.length === 0 && isQuickAnalysisHistoryOpen) {
       setQuickAnalysisHistoryOpen(false)
     }
   }, [quickAnalysisHistory.length, isQuickAnalysisHistoryOpen])
 
-  // Escape key handling for modals (useConditionAssessment handles history view mode reset)
-  // NOTE: Removed overflow manipulation - it was causing scroll lock issues.
-  // The modals themselves should handle their own overflow via their own useEffect.
-  useEffect(() => {
-    if (!isHistoryModalOpen && !isEditingAssessment) {
-      return
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        if (isEditingAssessment) {
-          closeAssessmentEditor()
-        } else if (isHistoryModalOpen) {
-          setHistoryModalOpen(false)
-        }
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isHistoryModalOpen, isEditingAssessment, closeAssessmentEditor])
-
-  // Note: Condition assessment reset is handled by useConditionAssessment hook
-  // Note: quickAnalysisScenarios, comparisonScenarios, scenarioOverrideEntries are provided by useScenarioComparison hook
-
-  // scenarioFilterOptions is computed locally because it includes scenarioOverrideEntries from hook
   const scenarioFilterOptions = useMemo(() => {
     const collected = new Set<DevelopmentScenario>()
-    availableChecklistScenarios.forEach((scenario) => collected.add(scenario))
+    selectedScenarios.forEach((scenario) => collected.add(scenario))
     quickAnalysisScenarios.forEach((scenario) =>
       collected.add(scenario.scenario as DevelopmentScenario),
     )
-    scenarioOverrideEntries.forEach((assessment) =>
-      collected.add(assessment.scenario),
-    )
     return Array.from(collected)
-  }, [
-    availableChecklistScenarios,
-    quickAnalysisScenarios,
-    scenarioOverrideEntries,
-  ])
+  }, [quickAnalysisScenarios, selectedScenarios])
 
   const scenarioFocusOptions = useMemo(
     () =>
       ['all', ...scenarioFilterOptions] as Array<'all' | DevelopmentScenario>,
     [scenarioFilterOptions],
   )
-
-  // Note: scenarioChecklistProgress is provided by useChecklist hook
-  // Note: formatScenarioLabel, formatNumberMetric, formatCurrency, formatScenarioMetricValue,
-  // summariseScenarioMetrics are provided by useScenarioComparison hook
 
   const scenarioComparisonRef = useRef<HTMLDivElement | null>(null)
   const formatTimestamp = useCallback((value: string) => {
@@ -379,6 +267,16 @@ export function SiteAcquisitionPage() {
       block: 'start',
     })
   }, [])
+
+  useEffect(() => {
+    if (activeScenario === 'all') {
+      return
+    }
+    if (scenarioFilterOptions.includes(activeScenario)) {
+      return
+    }
+    setActiveScenario(scenarioFilterOptions[0] ?? 'all')
+  }, [activeScenario, scenarioFilterOptions])
 
   // Wrapper for the pure buildFeasibilitySignals function
   const getFeasibilitySignals = useCallback(
@@ -556,9 +454,6 @@ export function SiteAcquisitionPage() {
     [handleToggleLayerVisibility, handleSoloPreviewLayer, handleFocusLayer],
   )
 
-  // Note: scenarioComparisonBase useEffect, baseScenarioAssessment, and scenarioComparisonEntries
-  // are provided by useScenarioComparison hook
-
   const feasibilitySignals = useMemo(() => {
     if (!quickAnalysisScenarios.length) {
       return []
@@ -585,78 +480,9 @@ export function SiteAcquisitionPage() {
     formatScenarioLabel,
   ])
 
-  const describeRatingChange = useCallback(
-    (current: string, reference: string) => {
-      type Rating = (typeof CONDITION_RATINGS)[number]
-      const currentIndex = CONDITION_RATINGS.indexOf(current as Rating)
-      const referenceIndex = CONDITION_RATINGS.indexOf(reference as Rating)
-      if (currentIndex === -1 || referenceIndex === -1) {
-        if (current === reference) {
-          return { text: 'Rating unchanged.', tone: 'neutral' as const }
-        }
-        return {
-          text: `Rating changed from ${reference} to ${current}.`,
-          tone: 'neutral' as const,
-        }
-      }
-      if (currentIndex === referenceIndex) {
-        return { text: 'Rating unchanged.', tone: 'neutral' as const }
-      }
-      if (currentIndex < referenceIndex) {
-        return {
-          text: `Rating improved from ${reference} to ${current}.`,
-          tone: 'positive' as const,
-        }
-      }
-      return {
-        text: `Rating declined from ${reference} to ${current}.`,
-        tone: 'negative' as const,
-      }
-    },
-    [],
-  )
-
-  const describeRiskChange = useCallback(
-    (current: string, reference: string) => {
-      type RiskLevel = (typeof CONDITION_RISK_LEVELS)[number]
-      const currentIndex = CONDITION_RISK_LEVELS.indexOf(current as RiskLevel)
-      const referenceIndex = CONDITION_RISK_LEVELS.indexOf(
-        reference as RiskLevel,
-      )
-      if (currentIndex === -1 || referenceIndex === -1) {
-        if (current === reference) {
-          return { text: 'Risk level unchanged.', tone: 'neutral' as const }
-        }
-        return {
-          text: `Risk level changed from ${reference} to ${current}.`,
-          tone: 'neutral' as const,
-        }
-      }
-      if (currentIndex === referenceIndex) {
-        return { text: 'Risk level unchanged.', tone: 'neutral' as const }
-      }
-      if (currentIndex < referenceIndex) {
-        return {
-          text: `Risk eased from ${reference} to ${current}.`,
-          tone: 'positive' as const,
-        }
-      }
-      return {
-        text: `Risk intensified from ${reference} to ${current}.`,
-        tone: 'negative' as const,
-      }
-    },
-    [],
-  )
-
-  // Note: systemComparisons, systemComparisonMap, systemTrendInsights, backendInsightViews,
-  // combinedConditionInsights, insightSubtitle, scenarioComparisonData, scenarioComparisonTableRows,
-  // scenarioComparisonVisible, activeScenarioSummary, recommendedActionDiff, comparisonSummary,
-  // and the quick analysis history snapshot effect are provided by useScenarioComparison hook
-
   const formatRecordedTimestamp = useCallback((timestamp?: string | null) => {
     if (!timestamp) {
-      return 'Draft assessment'
+      return '—'
     }
     const parsed = new Date(timestamp)
     if (Number.isNaN(parsed.getTime())) {
@@ -664,12 +490,6 @@ export function SiteAcquisitionPage() {
     }
     return parsed.toLocaleString()
   }, [])
-
-  useEffect(() => {
-    setSelectedCategory(null)
-  }, [activeScenario, setSelectedCategory])
-
-  // Note: All condition assessment loading, effects, and handlers are now provided by useConditionAssessment hook
 
   function toggleScenario(scenario: DevelopmentScenario) {
     setSelectedScenarios((prev) =>
@@ -765,77 +585,6 @@ export function SiteAcquisitionPage() {
     setAddress('')
     setSelectedScenarios([])
   }, [setPreviewJob])
-
-  const handleCreateFinanceProject = useCallback(async () => {
-    if (!capturedProperty?.propertyId) {
-      setError('Capture a property before creating a finance project.')
-      return
-    }
-    if (isCreatingFinanceProject) {
-      return
-    }
-
-    setIsCreatingFinanceProject(true)
-    setError(null)
-
-    try {
-      const projectLabel =
-        capturedProperty.propertyInfo?.propertyName?.trim() ||
-        capturedProperty.address?.fullAddress?.trim() ||
-        'GPS Capture'
-
-      const created = await createFinanceProjectFromCapture(
-        capturedProperty.propertyId,
-        {
-          projectName: projectLabel,
-          scenarioName: 'Base Case',
-          totalEstimatedCapexSgd:
-            capturedProperty.financialSummary?.totalEstimatedCapexSgd ?? null,
-          totalEstimatedRevenueSgd:
-            capturedProperty.financialSummary?.totalEstimatedRevenueSgd ?? null,
-        },
-      )
-
-      const query = new URLSearchParams()
-      query.set('projectId', created.projectId)
-      if (created.projectName) {
-        query.set('projectName', created.projectName)
-      }
-      if (Number.isFinite(created.finProjectId) && created.finProjectId > 0) {
-        query.set('finProjectId', String(created.finProjectId))
-      }
-      router.navigate(`/finance?${query.toString()}`)
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to create finance project from capture.',
-      )
-    } finally {
-      setIsCreatingFinanceProject(false)
-    }
-  }, [capturedProperty, isCreatingFinanceProject, router])
-
-  // Note: handleChecklistUpdate is provided by useChecklist hook
-  // Note: handleReportExport is provided by useConditionAssessment hook
-
-  const InlineInspectionHistorySummary = () => (
-    <InspectionHistorySummary
-      hasProperty={!!capturedProperty}
-      isLoading={isLoadingAssessmentHistory}
-      error={assessmentHistoryError}
-      latestEntry={latestAssessmentEntry}
-      previousEntry={previousAssessmentEntry}
-      formatScenario={(scenario) =>
-        formatScenarioLabel(
-          scenario as DevelopmentScenario | 'all' | null | undefined,
-        )
-      }
-      formatTimestamp={formatRecordedTimestamp}
-      onViewTimeline={() => setHistoryModalOpen(true)}
-      onLogInspection={() => openAssessmentEditor('new')}
-    />
-  )
 
   return (
     <Box
@@ -959,7 +708,7 @@ export function SiteAcquisitionPage() {
               hasProperty={!!capturedProperty}
             />
 
-            {/* Quick Actions - New Capture / Finance (appears after capture) */}
+            {/* Quick Actions - New Capture only (appears after capture) */}
             {capturedProperty && (
               <div className="site-acquisition__quick-actions">
                 <Button
@@ -969,15 +718,6 @@ export function SiteAcquisitionPage() {
                   className="site-acquisition__action-btn"
                 >
                   New Capture
-                </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={handleCreateFinanceProject}
-                  disabled={isCreatingFinanceProject}
-                  className="site-acquisition__action-btn"
-                >
-                  {isCreatingFinanceProject ? 'Creating...' : 'Finance →'}
                 </Button>
               </div>
             )}
@@ -1178,8 +918,6 @@ export function SiteAcquisitionPage() {
                 scenarioLookup={scenarioLookup}
                 activeScenario={activeScenario}
                 activeScenarioSummary={activeScenarioSummary}
-                scenarioChecklistProgress={scenarioChecklistProgress}
-                displaySummary={displaySummary}
                 quickAnalysisHistoryCount={quickAnalysisHistory.length}
                 scenarioComparisonVisible={scenarioComparisonVisible}
                 setActiveScenario={setActiveScenario}
@@ -1187,27 +925,10 @@ export function SiteAcquisitionPage() {
                 onOpenQuickAnalysisHistory={() =>
                   setQuickAnalysisHistoryOpen(true)
                 }
-                onOpenInspectionHistory={() => setHistoryModalOpen(true)}
+                onOpenDueDiligence={() => router.navigate(dueDiligencePath)}
                 formatScenarioLabel={formatScenarioLabel}
               />
             )}
-
-            <SalesVelocityCard jurisdictionCode={jurisdictionCode} />
-
-            {/* Due Diligence Checklist - Depth 1 */}
-            {/* NOTE: Scenario filtering now handled by ScenarioFocusSection above */}
-            <DueDiligenceChecklistSection
-              capturedProperty={capturedProperty}
-              checklistItems={checklistItems}
-              filteredChecklistItems={filteredChecklistItems}
-              displaySummary={displaySummary}
-              activeScenario={activeScenario}
-              activeScenarioDetails={activeScenarioDetails}
-              selectedCategory={selectedCategory}
-              isLoadingChecklist={isLoadingChecklist}
-              setSelectedCategory={setSelectedCategory}
-              handleChecklistUpdate={handleChecklistUpdate}
-            />
 
             {/* Multi-Scenario Comparison - Depth 1 */}
             <MultiScenarioComparisonSection
@@ -1219,44 +940,25 @@ export function SiteAcquisitionPage() {
               activeScenario={activeScenario}
               scenarioLookup={scenarioLookup}
               propertyId={capturedProperty?.propertyId ?? null}
-              isExportingReport={isExportingReport}
-              reportExportMessage={reportExportMessage}
               setActiveScenario={setActiveScenario}
-              handleReportExport={handleReportExport}
               formatRecordedTimestamp={formatRecordedTimestamp}
             />
 
-            {/* Condition Assessment - Depth 1 */}
-            <ConditionAssessmentSection
-              capturedProperty={capturedProperty}
-              conditionAssessment={conditionAssessment}
-              isLoadingCondition={isLoadingCondition}
-              latestAssessmentEntry={latestAssessmentEntry}
-              previousAssessmentEntry={previousAssessmentEntry}
-              assessmentHistoryError={assessmentHistoryError}
-              isLoadingAssessmentHistory={isLoadingAssessmentHistory}
-              assessmentSaveMessage={assessmentSaveMessage}
-              scenarioAssessments={scenarioAssessments}
-              isLoadingScenarioAssessments={isLoadingScenarioAssessments}
-              scenarioAssessmentsError={scenarioAssessmentsError}
-              scenarioOverrideEntries={scenarioOverrideEntries}
-              baseScenarioAssessment={baseScenarioAssessment}
-              scenarioComparisonEntries={scenarioComparisonEntries}
-              combinedConditionInsights={combinedConditionInsights}
-              insightSubtitle={insightSubtitle}
-              systemComparisonMap={systemComparisonMap}
-              isExportingReport={isExportingReport}
-              scenarioLookup={scenarioLookup}
-              formatRecordedTimestamp={formatRecordedTimestamp}
-              formatScenarioLabel={formatScenarioLabel}
-              describeRatingChange={describeRatingChange}
-              describeRiskChange={describeRiskChange}
-              openAssessmentEditor={openAssessmentEditor}
-              setScenarioComparisonBase={setScenarioComparisonBase}
-              handleReportExport={handleReportExport}
-              setHistoryModalOpen={setHistoryModalOpen}
-              InlineInspectionHistorySummary={InlineInspectionHistorySummary}
-            />
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                py: 'var(--ob-space-100)',
+              }}
+            >
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={() => router.navigate(dueDiligencePath)}
+              >
+                View Due Diligence →
+              </Button>
+            </Box>
           </>
         )}
       </Stack>

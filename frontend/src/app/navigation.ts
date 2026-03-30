@@ -6,6 +6,7 @@ export type NavItemKey =
   | 'advisory'
   | 'integrations'
   | 'siteAcquisition'
+  | 'dueDiligence'
   | 'assetFeasibility'
   | 'financialControl'
   | 'phaseManagement'
@@ -80,6 +81,15 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
     label: 'Site Acquisition',
     path: '/app/site-acquisition',
     description: 'GPS capture and comprehensive due diligence for developers.',
+    workspace: 'developer',
+  },
+  {
+    key: 'dueDiligence',
+    label: 'Property Due Diligence',
+    path: '/app/due-diligence',
+    projectPath: (projectId: string) => `/projects/${projectId}/due-diligence`,
+    description:
+      'Condition assessment, inspection history, and due diligence checklists.',
     workspace: 'developer',
   },
   {
