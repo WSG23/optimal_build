@@ -101,9 +101,13 @@ def _make_property(**overrides) -> SingaporeProperty:
 
 def _make_rule(**overrides):
     defaults = dict(
+        id=101,
+        source_id=11,
+        document_id=21,
         jurisdiction="SG",
         authority="URA",
         topic="zoning",
+        clause_ref="4.2.1",
         parameter_key="zoning.max_far",
         operator="<=",
         value="3.5",
@@ -111,6 +115,9 @@ def _make_rule(**overrides):
         applicability={"zone_code": "SG:residential"},
         review_status="approved",
         is_published=True,
+        source_provenance={"document_id": 21, "clause_id": 31, "pages": [4]},
+        notes="Seeded rule",
+        review_notes=None,
     )
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
@@ -149,6 +156,10 @@ async def test_check_ura_compliance_detects_plot_ratio_and_height():
     assert result["status"].value == "failed"
     assert len(result["violations"]) >= 2
     assert "plot ratio" in result["violations"][0].lower()
+    assert result["rule_corpus_status"]["coverage_state"] == "approved"
+    assert result["rule_corpus_status"]["confidence"] == "high"
+    assert len(result["rule_evidence"]) == 2
+    assert result["rule_evidence"][0]["review_status"] == "approved"
 
 
 @pytest.mark.asyncio
@@ -160,6 +171,22 @@ async def test_check_ura_compliance_warns_when_rules_missing():
 
     assert result["status"].value == "warning"
     assert "no zoning rules" in result["warnings"][0].lower()
+    assert result["rule_corpus_status"]["coverage_state"] == "missing"
+
+
+@pytest.mark.asyncio
+async def test_check_ura_compliance_warns_when_rules_need_review():
+    property_record = _make_property()
+    rules = [_make_rule(review_status="needs_review", is_published=False)]
+    session = _DummySession([rules])
+
+    result = await singapore_compliance.check_ura_compliance(property_record, session)
+
+    assert result["status"].value == "warning"
+    assert "approved and published" in result["warnings"][0].lower()
+    assert result["rule_corpus_status"]["coverage_state"] == "review_pending"
+    assert result["rule_corpus_status"]["counts"]["needs_review"] == 1
+    assert result["rule_evidence"] == []
 
 
 @pytest.mark.asyncio
@@ -183,6 +210,8 @@ async def test_check_bca_compliance_detects_site_coverage_violation():
     assert result["status"].value == "failed"
     assert "site coverage" in result["violations"][0].lower()
     assert result["recommendations"]
+    assert result["rule_corpus_status"]["coverage_state"] == "approved"
+    assert result["rule_evidence"][0]["authority"] == "BCA"
 
 
 @pytest.mark.asyncio
@@ -247,6 +276,11 @@ async def test_run_full_compliance_check_aggregates_results():
     assert result["overall_status"].value == "passed"
     assert not result["violations"]
     assert result["compliance_data"]["ura_check"]["status"].value == "passed"
+    assert (
+        result["compliance_data"]["rule_corpus_status"]["ura"]["coverage_state"]
+        == "approved"
+    )
+    assert result["compliance_data"]["applied_rule_evidence"]["bca"]
     assert result["recommendations"]
 
 
@@ -280,6 +314,7 @@ async def test_update_property_compliance_sets_fields():
     assert updated.bca_compliance_status == "passed"
     assert updated.ura_compliance_status == "passed"
     assert updated.compliance_data["gfa_calculation"]["max_gfa_sqm"] > 0
+    assert updated.compliance_data["rule_corpus_status"]["bca"]["counts"]["approved"] == 1
     assert updated.max_developable_gfa_sqm is not None
     assert updated.compliance_last_checked is not None
 

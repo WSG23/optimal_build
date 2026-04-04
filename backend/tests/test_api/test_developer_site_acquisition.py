@@ -12,6 +12,7 @@ from app.models.finance import FinCapitalStack, FinProject, FinScenario
 from app.models.preview import PreviewJob
 from app.models.projects import Project
 from app.models.property import Property, PropertyStatus, PropertyType
+from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 from app.services.agents.gps_property_logger import PropertyLogResult
 from app.services.geocoding import Address
 from httpx import AsyncClient
@@ -108,6 +109,25 @@ def _build_stub_payload(property_id: UUID) -> PropertyLogResult:
             "heritage_premium_pct": 5.0,
             "source": "URA",
         },
+        geocoding_source=ExternalSourceMetadata(
+            provider="google_maps",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
+        ),
+        amenities_source=ExternalSourceMetadata(
+            provider="onemap",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
+        ),
+        ura_source=ExternalSourceMetadata(
+            provider="ura",
+            state=ExternalSourceState.MOCK,
+            configured=False,
+            synthetic=True,
+            reason="URA_ACCESS_KEY not configured",
+        ),
     )
 
 
@@ -140,6 +160,9 @@ async def test_developer_log_property_returns_envelope(
 
     assert payload["property_id"] == str(property_id)
     assert payload["existing_use"] == "commercial"
+    assert payload["geocoding_source"]["state"] == "live"
+    assert payload["amenities_source"]["provider"] == "onemap"
+    assert payload["ura_source"]["state"] == "mock"
     assert payload["quick_analysis"]["scenarios"][0]["scenario"] == "raw_land"
 
     envelope = payload["build_envelope"]
@@ -150,6 +173,13 @@ async def test_developer_log_property_returns_envelope(
     assert envelope["current_gfa_sqm"] == 12500.0
     assert envelope["additional_potential_gfa_sqm"] == pytest.approx(5500.0)
     assert envelope["assumptions"], "Assumptions should not be empty"
+    assert envelope["rule_corpus_status"]["zone_code"] == "SG:commercial"
+    assert envelope["rule_corpus_status"]["coverage_state"] in {
+        "approved",
+        "missing",
+        "partial",
+        "review_pending",
+    }
 
     visualization = payload["visualization"]
     assert visualization["status"] in {"ready", "placeholder"}

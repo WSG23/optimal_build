@@ -5,7 +5,24 @@ from __future__ import annotations
 from uuid import UUID, uuid4
 
 from app.models.business_performance import AgentDeal
-from app.services.deals.utils import audit_project_key
+from app.services.deals.utils import audit_key_from_value, audit_project_key
+
+
+def test_audit_key_from_value_handles_integer_and_integer_string():
+    assert audit_key_from_value(42) == 42
+    assert audit_key_from_value("42") == 42
+
+
+def test_audit_key_from_value_handles_uuid_string():
+    project_id = uuid4()
+    result = audit_key_from_value(str(project_id))
+    assert result is not None
+    assert result > 0
+
+
+def test_audit_key_from_value_returns_none_for_invalid_value():
+    assert audit_key_from_value("not-a-valid-id") is None
+    assert audit_key_from_value("") is None
 
 
 def test_audit_project_key_uses_project_id_first():

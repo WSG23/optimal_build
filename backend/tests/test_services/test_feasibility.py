@@ -61,6 +61,7 @@ def _build_project(**overrides: object) -> NewFeasibilityProjectInput:
         ),
         "building_height_meters": overrides.pop("building_height_meters", 45.0),
     }
+    base_payload.update(overrides)
     return NewFeasibilityProjectInput(**base_payload)
 
 
@@ -74,6 +75,34 @@ def test_generate_feasibility_rules_formats_land_use() -> None:
     assert response.rules
     assert set(response.recommended_rule_ids)
     assert "mixed use precinct" in response.summary.notes
+
+
+def test_generate_feasibility_rules_preserves_rule_corpus_status() -> None:
+    project = _build_project(
+        build_envelope={
+            "zone_code": "SG:MU",
+            "rule_corpus_status": {
+                "zone_code": "SG:MU",
+                "coverage_state": "partial",
+                "confidence": "medium",
+                "counts": {
+                    "applicable": 4,
+                    "approved": 2,
+                    "published": 2,
+                    "traceable": 2,
+                    "needs_review": 1,
+                    "rejected": 0,
+                },
+                "applied_rule_ids": [10, 11],
+            },
+        },
+    )
+
+    response = generate_feasibility_rules(project)
+
+    assert response.rule_corpus_status is not None
+    assert response.rule_corpus_status.coverage_state == "partial"
+    assert "partially approved" in (response.summary.notes or "").lower()
 
 
 def test_run_feasibility_assessment_rejects_unknown_rules() -> None:
@@ -113,3 +142,37 @@ def test_run_feasibility_assessment_summarises_results() -> None:
     recommendations = "\n".join(response.recommendations)
     assert "coordination call" in recommendations
     assert "fire access" in recommendations
+
+
+def test_run_feasibility_assessment_carries_rule_corpus_status() -> None:
+    project = _build_project(
+        land_use="residential",
+        build_envelope={
+            "site_area_sqm": 2400.0,
+            "allowable_plot_ratio": 3.0,
+            "rule_corpus_status": {
+                "zone_code": "SG:R",
+                "coverage_state": "review_pending",
+                "confidence": "low",
+                "counts": {
+                    "applicable": 3,
+                    "approved": 0,
+                    "published": 0,
+                    "traceable": 0,
+                    "needs_review": 3,
+                    "rejected": 0,
+                },
+                "applied_rule_ids": [],
+            },
+        },
+    )
+    request = FeasibilityAssessmentRequest(
+        project=project,
+        selected_rule_ids=["ura-plot-ratio", "bca-site-coverage"],
+    )
+
+    response = run_feasibility_assessment(request)
+
+    assert response.rule_corpus_status is not None
+    assert response.rule_corpus_status.coverage_state == "review_pending"
+    assert any("pending review" in item.lower() for item in response.recommendations)

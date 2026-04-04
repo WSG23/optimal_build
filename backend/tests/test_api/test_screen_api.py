@@ -60,6 +60,7 @@ async def test_screen_buildable_with_address(client, geocode_with_parcel):
     assert body["input_kind"] == "address"
     assert "zone_code" in body
     assert "metrics" in body
+    assert "rule_corpus_status" in body
     assert "rules" in body
 
 
@@ -127,6 +128,7 @@ async def test_screen_buildable_mock_response_structure(client):
     assert "advisory_hints" in body
     assert "metrics" in body
     assert "zone_source" in body
+    assert "rule_corpus_status" in body
     assert "rules" in body
 
 
@@ -175,6 +177,9 @@ async def test_screen_buildable_rules_structure(client):
     body = response.json()
     rules = body["rules"]
     assert isinstance(rules, list)
+    corpus = body["rule_corpus_status"]
+    assert "coverage_state" in corpus
+    assert "counts" in corpus
     if rules:
         rule = rules[0]
         assert "id" in rule
@@ -199,3 +204,4 @@ async def test_screen_buildable_geometry_with_zone_code_property(client):
     assert response.status_code == 200
     body = response.json()
     assert body["input_kind"] == "geometry"
+    assert "rule_corpus_status" in body

@@ -114,6 +114,10 @@ async def test_check_ura_compliance_detects_height_and_far_violations(
     assert result["status"] == ComplianceStatus.FAILED
     assert any("Plot ratio" in message for message in result["violations"])
     assert any("Building height" in message for message in result["violations"])
+    assert result["rule_corpus_status"]["coverage_state"] == "approved"
+    assert result["rule_corpus_status"]["counts"]["approved"] >= 2
+    assert result["rule_evidence"]
+    assert all(item["review_status"] == "approved" for item in result["rule_evidence"])
 
 
 @pytest.mark.asyncio
@@ -136,6 +140,7 @@ async def test_check_ura_compliance_warns_when_rules_missing(db_session) -> None
 
     assert result["status"] == ComplianceStatus.WARNING
     assert "No zoning rules found" in result["warnings"][0]
+    assert result["rule_corpus_status"]["coverage_state"] == "missing"
 
 
 @pytest.mark.asyncio
@@ -156,6 +161,9 @@ async def test_check_bca_compliance_detects_site_coverage_violation(
     assert result["status"] == ComplianceStatus.FAILED
     assert any("Site coverage" in message for message in result["violations"])
     assert "BCA Green Mark" in result["recommendations"][0]
+    assert result["rule_corpus_status"]["coverage_state"] == "approved"
+    assert result["rule_evidence"]
+    assert result["rule_evidence"][0]["authority"] == "BCA"
 
 
 @pytest.mark.asyncio
@@ -174,6 +182,7 @@ async def test_check_bca_compliance_warns_when_rules_missing(db_session) -> None
 
     assert result["status"] == ComplianceStatus.WARNING
     assert "No building rules found" in result["warnings"][0]
+    assert result["rule_corpus_status"]["coverage_state"] == "missing"
 
 
 @pytest.mark.asyncio
@@ -196,6 +205,8 @@ async def test_run_full_compliance_check_compiles_summary(
     assert result["ura_status"] == ComplianceStatus.FAILED
     assert result["violations"]
     assert "gfa_calculation" in result["compliance_data"]
+    assert "rule_corpus_status" in result["compliance_data"]
+    assert result["compliance_data"]["applied_rule_evidence"]["ura"]
 
 
 @pytest.mark.asyncio
@@ -211,6 +222,7 @@ async def test_run_full_compliance_check_reports_warning_without_violations(
     assert not result["violations"]
     assert result["warnings"]
     assert "Warning:" in (result["compliance_notes"] or "")
+    assert result["compliance_data"]["rule_corpus_status"]["ura"]["coverage_state"] == "missing"
 
 
 @pytest.mark.asyncio
@@ -235,6 +247,7 @@ async def test_update_property_compliance_sets_fields(
     assert updated.ura_compliance_status == ComplianceStatus.FAILED.value
     assert updated.compliance_last_checked is not None
     assert updated.compliance_data is not None
+    assert updated.compliance_data["rule_corpus_status"]["bca"]["counts"]["approved"] >= 1
     assert updated.max_developable_gfa_sqm is not None
 
 

@@ -40,6 +40,8 @@ class TestMockCorenetSubmitToAgency:
         assert "timestamp" in result
         assert "message" in result
         assert "URA" in result["message"]
+        assert result["integration_status"]["state"] == "mock"
+        assert result["integration_status"]["synthetic"] is True
 
     @pytest.mark.asyncio
     async def test_submit_to_agency_generates_ura_ref_format(self, corenet_service):
@@ -113,6 +115,8 @@ class TestMockCorenetCheckStatus:
         assert "mapped_status" in result
         assert "remarks" in result
         assert "last_updated" in result
+        assert result["integration_status"]["provider"] == "corenet"
+        assert result["integration_status"]["state"] == "mock"
 
     @pytest.mark.asyncio
     async def test_check_status_auto_approves_ref_ending_00(self, corenet_service):

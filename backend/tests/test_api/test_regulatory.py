@@ -95,3 +95,14 @@ async def test_create_submission_api(client: AsyncClient, db_session):
 
     # Assert
     assert response.status_code in [200, 400, 404, 500]
+
+
+async def test_get_corenet_capability(client: AsyncClient):
+    response = await client.get("/api/v1/regulatory/corenet-capability")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["submission_mode_default"] == "submission_prep"
+    assert payload["live_submission_available"] is False
+    assert payload["package_status"] == "submission_ready"
+    assert payload["integration_status"]["provider"] == "corenet"

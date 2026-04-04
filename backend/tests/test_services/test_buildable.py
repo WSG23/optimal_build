@@ -41,6 +41,7 @@ async def test_calculate_buildable_honours_overrides(async_session_factory) -> N
         baseline = await calculate_buildable(session, resolved, defaults)
         assert baseline.metrics.floors_max == 7
         assert baseline.metrics.nsa_est_m2 == 1800
+        assert baseline.rule_corpus_status.coverage_state == "missing"
 
         overrides = await calculate_buildable(
             session,
@@ -134,6 +135,8 @@ async def test_calculate_buildable_applies_rule_overrides(session) -> None:
     assert metrics.footprint_m2 == 520
     assert metrics.floors_max == 6
     assert metrics.nsa_est_m2 == 2352
+    assert calculation.rule_corpus_status.coverage_state == "approved"
+    assert calculation.rule_corpus_status.counts.approved == len(approved_rules)
     assert len(calculation.rules) == len(approved_rules)
 
 
@@ -196,6 +199,8 @@ async def test_calculate_buildable_ignores_unapproved_rules(session) -> None:
     assert metrics.footprint_m2 == 550
     assert metrics.floors_max == 4
     assert metrics.nsa_est_m2 == 1350
+    assert calculation.rule_corpus_status.coverage_state == "partial"
+    assert calculation.rule_corpus_status.counts.needs_review == 1
     assert len(calculation.rules) == 1
     rule = calculation.rules[0]
     assert rule.id == approved_rule.id
@@ -249,6 +254,7 @@ async def test_calculate_buildable_ignores_unpublished_rules(session) -> None:
     assert metrics.footprint_m2 == 550
     assert metrics.floors_max == 4
     assert metrics.nsa_est_m2 == 1350
+    assert calculation.rule_corpus_status.coverage_state == "review_pending"
     assert not calculation.rules
 
 
@@ -278,4 +284,5 @@ async def test_calculate_buildable_without_rule_overrides(
     assert metrics.footprint_m2 == 375
     assert metrics.floors_max == 6
     assert metrics.nsa_est_m2 == 1463
+    assert calculation.rule_corpus_status.coverage_state == "missing"
     assert not calculation.rules

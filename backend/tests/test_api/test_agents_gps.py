@@ -7,6 +7,7 @@ from uuid import uuid4
 import pytest
 
 from app.api.v1 import agents as agents_api
+from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 from app.services.agents.gps_property_logger import PropertyLogResult
 from app.services.geocoding import Address
 
@@ -32,6 +33,26 @@ def _sample_result():
             "scenarios": [],
         },
         timestamp=datetime.utcnow(),
+        geocoding_source=ExternalSourceMetadata(
+            provider="google_maps",
+            state=ExternalSourceState.MOCK,
+            configured=False,
+            synthetic=True,
+            reason="GOOGLE_MAPS_API_KEY not configured",
+        ),
+        amenities_source=ExternalSourceMetadata(
+            provider="onemap",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
+        ),
+        ura_source=ExternalSourceMetadata(
+            provider="ura",
+            state=ExternalSourceState.MOCK,
+            configured=False,
+            synthetic=True,
+            reason="URA_ACCESS_KEY not configured",
+        ),
     )
 
 
@@ -52,6 +73,9 @@ async def test_log_property_by_gps_success(client, monkeypatch):
     assert response.status_code == 200
     body = response.json()
     assert body["property_id"] == str(result.property_id)
+    assert body["geocoding_source"]["provider"] == "google_maps"
+    assert body["amenities_source"]["state"] == "live"
+    assert body["ura_source"]["state"] == "mock"
     agents_api.gps_logger.log_property_from_gps.assert_awaited_once()  # type: ignore[attr-defined]
 
 
@@ -82,6 +106,9 @@ async def test_log_property_by_gps_fallback(client, monkeypatch):
 
     assert response.status_code == 200
     body = response.json()
+    assert body["geocoding_source"]["state"] == "mock"
+    assert body["amenities_source"]["provider"] == "onemap"
+    assert body["ura_source"]["state"] == "mock"
     assert body["ura_zoning"]["zone_code"] == "MU"
     ensure_seeded.assert_awaited()
     auto_populate.assert_awaited()

@@ -15,6 +15,8 @@ from app.schemas.buildable import (
     BuildableCalculation,
     BuildableDefaults,
     BuildableMetrics,
+    RuleCorpusCounts,
+    RuleCorpusStatus,
     ZoneSource,
 )
 from httpx import AsyncClient
@@ -52,6 +54,20 @@ async def test_buildable_request_accepts_camel_case(
                 nsa_est_m2=3456,
             ),
             zone_source=ZoneSource(kind="unknown"),
+            rule_corpus_status=RuleCorpusStatus(
+                zone_code="SG:demo",
+                coverage_state="approved",
+                confidence="high",
+                counts=RuleCorpusCounts(
+                    applicable=2,
+                    approved=2,
+                    published=2,
+                    traceable=2,
+                    needs_review=0,
+                    rejected=0,
+                ),
+                applied_rule_ids=[1, 2],
+            ),
             rules=[],
         )
 

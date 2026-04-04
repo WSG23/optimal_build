@@ -14,6 +14,7 @@ from app.core.audit.ledger import (
     _normalise_context,
     _payload_for_hash,
     _sign_hash,
+    build_evidence_report,
     compute_event_hash,
 )
 from app.core.config import settings
@@ -337,6 +338,102 @@ class TestSignHash:
 
         assert isinstance(result, str)
         assert len(result) == 64
+
+
+class TestBuildEvidenceReport:
+    """Tests for evidence-pack summaries."""
+
+    def test_build_evidence_report_extracts_key_artifacts(self):
+        logs = [
+            AuditLog(
+                project_id=42,
+                version=1,
+                event_type="export_generated",
+                context={
+                    "format": "pdf",
+                    "accepted_suggestions": 4,
+                    "recipient_email": "ops@example.com",
+                },
+                hash="hash-1",
+                signature="sig-1",
+                recorded_at=datetime(2026, 4, 1, 9, 0, 0, tzinfo=UTC),
+            ),
+            AuditLog(
+                project_id=42,
+                version=2,
+                event_type="finance_scenario_created",
+                context={
+                    "scenario_id": 11,
+                    "scenario_name": "Base Case",
+                    "origin": "workbook",
+                    "currency": "SGD",
+                    "is_primary": True,
+                    "has_asset_mix": True,
+                    "has_capital_stack": True,
+                    "has_sensitivity_bands": False,
+                    "recipient_email": "analyst@example.com",
+                },
+                prev_hash="hash-1",
+                hash="hash-2",
+                signature="sig-2",
+                recorded_at=datetime(2026, 4, 1, 9, 20, 0, tzinfo=UTC),
+            ),
+            AuditLog(
+                project_id=42,
+                version=3,
+                event_type="workbook_imported",
+                context={
+                    "format": "xlsx",
+                    "workbook_format": "optimal-build",
+                    "asset_count": 3,
+                    "scenario_id": 11,
+                    "scenario_name": "Base Case",
+                    "recipient_email": "analyst@example.com",
+                },
+                prev_hash="hash-2",
+                hash="hash-3",
+                signature="sig-3",
+                recorded_at=datetime(2026, 4, 1, 9, 30, 0, tzinfo=UTC),
+            ),
+            AuditLog(
+                project_id=42,
+                version=4,
+                event_type="submission_packaged",
+                context={
+                    "agency": "URA",
+                    "agency_name": "Urban Redevelopment Authority",
+                    "submission_no": "PKG-001",
+                    "submission_mode": "submission_prep",
+                    "package_status": "submission_ready",
+                    "scenario_name": "Base Case",
+                },
+                prev_hash="hash-3",
+                hash="hash-4",
+                signature="sig-4",
+                recorded_at=datetime(2026, 4, 1, 10, 0, 0, tzinfo=UTC),
+            ),
+        ]
+
+        report = build_evidence_report(42, True, logs)
+
+        assert report["project_id"] == 42
+        assert report["valid"] is True
+        assert report["chain"]["entry_count"] == 4
+        assert report["exports"][0]["format"] == "pdf"
+        assert report["exports"][0]["export_type"] is None
+        assert report["imports"][0]["workbook_format"] == "optimal-build"
+        assert report["imports"][0]["asset_count"] == 3
+        assert report["recipients"] == ["analyst@example.com", "ops@example.com"]
+        assert report["scenario_events"][0]["scenario_name"] == "Base Case"
+        assert report["scenario_events"][0]["origin"] == "workbook"
+        assert report["finance_events"][0]["origin"] == "workbook"
+        assert report["finance_events"][0]["currency"] == "SGD"
+        assert report["finance_events"][0]["is_primary"] is True
+        assert report["submission_events"][0]["agency"] == "URA"
+        assert (
+            report["submission_events"][0]["agency_name"]
+            == "Urban Redevelopment Authority"
+        )
 
 
 class TestSerialiseLog:

@@ -42,6 +42,40 @@ async def test_fetch_feasibility_rules(app_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
+async def test_fetch_feasibility_rules_surfaces_rule_corpus_status(
+    app_client: AsyncClient,
+) -> None:
+    payload = {
+        **PROJECT_PAYLOAD,
+        "buildEnvelope": {
+            "zoneCode": "SG:R",
+            "ruleCorpusStatus": {
+                "zoneCode": "SG:R",
+                "coverageState": "partial",
+                "confidence": "medium",
+                "counts": {
+                    "applicable": 4,
+                    "approved": 2,
+                    "published": 2,
+                    "traceable": 2,
+                    "needsReview": 1,
+                    "rejected": 0,
+                },
+                "appliedRuleIds": [101, 102],
+            },
+        },
+    }
+
+    response = await app_client.post("/api/v1/feasibility/rules", json=payload)
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["rule_corpus_status"]["coverage_state"] == "partial"
+    assert body["rule_corpus_status"]["counts"]["needs_review"] == 1
+    assert "partially approved" in (body["summary"]["notes"] or "").lower()
+
+
+@pytest.mark.asyncio
 async def test_submit_feasibility_assessment(app_client: AsyncClient) -> None:
     payload = {
         "project": PROJECT_PAYLOAD,
@@ -76,6 +110,43 @@ async def test_submit_feasibility_assessment(app_client: AsyncClient) -> None:
     assert summary["estimated_unit_count"] >= 130
     assert summary["site_coverage_percent"] == 32.5
     assert "design revisions" in (summary.get("remarks") or "").lower()
+
+
+@pytest.mark.asyncio
+async def test_submit_feasibility_assessment_surfaces_rule_corpus_status(
+    app_client: AsyncClient,
+) -> None:
+    payload = {
+        "project": {
+            **PROJECT_PAYLOAD,
+            "buildEnvelope": {
+                "siteAreaSqm": 5000,
+                "allowablePlotRatio": 3.5,
+                "ruleCorpusStatus": {
+                    "zoneCode": "SG:R",
+                    "coverageState": "review_pending",
+                    "confidence": "low",
+                    "counts": {
+                        "applicable": 3,
+                        "approved": 0,
+                        "published": 0,
+                        "traceable": 0,
+                        "needsReview": 3,
+                        "rejected": 0,
+                    },
+                    "appliedRuleIds": [],
+                },
+            },
+        },
+        "selectedRuleIds": SELECTED_RULE_IDS,
+    }
+
+    response = await app_client.post("/api/v1/feasibility/assessment", json=payload)
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["rule_corpus_status"]["coverage_state"] == "review_pending"
+    assert any("pending review" in item.lower() for item in body["recommendations"])
 
 
 @pytest.mark.asyncio

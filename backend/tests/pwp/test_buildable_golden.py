@@ -178,10 +178,15 @@ async def test_buildable_golden_addresses(buildable_client):
         assert zone_source["parcel_source"] == "sample_loader"
         assert zone_source["layer_name"] == "MasterPlan"
         assert zone_source["jurisdiction"] == "SG"
+        corpus = body["rule_corpus_status"]
+        assert corpus["zone_code"] == expected["zone_code"]
+        assert "coverage_state" in corpus
+        assert "counts" in corpus
 
         rules = body["rules"]
         if expected["zone_code"] == "R2":
             assert rules, "Expected R2 buildable screening to include zoning rules"
+            assert corpus["counts"]["approved"] >= 1
             target_rule = next(
                 (
                     item

@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from app.schemas.external_sources import ExternalSourceState
 from app.services.geocoding import GeocodingService
 
 
@@ -237,6 +238,57 @@ def test_get_district_from_postal_unknown() -> None:
     service = GeocodingService()
     assert service._get_district_from_postal("000000") is None
     assert service._get_district_from_postal("") is None
+
+
+def test_google_geocoding_metadata_reports_mock_without_api_key() -> None:
+    service = GeocodingService()
+    service.google_maps_api_key = None
+    service.offline_mode = False
+
+    metadata = service.get_google_geocoding_metadata()
+
+    assert metadata.provider == "google_maps"
+    assert metadata.state == ExternalSourceState.MOCK
+    assert metadata.synthetic is True
+    assert metadata.reason == "GOOGLE_MAPS_API_KEY not configured"
+
+
+def test_google_geocoding_metadata_reports_live_when_client_ready() -> None:
+    service = GeocodingService()
+    service.google_maps_api_key = "test-key"
+    service.client = _DummyClient(lambda *_: _FakeResponse(200, {}))
+    service.offline_mode = False
+
+    metadata = service.get_google_geocoding_metadata()
+
+    assert metadata.provider == "google_maps"
+    assert metadata.state == ExternalSourceState.LIVE
+    assert metadata.synthetic is False
+
+
+def test_onemap_amenities_metadata_reports_mock_in_offline_mode() -> None:
+    service = GeocodingService()
+    service.offline_mode = True
+    service.client = None
+
+    metadata = service.get_onemap_amenities_metadata()
+
+    assert metadata.provider == "onemap"
+    assert metadata.state == ExternalSourceState.MOCK
+    assert metadata.synthetic is True
+    assert metadata.reason == "OFFLINE_MODE enabled"
+
+
+def test_onemap_amenities_metadata_reports_live_when_client_ready() -> None:
+    service = GeocodingService()
+    service.offline_mode = False
+    service.client = _DummyClient(lambda *_: _FakeResponse(200, {}))
+
+    metadata = service.get_onemap_amenities_metadata()
+
+    assert metadata.provider == "onemap"
+    assert metadata.state == ExternalSourceState.LIVE
+    assert metadata.synthetic is False
 
 
 def test_calculate_distance_returns_positive_value() -> None:

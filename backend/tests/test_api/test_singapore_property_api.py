@@ -70,6 +70,8 @@ async def test_calculate_buildable_metrics_fallback(client: "AsyncClient", monke
     result = response.json()
     assert result["fallback_used"] is True
     assert result["plot_ratio"] == 2.8
+    assert result["rule_corpus_status"]["coverage_state"] == "mock"
+    assert result["rule_corpus_status"]["counts"]["approved"] == 0
 
 
 @pytest.mark.asyncio
@@ -80,6 +82,19 @@ async def test_general_compliance_endpoint(client: "AsyncClient", monkeypatch):
         "violations": ["setback"],
         "warnings": [],
         "rules_applied": {},
+        "rule_evidence": [
+            {
+                "rule_id": 1,
+                "review_status": "approved",
+                "source_id": 10,
+                "document_id": 20,
+            }
+        ],
+        "rule_corpus_status": {
+            "coverage_state": "partial",
+            "confidence": "medium",
+            "counts": {"approved": 1, "needs_review": 1},
+        },
     }
     bca_result = {
         "status": SimpleNamespace(value="passed"),
@@ -87,6 +102,12 @@ async def test_general_compliance_endpoint(client: "AsyncClient", monkeypatch):
         "warnings": ["height"],
         "requirements_applied": {},
         "recommendations": ["add sprinklers"],
+        "rule_evidence": [],
+        "rule_corpus_status": {
+            "coverage_state": "approved",
+            "confidence": "high",
+            "counts": {"approved": 2, "needs_review": 0},
+        },
     }
 
     async def _ura(*_, **__):
@@ -113,6 +134,9 @@ async def test_general_compliance_endpoint(client: "AsyncClient", monkeypatch):
     result = response.json()
     assert result["status"] == "FAILED"
     assert "setback" in result["violations"]
+    assert result["ura_check"]["rule_evidence"][0]["rule_id"] == 1
+    assert result["ura_check"]["rule_corpus_status"]["coverage_state"] == "partial"
+    assert result["bca_check"]["rule_corpus_status"]["confidence"] == "high"
 
 
 @pytest.mark.asyncio

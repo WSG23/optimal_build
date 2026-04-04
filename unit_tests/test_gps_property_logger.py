@@ -9,9 +9,26 @@ from backend.app.services.agents.gps_property_logger import (
 )
 from backend.app.services.agents.ura_integration import URAPropertyInfo, URAZoningInfo
 from backend.app.services.geocoding import Address
+from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 
 
 class StubGeocodingService:
+    def get_google_geocoding_metadata(self) -> ExternalSourceMetadata:
+        return ExternalSourceMetadata(
+            provider="google_maps",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
+        )
+
+    def get_onemap_amenities_metadata(self) -> ExternalSourceMetadata:
+        return ExternalSourceMetadata(
+            provider="onemap",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
+        )
+
     async def reverse_geocode(self, latitude: float, longitude: float) -> Address:
         return Address(
             full_address="1 Example Street",
@@ -36,6 +53,15 @@ class StubGeocodingService:
 
 
 class StubURAService:
+    def source_metadata(self) -> ExternalSourceMetadata:
+        return ExternalSourceMetadata(
+            provider="ura",
+            state=ExternalSourceState.MOCK,
+            configured=False,
+            synthetic=True,
+            reason="URA_ACCESS_KEY not configured",
+        )
+
     async def get_zoning_info(self, address: str) -> URAZoningInfo:
         return URAZoningInfo(
             zone_code="C",
@@ -217,6 +243,9 @@ async def test_gps_logging_generates_quick_analysis() -> None:
 
     payload = result.to_dict()
     assert payload["quick_analysis"] == quick_analysis
+    assert payload["geocoding_source"]["provider"] == "google_maps"
+    assert payload["amenities_source"]["provider"] == "onemap"
+    assert payload["ura_source"]["state"] == "mock"
 
 
 @pytest.mark.asyncio

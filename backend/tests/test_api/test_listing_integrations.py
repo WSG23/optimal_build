@@ -54,6 +54,8 @@ async def test_mock_flow(
         headers=headers,
     )
     assert connect_response.status_code == 200, connect_response.text
+    connect_body = connect_response.json()
+    assert connect_body["provider_status"]["state"] == "mock"
 
     publish_response = await app_client.post(
         f"/api/v1/integrations/listings/{provider}/publish",
@@ -67,6 +69,8 @@ async def test_mock_flow(
     assert publish_response.status_code == 200, publish_response.text
     body = publish_response.json()
     assert body["listing_id"] == "mock-listing-1"
+    assert body["provider_status"]["state"] == "mock"
+    assert body["provider_status"]["synthetic"] is True
 
     accounts_response = await app_client.get(
         "/api/v1/integrations/listings/accounts",
@@ -76,6 +80,8 @@ async def test_mock_flow(
     accounts = accounts_response.json()
     assert len(accounts) == 1
     assert accounts[0]["provider"] == provider
+    assert accounts[0]["provider_status"]["state"] == "mock"
+    assert accounts[0]["provider_status"]["synthetic"] is True
 
     async with async_session_factory() as session:
         await session.execute(
@@ -106,6 +112,7 @@ async def test_mock_flow(
     body = disconnect_response.json()
     assert body["status"] == "disconnected"
     assert body["provider"] == provider
+    assert body["provider_status"]["state"] == "mock"
 
 
 async def _fetch_demo_property_id(session: AsyncSession) -> str:
