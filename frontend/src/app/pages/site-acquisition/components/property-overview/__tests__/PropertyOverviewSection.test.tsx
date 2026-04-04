@@ -49,10 +49,10 @@ const mockCards: OverviewCard[] = [
     items: [{ label: 'Risk Level', value: 'Low Risk' }],
   },
   {
-    title: 'Financial Snapshot',
+    title: 'Analysis Status',
     items: [
-      { label: 'Est. Revenue', value: 'S$100M' },
-      { label: 'Est. CAPEX', value: 'S$50M' },
+      { label: 'Envelope Completeness', value: '3/5 scalar controls' },
+      { label: 'Geometry Status', value: 'Placeholder only' },
     ],
   },
 ]
@@ -83,7 +83,7 @@ describe('PropertyOverviewSection', () => {
     expect(screen.getByText('Location & Tenure')).toBeTruthy()
     expect(screen.getByText('Build Envelope')).toBeTruthy()
     expect(screen.getByText('Heritage Context')).toBeTruthy()
-    expect(screen.getByText('Financial Snapshot')).toBeTruthy()
+    expect(screen.getByText('Analysis Status')).toBeTruthy()
   })
 
   /**
@@ -107,9 +107,9 @@ describe('PropertyOverviewSection', () => {
     // Build Envelope should show Zone Code in accent color
     expect(screen.getByText('C1')).toBeTruthy()
 
-    // Financial card should have large hero numbers
-    expect(screen.getByText('S$100M')).toBeTruthy()
-    expect(screen.getByText('S$50M')).toBeTruthy()
+    // Analysis status card should show completeness/scope values
+    expect(screen.getByText('3/5 scalar controls')).toBeTruthy()
+    expect(screen.getByText('Placeholder only')).toBeTruthy()
 
     // Heritage card should show risk as badge
     expect(screen.getByText('Low Risk')).toBeTruthy()
@@ -129,7 +129,7 @@ describe('PropertyOverviewSection', () => {
 
     // Each card should be rendered (no missing cards)
     const renderedCards = screen.getAllByText(
-      /Location|Build|Heritage|Financial/,
+      /Location|Build|Heritage|Analysis/,
     )
     expect(renderedCards.length).toBeGreaterThanOrEqual(4)
   })

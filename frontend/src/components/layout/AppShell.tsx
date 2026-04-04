@@ -30,6 +30,7 @@ interface AppShellProps {
   description?: string
   hideSidebar?: boolean
   actions?: ReactNode
+  workspace?: 'agent' | 'developer'
 }
 
 export function AppShell({
@@ -39,6 +40,7 @@ export function AppShell({
   description,
   hideSidebar,
   actions,
+  workspace,
 }: AppShellProps) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
@@ -175,6 +177,7 @@ export function AppShell({
                   activeItem={activeItem}
                   onNavigate={handleNavigate}
                   currentPath={path}
+                  workspace={workspace}
                 />
               </Box>
             </Drawer>
@@ -209,6 +212,7 @@ export function AppShell({
                   activeItem={activeItem}
                   onNavigate={handleNavigate}
                   currentPath={path}
+                  workspace={workspace}
                 />
               </Box>
             </Drawer>

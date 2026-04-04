@@ -286,6 +286,56 @@ export interface FinanceAnalyticsMetadata {
   [key: string]: unknown
 }
 
+export interface FinanceAuditEvidenceEvent {
+  version: number
+  recordedAt: string | null
+  scenarioId?: number | null
+  scenarioName?: string | null
+  origin?: string | null
+  currency?: string | null
+  isPrimary?: boolean | null
+  hasAssetMix?: boolean | null
+  hasCapitalStack?: boolean | null
+  hasSensitivityBands?: boolean | null
+}
+
+export interface FinanceAuditSubmissionEvent {
+  version: number
+  eventType: string
+  recordedAt: string | null
+  agency?: string | null
+  agencyName?: string | null
+  submissionNo?: string | null
+  submissionType?: string | null
+  status?: string | null
+  submissionMode?: string | null
+  packageStatus?: string | null
+}
+
+export interface FinanceAuditImportEvent {
+  version: number
+  recordedAt: string | null
+  format?: string | null
+  workbookFormat?: string | null
+  scenarioId?: number | null
+  scenarioName?: string | null
+  assetCount?: number | null
+}
+
+export interface FinanceAuditEvidence {
+  projectId: number
+  valid: boolean
+  chain: {
+    entryCount: number
+    signedEntries: number
+    latestHash: string | null
+  }
+  recipients: string[]
+  financeEvents: FinanceAuditEvidenceEvent[]
+  imports: FinanceAuditImportEvent[]
+  submissionEvents: FinanceAuditSubmissionEvent[]
+}
+
 export interface FinanceScenarioSummary {
   scenarioId: number
   projectId: number | string
@@ -315,6 +365,31 @@ export interface FinanceScenarioUpdateInput {
   scenarioName?: string
   description?: string | null
   isPrimary?: boolean
+}
+
+export interface FinanceWorkbookSheetSummary {
+  name: string
+  rowCount: number
+  columnCount: number
+  recognisedAs?: string | null
+}
+
+export interface FinanceWorkbookValidationIssue {
+  field: string
+  message: string
+}
+
+export interface FinanceWorkbookImportPreview {
+  filename: string
+  workbookFormat: string
+  detectedSheets: FinanceWorkbookSheetSummary[]
+  warnings: string[]
+  isValid: boolean
+  validationErrors: FinanceWorkbookValidationIssue[]
+  requestPayload: Record<string, unknown>
+  scenarioName?: string | null
+  projectName?: string | null
+  assetCount: number
 }
 
 interface FinanceFeasibilityRequestPayload {
@@ -586,6 +661,45 @@ interface FinanceFeasibilityResponsePayload {
 
 interface ConstructionLoanUpdateRequestPayload {
   construction_loan: ConstructionLoanInputPayload
+}
+
+interface FinanceWorkbookSheetSummaryPayload {
+  name: string
+  row_count: number
+  column_count: number
+  recognised_as?: string | null
+}
+
+interface FinanceWorkbookValidationIssuePayload {
+  field: string
+  message: string
+}
+
+interface FinanceWorkbookImportPreviewPayload {
+  filename: string
+  workbook_format: string
+  detected_sheets?: FinanceWorkbookSheetSummaryPayload[] | null
+  warnings?: string[] | null
+  is_valid: boolean
+  validation_errors?: FinanceWorkbookValidationIssuePayload[] | null
+  request_payload?: Record<string, unknown> | null
+  scenario_name?: string | null
+  project_name?: string | null
+  asset_count?: number | null
+}
+
+interface FinanceAuditEvidencePayload {
+  project_id: number
+  valid: boolean
+  chain?: {
+    entry_count?: number
+    signed_entries?: number
+    latest_hash?: string | null
+  } | null
+  recipients?: string[] | null
+  finance_events?: Array<Record<string, unknown>> | null
+  imports?: Array<Record<string, unknown>> | null
+  submission_events?: Array<Record<string, unknown>> | null
 }
 
 function toAssetMixPayload(entry: FinanceAssetMixInput): AssetMixPayload {
@@ -1069,6 +1183,124 @@ function mapResponse(
     isPrimary: payload.is_primary ?? undefined,
     isPrivate: payload.is_private ?? undefined,
     updatedAt: payload.updated_at ?? null,
+  }
+}
+
+function mapWorkbookPreview(
+  payload: FinanceWorkbookImportPreviewPayload,
+): FinanceWorkbookImportPreview {
+  return {
+    filename: payload.filename,
+    workbookFormat: payload.workbook_format,
+    detectedSheets: Array.isArray(payload.detected_sheets)
+      ? payload.detected_sheets.map((sheet) => ({
+          name: sheet.name,
+          rowCount: sheet.row_count,
+          columnCount: sheet.column_count,
+          recognisedAs: sheet.recognised_as ?? null,
+        }))
+      : [],
+    warnings: Array.isArray(payload.warnings) ? [...payload.warnings] : [],
+    isValid: Boolean(payload.is_valid),
+    validationErrors: Array.isArray(payload.validation_errors)
+      ? payload.validation_errors.map((issue) => ({
+          field: issue.field,
+          message: issue.message,
+        }))
+      : [],
+    requestPayload: payload.request_payload ? { ...payload.request_payload } : {},
+    scenarioName: payload.scenario_name ?? null,
+    projectName: payload.project_name ?? null,
+    assetCount: Number(payload.asset_count ?? 0),
+  }
+}
+
+function mapAuditEvidenceEvent(
+  payload: Record<string, unknown>,
+): FinanceAuditEvidenceEvent {
+  return {
+    version: Number(payload.version ?? 0),
+    recordedAt: toOptionalString(payload.recorded_at) ?? null,
+    scenarioId:
+      payload.scenario_id == null ? null : Number(payload.scenario_id ?? 0),
+    scenarioName: toOptionalString(payload.scenario_name) ?? null,
+    origin: toOptionalString(payload.origin) ?? null,
+    currency: toOptionalString(payload.currency) ?? null,
+    isPrimary:
+      typeof payload.is_primary === 'boolean' ? payload.is_primary : null,
+    hasAssetMix:
+      typeof payload.has_asset_mix === 'boolean' ? payload.has_asset_mix : null,
+    hasCapitalStack:
+      typeof payload.has_capital_stack === 'boolean'
+        ? payload.has_capital_stack
+        : null,
+    hasSensitivityBands:
+      typeof payload.has_sensitivity_bands === 'boolean'
+        ? payload.has_sensitivity_bands
+        : null,
+  }
+}
+
+function mapAuditImportEvent(
+  payload: Record<string, unknown>,
+): FinanceAuditImportEvent {
+  return {
+    version: Number(payload.version ?? 0),
+    recordedAt: toOptionalString(payload.recorded_at) ?? null,
+    format: toOptionalString(payload.format) ?? null,
+    workbookFormat: toOptionalString(payload.workbook_format) ?? null,
+    scenarioId:
+      payload.scenario_id == null ? null : Number(payload.scenario_id ?? 0),
+    scenarioName: toOptionalString(payload.scenario_name) ?? null,
+    assetCount:
+      payload.asset_count == null ? null : Number(payload.asset_count ?? 0),
+  }
+}
+
+function mapAuditSubmissionEvent(
+  payload: Record<string, unknown>,
+): FinanceAuditSubmissionEvent {
+  return {
+    version: Number(payload.version ?? 0),
+    eventType: String(payload.event_type ?? ''),
+    recordedAt: toOptionalString(payload.recorded_at) ?? null,
+    agency: toOptionalString(payload.agency) ?? null,
+    agencyName: toOptionalString(payload.agency_name) ?? null,
+    submissionNo: toOptionalString(payload.submission_no) ?? null,
+    submissionType: toOptionalString(payload.submission_type) ?? null,
+    status: toOptionalString(payload.status) ?? null,
+    submissionMode: toOptionalString(payload.submission_mode) ?? null,
+    packageStatus: toOptionalString(payload.package_status) ?? null,
+  }
+}
+
+function mapAuditEvidence(
+  payload: FinanceAuditEvidencePayload,
+): FinanceAuditEvidence {
+  return {
+    projectId: Number(payload.project_id),
+    valid: Boolean(payload.valid),
+    chain: {
+      entryCount: Number(payload.chain?.entry_count ?? 0),
+      signedEntries: Number(payload.chain?.signed_entries ?? 0),
+      latestHash: payload.chain?.latest_hash ?? null,
+    },
+    recipients: Array.isArray(payload.recipients) ? [...payload.recipients] : [],
+    financeEvents: Array.isArray(payload.finance_events)
+      ? payload.finance_events.map((event) =>
+          mapAuditEvidenceEvent(event as Record<string, unknown>),
+        )
+      : [],
+    imports: Array.isArray(payload.imports)
+      ? payload.imports.map((event) =>
+          mapAuditImportEvent(event as Record<string, unknown>),
+        )
+      : [],
+    submissionEvents: Array.isArray(payload.submission_events)
+      ? payload.submission_events.map((event) =>
+          mapAuditSubmissionEvent(event as Record<string, unknown>),
+        )
+      : [],
   }
 }
 
@@ -1835,6 +2067,136 @@ export async function exportFinanceScenarioCsv(
     )
   }
   return await response.blob()
+}
+
+export async function exportFinanceScenarioWorkbook(
+  scenarioId: number,
+  options: FinanceFeasibilityOptions = {},
+): Promise<Blob> {
+  if (!Number.isFinite(Number(scenarioId))) {
+    throw new Error('scenarioId is required to export a finance workbook')
+  }
+  const headers = applyIdentityHeaders({})
+  const url = buildUrl(
+    `api/v1/finance/export/workbook?scenario_id=${scenarioId}`,
+    apiBaseUrl,
+  )
+  const response = await fetch(url, {
+    method: 'GET',
+    headers,
+    signal: options.signal,
+  })
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(
+      message ||
+        `Finance workbook export failed with status ${response.status}`,
+    )
+  }
+  return await response.blob()
+}
+
+export async function previewFinanceWorkbookImport(
+  file: File,
+  input: {
+    projectId?: string | number | null
+    projectName?: string | null
+  } = {},
+  options: FinanceFeasibilityOptions = {},
+): Promise<FinanceWorkbookImportPreview> {
+  const formData = new FormData()
+  formData.set('file', file)
+  if (input.projectId !== undefined && input.projectId !== null && input.projectId !== '') {
+    formData.set('project_id', String(input.projectId))
+  }
+  if (input.projectName) {
+    formData.set('project_name', input.projectName)
+  }
+  const headers = applyIdentityHeaders({})
+  const response = await fetch(
+    buildUrl('api/v1/finance/import/workbook/preview', apiBaseUrl),
+    {
+      method: 'POST',
+      headers,
+      body: formData,
+      signal: options.signal,
+    },
+  )
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(
+      message ||
+        `Finance workbook preview failed with status ${response.status}`,
+    )
+  }
+  const payload = (await response.json()) as FinanceWorkbookImportPreviewPayload
+  return mapWorkbookPreview(payload)
+}
+
+export async function importFinanceWorkbook(
+  file: File,
+  input: {
+    projectId?: string | number | null
+    projectName?: string | null
+  } = {},
+  options: FinanceFeasibilityOptions = {},
+): Promise<FinanceScenarioSummary> {
+  const formData = new FormData()
+  formData.set('file', file)
+  if (input.projectId !== undefined && input.projectId !== null && input.projectId !== '') {
+    formData.set('project_id', String(input.projectId))
+  }
+  if (input.projectName) {
+    formData.set('project_name', input.projectName)
+  }
+  const headers = applyIdentityHeaders({})
+  const response = await fetch(
+    buildUrl('api/v1/finance/import/workbook', apiBaseUrl),
+    {
+      method: 'POST',
+      headers,
+      body: formData,
+      signal: options.signal,
+    },
+  )
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(
+      message ||
+        `Finance workbook import failed with status ${response.status}`,
+    )
+  }
+  const payload = (await response.json()) as FinanceFeasibilityResponsePayload
+  return mapResponse(payload)
+}
+
+export async function fetchFinanceAuditEvidence(
+  projectId: string | number,
+  options: FinanceFeasibilityOptions = {},
+): Promise<FinanceAuditEvidence> {
+  if (projectId === '' || projectId === null || projectId === undefined) {
+    throw new Error('projectId is required to fetch finance audit evidence')
+  }
+  const headers = applyIdentityHeaders({})
+  const response = await fetch(
+    buildUrl(
+      `api/v1/audit/by-ref/${encodeURIComponent(String(projectId))}/evidence`,
+      apiBaseUrl,
+    ),
+    {
+      method: 'GET',
+      headers,
+      signal: options.signal,
+    },
+  )
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(
+      message || `Finance audit evidence failed with status ${response.status}`,
+    )
+  }
+  const payload = (await response.json()) as FinanceAuditEvidencePayload
+  return mapAuditEvidence(payload)
 }
 
 export async function runScenarioSensitivity(

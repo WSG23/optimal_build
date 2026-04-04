@@ -82,6 +82,34 @@ function formatPercent(value: number | null | undefined): string {
   return `${value.toFixed(1)}%`
 }
 
+function formatDistance(
+  value: number | null | undefined,
+  numberFormatter: Intl.NumberFormat,
+): string {
+  if (value == null || Number.isNaN(value)) {
+    return '—'
+  }
+  if (value >= 1000) {
+    return `${numberFormatter.format(value / 1000)} km`
+  }
+  return `${numberFormatter.format(Math.round(value))} m`
+}
+
+function formatRecordedDate(value: string | null | undefined): string {
+  if (!value) {
+    return '—'
+  }
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    return value
+  }
+  return new Intl.DateTimeFormat('en-SG', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }).format(parsed)
+}
+
 function sumMetric<K extends string>(
   items: Array<Partial<Record<K, number | null | undefined>>>,
   key: K,
@@ -278,6 +306,24 @@ export function FeasibilityOutputPanel({
         })) ?? [])
 
   const heritageOverlay = captureResult?.heritageContext?.overlay?.name ?? null
+  const nearestMrt = captureResult?.nearbyAmenities?.mrtStations?.[0] ?? null
+  const nearestBusStop = captureResult?.nearbyAmenities?.busStops?.[0] ?? null
+  const amenityCoverage =
+    (captureResult?.nearbyAmenities?.mrtStations?.length ?? 0) +
+    (captureResult?.nearbyAmenities?.busStops?.length ?? 0) +
+    (captureResult?.nearbyAmenities?.schools?.length ?? 0) +
+    (captureResult?.nearbyAmenities?.shoppingMalls?.length ?? 0) +
+    (captureResult?.nearbyAmenities?.parks?.length ?? 0)
+  const lastTransactionPrice =
+    captureResult?.propertyInfo?.lastTransactionPrice ?? null
+  const lastTransactionDate =
+    captureResult?.propertyInfo?.lastTransactionDate ?? null
+  const lastTransaction =
+    lastTransactionPrice != null
+      ? `${captureResult?.currencySymbol ?? '$'}${numberFormatter.format(
+          Math.round(lastTransactionPrice),
+        )} · ${formatRecordedDate(lastTransactionDate)}`
+      : formatRecordedDate(lastTransactionDate)
   const recommendation =
     assessment?.recommendations?.[0] ??
     captureResult?.financialSummary?.notes?.[0] ??
@@ -514,6 +560,83 @@ export function FeasibilityOutputPanel({
               NIA vs GFA distribution will appear after simulation.
             </div>
           )}
+        </Card>
+
+        <Card
+          variant="glass"
+          className="feasibility-output__card feasibility-output__card--span-4"
+        >
+          <div className="feasibility-output__card-header">
+            <Typography variant="h6">Market & Connectivity</Typography>
+          </div>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+              gap: 'var(--ob-space-100)',
+            }}
+          >
+            {[
+              {
+                label: 'Existing Use',
+                value: captureResult?.existingUse ?? '—',
+              },
+              {
+                label: 'Nearest MRT',
+                value: nearestMrt
+                  ? `${nearestMrt.name} (${formatDistance(
+                      nearestMrt.distanceM,
+                      numberFormatter,
+                    )})`
+                  : '—',
+              },
+              {
+                label: 'Nearest Bus',
+                value: nearestBusStop
+                  ? `${nearestBusStop.name} (${formatDistance(
+                      nearestBusStop.distanceM,
+                      numberFormatter,
+                    )})`
+                  : '—',
+              },
+              {
+                label: 'Last Transaction',
+                value: lastTransaction,
+              },
+              {
+                label: 'Nearby Markers',
+                value:
+                  amenityCoverage > 0
+                    ? `${numberFormatter.format(amenityCoverage)} traced`
+                    : '—',
+              },
+              {
+                label: 'District',
+                value: captureResult?.address?.district ?? '—',
+              },
+            ].map((item) => (
+              <Box
+                key={item.label}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 'var(--ob-space-025)',
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'var(--ob-color-text-muted)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  {item.label}
+                </Typography>
+                <Typography variant="body2">{item.value}</Typography>
+              </Box>
+            ))}
+          </Box>
         </Card>
 
         <Card

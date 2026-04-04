@@ -29,7 +29,6 @@ import { VoiceObservationsPanel } from '../site-acquisition/components/VoiceObse
 import type { DevelopmentScenario } from '../../../api/agents'
 import { useRouterParams } from '../../../router'
 
-import 'mapbox-gl/dist/mapbox-gl.css'
 import '../../../styles/gps-capture.css'
 
 // Lazy load developer results to avoid bundle bloat for agents
@@ -70,10 +69,6 @@ const SCENARIOS: {
 
 const JURISDICTIONS = [
   { value: 'SG', label: 'Singapore' },
-  { value: 'HK', label: 'Hong Kong' },
-  { value: 'NZ', label: 'New Zealand' },
-  { value: 'SEA', label: 'Southeast Asia' },
-  { value: 'TOR', label: 'Toronto' },
 ]
 
 export function UnifiedCapturePage() {

@@ -29,6 +29,8 @@ export interface AuthoritySubmission {
   id: string // UUID
   project_id: string // UUID
   agency_id: string // UUID of the regulatory agency
+  agency_code?: string | null
+  agency_name?: string | null
   submission_type: string
   submission_no?: string // External reference number
   status: 'DRAFT' | 'SUBMITTED' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'RFI'
@@ -38,12 +40,40 @@ export interface AuthoritySubmission {
   approved_at?: string
   created_at: string
   updated_at: string
+  submission_mode?: 'submission_prep' | 'live_submit'
+  package_status?: string | null
+  package_requirements?: string[]
+  delivery_blockers?: string[]
+  live_submission_available?: boolean
+  integration_status?: {
+    provider: string
+    state: string
+    configured?: boolean
+    synthetic?: boolean
+    reason?: string | null
+  } | null
 }
 
 export interface CreateSubmissionRequest {
   project_id: string // UUID string or integer string
   agency: string
   submission_type: string
+  submission_mode?: 'submission_prep' | 'live_submit'
+}
+
+export interface CorenetCapability {
+  submission_mode_default: 'submission_prep' | 'live_submit'
+  live_submission_available: boolean
+  package_status: string
+  package_requirements: string[]
+  delivery_blockers: string[]
+  integration_status: {
+    provider: string
+    state: string
+    configured?: boolean
+    synthetic?: boolean
+    reason?: string | null
+  }
 }
 
 // Asset types for compliance paths
@@ -185,6 +215,13 @@ export const regulatoryApi = {
   ): Promise<AuthoritySubmission> => {
     const { data } = await apiClient.get<AuthoritySubmission>(
       `/api/v1/regulatory/${submissionId}/status`,
+    )
+    return data
+  },
+
+  getCorenetCapability: async (): Promise<CorenetCapability> => {
+    const { data } = await apiClient.get<CorenetCapability>(
+      '/api/v1/regulatory/corenet-capability',
     )
     return data
   },

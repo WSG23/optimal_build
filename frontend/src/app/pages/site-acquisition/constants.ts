@@ -73,30 +73,6 @@ export const JURISDICTION_OPTIONS: readonly JurisdictionOption[] = [
     defaultLat: '1.3000',
     defaultLon: '103.8500',
   },
-  {
-    code: 'HK',
-    label: 'Hong Kong',
-    defaultLat: '22.3193',
-    defaultLon: '114.1694',
-  },
-  {
-    code: 'NZ',
-    label: 'New Zealand',
-    defaultLat: '-36.8485',
-    defaultLon: '174.7633',
-  },
-  {
-    code: 'SEA',
-    label: 'Seattle',
-    defaultLat: '47.6062',
-    defaultLon: '-122.3321',
-  },
-  {
-    code: 'TOR',
-    label: 'Toronto',
-    defaultLat: '43.6532',
-    defaultLon: '-79.3832',
-  },
 ] as const
 
 // ============================================================================
@@ -135,7 +111,7 @@ export const PREVIEW_DETAIL_OPTIONS: GeometryDetailLevel[] = [
 ]
 
 export const PREVIEW_DETAIL_LABELS: Record<GeometryDetailLevel, string> = {
-  medium: 'Medium (octagonal, setbacks, floor lines)',
+  medium: 'Medium (layered massing, optional floor bands)',
   simple: 'Simple (fast box geometry)',
 }
 
@@ -147,26 +123,22 @@ export const SCENARIO_METRIC_PRIORITY: readonly string[] = [
   'plot_ratio',
   'potential_gfa_sqm',
   'gfa_uplift_sqm',
-  'occupancy_pct',
-  'annual_noi',
-  'valuation_cap_rate',
-  'potential_rent_uplift_pct',
-  'target_lease_term_years',
-  'estimated_capex',
+  'site_area_sqm',
+  'building_height_limit_m',
+  'site_coverage_pct',
   'conservation_status',
+  'heritage_risk',
 ]
 
 export const SCENARIO_METRIC_LABELS: Record<string, string> = {
   plot_ratio: 'Plot ratio',
   potential_gfa_sqm: 'Potential GFA (sqm)',
   gfa_uplift_sqm: 'GFA uplift (sqm)',
-  occupancy_pct: 'Occupancy',
-  annual_noi: 'Annual NOI',
-  valuation_cap_rate: 'Cap rate',
-  potential_rent_uplift_pct: 'Rent uplift',
-  target_lease_term_years: 'Lease term (yrs)',
-  estimated_capex: 'Estimated CAPEX',
+  site_area_sqm: 'Site area (sqm)',
+  building_height_limit_m: 'Height limit (m)',
+  site_coverage_pct: 'Site coverage',
   conservation_status: 'Conservation status',
+  heritage_risk: 'Heritage risk',
 }
 
 // ============================================================================

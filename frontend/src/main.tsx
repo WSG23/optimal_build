@@ -111,16 +111,50 @@ const DeveloperControlPanel = React.lazy(async () => {
   const module = await import('./app/pages/developer/DeveloperControlPanel')
   return { default: module.DeveloperControlPanel }
 })
+const DealCalculatorPage = React.lazy(async () => {
+  const module = await import('./app/pages/deal-calculator/DealCalculatorPage')
+  return { default: module.DealCalculatorPage }
+})
+const EvidencePage = React.lazy(async () => {
+  const module = await import('./app/pages/evidence/EvidencePage')
+  return { default: module.EvidencePage }
+})
+const WhyNotExcelPage = React.lazy(async () => {
+  const module = await import('./app/pages/why-not-excel/WhyNotExcelPage')
+  return { default: module.WhyNotExcelPage }
+})
 
 const businessPerformanceElement = (
-  <AppShell activeItem="performance" hideSidebar hideHeader>
+  <AppShell activeItem="performance" hideSidebar hideHeader workspace="agent">
     {suspense(<BusinessPerformancePage />)}
   </AppShell>
 )
 
-// Unified capture page - consolidates GPS Capture and Site Acquisition
-const unifiedCaptureElement = (
-  <AppShell activeItem="capture" hideSidebar hideHeader>
+const agentDashboardElement = (
+  <AppShell
+    activeItem="performance"
+    title="Agent Workspace"
+    description="Pipeline performance, capture, marketing, and advisory workflows."
+    workspace="agent"
+  >
+    {suspense(<BusinessPerformancePage />)}
+  </AppShell>
+)
+
+// Unified capture page - same feature surface, workspace-specific shell wrappers
+const agentCaptureElement = (
+  <AppShell activeItem="gpsCapture" hideSidebar hideHeader workspace="agent">
+    {suspense(<UnifiedCapturePage />)}
+  </AppShell>
+)
+
+const developerCaptureElement = (
+  <AppShell
+    activeItem="siteAcquisition"
+    hideSidebar
+    hideHeader
+    workspace="developer"
+  >
     {suspense(<UnifiedCapturePage />)}
   </AppShell>
 )
@@ -131,6 +165,7 @@ const marketingElement = (
     title="Marketing packs"
     description="Generate, track, and share professional marketing packs for developers and investors."
     hideSidebar
+    workspace="agent"
   >
     {suspense(<MarketingPage />)}
   </AppShell>
@@ -142,6 +177,7 @@ const advisoryElement = (
     title="Advisory console"
     description="Review asset mix strategy, pricing guidance, absorption forecasts, and market feedback in one workspace."
     hideSidebar
+    workspace="agent"
   >
     {suspense(<AdvisoryPage />)}
   </AppShell>
@@ -150,9 +186,10 @@ const advisoryElement = (
 const integrationsElement = (
   <AppShell
     activeItem="integrations"
-    title="Listing integrations"
-    description="Connect PropertyGuru, EdgeProp, Zoho, and future portals to publish and monitor listings."
+    title="Data partnerships"
+    description="Truthful partner status for Singapore portals, market data, and CRM workflows."
     hideSidebar
+    workspace="agent"
   >
     {suspense(<IntegrationsPage />)}
   </AppShell>
@@ -164,6 +201,7 @@ const developerPreviewStandaloneElement = (
     title="Developer preview"
     description="Standalone preview viewer for manual QA of Phase 2B renders."
     hideSidebar
+    workspace="developer"
   >
     {suspense(<DeveloperPreviewStandalone />)}
   </AppShell>
@@ -175,6 +213,7 @@ const checklistTemplateManagerElement = (
     title="Checklist templates"
     description="Author and import scenario-specific due diligence checklists."
     hideSidebar
+    workspace="developer"
   >
     {suspense(<ChecklistTemplateManager />)}
   </AppShell>
@@ -186,6 +225,7 @@ const dueDiligenceElement = (
     title="Property due diligence"
     description="Review condition assessments, inspection history, checklist progress, and scenario overrides."
     hideSidebar
+    workspace="developer"
   >
     {suspense(<DueDiligencePage />)}
   </AppShell>
@@ -197,27 +237,45 @@ const developerFeasibilityElement = (
     title="Feasibility"
     description="Run feasibility checks, document pack generation, and advisory workflows."
     hideSidebar
+    workspace="developer"
   >
     {suspense(<FeasibilityWizard withLayout={false} />)}
   </AppShell>
 )
 
-const financialControlElement = suspense(<FinanceWorkspace />)
+const financialControlElement = suspense(
+  <FinanceWorkspace workspace="developer" />,
+)
 
 const phaseManagementElement = (
-  <AppShell activeItem="phaseManagement" hideSidebar hideHeader>
+  <AppShell
+    activeItem="phaseManagement"
+    hideSidebar
+    hideHeader
+    workspace="developer"
+  >
     {suspense(<PhaseManagementPage />)}
   </AppShell>
 )
 
 const teamCoordinationElement = (
-  <AppShell activeItem="teamCoordination" hideSidebar hideHeader>
+  <AppShell
+    activeItem="teamCoordination"
+    hideSidebar
+    hideHeader
+    workspace="developer"
+  >
     {suspense(<TeamManagementPage />)}
   </AppShell>
 )
 
 const regulatoryNavigationElement = (
-  <AppShell activeItem="regulatoryNavigation" hideSidebar hideHeader>
+  <AppShell
+    activeItem="regulatoryNavigation"
+    hideSidebar
+    hideHeader
+    workspace="developer"
+  >
     {suspense(<RegulatoryDashboardPage />)}
   </AppShell>
 )
@@ -227,19 +285,74 @@ const developerControlPanelElement = (
     activeItem="performance"
     title="Developer Console"
     description="Internal tools and configuration."
+    workspace="developer"
   >
     {suspense(<DeveloperControlPanel />)}
   </AppShell>
 )
 
+const dealCalculatorElement = (
+  <AppShell
+    activeItem="dealCalculator"
+    title="Deal Calculator"
+    description="Standalone Singapore deal screen for feasibility, finance, and trust-signaled underwriting."
+    hideSidebar
+    workspace="developer"
+  >
+    {suspense(<DealCalculatorPage />)}
+  </AppShell>
+)
+
+const evidenceElement = (
+  <AppShell
+    activeItem="evidence"
+    title="Evidence Packs"
+    description="Exportable audit packs for finance lineage, workbook imports, recipients, and submissions."
+    hideSidebar
+    workspace="developer"
+  >
+    {suspense(<EvidencePage />)}
+  </AppShell>
+)
+
+const whyNotExcelElement = (
+  <AppShell
+    title="Why Not Excel?"
+    description="Why Singapore developers move from spreadsheet-only underwriting into a shared evidence workflow."
+    hideSidebar
+    workspace="developer"
+  >
+    {suspense(<WhyNotExcelPage />)}
+  </AppShell>
+)
+
 const projectListElement = (
-  <AppShell title="Projects" description="Select or create a project.">
+  <AppShell
+    title="Projects"
+    description="Singapore-first onboarding for deal modeling, workbook intake, and project execution."
+    workspace="developer"
+  >
+    {suspense(<ProjectListPage />)}
+  </AppShell>
+)
+
+const developerDashboardElement = (
+  <AppShell
+    activeItem="projects"
+    title="Developer Workspace"
+    description="Singapore developer workflow for deal screening, finance, consultant coordination, and regulatory prep."
+    workspace="developer"
+  >
     {suspense(<ProjectListPage />)}
   </AppShell>
 )
 
 const projectHubElement = (
-  <AppShell title="Project Overview" description="Project hub and navigation.">
+  <AppShell
+    title="Project Overview"
+    description="Project hub and navigation."
+    workspace="developer"
+  >
     {suspense(<ProjectHubPage />)}
   </AppShell>
 )
@@ -247,7 +360,15 @@ const projectHubElement = (
 const router = createBrowserRouter([
   {
     path: '/',
-    element: businessPerformanceElement,
+    element: developerDashboardElement,
+  },
+  {
+    path: '/agents',
+    element: agentDashboardElement,
+  },
+  {
+    path: '/developers',
+    element: developerDashboardElement,
   },
   {
     path: '/app/performance',
@@ -260,15 +381,15 @@ const router = createBrowserRouter([
   // Unified capture page - all capture routes point to the same unified experience
   {
     path: '/app/capture',
-    element: unifiedCaptureElement,
+    element: developerCaptureElement,
   },
   {
     path: '/app/gps-capture',
-    element: unifiedCaptureElement,
+    element: agentCaptureElement,
   },
   {
     path: '/agents/site-capture',
-    element: unifiedCaptureElement,
+    element: agentCaptureElement,
   },
   {
     path: '/app/marketing',
@@ -296,11 +417,35 @@ const router = createBrowserRouter([
   },
   {
     path: '/app/site-acquisition',
-    element: unifiedCaptureElement,
+    element: developerCaptureElement,
+  },
+  {
+    path: '/app/deal-calculator',
+    element: dealCalculatorElement,
   },
   {
     path: '/developers/site-acquisition',
-    element: unifiedCaptureElement,
+    element: developerCaptureElement,
+  },
+  {
+    path: '/developers/deal-calculator',
+    element: dealCalculatorElement,
+  },
+  {
+    path: '/app/evidence',
+    element: evidenceElement,
+  },
+  {
+    path: '/developers/evidence',
+    element: evidenceElement,
+  },
+  {
+    path: '/why-not-excel',
+    element: whyNotExcelElement,
+  },
+  {
+    path: '/developers/why-not-excel',
+    element: whyNotExcelElement,
   },
   {
     path: '/agents/developers/:propertyId/preview',
@@ -368,7 +513,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/projects/:projectId/capture',
-    element: unifiedCaptureElement,
+    element: developerCaptureElement,
   },
   {
     path: '/projects/:projectId/due-diligence',
@@ -389,6 +534,10 @@ const router = createBrowserRouter([
   {
     path: '/projects/:projectId/team',
     element: teamCoordinationElement,
+  },
+  {
+    path: '/projects/:projectId/evidence',
+    element: evidenceElement,
   },
   {
     path: '/developer',

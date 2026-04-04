@@ -1,5 +1,6 @@
 import {
   Suspense,
+  type ChangeEvent,
   lazy,
   useCallback,
   useEffect,
@@ -9,12 +10,19 @@ import {
 } from 'react'
 
 import {
+  runFinanceFeasibility,
   updateConstructionLoan,
   updateFinanceScenario,
   runScenarioSensitivity,
   deleteFinanceScenario,
   exportFinanceScenarioCsv,
+  exportFinanceScenarioWorkbook,
+  importFinanceWorkbook,
+  previewFinanceWorkbookImport,
+  fetchFinanceAuditEvidence,
   type ConstructionLoanInput,
+  type FinanceAuditEvidence,
+  type FinanceWorkbookImportPreview,
   type SensitivityBandInput,
   type FinanceAnalyticsMetadata,
 } from '../../api/finance'
@@ -58,6 +66,13 @@ import { Card } from '../../components/canonical/Card'
 import { useProject } from '../../contexts/useProject'
 import { createFinanceProjectFromCapture } from '../../api/siteAcquisition'
 import { getCapturePropertyId } from '../../app/pages/capture/utils/captureStorage'
+import {
+  buildQuickScreenAssessmentSummary,
+  buildQuickScreenScenarioDescription,
+  clearQuickScreenFinanceDraft,
+  readQuickScreenFinanceDraft,
+  type QuickScreenFinanceDraft,
+} from './quickScreenDraft'
 
 const FinanceAssetBreakdown = lazy(
   () => import('./components/FinanceAssetBreakdown'),
@@ -173,10 +188,14 @@ const DEFAULT_SENSITIVITY_HEADERS = [
   'total_interest',
 ]
 
-export function FinanceWorkspace() {
+interface FinanceWorkspaceProps {
+  workspace?: 'agent' | 'developer'
+}
+
+export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
   const { t } = useTranslation()
   const router = useRouterController()
-  const { path, navigate } = router
+  const { path, search, navigate } = router
   const { projectId: routeProjectId } = useRouterParams()
   const {
     currentProject,
@@ -210,6 +229,9 @@ export function FinanceWorkspace() {
     : false
   const projectDisplayName =
     effectiveProjectName ?? shortenProjectId(effectiveProjectId)
+  const searchParams = useMemo(() => new URLSearchParams(search), [search])
+  const onboardingMode = searchParams.get('onboarding')
+  const financeTemplateId = searchParams.get('template')
   const hasProject = Boolean(effectiveProjectId)
   const capturePropertyId = useMemo(
     () => getCapturePropertyId(effectiveProjectId),
@@ -255,6 +277,21 @@ export function FinanceWorkspace() {
     null,
   )
   const [exportingScenario, setExportingScenario] = useState(false)
+  const [exportingWorkbook, setExportingWorkbook] = useState(false)
+  const [previewingWorkbook, setPreviewingWorkbook] = useState(false)
+  const [importingWorkbook, setImportingWorkbook] = useState(false)
+  const [workbookPreview, setWorkbookPreview] =
+    useState<FinanceWorkbookImportPreview | null>(null)
+  const [pendingWorkbookFile, setPendingWorkbookFile] = useState<File | null>(
+    null,
+  )
+  const [quickScreenDraft, setQuickScreenDraft] =
+    useState<QuickScreenFinanceDraft | null>(null)
+  const [auditEvidence, setAuditEvidence] = useState<FinanceAuditEvidence | null>(
+    null,
+  )
+  const [auditEvidenceError, setAuditEvidenceError] = useState<string | null>(null)
+  const workbookInputRef = useRef<HTMLInputElement | null>(null)
   const identityErrorRegex = /restricted/i
   const needsScenarioIdentity =
     typeof error === 'string' && identityErrorRegex.test(error)
@@ -524,6 +561,231 @@ export function FinanceWorkspace() {
     }
   }, [primaryScenario, exportingScenario, t])
 
+  const handleExportWorkbook = useCallback(async () => {
+    if (!primaryScenario || exportingWorkbook) {
+      return
+    }
+    setExportingWorkbook(true)
+    setScenarioError(null)
+    try {
+      const blob = await exportFinanceScenarioWorkbook(primaryScenario.scenarioId)
+      const url = URL.createObjectURL(blob)
+      const filename = `finance_scenario_${primaryScenario.scenarioId}.xlsx`
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = filename
+      anchor.style.display = 'none'
+      document.body.appendChild(anchor)
+      anchor.click()
+      document.body.removeChild(anchor)
+      URL.revokeObjectURL(url)
+      setScenarioMessage(
+        t('finance.actions.exportWorkbookSuccess', {
+          defaultValue: 'Finance workbook downloaded.',
+        }),
+      )
+    } catch (err) {
+      console.error('[finance] failed to export workbook', err)
+      setScenarioError(
+        err instanceof Error
+          ? err.message
+          : t('finance.errors.exportWorkbook', {
+              defaultValue: 'Unable to export the selected workbook.',
+            }),
+      )
+    } finally {
+      setExportingWorkbook(false)
+    }
+  }, [primaryScenario, exportingWorkbook, t])
+
+  const handleImportWorkbookClick = useCallback(() => {
+    if (!hasProject || previewingWorkbook || importingWorkbook) {
+      return
+    }
+    workbookInputRef.current?.click()
+  }, [hasProject, previewingWorkbook, importingWorkbook])
+
+  const handleWorkbookSelected = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (!file || !hasProject) {
+        return
+      }
+      setPreviewingWorkbook(true)
+      setScenarioError(null)
+      setScenarioMessage(null)
+      try {
+        const preview = await previewFinanceWorkbookImport(file, {
+          projectId: effectiveProjectId,
+          projectName: effectiveProjectName ?? projectDisplayName,
+        })
+        setPendingWorkbookFile(file)
+        setWorkbookPreview(preview)
+      } catch (err) {
+        console.error('[finance] failed to preview workbook import', err)
+        setScenarioError(
+          err instanceof Error
+            ? err.message
+            : t('finance.errors.importWorkbook', {
+                defaultValue: 'Unable to preview workbook import.',
+              }),
+        )
+        setPendingWorkbookFile(null)
+        setWorkbookPreview(null)
+      } finally {
+        event.target.value = ''
+        setPreviewingWorkbook(false)
+      }
+    },
+    [hasProject, effectiveProjectId, effectiveProjectName, projectDisplayName, t],
+  )
+
+  const handleDismissWorkbookPreview = useCallback(() => {
+    setPendingWorkbookFile(null)
+    setWorkbookPreview(null)
+  }, [])
+
+  const handleConfirmWorkbookImport = useCallback(async () => {
+    if (!pendingWorkbookFile || !hasProject || importingWorkbook) {
+      return
+    }
+    setImportingWorkbook(true)
+    setScenarioError(null)
+    try {
+      const imported = await importFinanceWorkbook(pendingWorkbookFile, {
+        projectId: effectiveProjectId,
+        projectName: effectiveProjectName ?? projectDisplayName,
+      })
+      setScenarioMessage(
+        t('finance.actions.importWorkbookSuccess', {
+          defaultValue: 'Workbook imported into a finance scenario.',
+        }),
+      )
+      addScenario(imported)
+      setActiveTab(0)
+      setPendingWorkbookFile(null)
+      setWorkbookPreview(null)
+      await refresh()
+    } catch (err) {
+      console.error('[finance] failed to import workbook', err)
+      setScenarioError(
+        err instanceof Error
+          ? err.message
+          : t('finance.errors.importWorkbook', {
+              defaultValue: 'Unable to import workbook.',
+            }),
+      )
+    } finally {
+      setImportingWorkbook(false)
+    }
+  }, [
+    pendingWorkbookFile,
+    hasProject,
+    importingWorkbook,
+    effectiveProjectId,
+    effectiveProjectName,
+    projectDisplayName,
+    addScenario,
+    refresh,
+    t,
+  ])
+
+  useEffect(() => {
+    setQuickScreenDraft(readQuickScreenFinanceDraft())
+  }, [])
+
+  useEffect(() => {
+    if (!hasProject) {
+      setAuditEvidence(null)
+      setAuditEvidenceError(null)
+      return undefined
+    }
+    const controller = new AbortController()
+    setAuditEvidenceError(null)
+    fetchFinanceAuditEvidence(effectiveProjectId, { signal: controller.signal })
+      .then((evidence) => {
+        setAuditEvidence(evidence)
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) {
+          return
+        }
+        console.warn('[finance] failed to load audit evidence', err)
+        setAuditEvidenceError(
+          err instanceof Error ? err.message : 'Unable to load audit evidence.',
+        )
+      })
+    return () => controller.abort()
+  }, [effectiveProjectId, hasProject, scenarios.length, primaryScenario?.scenarioId])
+
+  const handleImportQuickScreenDraft = useCallback(async () => {
+    if (!quickScreenDraft || !hasProject) {
+      return
+    }
+    setScenarioError(null)
+    setScenarioMessage(null)
+    try {
+      const scenario = {
+        ...quickScreenDraft.scenario,
+        description: buildQuickScreenScenarioDescription(
+          quickScreenDraft.scenario.description,
+          quickScreenDraft.assessment,
+        ),
+      }
+      const summary = await runFinanceFeasibility({
+        projectId: effectiveProjectId,
+        projectName:
+          effectiveProjectName ?? quickScreenDraft.projectName ?? projectDisplayName,
+        scenario,
+      })
+      addScenario(summary)
+      setScenarioMessage(
+        t('finance.actions.importQuickScreenSuccess', {
+          defaultValue: 'Quick screen assumptions imported into finance.',
+        }),
+      )
+      clearQuickScreenFinanceDraft()
+      setQuickScreenDraft(null)
+      setActiveTab(0)
+      await refresh()
+    } catch (err) {
+      console.error('[finance] failed to import quick screen draft', err)
+      setScenarioError(
+        err instanceof Error
+          ? err.message
+          : t('finance.errors.importQuickScreen', {
+              defaultValue: 'Unable to import quick screen assumptions.',
+            }),
+      )
+    }
+  }, [
+    quickScreenDraft,
+    hasProject,
+    effectiveProjectId,
+    effectiveProjectName,
+    projectDisplayName,
+    addScenario,
+    refresh,
+    t,
+  ])
+
+  const quickScreenAssessmentLines = useMemo(
+    () => buildQuickScreenAssessmentSummary(quickScreenDraft?.assessment),
+    [quickScreenDraft],
+  )
+  const latestFinanceAuditEvent = useMemo(
+    () => auditEvidence?.financeEvents.at(-1) ?? null,
+    [auditEvidence],
+  )
+  const latestWorkbookImport = useMemo(
+    () => auditEvidence?.imports.at(-1) ?? null,
+    [auditEvidence],
+  )
+  const latestSubmissionEvent = useMemo(
+    () => auditEvidence?.submissionEvents.at(-1) ?? null,
+    [auditEvidence],
+  )
+
   const handleSaveLoan = useCallback(
     async (input: ConstructionLoanInput) => {
       if (!primaryScenario) {
@@ -668,8 +930,13 @@ export function FinanceWorkspace() {
           refresh()
         }}
         refreshing={loading}
+        onImportWorkbook={handleImportWorkbookClick}
+        importingWorkbook={previewingWorkbook || importingWorkbook}
+        importDisabled={!hasProject}
+        onExportWorkbook={handleExportWorkbook}
+        exportingWorkbook={exportingWorkbook}
         onExportCsv={handleExportCsv}
-        exporting={exportingScenario}
+        exportingCsv={exportingScenario}
         exportDisabled={!primaryScenario}
       />
 
@@ -869,6 +1136,13 @@ export function FinanceWorkspace() {
               )}
               {hasProject && (
                 <>
+                  <input
+                    ref={workbookInputRef}
+                    type="file"
+                    accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    style={{ display: 'none' }}
+                    onChange={handleWorkbookSelected}
+                  />
                   {error && (
                     <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
                       <strong>{t('finance.errors.generic')}</strong>
@@ -918,6 +1192,319 @@ export function FinanceWorkspace() {
                       {scenarioMessage}
                     </Alert>
                   )}
+                  {onboardingMode === 'workbook' && (
+                    <Alert severity="info" sx={{ mb: 'var(--ob-space-150)' }}>
+                      <Stack spacing={1}>
+                        <Typography variant="body2">
+                          Workbook onboarding is active for this project. Import an
+                          existing Excel model to structure it into the Singapore
+                          finance workflow without rebuilding assumptions manually.
+                        </Typography>
+                        <Box>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={handleImportWorkbookClick}
+                            disabled={previewingWorkbook || importingWorkbook}
+                          >
+                            {previewingWorkbook || importingWorkbook
+                              ? 'Preparing workbook import...'
+                              : 'Choose workbook'}
+                          </Button>
+                        </Box>
+                      </Stack>
+                    </Alert>
+                  )}
+                  {onboardingMode === 'sample' && (
+                    <Alert severity="info" sx={{ mb: 'var(--ob-space-150)' }}>
+                      <Stack spacing={1}>
+                        <Typography variant="body2">
+                          This sample project starts with a Singapore underwriting
+                          template. Review the template guidance below, then export
+                          lender or investor materials once the scenario is ready.
+                        </Typography>
+                        <Stack direction="row" spacing={1}>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => navigate('/developers/why-not-excel')}
+                          >
+                            Why not Excel?
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/projects/${effectiveProjectId}/evidence`)}
+                          >
+                            Review evidence pack
+                          </Button>
+                        </Stack>
+                      </Stack>
+                    </Alert>
+                  )}
+                  {quickScreenDraft && (
+                    <Alert severity="info" sx={{ mb: 'var(--ob-space-150)' }}>
+                      <Stack spacing={1.25}>
+                        <Stack
+                          direction={{ xs: 'column', md: 'row' }}
+                          spacing={1}
+                          justifyContent="space-between"
+                          alignItems={{ xs: 'flex-start', md: 'center' }}
+                        >
+                          <Box>
+                            <strong>
+                              {t('finance.actions.importQuickScreen', {
+                                defaultValue: 'Quick screen draft ready.',
+                              })}
+                            </strong>
+                            <Box component="span" sx={{ display: 'block' }}>
+                              {quickScreenDraft.scenario.name}
+                            </Box>
+                            {quickScreenDraft.assessment?.generatedAt ? (
+                              <Box
+                                component="span"
+                                sx={{
+                                  display: 'block',
+                                  fontSize: 'var(--ob-font-size-2xs)',
+                                  color: 'var(--ob-color-text-tertiary)',
+                                  mt: 'var(--ob-space-050)',
+                                }}
+                              >
+                                Screened {new Date(quickScreenDraft.assessment.generatedAt).toLocaleString()}
+                              </Box>
+                            ) : null}
+                          </Box>
+                          <Stack direction="row" spacing={1}>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={handleImportQuickScreenDraft}
+                            >
+                              {t('finance.actions.importQuickScreen', {
+                                defaultValue: 'Import quick screen',
+                              })}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                clearQuickScreenFinanceDraft()
+                                setQuickScreenDraft(null)
+                              }}
+                            >
+                              {t('common.actions.cancel')}
+                            </Button>
+                          </Stack>
+                        </Stack>
+                        {quickScreenAssessmentLines.length > 0 ? (
+                          <Box component="ul" sx={{ m: 0, pl: 3 }}>
+                            {quickScreenAssessmentLines.map((line) => (
+                              <li key={line}>{line}</li>
+                            ))}
+                          </Box>
+                        ) : null}
+                      </Stack>
+                    </Alert>
+                  )}
+                  {workbookPreview && (
+                    <Alert
+                      severity={workbookPreview.isValid ? 'info' : 'warning'}
+                      sx={{ mb: 'var(--ob-space-150)' }}
+                    >
+                      <Stack spacing={1.25}>
+                        <Box>
+                          <strong>{workbookPreview.filename}</strong>
+                          <Box component="span" sx={{ display: 'block' }}>
+                            {workbookPreview.scenarioName ?? 'Workbook preview'} •{' '}
+                            {workbookPreview.assetCount} assets •{' '}
+                            {workbookPreview.detectedSheets.length} sheets mapped
+                          </Box>
+                        </Box>
+                        {workbookPreview.warnings.length > 0 && (
+                          <Box component="ul" sx={{ m: 0, pl: 3 }}>
+                            {workbookPreview.warnings.map((warning) => (
+                              <li key={warning}>{warning}</li>
+                            ))}
+                          </Box>
+                        )}
+                        {workbookPreview.validationErrors.length > 0 && (
+                          <Box component="ul" sx={{ m: 0, pl: 3 }}>
+                            {workbookPreview.validationErrors.map((issue) => (
+                              <li key={`${issue.field}:${issue.message}`}>
+                                {issue.field}: {issue.message}
+                              </li>
+                            ))}
+                          </Box>
+                        )}
+                        <Stack direction="row" spacing={1}>
+                          {workbookPreview.isValid ? (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={handleConfirmWorkbookImport}
+                              disabled={importingWorkbook}
+                            >
+                              {importingWorkbook
+                                ? t('finance.actions.importingWorkbook', {
+                                    defaultValue: 'Importing workbook…',
+                                  })
+                                : t('finance.actions.importWorkbook', {
+                                    defaultValue: 'Import workbook',
+                                  })}
+                            </Button>
+                          ) : null}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleDismissWorkbookPreview}
+                          >
+                            {t('common.actions.cancel')}
+                          </Button>
+                        </Stack>
+                      </Stack>
+                    </Alert>
+                  )}
+                  {hasProject && (
+                    <Card
+                      variant="glass"
+                      sx={{ mb: 'var(--ob-space-150)', p: 'var(--ob-space-200)' }}
+                    >
+                      <Stack spacing={1.25}>
+                        <Box>
+                          <Typography variant="h6">Audit evidence snapshot</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Evidence chain health for finance modeling, workbook imports,
+                            and regulatory submission prep.
+                          </Typography>
+                        </Box>
+                        {auditEvidenceError ? (
+                          <Alert severity="warning">{auditEvidenceError}</Alert>
+                        ) : auditEvidence ? (
+                          <>
+                            <Stack
+                              direction={{ xs: 'column', md: 'row' }}
+                              spacing={1}
+                              useFlexGap
+                              flexWrap="wrap"
+                            >
+                              <Box
+                                sx={{
+                                  px: 1.25,
+                                  py: 0.75,
+                                  borderRadius: 2,
+                                  bgcolor: auditEvidence.valid
+                                    ? 'rgba(15,118,110,0.10)'
+                                    : 'rgba(185,28,28,0.10)',
+                                  color: auditEvidence.valid ? '#0f766e' : '#b91c1c',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {auditEvidence.valid ? 'Chain valid' : 'Chain needs review'}
+                              </Box>
+                              <Typography variant="body2" color="text.secondary">
+                                {auditEvidence.chain.signedEntries}/{auditEvidence.chain.entryCount}{' '}
+                                signed entries
+                              </Typography>
+                              {auditEvidence.recipients.length > 0 ? (
+                                <Typography variant="body2" color="text.secondary">
+                                  Recipients: {auditEvidence.recipients.join(', ')}
+                                </Typography>
+                              ) : null}
+                            </Stack>
+                            <Stack spacing={0.75}>
+                              {latestFinanceAuditEvent ? (
+                                <Typography variant="body2" color="text.secondary">
+                                  Latest finance scenario: {latestFinanceAuditEvent.scenarioName ?? 'Scenario'} via{' '}
+                                  <strong>{latestFinanceAuditEvent.origin ?? 'manual'}</strong>
+                                  {latestFinanceAuditEvent.recordedAt
+                                    ? ` on ${new Date(latestFinanceAuditEvent.recordedAt).toLocaleString()}`
+                                    : ''}
+                                </Typography>
+                              ) : null}
+                              {latestWorkbookImport ? (
+                                <Typography variant="body2" color="text.secondary">
+                                  Latest workbook import: {latestWorkbookImport.scenarioName ?? 'Workbook scenario'}
+                                  {latestWorkbookImport.workbookFormat
+                                    ? ` (${latestWorkbookImport.workbookFormat})`
+                                    : ''}
+                                </Typography>
+                              ) : null}
+                              {latestSubmissionEvent ? (
+                                <Typography variant="body2" color="text.secondary">
+                                  Latest submission event: {latestSubmissionEvent.agencyName ?? latestSubmissionEvent.agency ?? 'Agency'}{' '}
+                                  {latestSubmissionEvent.submissionMode
+                                    ? `• ${latestSubmissionEvent.submissionMode.replace('_', ' ')}`
+                                    : ''}
+                                  {latestSubmissionEvent.packageStatus
+                                    ? ` • ${latestSubmissionEvent.packageStatus}`
+                                    : ''}
+                                </Typography>
+                              ) : null}
+                            </Stack>
+                            <Box>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => navigate(`/projects/${effectiveProjectId}/evidence`)}
+                              >
+                                Open evidence pack
+                              </Button>
+                            </Box>
+                          </>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            No audit evidence recorded for this project yet.
+                          </Typography>
+                        )}
+                      </Stack>
+                    </Card>
+                  )}
+
+                  <Card
+                    variant="glass"
+                    sx={{ mb: 'var(--ob-space-150)', p: 'var(--ob-space-200)' }}
+                  >
+                    <Stack
+                      direction={{ xs: 'column', md: 'row' }}
+                      spacing={1.5}
+                      justifyContent="space-between"
+                    >
+                      <Box>
+                        <Typography variant="h6">Finance mode for Singapore developers</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Build a scenario from a deal screen, import a workbook, or
+                          start from an SG template. Then package outputs for lenders,
+                          investors, and internal approvals.
+                        </Typography>
+                      </Box>
+                      <Stack direction="row" spacing={1}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => navigate('/developers/why-not-excel')}
+                        >
+                          Why not Excel?
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleExportWorkbook}
+                          disabled={!primaryScenario || exportingWorkbook}
+                        >
+                          {exportingWorkbook ? 'Preparing workbook...' : 'Lender workbook'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleExportCsv}
+                          disabled={!primaryScenario || exportingScenario}
+                        >
+                          {exportingScenario ? 'Preparing export...' : 'Investor export'}
+                        </Button>
+                      </Stack>
+                    </Stack>
+                  </Card>
 
                   {/* Tab Panels - Depth 1 (Glass Cards with ob-card-module) */}
                   <div role="tabpanel" hidden={activeTab !== 0}>
@@ -928,6 +1515,7 @@ export function FinanceWorkspace() {
                             <FinanceScenarioCreator
                               projectId={effectiveProjectId}
                               projectName={projectDisplayName}
+                              initialTemplateId={financeTemplateId}
                               onCreated={(summary) => {
                                 setScenarioMessage(
                                   t('finance.scenarioCreator.success', {
@@ -998,8 +1586,12 @@ export function FinanceWorkspace() {
                                 >
                                   Build from assumptions
                                 </Button>
-                                <Button variant="ghost" size="sm" disabled>
-                                  Import from Excel/Argus (coming soon)
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={handleImportWorkbookClick}
+                                >
+                                  Import from workbook
                                 </Button>
                               </Stack>
                             </Stack>

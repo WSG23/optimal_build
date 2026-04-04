@@ -6,7 +6,6 @@
 
 import type {
   SiteAcquisitionResult,
-  DeveloperAssetOptimization,
   PreviewJob,
   DeveloperColorLegendEntry,
 } from '../../../../api/siteAcquisition'
@@ -33,14 +32,6 @@ export interface CardBuilderFormatters {
 
 export interface CardBuilderContext {
   capturedProperty: SiteAcquisitionResult
-  /** Pre-extracted propertyInfo summary (optional, will be derived from capturedProperty if not provided) */
-  propertyInfoSummary?: SiteAcquisitionResult['propertyInfo'] | null
-  /** Pre-extracted uraZoning summary (optional, will be derived from capturedProperty if not provided) */
-  zoningSummary?: SiteAcquisitionResult['uraZoning'] | null
-  /** Pre-extracted nearest MRT station (optional, will be derived from capturedProperty if not provided) */
-  nearestMrtStation?: { name: string; distanceM: number | null } | null
-  /** Pre-extracted nearest bus stop (optional, will be derived from capturedProperty if not provided) */
-  nearestBusStop?: { name: string; distanceM: number | null } | null
   previewJob: PreviewJob | null
   colorLegendEntries: DeveloperColorLegendEntry[]
   formatters: CardBuilderFormatters
@@ -93,35 +84,6 @@ function createSiteCoverageFormatter(formatNumber: NumberFormatter) {
       maximumFractionDigits: percent >= 100 ? 0 : 1,
     })}%`
   }
-}
-
-function createDistanceFormatter(formatNumber: NumberFormatter) {
-  return (value: number | null | undefined): string => {
-    if (value === null || value === undefined) {
-      return '—'
-    }
-    if (value >= 1000) {
-      return `${formatNumber(value / 1000, {
-        maximumFractionDigits: 1,
-      })} km`
-    }
-    return `${formatNumber(value, { maximumFractionDigits: 0 })} m`
-  }
-}
-
-function formatDate(value: string | null | undefined): string {
-  if (!value) {
-    return '—'
-  }
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) {
-    return value
-  }
-  return new Intl.DateTimeFormat('en-SG', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  }).format(parsed)
 }
 
 // ============================================================================
@@ -339,146 +301,59 @@ function buildPreviewJobCard(
   }
 }
 
-function buildAssetMixCard(
-  optimizations: DeveloperAssetOptimization[],
-  formatNumber: NumberFormatter,
-  currencySymbol: string = 'S$',
-): PropertyOverviewCard | null {
-  if (optimizations.length === 0) {
-    return null
-  }
-
-  const formatAllocation = (plan: DeveloperAssetOptimization) => {
-    const segments: string[] = [
-      `${formatNumber(plan.allocationPct, { maximumFractionDigits: 0 })}%`,
-    ]
-    if (plan.allocatedGfaSqm != null) {
-      segments.push(
-        `${formatNumber(
-          plan.allocatedGfaSqm >= 1000
-            ? plan.allocatedGfaSqm / 1000
-            : plan.allocatedGfaSqm,
-          {
-            maximumFractionDigits: plan.allocatedGfaSqm >= 1000 ? 1 : 0,
-          },
-        )}${plan.allocatedGfaSqm >= 1000 ? 'k' : ''} sqm`,
-      )
-    }
-    if (plan.niaEfficiency != null) {
-      segments.push(
-        `NIA ${formatNumber(plan.niaEfficiency * 100, {
-          maximumFractionDigits: plan.niaEfficiency * 100 >= 100 ? 0 : 1,
-        })}%`,
-      )
-    }
-    if (plan.targetFloorHeightM != null) {
-      segments.push(
-        `${formatNumber(plan.targetFloorHeightM, {
-          maximumFractionDigits: 1,
-        })} m floor height`,
-      )
-    }
-    if (plan.parkingRatioPer1000Sqm != null) {
-      segments.push(
-        `${formatNumber(plan.parkingRatioPer1000Sqm, {
-          maximumFractionDigits: 1,
-        })} lots / 1,000 sqm`,
-      )
-    }
-    if (plan.estimatedRevenueSgd != null && plan.estimatedRevenueSgd > 0) {
-      segments.push(
-        `Rev ≈ ${currencySymbol}${formatNumber(
-          plan.estimatedRevenueSgd / 1_000_000,
-          {
-            maximumFractionDigits: 1,
-          },
-        )}M`,
-      )
-    }
-    if (plan.estimatedCapexSgd != null && plan.estimatedCapexSgd > 0) {
-      segments.push(
-        `CAPEX ≈ ${currencySymbol}${formatNumber(
-          plan.estimatedCapexSgd / 1_000_000,
-          {
-            maximumFractionDigits: 1,
-          },
-        )}M`,
-      )
-    }
-    if (plan.riskLevel) {
-      const riskLabel = `${plan.riskLevel.charAt(0).toUpperCase()}${plan.riskLevel.slice(1)}`
-      segments.push(
-        `${riskLabel} risk${
-          plan.absorptionMonths
-            ? ` · ~${formatNumber(plan.absorptionMonths, { maximumFractionDigits: 0 })}m absorption`
-            : ''
-        }`,
-      )
-    }
-    return segments.join(' • ')
-  }
-
-  return {
-    title: 'Recommended asset mix',
-    subtitle: 'Initial allocation guidance',
-    items: optimizations.map((plan) => ({
-      label: plan.assetType,
-      value: formatAllocation(plan),
-    })),
-    note:
-      optimizations.find((plan) => plan.notes.length)?.notes[0] ??
-      'Adjust allocations as feasibility modelling matures.',
-  }
-}
-
-function buildFinancialCard(
+function buildAnalysisStatusCard(
   capturedProperty: SiteAcquisitionResult,
-  formatNumber: NumberFormatter,
-  currencySymbol: string = 'S$',
+  previewJob: PreviewJob | null,
 ): PropertyOverviewCard {
-  const financialSummary = capturedProperty.financialSummary
-  const financeNote =
-    financialSummary.notes.length > 0
-      ? financialSummary.notes[0]
-      : 'Sync with finance modelling to validate programme-level cash flows.'
-
-  // At GPS capture stage, only show high-level estimates.
-  // Capital stack (equity/debt split) and loan rates belong in Finance page
-  // after user clicks "Create Finance Project".
-  const financialItems: Array<{ label: string; value: string }> = [
-    {
-      label: 'Total estimated revenue',
-      value:
-        financialSummary.totalEstimatedRevenueSgd != null
-          ? `${currencySymbol}${formatNumber(
-              financialSummary.totalEstimatedRevenueSgd / 1_000_000,
-              { maximumFractionDigits: 1 },
-            )}M`
-          : '—',
-    },
-    {
-      label: 'Total estimated capex',
-      value:
-        financialSummary.totalEstimatedCapexSgd != null
-          ? `${currencySymbol}${formatNumber(
-              financialSummary.totalEstimatedCapexSgd / 1_000_000,
-              { maximumFractionDigits: 1 },
-            )}M`
-          : '—',
-    },
-    {
-      label: 'Dominant risk',
-      value: financialSummary.dominantRiskProfile
-        ? financialSummary.dominantRiskProfile.replace('_', ' ')
-        : '—',
-    },
-  ]
+  const envelope = capturedProperty.buildEnvelope
+  const visualization = capturedProperty.visualization
+  const envelopeResolved = [
+    envelope.zoneCode,
+    envelope.allowablePlotRatio,
+    envelope.maxBuildableGfaSqm,
+    envelope.buildingHeightLimitM,
+    envelope.siteCoveragePct,
+  ].filter((value) => value !== null && value !== undefined).length
+  const geometryStatus = previewJob?.status?.toLowerCase()
+  const isPlaceholderGeometry =
+    visualization.status.toLowerCase() === 'placeholder' ||
+    (!visualization.previewAvailable &&
+      !visualization.conceptMeshUrl &&
+      !previewJob?.previewUrl)
+  const envelopeMode =
+    envelope.sourceReference || envelopeResolved >= 4
+      ? 'Resolved scalar controls'
+      : 'Derived scalar controls'
 
   return {
-    title: 'Financial snapshot',
-    subtitle: 'Optimisation-derived estimates',
-    items: financialItems,
-    note: financeNote,
+    title: 'Analysis status',
+    subtitle: isPlaceholderGeometry
+      ? 'Instant capture only'
+      : 'Capture with preview job',
+    items: [
+      {
+        label: 'Envelope completeness',
+        value: `${envelopeResolved}/5 scalar controls`,
+      },
+      {
+        label: 'Envelope mode',
+        value: envelopeMode,
+      },
+      {
+        label: 'Geometry status',
+        value: isPlaceholderGeometry
+          ? 'Placeholder only'
+          : geometryStatus
+            ? geometryStatus.replace(/_/g, ' ')
+            : 'Pending',
+      },
+      {
+        label: 'Compliance scope',
+        value: 'No setbacks or floor-by-floor compliance',
+      },
+    ],
+    note:
+      'Capture currently reports parcel-level zoning and build-envelope signals. Setbacks, step-backs, and floor-by-floor compliance remain out of scope here.',
   }
 }
 
@@ -505,8 +380,10 @@ function buildVisualizationCard(
     {
       label: 'Preview status',
       value: visualization.previewAvailable
-        ? 'High-fidelity preview ready'
-        : 'Waiting on Phase 2B visuals',
+        ? 'Mesh ready'
+        : visualization.status.toLowerCase() === 'placeholder'
+          ? 'Placeholder only'
+          : 'Queued / pending',
     },
     {
       label: 'Status flag',
@@ -516,7 +393,7 @@ function buildVisualizationCard(
     },
     {
       label: 'Concept mesh',
-      value: visualization.conceptMeshUrl ?? 'Stub not generated yet',
+      value: visualization.conceptMeshUrl ?? 'No mesh asset returned',
     },
     {
       label: 'Camera orbit hint',
@@ -562,7 +439,9 @@ function buildVisualizationCard(
     title: 'Visualization readiness',
     subtitle: visualization.previewAvailable
       ? 'Preview ready'
-      : 'Preview in progress',
+      : visualization.status.toLowerCase() === 'placeholder'
+        ? 'Instant capture only'
+        : 'Preview pending',
     items: visualizationItems,
     note: visualization.notes?.length ? visualization.notes[0] : null,
   }
@@ -606,62 +485,6 @@ function buildZoningCard(
   }
 }
 
-function buildMarketCard(
-  capturedProperty: SiteAcquisitionResult,
-  formatNumber: NumberFormatter,
-  formatCurrency: CurrencyFormatter,
-): PropertyOverviewCard {
-  const info = capturedProperty.propertyInfo
-  const formatDistance = createDistanceFormatter(formatNumber)
-  const nearestMrtStation =
-    capturedProperty.nearbyAmenities?.mrtStations?.[0] ?? null
-  const nearestBusStop = capturedProperty.nearbyAmenities?.busStops?.[0] ?? null
-
-  return {
-    title: 'Market & connectivity',
-    items: [
-      {
-        label: 'Existing use',
-        value:
-          capturedProperty.existingUse && capturedProperty.existingUse.trim()
-            ? capturedProperty.existingUse
-            : '—',
-      },
-      {
-        label: 'Last transaction',
-        value:
-          info?.lastTransactionDate || info?.lastTransactionPrice
-            ? [
-                formatDate(info?.lastTransactionDate),
-                info?.lastTransactionPrice
-                  ? formatCurrency(info.lastTransactionPrice)
-                  : null,
-              ]
-                .filter(Boolean)
-                .join(' · ')
-            : '—',
-      },
-      {
-        label: 'Nearest MRT',
-        value: nearestMrtStation
-          ? `${nearestMrtStation.name} (${formatDistance(nearestMrtStation.distanceM)})`
-          : '—',
-      },
-      {
-        label: 'Nearest bus stop',
-        value: nearestBusStop
-          ? `${nearestBusStop.name} (${formatDistance(nearestBusStop.distanceM)})`
-          : '—',
-      },
-    ],
-    note: `Lat ${formatNumber(capturedProperty.coordinates.latitude, {
-      maximumFractionDigits: 6,
-    })}, Lon ${formatNumber(capturedProperty.coordinates.longitude, {
-      maximumFractionDigits: 6,
-    })}`,
-  }
-}
-
 // ============================================================================
 // Main Export
 // ============================================================================
@@ -677,20 +500,11 @@ export function buildPropertyOverviewCards(
 ): PropertyOverviewCard[] {
   const {
     capturedProperty,
-    // These can be passed for optimization or derived from capturedProperty
-    propertyInfoSummary: _propertyInfoSummary,
-    zoningSummary: _zoningSummary,
-    nearestMrtStation: _nearestMrtStation,
-    nearestBusStop: _nearestBusStop,
     previewJob,
     colorLegendEntries,
     formatters,
-    currencySymbol: contextCurrencySymbol,
   } = context
-  const { formatNumber, formatCurrency, formatTimestamp } = formatters
-  // Get currency symbol from context or capturedProperty, defaulting to S$
-  const currencySymbol =
-    contextCurrencySymbol ?? capturedProperty.currencySymbol ?? 'S$'
+  const { formatNumber, formatTimestamp } = formatters
 
   const cards: PropertyOverviewCard[] = []
 
@@ -706,23 +520,12 @@ export function buildPropertyOverviewCards(
     cards.push(heritageCard)
   }
 
+  cards.push(buildAnalysisStatusCard(capturedProperty, previewJob))
+
   // Preview job (optional)
   if (previewJob) {
     cards.push(buildPreviewJobCard(previewJob, formatTimestamp))
   }
-
-  // Asset mix (optional)
-  const assetMixCard = buildAssetMixCard(
-    capturedProperty.optimizations ?? [],
-    formatNumber,
-    currencySymbol,
-  )
-  if (assetMixCard) {
-    cards.push(assetMixCard)
-  }
-
-  // Financial snapshot
-  cards.push(buildFinancialCard(capturedProperty, formatNumber, currencySymbol))
 
   // Visualization readiness
   const visualizationCard = buildVisualizationCard(
@@ -739,9 +542,6 @@ export function buildPropertyOverviewCards(
 
   // Zoning & planning
   cards.push(buildZoningCard(capturedProperty, formatNumber))
-
-  // Market & connectivity
-  cards.push(buildMarketCard(capturedProperty, formatNumber, formatCurrency))
 
   return cards
 }

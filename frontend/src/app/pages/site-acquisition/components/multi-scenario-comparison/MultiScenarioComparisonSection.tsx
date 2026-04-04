@@ -198,6 +198,7 @@ function getAnalysisCoverage(
   quickAnalysisTimestamp: string | null,
 ): number {
   const envelope = capturedProperty?.buildEnvelope
+  const visualizationStatus = capturedProperty?.visualization?.status?.toLowerCase()
   const baseChecks = [
     !!quickAnalysisTimestamp,
     !!row.quickHeadline,
@@ -211,7 +212,7 @@ function getAnalysisCoverage(
       envelope?.buildingHeightLimitM !== undefined,
     envelope?.siteCoveragePct !== null &&
       envelope?.siteCoveragePct !== undefined,
-    !!capturedProperty?.visualization?.status,
+    !!visualizationStatus && visualizationStatus !== 'placeholder',
   ]
   if (row.key === 'heritage_property') {
     baseChecks.push(!!capturedProperty?.heritageContext)

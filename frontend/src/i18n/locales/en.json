@@ -280,6 +280,13 @@
       "exportCsv": "Export CSV",
       "exporting": "Exporting…",
       "exportSuccess": "Finance CSV downloaded.",
+      "exportWorkbook": "Export workbook",
+      "exportWorkbookSuccess": "Finance workbook downloaded.",
+      "importWorkbook": "Import workbook",
+      "importingWorkbook": "Importing workbook…",
+      "importWorkbookSuccess": "Workbook imported into a finance scenario.",
+      "importQuickScreen": "Import quick screen",
+      "importQuickScreenSuccess": "Quick screen assumptions imported into finance.",
       "exportReport": "Export Report",
       "saveScenario": "Save Scenario"
     },
@@ -317,7 +324,10 @@
     },
     "errors": {
       "generic": "Unable to load finance scenarios.",
-      "export": "Unable to export the selected scenario."
+      "export": "Unable to export the selected scenario.",
+      "exportWorkbook": "Unable to export the selected workbook.",
+      "importWorkbook": "Unable to import workbook.",
+      "importQuickScreen": "Unable to import quick screen assumptions."
     },
     "table": {
       "caption": "Finance scenario comparison",

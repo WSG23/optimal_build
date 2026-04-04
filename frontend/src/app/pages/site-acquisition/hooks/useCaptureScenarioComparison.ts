@@ -55,6 +55,26 @@ export interface UseCaptureScenarioComparisonResult {
   formatCurrency: (value: number | null | undefined) => string
 }
 
+const FINANCE_HEADLINE_PATTERN =
+  /\b(noi|revenue|yield|rent|capex|irr|roi|valuation|pricing|price|absorption|market)\b/i
+
+function sanitiseCaptureHeadline(
+  headline: string | null | undefined,
+  fallbackLabel: string,
+): string | null {
+  if (!headline) {
+    return null
+  }
+  const trimmed = headline.trim()
+  if (!trimmed) {
+    return null
+  }
+  if (FINANCE_HEADLINE_PATTERN.test(trimmed)) {
+    return `${fallbackLabel} instant zoning and envelope scan available.`
+  }
+  return trimmed
+}
+
 function buildAggregateMetrics(
   capturedProperty: SiteAcquisitionResult | null,
   formatNumberMetric: (
@@ -155,34 +175,33 @@ export function useCaptureScenarioComparison({
       if (value === null || value === undefined || value === '') {
         return '—'
       }
+      if (key === 'use_groups' && Array.isArray(value)) {
+        const groups = value.filter(
+          (entry): entry is string => typeof entry === 'string' && !!entry,
+        )
+        return groups.length > 0 ? groups.join(', ') : '—'
+      }
       const numeric = safeNumber(value)
       if (numeric !== null) {
-        if (key.includes('_pct') || key.endsWith('_rate')) {
-          return `${formatNumberMetric(numeric * 100, { maximumFractionDigits: 1 })}%`
+        if (key.includes('_pct')) {
+          const percent = numeric <= 1 ? numeric * 100 : numeric
+          return `${formatNumberMetric(percent, { maximumFractionDigits: 1 })}%`
         }
         if (key.includes('_sqm')) {
           return `${formatNumberMetric(numeric, { maximumFractionDigits: 0 })} sqm`
         }
-        if (
-          key === 'annual_noi' ||
-          key === 'estimated_capex' ||
-          key === 'average_psf_price' ||
-          key === 'average_monthly_rent'
-        ) {
-          return formatCurrency(numeric)
+        if (key.endsWith('_m')) {
+          return `${formatNumberMetric(numeric, { maximumFractionDigits: 1 })} m`
         }
         if (key.includes('_count')) {
           return formatNumberMetric(numeric, { maximumFractionDigits: 0 })
-        }
-        if (key === 'target_lease_term_years') {
-          return `${formatNumberMetric(numeric, { maximumFractionDigits: 1 })} yrs`
         }
         return formatNumberMetric(numeric, { maximumFractionDigits: 2 })
       }
       const text = String(value)
       return text.charAt(0).toUpperCase() + text.slice(1)
     },
-    [formatCurrency, formatNumberMetric],
+    [formatNumberMetric],
   )
 
   const summariseScenarioMetrics = useCallback(
@@ -203,20 +222,8 @@ export function useCaptureScenarioComparison({
           break
         }
       }
-      if (selected.length < 3) {
-        for (const key of Object.keys(metrics)) {
-          if (selected.length >= 3) {
-            break
-          }
-          if (
-            metrics[key] !== null &&
-            metrics[key] !== undefined &&
-            metrics[key] !== '' &&
-            !selected.includes(key)
-          ) {
-            selected.push(key)
-          }
-        }
+      if (selected.length < 3 && Array.isArray(metrics['use_groups'])) {
+        selected.push('use_groups')
       }
 
       return selected.map((key) => ({
@@ -307,7 +314,11 @@ export function useCaptureScenarioComparison({
           option?.label ??
           formatScenarioLabel(scenarioKey as DevelopmentScenario),
         icon: option?.icon ?? '🏗️',
-        quickHeadline: quickEntry?.headline ?? null,
+        quickHeadline: sanitiseCaptureHeadline(
+          quickEntry?.headline ?? null,
+          option?.label ??
+            formatScenarioLabel(scenarioKey as DevelopmentScenario),
+        ),
         quickMetrics: summariseScenarioMetrics(quickEntry?.metrics ?? {}),
       }
     })

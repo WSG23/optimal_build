@@ -14,12 +14,14 @@ interface AppNavigationProps {
   activeItem: NavItemKey
   onNavigate: (path: string) => void
   currentPath: string
+  workspace?: Workspace
 }
 
 export function AppNavigation({
   activeItem,
   onNavigate,
   currentPath,
+  workspace,
 }: AppNavigationProps) {
   const { isDeveloperMode } = useDeveloperMode()
   const { currentProject } = useProject()
@@ -30,12 +32,14 @@ export function AppNavigation({
     ? 'developer'
     : 'agent'
 
-  const [selectedWorkspace, setSelectedWorkspace] =
-    useState<Workspace>(initialWorkspace)
+  const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace>(
+    workspace ?? initialWorkspace,
+  )
+  const effectiveWorkspace = workspace ?? selectedWorkspace
 
   // Show items for selected workspace only
   const navItems = (
-    selectedWorkspace === 'agent' ? AGENT_NAV_ITEMS : DEVELOPER_NAV_ITEMS
+    effectiveWorkspace === 'agent' ? AGENT_NAV_ITEMS : DEVELOPER_NAV_ITEMS
   ).filter((item) => !item.comingSoon)
 
   const handleClick = (path: string, disabled: boolean | undefined) => {
@@ -89,70 +93,71 @@ export function AppNavigation({
       <div className="app-nav__header">
         <span className="app-nav__product">Optimal Build Studio</span>
         <span className="app-nav__subheading">
-          {selectedWorkspace === 'agent'
+          {effectiveWorkspace === 'agent'
             ? 'Agent workspace'
-            : 'Developer workspace'}
+            : 'Singapore developer workspace'}
         </span>
       </div>
 
-      {/* Workspace Switcher */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '0.5rem',
-          padding: '0.75rem 1rem',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => handleWorkspaceSwitch('agent')}
+      {!workspace ? (
+        <div
           style={{
-            flex: 1,
-            padding: '0.5rem',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            color:
-              selectedWorkspace === 'agent'
-                ? '#fff'
-                : 'rgba(255, 255, 255, 0.6)',
-            background:
-              selectedWorkspace === 'agent'
-                ? 'rgba(255, 255, 255, 0.1)'
-                : 'transparent',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
+            display: 'flex',
+            gap: '0.5rem',
+            padding: '0.75rem 1rem',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           }}
         >
-          Agent
-        </button>
-        <button
-          type="button"
-          onClick={() => handleWorkspaceSwitch('developer')}
-          style={{
-            flex: 1,
-            padding: '0.5rem',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            color:
-              selectedWorkspace === 'developer'
-                ? '#fff'
-                : 'rgba(255, 255, 255, 0.6)',
-            background:
-              selectedWorkspace === 'developer'
-                ? 'rgba(255, 255, 255, 0.1)'
-                : 'transparent',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          Developer
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => handleWorkspaceSwitch('agent')}
+            style={{
+              flex: 1,
+              padding: '0.5rem',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color:
+                selectedWorkspace === 'agent'
+                  ? '#fff'
+                  : 'rgba(255, 255, 255, 0.6)',
+              background:
+                selectedWorkspace === 'agent'
+                  ? 'rgba(255, 255, 255, 0.1)'
+                  : 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            Agent
+          </button>
+          <button
+            type="button"
+            onClick={() => handleWorkspaceSwitch('developer')}
+            style={{
+              flex: 1,
+              padding: '0.5rem',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color:
+                selectedWorkspace === 'developer'
+                  ? '#fff'
+                  : 'rgba(255, 255, 255, 0.6)',
+              background:
+                selectedWorkspace === 'developer'
+                  ? 'rgba(255, 255, 255, 0.1)'
+                  : 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            Developer
+          </button>
+        </div>
+      ) : null}
 
       <ul className="app-nav__list">
         {navItems.map(renderItem)}

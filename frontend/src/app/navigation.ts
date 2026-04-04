@@ -6,6 +6,7 @@ export type NavItemKey =
   | 'advisory'
   | 'integrations'
   | 'siteAcquisition'
+  | 'dealCalculator'
   | 'dueDiligence'
   | 'assetFeasibility'
   | 'financialControl'
@@ -16,6 +17,7 @@ export type NavItemKey =
   | 'construction'
   | 'revenueOptimization'
   | 'documentation'
+  | 'evidence'
 
 export interface NavItem {
   key: NavItemKey
@@ -77,6 +79,13 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
     workspace: 'developer',
   },
   {
+    key: 'dealCalculator',
+    label: 'Deal Calculator',
+    path: '/app/deal-calculator',
+    description: 'Address-first feasibility and finance in a single screen.',
+    workspace: 'developer',
+  },
+  {
     key: 'siteAcquisition',
     label: 'Site Acquisition',
     path: '/app/site-acquisition',
@@ -118,10 +127,10 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
   },
   {
     key: 'teamCoordination',
-    label: 'Team Coordination',
+    label: 'Consultant Coordination',
     path: '/developers/team-coordination',
     projectPath: (projectId: string) => `/projects/${projectId}/team`,
-    description: 'Consultant network and approval workflows.',
+    description: 'Invite consultants, route approvals, and evidence handoffs.',
     workspace: 'developer',
   },
   {
@@ -158,12 +167,12 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
     comingSoon: true,
   },
   {
-    key: 'documentation',
-    label: 'Export & Documentation',
-    path: '/app/documentation',
-    description: 'Capital raise materials and authority submissions.',
+    key: 'evidence',
+    label: 'Evidence Packs',
+    path: '/developers/evidence',
+    projectPath: (projectId: string) => `/projects/${projectId}/evidence`,
+    description: 'Audit-ready packs for finance lineage and submissions.',
     workspace: 'developer',
-    comingSoon: true,
   },
 ]
 

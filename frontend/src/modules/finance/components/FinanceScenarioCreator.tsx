@@ -1,5 +1,5 @@
-import { FormEvent, useMemo, useState } from 'react'
-import { Box, Typography, IconButton, useTheme, alpha } from '@mui/material'
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { Box, Typography, IconButton, Stack, useTheme, alpha } from '@mui/material'
 import { ArrowForward, Close } from '@mui/icons-material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
@@ -57,9 +57,11 @@ const DEFAULT_ASSET_ROWS: Array<Omit<AssetFormRow, 'id'>> = [
   },
 ]
 
-function createDefaultAssetRows(): AssetFormRow[] {
+function createAssetRows(
+  rows: Array<Omit<AssetFormRow, 'id'>>,
+): AssetFormRow[] {
   const timestamp = Date.now()
-  return DEFAULT_ASSET_ROWS.map((row, index) => ({
+  return rows.map((row, index) => ({
     id: `asset-${timestamp}-${index}`,
     ...row,
   }))
@@ -125,9 +127,216 @@ const BASE_FINANCE_REQUEST: Omit<
   ],
 }
 
+type FinanceScenarioDefaults = Omit<
+  FinanceFeasibilityRequest['scenario'],
+  'name' | 'assetMix'
+>
+
+type FinanceTemplateDefinition = {
+  id: string
+  label: string
+  description: string
+  scenarioName: string
+  scenarioDefaults: FinanceScenarioDefaults
+  assets: Array<Omit<AssetFormRow, 'id'>>
+}
+
+const SG_FINANCE_TEMPLATES: FinanceTemplateDefinition[] = [
+  {
+    id: 'sg_mixed_use',
+    label: 'SG Mixed-Use',
+    description:
+      'Balanced residential-retail podium scheme for early Singapore feasibility.',
+    scenarioName: 'Singapore Mixed-Use Base Case',
+    scenarioDefaults: BASE_FINANCE_REQUEST,
+    assets: [
+      {
+        assetType: 'Residential',
+        allocationPct: '60',
+        niaSqm: '1800',
+        rentPsmMonth: '7',
+        vacancyPct: '3',
+        opexPct: '12',
+        estimatedRevenue: '146664',
+        estimatedCapex: '680000',
+        absorptionMonths: '7',
+        riskLevel: 'balanced',
+        notes: 'Assumes city-fringe apartment pricing and stable demand.',
+      },
+      {
+        assetType: 'Retail Podium',
+        allocationPct: '25',
+        niaSqm: '620',
+        rentPsmMonth: '11',
+        vacancyPct: '8',
+        opexPct: '24',
+        estimatedRevenue: '75293',
+        estimatedCapex: '210000',
+        absorptionMonths: '9',
+        riskLevel: 'moderate',
+        notes: 'Neighbourhood-serving retail with curated tenant mix.',
+      },
+      {
+        assetType: 'Office',
+        allocationPct: '15',
+        niaSqm: '420',
+        rentPsmMonth: '10',
+        vacancyPct: '6',
+        opexPct: '18',
+        estimatedRevenue: '47376',
+        estimatedCapex: '160000',
+        absorptionMonths: '8',
+        riskLevel: 'moderate',
+        notes: 'Flexible office floors above podium retail.',
+      },
+    ],
+  },
+  {
+    id: 'sg_repositioning',
+    label: 'Office Repositioning',
+    description:
+      'CBD or fringe-office repositioning with capex-led upside and staged leasing risk.',
+    scenarioName: 'Singapore Office Repositioning',
+    scenarioDefaults: {
+      ...BASE_FINANCE_REQUEST,
+      cashFlow: {
+        discountRate: '0.09',
+        cashFlows: ['-32500000', '4500000', '7200000', '10400000', '13800000'],
+      },
+      sensitivityBands: [
+        { parameter: 'Rent', low: '-10', base: '0', high: '8' },
+        { parameter: 'Construction Cost', low: '12', base: '0', high: '-4' },
+        { parameter: 'Interest Rate (delta %)', low: '1.75', base: '0', high: '-0.5' },
+      ],
+    },
+    assets: [
+      {
+        assetType: 'Grade B+ Office',
+        allocationPct: '80',
+        niaSqm: '2200',
+        rentPsmMonth: '12',
+        vacancyPct: '7',
+        opexPct: '19',
+        estimatedRevenue: '294624',
+        estimatedCapex: '980000',
+        absorptionMonths: '10',
+        riskLevel: 'moderate',
+        notes: 'Repositioned office floors with lobby and MEP upgrade.',
+      },
+      {
+        assetType: 'Retail / F&B',
+        allocationPct: '20',
+        niaSqm: '500',
+        rentPsmMonth: '13',
+        vacancyPct: '9',
+        opexPct: '28',
+        estimatedRevenue: '70980',
+        estimatedCapex: '240000',
+        absorptionMonths: '12',
+        riskLevel: 'high',
+        notes: 'Ground-floor activation and amenity-led rent premium.',
+      },
+    ],
+  },
+  {
+    id: 'sg_industrial',
+    label: 'Industrial / Adaptive Reuse',
+    description:
+      'Light industrial or adaptive-reuse underwriting with conservative rent and debt assumptions.',
+    scenarioName: 'Singapore Industrial Reuse',
+    scenarioDefaults: {
+      ...BASE_FINANCE_REQUEST,
+      cashFlow: {
+        discountRate: '0.0825',
+        cashFlows: ['-27800000', '3200000', '6100000', '8600000', '11100000'],
+      },
+      constructionLoan: {
+        interestRate: '0.0475',
+        periodsPerYear: 12,
+        capitaliseInterest: true,
+        facilities: [
+          {
+            name: 'Senior Loan',
+            amount: '18370000',
+            interestRate: '0.0425',
+            periodsPerYear: 12,
+            capitaliseInterest: true,
+          },
+        ],
+      },
+    },
+    assets: [
+      {
+        assetType: 'Light Industrial',
+        allocationPct: '70',
+        niaSqm: '2600',
+        rentPsmMonth: '6',
+        vacancyPct: '5',
+        opexPct: '16',
+        estimatedRevenue: '177840',
+        estimatedCapex: '620000',
+        absorptionMonths: '6',
+        riskLevel: 'balanced',
+        notes: 'Assumes JTC-compatible positioning and efficient floorplates.',
+      },
+      {
+        assetType: 'Ancillary Office',
+        allocationPct: '20',
+        niaSqm: '700',
+        rentPsmMonth: '8',
+        vacancyPct: '7',
+        opexPct: '18',
+        estimatedRevenue: '62496',
+        estimatedCapex: '170000',
+        absorptionMonths: '7',
+        riskLevel: 'moderate',
+        notes: 'Support office space tied to industrial occupiers.',
+      },
+      {
+        assetType: 'Retail Support',
+        allocationPct: '10',
+        niaSqm: '220',
+        rentPsmMonth: '9',
+        vacancyPct: '10',
+        opexPct: '24',
+        estimatedRevenue: '21384',
+        estimatedCapex: '90000',
+        absorptionMonths: '9',
+        riskLevel: 'moderate',
+        notes: 'Small convenience-led retail component.',
+      },
+    ],
+  },
+]
+
+function cloneScenarioDefaults(
+  template: FinanceScenarioDefaults,
+): FinanceScenarioDefaults {
+  return {
+    ...template,
+    costEscalation: { ...template.costEscalation },
+    cashFlow: {
+      ...template.cashFlow,
+      cashFlows: [...template.cashFlow.cashFlows],
+    },
+    drawdownSchedule: template.drawdownSchedule?.map((entry) => ({ ...entry })),
+    constructionLoan: template.constructionLoan
+      ? {
+          ...template.constructionLoan,
+          facilities: template.constructionLoan.facilities?.map((facility) => ({
+            ...facility,
+            metadata: facility.metadata ? { ...facility.metadata } : facility.metadata,
+          })),
+        }
+      : template.constructionLoan,
+    sensitivityBands: template.sensitivityBands?.map((band) => ({ ...band })),
+  }
+}
+
 interface FinanceScenarioCreatorProps {
   projectId: string | number
   projectName: string
+  initialTemplateId?: string | null
   onCreated: (summary: FinanceScenarioSummary) => void
   onError: (message: string) => void
   onRefresh: () => void
@@ -136,17 +345,43 @@ interface FinanceScenarioCreatorProps {
 export function FinanceScenarioCreator({
   projectId,
   projectName,
+  initialTemplateId,
   onCreated,
   onError,
   onRefresh,
 }: FinanceScenarioCreatorProps) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const [scenarioName, setScenarioName] = useState('Phase 2C Base Case')
+  const [selectedTemplateId, setSelectedTemplateId] =
+    useState<string>('sg_mixed_use')
+  const [requestDefaults, setRequestDefaults] = useState<FinanceScenarioDefaults>(
+    () => cloneScenarioDefaults(BASE_FINANCE_REQUEST),
+  )
+  const [scenarioName, setScenarioName] = useState('Singapore Mixed-Use Base Case')
   const [assets, setAssets] = useState<AssetFormRow[]>(() =>
-    createDefaultAssetRows(),
+    createAssetRows(SG_FINANCE_TEMPLATES[0].assets),
   )
   const [saving, setSaving] = useState(false)
+
+  const applyTemplate = useCallback((templateId: string) => {
+    const template =
+      SG_FINANCE_TEMPLATES.find((entry) => entry.id === templateId) ??
+      SG_FINANCE_TEMPLATES[0]
+    setSelectedTemplateId(template.id)
+    setScenarioName(template.scenarioName)
+    setRequestDefaults(cloneScenarioDefaults(template.scenarioDefaults))
+    setAssets(createAssetRows(template.assets))
+  }, [])
+
+  useEffect(() => {
+    if (!initialTemplateId) {
+      return
+    }
+    if (initialTemplateId === selectedTemplateId) {
+      return
+    }
+    applyTemplate(initialTemplateId)
+  }, [applyTemplate, initialTemplateId, selectedTemplateId])
 
   const totalAllocation = useMemo(() => {
     return assets.reduce(
@@ -239,8 +474,7 @@ export function FinanceScenarioCreator({
   }
 
   const handleReset = () => {
-    setScenarioName('Phase 2C Base Case')
-    setAssets(createDefaultAssetRows())
+    applyTemplate(selectedTemplateId)
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -273,7 +507,7 @@ export function FinanceScenarioCreator({
         projectId,
         projectName,
         scenario: {
-          ...BASE_FINANCE_REQUEST,
+          ...requestDefaults,
           name: scenarioName.trim(),
           assetMix: filteredAssets.map((asset) => ({
             assetType: asset.assetType.trim(),
@@ -307,6 +541,10 @@ export function FinanceScenarioCreator({
     }
   }
 
+  const selectedTemplate =
+    SG_FINANCE_TEMPLATES.find((template) => template.id === selectedTemplateId) ??
+    SG_FINANCE_TEMPLATES[0]
+
   return (
     <Box component="form" onSubmit={handleSubmit}>
       <Box
@@ -324,12 +562,66 @@ export function FinanceScenarioCreator({
           <GlassCard
             sx={{ p: 'var(--ob-space-100)', mb: 'var(--ob-space-100)' }}
           >
-            <Input
-              label={t('finance.scenarioCreator.fields.name')}
-              value={scenarioName}
-              onChange={(event) => setScenarioName(event.target.value)}
-              placeholder={t('finance.scenarioCreator.placeholders.name')}
-            />
+            <Stack spacing={1.25}>
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 0.75 }}>
+                  Singapore deal templates
+                </Typography>
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} useFlexGap flexWrap="wrap">
+                  {SG_FINANCE_TEMPLATES.map((template) => {
+                    const active = template.id === selectedTemplateId
+                    return (
+                      <Box
+                        key={template.id}
+                        component="button"
+                        type="button"
+                        onClick={() => applyTemplate(template.id)}
+                        sx={{
+                          textAlign: 'left',
+                          p: 'var(--ob-space-100)',
+                          borderRadius: 'var(--ob-radius-sm)',
+                          border: '1px solid',
+                          borderColor: active ? 'primary.main' : 'divider',
+                          backgroundColor: active ? 'rgba(0, 243, 255, 0.08)' : 'transparent',
+                          color: 'inherit',
+                          cursor: 'pointer',
+                          minWidth: { xs: '100%', md: 180 },
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                          {template.label}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          {template.description}
+                        </Typography>
+                      </Box>
+                    )
+                  })}
+                </Stack>
+              </Box>
+
+              <Box
+                sx={{
+                  p: 'var(--ob-space-100)',
+                  borderRadius: 'var(--ob-radius-sm)',
+                  bgcolor: alpha(theme.palette.primary.main, 0.06),
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  {selectedTemplate.label}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {selectedTemplate.description}
+                </Typography>
+              </Box>
+
+              <Input
+                label={t('finance.scenarioCreator.fields.name')}
+                value={scenarioName}
+                onChange={(event) => setScenarioName(event.target.value)}
+                placeholder={t('finance.scenarioCreator.placeholders.name')}
+              />
+            </Stack>
           </GlassCard>
 
           <GlassCard sx={{ overflow: 'hidden' }}>

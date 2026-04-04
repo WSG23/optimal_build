@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Dialog,
   DialogTitle,
@@ -25,7 +25,11 @@ import {
   Description as DocIcon,
   CheckCircle as CheckIcon,
 } from '@mui/icons-material'
-import { regulatoryApi, AuthoritySubmission } from '../../../../api/regulatory'
+import {
+  regulatoryApi,
+  AuthoritySubmission,
+  type CorenetCapability,
+} from '../../../../api/regulatory'
 
 interface SubmissionWizardProps {
   open: boolean
@@ -98,6 +102,29 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
   const [selectedAgency, setSelectedAgency] = useState('')
   const [submissionType, setSubmissionType] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [capability, setCapability] = useState<CorenetCapability | null>(null)
+
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+    let active = true
+    regulatoryApi
+      .getCorenetCapability()
+      .then((result) => {
+        if (active) {
+          setCapability(result)
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setCapability(null)
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [open])
 
   const handleNext = () => setActiveStep((prev) => prev + 1)
   const handleBack = () => setActiveStep((prev) => prev - 1)
@@ -110,6 +137,7 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
         project_id: String(projectId),
         agency: selectedAgency,
         submission_type: submissionType,
+        submission_mode: capability?.submission_mode_default ?? 'submission_prep',
       })
       onSuccess(submission)
       handleReset()
@@ -208,9 +236,20 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
             </FormControl>
             <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
               <Typography variant="caption" color="text.secondary">
-                Note: This simulation connects to a mock MockCorenet service. No
-                actual data will be sent to government agencies.
+                {capability?.live_submission_available
+                  ? 'Live CORENET submission is available for this workspace.'
+                  : 'This flow prepares a submission-ready CORENET package. No live government submission will be attempted from this environment.'}
               </Typography>
+              {capability?.delivery_blockers?.length ? (
+                <Typography
+                  variant="caption"
+                  color="warning.main"
+                  display="block"
+                  sx={{ mt: 1 }}
+                >
+                  Gate: {capability.delivery_blockers[0]}
+                </Typography>
+              ) : null}
             </Box>
           </Box>
         )
@@ -219,16 +258,23 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
           <Box sx={{ mt: 2, textAlign: 'center' }}>
             <DocIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
             <Typography variant="h6" gutterBottom>
-              Ready to Submit
+              Ready to Package
             </Typography>
             <Typography variant="body1" color="text.secondary" paragraph>
-              You are about to submit a{' '}
+              You are about to prepare a{' '}
               <strong>{getSubmissionTypeLabel()}</strong> application to{' '}
               <strong>{selectedAgency}</strong>.
             </Typography>
             <Typography variant="body2" color="warning.main">
-              Please ensure all required documents (simulated) are attached.
+              {capability?.live_submission_available
+                ? 'Please ensure all required documents are attached before live submission.'
+                : 'Please ensure all required documents are attached for the submission-ready package.'}
             </Typography>
+            {capability?.package_requirements?.length ? (
+              <Typography variant="caption" display="block" sx={{ mt: 1.5 }}>
+                Required: {capability.package_requirements.join(', ')}
+              </Typography>
+            ) : null}
           </Box>
         )
       default:
@@ -287,7 +333,11 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
               color: 'var(--ob-color-text-inverse)',
             }}
           >
-            {submitting ? 'Submitting...' : 'Submit'}
+            {submitting
+              ? 'Submitting...'
+              : capability?.live_submission_available
+                ? 'Submit'
+                : 'Create Package'}
           </Button>
         ) : (
           <Button

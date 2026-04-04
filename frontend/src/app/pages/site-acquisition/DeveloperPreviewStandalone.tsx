@@ -16,7 +16,7 @@ import {
 
 const PATH_PATTERN = /^\/agents\/developers\/([^/]+)\/preview\/?$/
 const DETAIL_LABELS: Record<'simple' | 'medium', string> = {
-  medium: 'Medium (octagonal, setbacks, floor lines)',
+  medium: 'Medium (layered massing, optional floor bands)',
   simple: 'Simple (fast box geometry)',
 }
 

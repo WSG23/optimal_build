@@ -1,14 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 
-import mapboxgl from 'mapbox-gl'
 import { colors } from '@ob/tokens'
-
-const isNodeTestEnv =
-  typeof process !== 'undefined' && process.env?.NODE_ENV === 'test'
-
-if (typeof window !== 'undefined' && !isNodeTestEnv) {
-  void import('mapbox-gl/dist/mapbox-gl.css')
-}
 
 import { AppLayout } from '../App'
 import {
@@ -29,13 +21,36 @@ import { forwardGeocodeAddress, reverseGeocodeCoords } from '../api/geocoding'
 import { useTranslation } from '../i18n'
 import { Link } from '../router'
 
-const MAPBOX_ENV =
+const GOOGLE_MAPS_ENV =
   typeof import.meta !== 'undefined' && import.meta
     ? (import.meta as ImportMeta).env
     : undefined
-const MAPBOX_TOKEN = MAPBOX_ENV?.VITE_MAPBOX_ACCESS_TOKEN ?? ''
-if (MAPBOX_TOKEN) {
-  mapboxgl.accessToken = MAPBOX_TOKEN
+const GOOGLE_MAPS_API_KEY = GOOGLE_MAPS_ENV?.VITE_GOOGLE_MAPS_API_KEY ?? ''
+
+let googleMapsPromise: Promise<void> | null = null
+
+function loadGoogleMapsScript(apiKey: string): Promise<void> {
+  if (typeof window === 'undefined') {
+    return Promise.reject(new Error('Window is not available.'))
+  }
+  if (window.google?.maps) {
+    return Promise.resolve()
+  }
+  if (googleMapsPromise) {
+    return googleMapsPromise
+  }
+
+  googleMapsPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async`
+    script.async = true
+    script.defer = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Failed to load Google Maps'))
+    document.head.appendChild(script)
+  })
+
+  return googleMapsPromise
 }
 
 const DEFAULT_LATITUDE = '1.3000'
@@ -184,43 +199,80 @@ function renderMarketReport(
 
 function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const mapRef = useRef<mapboxgl.Map | null>(null)
+  const mapRef = useRef<google.maps.Map | null>(null)
+  const markerRef = useRef<google.maps.Marker | null>(null)
+  const [mapError, setMapError] = useState<string | null>(null)
   const { t } = useTranslation()
 
-  const canRender = MAPBOX_TOKEN !== '' && typeof window !== 'undefined'
+  const canRender = GOOGLE_MAPS_API_KEY !== '' && typeof window !== 'undefined'
 
   useEffect(() => {
     if (!canRender || !containerRef.current) {
       return
     }
 
-    if (mapRef.current) {
-      mapRef.current.remove()
-    }
+    let cancelled = false
 
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: [coordinates.longitude, coordinates.latitude],
-      zoom: 15,
-    })
+    void loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+      .then(() => {
+        if (cancelled || !containerRef.current || typeof google === 'undefined') {
+          return
+        }
+        const center = {
+          lat: coordinates.latitude,
+          lng: coordinates.longitude,
+        }
 
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }))
-    new mapboxgl.Marker({ color: colors.brand[600] })
-      .setLngLat([coordinates.longitude, coordinates.latitude])
-      .addTo(map)
+        if (!mapRef.current) {
+          mapRef.current = new google.maps.Map(containerRef.current, {
+            center,
+            zoom: 15,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+          })
+        } else {
+          mapRef.current.setCenter(center)
+        }
 
-    mapRef.current = map
+        if (!markerRef.current) {
+          markerRef.current = new google.maps.Marker({
+            position: center,
+            map: mapRef.current,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 8,
+              fillColor: colors.brand[600],
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 2,
+            },
+          })
+        } else {
+          markerRef.current.setPosition(center)
+          markerRef.current.setMap(mapRef.current)
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setMapError(error instanceof Error ? error.message : 'Unable to load map preview.')
+        }
+      })
+
     return () => {
-      map.remove()
+      cancelled = true
+      if (markerRef.current) {
+        markerRef.current.setMap(null)
+        markerRef.current = null
+      }
       mapRef.current = null
     }
   }, [coordinates.latitude, coordinates.longitude, canRender])
 
-  if (!canRender) {
+  if (!canRender || mapError) {
     return (
       <div className="agents-capture__map-fallback">
-        {t('agentsCapture.context.mapFallback')}
+        {mapError ?? t('agentsCapture.context.mapFallback')}
       </div>
     )
   }

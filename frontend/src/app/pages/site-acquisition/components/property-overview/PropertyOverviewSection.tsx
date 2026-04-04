@@ -15,7 +15,7 @@
  * - Location & Tenure: Address multi-line + 2-col grid for District/Tenure
  * - Build Envelope: Zone/PlotRatio header row + divider + simple rows
  * - Heritage Context: Risk level as colored badge
- * - Financial Snapshot: Large hero numbers for Rev/CAPEX
+ * - Analysis Status: Explicit capture completeness and scope
  * - Site Metrics: Bottom divider rows + tags
  *
  * @see frontend/UX_ARCHITECTURE.md - Common UX Friction Points & Solutions
@@ -590,7 +590,7 @@ function HeritageCard({ card }: { card: OverviewCard }) {
 }
 
 /**
- * Financial Snapshot Card - AI Studio layout
+ * Financial Card - reserved for downstream workflows outside Capture
  * - Large hero numbers for Est. Revenue and Est. CAPEX
  * - Divider
  * - Smaller rows for Capital Stack and Dominant Risk
@@ -938,7 +938,7 @@ function getCardType(
  * - LocationTenureCard: Address multi-line + 2-col grid
  * - BuildEnvelopeCard: Zone/PlotRatio header row + divider + rows
  * - HeritageCard: Risk level as colored badge
- * - FinancialCard: Large hero numbers for Rev/CAPEX
+ * - FinancialCard: Reserved for downstream workflows, not Capture
  * - ZoningCard: Bottom divider rows + tags
  *
  * @see frontend/UX_ARCHITECTURE.md - "No More Uniform Label-Value Pairs"

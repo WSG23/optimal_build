@@ -8,8 +8,33 @@ interface FeasibilityLoopResult {
 }
 
 const DEBOUNCE_MS = 1000
-// Assuming backend is on localhost:8000 for dev. In prod, this should be environmental.
-const WS_URL = 'ws://localhost:8000/api/v1/feasibility/ws'
+
+function resolveWebSocketUrl(path: string): string {
+  const envBase =
+    import.meta.env.VITE_API_BASE_URL?.trim() ||
+    import.meta.env.VITE_API_BASE?.trim() ||
+    ''
+
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+
+  if (envBase && envBase !== '/' && /^https?:/i.test(envBase)) {
+    const root = new URL(envBase.endsWith('/') ? envBase : `${envBase}/`)
+    root.protocol = root.protocol === 'https:' ? 'wss:' : 'ws:'
+    root.pathname = normalizedPath
+    root.search = ''
+    root.hash = ''
+    return root.toString()
+  }
+
+  if (typeof window !== 'undefined') {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    return `${protocol}//${window.location.host}${normalizedPath}`
+  }
+
+  return `ws://localhost:8000${normalizedPath}`
+}
+
+const WS_URL = resolveWebSocketUrl('/api/v1/feasibility/ws')
 
 export function useFeasibilityLoop(
   units: DetectedUnit[],

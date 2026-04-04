@@ -60,6 +60,8 @@ function buildRawLandSignals(
       maxBuildableGfaSqm,
       additionalPotentialGfaSqm,
       allowablePlotRatio,
+      buildingHeightLimitM,
+      siteCoveragePct,
     } = capturedProperty.buildEnvelope
     if (maxBuildableGfaSqm) {
       opportunities.push(
@@ -87,6 +89,16 @@ function buildRawLandSignals(
         `Plot ratio cap ${formatNumber(allowablePlotRatio, {
           maximumFractionDigits: 2,
         })} still allows refinement.`,
+      )
+    }
+    if (buildingHeightLimitM == null) {
+      risks.push(
+        'Height limit unresolved — capture currently reflects scalar envelope only.',
+      )
+    }
+    if (siteCoveragePct == null) {
+      risks.push(
+        'Site coverage unresolved — confirm planning controls before massing.',
       )
     }
   }
@@ -126,12 +138,19 @@ function buildExistingBuildingSignals(
       })} sqm of GFA.`,
     )
   }
+  if (capturedProperty?.buildEnvelope?.buildingHeightLimitM == null) {
+    risks.push('Height limit unresolved — confirm current control envelope.')
+  }
+  if (capturedProperty?.buildEnvelope?.siteCoveragePct == null) {
+    risks.push('Site coverage unresolved — scalar code controls still partial.')
+  }
 
   return { opportunities, risks }
 }
 
 function buildHeritagePropertySignals(
   entry: QuickAnalysisEntry,
+  capturedProperty: SiteAcquisitionResult | null | undefined,
 ): FeasibilitySignals {
   const opportunities: string[] = []
   const risks: string[] = []
@@ -147,6 +166,13 @@ function buildHeritagePropertySignals(
       'Heritage considerations manageable based on current data.',
     )
   }
+  const overlayName = capturedProperty?.heritageContext?.overlay?.name
+  if (overlayName) {
+    opportunities.push(`Heritage overlay identified: ${overlayName}.`)
+  }
+  if (!capturedProperty?.heritageContext?.constraints?.length) {
+    risks.push('Detailed conservation controls are not yet itemized in Capture.')
+  }
 
   return { opportunities, risks }
 }
@@ -160,27 +186,40 @@ function buildUnderusedAssetSignals(
   const risks: string[] = []
   const metrics = entry.metrics ?? {}
 
-  const mrtCount = safeNumber(metrics['nearby_mrt_count'])
-  const buildingHeight = safeNumber(metrics['building_height_m'])
+  const uplift =
+    safeNumber(metrics['gfa_uplift_sqm']) ??
+    capturedProperty?.buildEnvelope?.additionalPotentialGfaSqm
+  const buildingHeightLimit =
+    safeNumber(metrics['building_height_limit_m']) ??
+    capturedProperty?.buildEnvelope?.buildingHeightLimitM
+  const siteCoverage =
+    safeNumber(metrics['site_coverage_pct']) ??
+    capturedProperty?.buildEnvelope?.siteCoveragePct
 
-  if (mrtCount && mrtCount > 0) {
-    opportunities.push(`${mrtCount} MRT stations support reuse potential.`)
-  } else {
-    risks.push('Limited transit access — budget for last-mile improvements.')
-  }
-  const heightLimit = capturedProperty?.buildEnvelope?.buildingHeightLimitM
-  if (buildingHeight && heightLimit && buildingHeight < heightLimit) {
-    opportunities.push('Low-rise profile — vertical expansion is feasible.')
-  }
-  if (capturedProperty?.buildEnvelope?.siteCoveragePct) {
+  if (uplift && uplift > 0) {
     opportunities.push(
-      `Site coverage control at ${formatNumber(
-        capturedProperty.buildEnvelope.siteCoveragePct,
-        {
-          maximumFractionDigits: 0,
-        },
-      )}% frames the reuse envelope.`,
+      `Reuse path retains ≈ ${formatNumber(uplift, {
+        maximumFractionDigits: 0,
+      })} sqm of code headroom.`,
     )
+  }
+  if (buildingHeightLimit != null) {
+    opportunities.push(
+      `Height control currently resolves to ${formatNumber(buildingHeightLimit, {
+        maximumFractionDigits: 0,
+      })} m.`,
+    )
+  } else {
+    risks.push('Height control unresolved — adaptive reuse massing is preliminary.')
+  }
+  if (siteCoverage != null) {
+    opportunities.push(
+      `Site coverage control at ${formatNumber(siteCoverage, {
+        maximumFractionDigits: 0,
+      })}% frames the reuse envelope.`,
+    )
+  } else {
+    risks.push('Site coverage unavailable — confirm scalar controls before reuse studies.')
   }
 
   return { opportunities, risks }
@@ -201,7 +240,9 @@ function buildMixedUseSignals(
 
   if (plotRatio && plotRatio > 0) {
     opportunities.push(
-      `Zoning plot ratio ${plotRatio} supports higher density.`,
+      `Zoning plot ratio ${formatNumber(plotRatio, {
+        maximumFractionDigits: 2,
+      })} supports higher density.`,
     )
   }
   if (useGroups.length) {
@@ -260,7 +301,7 @@ export function buildFeasibilitySignals(
       )
       break
     case 'heritage_property':
-      signals = buildHeritagePropertySignals(entry)
+      signals = buildHeritagePropertySignals(entry, capturedProperty)
       break
     case 'underused_asset':
       signals = buildUnderusedAssetSignals(

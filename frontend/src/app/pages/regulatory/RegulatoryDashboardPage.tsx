@@ -32,6 +32,7 @@ import {
   ChangeOfUseApplication,
   HeritageSubmission,
   AssetType,
+  type CorenetCapability,
 } from '../../../api/regulatory'
 import { SubmissionWizard } from './components/SubmissionWizard'
 import { CompliancePathTimeline } from './components/CompliancePathTimeline'
@@ -44,10 +45,10 @@ import { StatusChip } from '../../../components/canonical/StatusChip'
 import { GlassCard } from '../../../components/canonical/GlassCard'
 
 const AGENCIES_INFO = [
-  { code: 'URA', name: 'Urban Redevelopment Authority', status: 'Online' },
-  { code: 'BCA', name: 'Building & Construction Authority', status: 'Online' },
-  { code: 'SCDF', name: 'Singapore Civil Defence Force', status: 'Online' },
-  { code: 'NEA', name: 'National Environment Agency', status: 'Online' },
+  { code: 'URA', name: 'Urban Redevelopment Authority' },
+  { code: 'BCA', name: 'Building & Construction Authority' },
+  { code: 'SCDF', name: 'Singapore Civil Defence Force' },
+  { code: 'NEA', name: 'National Environment Agency' },
 ]
 
 const STORAGE_PREFIX = 'ob_regulatory'
@@ -127,6 +128,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
     HeritageSubmission | undefined
   >(undefined)
   const [error, setError] = useState<string | null>(null)
+  const [capability, setCapability] = useState<CorenetCapability | null>(null)
   const previousProjectId = useRef<string | null>(null)
   const fetchRequestId = useRef(0)
   const latestHeritageSubmission = useMemo(() => {
@@ -175,6 +177,16 @@ export const RegulatoryDashboardPage: React.FC = () => {
       )
 
       try {
+        try {
+          const capabilityData = await regulatoryApi.getCorenetCapability()
+          if (requestId !== fetchRequestId.current) {
+            return
+          }
+          setCapability(capabilityData)
+        } catch (capabilityError) {
+          console.warn('[regulatory] failed to load CORENET capability', capabilityError)
+        }
+
         // Fetch authority submissions
         const data = await regulatoryApi.listSubmissions(projectId)
         if (requestId !== fetchRequestId.current) {
@@ -372,6 +384,13 @@ export const RegulatoryDashboardPage: React.FC = () => {
     }
   }
 
+  const integrationState = capability?.integration_status.state ?? 'unavailable'
+  const integrationModeLabel = capability?.live_submission_available
+    ? 'Live submission'
+    : capability?.package_status === 'submission_ready'
+      ? 'Submission prep'
+      : 'Unavailable'
+
   return (
     <Box sx={{ width: '100%' }}>
       {/* Page Header - Content on background (Content vs Context pattern) */}
@@ -450,6 +469,24 @@ export const RegulatoryDashboardPage: React.FC = () => {
           {error}
         </Alert>
       )}
+
+      {capability ? (
+        <Alert
+          severity={
+            capability.live_submission_available
+              ? 'success'
+              : capability.integration_status.state === 'mock'
+                ? 'warning'
+                : 'info'
+          }
+          sx={{ mb: 'var(--ob-space-200)' }}
+        >
+          CORENET mode: <strong>{integrationModeLabel}</strong>
+          {capability.delivery_blockers.length > 0
+            ? ` — ${capability.delivery_blockers[0]}`
+            : ''}
+        </Alert>
+      ) : null}
 
       {/* Quick Actions - Flat section (no wrapper, cards as siblings) */}
       <Box
@@ -710,6 +747,17 @@ export const RegulatoryDashboardPage: React.FC = () => {
                   >
                     {agency.name}
                   </Box>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: 'var(--ob-font-size-2xs)',
+                      color: 'var(--ob-color-text-tertiary)',
+                      display: 'block',
+                      mt: 'var(--ob-space-025)',
+                    }}
+                  >
+                    {integrationModeLabel} • {integrationState}
+                  </Box>
                 </Box>
               </GlassCard>
             ))}
@@ -770,6 +818,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
                       <TableCell>Agency</TableCell>
                       <TableCell>Type</TableCell>
                       <TableCell>Status</TableCell>
+                      <TableCell>Delivery</TableCell>
                       <TableCell>Submitted</TableCell>
                       <TableCell align="right">Actions</TableCell>
                     </TableRow>
@@ -797,7 +846,21 @@ export const RegulatoryDashboardPage: React.FC = () => {
                             </Box>
                           )}
                         </TableCell>
-                        <TableCell>{row.agency_id}</TableCell>
+                        <TableCell>
+                          {row.agency_code ?? row.agency_name ?? row.agency_id}
+                          {row.agency_name ? (
+                            <Box
+                              component="span"
+                              sx={{
+                                display: 'block',
+                                fontSize: 'var(--ob-font-size-2xs)',
+                                color: 'var(--ob-color-text-tertiary)',
+                              }}
+                            >
+                              {row.agency_name}
+                            </Box>
+                          ) : null}
+                        </TableCell>
                         <TableCell>{row.submission_type}</TableCell>
                         <TableCell>
                           <StatusChip
@@ -807,6 +870,33 @@ export const RegulatoryDashboardPage: React.FC = () => {
                           >
                             {row.status.replace('_', ' ')}
                           </StatusChip>
+                        </TableCell>
+                        <TableCell>
+                          <Box
+                            component="span"
+                            sx={{
+                              display: 'block',
+                              fontSize: 'var(--ob-font-size-xs)',
+                              color: 'var(--ob-color-text-primary)',
+                              fontWeight: 500,
+                              textTransform: 'capitalize',
+                            }}
+                          >
+                            {(row.submission_mode ?? 'submission_prep').replace(
+                              '_',
+                              ' ',
+                            )}
+                          </Box>
+                          <Box
+                            component="span"
+                            sx={{
+                              display: 'block',
+                              fontSize: 'var(--ob-font-size-2xs)',
+                              color: 'var(--ob-color-text-tertiary)',
+                            }}
+                          >
+                            {row.package_status ?? row.integration_status?.state ?? 'pending'}
+                          </Box>
                         </TableCell>
                         <TableCell>
                           {new Date(
@@ -823,7 +913,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
                                 .then(() => fetchSubmissions(false))
                             }
                           >
-                            Track
+                            {row.submission_mode === 'live_submit' ? 'Track' : 'Refresh'}
                           </Button>
                         </TableCell>
                       </TableRow>

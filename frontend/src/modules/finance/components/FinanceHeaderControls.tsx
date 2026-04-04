@@ -12,6 +12,7 @@ import {
 } from '@mui/material'
 import {
   FileDownload as FileDownloadIcon,
+  UploadFile as UploadFileIcon,
   KeyboardArrowDown,
   Refresh,
 } from '@mui/icons-material'
@@ -33,8 +34,13 @@ interface FinanceHeaderControlsProps {
   onProjectChange: (projectId: string, projectName?: string | null) => void
   onRefresh: () => void
   refreshing: boolean
+  onImportWorkbook: () => void
+  importingWorkbook: boolean
+  importDisabled: boolean
+  onExportWorkbook: () => void
+  exportingWorkbook: boolean
   onExportCsv: () => void
-  exporting: boolean
+  exportingCsv: boolean
   exportDisabled: boolean
 }
 
@@ -45,8 +51,13 @@ export function FinanceHeaderControls({
   onProjectChange,
   onRefresh,
   refreshing,
+  onImportWorkbook,
+  importingWorkbook,
+  importDisabled,
+  onExportWorkbook,
+  exportingWorkbook,
   onExportCsv,
-  exporting,
+  exportingCsv,
   exportDisabled,
 }: FinanceHeaderControlsProps) {
   const { t } = useTranslation()
@@ -328,8 +339,88 @@ export function FinanceHeaderControls({
       <Button
         size="sm"
         variant="ghost"
+        onClick={onImportWorkbook}
+        disabled={importDisabled || importingWorkbook}
+        aria-label={t('finance.actions.importWorkbook', {
+          defaultValue: 'Import workbook',
+        })}
+        title={t('finance.actions.importWorkbook', {
+          defaultValue: 'Import workbook',
+        })}
+        sx={{
+          height: '100%',
+          px: 'var(--ob-space-150)',
+          borderRadius: 0,
+          fontWeight: 800,
+          letterSpacing: 'var(--ob-letter-spacing-wider)',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+          minWidth: 0,
+          flexShrink: 0,
+          justifyContent: 'center',
+          borderRight: 1,
+          borderColor: alpha(theme.palette.divider, 0.6),
+        }}
+      >
+        {importingWorkbook ? (
+          <CircularProgress size={16} sx={{ color: 'inherit' }} />
+        ) : (
+          <>
+            <UploadFileIcon fontSize="small" />
+            {showExportLabel
+              ? t('finance.actions.importWorkbook', {
+                  defaultValue: 'Import workbook',
+                })
+              : null}
+          </>
+        )}
+      </Button>
+
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={onExportWorkbook}
+        disabled={exportDisabled || exportingWorkbook}
+        aria-label={t('finance.actions.exportWorkbook', {
+          defaultValue: 'Export workbook',
+        })}
+        title={t('finance.actions.exportWorkbook', {
+          defaultValue: 'Export workbook',
+        })}
+        sx={{
+          height: '100%',
+          px: 'var(--ob-space-150)',
+          borderRadius: 0,
+          fontWeight: 800,
+          letterSpacing: 'var(--ob-letter-spacing-wider)',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+          minWidth: 0,
+          flexShrink: 0,
+          justifyContent: 'center',
+          borderRight: 1,
+          borderColor: alpha(theme.palette.divider, 0.6),
+        }}
+      >
+        {exportingWorkbook ? (
+          <CircularProgress size={16} sx={{ color: 'inherit' }} />
+        ) : (
+          <>
+            <FileDownloadIcon fontSize="small" />
+            {showExportLabel
+              ? t('finance.actions.exportWorkbook', {
+                  defaultValue: 'Export workbook',
+                })
+              : null}
+          </>
+        )}
+      </Button>
+
+      <Button
+        size="sm"
+        variant="ghost"
         onClick={onExportCsv}
-        disabled={exportDisabled || exporting}
+        disabled={exportDisabled || exportingCsv}
         aria-label={t('finance.actions.exportCsv')}
         title={t('finance.actions.exportCsv')}
         sx={{
@@ -345,7 +436,7 @@ export function FinanceHeaderControls({
           justifyContent: 'center',
         }}
       >
-        {exporting ? (
+        {exportingCsv ? (
           <CircularProgress size={16} sx={{ color: 'inherit' }} />
         ) : (
           <>

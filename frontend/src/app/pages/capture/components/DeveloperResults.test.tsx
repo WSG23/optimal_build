@@ -136,7 +136,21 @@ vi.mock('../../site-acquisition/utils/cardBuilders', () => ({
 
 vi.mock('../../site-acquisition/hooks/usePreviewJob', () => ({
   usePreviewJob: () => ({
-    previewJob: null,
+    previewJob: {
+      id: 'preview-1',
+      propertyId: 'prop-123',
+      scenario: 'raw_land',
+      status: 'queued',
+      previewUrl: null,
+      metadataUrl: null,
+      thumbnailUrl: null,
+      assetVersion: null,
+      requestedAt: '2026-01-06T10:00:00Z',
+      startedAt: null,
+      finishedAt: null,
+      message: null,
+      geometryDetailLevel: 'medium',
+    },
     previewDetailLevel: 'medium',
     setPreviewDetailLevel: mockSetPreviewDetailLevel,
     isRefreshingPreview: false,
@@ -411,6 +425,9 @@ describe('DeveloperResults', () => {
 
     expect(screen.getByTestId('ai-insight-text').textContent).toContain(
       'Instant capture analysis for Downtown highlights',
+    )
+    expect(screen.getByTestId('ai-insight-text').textContent).toContain(
+      'without setback or floor-by-floor compliance',
     )
     expect(screen.getByTestId('ai-is-generating').textContent).toBe('idle')
     expect(

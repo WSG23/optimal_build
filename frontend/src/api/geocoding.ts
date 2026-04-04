@@ -1,9 +1,14 @@
 import { buildUrl } from './shared'
+import {
+  mapExternalSourceMetadata,
+  type ExternalSourceMetadata,
+} from './externalSources'
 
 export interface GeocodeResult {
   latitude: number
   longitude: number
   formattedAddress: string
+  source?: ExternalSourceMetadata | null
 }
 
 export async function forwardGeocodeAddress(
@@ -21,6 +26,7 @@ export async function forwardGeocodeAddress(
     longitude?: number
     formattedAddress?: string
     formatted_address?: string
+    source?: unknown
   }
   if (payload.latitude == null || payload.longitude == null) {
     throw new Error('Geocode result missing coordinates')
@@ -31,6 +37,7 @@ export async function forwardGeocodeAddress(
     latitude: payload.latitude,
     longitude: payload.longitude,
     formattedAddress: formatted,
+    source: mapExternalSourceMetadata(payload.source),
   }
 }
 
@@ -53,6 +60,7 @@ export async function reverseGeocodeCoords(
     longitude?: number
     formattedAddress?: string
     formatted_address?: string
+    source?: unknown
   }
   if (payload.latitude == null || payload.longitude == null) {
     throw new Error('Reverse geocode result missing coordinates')
@@ -65,5 +73,6 @@ export async function reverseGeocodeCoords(
     latitude: payload.latitude ?? latitude,
     longitude: payload.longitude ?? longitude,
     formattedAddress: formatted,
+    source: mapExternalSourceMetadata(payload.source),
   }
 }

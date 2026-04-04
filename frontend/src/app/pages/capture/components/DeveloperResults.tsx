@@ -245,14 +245,6 @@ export function DeveloperResults({
     [],
   )
 
-  // Currency formatter for card values
-  const formatCurrency = useCallback(
-    (value: number) => {
-      return `${currencySymbol}${formatNumber(value, { maximumFractionDigits: 0 })}`
-    },
-    [currencySymbol, formatNumber],
-  )
-
   // Compute feasibility signals from quick analysis scenarios
   const feasibilitySignals = useMemo(() => {
     if (!quickAnalysisScenarios.length) {
@@ -294,18 +286,15 @@ export function DeveloperResults({
       colorLegendEntries: colorLegendEntries ?? [],
       formatters: {
         formatNumber,
-        formatCurrency,
+        formatCurrency: () => '—',
         formatTimestamp: formatRecordedTimestamp,
       },
-      currencySymbol,
     })
   }, [
     result,
     colorLegendEntries,
     formatNumber,
-    formatCurrency,
     formatRecordedTimestamp,
-    currencySymbol,
   ])
 
   // Instant capture insight based on captured property data
@@ -340,11 +329,18 @@ export function DeveloperResults({
     const previewStatus =
       result.visualization?.status?.replace(/_/g, ' ').toLowerCase() ??
       'pending'
+    const isFallbackCapture =
+      result.visualization?.status?.toLowerCase() === 'placeholder' ||
+      result.buildEnvelope?.buildingHeightLimitM == null ||
+      result.buildEnvelope?.siteCoveragePct == null
     const analysisSummary =
       analysisPoints.length > 0
         ? analysisPoints.slice(0, 3).join(', ')
         : 'zoning and envelope controls are still resolving'
-    return `Instant capture analysis for ${result.address?.district ?? 'this location'} highlights ${analysisSummary}. Active scenarios: ${scenarios}. Preview status: ${previewStatus}.`
+    const scopeNote = isFallbackCapture
+      ? 'This is a preliminary capture: scalar controls only, with no setback or floor-by-floor compliance modelling.'
+      : 'Capture reflects the currently resolved scalar controls for this site, without setback or floor-by-floor compliance modelling.'
+    return `Instant capture analysis for ${result.address?.district ?? 'this location'} highlights ${analysisSummary}. Active scenarios: ${scenarios}. Preview status: ${previewStatus}. ${scopeNote}`
   }, [formatNumber, result, selectedScenarios, scenarioLookup])
 
   return (
@@ -387,6 +383,7 @@ export function DeveloperResults({
                 onChange={(e) =>
                   setPreviewDetailLevel(e.target.value as 'simple' | 'medium')
                 }
+                disabled={!previewJob}
                 sx={{ minWidth: 'var(--ob-size-600)' }}
               >
                 <MenuItem value="simple">Simple</MenuItem>
@@ -397,7 +394,7 @@ export function DeveloperResults({
               variant="secondary"
               size="sm"
               onClick={() => handleRefreshPreview()}
-              disabled={isRefreshingPreview}
+              disabled={isRefreshingPreview || !previewJob}
             >
               <RefreshIcon
                 sx={{

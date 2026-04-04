@@ -574,10 +574,6 @@ export function GpsCapturePage() {
                   required
                 >
                   <option value="SG">Singapore</option>
-                  <option value="HK">Hong Kong</option>
-                  <option value="NZ">New Zealand</option>
-                  <option value="SEA">Seattle / King County</option>
-                  <option value="TOR">Toronto</option>
                 </select>
               </div>
 

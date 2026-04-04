@@ -227,6 +227,11 @@ export const TeamManagementPage: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
+      <Alert severity="info" sx={{ mb: 'var(--ob-space-150)' }}>
+        Architect and engineer workspaces are still staged. Today this surface is
+        the developer-controlled consultant coordination layer for invites,
+        approvals, and evidence-ready handoffs.
+      </Alert>
       {/* Compact Page Header - TIGHT layout with animation */}
       <Box
         component="header"
@@ -243,13 +248,13 @@ export const TeamManagementPage: React.FC = () => {
       >
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-            Team Management
+            Consultant Coordination
           </Typography>
           <Typography
             variant="body2"
             sx={{ color: 'text.secondary', mt: 'var(--ob-space-025)' }}
           >
-            Manage project team members and workflow approvals
+            Invite consultants, route approvals, and track staged architect and engineer reviews
           </Typography>
           {currentProject && (
             <Typography

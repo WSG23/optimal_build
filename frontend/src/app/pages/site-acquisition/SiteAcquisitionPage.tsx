@@ -219,7 +219,6 @@ export function SiteAcquisitionPage() {
     quickAnalysisHistory,
     formatScenarioLabel,
     formatNumberMetric,
-    formatCurrency,
   } = useCaptureScenarioComparison({
     capturedProperty,
     activeScenario,
@@ -288,43 +287,74 @@ export function SiteAcquisitionPage() {
       }),
     [capturedProperty, formatNumberMetric],
   )
-  const propertyInfoSummary = capturedProperty?.propertyInfo ?? null
-  const zoningSummary = capturedProperty?.uraZoning ?? null
-  const nearestMrtStation =
-    capturedProperty?.nearbyAmenities?.mrtStations?.[0] ?? null
-  const nearestBusStop =
-    capturedProperty?.nearbyAmenities?.busStops?.[0] ?? null
-
   const propertyOverviewCards = useMemo(() => {
     if (!capturedProperty) {
       return []
     }
     return buildPropertyOverviewCards({
       capturedProperty,
-      propertyInfoSummary,
-      zoningSummary,
-      nearestMrtStation,
-      nearestBusStop,
       previewJob,
       colorLegendEntries,
       formatters: {
         formatNumber: formatNumberMetric,
-        formatCurrency,
+        formatCurrency: () => '—',
         formatTimestamp,
       },
     })
   }, [
     capturedProperty,
-    propertyInfoSummary,
-    zoningSummary,
-    nearestMrtStation,
-    nearestBusStop,
     previewJob,
     colorLegendEntries,
     formatNumberMetric,
-    formatCurrency,
     formatTimestamp,
   ])
+
+  const captureInsight = useMemo(() => {
+    if (!capturedProperty) {
+      return null
+    }
+    const envelope = capturedProperty.buildEnvelope
+    const analysisPoints = [
+      envelope.allowablePlotRatio != null
+        ? `plot ratio ${formatNumberMetric(envelope.allowablePlotRatio, {
+            maximumFractionDigits: 2,
+          })}`
+        : null,
+      envelope.maxBuildableGfaSqm != null
+        ? `max buildable GFA ${formatNumberMetric(
+            envelope.maxBuildableGfaSqm,
+            {
+              maximumFractionDigits: 0,
+            },
+          )} sqm`
+        : null,
+      envelope.buildingHeightLimitM != null
+        ? `height limit ${formatNumberMetric(envelope.buildingHeightLimitM, {
+            maximumFractionDigits: 0,
+          })} m`
+        : null,
+      envelope.siteCoveragePct != null
+        ? `site coverage ${formatNumberMetric(envelope.siteCoveragePct, {
+            maximumFractionDigits: 0,
+          })}%`
+        : null,
+    ].filter(Boolean)
+    const previewStatus =
+      capturedProperty.visualization?.status?.replace(/_/g, ' ').toLowerCase() ??
+      'pending'
+    const isFallbackCapture =
+      capturedProperty.visualization?.status?.toLowerCase() === 'placeholder' ||
+      envelope.buildingHeightLimitM == null ||
+      envelope.siteCoveragePct == null
+    const summary =
+      analysisPoints.length > 0
+        ? analysisPoints.slice(0, 3).join(', ')
+        : 'zoning and envelope controls are still resolving'
+    const scopeNote = isFallbackCapture
+      ? 'This is a preliminary capture: scalar controls only, with no setback or floor-by-floor compliance modelling.'
+      : 'Capture reflects the currently resolved scalar controls for this site, without setback or floor-by-floor compliance modelling.'
+    return `Instant capture analysis highlights ${summary}. Preview status: ${previewStatus}. ${scopeNote}`
+  }, [capturedProperty, formatNumberMetric])
 
   // Transform nearby amenities for the map component (copied from PropertyCaptureForm)
   const mapAmenities = useMemo(() => {
@@ -405,36 +435,26 @@ export function SiteAcquisitionPage() {
   }, [capturedProperty?.heritageContext, latitude, longitude])
 
   // Asset mix data for the donut chart in Development Preview sidebar
-  // Extract from propertyOverviewCards (the "Recommended asset mix" card)
+  // Derived directly from massing or optimisation payloads.
   const assetMixData = useMemo(() => {
-    // Find the asset mix card from overview cards
-    const assetMixCard = propertyOverviewCards.find((card) =>
-      card.title.toLowerCase().includes('asset mix'),
-    )
-    if (!assetMixCard) return []
+    const massingLayers = capturedProperty?.visualization?.massingLayers ?? []
+    if (massingLayers.length > 0) {
+      return massingLayers.map((layer) => ({
+        label: layer.assetType,
+        value: layer.allocationPct,
+        allocatedGfa: layer.gfaSqm ?? undefined,
+      }))
+    }
 
-    // Parse asset mix data from card items
-    return assetMixCard.items.map((item) => {
-      // Parse percentage from value string (e.g., "54% • 7,560 sqm • ...")
-      const percentMatch = item.value.match(/^(\d+(?:\.\d+)?)\s*%/)
-      const percentage = percentMatch ? parseFloat(percentMatch[1]) : 0
-
-      // Parse GFA if present
-      const gfaMatch = item.value.match(
-        /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:k\s*)?sqm/i,
-      )
-      const gfa = gfaMatch
-        ? parseFloat(gfaMatch[1].replace(/,/g, '')) *
-          (gfaMatch[0].includes('k') ? 1000 : 1)
-        : undefined
-
-      return {
-        label: item.label,
-        value: percentage,
-        allocatedGfa: gfa,
-      }
-    })
-  }, [propertyOverviewCards])
+    const optimizations = capturedProperty?.optimizations ?? []
+    return optimizations
+      .filter((entry) => typeof entry.allocationPct === 'number')
+      .map((entry) => ({
+        label: entry.assetType,
+        value: entry.allocationPct,
+        allocatedGfa: entry.allocatedGfaSqm ?? undefined,
+      }))
+  }, [capturedProperty?.optimizations, capturedProperty?.visualization?.massingLayers])
 
   // Unified layer action handler for PreviewLayersTable
   const handleLayerAction = useCallback(
@@ -701,10 +721,7 @@ export function SiteAcquisitionPage() {
 
             {/* AI Intelligence Card */}
             <OptimalIntelligenceCard
-              insight={
-                capturedProperty?.quickAnalysis?.scenarios?.[0]?.headline ??
-                null
-              }
+              insight={captureInsight}
               hasProperty={!!capturedProperty}
             />
 
@@ -842,7 +859,7 @@ export function SiteAcquisitionPage() {
                                 e.target.value as GeometryDetailLevel,
                               )
                             }
-                            disabled={isRefreshingPreview}
+                            disabled={isRefreshingPreview || !previewJob}
                           >
                             {PREVIEW_DETAIL_OPTIONS.map((option) => (
                               <MenuItem key={option} value={option}>
@@ -856,7 +873,7 @@ export function SiteAcquisitionPage() {
                           variant="secondary"
                           size="sm"
                           onClick={handleRefreshPreview}
-                          disabled={isRefreshingPreview}
+                          disabled={isRefreshingPreview || !previewJob}
                         >
                           <Refresh
                             className={isRefreshingPreview ? 'fa-spin' : ''}

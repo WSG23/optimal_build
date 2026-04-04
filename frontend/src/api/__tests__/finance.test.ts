@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  fetchFinanceAuditEvidence,
   runFinanceFeasibility,
   listFinanceScenarios,
   type FinanceFeasibilityRequest,
@@ -232,6 +233,83 @@ describe('finance API mapping', () => {
       )
       expect(scenarios.every((scenario) => scenario.capitalStack != null)).toBe(
         true,
+      )
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  it('fetches finance audit evidence via the project reference route', async () => {
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = (async (input) => {
+      const url = typeof input === 'string' ? input : input.toString()
+      expect(
+        url.includes('/api/v1/audit/by-ref/550e8400-e29b-41d4-a716-446655440000/evidence'),
+      ).toBe(true)
+      return {
+        ok: true,
+        status: 200,
+        async json() {
+          return {
+            project_id: 19088743,
+            valid: true,
+            chain: {
+              entry_count: 6,
+              signed_entries: 6,
+              latest_hash: 'abc123',
+            },
+            recipients: ['ops@example.com'],
+            finance_events: [
+              {
+                version: 3,
+                recorded_at: '2026-04-03T10:00:00Z',
+                scenario_id: 22,
+                scenario_name: 'Quick Screen Handoff',
+                origin: 'quick_screen',
+                currency: 'SGD',
+                is_primary: true,
+                has_asset_mix: true,
+                has_capital_stack: true,
+                has_sensitivity_bands: false,
+              },
+            ],
+            imports: [
+              {
+                version: 4,
+                recorded_at: '2026-04-03T11:00:00Z',
+                format: 'xlsx',
+                workbook_format: 'optimal-build',
+                scenario_id: 23,
+                scenario_name: 'Workbook Scenario',
+                asset_count: 2,
+              },
+            ],
+            submission_events: [
+              {
+                version: 5,
+                event_type: 'submission_packaged',
+                recorded_at: '2026-04-03T12:00:00Z',
+                agency: 'URA',
+                agency_name: 'Urban Redevelopment Authority',
+                submission_mode: 'submission_prep',
+                package_status: 'submission_ready',
+              },
+            ],
+          }
+        },
+      }
+    }) as typeof globalThis.fetch
+
+    try {
+      const evidence = await fetchFinanceAuditEvidence(
+        '550e8400-e29b-41d4-a716-446655440000',
+      )
+      expect(evidence.valid).toBe(true)
+      expect(evidence.chain.entryCount).toBe(6)
+      expect(evidence.financeEvents[0]?.origin).toBe('quick_screen')
+      expect(evidence.imports[0]?.workbookFormat).toBe('optimal-build')
+      expect(evidence.submissionEvents[0]?.agencyName).toBe(
+        'Urban Redevelopment Authority',
       )
     } finally {
       globalThis.fetch = originalFetch

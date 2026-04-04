@@ -443,7 +443,6 @@ export function AdvisoryPage() {
                           size="small"
                         >
                           <MenuItem value="SG">Singapore</MenuItem>
-                          <MenuItem value="SEA">Seattle</MenuItem>
                         </TextField>
                         <TextField
                           select

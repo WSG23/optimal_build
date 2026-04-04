@@ -680,9 +680,15 @@ function mapDeveloperVisualization(
     : []
 
   if (!notes.length) {
-    notes.push(
-      'High-fidelity 3D previews will ship with Phase 2B visualisation work.',
-    )
+    if (preview && conceptMeshUrl) {
+      notes.push('Preview mesh available for visual review.')
+    } else if (status.toLowerCase() === 'queued') {
+      notes.push('Preview job queued; geometry asset not available yet.')
+    } else if (status.toLowerCase() === 'processing') {
+      notes.push('Preview job processing; mesh and metadata are still pending.')
+    } else {
+      notes.push('Preview geometry unavailable; capture remains in instant-analysis mode.')
+    }
   }
   return {
     status,
@@ -1184,7 +1190,7 @@ function deriveVisualizationFromSummary(
     )
   }
   notes.push(
-    'High-fidelity 3D previews will ship with Phase 2B visualisation work.',
+    'Instant capture only — no preview mesh, setbacks, or floor-by-floor compliance geometry available.',
   )
   return {
     status: 'placeholder',

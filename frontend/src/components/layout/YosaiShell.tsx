@@ -12,6 +12,7 @@ export interface AppShellProps {
   children: ReactNode
   hideSidebar?: boolean
   hideHeader?: boolean
+  workspace?: 'agent' | 'developer'
 }
 
 /**
@@ -31,6 +32,7 @@ export function AppShell({
   children,
   hideSidebar,
   hideHeader = false,
+  workspace = 'developer',
 }: AppShellProps) {
   const { inBaseLayout, topOffset } = useBaseLayoutContext()
   const { path } = useRouterController()
@@ -53,7 +55,7 @@ export function AppShell({
       }}
     >
       {/* "The Wall" - Sidebar */}
-      {!shouldHideSidebar && <YosaiSidebar />}
+      {!shouldHideSidebar && <YosaiSidebar workspace={workspace} />}
 
       {/* Main Content Area */}
       <Box

@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import type { ReactElement } from 'react'
 
 import { describe, expect, it, vi } from 'vitest'
@@ -42,7 +44,7 @@ function renderWithProviders(
 }
 
 describe('ProjectListPage', () => {
-  it('renders the canonical empty state and opens the create dialog from its CTA', async () => {
+  it('renders Singapore-first onboarding actions and opens the create dialog', async () => {
     const contextValue = createMockProjectContext()
     const user = userEvent.setup()
 
@@ -52,19 +54,26 @@ describe('ProjectListPage', () => {
       expect(contextValue.refreshProjects).toHaveBeenCalled()
     })
 
+    expect(screen.getByText('Singapore developer workspace')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /open deal calculator/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /start workbook intake/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /open sample project/i }),
+    ).toBeInTheDocument()
     expect(screen.getByText('No projects yet')).toBeInTheDocument()
     expect(
       screen.getByText(
-        'Create a project to start feasibility, finance, and intelligence workflows.',
+        'Start with the deal calculator, import an existing workbook, or open the seeded Singapore sample project.',
       ),
     ).toBeInTheDocument()
 
-    const createButtons = screen.getAllByRole('button', {
-      name: /create project/i,
-    })
-    await user.click(createButtons[1])
+    await user.click(screen.getByRole('button', { name: /create project/i }))
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
     expect(screen.getByText('Create Project')).toBeInTheDocument()
   })
 })

@@ -7,6 +7,7 @@ interface AppShellProps extends Omit<BaseAppShellProps, 'subtitle'> {
   activeItem?: string // Kept for backward compatibility
   description?: string
   hideHeader?: boolean
+  workspace?: 'agent' | 'developer'
 }
 
 export function AppShell({
@@ -16,6 +17,7 @@ export function AppShell({
   children,
   hideSidebar,
   hideHeader,
+  workspace,
 }: AppShellProps) {
   return (
     <BaseAppShell
@@ -24,6 +26,7 @@ export function AppShell({
       actions={actions}
       hideSidebar={hideSidebar}
       hideHeader={hideHeader}
+      workspace={workspace}
     >
       {children}
     </BaseAppShell>
