@@ -1,5 +1,7 @@
 [type_ignore]
-backend_baseline = 199
+production_baseline = 0
+backend_tests_baseline = 74
+tests_baseline = 7
 required_metadata_keys = ["owner", "expires", "reason"]
 
 [[pyproject_ignore_errors]]

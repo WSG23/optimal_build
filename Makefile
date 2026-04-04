@@ -5,6 +5,9 @@ DEV_RUNTIME_DIR_ABS := $(abspath $(DEV_RUNTIME_DIR))
 DEV_BACKEND_PID ?= $(DEV_RUNTIME_DIR_ABS)/backend.pid
 DEV_FRONTEND_PID ?= $(DEV_RUNTIME_DIR_ABS)/frontend.pid
 DEV_ADMIN_PID ?= $(DEV_RUNTIME_DIR_ABS)/ui-admin.pid
+DEV_BACKEND_PORT_FILE ?= $(DEV_RUNTIME_DIR_ABS)/backend.port
+DEV_FRONTEND_PORT_FILE ?= $(DEV_RUNTIME_DIR_ABS)/frontend.port
+DEV_ADMIN_PORT_FILE ?= $(DEV_RUNTIME_DIR_ABS)/ui-admin.port
 DEV_BACKEND_LOG ?= $(DEV_RUNTIME_DIR_ABS)/backend.log
 DEV_FRONTEND_LOG ?= $(DEV_RUNTIME_DIR_ABS)/frontend.log
 DEV_ADMIN_LOG ?= $(DEV_RUNTIME_DIR_ABS)/ui-admin.log
@@ -53,10 +56,11 @@ ADMIN_PORT ?= 4401
 
 BACKEND_APP ?= backend.app.main:app
 ifeq ($(UVICORN),$(PY) -m backend.uvicorn_stub)
-BACKEND_CMD ?= $(UVICORN) $(BACKEND_APP) --host 0.0.0.0 --port $(BACKEND_PORT)
+BACKEND_CMD_PREFIX ?= $(UVICORN) $(BACKEND_APP) --host 0.0.0.0
 else
-BACKEND_CMD ?= $(UVICORN) --interface asgi3 $(BACKEND_APP) --reload --host 0.0.0.0 --port $(BACKEND_PORT)
+BACKEND_CMD_PREFIX ?= $(UVICORN) --interface asgi3 $(BACKEND_APP) --reload --host 0.0.0.0
 endif
+BACKEND_CMD ?= $(BACKEND_CMD_PREFIX) --port $(BACKEND_PORT)
 FRONTEND_CMD ?= npm run dev -- --port $(FRONTEND_PORT)
 ADMIN_CMD ?= npm run dev -- --port $(ADMIN_PORT)
 INCLUDE_ADMIN ?= 1
@@ -570,44 +574,170 @@ dev: ## Start local development (no Docker, SQLite only)
 	@echo "│         🏗️  Optimal Build — Dev Server                    │"
 	@echo "└──────────────────────────────────────────────────────────┘"
 	@echo ""
-	@echo "  Cleaning up stale processes..."
-	@-pids=$$(lsof -ti:$(BACKEND_PORT) 2>/dev/null); [ "$$pids" ] && kill $$pids 2>/dev/null || true
-	@-pids=$$(lsof -ti:$(FRONTEND_PORT) 2>/dev/null); [ "$$pids" ] && kill $$pids 2>/dev/null || true
-	@-pids=$$(lsof -ti:$(ADMIN_PORT) 2>/dev/null); [ "$$pids" ] && kill $$pids 2>/dev/null || true
-	@rm -f $(DEV_BACKEND_PID) $(DEV_FRONTEND_PID) $(DEV_ADMIN_PID)
+	@echo "  Cleaning up prior dev processes..."
+	@for port_file in "$(DEV_BACKEND_PORT_FILE)" "$(DEV_FRONTEND_PORT_FILE)" "$(DEV_ADMIN_PORT_FILE)"; do \
+		if [ -f "$$port_file" ]; then \
+			port=$$(cat "$$port_file"); \
+			pids=$$(lsof -nP -iTCP:$$port -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 { print $$2 }' | sort -u); \
+			if [ -n "$$pids" ]; then \
+				kill $$pids 2>/dev/null || true; \
+			fi; \
+		fi; \
+	done
+	@for pid_file in "$(DEV_BACKEND_PID)" "$(DEV_FRONTEND_PID)" "$(DEV_ADMIN_PID)"; do \
+		if [ -f "$$pid_file" ]; then \
+			pid=$$(cat "$$pid_file" 2>/dev/null || true); \
+			if [ -n "$$pid" ] && kill -0 "$$pid" 2>/dev/null; then \
+				kill "$$pid" 2>/dev/null || true; \
+			fi; \
+		fi; \
+	done
+	@rm -f $(DEV_BACKEND_PID) $(DEV_FRONTEND_PID) $(DEV_ADMIN_PID) \
+		$(DEV_BACKEND_PORT_FILE) $(DEV_FRONTEND_PORT_FILE) $(DEV_ADMIN_PORT_FILE)
 	@sleep 1
 	@if [ -d uvicorn ]; then echo "  ⚠  WARNING: './uvicorn/' directory detected — it will shadow the real uvicorn." >&2; fi
 	@$(MAKE) --no-print-directory _dev-services
 
 _dev-services: ## Internal target to start backend, frontend, and admin UI
-	@BACKEND_STATUS=""; FRONTEND_STATUS=""; ADMIN_STATUS=""; \
+	@port_unavailable() { \
+		candidate=$$1; \
+		shift; \
+		for reserved in "$$@"; do \
+			if [ -n "$$reserved" ] && [ "$$candidate" = "$$reserved" ]; then \
+				return 0; \
+			fi; \
+		done; \
+		lsof -nP -iTCP:$$candidate -sTCP:LISTEN >/dev/null 2>&1; \
+	}; \
+	pick_port() { \
+		candidate=$$1; \
+		shift; \
+		while port_unavailable "$$candidate" "$$@"; do \
+			candidate=$$((candidate + 1)); \
+		done; \
+		printf '%s' "$$candidate"; \
+	}; \
+	listener_pid() { \
+		lsof -nP -iTCP:$$1 -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 { print $$2; exit }'; \
+	}; \
+	listener_pids() { \
+		lsof -nP -iTCP:$$1 -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 { print $$2 }' | sort -u; \
+	}; \
+	wait_for_listener() { \
+		attempts=20; \
+		while [ $$attempts -gt 0 ]; do \
+			if [ -n "$$(listener_pid "$$1")" ]; then \
+				return 0; \
+			fi; \
+			attempts=$$((attempts - 1)); \
+			sleep 0.5; \
+		done; \
+		return 1; \
+	}; \
+	log_has_port_conflict() { \
+		rg -q "Address already in use|EADDRINUSE|Port .* is in use" "$$1" 2>/dev/null; \
+	}; \
+	status_icon() { \
+		case "$$1" in \
+			started|reused) printf '✅' ;; \
+			skipped) printf '⏹' ;; \
+			failed) printf '✖' ;; \
+			*) printf '•' ;; \
+		esac; \
+	}; \
+	BACKEND_STATUS=""; FRONTEND_STATUS=""; ADMIN_STATUS=""; \
 	BACKEND_PID_VAL="-"; FRONTEND_PID_VAL="-"; ADMIN_PID_VAL="-"; \
+	BACKEND_PORT_VAL=$$(cat "$(DEV_BACKEND_PORT_FILE)" 2>/dev/null || printf '%s' "$(BACKEND_PORT)"); \
+	FRONTEND_PORT_VAL=$$(cat "$(DEV_FRONTEND_PORT_FILE)" 2>/dev/null || printf '%s' "$(FRONTEND_PORT)"); \
+	ADMIN_PORT_VAL=$$(cat "$(DEV_ADMIN_PORT_FILE)" 2>/dev/null || printf '%s' "$(ADMIN_PORT)"); \
 	if [ -f $(DEV_BACKEND_PID) ] && kill -0 $$(cat $(DEV_BACKEND_PID)) 2>/dev/null; then \
 		BACKEND_STATUS="reused"; \
 		BACKEND_PID_VAL=$$(cat $(DEV_BACKEND_PID)); \
 	else \
 		rm -f $(DEV_BACKEND_PID); \
-		: > $(DEV_BACKEND_LOG); \
-		( \
-			set -a; [ -f .env ] && . ./.env; set +a; \
-			EFFECTIVE_DB_URL=$${DATABASE_URL:-$(DEV_SQLITE_URL)}; \
-			SECRET_KEY=$${SECRET_KEY:-dev-secret-key-do-not-use-in-production} \
-			DEV_SQLITE_URL="$(DEV_SQLITE_URL)" SQLALCHEMY_DATABASE_URI="$$EFFECTIVE_DB_URL" DATABASE_URL="$$EFFECTIVE_DB_URL" \
-				nohup $(BACKEND_CMD) > "$(DEV_BACKEND_LOG)" 2>&1 & \
-			echo $$! > "$(DEV_BACKEND_PID)" \
-		); \
-		BACKEND_STATUS="started"; \
-		BACKEND_PID_VAL=$$(cat $(DEV_BACKEND_PID)); \
+		BACKEND_PORT_VAL=$$(pick_port "$(BACKEND_PORT)"); \
+		if [ "$$BACKEND_PORT_VAL" != "$(BACKEND_PORT)" ]; then \
+			printf "  ℹ Backend port %s occupied, using %s\n" "$(BACKEND_PORT)" "$$BACKEND_PORT_VAL"; \
+		fi; \
+		BACKEND_RETRIES=0; \
+		while [ $$BACKEND_RETRIES -lt 10 ]; do \
+			: > $(DEV_BACKEND_LOG); \
+			rm -f $(DEV_BACKEND_PID); \
+			( \
+				set -a; [ -f .env ] && . ./.env; set +a; \
+				EFFECTIVE_DB_URL=$${DATABASE_URL:-$(DEV_SQLITE_URL)}; \
+				SECRET_KEY=$${SECRET_KEY:-dev-secret-key-do-not-use-in-production} \
+				DEV_SQLITE_URL="$(DEV_SQLITE_URL)" SQLALCHEMY_DATABASE_URI="$$EFFECTIVE_DB_URL" DATABASE_URL="$$EFFECTIVE_DB_URL" \
+					nohup $(BACKEND_CMD_PREFIX) --port "$$BACKEND_PORT_VAL" < /dev/null > "$(DEV_BACKEND_LOG)" 2>&1 & \
+				echo $$! > "$(DEV_BACKEND_PID)" \
+			); \
+			if wait_for_listener "$$BACKEND_PORT_VAL"; then \
+				BACKEND_STATUS="started"; \
+				BACKEND_PID_VAL=$$(listener_pid "$$BACKEND_PORT_VAL"); \
+				printf '%s\n' "$$BACKEND_PID_VAL" > "$(DEV_BACKEND_PID)"; \
+				printf '%s\n' "$$BACKEND_PORT_VAL" > "$(DEV_BACKEND_PORT_FILE)"; \
+				break; \
+			fi; \
+			rm -f $(DEV_BACKEND_PID); \
+			if log_has_port_conflict "$(DEV_BACKEND_LOG)"; then \
+				BACKEND_RETRIES=$$((BACKEND_RETRIES + 1)); \
+				BACKEND_PORT_VAL=$$((BACKEND_PORT_VAL + 1)); \
+				printf "  ℹ Backend port conflict, retrying on %s\n" "$$BACKEND_PORT_VAL"; \
+				continue; \
+			fi; \
+			BACKEND_STATUS="failed"; \
+			BACKEND_PID_VAL="-"; \
+			rm -f "$(DEV_BACKEND_PORT_FILE)"; \
+			printf "  ✖ Backend failed to start. Inspect %s\n" "$(DEV_BACKEND_LOG)"; \
+			break; \
+		done; \
+		if [ "$$BACKEND_STATUS" = "" ]; then \
+			BACKEND_STATUS="failed"; \
+			BACKEND_PID_VAL="-"; \
+			rm -f "$(DEV_BACKEND_PORT_FILE)"; \
+			printf "  ✖ Backend failed to start after port retries. Inspect %s\n" "$(DEV_BACKEND_LOG)"; \
+		fi; \
 	fi; \
 	if [ -f $(DEV_FRONTEND_PID) ] && kill -0 $$(cat $(DEV_FRONTEND_PID)) 2>/dev/null; then \
 		FRONTEND_STATUS="reused"; \
 		FRONTEND_PID_VAL=$$(cat $(DEV_FRONTEND_PID)); \
 	else \
 		rm -f $(DEV_FRONTEND_PID); \
-		: > $(DEV_FRONTEND_LOG); \
-		(cd frontend && VITE_API_BASE=http://localhost:$(BACKEND_PORT) nohup $(FRONTEND_CMD) > $(DEV_FRONTEND_LOG) 2>&1 & echo $$! > $(DEV_FRONTEND_PID)); \
-		FRONTEND_STATUS="started"; \
-		FRONTEND_PID_VAL=$$(cat $(DEV_FRONTEND_PID)); \
+		FRONTEND_PORT_VAL=$$(pick_port "$(FRONTEND_PORT)" "$$BACKEND_PORT_VAL"); \
+		if [ "$$FRONTEND_PORT_VAL" != "$(FRONTEND_PORT)" ]; then \
+			printf "  ℹ Frontend port %s occupied, using %s\n" "$(FRONTEND_PORT)" "$$FRONTEND_PORT_VAL"; \
+		fi; \
+		FRONTEND_RETRIES=0; \
+		while [ $$FRONTEND_RETRIES -lt 10 ]; do \
+			: > $(DEV_FRONTEND_LOG); \
+			rm -f $(DEV_FRONTEND_PID); \
+			(cd frontend && BACKEND_PORT="$$BACKEND_PORT_VAL" nohup npm run dev -- --port "$$FRONTEND_PORT_VAL" < /dev/null > $(DEV_FRONTEND_LOG) 2>&1 & echo $$! > $(DEV_FRONTEND_PID)); \
+			if wait_for_listener "$$FRONTEND_PORT_VAL"; then \
+				FRONTEND_STATUS="started"; \
+				FRONTEND_PID_VAL=$$(listener_pid "$$FRONTEND_PORT_VAL"); \
+				printf '%s\n' "$$FRONTEND_PID_VAL" > "$(DEV_FRONTEND_PID)"; \
+				printf '%s\n' "$$FRONTEND_PORT_VAL" > "$(DEV_FRONTEND_PORT_FILE)"; \
+				break; \
+			fi; \
+			rm -f $(DEV_FRONTEND_PID); \
+			if log_has_port_conflict "$(DEV_FRONTEND_LOG)"; then \
+				FRONTEND_RETRIES=$$((FRONTEND_RETRIES + 1)); \
+				FRONTEND_PORT_VAL=$$((FRONTEND_PORT_VAL + 1)); \
+				printf "  ℹ Frontend port conflict, retrying on %s\n" "$$FRONTEND_PORT_VAL"; \
+				continue; \
+			fi; \
+			FRONTEND_STATUS="failed"; \
+			FRONTEND_PID_VAL="-"; \
+			rm -f "$(DEV_FRONTEND_PORT_FILE)"; \
+			printf "  ✖ Frontend failed to start. Inspect %s\n" "$(DEV_FRONTEND_LOG)"; \
+			break; \
+		done; \
+		if [ "$$FRONTEND_STATUS" = "" ]; then \
+			FRONTEND_STATUS="failed"; \
+			FRONTEND_PID_VAL="-"; \
+			rm -f "$(DEV_FRONTEND_PORT_FILE)"; \
+			printf "  ✖ Frontend failed to start after port retries. Inspect %s\n" "$(DEV_FRONTEND_LOG)"; \
+		fi; \
 	fi; \
 	if [ "$(INCLUDE_ADMIN)" != "0" ]; then \
 		if [ -f $(DEV_ADMIN_PID) ] && kill -0 $$(cat $(DEV_ADMIN_PID)) 2>/dev/null; then \
@@ -615,142 +745,180 @@ _dev-services: ## Internal target to start backend, frontend, and admin UI
 			ADMIN_PID_VAL=$$(cat $(DEV_ADMIN_PID)); \
 		else \
 			rm -f $(DEV_ADMIN_PID); \
-			: > $(DEV_ADMIN_LOG); \
-			(cd ui-admin && VITE_API_BASE=http://localhost:$(BACKEND_PORT) VITE_API_URL=http://localhost:$(BACKEND_PORT)/api/v1 nohup $(ADMIN_CMD) > $(DEV_ADMIN_LOG) 2>&1 & echo $$! > $(DEV_ADMIN_PID)); \
-			ADMIN_STATUS="started"; \
-			ADMIN_PID_VAL=$$(cat $(DEV_ADMIN_PID)); \
+			ADMIN_PORT_VAL=$$(pick_port "$(ADMIN_PORT)" "$$BACKEND_PORT_VAL" "$$FRONTEND_PORT_VAL"); \
+			if [ "$$ADMIN_PORT_VAL" != "$(ADMIN_PORT)" ]; then \
+				printf "  ℹ Admin port %s occupied, using %s\n" "$(ADMIN_PORT)" "$$ADMIN_PORT_VAL"; \
+			fi; \
+			ADMIN_RETRIES=0; \
+			while [ $$ADMIN_RETRIES -lt 10 ]; do \
+				: > $(DEV_ADMIN_LOG); \
+				rm -f $(DEV_ADMIN_PID); \
+				(cd ui-admin && BACKEND_PORT="$$BACKEND_PORT_VAL" nohup npm run dev -- --port "$$ADMIN_PORT_VAL" < /dev/null > $(DEV_ADMIN_LOG) 2>&1 & echo $$! > $(DEV_ADMIN_PID)); \
+				if wait_for_listener "$$ADMIN_PORT_VAL"; then \
+					ADMIN_STATUS="started"; \
+					ADMIN_PID_VAL=$$(listener_pid "$$ADMIN_PORT_VAL"); \
+					printf '%s\n' "$$ADMIN_PID_VAL" > "$(DEV_ADMIN_PID)"; \
+					printf '%s\n' "$$ADMIN_PORT_VAL" > "$(DEV_ADMIN_PORT_FILE)"; \
+					break; \
+				fi; \
+				rm -f $(DEV_ADMIN_PID); \
+				if log_has_port_conflict "$(DEV_ADMIN_LOG)"; then \
+					ADMIN_RETRIES=$$((ADMIN_RETRIES + 1)); \
+					ADMIN_PORT_VAL=$$((ADMIN_PORT_VAL + 1)); \
+					printf "  ℹ Admin port conflict, retrying on %s\n" "$$ADMIN_PORT_VAL"; \
+					continue; \
+				fi; \
+				ADMIN_STATUS="failed"; \
+				ADMIN_PID_VAL="-"; \
+				rm -f "$(DEV_ADMIN_PORT_FILE)"; \
+				printf "  ✖ Admin UI failed to start. Inspect %s\n" "$(DEV_ADMIN_LOG)"; \
+				break; \
+			done; \
+			if [ "$$ADMIN_STATUS" = "" ]; then \
+				ADMIN_STATUS="failed"; \
+				ADMIN_PID_VAL="-"; \
+				rm -f "$(DEV_ADMIN_PORT_FILE)"; \
+				printf "  ✖ Admin UI failed to start after port retries. Inspect %s\n" "$(DEV_ADMIN_LOG)"; \
+			fi; \
 		fi; \
 	else \
 		ADMIN_STATUS="skipped"; \
+		rm -f "$(DEV_ADMIN_PORT_FILE)"; \
 	fi; \
 	echo ""; \
 	echo "  SERVICE            URL                              PID      STATUS"; \
 	echo "  ─────────────────  ───────────────────────────────  ───────  ─────────"; \
-	printf "  %-18s  %-31s  %-7s  ✅ %s\n" "Backend API" "http://localhost:$(BACKEND_PORT)" "$$BACKEND_PID_VAL" "$$BACKEND_STATUS"; \
-	printf "  %-18s  %-31s  %-7s  ✅ %s\n" "Frontend" "http://localhost:$(FRONTEND_PORT)" "$$FRONTEND_PID_VAL" "$$FRONTEND_STATUS"; \
+	printf "  %-18s  %-31s  %-7s  %s %s\n" "Backend API" "http://localhost:$$BACKEND_PORT_VAL" "$$BACKEND_PID_VAL" "$$(status_icon "$$BACKEND_STATUS")" "$$BACKEND_STATUS"; \
+	printf "  %-18s  %-31s  %-7s  %s %s\n" "Frontend" "http://localhost:$$FRONTEND_PORT_VAL" "$$FRONTEND_PID_VAL" "$$(status_icon "$$FRONTEND_STATUS")" "$$FRONTEND_STATUS"; \
 	if [ "$$ADMIN_STATUS" = "skipped" ]; then \
 		printf "  %-18s  %-31s  %-7s  ⏹  %s\n" "Admin UI" "-" "-" "$$ADMIN_STATUS"; \
 	else \
-		printf "  %-18s  %-31s  %-7s  ✅ %s\n" "Admin UI" "http://localhost:$(ADMIN_PORT)" "$$ADMIN_PID_VAL" "$$ADMIN_STATUS"; \
+		printf "  %-18s  %-31s  %-7s  %s %s\n" "Admin UI" "http://localhost:$$ADMIN_PORT_VAL" "$$ADMIN_PID_VAL" "$$(status_icon "$$ADMIN_STATUS")" "$$ADMIN_STATUS"; \
 	fi; \
 	echo ""; \
-	echo "  API Docs:  http://localhost:$(BACKEND_PORT)/docs"; \
+	echo "  API Docs:  http://localhost:$$BACKEND_PORT_VAL/docs"; \
 	echo "  Logs:      $(DEV_RUNTIME_DIR_ABS)/{backend,frontend,ui-admin}.log"; \
 	echo "  Stop:      make stop"; \
 	echo ""; \
 	echo "  Opening browser..."; \
 	sleep 2; \
-	open -a "Google Chrome" "http://localhost:$(FRONTEND_PORT)" 2>/dev/null \
-		|| open "http://localhost:$(FRONTEND_PORT)" 2>/dev/null \
+	open -a "Google Chrome" "http://localhost:$$FRONTEND_PORT_VAL" 2>/dev/null \
+		|| open "http://localhost:$$FRONTEND_PORT_VAL" 2>/dev/null \
 		|| true
 
 status: ## Show running status for dev services
-	@echo ""
-	@echo "┌──────────────────────────────────────────────────────────┐"
-	@echo "│         🏗️  Optimal Build Dev Services                   │"
-	@echo "├──────────────────────────────────────────────────────────┤"
-	@echo "│  SERVICE            STATUS        PID       PORT        │"
-	@echo "│  ────────────────   ───────────   ───────   ─────       │"
-	@if [ -f $(DEV_BACKEND_PID) ]; then \
-		PID=$$(cat $(DEV_BACKEND_PID)); \
-		if kill -0 $$PID 2>/dev/null; then \
-			printf "│  🖥️  %-13s   ✅ %-8s   %-7s   %-5s       │\n" "Backend API" "running" "$$PID" "$(BACKEND_PORT)"; \
-		else \
-			printf "│  🖥️  %-13s   ⚠️  %-8s   %-7s   %-5s       │\n" "Backend API" "stale" "$$PID" "-"; \
-		fi; \
+	@listener_pid() { \
+		lsof -nP -iTCP:$$1 -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 { print $$2; exit }'; \
+	}; \
+	BACKEND_PORT_VAL=$$(cat "$(DEV_BACKEND_PORT_FILE)" 2>/dev/null); \
+	FRONTEND_PORT_VAL=$$(cat "$(DEV_FRONTEND_PORT_FILE)" 2>/dev/null); \
+	ADMIN_PORT_VAL=$$(cat "$(DEV_ADMIN_PORT_FILE)" 2>/dev/null); \
+	echo ""; \
+	echo "┌──────────────────────────────────────────────────────────┐"; \
+	echo "│         🏗️  Optimal Build Dev Services                   │"; \
+	echo "├──────────────────────────────────────────────────────────┤"; \
+	echo "│  SERVICE            STATUS        PID       PORT        │"; \
+	echo "│  ────────────────   ───────────   ───────   ─────       │"; \
+	if [ -n "$$BACKEND_PORT_VAL" ] && PID=$$(listener_pid "$$BACKEND_PORT_VAL"); [ -n "$$PID" ]; then \
+		printf "│  🖥️  %-13s   ✅ %-8s   %-7s   %-5s       │\n" "Backend API" "running" "$$PID" "$$BACKEND_PORT_VAL"; \
 	else \
 		printf "│  🖥️  %-13s   ⏹️  %-8s   %-7s   %-5s       │\n" "Backend API" "stopped" "-" "-"; \
-	fi
-	@if [ -f $(DEV_FRONTEND_PID) ]; then \
-		PID=$$(cat $(DEV_FRONTEND_PID)); \
-		if kill -0 $$PID 2>/dev/null; then \
-			printf "│  🌐 %-13s   ✅ %-8s   %-7s   %-5s       │\n" "Frontend" "running" "$$PID" "$(FRONTEND_PORT)"; \
-		else \
-			printf "│  🌐 %-13s   ⚠️  %-8s   %-7s   %-5s       │\n" "Frontend" "stale" "$$PID" "-"; \
-		fi; \
+	fi; \
+	if [ -n "$$FRONTEND_PORT_VAL" ] && PID=$$(listener_pid "$$FRONTEND_PORT_VAL"); [ -n "$$PID" ]; then \
+		printf "│  🌐 %-13s   ✅ %-8s   %-7s   %-5s       │\n" "Frontend" "running" "$$PID" "$$FRONTEND_PORT_VAL"; \
 	else \
 		printf "│  🌐 %-13s   ⏹️  %-8s   %-7s   %-5s       │\n" "Frontend" "stopped" "-" "-"; \
-	fi
-	@if [ "$(INCLUDE_ADMIN)" != "0" ]; then \
-		if [ -f $(DEV_ADMIN_PID) ]; then \
-			PID=$$(cat $(DEV_ADMIN_PID)); \
-			if kill -0 $$PID 2>/dev/null; then \
-				printf "│  ⚙️  %-13s   ✅ %-8s   %-7s   %-5s       │\n" "Admin UI" "running" "$$PID" "$(ADMIN_PORT)"; \
-			else \
-				printf "│  ⚙️  %-13s   ⚠️  %-8s   %-7s   %-5s       │\n" "Admin UI" "stale" "$$PID" "-"; \
-			fi; \
+	fi; \
+	if [ "$(INCLUDE_ADMIN)" != "0" ]; then \
+		if [ -n "$$ADMIN_PORT_VAL" ] && PID=$$(listener_pid "$$ADMIN_PORT_VAL"); [ -n "$$PID" ]; then \
+			printf "│  ⚙️  %-13s   ✅ %-8s   %-7s   %-5s       │\n" "Admin UI" "running" "$$PID" "$$ADMIN_PORT_VAL"; \
 		else \
 			printf "│  ⚙️  %-13s   ⏹️  %-8s   %-7s   %-5s       │\n" "Admin UI" "stopped" "-" "-"; \
 		fi; \
-	fi
-	@echo "├──────────────────────────────────────────────────────────┤"
-	@echo "│  🔗 URLS                                                 │"
-	@if [ -f $(DEV_BACKEND_PID) ] && kill -0 $$(cat $(DEV_BACKEND_PID)) 2>/dev/null; then \
-		printf "│     📚 API Docs:   %-35s │\n" "http://localhost:$(BACKEND_PORT)/docs"; \
-	fi
-	@if [ -f $(DEV_FRONTEND_PID) ] && kill -0 $$(cat $(DEV_FRONTEND_PID)) 2>/dev/null; then \
-		printf "│     🌐 Frontend:   %-35s │\n" "http://localhost:$(FRONTEND_PORT)"; \
-	fi
-	@if [ "$(INCLUDE_ADMIN)" != "0" ] && [ -f $(DEV_ADMIN_PID) ] && kill -0 $$(cat $(DEV_ADMIN_PID)) 2>/dev/null; then \
-		printf "│     ⚙️  Admin:      %-35s │\n" "http://localhost:$(ADMIN_PORT)"; \
-	fi
-	@echo "└──────────────────────────────────────────────────────────┘"
-	@echo ""
+	fi; \
+	echo "├──────────────────────────────────────────────────────────┤"; \
+	echo "│  🔗 URLS                                                 │"; \
+	if [ -n "$$BACKEND_PORT_VAL" ] && PID=$$(listener_pid "$$BACKEND_PORT_VAL"); [ -n "$$PID" ]; then \
+		printf "│     📚 API Docs:   %-35s │\n" "http://localhost:$$BACKEND_PORT_VAL/docs"; \
+	fi; \
+	if [ -n "$$FRONTEND_PORT_VAL" ] && PID=$$(listener_pid "$$FRONTEND_PORT_VAL"); [ -n "$$PID" ]; then \
+		printf "│     🌐 Frontend:   %-35s │\n" "http://localhost:$$FRONTEND_PORT_VAL"; \
+	fi; \
+	if [ "$(INCLUDE_ADMIN)" != "0" ] && [ -n "$$ADMIN_PORT_VAL" ] && PID=$$(listener_pid "$$ADMIN_PORT_VAL"); [ -n "$$PID" ]; then \
+		printf "│     ⚙️  Admin:      %-35s │\n" "http://localhost:$$ADMIN_PORT_VAL"; \
+	fi; \
+	echo "└──────────────────────────────────────────────────────────┘"; \
+	echo ""
 
 stop: ## Stop services started with dev (excluding docker-compose)
-	@if [ -f $(DEV_BACKEND_PID) ]; then \
-		PID=$$(cat $(DEV_BACKEND_PID)); \
-		if kill -0 $$PID 2>/dev/null; then \
-			echo "Stopping backend API (PID $$PID)."; \
-			kill $$PID; \
+	@if [ -f $(DEV_BACKEND_PORT_FILE) ]; then \
+		PORT=$$(cat $(DEV_BACKEND_PORT_FILE)); \
+		PIDS=$$(lsof -nP -iTCP:$$PORT -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 { print $$2 }' | sort -u); \
+		if [ -n "$$PIDS" ]; then \
+			echo "Stopping backend API on port $$PORT (PID $$PIDS)."; \
+			kill $$PIDS 2>/dev/null || true; \
 		fi; \
-		rm -f $(DEV_BACKEND_PID); \
+		rm -f $(DEV_BACKEND_PID) $(DEV_BACKEND_PORT_FILE); \
 	else \
 		echo "Backend API is not running."; \
 	fi
-	@if [ -f $(DEV_FRONTEND_PID) ]; then \
-		PID=$$(cat $(DEV_FRONTEND_PID)); \
-		if kill -0 $$PID 2>/dev/null; then \
-			echo "Stopping frontend app (PID $$PID)."; \
-			kill $$PID; \
+	@if [ -f $(DEV_FRONTEND_PORT_FILE) ]; then \
+		PORT=$$(cat $(DEV_FRONTEND_PORT_FILE)); \
+		PIDS=$$(lsof -nP -iTCP:$$PORT -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 { print $$2 }' | sort -u); \
+		if [ -n "$$PIDS" ]; then \
+			echo "Stopping frontend app on port $$PORT (PID $$PIDS)."; \
+			kill $$PIDS 2>/dev/null || true; \
 		fi; \
-		rm -f $(DEV_FRONTEND_PID); \
+		rm -f $(DEV_FRONTEND_PID) $(DEV_FRONTEND_PORT_FILE); \
 	else \
 		echo "Frontend app is not running."; \
 	fi
-	@if [ -f $(DEV_ADMIN_PID) ]; then \
-		PID=$$(cat $(DEV_ADMIN_PID)); \
-		if kill -0 $$PID 2>/dev/null; then \
-			echo "Stopping admin UI (PID $$PID)."; \
-			kill $$PID; \
+	@if [ -f $(DEV_ADMIN_PORT_FILE) ]; then \
+		PORT=$$(cat $(DEV_ADMIN_PORT_FILE)); \
+		PIDS=$$(lsof -nP -iTCP:$$PORT -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 { print $$2 }' | sort -u); \
+		if [ -n "$$PIDS" ]; then \
+			echo "Stopping admin UI on port $$PORT (PID $$PIDS)."; \
+			kill $$PIDS 2>/dev/null || true; \
 		fi; \
-		rm -f $(DEV_ADMIN_PID); \
+		rm -f $(DEV_ADMIN_PID) $(DEV_ADMIN_PORT_FILE); \
 	else \
 		echo "Admin UI is not running."; \
 	fi
 
 ui-stop: ## Force stop UI servers on configured ports (kills stuck processes)
-	@echo "⏹️  Stopping UI servers on ports $(BACKEND_PORT), $(FRONTEND_PORT), $(ADMIN_PORT)..."
-	@-pids=$$(lsof -ti:$(FRONTEND_PORT) 2>/dev/null); \
+	@BACKEND_PORT_VAL=$$(cat "$(DEV_BACKEND_PORT_FILE)" 2>/dev/null); \
+	FRONTEND_PORT_VAL=$$(cat "$(DEV_FRONTEND_PORT_FILE)" 2>/dev/null); \
+	ADMIN_PORT_VAL=$$(cat "$(DEV_ADMIN_PORT_FILE)" 2>/dev/null); \
+	echo "⏹️  Stopping UI servers on ports $$BACKEND_PORT_VAL, $$FRONTEND_PORT_VAL, $$ADMIN_PORT_VAL..."; \
+	pids=""; \
+	if [ -n "$$FRONTEND_PORT_VAL" ]; then \
+		pids=$$(lsof -nP -iTCP:$$FRONTEND_PORT_VAL -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 { print $$2 }' | sort -u); \
+	fi; \
 	if [ "$$pids" ]; then \
-		echo "Killing frontend processes on port $(FRONTEND_PORT): $$pids"; \
+		echo "Killing frontend processes on port $$FRONTEND_PORT_VAL: $$pids"; \
 		kill $$pids 2>/dev/null || true; \
 	else \
-		echo "ℹ️  No frontend server running on port $(FRONTEND_PORT)"; \
-	fi
-	@-pids=$$(lsof -ti:$(ADMIN_PORT) 2>/dev/null); \
+		echo "ℹ️  No frontend server running on port $$FRONTEND_PORT_VAL"; \
+	fi; \
+	pids=""; \
+	if [ -n "$$ADMIN_PORT_VAL" ]; then \
+		pids=$$(lsof -nP -iTCP:$$ADMIN_PORT_VAL -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 { print $$2 }' | sort -u); \
+	fi; \
 	if [ "$$pids" ]; then \
-		echo "Killing admin UI processes on port $(ADMIN_PORT): $$pids"; \
+		echo "Killing admin UI processes on port $$ADMIN_PORT_VAL: $$pids"; \
 		kill $$pids 2>/dev/null || true; \
 	else \
-		echo "ℹ️  No admin UI server running on port $(ADMIN_PORT)"; \
-	fi
-	@-pids=$$(lsof -ti:$(BACKEND_PORT) 2>/dev/null); \
+		echo "ℹ️  No admin UI server running on port $$ADMIN_PORT_VAL"; \
+	fi; \
+	pids=""; \
+	if [ -n "$$BACKEND_PORT_VAL" ]; then \
+		pids=$$(lsof -nP -iTCP:$$BACKEND_PORT_VAL -sTCP:LISTEN 2>/dev/null | awk 'NR > 1 { print $$2 }' | sort -u); \
+	fi; \
 	if [ "$$pids" ]; then \
-		echo "Killing backend processes on port $(BACKEND_PORT): $$pids"; \
+		echo "Killing backend processes on port $$BACKEND_PORT_VAL: $$pids"; \
 		kill $$pids 2>/dev/null || true; \
 	else \
-		echo "ℹ️  No backend server running on port $(BACKEND_PORT)"; \
+		echo "ℹ️  No backend server running on port $$BACKEND_PORT_VAL"; \
 	fi
 	@sleep 1
 	@echo "✅ All UI servers stopped"

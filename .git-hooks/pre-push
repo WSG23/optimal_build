@@ -54,8 +54,20 @@ if ! make lint > /dev/null 2>&1; then
 fi
 echo "   ✅ Linting OK"
 
+# Run type suppression budgets
+echo "3️⃣  Checking type suppression budgets..."
+if ! make type-ignore-budget > /dev/null 2>&1; then
+    echo ""
+    echo "❌ Type suppression budget exceeded!"
+    echo ""
+    echo "Run 'make type-ignore-budget' to see details."
+    echo ""
+    exit 1
+fi
+echo "   ✅ Type suppression budgets OK"
+
 # Run coding rules check
-echo "3️⃣  Checking coding rules..."
+echo "4️⃣  Checking coding rules..."
 if ! make check-coding-rules > /dev/null 2>&1; then
     echo ""
     echo "❌ Coding rules violations detected!"

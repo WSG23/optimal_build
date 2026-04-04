@@ -3,6 +3,32 @@ import path from 'node:path'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
+function resolveManualChunk(id: string): string | undefined {
+  if (id.includes('/node_modules/')) {
+    if (
+      id.includes('/@mui/') ||
+      id.includes('/@emotion/') ||
+      id.includes('/@popperjs/')
+    ) {
+      return 'vendor-mui'
+    }
+    if (id.includes('/recharts/')) {
+      return 'vendor-charts'
+    }
+    if (id.includes('/react-leaflet/') || id.includes('/leaflet/')) {
+      return 'vendor-leaflet'
+    }
+    if (id.includes('/three/')) {
+      return 'vendor-three'
+    }
+    if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) {
+      return 'vendor-react'
+    }
+  }
+
+  return undefined
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
@@ -33,6 +59,7 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: proxyTarget,
           changeOrigin: true,
+          ws: true,
         },
         '/static': {
           target: proxyTarget,
@@ -57,7 +84,9 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
-          // manualChunks removed for debugging
+          manualChunks(id) {
+            return resolveManualChunk(id)
+          },
         },
       },
     },

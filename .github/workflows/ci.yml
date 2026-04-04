@@ -483,6 +483,16 @@ jobs:
             tests/pwp/test_buildable_metrics.py \
             tests/test_integration/test_preview_job_integration.py
 
+      - name: Run finance release gate
+        run: |
+          cd backend
+          pytest -q \
+            tests/test_services/test_finance_golden_deals.py \
+            tests/test_api/test_finance_workbook.py \
+            tests/test_api/test_finance_origin_classification.py \
+            tests/test_api/test_audit.py \
+            tests/test_core/test_audit_ledger.py
+
       - name: Enforce backend runtime budgets
         run: |
           python backend/scripts/check_runtime_budget.py \
