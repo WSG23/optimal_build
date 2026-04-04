@@ -7,6 +7,37 @@ from uuid import UUID
 from app.models.business_performance import AgentDeal
 
 
+def audit_key_from_value(value: object | None) -> int | None:
+    """Derive a deterministic positive 31-bit audit key from a generic identifier."""
+
+    if value in (None, ""):
+        return None
+
+    if isinstance(value, int):
+        masked = value & 0x7FFFFFFF
+        return masked if masked > 0 else None
+
+    text = str(value).strip()
+    if not text:
+        return None
+
+    try:
+        numeric = int(text)
+    except (TypeError, ValueError):
+        numeric = None
+    if numeric is not None:
+        masked = numeric & 0x7FFFFFFF
+        if masked > 0:
+            return masked
+
+    try:
+        namespace = UUID(text)
+    except (TypeError, ValueError):
+        return None
+    masked = namespace.int & 0x7FFFFFFF
+    return masked if masked > 0 else None
+
+
 def audit_project_key(deal: AgentDeal) -> int | None:
     """Derive a deterministic integer key for audit ledger chaining.
 
@@ -21,13 +52,7 @@ def audit_project_key(deal: AgentDeal) -> int | None:
     """
     candidate_sources = [deal.project_id, deal.property_id, deal.id]
     for source in candidate_sources:
-        if not source:
-            continue
-        try:
-            namespace = UUID(str(source))
-        except (TypeError, ValueError):
-            continue
-        value = namespace.int & 0x7FFFFFFF
-        if value > 0:
+        value = audit_key_from_value(source)
+        if value is not None:
             return value
     return None

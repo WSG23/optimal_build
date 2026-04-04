@@ -150,6 +150,154 @@ def serialise_log(log: AuditLog) -> dict[str, Any]:
     }
 
 
+def build_evidence_report(
+    project_id: int, valid: bool, logs: list[AuditLog]
+) -> dict[str, Any]:
+    """Assemble an evidence-oriented summary for a project's audit ledger."""
+
+    event_counts: dict[str, int] = {}
+    exports: list[dict[str, Any]] = []
+    imports: list[dict[str, Any]] = []
+    recipients: set[str] = set()
+    scenario_events: list[dict[str, Any]] = []
+    finance_events: list[dict[str, Any]] = []
+    submission_events: list[dict[str, Any]] = []
+
+    for log in logs:
+        event_counts[log.event_type] = event_counts.get(log.event_type, 0) + 1
+        context = _normalise_context(log.context)
+        recorded_at = log.recorded_at.isoformat() if log.recorded_at else None
+
+        for key in ("recipient", "recipient_email", "shared_with"):
+            value = context.get(key)
+            if isinstance(value, str) and value.strip():
+                recipients.add(value.strip())
+        for key in ("recipients", "recipient_emails"):
+            value = context.get(key)
+            if isinstance(value, list):
+                recipients.update(
+                    item.strip()
+                    for item in value
+                    if isinstance(item, str) and item.strip()
+                )
+
+        if log.event_type == "export_generated":
+            exports.append(
+                {
+                    "version": log.version,
+                    "recorded_at": recorded_at,
+                    "format": context.get("format"),
+                    "export_type": context.get("export_type"),
+                    "scenario_id": context.get("scenario_id"),
+                    "scenario_name": context.get("scenario_name"),
+                    "accepted_suggestions": context.get("accepted_suggestions"),
+                    "include_pending": context.get("include_pending"),
+                    "include_rejected": context.get("include_rejected"),
+                }
+            )
+        if log.event_type == "workbook_imported":
+            imports.append(
+                {
+                    "version": log.version,
+                    "recorded_at": recorded_at,
+                    "format": context.get("format"),
+                    "workbook_format": context.get("workbook_format"),
+                    "scenario_id": context.get("scenario_id"),
+                    "scenario_name": context.get("scenario_name"),
+                    "asset_count": context.get("asset_count"),
+                }
+            )
+
+        scenario_name = context.get("scenario_name") or context.get("scenario")
+        scenario_id = context.get("scenario_id")
+        if scenario_name or scenario_id is not None:
+            scenario_events.append(
+                {
+                    "version": log.version,
+                    "event_type": log.event_type,
+                    "scenario_name": scenario_name,
+                    "scenario_id": scenario_id,
+                    "origin": context.get("origin"),
+                    "recorded_at": recorded_at,
+                }
+            )
+
+        if log.event_type == "finance_scenario_created":
+            finance_events.append(
+                {
+                    "version": log.version,
+                    "recorded_at": recorded_at,
+                    "scenario_id": context.get("scenario_id"),
+                    "scenario_name": context.get("scenario_name"),
+                    "origin": context.get("origin"),
+                    "currency": context.get("currency"),
+                    "is_primary": context.get("is_primary"),
+                    "has_asset_mix": context.get("has_asset_mix"),
+                    "has_capital_stack": context.get("has_capital_stack"),
+                    "has_sensitivity_bands": context.get("has_sensitivity_bands"),
+                }
+            )
+
+        if any(
+            key in context
+            for key in (
+                "agency",
+                "submission_no",
+                "submission_number",
+                "submission_type",
+                "package_status",
+                "submission_mode",
+            )
+        ):
+            submission_events.append(
+                {
+                    "version": log.version,
+                    "event_type": log.event_type,
+                    "recorded_at": recorded_at,
+                    "agency": context.get("agency"),
+                    "agency_name": context.get("agency_name"),
+                    "submission_no": context.get("submission_no")
+                    or context.get("submission_number"),
+                    "submission_type": context.get("submission_type"),
+                    "status": context.get("status"),
+                    "submission_mode": context.get("submission_mode"),
+                    "package_status": context.get("package_status"),
+                }
+            )
+
+    first_log = logs[0] if logs else None
+    last_log = logs[-1] if logs else None
+    event_type_summary = [
+        {"event_type": event_type, "count": count}
+        for event_type, count in sorted(event_counts.items())
+    ]
+    return {
+        "project_id": project_id,
+        "valid": valid,
+        "report_generated_at": datetime.now(UTC).isoformat(),
+        "timeframe": {
+            "first_recorded_at": (
+                first_log.recorded_at.isoformat() if first_log and first_log.recorded_at else None
+            ),
+            "last_recorded_at": (
+                last_log.recorded_at.isoformat() if last_log and last_log.recorded_at else None
+            ),
+        },
+        "chain": {
+            "entry_count": len(logs),
+            "signed_entries": sum(1 for log in logs if log.signature),
+            "latest_hash": last_log.hash if last_log else None,
+        },
+        "event_types": event_type_summary,
+        "exports": exports,
+        "imports": imports,
+        "recipients": sorted(recipients),
+        "scenario_events": scenario_events,
+        "finance_events": finance_events,
+        "submission_events": submission_events,
+    }
+
+
 def _diff_value(value_a: Any, value_b: Any) -> dict[str, Any] | None:
     """Return a diff structure describing the change between two scalars."""
 

@@ -132,6 +132,7 @@ class DeveloperBuildEnvelope(BaseModel):
     site_coverage_pct: Optional[float] = None
     assumptions: list[str] = Field(default_factory=list)
     source_reference: Optional[str] = None  # Data source attribution
+    rule_corpus_status: dict[str, Any] | None = None
 
 
 class DeveloperMassingLayer(BaseModel):

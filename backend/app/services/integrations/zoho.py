@@ -10,6 +10,8 @@ from typing import Any, Dict, Tuple
 import structlog
 from backend._compat.datetime import utcnow
 
+from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
+
 logger = structlog.get_logger()
 
 
@@ -32,6 +34,15 @@ class ZohoClient:
     def __init__(self, client_id: str | None = None, client_secret: str | None = None):
         self.client_id = client_id
         self.client_secret = client_secret
+
+    def source_metadata(self) -> ExternalSourceMetadata:
+        return ExternalSourceMetadata(
+            provider="zoho_crm",
+            state=ExternalSourceState.MOCK,
+            configured=bool(self.client_id and self.client_secret),
+            synthetic=True,
+            reason="Stub client; live Zoho CRM integration not configured",
+        )
 
     async def exchange_authorization_code(
         self, code: str, redirect_uri: str

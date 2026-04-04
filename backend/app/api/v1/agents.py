@@ -21,6 +21,7 @@ from app.core.config import settings
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.property import Property, PropertyType
+from app.schemas.external_sources import ExternalSourceMetadata
 from app.services.agents.gps_property_logger import DevelopmentScenario
 from app.services.geocoding import Address
 from app.utils.lazy import LazyProxy
@@ -247,6 +248,9 @@ class GPSLogResponse(BaseModel):
     property_id: UUID
     address: Address
     coordinates: CoordinatePair
+    geocoding_source: ExternalSourceMetadata | None = None
+    amenities_source: ExternalSourceMetadata | None = None
+    ura_source: ExternalSourceMetadata | None = None
     ura_zoning: Dict[str, Any]
     existing_use: str
     property_info: Optional[Dict[str, Any]]
@@ -556,6 +560,9 @@ async def log_property_by_gps(
                 latitude=result.coordinates[0],
                 longitude=result.coordinates[1],
             ),
+            geocoding_source=result.geocoding_source,
+            amenities_source=result.amenities_source,
+            ura_source=result.ura_source,
             ura_zoning=result.ura_zoning,
             existing_use=result.existing_use,
             property_info=result.property_info,
@@ -753,6 +760,9 @@ def _build_mock_gps_response(
         property_id=uuid4(),
         address=address,
         coordinates=CoordinatePair(latitude=latitude, longitude=longitude),
+        geocoding_source=geocoding_service.instance.get_google_geocoding_metadata(),
+        amenities_source=geocoding_service.instance.get_onemap_amenities_metadata(),
+        ura_source=ura_service.instance.source_metadata(),
         ura_zoning={
             "zone_code": "MU",
             "zone_description": "Mixed Use",

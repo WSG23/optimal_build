@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import re
+from collections import Counter
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
@@ -17,6 +18,8 @@ from app.schemas.buildable import (
     BuildableMetrics,
     BuildableRule,
     BuildableRuleProvenance,
+    RuleCorpusCounts,
+    RuleCorpusStatus,
     ZoneSource,
 )
 from sqlalchemy import select
@@ -150,30 +153,45 @@ async def calculate_buildable(
         nsa_est_m2=nsa_est,
     )
 
-    return BuildableCalculation(metrics=metrics, zone_source=zone_source, rules=rules)
+    return BuildableCalculation(
+        metrics=metrics,
+        zone_source=zone_source,
+        rule_corpus_status=overrides.rule_corpus_status or _empty_rule_corpus_status(
+            resolved.zone_code
+        ),
+        rules=rules,
+    )
 
 
 async def _load_rules_for_zone(
     session: AsyncSession, zone_code: str | None
 ) -> tuple[list[BuildableRule], _RuleOverrides]:
     if not zone_code:
-        return [], _RuleOverrides()
+        overrides = _RuleOverrides()
+        overrides.rule_corpus_status = _empty_rule_corpus_status(None)
+        return [], overrides
 
     stmt = (
         select(RefRule)
         .where(
             RefRule.topic.in_(["zoning", "building"])
         )  # Include both zoning and building rules
-        .where(RefRule.review_status == "approved")
-        .where(RefRule.is_published.is_(True))
     )
     result = await session.execute(stmt)
 
     overrides = _RuleOverrides()
+    applicable_records: list[RefRule] = []
+    approved_records: list[RefRule] = []
     rules: list[BuildableRule] = []
     for record in result.scalars():
         if not _zone_matches(record.applicability, zone_code):
             continue
+        applicable_records.append(record)
+        if not (
+            record.review_status == "approved" and bool(record.is_published)
+        ):
+            continue
+        approved_records.append(record)
         _apply_rule_override(overrides, record)
         provenance = BuildableRuleProvenance(
             rule_id=record.id,
@@ -193,8 +211,75 @@ async def _load_rules_for_zone(
                 provenance=provenance,
             )
         )
+    overrides.rule_corpus_status = _build_rule_corpus_status(
+        zone_code=zone_code,
+        applicable_records=applicable_records,
+        approved_records=approved_records,
+    )
     rules.sort(key=lambda item: (item.parameter_key, item.id))
     return rules, overrides
+
+
+def _empty_rule_corpus_status(zone_code: str | None) -> RuleCorpusStatus:
+    return RuleCorpusStatus(
+        zone_code=zone_code,
+        coverage_state="missing",
+        confidence="low",
+        counts=RuleCorpusCounts(),
+        applied_rule_ids=[],
+    )
+
+
+def _build_rule_corpus_status(
+    *,
+    zone_code: str | None,
+    applicable_records: Sequence[RefRule],
+    approved_records: Sequence[RefRule],
+) -> RuleCorpusStatus:
+    review_counts = Counter(record.review_status or "unknown" for record in applicable_records)
+    published_count = sum(1 for record in applicable_records if bool(record.is_published))
+    traceable_count = sum(
+        1
+        for record in approved_records
+        if any(
+            (
+                record.source_id,
+                record.document_id,
+                isinstance(record.source_provenance, dict),
+            )
+        )
+    )
+
+    if not applicable_records:
+        coverage_state = "missing"
+        confidence = "low"
+    elif not approved_records:
+        coverage_state = "review_pending"
+        confidence = "low"
+    elif len(approved_records) < len(applicable_records):
+        coverage_state = "partial"
+        confidence = "medium"
+    elif traceable_count < len(approved_records):
+        coverage_state = "approved"
+        confidence = "medium"
+    else:
+        coverage_state = "approved"
+        confidence = "high"
+
+    return RuleCorpusStatus(
+        zone_code=zone_code,
+        coverage_state=coverage_state,
+        confidence=confidence,
+        counts=RuleCorpusCounts(
+            applicable=len(applicable_records),
+            approved=len(approved_records),
+            published=published_count,
+            traceable=traceable_count,
+            needs_review=review_counts.get("needs_review", 0),
+            rejected=review_counts.get("rejected", 0),
+        ),
+        applied_rule_ids=[record.id for record in approved_records],
+    )
 
 
 def _determine_seed_tag(rule: RefRule) -> str | None:
@@ -418,6 +503,7 @@ class _RuleOverrides:
     height_limit_m: float | None = None
     storey_limit: int | None = None
     front_setback_m: float | None = None
+    rule_corpus_status: RuleCorpusStatus | None = None
 
 
 _NUMBER_PATTERN = re.compile(r"[-+]?(?:\d+\.?\d*|\d*\.?\d+)(?:[eE][-+]?\d+)?")

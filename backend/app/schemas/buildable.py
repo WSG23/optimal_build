@@ -53,6 +53,20 @@ _BUILDABLE_RESPONSE_EXAMPLE = {
         "parcel_source": "string",
         "note": "string",
     },
+    "rule_corpus_status": {
+        "zone_code": "SG:residential",
+        "coverage_state": "approved",
+        "confidence": "high",
+        "counts": {
+            "applicable": 3,
+            "approved": 3,
+            "published": 3,
+            "traceable": 3,
+            "needs_review": 0,
+            "rejected": 0,
+        },
+        "applied_rule_ids": [101, 102, 103],
+    },
     "rules": [
         {
             "id": 0,
@@ -224,6 +238,27 @@ class BuildableRule(BaseModel):
     provenance: BuildableRuleProvenance
 
 
+class RuleCorpusCounts(BaseModel):
+    """Coverage counts for the underlying rule corpus."""
+
+    applicable: int = 0
+    approved: int = 0
+    published: int = 0
+    traceable: int = 0
+    needs_review: int = 0
+    rejected: int = 0
+
+
+class RuleCorpusStatus(BaseModel):
+    """Summary describing rule-corpus quality for a buildable result."""
+
+    zone_code: str | None = None
+    coverage_state: str
+    confidence: str
+    counts: RuleCorpusCounts
+    applied_rule_ids: list[int] = Field(default_factory=list)
+
+
 class ZoneSource(BaseModel):
     """Metadata describing the source of the zoning information."""
 
@@ -240,6 +275,7 @@ class BuildableCalculation(BaseModel):
 
     metrics: BuildableMetrics
     zone_source: ZoneSource
+    rule_corpus_status: RuleCorpusStatus
     rules: list[BuildableRule]
 
     # type-ignore-meta: owner=backend expires=2026-06-30 reason=Pydantic computed_field decorator typing remains incomplete under strict mypy
@@ -263,6 +299,7 @@ class BuildableResponse(BaseModel):
     advisory_hints: list[str]
     metrics: BuildableMetrics
     zone_source: ZoneSource
+    rule_corpus_status: RuleCorpusStatus
     rules: list[BuildableRule]
 
 
@@ -276,5 +313,7 @@ __all__ = [
     "BuildableResponse",
     "BuildableRule",
     "BuildableRuleProvenance",
+    "RuleCorpusCounts",
+    "RuleCorpusStatus",
     "ZoneSource",
 ]

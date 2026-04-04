@@ -21,6 +21,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import RequestIdentity, require_reviewer
+from app.core.audit.ledger import append_event
 from app.core.config import settings
 from app.core.database import get_session
 from app.models.finance import (
@@ -31,6 +32,7 @@ from app.models.finance import (
     FinScenario,
 )
 from app.models.rkp import RefCostIndex
+from app.services.deals.utils import audit_key_from_value
 from app.schemas.finance import (
     AssetFinancialSummarySchema,
     CapitalStackSummarySchema,
@@ -211,6 +213,15 @@ def _build_finance_analytics_summary(
             ),
         }
     return analytics
+
+
+def _finance_scenario_origin(payload: FinanceFeasibilityRequest) -> str:
+    description = (payload.scenario.description or "").lower()
+    if "[workbook import context]" in description:
+        return "workbook"
+    if "[quick screen context]" in description:
+        return "quick_screen"
+    return "manual"
 
 
 # ---------------------------------------------------------------------------
@@ -836,6 +847,24 @@ async def run_finance_feasibility(
         session.add_all(results)
 
         await session.flush()
+        audit_project_id = audit_key_from_value(project_uuid)
+        if audit_project_id is not None:
+            await append_event(
+                session,
+                project_id=audit_project_id,
+                event_type="finance_scenario_created",
+                context={
+                    "scenario_id": scenario.id,
+                    "scenario_name": scenario.name,
+                    "currency": payload.scenario.currency,
+                    "origin": _finance_scenario_origin(payload),
+                    "is_primary": bool(scenario.is_primary),
+                    "has_asset_mix": bool(payload.scenario.asset_mix),
+                    "has_capital_stack": bool(payload.scenario.capital_stack),
+                    "has_sensitivity_bands": bool(payload.scenario.sensitivity_bands),
+                    "recipient_email": identity.email,
+                },
+            )
         await session.commit()
         await session.refresh(scenario)
 

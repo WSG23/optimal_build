@@ -18,6 +18,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback when geoalchemy missi
 from backend._compat.datetime import utcnow
 
 from app.models.property import Property, PropertyStatus, PropertyType
+from app.schemas.external_sources import ExternalSourceMetadata
 from app.services.agents.ura_integration import URAIntegrationService
 from app.services.geocoding import Address, GeocodingService
 from app.services.heritage_overlay import HeritageOverlayService
@@ -190,6 +191,9 @@ class PropertyLogResult:
         timestamp: Optional[datetime] = None,
         heritage_overlay: Optional[Dict[str, Any]] = None,
         jurisdiction_code: str = "SG",
+        geocoding_source: Optional[ExternalSourceMetadata] = None,
+        amenities_source: Optional[ExternalSourceMetadata] = None,
+        ura_source: Optional[ExternalSourceMetadata] = None,
     ):
         self.property_id = property_id
         self.address = address
@@ -202,6 +206,9 @@ class PropertyLogResult:
         self.timestamp = timestamp or utcnow()
         self.heritage_overlay = heritage_overlay
         self.jurisdiction_code = jurisdiction_code
+        self.geocoding_source = geocoding_source
+        self.amenities_source = amenities_source
+        self.ura_source = ura_source
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API response."""
@@ -220,6 +227,13 @@ class PropertyLogResult:
             "timestamp": self.timestamp.isoformat(),
             "heritage_overlay": self.heritage_overlay,
             "jurisdiction_code": self.jurisdiction_code,
+            "geocoding_source": (
+                self.geocoding_source.model_dump() if self.geocoding_source else None
+            ),
+            "amenities_source": (
+                self.amenities_source.model_dump() if self.amenities_source else None
+            ),
+            "ura_source": self.ura_source.model_dump() if self.ura_source else None,
         }
 
 
@@ -257,6 +271,9 @@ class GPSPropertyLogger:
         try:
             # Step 1: Reverse geocode to get address
             logger.info(f"Reverse geocoding coordinates: {latitude}, {longitude}")
+            geocoding_source = self.geocoding.get_google_geocoding_metadata()
+            amenities_source = self.geocoding.get_onemap_amenities_metadata()
+            ura_source = self.ura.source_metadata()
             address = await self.geocoding.reverse_geocode(latitude, longitude)
 
             if not address:
@@ -400,6 +417,9 @@ class GPSPropertyLogger:
                 timestamp=utcnow(),
                 heritage_overlay=heritage_overlay,
                 jurisdiction_code=jurisdiction,
+                geocoding_source=geocoding_source,
+                amenities_source=amenities_source,
+                ura_source=ura_source,
             )
 
         except Exception as e:

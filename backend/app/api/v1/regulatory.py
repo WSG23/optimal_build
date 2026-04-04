@@ -24,6 +24,7 @@ from app.schemas.regulatory import (
     AssetCompliancePathRead,
     AuthoritySubmissionCreate,
     AuthoritySubmissionRead,
+    CorenetCapabilityRead,
     ChangeOfUseCreate,
     ChangeOfUseRead,
     ChangeOfUseUpdate,
@@ -83,10 +84,33 @@ async def create_submission(
         )
         return result
     except ValueError as e:
+        status_code = (
+            status.HTTP_404_NOT_FOUND
+            if "not found" in str(e).lower()
+            else status.HTTP_400_BAD_REQUEST
+        )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status_code,
             detail=str(e),
         ) from e
+
+
+@router.get("/corenet-capability", response_model=CorenetCapabilityRead)
+async def get_corenet_capability(
+    db: AsyncSession = Depends(deps.get_db),
+) -> CorenetCapabilityRead:
+    """Return the effective CORENET integration mode and delivery gates."""
+
+    service = RegulatoryService(db)
+    capability = service.corenet.capability()
+    return CorenetCapabilityRead(
+        submission_mode_default=capability.submission_mode_default,
+        live_submission_available=capability.live_submission_available,
+        package_status=capability.package_status,
+        package_requirements=list(capability.package_requirements),
+        delivery_blockers=list(capability.delivery_blockers),
+        integration_status=service.corenet.source_metadata(),
+    )
 
 
 @router.get(

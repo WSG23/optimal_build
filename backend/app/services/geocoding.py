@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 import httpx
 from app.core.config import settings
+from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 from app.services.base import AsyncClientService
 
 logger = structlog.get_logger()
@@ -45,6 +46,66 @@ class GeocodingService(AsyncClientService):
                     "httpx AsyncClient unavailable; geocoding service will operate in mock mode"
                 )
                 self.client = None
+
+    def get_google_geocoding_metadata(self) -> ExternalSourceMetadata:
+        """Describe the current Google geocoding integration mode."""
+
+        if self.offline_mode:
+            return ExternalSourceMetadata(
+                provider="google_maps",
+                state=ExternalSourceState.MOCK,
+                configured=False,
+                synthetic=True,
+                reason="OFFLINE_MODE enabled",
+            )
+        if not self.google_maps_api_key:
+            return ExternalSourceMetadata(
+                provider="google_maps",
+                state=ExternalSourceState.MOCK,
+                configured=False,
+                synthetic=True,
+                reason="GOOGLE_MAPS_API_KEY not configured",
+            )
+        if self.client is None:
+            return ExternalSourceMetadata(
+                provider="google_maps",
+                state=ExternalSourceState.UNAVAILABLE,
+                configured=True,
+                synthetic=False,
+                reason="Geocoding client unavailable",
+            )
+        return ExternalSourceMetadata(
+            provider="google_maps",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
+        )
+
+    def get_onemap_amenities_metadata(self) -> ExternalSourceMetadata:
+        """Describe the current OneMap amenities integration mode."""
+
+        if self.offline_mode:
+            return ExternalSourceMetadata(
+                provider="onemap",
+                state=ExternalSourceState.MOCK,
+                configured=False,
+                synthetic=True,
+                reason="OFFLINE_MODE enabled",
+            )
+        if self.client is None:
+            return ExternalSourceMetadata(
+                provider="onemap",
+                state=ExternalSourceState.UNAVAILABLE,
+                configured=True,
+                synthetic=False,
+                reason="Geocoding client unavailable",
+            )
+        return ExternalSourceMetadata(
+            provider="onemap",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
+        )
 
     @staticmethod
     def _build_mock_address(latitude: float, longitude: float) -> Address:

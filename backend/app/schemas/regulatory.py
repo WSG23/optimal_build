@@ -1,10 +1,11 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.regulatory import AssetType, SubmissionType
+from app.schemas.external_sources import ExternalSourceMetadata
 
 
 class SubmissionDocumentBase(BaseModel):
@@ -34,6 +35,7 @@ class AuthoritySubmissionBase(BaseModel):
 class AuthoritySubmissionCreate(AuthoritySubmissionBase):
     project_id: str  # Accepts UUID string or integer string
     agency: str  # Agency code (URA, BCA, etc.)
+    submission_mode: Literal["submission_prep", "live_submit"] = "submission_prep"
 
 
 class AuthoritySubmissionRead(AuthoritySubmissionBase):
@@ -44,6 +46,8 @@ class AuthoritySubmissionRead(AuthoritySubmissionBase):
     id: UUID
     project_id: UUID
     agency_id: UUID  # Return the agency_id, not the lazy-loaded relationship
+    agency_code: str | None = None
+    agency_name: str | None = None
     status: str
     title: str
     description: Optional[str] = None
@@ -52,7 +56,22 @@ class AuthoritySubmissionRead(AuthoritySubmissionBase):
     approved_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    submission_mode: str = "submission_prep"
+    package_status: str | None = None
+    package_requirements: list[str] = Field(default_factory=list)
+    delivery_blockers: list[str] = Field(default_factory=list)
+    live_submission_available: bool = False
+    integration_status: ExternalSourceMetadata | None = None
     # Note: documents are omitted to avoid lazy loading - fetch separately if needed
+
+
+class CorenetCapabilityRead(BaseModel):
+    submission_mode_default: str = "submission_prep"
+    live_submission_available: bool = False
+    package_status: str
+    package_requirements: list[str] = Field(default_factory=list)
+    delivery_blockers: list[str] = Field(default_factory=list)
+    integration_status: ExternalSourceMetadata
 
 
 class AuthoritySubmissionUpdate(BaseModel):

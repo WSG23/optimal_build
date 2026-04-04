@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 import httpx
 from app.core.config import settings
+from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 from app.services.base import AsyncClientService
 
 logger = structlog.get_logger()
@@ -56,6 +57,32 @@ class URAIntegrationService(AsyncClientService):
                 "httpx AsyncClient unavailable; URA integration will operate in mock mode"
             )
             self.client = None
+
+    def source_metadata(self) -> ExternalSourceMetadata:
+        """Describe the current URA integration mode."""
+
+        if not self.access_key:
+            return ExternalSourceMetadata(
+                provider="ura",
+                state=ExternalSourceState.MOCK,
+                configured=False,
+                synthetic=True,
+                reason="URA_ACCESS_KEY not configured",
+            )
+        if self.client is None:
+            return ExternalSourceMetadata(
+                provider="ura",
+                state=ExternalSourceState.UNAVAILABLE,
+                configured=True,
+                synthetic=False,
+                reason="HTTP client unavailable",
+            )
+        return ExternalSourceMetadata(
+            provider="ura",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
+        )
 
     async def _get_token(self) -> Optional[str]:
         """Get or refresh URA API token."""

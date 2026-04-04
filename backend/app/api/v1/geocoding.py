@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.external_sources import ExternalSourceMetadata
 from app.services.geocoding import GeocodingService
 
 router = APIRouter(prefix="/geocoding", tags=["geocoding"])
@@ -19,6 +20,7 @@ class GeocodeResponse(BaseModel):
     latitude: float
     longitude: float
     formatted_address: str = Field(serialization_alias="formattedAddress")
+    source: ExternalSourceMetadata
 
 
 @router.get("/forward", response_model=GeocodeResponse)
@@ -40,6 +42,7 @@ async def forward_geocode(
         latitude=latitude,
         longitude=longitude,
         formatted_address=formatted or address,
+        source=geocoding_service.get_google_geocoding_metadata(),
     )
 
 
@@ -62,4 +65,5 @@ async def reverse_geocode(
         latitude=latitude,
         longitude=longitude,
         formatted_address=address.full_address,
+        source=geocoding_service.get_google_geocoding_metadata(),
     )

@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
+from app.schemas.buildable import RuleCorpusStatus
 from app.schemas.finance import AssetFinancialSummarySchema
 
 FeasibilityRuleSeverity = Literal["critical", "important", "informational"]
@@ -18,11 +19,50 @@ class BuildEnvelopeSnapshot(BaseModel):
 
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
+    zone_code: str | None = None
+    zone_description: str | None = None
     site_area_sqm: float | None = Field(default=None, gt=0)
     allowable_plot_ratio: float | None = Field(default=None, gt=0)
     max_buildable_gfa_sqm: float | None = Field(default=None, gt=0)
     current_gfa_sqm: float | None = Field(default=None, ge=0)
     additional_potential_gfa_sqm: float | None = Field(default=None)
+    assumptions: list[str] = Field(default_factory=list)
+    source_reference: str | None = None
+    rule_corpus_status: RuleCorpusStatus | None = None
+
+    @field_validator("rule_corpus_status", mode="before")
+    @classmethod
+    def _normalise_rule_corpus_status(
+        cls, value: RuleCorpusStatus | dict[str, Any] | None
+    ) -> RuleCorpusStatus | dict[str, Any] | None:
+        if value is None or not isinstance(value, dict):
+            return value
+
+        payload = dict(value)
+        counts = payload.get("counts")
+        if isinstance(counts, dict):
+            payload["counts"] = {
+                "applicable": counts.get("applicable", 0),
+                "approved": counts.get("approved", 0),
+                "published": counts.get("published", 0),
+                "traceable": counts.get("traceable", 0),
+                "needs_review": counts.get(
+                    "needs_review", counts.get("needsReview", 0)
+                ),
+                "rejected": counts.get("rejected", 0),
+            }
+
+        return {
+            "zone_code": payload.get("zone_code", payload.get("zoneCode")),
+            "coverage_state": payload.get(
+                "coverage_state", payload.get("coverageState")
+            ),
+            "confidence": payload.get("confidence"),
+            "counts": payload.get("counts"),
+            "applied_rule_ids": payload.get(
+                "applied_rule_ids", payload.get("appliedRuleIds", [])
+            ),
+        }
 
 
 class NewFeasibilityProjectInput(BaseModel):
@@ -71,6 +111,7 @@ class FeasibilityRulesResponse(BaseModel):
     rules: list[FeasibilityRule]
     recommended_rule_ids: list[str]
     summary: FeasibilityRulesSummary
+    rule_corpus_status: RuleCorpusStatus | None = None
 
 
 class FeasibilityAssessmentRequest(BaseModel):
@@ -149,6 +190,7 @@ class FeasibilityAssessmentResponse(BaseModel):
     asset_mix_summary: AssetFinancialSummarySchema | None = None
     constraint_log: list[AssetConstraintViolation] = Field(default_factory=list)
     optimizer_confidence: float | None = None
+    rule_corpus_status: RuleCorpusStatus | None = None
 
 
 __all__ = [

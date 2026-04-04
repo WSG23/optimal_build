@@ -6,8 +6,9 @@ This module provides compliance validation functions based on Singapore's:
 """
 
 import asyncio
+from collections import Counter
 from decimal import Decimal
-from typing import Any, Awaitable, Callable, Dict, TypeVar
+from typing import Any, Awaitable, Callable, Dict, Iterable, TypeVar
 
 from backend._compat.datetime import utcnow
 
@@ -42,6 +43,127 @@ async def _run_with_temporary_async_session(
         await engine.dispose()
 
 
+def _rule_zone_code(rule: Any) -> str | None:
+    applicability = getattr(rule, "applicability", None)
+    if not isinstance(applicability, dict):
+        return None
+    zone = applicability.get("zone_code") or applicability.get("zone")
+    if isinstance(zone, list):
+        return next((str(item) for item in zone if item), None)
+    if zone:
+        return str(zone)
+    return None
+
+
+def _filter_rules_for_zone(rules: Iterable[Any], zone_code: str) -> list[Any]:
+    return [rule for rule in rules if _rule_zone_code(rule) == zone_code]
+
+
+def _approved_published_rules(rules: Iterable[Any]) -> list[Any]:
+    return [
+        rule
+        for rule in rules
+        if getattr(rule, "review_status", None) == "approved"
+        and bool(getattr(rule, "is_published", False))
+    ]
+
+
+def _serialise_rule_evidence(rule: Any) -> dict[str, Any]:
+    provenance = getattr(rule, "source_provenance", None)
+    if isinstance(provenance, dict):
+        source_provenance = dict(provenance)
+    else:
+        source_provenance = {}
+
+    if getattr(rule, "review_status", None) == "approved":
+        source_provenance.setdefault("document_id", getattr(rule, "document_id", None))
+        source_provenance.setdefault("clause_id", None)
+        source_provenance.setdefault("pages", [])
+
+    return {
+        "rule_id": getattr(rule, "id", None),
+        "source_id": getattr(rule, "source_id", None),
+        "document_id": getattr(rule, "document_id", None),
+        "authority": getattr(rule, "authority", None),
+        "topic": getattr(rule, "topic", None),
+        "parameter_key": getattr(rule, "parameter_key", None),
+        "operator": getattr(rule, "operator", None),
+        "value": getattr(rule, "value", None),
+        "unit": getattr(rule, "unit", None),
+        "clause_ref": getattr(rule, "clause_ref", None),
+        "review_status": getattr(rule, "review_status", None),
+        "is_published": bool(getattr(rule, "is_published", False)),
+        "applicability": getattr(rule, "applicability", None) or {},
+        "notes": getattr(rule, "notes", None),
+        "review_notes": getattr(rule, "review_notes", None),
+        "source_provenance": source_provenance,
+    }
+
+
+def _rule_corpus_status(
+    *,
+    authority: str,
+    topic: str,
+    zone_code: str,
+    applicable_rules: list[Any],
+    approved_rules: list[Any],
+) -> dict[str, Any]:
+    review_counts = Counter(
+        str(getattr(rule, "review_status", "unknown")) for rule in applicable_rules
+    )
+    published_count = sum(
+        1 for rule in applicable_rules if bool(getattr(rule, "is_published", False))
+    )
+    traceable_count = sum(
+        1
+        for rule in approved_rules
+        if any(
+            (
+                getattr(rule, "source_id", None),
+                getattr(rule, "document_id", None),
+                isinstance(getattr(rule, "source_provenance", None), dict),
+            )
+        )
+    )
+
+    if not applicable_rules:
+        coverage_state = "missing"
+        confidence = "low"
+    elif not approved_rules:
+        coverage_state = "review_pending"
+        confidence = "low"
+    elif len(approved_rules) < len(applicable_rules):
+        coverage_state = "partial"
+        confidence = "medium"
+    elif traceable_count < len(approved_rules):
+        coverage_state = "approved"
+        confidence = "medium"
+    else:
+        coverage_state = "approved"
+        confidence = "high"
+
+    return {
+        "authority": authority,
+        "topic": topic,
+        "zone_code": zone_code,
+        "coverage_state": coverage_state,
+        "confidence": confidence,
+        "counts": {
+            "applicable": len(applicable_rules),
+            "approved": len(approved_rules),
+            "published": published_count,
+            "traceable": traceable_count,
+            "needs_review": review_counts.get("needs_review", 0),
+            "rejected": review_counts.get("rejected", 0),
+        },
+        "applied_rule_ids": [
+            getattr(rule, "id", None)
+            for rule in approved_rules
+            if getattr(rule, "id", None) is not None
+        ],
+    }
+
+
 async def check_ura_compliance(
     property: SingaporeProperty, session: AsyncSession
 ) -> Dict[str, Any]:
@@ -70,6 +192,23 @@ async def check_ura_compliance(
             "violations": [],
             "warnings": ["Property zoning must be specified for compliance check"],
             "rules_applied": {},
+            "rule_evidence": [],
+            "rule_corpus_status": {
+                "authority": "URA",
+                "topic": "zoning",
+                "zone_code": None,
+                "coverage_state": "missing",
+                "confidence": "low",
+                "counts": {
+                    "applicable": 0,
+                    "approved": 0,
+                    "published": 0,
+                    "traceable": 0,
+                    "needs_review": 0,
+                    "rejected": 0,
+                },
+                "applied_rule_ids": [],
+            },
         }
 
     # Convert enum to string if needed
@@ -84,19 +223,20 @@ async def check_ura_compliance(
         .where(RefRule.jurisdiction == "SG")
         .where(RefRule.authority == "URA")
         .where(RefRule.topic == "zoning")
-        .where(RefRule.review_status == "approved")
-        .where(RefRule.is_published)
     )
     result = await session.execute(stmt)
     all_rules = result.scalars().all()
 
     # Filter rules applicable to this zone
-    applicable_rules = []
-    for rule in all_rules:
-        if rule.applicability and isinstance(rule.applicability, dict):
-            rule_zone_code = rule.applicability.get("zone_code")
-            if rule_zone_code == zone_code:
-                applicable_rules.append(rule)
+    applicable_rules = _filter_rules_for_zone(all_rules, zone_code)
+    approved_rules = _approved_published_rules(applicable_rules)
+    rule_corpus_status = _rule_corpus_status(
+        authority="URA",
+        topic="zoning",
+        zone_code=zone_code,
+        applicable_rules=applicable_rules,
+        approved_rules=approved_rules,
+    )
 
     if not applicable_rules:
         return {
@@ -105,11 +245,26 @@ async def check_ura_compliance(
             "violations": [],
             "warnings": [f"No zoning rules found in database for zone {zone_code}"],
             "rules_applied": {},
+            "rule_evidence": [],
+            "rule_corpus_status": rule_corpus_status,
+        }
+
+    if not approved_rules:
+        return {
+            "status": ComplianceStatus.WARNING,
+            "message": f"URA rules for zoning {zoning_str} exist but are not approved",
+            "violations": [],
+            "warnings": [
+                f"URA rules exist for zone {zone_code}, but none are both approved and published"
+            ],
+            "rules_applied": {},
+            "rule_evidence": [],
+            "rule_corpus_status": rule_corpus_status,
         }
 
     # Parse rules into dict for easier checking
     rules_dict = {}
-    for rule in applicable_rules:
+    for rule in approved_rules:
         if rule.parameter_key == "zoning.max_far":
             rules_dict["max_plot_ratio"] = Decimal(rule.value)
         elif rule.parameter_key == "zoning.max_building_height_m":
@@ -163,6 +318,8 @@ async def check_ura_compliance(
         "rules_applied": {
             k: str(v) if isinstance(v, Decimal) else v for k, v in rules_dict.items()
         },
+        "rule_evidence": [_serialise_rule_evidence(rule) for rule in approved_rules],
+        "rule_corpus_status": rule_corpus_status,
     }
 
 
@@ -196,6 +353,23 @@ async def check_bca_compliance(
             "warnings": ["Property zoning must be specified for BCA compliance check"],
             "recommendations": [],
             "requirements_applied": {},
+            "rule_evidence": [],
+            "rule_corpus_status": {
+                "authority": "BCA",
+                "topic": "building",
+                "zone_code": None,
+                "coverage_state": "missing",
+                "confidence": "low",
+                "counts": {
+                    "applicable": 0,
+                    "approved": 0,
+                    "published": 0,
+                    "traceable": 0,
+                    "needs_review": 0,
+                    "rejected": 0,
+                },
+                "applied_rule_ids": [],
+            },
         }
 
     # Convert enum to string if needed
@@ -210,19 +384,20 @@ async def check_bca_compliance(
         .where(RefRule.jurisdiction == "SG")
         .where(RefRule.authority == "BCA")
         .where(RefRule.topic == "building")
-        .where(RefRule.review_status == "approved")
-        .where(RefRule.is_published)
     )
     result = await session.execute(stmt)
     all_rules = result.scalars().all()
 
     # Filter rules applicable to this zone
-    applicable_rules = []
-    for rule in all_rules:
-        if rule.applicability and isinstance(rule.applicability, dict):
-            rule_zone_code = rule.applicability.get("zone_code")
-            if rule_zone_code == zone_code:
-                applicable_rules.append(rule)
+    applicable_rules = _filter_rules_for_zone(all_rules, zone_code)
+    approved_rules = _approved_published_rules(applicable_rules)
+    rule_corpus_status = _rule_corpus_status(
+        authority="BCA",
+        topic="building",
+        zone_code=zone_code,
+        applicable_rules=applicable_rules,
+        approved_rules=approved_rules,
+    )
 
     if not applicable_rules:
         return {
@@ -232,11 +407,27 @@ async def check_bca_compliance(
             "warnings": [f"No building rules found in database for zone {zone_code}"],
             "recommendations": [],
             "requirements_applied": {},
+            "rule_evidence": [],
+            "rule_corpus_status": rule_corpus_status,
+        }
+
+    if not approved_rules:
+        return {
+            "status": ComplianceStatus.WARNING,
+            "message": f"BCA rules for zoning {zoning_str} exist but are not approved",
+            "violations": [],
+            "warnings": [
+                f"BCA rules exist for zone {zone_code}, but none are both approved and published"
+            ],
+            "recommendations": [],
+            "requirements_applied": {},
+            "rule_evidence": [],
+            "rule_corpus_status": rule_corpus_status,
         }
 
     # Parse rules into dict
     requirements = {}
-    for rule in applicable_rules:
+    for rule in approved_rules:
         if rule.parameter_key == "zoning.site_coverage.max_percent":
             # Convert "40%" string to 0.40 decimal
             value_str = rule.value.replace("%", "")
@@ -322,6 +513,8 @@ async def check_bca_compliance(
         "requirements_applied": {
             k: str(v) if isinstance(v, Decimal) else v for k, v in requirements.items()
         },
+        "rule_evidence": [_serialise_rule_evidence(rule) for rule in approved_rules],
+        "rule_corpus_status": rule_corpus_status,
     }
 
 
@@ -581,6 +774,14 @@ async def run_full_compliance_check(
             "ura_check": ura_check,
             "bca_check": bca_check,
             "gfa_calculation": gfa_calc,
+            "rule_corpus_status": {
+                "ura": ura_check.get("rule_corpus_status", {}),
+                "bca": bca_check.get("rule_corpus_status", {}),
+            },
+            "applied_rule_evidence": {
+                "ura": ura_check.get("rule_evidence", []),
+                "bca": bca_check.get("rule_evidence", []),
+            },
             "checked_at": utcnow().isoformat(),
         },
     }

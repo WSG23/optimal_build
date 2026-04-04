@@ -9,6 +9,7 @@ This replaces the hardcoded mock values in URAIntegrationService.get_zoning_info
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections import Counter
 from typing import Optional
 
 import structlog
@@ -57,6 +58,7 @@ class ZoningRulesResult:
     zone_description: Optional[str] = None
     source_reference: str = "RefRule Database"
     rules_found: int = 0
+    rule_corpus_status: dict[str, object] | None = None
 
     @property
     def has_data(self) -> bool:
@@ -138,8 +140,6 @@ async def get_zoning_rules_for_zone(
         select(RefRule)
         .where(RefRule.jurisdiction == jurisdiction)
         .where(RefRule.topic == "zoning")
-        .where(RefRule.review_status == "approved")
-        .where(RefRule.is_published.is_(True))
     )
 
     result = await session.execute(stmt)
@@ -152,6 +152,47 @@ async def get_zoning_rules_for_zone(
             rule_zone_code = rule.applicability.get("zone_code")
             if rule_zone_code and rule_zone_code.lower() == normalized_zone.lower():
                 applicable_rules.append(rule)
+    approved_rules = [
+        rule
+        for rule in applicable_rules
+        if rule.review_status == "approved" and bool(rule.is_published)
+    ]
+    review_counts = Counter((rule.review_status or "unknown") for rule in applicable_rules)
+    published_count = sum(1 for rule in applicable_rules if bool(rule.is_published))
+    traceable_count = sum(
+        1
+        for rule in approved_rules
+        if any((rule.source_id, rule.document_id, isinstance(rule.source_provenance, dict)))
+    )
+    if not applicable_rules:
+        coverage_state = "missing"
+        confidence = "low"
+    elif not approved_rules:
+        coverage_state = "review_pending"
+        confidence = "low"
+    elif len(approved_rules) < len(applicable_rules):
+        coverage_state = "partial"
+        confidence = "medium"
+    elif traceable_count < len(approved_rules):
+        coverage_state = "approved"
+        confidence = "medium"
+    else:
+        coverage_state = "approved"
+        confidence = "high"
+    rule_corpus_status = {
+        "zone_code": normalized_zone,
+        "coverage_state": coverage_state,
+        "confidence": confidence,
+        "counts": {
+            "applicable": len(applicable_rules),
+            "approved": len(approved_rules),
+            "published": published_count,
+            "traceable": traceable_count,
+            "needs_review": review_counts.get("needs_review", 0),
+            "rejected": review_counts.get("rejected", 0),
+        },
+        "applied_rule_ids": [rule.id for rule in approved_rules if rule.id is not None],
+    }
 
     if not applicable_rules:
         logger.info(
@@ -165,6 +206,7 @@ async def get_zoning_rules_for_zone(
             zone_description=_extract_zone_description(normalized_zone),
             source_reference=f"No RefRule data for {normalized_zone}",
             rules_found=0,
+            rule_corpus_status=rule_corpus_status,
         )
 
     # Extract parameter values
@@ -172,7 +214,7 @@ async def get_zoning_rules_for_zone(
     building_height_limit_m: Optional[float] = None
     site_coverage_pct: Optional[float] = None
 
-    for rule in applicable_rules:
+    for rule in approved_rules:
         try:
             if rule.parameter_key == "zoning.max_far":
                 plot_ratio = float(rule.value)
@@ -204,5 +246,6 @@ async def get_zoning_rules_for_zone(
         zone_code=normalized_zone,
         zone_description=_extract_zone_description(normalized_zone),
         source_reference=f"URA Zoning Rules ({jurisdiction} RefRule Database)",
-        rules_found=len(applicable_rules),
+        rules_found=len(approved_rules),
+        rule_corpus_status=rule_corpus_status,
     )

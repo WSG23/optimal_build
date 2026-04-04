@@ -30,6 +30,12 @@ logger = structlog.get_logger()
 
 
 def _serialize_account(account: ListingIntegrationAccount) -> dict[str, Any]:
+    client = CLIENTS.get(account.provider)
+    provider_status = (
+        client.source_metadata().model_dump(mode="json")
+        if client is not None and hasattr(client, "source_metadata")
+        else None
+    )
     return {
         "id": account.id,
         "user_id": account.user_id,
@@ -39,6 +45,7 @@ def _serialize_account(account: ListingIntegrationAccount) -> dict[str, Any]:
         "updated_at": account.updated_at.isoformat() if account.updated_at else None,
         "metadata": account.metadata,
         "expires_at": account.expires_at.isoformat() if account.expires_at else None,
+        "provider_status": provider_status,
     }
 
 
@@ -130,7 +137,16 @@ async def publish_listing(
 
     client = _client_for(provider_enum)
     listing_id, provider_payload = await client.publish_listing(payload)
-    return {"listing_id": listing_id, "provider_payload": provider_payload}
+    provider_status = (
+        client.source_metadata().model_dump(mode="json")
+        if hasattr(client, "source_metadata")
+        else None
+    )
+    return {
+        "listing_id": listing_id,
+        "provider_payload": provider_payload,
+        "provider_status": provider_status,
+    }
 
 
 @router.post("/{provider}/disconnect")
@@ -153,7 +169,17 @@ async def disconnect_account(
         )
 
     await account_service.revoke_account(account=account, session=session)
-    return {"status": "disconnected", "provider": provider_enum.value}
+    client = _client_for(provider_enum)
+    provider_status = (
+        client.source_metadata().model_dump(mode="json")
+        if hasattr(client, "source_metadata")
+        else None
+    )
+    return {
+        "status": "disconnected",
+        "provider": provider_enum.value,
+        "provider_status": provider_status,
+    }
 
 
 def _resolve_provider(value: str) -> ListingProvider:

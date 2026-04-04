@@ -551,6 +551,9 @@ async def calculate_buildable_metrics(
             "efficiency_ratio": 0.82,
             "floor_to_floor_m": 4.0,
             "rules_applied": len(buildable_calc.rules),
+            "rule_corpus_status": buildable_calc.rule_corpus_status.model_dump(
+                mode="json"
+            ),
             "jurisdiction": jurisdiction,
             "zone_code": zoning,
         }
@@ -606,6 +609,20 @@ async def calculate_buildable_metrics(
             "efficiency_ratio": 0.82,
             "floor_to_floor_m": 4.0,
             "rules_applied": 0,
+            "rule_corpus_status": {
+                "zone_code": f"{jurisdiction}:{zoning}",
+                "coverage_state": "mock",
+                "confidence": "low",
+                "counts": {
+                    "applicable": 0,
+                    "approved": 0,
+                    "published": 0,
+                    "traceable": 0,
+                    "needs_review": 0,
+                    "rejected": 0,
+                },
+                "applied_rule_ids": [],
+            },
             "jurisdiction": jurisdiction,
             "zone_code": zoning,
             "fallback_used": True,
@@ -694,7 +711,10 @@ async def check_compliance(
                     else ura_result["status"]
                 ),
                 "violations": ura_result.get("violations", []),
+                "warnings": ura_result.get("warnings", []),
                 "rules_applied": ura_result.get("rules_applied", {}),
+                "rule_evidence": ura_result.get("rule_evidence", []),
+                "rule_corpus_status": ura_result.get("rule_corpus_status", {}),
             },
             "bca_check": {
                 "status": (
@@ -703,7 +723,10 @@ async def check_compliance(
                     else bca_result["status"]
                 ),
                 "violations": bca_result.get("violations", []),
+                "warnings": bca_result.get("warnings", []),
                 "requirements_applied": bca_result.get("requirements_applied", {}),
+                "rule_evidence": bca_result.get("rule_evidence", []),
+                "rule_corpus_status": bca_result.get("rule_corpus_status", {}),
             },
             "proposed_design": {
                 "land_area_sqm": float(land_area),

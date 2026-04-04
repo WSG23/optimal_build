@@ -11,6 +11,7 @@ Original file: 2,509 lines → split into 4 files (~600 lines each)
 from fastapi import APIRouter
 
 from app.api.v1.developers_gps import router as gps_router
+from app.api.v1.developers_deal_calculator import router as deal_calculator_router
 from app.api.v1.developers_checklists import router as checklists_router
 from app.api.v1.developers_conditions import router as conditions_router
 
@@ -74,6 +75,7 @@ router = APIRouter()
 # Include all domain routers (they already have prefix="/developers")
 # We need to strip the prefix since they're being included at the same level
 router.include_router(gps_router, prefix="", tags=["developers"])
+router.include_router(deal_calculator_router, prefix="", tags=["developers"])
 router.include_router(checklists_router, prefix="", tags=["developers"])
 router.include_router(conditions_router, prefix="", tags=["developers"])
 

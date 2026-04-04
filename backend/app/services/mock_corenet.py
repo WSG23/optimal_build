@@ -3,7 +3,9 @@ import asyncio
 import random
 from datetime import datetime
 from typing import Dict, Any
+
 from app.models.regulatory import AgencyCode, SubmissionStatus
+from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,15 @@ class MockCorenetService:
 
     def __init__(self) -> None:
         self.mock_delay_ms = 500  # Simulate network latency
+
+    def source_metadata(self) -> ExternalSourceMetadata:
+        return ExternalSourceMetadata(
+            provider="corenet",
+            state=ExternalSourceState.MOCK,
+            configured=False,
+            synthetic=True,
+            reason="Mock CORENET service; live government integration not configured",
+        )
 
     async def submit_to_agency(
         self,
@@ -43,6 +54,7 @@ class MockCorenetService:
             "status": "received",  # External system status
             "timestamp": datetime.utcnow().isoformat(),
             "message": f"Submission received by {agency_code}. Reference: {ref_no}",
+            "integration_status": self.source_metadata().model_dump(mode="json"),
         }
 
     async def check_status(self, agency_code: str, reference_no: str) -> Dict[str, Any]:
@@ -85,6 +97,7 @@ class MockCorenetService:
             "mapped_status": self._map_external_status(s),
             "remarks": m,
             "last_updated": datetime.utcnow().isoformat(),
+            "integration_status": self.source_metadata().model_dump(mode="json"),
         }
 
     def _generate_ref_no(self, agency: str, type_code: str) -> str:

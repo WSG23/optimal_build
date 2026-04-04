@@ -6,20 +6,85 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.core.audit.ledger import append_event
 from app.models.regulatory import (
     AuthoritySubmission,
     RegulatoryAgency,
     SubmissionStatus,
 )
 from app.models.projects import Project
+from app.services.deals.utils import audit_key_from_value
 from app.schemas.regulatory import AuthoritySubmissionCreate
-from app.services.mock_corenet import MockCorenetService
+from app.services.regulatory.corenet_adapter import (
+    CorenetAdapter,
+    get_corenet_adapter,
+)
 
 
 class RegulatoryService:
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, corenet: CorenetAdapter | None = None):
         self.db = db
-        self.corenet = MockCorenetService()
+        self.corenet = corenet or get_corenet_adapter()
+
+    async def _load_agency(self, agency_id: UUID | None) -> RegulatoryAgency | None:
+        if agency_id is None:
+            return None
+        return await self._maybe_await(self.db.get(RegulatoryAgency, agency_id))
+
+    async def _stamp_submission_metadata(
+        self,
+        submission: AuthoritySubmission,
+        *,
+        agency: RegulatoryAgency | None = None,
+    ) -> None:
+        resolved_agency = agency or await self._load_agency(getattr(submission, "agency_id", None))
+        capability = self.corenet.capability()
+        setattr(
+            submission,
+            "integration_status",
+            self.corenet.source_metadata().model_dump(mode="json"),
+        )
+        setattr(submission, "agency_code", resolved_agency.code if resolved_agency else None)
+        setattr(submission, "agency_name", resolved_agency.name if resolved_agency else None)
+        setattr(submission, "submission_mode", capability.submission_mode_default)
+        setattr(submission, "package_status", capability.package_status)
+        setattr(
+            submission, "package_requirements", list(capability.package_requirements)
+        )
+        setattr(submission, "delivery_blockers", list(capability.delivery_blockers))
+        setattr(
+            submission,
+            "live_submission_available",
+            capability.live_submission_available,
+        )
+
+    async def _append_submission_audit(
+        self,
+        *,
+        project_id: UUID,
+        event_type: str,
+        submission: AuthoritySubmission,
+        agency: RegulatoryAgency | None,
+    ) -> None:
+        audit_project_id = audit_key_from_value(project_id)
+        if audit_project_id is None:
+            return
+        await append_event(
+            self.db,
+            project_id=audit_project_id,
+            event_type=event_type,
+            context={
+                "agency": agency.code if agency else getattr(submission, "agency_code", None),
+                "agency_name": agency.name if agency else getattr(submission, "agency_name", None),
+                "submission_id": str(submission.id),
+                "submission_no": submission.submission_no,
+                "submission_type": str(submission.submission_type),
+                "submission_mode": getattr(submission, "submission_mode", None),
+                "package_status": getattr(submission, "package_status", None),
+                "status": str(submission.status),
+            },
+        )
+        await self._maybe_await(self.db.commit())
 
     @staticmethod
     async def _maybe_await(value):
@@ -34,8 +99,17 @@ class RegulatoryService:
         submitted_by_id: Optional[UUID] = None,
     ) -> AuthoritySubmission:
         """
-        Creates a new submission record and 'sends' it to the external agency via MockCorenet.
+        Creates a submission record and routes it through the configured CORENET adapter.
         """
+        capability = self.corenet.capability()
+        if (
+            submission.submission_mode == "live_submit"
+            and not capability.live_submission_available
+        ):
+            raise ValueError(
+                "Live CORENET submission is unavailable; create a submission-ready package instead"
+            )
+
         # 1. Validate Project
         result = await self._maybe_await(
             self.db.execute(select(Project).filter(Project.id == project_id))
@@ -70,8 +144,16 @@ class RegulatoryService:
             agency_id=agency.id,
             submission_type=submission.submission_type,
             title=f"{submission.agency} Submission for {project.project_code}",
-            status=SubmissionStatus.SUBMITTED,  # Jump to submitted for demo flow
-            submitted_at=datetime.utcnow(),
+            status=(
+                SubmissionStatus.SUBMITTED
+                if submission.submission_mode == "live_submit"
+                else SubmissionStatus.DRAFT
+            ),
+            submitted_at=(
+                datetime.utcnow()
+                if submission.submission_mode == "live_submit"
+                else None
+            ),
             # submitted_by_id=submitted_by_id # User tracking if available
         )
         self.db.add(db_submission)
@@ -89,9 +171,67 @@ class RegulatoryService:
         # 5. Update Record with External Reference
         if external_response.get("success"):
             db_submission.submission_no = external_response.get("transaction_id")
-            # db_submission.status = SubmissionStatus.IN_REVIEW # or keep as submitted
+            if submission.submission_mode == "live_submit":
+                db_submission.submitted_at = datetime.utcnow()
             await self._maybe_await(self.db.commit())
             await self._maybe_await(self.db.refresh(db_submission))
+        if submission.submission_mode != "live_submit":
+            package_status = external_response.get("package_status")
+            if package_status:
+                existing_desc = db_submission.description or ""
+                db_submission.description = (
+                    f"{existing_desc}\n\n[Submission Package]: {package_status}".strip()
+                )
+                await self._maybe_await(self.db.commit())
+                await self._maybe_await(self.db.refresh(db_submission))
+        setattr(
+            db_submission,
+            "integration_status",
+            external_response.get("integration_status"),
+        )
+        setattr(db_submission, "agency_code", agency.code)
+        setattr(db_submission, "agency_name", agency.name)
+        setattr(
+            db_submission,
+            "submission_mode",
+            external_response.get("submission_mode", capability.submission_mode_default),
+        )
+        setattr(
+            db_submission,
+            "package_status",
+            external_response.get("package_status", capability.package_status),
+        )
+        setattr(
+            db_submission,
+            "package_requirements",
+            external_response.get(
+                "package_requirements", list(capability.package_requirements)
+            ),
+        )
+        setattr(
+            db_submission,
+            "delivery_blockers",
+            external_response.get(
+                "delivery_blockers", list(capability.delivery_blockers)
+            ),
+        )
+        setattr(
+            db_submission,
+            "live_submission_available",
+            external_response.get(
+                "live_submission_available", capability.live_submission_available
+            ),
+        )
+        await self._append_submission_audit(
+            project_id=project_id,
+            event_type=(
+                "submission_submitted"
+                if submission.submission_mode == "live_submit"
+                else "submission_packaged"
+            ),
+            submission=db_submission,
+            agency=agency,
+        )
 
         return db_submission
 
@@ -106,6 +246,12 @@ class RegulatoryService:
         )
         if not submission:
             raise ValueError("Submission not found")
+
+        capability = self.corenet.capability()
+
+        if submission.status == SubmissionStatus.DRAFT:
+            await self._stamp_submission_metadata(submission)
+            return submission
 
         if not submission.submission_no or submission.status in [
             SubmissionStatus.APPROVED,
@@ -148,6 +294,49 @@ class RegulatoryService:
             await self._maybe_await(self.db.commit())
             await self._maybe_await(self.db.refresh(submission))
 
+        setattr(
+            submission,
+            "integration_status",
+            status_update.get("integration_status"),
+        )
+        agency = None
+        if agency_code and getattr(submission, "agency_id", None) is not None:
+            agency = await self._load_agency(submission.agency_id)
+        setattr(submission, "agency_code", agency.code if agency else agency_code)
+        setattr(submission, "agency_name", agency.name if agency else None)
+        setattr(
+            submission,
+            "submission_mode",
+            status_update.get("submission_mode", capability.submission_mode_default),
+        )
+        setattr(
+            submission,
+            "package_status",
+            status_update.get("package_status", capability.package_status),
+        )
+        setattr(
+            submission,
+            "package_requirements",
+            status_update.get("package_requirements", list(capability.package_requirements)),
+        )
+        setattr(
+            submission,
+            "delivery_blockers",
+            status_update.get("delivery_blockers", list(capability.delivery_blockers)),
+        )
+        setattr(
+            submission,
+            "live_submission_available",
+            status_update.get(
+                "live_submission_available", capability.live_submission_available
+            ),
+        )
+        await self._append_submission_audit(
+            project_id=submission.project_id,
+            event_type="submission_status_changed",
+            submission=submission,
+            agency=agency,
+        )
         return submission
 
     async def get_project_submissions(
@@ -160,9 +349,17 @@ class RegulatoryService:
                 .order_by(AuthoritySubmission.created_at.desc())
             )
         )
-        return list(result.scalars().all())
+        submissions = list(result.scalars().all())
+        for submission in submissions:
+            await self._stamp_submission_metadata(submission)
+        return submissions
 
     async def get_submission(
         self, submission_id: UUID
     ) -> Optional[AuthoritySubmission]:
-        return await self._maybe_await(self.db.get(AuthoritySubmission, submission_id))
+        submission = await self._maybe_await(
+            self.db.get(AuthoritySubmission, submission_id)
+        )
+        if submission is not None:
+            await self._stamp_submission_metadata(submission)
+        return submission

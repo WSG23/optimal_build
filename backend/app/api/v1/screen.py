@@ -96,6 +96,7 @@ async def screen_buildable(
             advisory_hints=hints,
             metrics=calculation.metrics,
             zone_source=calculation.zone_source,
+            rule_corpus_status=calculation.rule_corpus_status,
             rules=calculation.rules,
         )
     except Exception as exc:
@@ -230,6 +231,20 @@ def _build_mock_buildable_response(payload: BuildableRequest) -> BuildableRespon
         advisory_hints=hints,
         metrics=metrics,
         zone_source=zone_source,
+        rule_corpus_status={
+            "zone_code": zone_code,
+            "coverage_state": "mock",
+            "confidence": "low",
+            "counts": {
+                "applicable": len(rules),
+                "approved": len(rules),
+                "published": len(rules),
+                "traceable": len(rules),
+                "needs_review": 0,
+                "rejected": 0,
+            },
+            "applied_rule_ids": [rule.id for rule in rules],
+        },
         rules=rules,
     )
 

@@ -122,6 +122,48 @@ def _format_land_use(land_use: str) -> str:
     return cleaned if cleaned else "mixed use"
 
 
+def _rule_corpus_status(project: NewFeasibilityProjectInput):
+    envelope = getattr(project, "build_envelope", None)
+    if envelope is None:
+        return None
+    return getattr(envelope, "rule_corpus_status", None)
+
+
+def _rule_corpus_advisories(project: NewFeasibilityProjectInput) -> list[str]:
+    status = _rule_corpus_status(project)
+    if status is None:
+        return []
+
+    advisories: list[str] = []
+    coverage_state = (status.coverage_state or "").strip().lower()
+    confidence = (status.confidence or "").strip().lower()
+    counts = status.counts
+
+    if coverage_state == "approved":
+        advisories.append(
+            f"Rule corpus approved with {counts.approved} traceable entries ({confidence or 'high'} confidence)."
+        )
+    elif coverage_state == "partial":
+        advisories.append(
+            "Rule corpus only partially approved; validate unresolved controls before committing to underwriting assumptions."
+        )
+    elif coverage_state == "review_pending":
+        advisories.append(
+            "Rule corpus is pending review; treat feasibility outputs as provisional until the SG compliance set is approved."
+        )
+    elif coverage_state in {"missing", "mock"}:
+        advisories.append(
+            "No approved SG rule corpus is available for this zone; feasibility outputs rely on fallback zoning assumptions."
+        )
+
+    if counts.needs_review:
+        advisories.append(
+            f"{counts.needs_review} zoning rule entries still require review."
+        )
+
+    return advisories
+
+
 def _build_rules() -> list[FeasibilityRule]:
     return [FeasibilityRule.model_validate(item) for item in _BASE_RULES]
 
@@ -158,15 +200,21 @@ def generate_feasibility_rules(
 
     rules = _build_rules()
     recommended = [rule.id for rule in rules if rule.default_selected]
+    notes = f"Auto-selected based on {_format_land_use(project.land_use)} land use profile"
+    corpus_notes = _rule_corpus_advisories(project)
+    if corpus_notes:
+        notes = f"{notes}. {' '.join(corpus_notes)}"
+
     summary = FeasibilityRulesSummary(
         compliance_focus="Envelope controls and critical access provisions",
-        notes=f"Auto-selected based on {_format_land_use(project.land_use)} land use profile",
+        notes=notes,
     )
     return FeasibilityRulesResponse(
         project_id=_project_identifier(project),
         rules=rules,
         recommended_rule_ids=recommended,
         summary=summary,
+        rule_corpus_status=_rule_corpus_status(project),
     )
 
 
@@ -465,6 +513,7 @@ def run_feasibility_assessment(
         recommendations.append(
             "Investigate design options to improve fire access compliance buffers."
         )
+    recommendations.extend(_rule_corpus_advisories(payload.project))
 
     asset_mix, mix_notes, mix_outcome = _generate_asset_mix(payload.project, summary)
     asset_financials = _summarise_asset_financials(asset_mix)
@@ -495,6 +544,7 @@ def run_feasibility_assessment(
         asset_mix_summary=asset_financials,
         constraint_log=constraint_log,
         optimizer_confidence=optimizer_confidence,
+        rule_corpus_status=_rule_corpus_status(payload.project),
     )
 
 

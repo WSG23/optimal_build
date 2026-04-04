@@ -44,6 +44,7 @@ from app.core.jwt_auth import TokenData, get_optional_user
 from app.api.deps import RequestIdentity, require_reviewer
 from app.models.property import Property
 from app.models.projects import Project, ProjectPhase, ProjectType
+from app.schemas.external_sources import ExternalSourceMetadata
 from app.schemas.finance import FinanceAssetMixInput
 from app.services.finance_project_creation import (
     create_finance_project_from_capture,
@@ -428,6 +429,33 @@ async def _derive_build_envelope(
         )
     if rules_result.rules_found > 0:
         assumptions.append(f"Data from {rules_result.rules_found} RefRule entries.")
+    corpus_status = rules_result.rule_corpus_status or {}
+    if corpus_status:
+        coverage_state = corpus_status.get("coverage_state")
+        confidence = corpus_status.get("confidence")
+        counts = corpus_status.get("counts") or {}
+        approved_count = counts.get("approved", 0)
+        needs_review_count = counts.get("needs_review", 0)
+        if coverage_state == "partial":
+            assumptions.append(
+                "Rule corpus partially approved; verify unresolved zoning controls before underwriting."
+            )
+        elif coverage_state == "review_pending":
+            assumptions.append(
+                "Rule corpus exists but is pending review; treat envelope outputs as provisional."
+            )
+        elif coverage_state == "missing":
+            assumptions.append(
+                "No approved RefRule corpus found for this zone; envelope falls back to captured zoning metadata."
+            )
+        elif coverage_state == "approved":
+            assumptions.append(
+                f"Rule corpus approved with {approved_count} published entries ({confidence} confidence)."
+            )
+        if needs_review_count:
+            assumptions.append(
+                f"{needs_review_count} zoning rule entries still require review."
+            )
     if not assumptions:
         assumptions.append(
             "Plot ratio or site area unavailable; envelope estimated from captured metadata."
@@ -445,6 +473,7 @@ async def _derive_build_envelope(
         site_coverage_pct=_round_optional(site_coverage),
         assumptions=assumptions,
         source_reference=source_reference,
+        rule_corpus_status=rules_result.rule_corpus_status,
     )
 
 
@@ -979,6 +1008,9 @@ class DeveloperGPSLogResponse(BaseModel):
     property_id: UUID
     address: Address
     coordinates: CoordinatePair
+    geocoding_source: ExternalSourceMetadata | None = None
+    amenities_source: ExternalSourceMetadata | None = None
+    ura_source: ExternalSourceMetadata | None = None
     jurisdiction_code: str
     ura_zoning: Dict[str, Any]
     existing_use: str
@@ -1257,6 +1289,9 @@ async def developer_log_property_by_gps(
             latitude=result.coordinates[0],
             longitude=result.coordinates[1],
         ),
+        geocoding_source=result.geocoding_source,
+        amenities_source=result.amenities_source,
+        ura_source=result.ura_source,
         jurisdiction_code=property_jurisdiction,
         ura_zoning=result.ura_zoning,
         existing_use=result.existing_use,
