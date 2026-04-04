@@ -22,7 +22,6 @@ import {
   Language as LanguageIcon,
   LightMode as LightModeIcon,
   Menu as MenuIcon,
-  Settings as SettingsIcon,
   Share as ShareIcon,
   UploadFile as UploadFileIcon,
 } from '@mui/icons-material'
@@ -371,18 +370,6 @@ export function TopUtilityMenu() {
             </MenuItem>
           </>
         )}
-
-        <MenuItem
-          onClick={() => {
-            setAnchorEl(null)
-            setSnackbarMessage('Settings not implemented')
-          }}
-        >
-          <ListItemIcon>
-            <SettingsIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Settings</ListItemText>
-        </MenuItem>
 
         <Divider />
 

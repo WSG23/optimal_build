@@ -100,59 +100,18 @@ export function AppNavigation({
       </div>
 
       {!workspace ? (
-        <div
-          style={{
-            display: 'flex',
-            gap: '0.5rem',
-            padding: '0.75rem 1rem',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          }}
-        >
+        <div className="app-nav__workspace-switcher">
           <button
             type="button"
+            className={`app-nav__workspace-btn${selectedWorkspace === 'agent' ? ' app-nav__workspace-btn--active' : ''}`}
             onClick={() => handleWorkspaceSwitch('agent')}
-            style={{
-              flex: 1,
-              padding: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color:
-                selectedWorkspace === 'agent'
-                  ? '#fff'
-                  : 'rgba(255, 255, 255, 0.6)',
-              background:
-                selectedWorkspace === 'agent'
-                  ? 'rgba(255, 255, 255, 0.1)'
-                  : 'transparent',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
           >
             Agent
           </button>
           <button
             type="button"
+            className={`app-nav__workspace-btn${selectedWorkspace === 'developer' ? ' app-nav__workspace-btn--active' : ''}`}
             onClick={() => handleWorkspaceSwitch('developer')}
-            style={{
-              flex: 1,
-              padding: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color:
-                selectedWorkspace === 'developer'
-                  ? '#fff'
-                  : 'rgba(255, 255, 255, 0.6)',
-              background:
-                selectedWorkspace === 'developer'
-                  ? 'rgba(255, 255, 255, 0.1)'
-                  : 'transparent',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
           >
             Developer
           </button>
@@ -163,7 +122,7 @@ export function AppNavigation({
         {navItems.map(renderItem)}
         {isDeveloperMode &&
           renderItem({
-            key: 'developer_console' as unknown as NavItemKey,
+            key: 'developerConsole',
             label: 'Developer Console',
             path: '/developer',
             description: 'Debug tools & experiments',

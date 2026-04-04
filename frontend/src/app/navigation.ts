@@ -3,6 +3,7 @@ export type NavItemKey =
   | 'performance'
   | 'gpsCapture'
   | 'marketing'
+  | 'developerConsole'
   | 'advisory'
   | 'integrations'
   | 'siteAcquisition'
@@ -12,8 +13,7 @@ export type NavItemKey =
   | 'financialControl'
   | 'phaseManagement'
   | 'teamCoordination'
-  | 'regulatory'
-  | 'regulatoryNavigation' // Added
+  | 'regulatoryNavigation'
   | 'construction'
   | 'revenueOptimization'
   | 'documentation'
@@ -143,14 +143,6 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
     workspace: 'developer',
   },
   {
-    key: 'regulatory',
-    label: 'Regulatory Navigation',
-    path: '/app/regulatory',
-    description: 'Multi-authority coordination and compliance tracking.',
-    workspace: 'developer',
-    comingSoon: true,
-  },
-  {
     key: 'construction',
     label: 'Construction Delivery',
     path: '/app/construction',
@@ -176,8 +168,6 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
   },
 ]
 
-// Combined navigation (temporary - will add workspace switcher later)
-// Shows both Agent and Developer tools for now
 export const NAV_ITEMS: NavItem[] = [...AGENT_NAV_ITEMS, ...DEVELOPER_NAV_ITEMS]
 
 export function resolveNavPath(

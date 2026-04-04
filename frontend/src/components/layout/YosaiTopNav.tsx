@@ -23,7 +23,8 @@ import { useProject } from '../../contexts/useProject'
 import { ProjectSelector } from './ProjectSelector'
 
 type NavGroup = {
-  items: Array<{ path: string; label: string }>
+  title?: string
+  items: Array<{ path: string; label: string; description?: string }>
 }
 
 const UTILITY_BAR_HEIGHT = 'var(--ob-space-250)'
@@ -53,62 +54,92 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
   const navGroups: NavGroup[] = useMemo(() => {
     const groups: NavGroup[] = [
       {
+        title: 'CAD',
         items: [
-          { path: '/cad/upload', label: t('nav.upload') },
-          { path: '/cad/detection', label: t('nav.detection') },
-          { path: '/cad/pipelines', label: t('nav.pipelines') },
+          {
+            path: '/cad/upload',
+            label: t('nav.upload'),
+            description: 'Upload CAD files for analysis',
+          },
+          {
+            path: '/cad/detection',
+            label: t('nav.detection'),
+            description: 'AI-powered feature detection',
+          },
+          {
+            path: '/cad/pipelines',
+            label: t('nav.pipelines'),
+            description: 'Processing pipeline status',
+          },
         ],
       },
       {
+        title: 'Analysis',
         items: [
           {
             path: '/visualizations/intelligence',
             label: t('nav.intelligence'),
+            description: 'Market intelligence and insights',
           },
           {
             path: projectBase ? `${projectBase}/feasibility` : '/projects',
             label: t('nav.feasibility'),
+            description: 'Development feasibility analysis',
           },
           {
             path: projectBase ? `${projectBase}/finance` : '/projects/finance',
             label: t('nav.finance'),
+            description: 'Financial modeling and scenarios',
           },
         ],
       },
-      // Unified capture - single entry point for both agents and developers
       {
-        items: [{ path: '/app/capture', label: t('nav.capture') }],
+        title: 'Field',
+        items: [
+          {
+            path: '/app/capture',
+            label: t('nav.capture'),
+            description: 'GPS site capture and observations',
+          },
+        ],
       },
     ]
 
     if (isDeveloperMode) {
       groups.push({
+        title: 'Execution',
         items: [
           {
             path: projectBase
               ? `${projectBase}/due-diligence`
               : '/app/due-diligence',
             label: t('nav.dueDiligence'),
+            description: 'Property condition and inspection history',
           },
           {
             path: projectBase ? `${projectBase}/feasibility` : '/projects',
             label: t('nav.assetFeasibility'),
+            description: 'Multi-use optimizer and asset modeling',
           },
           {
             path: projectBase ? `${projectBase}/finance` : '/projects',
             label: t('nav.financialControl'),
+            description: 'Development economics and financing',
           },
           {
             path: projectBase ? `${projectBase}/phases` : '/projects',
             label: t('nav.phaseManagement'),
+            description: 'Multi-phase development sequencing',
           },
           {
             path: projectBase ? `${projectBase}/team` : '/projects',
             label: t('nav.teamCoordination'),
+            description: 'Consultant coordination and approvals',
           },
           {
             path: projectBase ? `${projectBase}/regulatory` : '/projects',
             label: t('nav.regulatoryNavigation'),
+            description: 'Authority submissions and compliance',
           },
         ],
       })
@@ -140,12 +171,7 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
   }, [])
 
   useEffect(() => {
-    if (isPinned) {
-      setIsRevealed(true)
-      return
-    }
-    // Keep the ribbon visible immediately after unpin so the user can see the
-    // state change; it will auto-hide on mouse leave.
+    // Reveal on any pin state change so the user sees the transition.
     setIsRevealed(true)
   }, [isPinned])
 
@@ -160,9 +186,13 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
     })
   }
 
-  const renderItem = (item: { path: string; label: string }) => {
+  const renderItem = (item: {
+    path: string
+    label: string
+    description?: string
+  }) => {
     const isActive = path === item.path || path.startsWith(`${item.path}/`)
-    return (
+    const button = (
       <Button
         key={`${item.path}-${item.label}`}
         component={Link}
@@ -171,22 +201,21 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
         sx={{
           justifyContent: 'center',
           color: isActive ? 'var(--ob-color-neon-cyan)' : 'text.secondary',
-          bgcolor: 'transparent', // Always transparent - no filled background
+          bgcolor: 'transparent',
           borderRadius: 0,
           px: 'var(--ob-space-150)',
           py: 'var(--ob-space-100)',
           textTransform: 'uppercase',
           fontWeight: isActive ? 800 : 600,
-          fontSize: 'var(--ob-font-size-2xs)', // 10px - matches V3 reference
+          fontSize: 'var(--ob-font-size-xs)',
           letterSpacing: 'var(--ob-letter-spacing-wider)',
           whiteSpace: 'nowrap',
           position: 'relative',
           textShadow: isActive ? 'var(--ob-glow-neon-text)' : 'none',
           '&:hover': {
-            bgcolor: 'transparent', // Keep transparent on hover
+            bgcolor: 'transparent',
             color: isActive ? 'var(--ob-color-neon-cyan)' : 'text.primary',
           },
-          // Glowing underline for active state - positioned below the nav bar
           '&::after': isActive
             ? {
                 content: '""',
@@ -204,6 +233,20 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
         {item.label}
       </Button>
     )
+    if (item.description) {
+      return (
+        <Tooltip
+          key={`${item.path}-${item.label}`}
+          title={item.description}
+          placement="bottom"
+          enterDelay={400}
+          arrow
+        >
+          {button}
+        </Tooltip>
+      )
+    }
+    return button
   }
 
   const cancelHide = () => {
@@ -231,8 +274,11 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
     <>
       {!isPinned && (
         <Box
-          aria-hidden
+          tabIndex={0}
+          role="button"
+          aria-label="Reveal navigation"
           onMouseEnter={reveal}
+          onFocus={reveal}
           sx={{
             position: 'fixed',
             top: 0,
@@ -241,17 +287,30 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
             height: 'var(--ob-space-075)',
             zIndex: 'var(--ob-z-fixed)',
             background: 'transparent',
+            '&:focus-visible': {
+              outline: '2px solid var(--ob-color-neon-cyan)',
+              outlineOffset: -2,
+            },
           }}
         />
       )}
 
       <Box
         component="header"
+        aria-expanded={isPinned || isRevealed}
         onMouseEnter={() => {
           if (!isPinned) reveal()
         }}
         onMouseLeave={() => {
           if (!isPinned) scheduleHide()
+        }}
+        onFocusCapture={() => {
+          if (!isPinned) reveal()
+        }}
+        onBlurCapture={(e) => {
+          if (!isPinned && !e.currentTarget.contains(e.relatedTarget)) {
+            scheduleHide()
+          }
         }}
         sx={{
           position: isPinned ? 'sticky' : 'fixed',
@@ -364,7 +423,11 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
                 },
               }}
             >
-              <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing="var(--ob-space-075)"
+              >
                 {/* Neon CPU Icon */}
                 <Box
                   sx={{
@@ -411,9 +474,9 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
                       fontSize: 'var(--ob-font-size-2xs)',
                       fontWeight: 800,
                       border: '1px solid var(--ob-color-neon-cyan-dim)',
-                      padding: '0px 4px',
+                      padding: '0 var(--ob-space-025)',
                       borderRadius: 'var(--ob-radius-xs)',
-                      mt: '2px',
+                      mt: 'var(--ob-space-025)',
                     }}
                   >
                     V2.5_PRO
@@ -484,13 +547,34 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
                   px: 'var(--ob-space-025)',
                 }}
               >
-                {navGroups.map((group) => (
+                {navGroups.map((group, idx) => (
                   <Stack
                     key={group.items.map((item) => item.path).join('|')}
                     direction="row"
                     alignItems="center"
                     sx={{ gap: 'var(--ob-space-050)', flexShrink: 0 }}
                   >
+                    {group.title && (
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontSize: 'var(--ob-font-size-2xs)',
+                          fontFamily: 'var(--ob-font-family-mono)',
+                          fontWeight: 700,
+                          color: 'text.disabled',
+                          textTransform: 'uppercase',
+                          letterSpacing: 'var(--ob-letter-spacing-widest)',
+                          pr: 'var(--ob-space-050)',
+                          pl: idx > 0 ? 'var(--ob-space-050)' : 0,
+                          borderLeft: idx > 0 ? 1 : 0,
+                          borderColor: alpha(theme.palette.divider, 0.2),
+                          whiteSpace: 'nowrap',
+                          userSelect: 'none',
+                        }}
+                      >
+                        {group.title}
+                      </Typography>
+                    )}
                     {group.items.map(renderItem)}
                   </Stack>
                 ))}

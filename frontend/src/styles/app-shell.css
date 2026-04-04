@@ -215,3 +215,34 @@
     color: var(--ob-brand-600); /* Use specific tone for contrast on dark */
     font-weight: 700;
 }
+
+/* Workspace switcher (sidebar nav) */
+.app-nav__workspace-switcher {
+    display: flex;
+    gap: var(--ob-space-050);
+    padding: var(--ob-space-075) var(--ob-space-100);
+    border-bottom: var(--ob-border-fine);
+}
+
+.app-nav__workspace-btn {
+    flex: 1;
+    padding: var(--ob-space-050);
+    font-size: var(--ob-font-size-sm);
+    font-weight: 500;
+    color: var(--ob-color-text-muted);
+    background: transparent;
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.app-nav__workspace-btn:hover {
+    color: var(--ob-color-text-primary);
+    background: var(--ob-color-action-hover);
+}
+
+.app-nav__workspace-btn--active {
+    color: var(--ob-color-text-primary);
+    background: var(--ob-overlay-subtle);
+}
