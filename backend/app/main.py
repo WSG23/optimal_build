@@ -222,6 +222,34 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             await conn.run_sync(BaseModel.metadata.create_all)
         log_event(logger, "sqlite_tables_created")
 
+        # Seed regulatory compliance paths if empty
+        try:
+            from app.core.database import AsyncSessionLocal
+            from app.models.regulatory import AssetCompliancePath
+
+            async with AsyncSessionLocal() as seed_db:
+                from sqlalchemy import select as sa_select
+
+                existing = await seed_db.execute(
+                    sa_select(AssetCompliancePath).limit(1)
+                )
+                if not existing.scalar_one_or_none():
+                    from scripts.seed_compliance_paths import (
+                        seed_agencies,
+                        seed_compliance_paths,
+                    )
+
+                    agency_map = await seed_agencies(seed_db)
+                    count = await seed_compliance_paths(seed_db, agency_map)
+                    log_event(
+                        logger,
+                        "compliance_paths_seeded",
+                        count=count,
+                        agencies=len(agency_map),
+                    )
+        except Exception as e:
+            log_event(logger, "compliance_path_seed_skipped", error=str(e))
+
     try:
         yield
     finally:

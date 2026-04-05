@@ -33,7 +33,7 @@ import {
 } from '../../../../api/regulatory'
 import { loadCaptureForProject } from '../../capture/utils/captureStorage'
 import { colors } from '@ob/tokens'
-import { GlassCard } from '../../../../components/canonical/GlassCard'
+import { Card } from '../../../../components/canonical/Card'
 import { StatusChip } from '../../../../components/canonical/StatusChip'
 import { Tag } from '../../../../components/canonical/Tag'
 
@@ -679,7 +679,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
           mb: 'var(--ob-space-200)',
         }}
       >
-        <GlassCard
+        <Card
           variant="default"
           sx={{
             p: 'var(--ob-space-150)',
@@ -722,9 +722,9 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
               },
             }}
           />
-        </GlassCard>
+        </Card>
 
-        <GlassCard
+        <Card
           variant="default"
           sx={{
             p: 'var(--ob-space-150)',
@@ -753,9 +753,9 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
           >
             {completedSteps}/{compliancePaths.length}
           </Box>
-        </GlassCard>
+        </Card>
 
-        <GlassCard
+        <Card
           variant="default"
           sx={{
             p: 'var(--ob-space-150)',
@@ -784,11 +784,11 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
           >
             {totalDuration - 30} days
           </Box>
-        </GlassCard>
+        </Card>
       </Box>
 
       {/* Timeline */}
-      <GlassCard
+      <Card
         variant="default"
         sx={{
           overflow: 'auto',
@@ -980,7 +980,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
             </Stack>
           </Box>
         </Box>
-      </GlassCard>
+      </Card>
     </Box>
   )
 }

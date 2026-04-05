@@ -42,7 +42,7 @@ import { getTableSx } from '../../../utils/themeStyles'
 import { useProject } from '../../../contexts/useProject'
 import { Button } from '../../../components/canonical/Button'
 import { StatusChip } from '../../../components/canonical/StatusChip'
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
 
 const AGENCIES_INFO = [
   { code: 'URA', name: 'Urban Redevelopment Authority' },
@@ -184,7 +184,10 @@ export const RegulatoryDashboardPage: React.FC = () => {
           }
           setCapability(capabilityData)
         } catch (capabilityError) {
-          console.warn('[regulatory] failed to load CORENET capability', capabilityError)
+          console.warn(
+            '[regulatory] failed to load CORENET capability',
+            capabilityError,
+          )
         }
 
         // Fetch authority submissions
@@ -516,9 +519,9 @@ export const RegulatoryDashboardPage: React.FC = () => {
             gap: 'var(--ob-space-150)',
           }}
         >
-          <GlassCard
+          <Card
             variant="default"
-            hoverEffect
+            hover="lift"
             onClick={() => openChangeOfUseForm()}
             sx={{
               p: 'var(--ob-space-150)',
@@ -553,11 +556,11 @@ export const RegulatoryDashboardPage: React.FC = () => {
                 Apply for land use conversion
               </Box>
             </Box>
-          </GlassCard>
+          </Card>
 
-          <GlassCard
+          <Card
             variant="default"
-            hoverEffect
+            hover="lift"
             onClick={() =>
               latestHeritageSubmission
                 ? openHeritageForm(latestHeritageSubmission)
@@ -624,11 +627,11 @@ export const RegulatoryDashboardPage: React.FC = () => {
                 </Box>
               ) : null}
             </Box>
-          </GlassCard>
+          </Card>
 
-          <GlassCard
+          <Card
             variant="default"
-            hoverEffect
+            hover="lift"
             onClick={() => setTabValue(1)}
             sx={{
               p: 'var(--ob-space-150)',
@@ -663,7 +666,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
                 View regulatory path by asset type
               </Box>
             </Box>
-          </GlassCard>
+          </Card>
         </Box>
       </Box>
 
@@ -713,7 +716,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
             }}
           >
             {AGENCIES_INFO.map((agency) => (
-              <GlassCard
+              <Card
                 key={agency.code}
                 variant="default"
                 sx={{
@@ -759,7 +762,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
                     {integrationModeLabel} • {integrationState}
                   </Box>
                 </Box>
-              </GlassCard>
+              </Card>
             ))}
           </Box>
         </Box>
@@ -791,7 +794,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
               <CircularProgress />
             </Box>
           ) : submissions.length === 0 ? (
-            <GlassCard
+            <Card
               variant="default"
               sx={{ p: 'var(--ob-space-200)', textAlign: 'center' }}
             >
@@ -806,9 +809,9 @@ export const RegulatoryDashboardPage: React.FC = () => {
                 No authority submissions yet. Change of Use and Heritage drafts
                 appear below.
               </Box>
-            </GlassCard>
+            </Card>
           ) : (
-            <GlassCard variant="default" sx={{ overflow: 'hidden' }}>
+            <Card variant="default" sx={{ overflow: 'hidden' }}>
               <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
                 <Table sx={tableSx}>
                   <TableHead>
@@ -895,7 +898,9 @@ export const RegulatoryDashboardPage: React.FC = () => {
                               color: 'var(--ob-color-text-tertiary)',
                             }}
                           >
-                            {row.package_status ?? row.integration_status?.state ?? 'pending'}
+                            {row.package_status ??
+                              row.integration_status?.state ??
+                              'pending'}
                           </Box>
                         </TableCell>
                         <TableCell>
@@ -913,7 +918,9 @@ export const RegulatoryDashboardPage: React.FC = () => {
                                 .then(() => fetchSubmissions(false))
                             }
                           >
-                            {row.submission_mode === 'live_submit' ? 'Track' : 'Refresh'}
+                            {row.submission_mode === 'live_submit'
+                              ? 'Track'
+                              : 'Refresh'}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -921,7 +928,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
-            </GlassCard>
+            </Card>
           )}
         </Box>
 
@@ -942,7 +949,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
             Change of Use Applications
           </Box>
           {changeOfUseApps.length === 0 ? (
-            <GlassCard
+            <Card
               variant="default"
               sx={{ p: 'var(--ob-space-150)', textAlign: 'center' }}
             >
@@ -956,9 +963,9 @@ export const RegulatoryDashboardPage: React.FC = () => {
               >
                 No change of use applications yet.
               </Box>
-            </GlassCard>
+            </Card>
           ) : (
-            <GlassCard variant="default" sx={{ overflow: 'hidden' }}>
+            <Card variant="default" sx={{ overflow: 'hidden' }}>
               <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
                 <Table sx={tableSx}>
                   <TableHead>
@@ -1021,7 +1028,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
-            </GlassCard>
+            </Card>
           )}
         </Box>
 
@@ -1053,7 +1060,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
             </Box>
           </Box>
           {heritageSubmissions.length === 0 ? (
-            <GlassCard
+            <Card
               variant="default"
               sx={{
                 p: 'var(--ob-space-200)',
@@ -1080,9 +1087,9 @@ export const RegulatoryDashboardPage: React.FC = () => {
               >
                 Start heritage submission
               </Button>
-            </GlassCard>
+            </Card>
           ) : (
-            <GlassCard variant="default" sx={{ overflow: 'hidden' }}>
+            <Card variant="default" sx={{ overflow: 'hidden' }}>
               <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
                 <Table sx={tableSx}>
                   <TableHead>
@@ -1136,7 +1143,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
-            </GlassCard>
+            </Card>
           )}
         </Box>
       </TabPanel>

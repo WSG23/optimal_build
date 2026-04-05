@@ -346,12 +346,15 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
     onSuccess,
   ])
 
+  const [confirmSTBOpen, setConfirmSTBOpen] = useState(false)
+
   const handleSubmitToSTB = useCallback(async () => {
     if (!activeSubmission) {
       setError('Please save the submission first before submitting to STB')
       return
     }
 
+    setConfirmSTBOpen(false)
     setLoading(true)
     setError(null)
 
@@ -1017,23 +1020,13 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
             </Button>
 
             <Button
-              onClick={handleSubmitToSTB}
+              onClick={() => setConfirmSTBOpen(true)}
               disabled={loading || !activeSubmission || !canSubmit}
-              startIcon={
-                loading ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : (
-                  <SendIcon />
-                )
-              }
+              startIcon={<SendIcon />}
               variant="contained"
-              sx={{
-                background: 'linear-gradient(135deg, #00C9FF 0%, #92FE9D 100%)',
-                color: '#000',
-                fontWeight: 'bold',
-              }}
+              color="primary"
             >
-              {loading ? 'Submitting...' : 'Submit to STB'}
+              Submit to STB
             </Button>
           </>
         )}
@@ -1046,6 +1039,31 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
           />
         )}
       </DialogActions>
+
+      {/* STB Submission Confirmation */}
+      <Dialog open={confirmSTBOpen} onClose={() => setConfirmSTBOpen(false)}>
+        <DialogTitle>Submit to STB</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Submit this heritage conservation application to the Singapore
+            Tourism Board? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button variant="outlined" onClick={() => setConfirmSTBOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSubmitToSTB}
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={16} /> : <SendIcon />}
+          >
+            {loading ? 'Submitting...' : 'Confirm Submit'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   )
 }
