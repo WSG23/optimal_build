@@ -53,7 +53,7 @@ export interface MetricTileProps {
  *
  * Geometry: 4px border radius (--ob-radius-sm)
  * Height: Fixed 88px (default), 120px (hero), 72px (compact)
- * Border: 1px fine line
+ * Border: 1px fine line on solid surface
  *
  * Used for displaying high-level metrics in dashboards.
  */
@@ -109,7 +109,7 @@ export function MetricTile({
 
   return (
     <Card
-      variant="glass"
+      variant="default"
       hover={onClick ? 'lift' : 'subtle'}
       animated={animated && !loading}
       onClick={onClick}

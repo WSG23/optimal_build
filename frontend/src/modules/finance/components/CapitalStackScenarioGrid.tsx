@@ -102,8 +102,8 @@ function ScenarioCard({
 
   return (
     <Card
-      variant={active ? 'premium' : 'glass'}
-      hover="glow"
+      variant={active ? 'default' : 'default'}
+      hover="lift"
       accent={active || scenario.isPrimary}
       onClick={() => onSelect(scenario.scenarioId)}
       className="capital-stack-scenario-card"

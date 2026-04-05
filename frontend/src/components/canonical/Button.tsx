@@ -11,8 +11,8 @@ type ObButtonSize = 'sm' | 'md' | 'lg'
 export interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size'> {
   /**
    * Button variant:
-   * - 'primary': Gradient background with glow (main CTAs)
-   * - 'secondary': Glass surface with border
+   * - 'primary': Solid brand background (main CTAs)
+   * - 'secondary': Surface with border
    * - 'ghost': Transparent with hover effect
    */
   variant?: ObButtonVariant
@@ -23,22 +23,16 @@ export interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size'> {
    * - 'lg': 48px height
    */
   size?: ObButtonSize
-  /**
-   * Disable shimmer animation on primary buttons
-   */
-  disableShimmer?: boolean
 }
 
 type StyledButtonProps = Omit<MuiButtonProps, 'variant' | 'size'> & {
   obVariant: ObButtonVariant
   obSize: ObButtonSize
-  disableShimmer?: boolean
 }
 
 const StyledButton = styled(MuiButton, {
-  shouldForwardProp: (prop) =>
-    prop !== 'disableShimmer' && prop !== 'obVariant' && prop !== 'obSize',
-})<StyledButtonProps>(({ obVariant, obSize, disableShimmer }) => {
+  shouldForwardProp: (prop) => prop !== 'obVariant' && prop !== 'obSize',
+})<StyledButtonProps>(({ obVariant, obSize }) => {
   // Height mapping
   const heightMap = {
     sm: '32px',
@@ -74,53 +68,30 @@ const StyledButton = styled(MuiButton, {
     },
   }
 
-  // Primary variant - cyan gradient with shimmer (premium cyber aesthetic)
+  // Primary variant - solid brand color
   if (obVariant === 'primary') {
     return {
       ...common,
-      background:
-        'linear-gradient(135deg, #0096cc 0%, var(--ob-color-neon-cyan) 100%)',
-      color: '#0a1628', // Dark text for contrast on bright cyan
+      background: 'var(--ob-color-brand-primary)',
+      color: 'var(--ob-color-bg-root)',
       border: 'none',
-      boxShadow: 'var(--ob-glow-neon-cyan)',
       '&:hover': {
-        background:
-          'linear-gradient(135deg, var(--ob-color-neon-cyan) 0%, #0096cc 100%)',
-        boxShadow: 'var(--ob-glow-neon-cyan-strong)',
+        background: 'var(--ob-color-brand-primary)',
+        filter: 'brightness(1.1)',
         transform: 'translateY(-1px)',
       },
-      // Shimmer effect overlay
-      ...(!disableShimmer && {
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: '-100%',
-          width: '50%',
-          height: '100%',
-          background:
-            'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-          transform: 'skewX(-20deg)',
-          transition: 'none',
-        },
-        '&:hover::after': {
-          left: '200%',
-          transition: 'left 0.7s ease-in-out',
-        },
-      }),
     }
   }
 
-  // Secondary variant - glass with border
+  // Secondary variant - surface with border
   if (obVariant === 'secondary') {
     return {
       ...common,
-      background: 'var(--ob-surface-glass-1)',
+      background: 'var(--ob-color-bg-surface)',
       color: 'var(--ob-color-text-primary)',
       border: 'var(--ob-border-fine-strong)',
-      backdropFilter: 'blur(var(--ob-blur-xs))',
       '&:hover': {
-        background: 'var(--ob-surface-glass-2)',
+        background: 'var(--ob-color-surface-strong)',
         border: 'var(--ob-border-fine-hover)',
         transform: 'translateY(-1px)',
       },
@@ -146,30 +117,18 @@ const StyledButton = styled(MuiButton, {
 })
 
 /**
- * Button - Square Cyber-Minimalism Action Component
+ * Button - Square Minimalism Action Component
  *
  * Geometry: 2px border radius (--ob-radius-xs)
- * Effects: Shimmer animation on primary, lift on hover
- *
- * Preserves the "wow" factor with gradient backgrounds and glow effects.
+ * Effects: Lift on hover
  */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      variant = 'primary',
-      size = 'md',
-      disableShimmer = false,
-      children,
-      ...props
-    },
-    ref,
-  ) => {
+  ({ variant = 'primary', size = 'md', children, ...props }, ref) => {
     return (
       <StyledButton
         ref={ref}
         obVariant={variant}
         obSize={size}
-        disableShimmer={disableShimmer}
         disableElevation
         disableRipple
         {...props}

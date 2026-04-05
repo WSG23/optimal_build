@@ -82,16 +82,6 @@
     font-weight: 700;
     color: var(--ob-color-text-primary);
     letter-spacing: -0.02em;
-
-    /* Subtle gradient on main title */
-    background: linear-gradient(
-        135deg,
-        var(--ob-color-text-primary) 60%,
-        var(--ob-neutral-400) 100%
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
 }
 
 .app-shell__subtitle {

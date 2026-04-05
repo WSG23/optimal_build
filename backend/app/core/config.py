@@ -11,10 +11,14 @@ _DEFAULT_ALLOWED_ORIGINS = (
     "http://localhost:5173",
     "http://localhost:4400",
     "http://localhost:4401",
+    "http://localhost:4402",
+    "http://localhost:4403",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:4400",
     "http://127.0.0.1:4401",
+    "http://127.0.0.1:4402",
+    "http://127.0.0.1:4403",
 )
 _DEFAULT_ALLOWED_HOSTS = ("localhost", "127.0.0.1")
 _DEFAULT_RATE_LIMIT = "10/minute"

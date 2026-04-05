@@ -1,12 +1,7 @@
 /**
  * UnifiedCapturePage - Consolidated capture page for Agents and Developers
  *
- * PRE-CAPTURE (same for all users):
- * - Dark Mapbox 3D map (always dark-v11, never light mode)
- * - Radar sweep animation during scanning
- * - Glass card capture form (left panel)
- * - Developer mode toggle (visible to entitled users)
- *
+ * PRE-CAPTURE: Dark map with capture form panel
  * POST-CAPTURE (role-based):
  * - Agent Mode: HUD widgets + Mission Log
  * - Developer Mode: Full workspace (Property Overview, 3D Preview, etc.)
@@ -67,16 +62,13 @@ const SCENARIOS: {
   },
 ]
 
-const JURISDICTIONS = [
-  { value: 'SG', label: 'Singapore' },
-]
+const JURISDICTIONS = [{ value: 'SG', label: 'Singapore' }]
 
 export function UnifiedCapturePage() {
   const { isDeveloperMode, toggleDeveloperMode } = useDeveloperMode()
   const { projectId } = useRouterParams()
 
   const {
-    // Form state
     latitude,
     longitude,
     address,
@@ -87,44 +79,31 @@ export function UnifiedCapturePage() {
     setAddress,
     setJurisdictionCode,
     handleScenarioToggle,
-
-    // Capture state
     isCapturing,
     isScanning,
     captureError,
     hasResults,
-
-    // Agent results
     captureSummary,
     marketSummary,
     marketLoading,
     capturedSites,
-
-    // Developer results
     siteAcquisitionResult,
-
-    // Geocoding
     geocodeError,
     handleForwardGeocode,
     handleReverseGeocode,
-
-    // Map
     mapContainerRef,
     mapError,
-
-    // Handlers
     handleCapture,
     handleNewCapture,
   } = useUnifiedCapture({ isDeveloperMode, projectId })
 
-  // Get property ID for voice notes
   const propertyId = isDeveloperMode
     ? (siteAcquisitionResult?.propertyId ?? null)
     : (captureSummary?.propertyId ?? null)
 
   return (
     <div className="gps-page">
-      {/* Full-screen dark Mapbox background */}
+      {/* Full-screen dark map background */}
       <div
         ref={mapContainerRef}
         className={`gps-background-map ${isScanning ? 'scanning' : ''}`}
@@ -134,8 +113,9 @@ export function UnifiedCapturePage() {
       <div className="gps-content-overlay">
         {/* Main capture section */}
         <section className="gps-page__summary">
-          {/* LEFT PANEL: Glass capture form */}
+          {/* LEFT PANEL: Capture form */}
           <div className="capture-card-glass">
+            {/* Header */}
             <div className="gps-form__header">
               <h2 className="gps-form__title">
                 <RadarIcon /> Property Capture
@@ -147,22 +127,25 @@ export function UnifiedCapturePage() {
                   onClick={handleNewCapture}
                   title="Start a new capture"
                 >
-                  <AddIcon /> New Capture
+                  <AddIcon /> New
                 </button>
               )}
             </div>
 
             <form className="gps-form" onSubmit={handleCapture}>
-              {/* Address input with geocode buttons */}
-              <div className="gps-form__group">
-                <label className="gps-form__label">Address</label>
+              {/* ── Section 1: Location ── */}
+              <fieldset className="gps-fieldset">
+                <legend className="gps-fieldset__legend">Location</legend>
+
+                {/* Address — primary input, full width */}
                 <div className="gps-form__address-row">
                   <input
                     type="text"
-                    className="gps-input-ghost"
-                    placeholder="Enter address..."
+                    className="gps-input-ghost gps-input-ghost--lg"
+                    placeholder="Click the map or type an address..."
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
+                    aria-label="Address"
                   />
                   <div className="gps-form__address-actions">
                     <button
@@ -171,7 +154,8 @@ export function UnifiedCapturePage() {
                       onClick={() => {
                         void handleForwardGeocode()
                       }}
-                      title="Geocode address"
+                      title="Geocode address to coordinates"
+                      aria-label="Geocode address"
                     >
                       →
                     </button>
@@ -179,7 +163,8 @@ export function UnifiedCapturePage() {
                       type="button"
                       className="gps-geocode-btn"
                       onClick={handleReverseGeocode}
-                      title="Reverse geocode"
+                      title="Get address from coordinates"
+                      aria-label="Reverse geocode"
                     >
                       ←
                     </button>
@@ -188,51 +173,51 @@ export function UnifiedCapturePage() {
                 {geocodeError && (
                   <p className="gps-error-text">{geocodeError}</p>
                 )}
-              </div>
 
-              {/* Coordinate inputs */}
-              <div className="gps-form__row">
-                <div className="gps-form__group gps-form__group--half">
-                  <label className="gps-form__label">Latitude</label>
-                  <input
-                    type="text"
-                    className="gps-input-ghost"
-                    placeholder="1.3000"
-                    value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
-                  />
+                {/* Coords + Jurisdiction — compact row */}
+                <div className="gps-form__coords-row">
+                  <div className="gps-form__coord">
+                    <label className="gps-form__inline-label">Lat</label>
+                    <input
+                      type="text"
+                      className="gps-input-ghost gps-input-ghost--sm"
+                      placeholder="1.3000"
+                      value={latitude}
+                      onChange={(e) => setLatitude(e.target.value)}
+                      inputMode="decimal"
+                    />
+                  </div>
+                  <div className="gps-form__coord">
+                    <label className="gps-form__inline-label">Lng</label>
+                    <input
+                      type="text"
+                      className="gps-input-ghost gps-input-ghost--sm"
+                      placeholder="103.8500"
+                      value={longitude}
+                      onChange={(e) => setLongitude(e.target.value)}
+                      inputMode="decimal"
+                    />
+                  </div>
+                  <div className="gps-form__coord">
+                    <label className="gps-form__inline-label">Region</label>
+                    <select
+                      className="gps-select-ghost gps-input-ghost--sm"
+                      value={jurisdictionCode}
+                      onChange={(e) => setJurisdictionCode(e.target.value)}
+                    >
+                      {JURISDICTIONS.map((j) => (
+                        <option key={j.value} value={j.value}>
+                          {j.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div className="gps-form__group gps-form__group--half">
-                  <label className="gps-form__label">Longitude</label>
-                  <input
-                    type="text"
-                    className="gps-input-ghost"
-                    placeholder="103.8500"
-                    value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
-                  />
-                </div>
-              </div>
+              </fieldset>
 
-              {/* Jurisdiction selector */}
-              <div className="gps-form__group">
-                <label className="gps-form__label">Jurisdiction</label>
-                <select
-                  className="gps-select-ghost"
-                  value={jurisdictionCode}
-                  onChange={(e) => setJurisdictionCode(e.target.value)}
-                >
-                  {JURISDICTIONS.map((j) => (
-                    <option key={j.value} value={j.value}>
-                      {j.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Scenario tiles */}
-              <div className="gps-form__group">
-                <label className="gps-form__label">Mission Scenarios</label>
+              {/* ── Section 2: Scenario Selection ── */}
+              <fieldset className="gps-fieldset">
+                <legend className="gps-fieldset__legend">Scenario</legend>
                 <div className="gps-scenarios-grid">
                   {SCENARIOS.map((scenario) => (
                     <button
@@ -244,16 +229,17 @@ export function UnifiedCapturePage() {
                           : ''
                       }`}
                       onClick={() => handleScenarioToggle(scenario.value)}
+                      aria-pressed={selectedScenarios.includes(scenario.value)}
                     >
                       {scenario.icon}
                       <span>{scenario.label}</span>
                     </button>
                   ))}
                 </div>
-              </div>
+              </fieldset>
 
-              {/* Developer mode toggle */}
-              <div className="gps-form__group">
+              {/* ── Section 3: Mode + Action ── */}
+              <div className="gps-form__actions">
                 <label className="gps-developer-mode-toggle">
                   <input
                     type="checkbox"
@@ -265,45 +251,41 @@ export function UnifiedCapturePage() {
                     {isDeveloperMode ? 'Full workspace' : 'HUD only'}
                   </span>
                 </label>
-              </div>
 
-              {/* Scan button with prerequisite feedback */}
-              <button
-                type="submit"
-                className="gps-scan-button"
-                disabled={isCapturing || selectedScenarios.length === 0}
-                title={
-                  selectedScenarios.length === 0
-                    ? 'Select at least one scenario to capture'
-                    : undefined
-                }
-              >
-                {isCapturing ? (
-                  <>
-                    <div className="gps-spinner"></div>
-                    <span>Scanning...</span>
-                  </>
-                ) : selectedScenarios.length === 0 ? (
-                  <>
-                    <RadarIcon />
-                    <span>Select Scenario</span>
-                  </>
-                ) : (
-                  <>
-                    <RadarIcon />
-                    <span>Scan &amp; Analyze</span>
-                  </>
-                )}
-              </button>
+                <button
+                  type="submit"
+                  className="gps-scan-button"
+                  disabled={isCapturing || selectedScenarios.length === 0}
+                  title={
+                    selectedScenarios.length === 0
+                      ? 'Select at least one scenario to capture'
+                      : undefined
+                  }
+                >
+                  {isCapturing ? (
+                    <>
+                      <div className="gps-spinner"></div>
+                      <span>Scanning...</span>
+                    </>
+                  ) : selectedScenarios.length === 0 ? (
+                    <>
+                      <RadarIcon />
+                      <span>Select Scenario</span>
+                    </>
+                  ) : (
+                    <>
+                      <RadarIcon />
+                      <span>Scan &amp; Analyze</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </form>
 
-            {/* Capture error */}
+            {/* Feedback */}
             {captureError && <p className="gps-error">{captureError}</p>}
-
-            {/* Map error */}
             {mapError && <p className="gps-warning">{mapError}</p>}
 
-            {/* Capture confirmation */}
             {hasResults && !isDeveloperMode && captureSummary && (
               <div className="gps-capture-meta">
                 <p>

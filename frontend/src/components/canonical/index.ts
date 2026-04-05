@@ -13,7 +13,7 @@
  * - Fine line borders (1px at low opacity)
  * - Consistent spacing tokens
  * - Dark/light mode support
- * - Preserved animations (shimmer, lift, blur)
+ * - Subtle animations (lift, entrance)
  * =============================================================================
  */
 

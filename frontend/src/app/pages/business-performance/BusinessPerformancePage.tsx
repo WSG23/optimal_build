@@ -384,8 +384,8 @@ export function BusinessPerformancePage() {
   // const weightPipelineValue = useMemo(() => totalWeightedPipeline(columns), [columns])
 
   return (
-    <Box className="bp-page" sx={{ width: '100%' }}>
-      {/* Compact Page Header - TIGHT layout with animation */}
+    <Box className="bp-page" sx={{ width: '100%' }} role="main">
+      {/* Page Header */}
       <Box
         component="header"
         sx={{
@@ -427,18 +427,20 @@ export function BusinessPerformancePage() {
         </Typography>
         <Grid
           container
-          spacing="var(--ob-space-300)"
+          spacing="var(--ob-space-200)"
           className="bp-page__summary"
+          role="region"
+          aria-label="Key performance metrics"
         >
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} sm={6} md={3}>
             <MetricTile
               label="Last Snapshot"
               value={analyticsLoading ? '-' : lastSnapshot}
               icon={<AccessTime fontSize="small" />}
-              variant="default"
+              variant="compact"
             />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} sm={12} md={6}>
             <MetricTile
               label="Open Pipeline Value"
               value={
@@ -466,12 +468,12 @@ export function BusinessPerformancePage() {
               trend={openPipelineMetric.kind === 'value' ? '+12%' : undefined}
             />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} sm={6} md={3}>
             <MetricTile
               label="ROI Projects Tracked"
               value={analyticsLoading ? '-' : roiSummary.projectCount}
               icon={<Assessment fontSize="small" />}
-              variant="default"
+              variant="compact"
             />
           </Grid>
         </Grid>
@@ -508,7 +510,7 @@ export function BusinessPerformancePage() {
       <Grid container spacing="var(--ob-space-300)" className="bp-page__layout">
         <Grid item xs={12} lg={8} className="bp-page__pipeline">
           <Card
-            variant="glass"
+            variant="default"
             className="bp-pipeline-wrapper"
             sx={{ height: '100%', p: 'var(--ob-space-200)' }}
           >

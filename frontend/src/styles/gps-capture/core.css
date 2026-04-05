@@ -1,57 +1,7 @@
 /* GPS capture workspace ---------------------------------------------------- */
 
-/* Form Header with New Capture Button */
-.gps-form__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--ob-space-100);
-}
+/* ── Page Shell ── */
 
-.gps-form__title {
-    display: flex;
-    align-items: center;
-    gap: var(--ob-space-075);
-    margin: 0;
-    font-size: var(--ob-font-size-xl);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    background: linear-gradient(90deg, #fff, #94a3b8);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.gps-form__title svg {
-    color: var(--ob-color-neon-cyan);
-    -webkit-text-fill-color: var(--ob-color-neon-cyan);
-}
-
-.gps-new-capture-btn {
-    display: flex;
-    align-items: center;
-    gap: var(--ob-space-050);
-    padding: var(--ob-space-050) var(--ob-space-100);
-    background: rgba(0, 243, 255, 0.1);
-    border: 1px solid var(--ob-color-neon-cyan);
-    border-radius: var(--ob-radius-xs);
-    color: var(--ob-color-neon-cyan);
-    font-size: var(--ob-font-size-sm);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.gps-new-capture-btn:hover {
-    background: rgba(0, 243, 255, 0.2);
-    box-shadow: var(--ob-glow-neon-cyan);
-}
-
-.gps-new-capture-btn svg {
-    font-size: var(--ob-font-size-md);
-}
-
-/* GPS page becomes relative to hold absolute map */
 .gps-page {
     position: relative;
     display: flex;
@@ -64,7 +14,7 @@
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
     overflow-x: hidden;
-    background: #000; /* Fallback for map loading */
+    background: var(--ob-color-bg-root);
 }
 
 /* Full-screen map background */
@@ -75,62 +25,33 @@
     right: 0;
     bottom: 0;
     z-index: 0;
-    /* Visual Placeholder if Map Fails */
-    background-image: url('https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?q=80&w=2070&auto=format&fit=crop');
-    background-size: cover;
-    background-position: center;
+    background: var(--ob-color-bg-root);
+    cursor: crosshair;
 }
 
-/* Overlay for darkening the map slightly for UI contrast */
-.gps-background-map::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, 0.3) 0%,
-        rgba(0, 0, 0, 0.6) 100%
-    );
-    pointer-events: none;
+/* Scanning state — subtle border pulse */
+.gps-background-map.scanning {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: -2px;
+    animation: scan-pulse 1.5s ease-in-out;
 }
 
-/* Radar Scan Animation Effect on Map */
-.gps-background-map.scanning::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 150vmax;
-    height: 150vmax;
-    transform: translate(-50%, -50%);
-    background: conic-gradient(
-        from 0deg,
-        transparent 0deg,
-        rgba(0, 229, 255, 0.1) 60deg,
-        rgba(0, 229, 255, 0.3) 360deg
-    );
-    border-radius: 50%;
-    animation: radar-sweep 4s linear infinite;
-    pointer-events: none;
-    opacity: 0.5;
-    z-index: 1;
-}
-
-@keyframes radar-sweep {
-    from {
-        transform: translate(-50%, -50%) rotate(0deg);
+@keyframes scan-pulse {
+    0%,
+    100% {
+        outline-color: transparent;
     }
-    to {
-        transform: translate(-50%, -50%) rotate(360deg);
+    50% {
+        outline-color: var(--ob-color-brand-primary);
     }
 }
 
-/* Content overlay wrapper ensuring z-index above map */
+/* ── Content Overlay ── */
+
 .gps-content-overlay {
     position: relative;
     z-index: 10;
-    pointer-events: none; /* Let clicks pass through to map where no content exists */
-    /* padding removed - YosaiShell provides canonical 16px layout padding */
+    pointer-events: none;
     display: flex;
     flex-direction: column;
     gap: var(--ob-space-250);
@@ -138,12 +59,15 @@
     box-sizing: border-box;
 }
 
-/* Container for pointers to re-enable clicks on interactive elements */
-.gps-content-overlay * {
+/* Only interactive panels capture clicks */
+.capture-card-glass,
+.gps-hud-group,
+.gps-page__developer-workspace {
     pointer-events: auto;
 }
 
-/* Main Layout: Split Screen (Left vs Right) */
+/* ── Layout: Left + Right ── */
+
 .gps-page__summary {
     display: flex;
     justify-content: space-between;
@@ -152,20 +76,21 @@
     width: 100%;
 }
 
-/* Left Panel: The Cockpit */
+/* ── Left Panel (Capture Form) ── */
+
 .capture-card-glass {
     flex: 1;
-    max-width: 480px;
-    background: rgba(20, 20, 20, 0.75); /* Darker, high-contrast cockpit feel */
-    backdrop-filter: blur(var(--ob-blur-xl));
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 420px;
+    background: var(--ob-color-bg-surface);
+    border: var(--ob-border-fine);
     border-radius: var(--ob-radius-sm);
-    padding: var(--ob-space-200);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    padding: var(--ob-space-150) var(--ob-space-200) var(--ob-space-200);
     display: flex;
     flex-direction: column;
-    gap: var(--ob-space-150);
-    color: #fff;
+    gap: var(
+        --ob-space-075
+    ); /* Tight base gap — fieldsets add their own rhythm */
+    color: var(--ob-color-text-primary);
     transition:
         opacity 0.5s ease,
         transform 0.5s ease;
@@ -177,118 +102,190 @@
     pointer-events: none;
 }
 
-.capture-card-glass h2 {
+/* ── Header ── */
+
+.gps-form__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--ob-space-100);
+    margin-bottom: var(--ob-space-050);
+}
+
+.gps-form__title {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-075);
     margin: 0;
-    font-size: var(--ob-font-size-2xl);
+    font-size: var(--ob-font-size-lg);
     font-weight: 700;
-    letter-spacing: -0.02em;
-    background: linear-gradient(90deg, #fff, #94a3b8);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.01em;
+    color: var(--ob-color-text-primary);
 }
 
-.capture-card-glass p {
+.gps-form__title svg {
+    color: var(--ob-color-text-muted);
+    font-size: 20px;
+}
+
+.gps-new-capture-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-050);
+    padding: var(--ob-space-025) var(--ob-space-075);
+    background: transparent;
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-xs);
+    color: var(--ob-color-text-secondary);
+    font-size: var(--ob-font-size-xs);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.gps-new-capture-btn:hover {
+    color: var(--ob-color-text-primary);
+    background: var(--ob-color-action-hover);
+}
+
+.gps-new-capture-btn svg {
+    font-size: 14px;
+}
+
+/* ── Fieldsets — section rhythm ── */
+
+.gps-fieldset {
+    border: none;
     margin: 0;
-    color: #94a3b8;
-    font-size: var(--ob-font-size-md);
-}
-
-/* Right Panel: HUD Widgets Stack */
-.gps-hud-group {
-    flex: 0 0 320px;
+    padding: 0;
     display: flex;
     flex-direction: column;
     gap: var(--ob-space-100);
-    align-items: flex-end; /* Align cards to right edge */
 }
 
-/* Floating HUD Card */
-.gps-hud-card {
-    width: 100%;
-    background: rgba(20, 20, 20, 0.6);
-    backdrop-filter: blur(var(--ob-blur-md));
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--ob-radius-sm);
-    padding: var(--ob-space-100) var(--ob-space-125);
-    color: #fff;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-}
-
-.gps-hud-card.locked {
-    filter: grayscale(1);
-    opacity: 0.8;
-}
-
-.gps-hud-card h3 {
-    margin: 0 0 var(--ob-space-050) 0;
-    font-size: var(--ob-font-size-sm);
+.gps-fieldset__legend {
+    font-size: var(--ob-font-size-xs);
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: rgba(255, 255, 255, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    letter-spacing: 0.06em;
+    color: var(--ob-color-text-muted);
+    padding: 0;
+    margin-bottom: var(--ob-space-050);
 }
 
-/* Locked Overlay Content */
-.gps-hud-locked-overlay {
+/* ── Address (primary input) ── */
+
+.gps-form__address-row {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--ob-space-100) 0;
+    gap: var(--ob-space-075);
+    align-items: flex-end;
+}
+
+.gps-form__address-row .gps-input-ghost {
+    flex: 1;
+    min-width: 0;
+}
+
+.gps-form__address-actions {
+    display: flex;
+    gap: var(--ob-space-025);
+    flex-shrink: 0;
+}
+
+/* ── Coords + Jurisdiction (compact row) ── */
+
+.gps-form__coords-row {
+    display: flex;
+    gap: var(--ob-space-100);
+    align-items: flex-end;
+}
+
+.gps-form__coord {
+    display: flex;
+    align-items: baseline;
     gap: var(--ob-space-050);
-    color: rgba(255, 255, 255, 0.4);
+    flex: 1;
+    min-width: 0;
 }
 
-.gps-hud-locked-overlay svg {
-    font-size: var(--ob-font-size-2xl);
-    margin-bottom: var(--ob-space-025);
+.gps-form__inline-label {
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-muted);
+    flex-shrink: 0;
+    line-height: 1;
+    padding-bottom: 0.75rem; /* Align with input text baseline */
 }
 
-/* When unlocked, content fades in */
-.gps-hud-content {
-    opacity: 1;
-    transition: opacity 0.5s ease 0.2s;
-}
+/* ── Ghost Inputs ── */
 
-.gps-hud-card.locked .gps-hud-content {
-    opacity: 0.1; /* Show faint ghost of content behind lock */
-    filter: blur(var(--ob-blur-sm));
-    pointer-events: none;
-}
-
-/* Ghost Inputs */
 .gps-input-ghost {
+    width: 100%;
     background: transparent !important;
     border: none !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-bottom: var(--ob-border-fine) !important;
     border-radius: 0 !important;
-    padding: 0.75rem 0 !important;
-    color: #fff !important;
-    font-size: 1rem !important;
-    transition: all 0.3s ease;
+    padding: var(--ob-space-075) 0 !important;
+    color: var(--ob-color-text-primary) !important;
+    font-size: var(--ob-font-size-sm) !important;
+    transition: border-color 0.2s ease;
     outline: none;
+    box-sizing: border-box;
+}
+
+.gps-input-ghost--lg {
+    font-size: var(--ob-font-size-md) !important;
+}
+
+.gps-input-ghost--sm {
+    font-size: var(--ob-font-size-sm) !important;
+    padding: var(--ob-space-050) 0 !important;
+}
+
+.gps-input-ghost::placeholder {
+    color: var(--ob-color-text-muted) !important;
 }
 
 .gps-input-ghost:focus {
-    border-bottom-color: var(--ob-color-neon-cyan) !important;
-    box-shadow: var(--ob-glow-neon-cyan);
-    background: linear-gradient(
-        to bottom,
-        transparent,
-        rgba(0, 243, 255, 0.05)
-    ) !important;
+    border-bottom-color: var(--ob-color-brand-primary) !important;
 }
 
-/* Scenarios Tiles */
+/* ── Geocode Buttons ── */
+
+.gps-geocode-btn {
+    background: transparent;
+    color: var(--ob-color-text-secondary);
+    border: var(--ob-border-fine);
+    padding: var(--ob-space-025) var(--ob-space-075);
+    border-radius: var(--ob-radius-xs);
+    font-size: var(--ob-font-size-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1.4;
+}
+
+.gps-geocode-btn:hover {
+    color: var(--ob-color-text-primary);
+    background: var(--ob-color-action-hover);
+}
+
+/* ── Select ── */
+
+.gps-select-ghost {
+    color: var(--ob-color-text-primary);
+    background: transparent;
+}
+
+.gps-select-ghost option {
+    background: var(--ob-color-surface-default);
+    color: var(--ob-color-text-primary);
+}
+
+/* ── Scenario Tiles ── */
+
 .gps-scenarios-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--ob-space-075);
+    gap: var(--ob-space-050);
 }
 
 .gps-scenario-tile {
@@ -296,72 +293,109 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--ob-space-050);
-    padding: var(--ob-space-100) var(--ob-space-050);
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    gap: var(--ob-space-025);
+    padding: var(--ob-space-075) var(--ob-space-050);
+    background: transparent;
+    border: var(--ob-border-fine);
     border-radius: var(--ob-radius-sm);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     text-align: center;
+    color: var(--ob-color-text-secondary);
+}
+
+.gps-scenario-tile svg {
+    font-size: 20px;
 }
 
 .gps-scenario-tile:hover {
-    background: rgba(0, 243, 255, 0.08);
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-text-secondary);
 }
 
 .gps-scenario-tile--selected {
-    background: rgba(0, 243, 255, 0.15);
-    border: 1px solid var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    background: var(--ob-color-action-hover);
+    border-color: var(--ob-color-brand-primary);
 }
 
 .gps-scenario-tile span {
-    font-size: var(--ob-font-size-xs);
-    color: rgba(255, 255, 255, 0.7);
+    font-size: var(--ob-font-size-2xs);
+    color: var(--ob-color-text-secondary);
 }
 
 .gps-scenario-tile--selected span {
-    color: var(--ob-color-neon-cyan);
-    font-weight: 500;
-    text-shadow: var(--ob-glow-neon-text);
+    color: var(--ob-color-text-primary);
+    font-weight: 600;
 }
 
-/* Scan Button - Gamified */
+/* ── Actions section ── */
+
+.gps-form__actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-075);
+    margin-top: var(--ob-space-050);
+    padding-top: var(--ob-space-100);
+    border-top: var(--ob-border-fine);
+}
+
+/* ── Developer Mode Toggle ── */
+
+.gps-developer-mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-075);
+    padding: var(--ob-space-075);
+    background: transparent;
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.gps-developer-mode-toggle:hover {
+    background: var(--ob-color-action-hover);
+}
+
+.gps-developer-mode-toggle input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--ob-color-brand-primary);
+    cursor: pointer;
+}
+
+.gps-developer-mode-toggle span {
+    color: var(--ob-color-text-primary);
+    font-size: var(--ob-font-size-sm);
+}
+
+.gps-developer-mode-hint {
+    color: var(--ob-color-text-muted);
+    font-size: var(--ob-font-size-xs);
+    margin-left: auto;
+}
+
+/* ── Scan Button ── */
+
 .gps-scan-button {
     width: 100%;
-    padding: var(--ob-space-125);
+    padding: var(--ob-space-100);
     border: none;
-    border-radius: var(--ob-radius-xs); /* 2px - buttons */
-    background: linear-gradient(
-        135deg,
-        #0096cc 0%,
-        var(--ob-color-neon-cyan) 100%
-    );
-    color: #0a1628;
+    border-radius: var(--ob-radius-xs);
+    background: var(--ob-color-brand-primary);
+    color: var(--ob-color-bg-root);
     font-weight: 700;
-    font-size: var(--ob-font-size-lg);
-    letter-spacing: 0.02em;
+    font-size: var(--ob-font-size-md);
+    letter-spacing: 0.04em;
     cursor: pointer;
-    box-shadow: var(--ob-glow-neon-cyan);
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: var(--ob-space-075);
-    margin-top: var(--ob-space-100);
 }
 
 .gps-scan-button:hover:not(:disabled) {
-    transform: translateY(-2px);
-    background: linear-gradient(
-        135deg,
-        var(--ob-color-neon-cyan) 0%,
-        #0096cc 100%
-    );
-    box-shadow: var(--ob-glow-neon-cyan-strong);
+    filter: brightness(1.1);
 }
 
 .gps-scan-button:disabled {
@@ -371,180 +405,115 @@
     color: var(--ob-color-text-muted);
 }
 
-/* Marketing Packs Grid */
-.gps-pack-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--ob-space-075);
+/* ── Error / Warning text ── */
+
+.gps-error-text {
+    color: var(--ob-color-status-error-text);
+    font-size: var(--ob-font-size-xs);
+    margin: 0;
 }
 
-.gps-pack-btn {
+/* ── Capture meta ── */
+
+.gps-capture-meta {
+    color: var(--ob-color-text-secondary);
+    font-size: var(--ob-font-size-sm);
+}
+
+/* ── Right Panel: HUD Widgets ── */
+
+.gps-hud-group {
+    flex: 0 0 300px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-075);
+    align-items: flex-end;
+}
+
+.gps-hud-card {
+    width: 100%;
+    background: var(--ob-color-bg-surface);
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-sm);
+    padding: var(--ob-space-100);
+    color: var(--ob-color-text-primary);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.gps-hud-card.locked {
+    filter: grayscale(1);
+    opacity: 0.6;
+}
+
+.gps-hud-card h3 {
+    margin: 0 0 var(--ob-space-050) 0;
+    font-size: var(--ob-font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ob-color-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Locked Overlay */
+.gps-hud-locked-overlay {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--ob-space-050);
-    padding: var(--ob-space-075);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--ob-radius-xs);
-    color: #fff;
-    font-size: var(--ob-font-size-sm);
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.gps-pack-btn:hover:not(:disabled) {
-    background: rgba(0, 243, 255, 0.08);
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
-}
-
-/* Map Error Toast */
-.gps-map-error {
-    position: absolute;
-    top: var(--ob-space-200);
-    left: var(--ob-space-200);
-    z-index: 1000;
-    background: rgba(0, 0, 0, 0.8);
-    padding: var(--ob-space-100);
-    border-radius: var(--ob-radius-sm);
-    color: var(--ob-color-error-500);
-    font-size: var(--ob-font-size-sm);
-}
-
-/* Geocode action buttons */
-.gps-geocode-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border: none;
-    padding: var(--ob-space-050) var(--ob-space-100);
-    border-radius: var(--ob-radius-xs);
-    font-size: var(--ob-font-size-sm);
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.gps-geocode-btn:hover {
-    background: rgba(0, 243, 255, 0.15);
-    color: var(--ob-color-neon-cyan);
-}
-
-/* Select ghost styling for dark option text */
-.gps-select-ghost {
-    color: #fff;
-    background: transparent;
-}
-
-.gps-select-ghost option {
-    background: var(--ob-color-surface-default);
-    color: var(--ob-color-text-primary);
-}
-
-/* Full-width form group */
-.gps-form__group--full-width {
-    grid-column: 1 / -1;
-}
-
-/* Capture meta styling */
-.gps-capture-meta {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-/* HUD helper text */
-.gps-hud-more-scenarios {
-    font-size: var(--ob-font-size-xs);
-    color: var(--ob-color-text-muted);
-    font-style: italic;
-    margin-top: var(--ob-space-050);
-}
-
-/* HUD loading state */
-.gps-hud-loading {
-    display: flex;
-    align-items: center;
+    padding: var(--ob-space-100) 0;
     gap: var(--ob-space-050);
     color: var(--ob-color-text-muted);
-    padding: var(--ob-space-100);
 }
 
-/* Spinner size variants */
-.gps-spinner--sm {
-    width: 16px;
-    height: 16px;
+.gps-hud-locked-overlay svg {
+    font-size: var(--ob-font-size-2xl);
+    margin-bottom: var(--ob-space-025);
 }
 
-.gps-spinner--xs {
-    width: 14px;
-    height: 14px;
+.gps-hud-content {
+    opacity: 1;
+    transition: opacity 0.3s ease;
 }
 
-/* Developer Mode Toggle */
-.gps-developer-mode-toggle {
-    display: flex;
-    align-items: center;
-    gap: var(--ob-space-100);
-    padding: var(--ob-space-100);
-    background: rgba(0, 243, 255, 0.05);
-    border: 1px solid rgba(0, 243, 255, 0.2);
-    border-radius: var(--ob-radius-sm);
-    cursor: pointer;
-    transition: all 0.2s ease;
+.gps-hud-card.locked .gps-hud-content {
+    opacity: 0.15;
+    filter: blur(var(--ob-blur-sm));
+    pointer-events: none;
 }
 
-.gps-developer-mode-toggle:hover {
-    background: rgba(0, 243, 255, 0.1);
-    border-color: var(--ob-color-neon-cyan);
-}
+/* ── HUD Panel List ── */
 
-.gps-developer-mode-toggle input[type='checkbox'] {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--ob-color-neon-cyan);
-    cursor: pointer;
-}
-
-.gps-developer-mode-toggle span {
-    color: #fff;
-    font-size: var(--ob-font-size-sm);
-}
-
-.gps-developer-mode-hint {
-    color: rgba(255, 255, 255, 0.5);
-    font-size: var(--ob-font-size-xs);
-    margin-left: auto;
-}
-
-/* HUD Panel List (Quick Analysis scenarios) */
 .gps-panel__list {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--ob-space-100);
+    gap: var(--ob-space-075);
 }
 
 .gps-panel__list > li {
     padding: var(--ob-space-075);
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--ob-color-action-hover);
     border-radius: var(--ob-radius-xs);
-    border-left: 2px solid var(--ob-color-neon-cyan);
+    border-left: 2px solid var(--ob-color-brand-primary);
 }
 
-/* HUD Panel Headline (scenario label) */
 .gps-panel__headline {
     font-size: var(--ob-font-size-sm);
     font-weight: 600;
-    color: #fff;
+    color: var(--ob-color-text-primary);
     margin-bottom: var(--ob-space-050);
 }
 
 .gps-panel__headline strong {
-    color: var(--ob-color-neon-cyan);
+    color: var(--ob-color-brand-primary);
 }
 
-/* HUD Panel Metrics (key-value definition list) */
 .gps-panel__metrics {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
@@ -560,7 +529,7 @@
 
 .gps-panel__metrics dt {
     font-size: var(--ob-font-size-2xs);
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--ob-color-text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -569,54 +538,129 @@
     margin: 0;
     font-size: var(--ob-font-size-sm);
     font-weight: 600;
-    color: #fff;
+    color: var(--ob-color-text-primary);
 }
 
-/* Upsell Card */
+/* ── HUD helpers ── */
+
+.gps-hud-more-scenarios {
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-muted);
+    font-style: italic;
+    margin-top: var(--ob-space-050);
+}
+
+.gps-hud-loading {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-050);
+    color: var(--ob-color-text-muted);
+    padding: var(--ob-space-100);
+}
+
+.gps-spinner--sm {
+    width: 16px;
+    height: 16px;
+}
+
+.gps-spinner--xs {
+    width: 14px;
+    height: 14px;
+}
+
+/* ── Marketing Packs ── */
+
+.gps-pack-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ob-space-050);
+}
+
+.gps-pack-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ob-space-050);
+    padding: var(--ob-space-075);
+    background: transparent;
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-xs);
+    color: var(--ob-color-text-primary);
+    font-size: var(--ob-font-size-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.gps-pack-btn:hover:not(:disabled) {
+    background: var(--ob-color-action-hover);
+}
+
+/* ── Upsell Card ── */
+
 .gps-hud-card--upsell {
-    background: rgba(99, 102, 241, 0.1);
-    border-color: rgba(99, 102, 241, 0.3);
+    background: var(--ob-color-bg-surface);
+    border-color: var(--ob-color-border-brand);
 }
 
 .gps-hud-upsell-text {
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--ob-color-text-secondary);
     font-size: var(--ob-font-size-sm);
-    margin: var(--ob-space-100) 0;
+    margin: var(--ob-space-075) 0;
 }
 
 .gps-hud-upsell-btn {
     width: 100%;
 }
 
-/* Developer Workspace Section - Full workspace below map */
+/* ── Map Error ── */
+
+.gps-map-error {
+    position: absolute;
+    top: var(--ob-space-200);
+    left: var(--ob-space-200);
+    z-index: 1000;
+    background: var(--ob-color-bg-surface);
+    padding: var(--ob-space-100);
+    border-radius: var(--ob-radius-sm);
+    border: var(--ob-border-fine);
+    color: var(--ob-color-status-error-text);
+    font-size: var(--ob-font-size-sm);
+}
+
+/* ── Developer Workspace ── */
+
 .gps-page__developer-workspace {
     padding: var(--ob-space-200);
     margin-top: var(--ob-space-200);
     background: var(--ob-color-bg-root);
-    border-radius: var(--ob-radius-lg) var(--ob-radius-lg) 0 0;
-    /* Solid background to separate from map - not glass since it's a full workspace */
+    border-radius: var(--ob-radius-sm) var(--ob-radius-sm) 0 0;
 }
 
-/* Developer Results Container */
 .site-acquisition__developer-results {
     display: flex;
     flex-direction: column;
     gap: var(--ob-space-250);
 }
 
-/* Scenario Focus Section */
 .site-acquisition__scenario-focus {
     margin-top: var(--ob-space-150);
 }
 
-/* Finance CTA Section */
 .site-acquisition__finance-cta {
     margin-top: var(--ob-space-200);
     padding-top: var(--ob-space-200);
-    border-top: 1px solid var(--ob-color-border-subtle);
+    border-top: var(--ob-border-fine);
 }
 
-/* Mobile Responsive */
+/* ── Full-width form group ── */
+
+.gps-form__group--full-width {
+    grid-column: 1 / -1;
+}
+
+/* ── Responsive ── */
+
 @media (max-width: 1024px) {
     .gps-page__summary {
         flex-direction: column;
@@ -634,5 +678,9 @@
 
     .gps-hud-card {
         width: 100%;
+    }
+
+    .gps-form__coords-row {
+        flex-wrap: wrap;
     }
 }

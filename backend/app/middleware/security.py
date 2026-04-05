@@ -74,7 +74,10 @@ def _normalise_origin(origin: str) -> str | None:
     candidate = origin.strip()
     if not candidate or candidate.lower() == "null":
         return None
-    parsed = urlsplit(candidate)
+    try:
+        parsed = urlsplit(candidate)
+    except ValueError:
+        return None
     if not parsed.scheme or not parsed.netloc:
         return None
     return f"{parsed.scheme.lower()}://{parsed.netloc.lower()}"

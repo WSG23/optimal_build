@@ -104,7 +104,7 @@ export function PremiumMetricCard({
   return (
     <Card
       variant="premium"
-      hover={onClick ? 'glow' : 'subtle'}
+      hover={onClick ? 'lift' : 'subtle'}
       accent={featured}
       animated={!loading}
       onClick={onClick}

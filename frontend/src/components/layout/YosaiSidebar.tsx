@@ -151,69 +151,29 @@ export function YosaiSidebar({ workspace = 'developer' }: YosaiSidebarProps) {
                       component={Link}
                       to={item.path}
                       variant="text"
+                      aria-current={isActive ? 'page' : undefined}
                       sx={{
                         justifyContent: 'flex-start',
                         color: isActive ? 'primary.main' : 'text.secondary',
                         bgcolor: isActive
                           ? alpha(theme.palette.primary.main, 0.12)
                           : 'transparent',
-                        borderLeft: 4,
+                        borderLeft: 3,
                         borderColor: isActive ? 'primary.main' : 'transparent',
-                        borderRadius: '0 4px 4px 0', // Square Cyber-Minimalism: sm
-                        px: 2, // 16px - consistent with layout gaps
+                        borderRadius:
+                          '0 var(--ob-radius-sm) var(--ob-radius-sm) 0',
+                        px: 2,
                         py: 1.25,
                         textAlign: 'left',
                         textTransform: 'none',
                         fontWeight: isActive ? 600 : 400,
-                        fontSize: isActive ? '0.875rem' : '0.85rem',
-                        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        '&::before': isActive
-                          ? {
-                              content: '""',
-                              position: 'absolute',
-                              left: 0,
-                              top: '50%',
-                              transform: 'translateY(-50%)',
-                              width: '4px',
-                              height: '70%',
-                              borderRadius: '0 4px 4px 0',
-                              bgcolor: 'primary.main',
-                              boxShadow: `0 0 12px 2px ${alpha(theme.palette.primary.main, 0.6)}`,
-                            }
-                          : {},
-                        '&::after': isActive
-                          ? {
-                              content: '""',
-                              position: 'absolute',
-                              right: '8px',
-                              top: '50%',
-                              transform: 'translateY(-50%)',
-                              width: '6px',
-                              height: '6px',
-                              borderRadius: '50%',
-                              bgcolor: 'primary.main',
-                              boxShadow: `0 0 8px 2px ${alpha(theme.palette.primary.main, 0.5)}`,
-                              animation: 'pulse 2s ease-in-out infinite',
-                            }
-                          : {},
-                        '@keyframes pulse': {
-                          '0%, 100%': {
-                            opacity: 1,
-                            transform: 'translateY(-50%) scale(1)',
-                          },
-                          '50%': {
-                            opacity: 0.6,
-                            transform: 'translateY(-50%) scale(0.8)',
-                          },
-                        },
+                        fontSize: '0.85rem',
+                        transition: 'background 0.2s ease, color 0.2s ease',
                         '&:hover': {
                           bgcolor: isActive
                             ? alpha(theme.palette.primary.main, 0.15)
                             : alpha(theme.palette.text.primary, 0.06),
                           color: isActive ? 'primary.main' : 'text.primary',
-                          transform: 'translateX(4px)',
                         },
                       }}
                     >

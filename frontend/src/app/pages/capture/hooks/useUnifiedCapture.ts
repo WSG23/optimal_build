@@ -316,50 +316,86 @@ export function useUnifiedCapture({
       return
     }
 
-    // Dark mode map style
-    const darkMapStyle: google.maps.MapTypeStyle[] = [
-      { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-      { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
-      { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+    // Dark grey map style — monochrome, no colorful markers
+    const darkGreyMapStyle: google.maps.MapTypeStyle[] = [
+      { elementType: 'geometry', stylers: [{ color: '#212121' }] },
+      { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+      { elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
+      { elementType: 'labels.text.stroke', stylers: [{ color: '#212121' }] },
       {
-        featureType: 'administrative.locality',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#d59563' }],
+        featureType: 'administrative',
+        elementType: 'geometry',
+        stylers: [{ color: '#757575' }],
+      },
+      {
+        featureType: 'poi',
+        elementType: 'geometry',
+        stylers: [{ color: '#2a2a2a' }],
       },
       {
         featureType: 'poi',
         elementType: 'labels.text.fill',
-        stylers: [{ color: '#d59563' }],
+        stylers: [{ color: '#616161' }],
       },
       {
         featureType: 'poi.park',
         elementType: 'geometry',
-        stylers: [{ color: '#263c3f' }],
+        stylers: [{ color: '#1c3a1c' }],
       },
       {
         featureType: 'road',
-        elementType: 'geometry',
-        stylers: [{ color: '#38414e' }],
+        elementType: 'geometry.fill',
+        stylers: [{ color: '#2c2c2c' }],
       },
       {
         featureType: 'road',
         elementType: 'labels.text.fill',
-        stylers: [{ color: '#9ca5b3' }],
+        stylers: [{ color: '#8a8a8a' }],
+      },
+      {
+        featureType: 'road.arterial',
+        elementType: 'geometry',
+        stylers: [{ color: '#373737' }],
       },
       {
         featureType: 'road.highway',
         elementType: 'geometry',
-        stylers: [{ color: '#746855' }],
+        stylers: [{ color: '#3c3c3c' }],
+      },
+      {
+        featureType: 'road.highway.controlled_access',
+        elementType: 'geometry',
+        stylers: [{ color: '#4e4e4e' }],
+      },
+      {
+        featureType: 'road.local',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#616161' }],
+      },
+      {
+        featureType: 'transit',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#616161' }],
+      },
+      {
+        featureType: 'transit.line',
+        elementType: 'geometry',
+        stylers: [{ color: '#2a2a2a' }],
+      },
+      {
+        featureType: 'transit.station',
+        elementType: 'labels.icon',
+        stylers: [{ visibility: 'off' }],
       },
       {
         featureType: 'water',
         elementType: 'geometry',
-        stylers: [{ color: '#17263c' }],
+        stylers: [{ color: '#181818' }],
       },
       {
         featureType: 'water',
         elementType: 'labels.text.fill',
-        stylers: [{ color: '#515c6d' }],
+        stylers: [{ color: '#3d3d3d' }],
       },
     ]
 
@@ -369,37 +405,50 @@ export function useUnifiedCapture({
     const map = new google.maps.Map(mapContainerRef.current, {
       center: { lat: initialLat, lng: initialLng },
       zoom: 16,
-      tilt: 45, // Add tilt for 3D feel
-      styles: darkMapStyle,
+      styles: darkGreyMapStyle,
       mapTypeControl: false,
       streetViewControl: false,
+      fullscreenControl: false,
+      zoomControl: true,
+      clickableIcons: true,
     })
 
-    // Create draggable marker
+    // Create draggable marker — white on dark map
     const marker = new google.maps.Marker({
       position: { lat: initialLat, lng: initialLng },
       map,
       draggable: true,
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
-        scale: 12,
-        fillColor: '#3b82f6',
+        scale: 10,
+        fillColor: '#ffffff',
         fillOpacity: 1,
-        strokeColor: 'white',
+        strokeColor: '#3b82f6',
         strokeWeight: 3,
       },
+      title: 'Drag to reposition or click the map',
     })
 
-    // Handle marker drag
+    // Handle marker drag — update coords and reverse-geocode
     marker.addListener('dragend', () => {
       const position = marker.getPosition()
       if (position) {
-        setLatitude(position.lat().toFixed(6))
-        setLongitude(position.lng().toFixed(6))
+        const lat = position.lat()
+        const lng = position.lng()
+        setLatitude(lat.toFixed(6))
+        setLongitude(lng.toFixed(6))
+        reverseGeocodeCoords(lat, lng)
+          .then((result) => {
+            if (result?.formattedAddress) {
+              setAddress(result.formattedAddress)
+              lastGeocodedAddressRef.current = result.formattedAddress
+            }
+          })
+          .catch(() => {})
       }
     })
 
-    // Handle map click
+    // Handle map click — set pin and reverse-geocode for address
     map.addListener('click', (event: google.maps.MapMouseEvent) => {
       if (event.latLng) {
         const lat = event.latLng.lat()
@@ -407,6 +456,17 @@ export function useUnifiedCapture({
         setLatitude(lat.toFixed(6))
         setLongitude(lng.toFixed(6))
         marker.setPosition({ lat, lng })
+        // Auto reverse-geocode to populate address
+        reverseGeocodeCoords(lat, lng)
+          .then((result) => {
+            if (result?.formattedAddress) {
+              setAddress(result.formattedAddress)
+              lastGeocodedAddressRef.current = result.formattedAddress
+            }
+          })
+          .catch(() => {
+            // Silently ignore — coords are already set
+          })
       }
     })
 

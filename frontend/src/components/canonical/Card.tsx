@@ -16,11 +16,10 @@ export interface CardProps {
    * - 'none': No hover effect
    * - 'subtle': Slight border highlight
    * - 'lift': Lift with shadow
-   * - 'glow': Neon cyan border glow (cyber aesthetic)
    */
-  hover?: 'none' | 'subtle' | 'lift' | 'glow'
+  hover?: 'none' | 'subtle' | 'lift'
   /**
-   * Show gradient accent border on top (cyber aesthetic)
+   * Show accent border on top
    */
   accent?: boolean
   /**
@@ -39,11 +38,11 @@ export interface CardProps {
 }
 
 /**
- * Card - Square Cyber-Minimalism Base Container
+ * Card - Square Minimalism Base Container
  *
  * Geometry: 4px border radius (--ob-radius-sm)
  * Border: 1px fine line at low opacity
- * Effects: Optional glassmorphism, lift on hover
+ * Default: Solid surface, subtle hover
  */
 export const Card = forwardRef<HTMLDivElement, CardProps>(
   (
@@ -104,15 +103,9 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
           border: 'var(--ob-border-fine-hover)',
         },
       },
-      glow: {
-        '&:hover': {
-          borderColor: 'var(--ob-color-neon-cyan)',
-          boxShadow: 'var(--ob-glow-neon-cyan)',
-        },
-      },
     }
 
-    // Accent styles (gradient top border)
+    // Accent styles (solid top border)
     const accentStyles: SxProps<Theme> = accent
       ? {
           position: 'relative',
@@ -123,7 +116,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
             left: 0,
             right: 0,
             height: '2px',
-            background: 'var(--ob-gradient-accent-fade)',
+            background: 'var(--ob-color-brand-primary)',
             borderRadius: 'var(--ob-radius-sm) var(--ob-radius-sm) 0 0',
           },
         }
