@@ -110,12 +110,13 @@ async def preview_import_finance_workbook(
     if not content:
         raise HTTPException(status_code=400, detail="Empty workbook upload.")
     try:
-        return preview_finance_workbook(
+        result: FinanceWorkbookPreviewResponse = preview_finance_workbook(
             content,
             filename=filename,
             project_id=project_id,
             project_name=project_name,
         )
+        return result
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -151,8 +152,7 @@ async def import_finance_workbook(
             detail={
                 "message": "Workbook could not be validated.",
                 "validation_errors": [
-                    issue.model_dump(mode="json")
-                    for issue in preview.validation_errors
+                    issue.model_dump(mode="json") for issue in preview.validation_errors
                 ],
             },
         )

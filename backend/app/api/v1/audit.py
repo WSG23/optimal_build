@@ -22,7 +22,7 @@ def _resolve_audit_project_id(project_ref: str) -> int:
     project_id = audit_key_from_value(project_ref)
     if project_id is None:
         raise HTTPException(status_code=404, detail="Audit project not found")
-    return project_id
+    return int(project_id)
 
 
 @router.get("/{project_id}")
@@ -35,12 +35,13 @@ async def list_project_audit(
 
     valid, logs = await verify_chain(session, project_id)
     items = [serialise_log(log) for log in logs]
-    return {
+    result: dict[str, object] = {
         "project_id": project_id,
         "valid": valid,
         "count": len(items),
         "items": items,
     }
+    return result
 
 
 @router.get("/{project_id}/evidence")
@@ -52,7 +53,8 @@ async def project_audit_evidence(
     """Return an evidence-pack summary for a project's audit ledger."""
 
     valid, logs = await verify_chain(session, project_id)
-    return build_evidence_report(project_id, valid, logs)
+    report: dict[str, object] = build_evidence_report(project_id, valid, logs)
+    return report
 
 
 @router.get("/by-ref/{project_ref}/evidence")
@@ -65,7 +67,8 @@ async def project_audit_evidence_by_ref(
 
     project_id = _resolve_audit_project_id(project_ref)
     valid, logs = await verify_chain(session, project_id)
-    return build_evidence_report(project_id, valid, logs)
+    report: dict[str, object] = build_evidence_report(project_id, valid, logs)
+    return report
 
 
 @router.get("/{project_id}/diff/{version_a}/{version_b}")

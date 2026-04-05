@@ -98,15 +98,22 @@ async def approve_step(
         )
     service = WorkflowService(db)
     try:
-        step = await service.approve_step(
-            step_id=step_id,
-            user_id=UUID(identity.user_id),
-            comments=approval_in.comments,
-        )
+        if approval_in.approved:
+            step = await service.approve_step(
+                step_id=step_id,
+                user_id=UUID(identity.user_id),
+                comments=approval_in.comments,
+            )
+        else:
+            step = await service.reject_step(
+                step_id=step_id,
+                user_id=UUID(identity.user_id),
+                comments=approval_in.comments,
+            )
         # Return the updated workflow
         workflow = await service.get_workflow(step.workflow_id)
         if not workflow:
-            raise HTTPException(status_code=400, detail="Unable to approve step")
+            raise HTTPException(status_code=400, detail="Unable to process step")
         return ApprovalWorkflowRead.from_orm_workflow(workflow)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e

@@ -12,6 +12,7 @@ class TeamMemberBase(BaseModel):
 
 
 class TeamMemberRead(TeamMemberBase):
+    id: UUID
     project_id: UUID
     joined_at: datetime
     last_active_at: Optional[datetime] = None

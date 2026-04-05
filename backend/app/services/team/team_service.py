@@ -103,6 +103,54 @@ class TeamService:
 
         return invitation
 
+    async def revoke_invitation(self, invitation_id: UUID) -> bool:
+        """Revoke a pending invitation."""
+        query = select(TeamInvitation).where(TeamInvitation.id == invitation_id)
+        result = await self.db.execute(query)
+        invitation = result.scalar_one_or_none()
+
+        if not invitation or invitation.status != InvitationStatus.PENDING:
+            return False
+
+        invitation.status = InvitationStatus.REVOKED
+        self.db.add(invitation)
+        await self.db.commit()
+        return True
+
+    async def resend_invitation(
+        self, invitation_id: UUID, invited_by_id: UUID
+    ) -> TeamInvitation | None:
+        """Resend an expired or pending invitation with a new token and expiry."""
+        query = select(TeamInvitation).where(TeamInvitation.id == invitation_id)
+        result = await self.db.execute(query)
+        old_invitation = result.scalar_one_or_none()
+
+        if not old_invitation:
+            return None
+
+        # Revoke old invitation if still pending
+        if old_invitation.status == InvitationStatus.PENDING:
+            old_invitation.status = InvitationStatus.REVOKED
+            self.db.add(old_invitation)
+
+        # Create fresh invitation
+        return await self.invite_member(
+            project_id=old_invitation.project_id,
+            email=old_invitation.email,
+            role=old_invitation.role,
+            invited_by_id=invited_by_id,
+        )
+
+    async def list_invitations(self, project_id: UUID) -> list[TeamInvitation]:
+        """List all invitations for a project."""
+        query = (
+            select(TeamInvitation)
+            .where(TeamInvitation.project_id == project_id)
+            .order_by(TeamInvitation.created_at.desc())
+        )
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
+
     async def accept_invitation(self, token: str, user_id: UUID) -> TeamMember:
         """Accept an invitation and add user to the team."""
 

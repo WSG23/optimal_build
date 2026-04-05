@@ -19,6 +19,7 @@ import {
   Tab,
   Alert,
   CircularProgress,
+  Snackbar,
 } from '@mui/material'
 import {
   Add as AddIcon,
@@ -27,7 +28,7 @@ import {
   Dashboard as DashboardIcon,
 } from '@mui/icons-material'
 import { Button } from '../../../components/canonical/Button'
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
 import { teamApi, TeamMember } from '../../../api/team'
 import { WorkflowDashboard } from './components/WorkflowDashboard'
 import { ProjectProgressDashboard } from './components/ProjectProgressDashboard'
@@ -84,6 +85,8 @@ export const TeamManagementPage: React.FC = () => {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState('consultant')
   const [inviting, setInviting] = useState(false)
+  const [snackbar, setSnackbar] = useState<string | null>(null)
+  const [confirmRemove, setConfirmRemove] = useState<TeamMember | null>(null)
 
   // Ref to prevent multiple fetches and track if we've already loaded data
   const hasFetchedRef = useRef(false)
@@ -164,11 +167,7 @@ export const TeamManagementPage: React.FC = () => {
       })
       setInviteOpen(false)
       setInviteEmail('')
-      // Ideally refresh members list if they show up immediately (pending),
-      // but standard invitation flow usually means they don't show up in 'members' until accepted
-      // unless we list invitations separately.
-      // For now, let's just show a success message or re-fetch.
-      alert('Invitation sent!')
+      setSnackbar(`Invitation sent to ${inviteEmail}`)
     } catch (err) {
       console.error(err)
       setError('Failed to send invitation')
@@ -228,8 +227,8 @@ export const TeamManagementPage: React.FC = () => {
   return (
     <Box sx={{ width: '100%' }}>
       <Alert severity="info" sx={{ mb: 'var(--ob-space-150)' }}>
-        Architect and engineer workspaces are still staged. Today this surface is
-        the developer-controlled consultant coordination layer for invites,
+        Architect and engineer workspaces are still staged. Today this surface
+        is the developer-controlled consultant coordination layer for invites,
         approvals, and evidence-ready handoffs.
       </Alert>
       {/* Compact Page Header - TIGHT layout with animation */}
@@ -254,7 +253,8 @@ export const TeamManagementPage: React.FC = () => {
             variant="body2"
             sx={{ color: 'text.secondary', mt: 'var(--ob-space-025)' }}
           >
-            Invite consultants, route approvals, and track staged architect and engineer reviews
+            Invite consultants, route approvals, and track staged architect and
+            engineer reviews
           </Typography>
           {currentProject && (
             <Typography
@@ -338,8 +338,8 @@ export const TeamManagementPage: React.FC = () => {
           >
             Team Members
           </Typography>
-          {/* Data table in GlassCard */}
-          <GlassCard sx={{ p: 'var(--ob-space-150)' }}>
+          {/* Data table in Card */}
+          <Card sx={{ p: 'var(--ob-space-150)' }}>
             <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
               <Table>
                 <TableHead>
@@ -433,7 +433,7 @@ export const TeamManagementPage: React.FC = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleRemoveMember(member)}
+                              onClick={() => setConfirmRemove(member)}
                               disabled={removingMemberId === member.id}
                               sx={{ color: 'error.main' }}
                             >
@@ -449,7 +449,7 @@ export const TeamManagementPage: React.FC = () => {
                 </TableBody>
               </Table>
             </TableContainer>
-          </GlassCard>
+          </Card>
         </Box>
       )}
 
@@ -512,11 +512,59 @@ export const TeamManagementPage: React.FC = () => {
           >
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleInvite} disabled={inviting}>
+          <Button
+            variant="primary"
+            onClick={handleInvite}
+            disabled={inviting || !inviteEmail.includes('@')}
+          >
             {inviting ? 'Sending...' : 'Send Invitation'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Confirm Remove Dialog */}
+      <Dialog open={!!confirmRemove} onClose={() => setConfirmRemove(null)}>
+        <DialogTitle>Remove Team Member</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Remove{' '}
+            <strong>
+              {confirmRemove?.user?.full_name ||
+                confirmRemove?.user?.email ||
+                'this member'}
+            </strong>{' '}
+            from the project? They will lose access to all project resources.
+          </Typography>
+        </DialogContent>
+        <DialogActions
+          sx={{ p: 'var(--ob-space-200)', gap: 'var(--ob-space-100)' }}
+        >
+          <Button variant="ghost" onClick={() => setConfirmRemove(null)}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            sx={{ bgcolor: 'error.main', '&:hover': { bgcolor: 'error.dark' } }}
+            onClick={() => {
+              if (confirmRemove) {
+                void handleRemoveMember(confirmRemove)
+                setConfirmRemove(null)
+              }
+            }}
+          >
+            Remove
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={!!snackbar}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(null)}
+        message={snackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
     </Box>
   )
 }

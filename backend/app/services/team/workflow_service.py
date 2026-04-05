@@ -180,6 +180,46 @@ class WorkflowService:
         await self.db.refresh(step)
         return step
 
+    async def reject_step(
+        self, step_id: UUID, user_id: UUID, comments: str | None = None
+    ) -> ApprovalStep:
+        """Reject a specific step, blocking workflow progression."""
+
+        query = select(ApprovalStep).where(ApprovalStep.id == step_id)
+        result = await self.db.execute(query)
+        step = result.scalar_one_or_none()
+
+        if not step:
+            raise ValueError("Step not found")
+
+        if step.status != StepStatus.IN_REVIEW:
+            raise ValueError("Step is not in review")
+
+        has_permission = await self._check_step_permission(step, user_id)
+        if not has_permission:
+            raise PermissionError(
+                "User does not have permission to reject this step. "
+                "Required: specific user or role assignment."
+            )
+
+        step.status = StepStatus.REJECTED
+        step.approved_by_id = user_id
+        step.decision_at = utcnow()
+        step.comments = comments
+
+        self.db.add(step)
+
+        # Mark workflow as rejected
+        workflow = await self.get_workflow(step.workflow_id)
+        if workflow:
+            workflow.status = WorkflowStatus.REJECTED
+            workflow.completed_at = utcnow()
+            self.db.add(workflow)
+
+        await self.db.commit()
+        await self.db.refresh(step)
+        return step
+
     async def _advance_workflow(self, workflow_id: UUID) -> None:
         """Check workflow state and activate next step or complete workflow."""
         workflow = await self.get_workflow(workflow_id)

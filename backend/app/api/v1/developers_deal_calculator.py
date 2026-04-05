@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from decimal import Decimal, ROUND_HALF_UP
 from math import ceil
-from typing import Any
-from uuid import uuid4
+from typing import Any, Literal, cast
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend._compat.datetime import utcnow
 from app.api.deps import require_viewer
 from app.core.database import get_session
-from app.schemas.buildable import BuildableDefaults
 from app.schemas.deal_calculator import (
     DealCalculatorCoordinates,
     DealCalculatorFinanceSummary,
@@ -21,7 +19,11 @@ from app.schemas.deal_calculator import (
     DealCalculatorResponse,
     DealCalculatorSiteSummary,
 )
-from app.schemas.feasibility import BuildEnvelopeSnapshot, FeasibilityAssessmentRequest, NewFeasibilityProjectInput
+from app.schemas.feasibility import (
+    BuildEnvelopeSnapshot,
+    FeasibilityAssessmentRequest,
+    NewFeasibilityProjectInput,
+)
 from app.services.agents.ura_integration import URAIntegrationService
 from app.services.buildable import BuildableService, BuildableInput
 from app.services.finance import (
@@ -33,7 +35,10 @@ from app.services.finance import (
     serialise_breakdown,
     summarise_asset_financials,
 )
-from app.services.feasibility import generate_feasibility_rules, run_feasibility_assessment
+from app.services.feasibility import (
+    generate_feasibility_rules,
+    run_feasibility_assessment,
+)
 from app.services.geocoding import Address, GeocodingService
 
 router = APIRouter(prefix="/developers/deal-calculator", tags=["developers"])
@@ -85,14 +90,19 @@ def _infer_land_use(
     ]
     if any("residential" in item or item.startswith("r") for item in candidates):
         return "residential"
-    if any("industrial" in item or "business" in item or item.startswith("b") for item in candidates):
+    if any(
+        "industrial" in item or "business" in item or item.startswith("b")
+        for item in candidates
+    ):
         return "industrial"
     if any("mixed" in item or item.startswith("mu") for item in candidates):
         return "mixed_use"
     return "commercial"
 
 
-def _build_source_reference(zone_source: dict[str, Any], ura_source_provider: str | None) -> str | None:
+def _build_source_reference(
+    zone_source: dict[str, Any], ura_source_provider: str | None
+) -> str | None:
     source_parts: list[str] = []
     parcel_source = zone_source.get("parcel_source")
     note = zone_source.get("note")
@@ -148,11 +158,17 @@ def _build_finance_summary(
 ) -> tuple[DealCalculatorFinanceSummary, list[Any], Any | None]:
     finance_inputs = _build_finance_inputs(asset_optimizations)
     breakdowns_raw = build_asset_financials(finance_inputs)
-    breakdowns = list(breakdowns_raw if isinstance(breakdowns_raw, tuple) else (breakdowns_raw,))
-    asset_mix_summary = summarise_asset_financials(breakdowns, project_name="Quick Screen")
+    breakdowns = list(
+        breakdowns_raw if isinstance(breakdowns_raw, tuple) else (breakdowns_raw,)
+    )
+    asset_mix_summary = summarise_asset_financials(
+        breakdowns, project_name="Quick Screen"
+    )
 
     total_capex = asset_mix_summary.total_capex_sgd if asset_mix_summary else None
-    annual_revenue = asset_mix_summary.total_annual_revenue_sgd if asset_mix_summary else None
+    annual_revenue = (
+        asset_mix_summary.total_annual_revenue_sgd if asset_mix_summary else None
+    )
     annual_noi = asset_mix_summary.total_annual_noi_sgd if asset_mix_summary else None
 
     equity_fraction = _fraction_from_pct(financing.equity_pct)
@@ -163,20 +179,30 @@ def _build_finance_summary(
     sale_cost_fraction = _fraction_from_pct(financing.sale_cost_pct)
 
     equity_required = (
-        _quantize_money(total_capex * equity_fraction) if total_capex is not None else None
+        _quantize_money(total_capex * equity_fraction)
+        if total_capex is not None
+        else None
     )
     debt_amount = (
-        _quantize_money(total_capex * debt_fraction) if total_capex is not None else None
+        _quantize_money(total_capex * debt_fraction)
+        if total_capex is not None
+        else None
     )
     annual_debt_service = (
-        _quantize_money(debt_amount * interest_fraction) if debt_amount is not None else None
+        _quantize_money(debt_amount * interest_fraction)
+        if debt_amount is not None
+        else None
     )
     operating_expenses = None
     if annual_revenue is not None and annual_noi is not None:
         operating_expenses = annual_revenue - annual_noi
 
     metrics = None
-    if total_capex is not None and annual_revenue is not None and annual_noi is not None:
+    if (
+        total_capex is not None
+        and annual_revenue is not None
+        and annual_noi is not None
+    ):
         metrics = calculate_comprehensive_metrics(
             property_value=total_capex,
             gross_rental_income=annual_revenue,
@@ -248,7 +274,9 @@ def _build_finance_summary(
         total_capex_sgd=total_capex,
         total_annual_revenue_sgd=annual_revenue,
         total_annual_noi_sgd=annual_noi,
-        blended_yield_pct=asset_mix_summary.blended_yield_pct if asset_mix_summary else None,
+        blended_yield_pct=(
+            asset_mix_summary.blended_yield_pct if asset_mix_summary else None
+        ),
         equity_required_sgd=equity_required,
         debt_amount_sgd=debt_amount,
         annual_debt_service_sgd=annual_debt_service,
@@ -284,7 +312,9 @@ async def evaluate_deal(
         coordinates = DealCalculatorCoordinates(latitude=latitude, longitude=longitude)
         ura_zoning = await ura_service.get_zoning_info(address.full_address)
         property_info = await ura_service.get_property_info(address.full_address)
-        existing_use = payload.existing_use or await ura_service.get_existing_use(address.full_address)
+        existing_use = payload.existing_use or await ura_service.get_existing_use(
+            address.full_address
+        )
         input_mode = "address"
     else:
         formatted_address = "Manual parameters"
@@ -297,7 +327,9 @@ async def evaluate_deal(
 
     zone_code = payload.zone_code or (ura_zoning.zone_code if ura_zoning else None)
     zone_description = ura_zoning.zone_description if ura_zoning else None
-    land_use = _infer_land_use(payload.land_use, zone_description, existing_use, zone_code)
+    land_use = _infer_land_use(
+        payload.land_use, zone_description, existing_use, zone_code
+    )
 
     site_area_sqm = (
         payload.site_area_sqm
@@ -322,7 +354,11 @@ async def evaluate_deal(
             land_area=site_area_sqm,
             zone_code=zone_code,
             plot_ratio=allowable_plot_ratio,
-            site_coverage=(ura_zoning.site_coverage / 100.0) if ura_zoning and ura_zoning.site_coverage else None,
+            site_coverage=(
+                (ura_zoning.site_coverage / 100.0)
+                if ura_zoning and ura_zoning.site_coverage
+                else None
+            ),
             floor_height_m=4.0,
             efficiency_ratio=0.82,
         )
@@ -334,7 +370,9 @@ async def evaluate_deal(
     )
     additional_potential = None
     if current_gfa_sqm is not None:
-        additional_potential = max(buildable_calc.metrics.gfa_cap_m2 - current_gfa_sqm, 0)
+        additional_potential = max(
+            buildable_calc.metrics.gfa_cap_m2 - current_gfa_sqm, 0
+        )
 
     build_envelope = BuildEnvelopeSnapshot(
         zone_code=zone_code,
@@ -385,7 +423,7 @@ async def evaluate_deal(
     return DealCalculatorResponse(
         generated_at=utcnow(),
         site=DealCalculatorSiteSummary(
-            input_mode=input_mode,
+            input_mode=cast(Literal["address", "manual"], input_mode),
             formatted_address=address.full_address,
             coordinates=coordinates,
             jurisdiction_code="SG",

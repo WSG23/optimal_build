@@ -10,15 +10,22 @@ import {
   StepLabel,
   Stepper,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Snackbar,
 } from '@mui/material'
 import {
   Add as AddIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   CheckCircle as CheckIcon,
+  Cancel as RejectIcon,
 } from '@mui/icons-material'
 import { Button } from '../../../../components/canonical/Button'
-import { GlassCard } from '../../../../components/canonical/GlassCard'
+import { Card } from '../../../../components/canonical/Card'
 import { ApprovalWorkflow, workflowApi } from '../../../../api/workflow'
 import { CreateWorkflowDialog } from './CreateWorkflowDialog'
 
@@ -62,8 +69,8 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
   const [workflows, setWorkflows] = useState<ApprovalWorkflow[]>([])
   const [loading, setLoading] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
+  const [snackbar, setSnackbar] = useState<string | null>(null)
 
-  // Fetch workflows from API
   const fetchWorkflows = React.useCallback(async () => {
     setLoading(true)
     const stored = loadStoredWorkflows(projectId)
@@ -105,12 +112,15 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
       return next
     })
     setCreateOpen(false)
+    setSnackbar('Workflow created')
   }
 
-  const handleApproveStep = async (stepId: string) => {
-    // Check if this is a mock step (mock IDs start with 'mock-')
+  const handleStepAction = async (
+    stepId: string,
+    approved: boolean,
+    comments: string,
+  ) => {
     if (stepId.startsWith('mock-')) {
-      // Optimistic update for mock data
       setWorkflows((prev) =>
         prev.map((w) => ({
           ...w,
@@ -118,24 +128,26 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
             s.id === stepId
               ? {
                   ...s,
-                  status: 'approved' as const,
+                  status: approved
+                    ? ('approved' as const)
+                    : ('rejected' as const),
                   approved_at: new Date().toISOString(),
                 }
               : s,
           ),
         })),
       )
+      setSnackbar(approved ? 'Step approved' : 'Step rejected')
       return
     }
 
-    // Real API call for non-mock steps
     try {
-      await workflowApi.approveStep(stepId, true, 'Approved from dashboard')
-      // Refresh workflows to get updated state
+      await workflowApi.approveStep(stepId, approved, comments || undefined)
       await fetchWorkflows()
+      setSnackbar(approved ? 'Step approved' : 'Step rejected')
     } catch (error) {
-      console.error('Failed to approve step:', error)
-      // Could show error notification here
+      console.error('Failed to update step:', error)
+      setSnackbar('Failed to update step. Check your permissions.')
     }
   }
 
@@ -147,7 +159,6 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
         gap: 'var(--ob-space-150)',
       }}
     >
-      {/* Section header on background with action button */}
       <Box
         sx={{
           display: 'flex',
@@ -197,15 +208,15 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
             <WorkflowCard
               key={workflow.id}
               workflow={workflow}
-              onApproveStep={handleApproveStep}
+              onStepAction={handleStepAction}
             />
           ))}
           {workflows.length === 0 && (
-            <GlassCard sx={{ p: 'var(--ob-space-300)' }}>
+            <Card sx={{ p: 'var(--ob-space-300)' }}>
               <Typography variant="body1" color="text.secondary" align="center">
                 No active workflows. Create one to get started.
               </Typography>
-            </GlassCard>
+            </Card>
           )}
         </Box>
       )}
@@ -216,23 +227,49 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
         projectId={projectId}
         onSuccess={handleCreateSuccess}
       />
+
+      <Snackbar
+        open={!!snackbar}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(null)}
+        message={snackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
     </Box>
   )
 }
 
 const WorkflowCard: React.FC<{
   workflow: ApprovalWorkflow
-  onApproveStep: (id: string) => void
-}> = ({ workflow, onApproveStep }) => {
+  onStepAction: (id: string, approved: boolean, comments: string) => void
+}> = ({ workflow, onStepAction }) => {
   const [expanded, setExpanded] = useState(true)
+  const [confirmStep, setConfirmStep] = useState<{
+    id: string
+    name: string
+    approved: boolean
+  } | null>(null)
+  const [comments, setComments] = useState('')
 
   const activeStepIndex = workflow.steps.findIndex(
     (s) => s.status === 'in_review' || s.status === 'pending',
   )
 
+  const statusColor =
+    workflow.status === 'approved'
+      ? 'success'
+      : workflow.status === 'rejected'
+        ? 'error'
+        : workflow.status === 'in_progress'
+          ? 'primary'
+          : 'default'
+
   return (
-    <GlassCard sx={{ overflow: 'hidden' }}>
+    <Card sx={{ overflow: 'hidden' }}>
       <Box
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
         sx={{
           p: 'var(--ob-space-200)',
           display: 'flex',
@@ -241,60 +278,51 @@ const WorkflowCard: React.FC<{
           cursor: 'pointer',
         }}
         onClick={() => setExpanded(!expanded)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            setExpanded(!expanded)
+          }
+        }}
       >
         <Box sx={{ flex: 1 }}>
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 'var(--ob-space-200)',
+              gap: 'var(--ob-space-100)',
               mb: workflow.description ? 'var(--ob-space-050)' : 0,
             }}
           >
-            <Typography variant="h6">
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
               {workflow.name || workflow.title}
             </Typography>
             <Chip
               label={workflow.status.replace('_', ' ')}
-              color={
-                workflow.status === 'approved'
-                  ? 'success'
-                  : workflow.status === 'in_progress'
-                    ? 'primary'
-                    : 'default'
-              }
+              color={statusColor}
               size="small"
+              sx={{ textTransform: 'capitalize' }}
+            />
+            <Chip
+              label={workflow.workflow_type.replace(/_/g, ' ')}
+              size="small"
+              variant="outlined"
               sx={{ textTransform: 'capitalize' }}
             />
           </Box>
           {workflow.description && (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 'var(--ob-space-050)' }}
-            >
+            <Typography variant="body2" color="text.secondary">
               {workflow.description}
             </Typography>
           )}
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 'var(--ob-space-200)',
-              mt: 'var(--ob-space-100)',
-            }}
-          >
-            <Typography variant="caption" color="text.secondary">
-              <strong>Type:</strong> {workflow.workflow_type.replace('_', ' ')}
-            </Typography>
-          </Box>
         </Box>
-        <IconButton size="small">
+        <IconButton size="small" tabIndex={-1} aria-hidden>
           {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         </IconButton>
       </Box>
       <Collapse in={expanded}>
         <Divider />
-        <Box sx={{ p: 'var(--ob-space-300)' }}>
+        <Box sx={{ p: 'var(--ob-space-200)' }}>
           <Stepper
             activeStep={
               activeStepIndex === -1 ? workflow.steps.length : activeStepIndex
@@ -309,38 +337,79 @@ const WorkflowCard: React.FC<{
                       color:
                         step.status === 'approved'
                           ? 'success.main'
-                          : step.status === 'in_review'
-                            ? 'primary.main'
-                            : 'text.disabled',
+                          : step.status === 'rejected'
+                            ? 'error.main'
+                            : step.status === 'in_review'
+                              ? 'primary.main'
+                              : 'text.disabled',
                     },
                   }}
                 >
                   <Box>
-                    {step.name}
+                    <Typography variant="body2">{step.name}</Typography>
                     {step.approver_role && (
+                      <Typography variant="caption" color="text.secondary">
+                        Role: {step.approver_role}
+                      </Typography>
+                    )}
+                    {step.approved_at && (
                       <Typography
                         variant="caption"
                         display="block"
                         color="text.secondary"
                       >
-                        Approver: {step.approver_role}
+                        {step.status === 'rejected' ? 'Rejected' : 'Approved'}{' '}
+                        {new Date(step.approved_at).toLocaleDateString()}
+                      </Typography>
+                    )}
+                    {step.comments && (
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        sx={{ fontStyle: 'italic', color: 'text.secondary' }}
+                      >
+                        &ldquo;{step.comments}&rdquo;
                       </Typography>
                     )}
                   </Box>
                   {step.status === 'in_review' && (
-                    <Box sx={{ mt: 'var(--ob-space-100)' }}>
+                    <Box
+                      sx={{
+                        mt: 'var(--ob-space-075)',
+                        display: 'flex',
+                        gap: 'var(--ob-space-050)',
+                      }}
+                    >
                       <Button
                         size="sm"
-                        variant="secondary"
+                        variant="primary"
                         onClick={(e) => {
                           e.stopPropagation()
-                          onApproveStep(step.id)
+                          setConfirmStep({
+                            id: step.id,
+                            name: step.name,
+                            approved: true,
+                          })
                         }}
                       >
-                        <CheckIcon
-                          sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }}
-                        />
+                        <CheckIcon sx={{ fontSize: '0.875rem' }} />
                         Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        sx={{ color: 'error.main' }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setConfirmStep({
+                            id: step.id,
+                            name: step.name,
+                            approved: false,
+                          })
+                        }}
+                      >
+                        <RejectIcon sx={{ fontSize: '0.875rem' }} />
+                        Reject
                       </Button>
                     </Box>
                   )}
@@ -350,6 +419,67 @@ const WorkflowCard: React.FC<{
           </Stepper>
         </Box>
       </Collapse>
-    </GlassCard>
+
+      {/* Confirm approve/reject dialog */}
+      <Dialog
+        open={!!confirmStep}
+        onClose={() => {
+          setConfirmStep(null)
+          setComments('')
+        }}
+      >
+        <DialogTitle>
+          {confirmStep?.approved ? 'Approve' : 'Reject'} Step
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 'var(--ob-space-150)' }}>
+            {confirmStep?.approved ? 'Approve' : 'Reject'}{' '}
+            <strong>{confirmStep?.name}</strong>?
+            {!confirmStep?.approved && ' This will reject the entire workflow.'}
+          </Typography>
+          <TextField
+            label="Comments (optional)"
+            fullWidth
+            multiline
+            rows={2}
+            value={comments}
+            onChange={(e) => setComments(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions
+          sx={{ p: 'var(--ob-space-200)', gap: 'var(--ob-space-100)' }}
+        >
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setConfirmStep(null)
+              setComments('')
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            sx={
+              !confirmStep?.approved
+                ? {
+                    bgcolor: 'error.main',
+                    '&:hover': { bgcolor: 'error.dark' },
+                  }
+                : {}
+            }
+            onClick={() => {
+              if (confirmStep) {
+                onStepAction(confirmStep.id, confirmStep.approved, comments)
+                setConfirmStep(null)
+                setComments('')
+              }
+            }}
+          >
+            {confirmStep?.approved ? 'Approve' : 'Reject'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Card>
   )
 }

@@ -112,6 +112,50 @@ async def get_team_activity(
     return activity_stats
 
 
+@router.get("/invitations", response_model=list[InvitationRead])
+async def list_invitations(
+    project_id: UUID,
+    db: AsyncSession = Depends(get_session),
+    identity: deps.RequestIdentity = Depends(deps.require_viewer),
+) -> Any:
+    """List all invitations for a project."""
+    service = TeamService(db)
+    invitations = await service.list_invitations(project_id)
+    return invitations
+
+
+@router.post("/invitations/{invitation_id}/resend", response_model=InvitationRead)
+async def resend_invitation(
+    invitation_id: UUID,
+    db: AsyncSession = Depends(get_session),
+    identity: deps.RequestIdentity = Depends(deps.require_reviewer),
+) -> Any:
+    """Resend an invitation with a new token and expiry."""
+    if not identity.user_id:
+        raise HTTPException(status_code=400, detail="User ID required")
+    service = TeamService(db)
+    invitation = await service.resend_invitation(invitation_id, UUID(identity.user_id))
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    return invitation
+
+
+@router.post("/invitations/{invitation_id}/revoke", response_model=bool)
+async def revoke_invitation(
+    invitation_id: UUID,
+    db: AsyncSession = Depends(get_session),
+    identity: deps.RequestIdentity = Depends(deps.require_reviewer),
+) -> Any:
+    """Revoke a pending invitation."""
+    service = TeamService(db)
+    success = await service.revoke_invitation(invitation_id)
+    if not success:
+        raise HTTPException(
+            status_code=400, detail="Invitation not found or not pending"
+        )
+    return True
+
+
 @router.post("/members/{user_id}/activity", response_model=TeamMemberRead)
 async def update_member_activity(
     project_id: UUID,
