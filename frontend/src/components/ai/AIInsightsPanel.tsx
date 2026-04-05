@@ -317,7 +317,7 @@ export function AIInsightsPanel({
 
   if (loading) {
     return (
-      <Card variant="glass" sx={{ p: 'var(--ob-space-200)' }}>
+      <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
         <Skeleton variant="text" width="60%" />
         <Skeleton variant="rectangular" height={60} sx={{ mt: 1 }} />
         <Skeleton variant="rectangular" height={60} sx={{ mt: 1 }} />
@@ -348,7 +348,7 @@ export function AIInsightsPanel({
   }
 
   return (
-    <Card variant="glass" sx={{ p: 'var(--ob-space-200)' }}>
+    <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
       {/* Header */}
       <Box
         sx={{

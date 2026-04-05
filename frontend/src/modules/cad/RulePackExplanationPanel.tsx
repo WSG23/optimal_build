@@ -3,7 +3,7 @@ import { Box, Typography, Stack, Grid, Skeleton } from '@mui/material'
 
 import { useTranslation } from '../../i18n'
 import type { RuleSummary } from '../../api/client'
-import { GlassCard } from '../../components/canonical/GlassCard'
+import { Card } from '../../components/canonical/Card'
 import { StatusChip } from '../../components/canonical/StatusChip'
 
 interface RulePackExplanationPanelProps {
@@ -255,7 +255,7 @@ export function RulePackExplanationPanel({
       )
     }
     return (
-      <GlassCard sx={{ p: 'var(--ob-space-300)' }}>
+      <Card sx={{ p: 'var(--ob-space-300)' }}>
         <Typography variant="h6" sx={{ mb: 'var(--ob-space-300)' }}>
           {t('panels.rulePackTitle', { defaultValue: 'Rule constraints' })}
         </Typography>
@@ -264,7 +264,7 @@ export function RulePackExplanationPanel({
           <Skeleton variant="rectangular" height={40} />
           <Skeleton variant="rectangular" height={40} />
         </Stack>
-      </GlassCard>
+      </Card>
     )
   }
 
@@ -281,13 +281,13 @@ export function RulePackExplanationPanel({
       )
     }
     return (
-      <GlassCard sx={{ p: 'var(--ob-space-300)', textAlign: 'center' }}>
+      <Card sx={{ p: 'var(--ob-space-300)', textAlign: 'center' }}>
         <Typography variant="body2" color="text.secondary">
           {t('panels.rulePackEmpty', {
             defaultValue: 'No active rules for this selection.',
           })}
         </Typography>
-      </GlassCard>
+      </Card>
     )
   }
 
@@ -508,7 +508,7 @@ export function RulePackExplanationPanel({
 
   // Standalone variant: original with GlassCard
   return (
-    <GlassCard
+    <Card
       sx={{
         p: 'var(--ob-space-300)',
         maxWidth: 1000,
@@ -517,7 +517,7 @@ export function RulePackExplanationPanel({
       }}
     >
       {RulesContent}
-    </GlassCard>
+    </Card>
   )
 }
 

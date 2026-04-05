@@ -35,7 +35,7 @@ export function DeveloperControlPanel() {
       <Grid container spacing={4} sx={{ mt: 2 }}>
         {/* Feature Flags Section */}
         <Grid item xs={12} md={6}>
-          <Card variant="glass">
+          <Card variant="default">
             <Box sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <ScienceIcon sx={{ mr: 1, color: 'primary.main' }} />
@@ -54,7 +54,7 @@ export function DeveloperControlPanel() {
 
         {/* Tools Section */}
         <Grid item xs={12} md={6}>
-          <Card variant="glass">
+          <Card variant="default">
             <Box sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <ViewInArIcon sx={{ mr: 1, color: 'secondary.main' }} />
@@ -85,7 +85,7 @@ export function DeveloperControlPanel() {
           </Card>
 
           <Box sx={{ mt: 3 }}>
-            <Card variant="glass">
+            <Card variant="default">
               <Box sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <BugReportIcon sx={{ mr: 1, color: 'error.main' }} />

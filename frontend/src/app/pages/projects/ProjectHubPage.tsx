@@ -29,7 +29,7 @@ import {
 import { useProject } from '../../../contexts/useProject'
 import { useRouterController } from '../../../router'
 import { MetricTile } from '../../../components/canonical/MetricTile'
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
 import {
   getProjectDashboard,
   ProjectDashboardResponse,
@@ -167,7 +167,7 @@ export function ProjectHubPage() {
           // Use path from API directly
           return (
             <Grid item xs={12} md={6} lg={4} key={item.path}>
-              <GlassCard
+              <Card
                 sx={{
                   height: '100%',
                   transition: 'all 0.2s',
@@ -176,9 +176,8 @@ export function ProjectHubPage() {
                     borderColor: color,
                   },
                 }}
-                hoverEffect
+                hover="lift"
                 onClick={() => navigate(item.path)}
-                role="button"
               >
                 <Stack
                   direction="row"
@@ -206,7 +205,7 @@ export function ProjectHubPage() {
                 <Typography variant="body2" color="text.secondary">
                   {item.description}
                 </Typography>
-              </GlassCard>
+              </Card>
             </Grid>
           )
         })}
@@ -217,7 +216,7 @@ export function ProjectHubPage() {
     <Grid container spacing={3}>
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <Grid item xs={12} md={6} lg={4} key={i}>
-          <GlassCard sx={{ height: '100%' }}>
+          <Card sx={{ height: '100%' }}>
             <Stack direction="row" justifyContent="space-between" mb={2}>
               <Skeleton
                 variant="rectangular"
@@ -228,7 +227,7 @@ export function ProjectHubPage() {
             </Stack>
             <Skeleton variant="text" width="60%" height={32} sx={{ mb: 1 }} />
             <Skeleton variant="text" width="80%" />
-          </GlassCard>
+          </Card>
         </Grid>
       ))}
     </Grid>

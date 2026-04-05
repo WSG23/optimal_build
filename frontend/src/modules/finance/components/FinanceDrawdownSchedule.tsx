@@ -27,7 +27,7 @@ import { DrawdownStatsCards } from './DrawdownStatsCards'
 import { DrawdownDetailsPanel } from './DrawdownDetailsPanel'
 import { DrawdownInsightBox } from './DrawdownInsightBox'
 import { ScenarioSelector } from './ScenarioSelector'
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
 
 interface FinanceDrawdownScheduleProps {
   scenarios: FinanceScenarioSummary[]
@@ -229,7 +229,7 @@ function LegacyDrawdownTable({
   }
 
   return (
-    <GlassCard
+    <Card
       sx={{
         maxHeight: 'var(--ob-max-height-panel)',
         overflow: 'auto',
@@ -260,7 +260,7 @@ function LegacyDrawdownTable({
           </tbody>
         </table>
       </div>
-    </GlassCard>
+    </Card>
   )
 }
 

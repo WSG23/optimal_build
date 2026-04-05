@@ -1,9 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Alert, Box, Chip, CircularProgress, Grid, Stack, Typography } from '@mui/material'
+import {
+  Alert,
+  Box,
+  Chip,
+  CircularProgress,
+  Grid,
+  Stack,
+  Typography,
+} from '@mui/material'
 
 import { Button } from '../../../components/canonical/Button'
 import { Card } from '../../../components/canonical/Card'
-import { fetchFinanceAuditEvidence, type FinanceAuditEvidence } from '../../../api/finance'
+import {
+  fetchFinanceAuditEvidence,
+  type FinanceAuditEvidence,
+} from '../../../api/finance'
 import { useProject } from '../../../contexts/useProject'
 import { useRouterController, useRouterParams } from '../../../router'
 
@@ -50,7 +61,9 @@ export function EvidencePage() {
         if (controller.signal.aborted) {
           return
         }
-        setError(err instanceof Error ? err.message : 'Unable to load evidence pack.')
+        setError(
+          err instanceof Error ? err.message : 'Unable to load evidence pack.',
+        )
       })
       .finally(() => {
         if (!controller.signal.aborted) {
@@ -64,7 +77,10 @@ export function EvidencePage() {
     () => evidence?.financeEvents.at(-1) ?? null,
     [evidence],
   )
-  const latestImport = useMemo(() => evidence?.imports.at(-1) ?? null, [evidence])
+  const latestImport = useMemo(
+    () => evidence?.imports.at(-1) ?? null,
+    [evidence],
+  )
   const latestSubmission = useMemo(
     () => evidence?.submissionEvents.at(-1) ?? null,
     [evidence],
@@ -72,14 +88,20 @@ export function EvidencePage() {
 
   if (!projectRef) {
     return (
-      <Card variant="glass" sx={{ p: 'var(--ob-space-200)' }}>
+      <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
         <Stack spacing={1.5}>
-          <Typography variant="h6">Select a project to review evidence</Typography>
+          <Typography variant="h6">
+            Select a project to review evidence
+          </Typography>
           <Typography variant="body2" color="text.secondary">
             Evidence packs are tied to a project audit chain.
           </Typography>
           <Box>
-            <Button variant="primary" size="sm" onClick={() => navigate('/projects')}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => navigate('/projects')}
+            >
               Go to projects
             </Button>
           </Box>
@@ -90,7 +112,7 @@ export function EvidencePage() {
 
   return (
     <Stack spacing={2.5}>
-      <Card variant="glass" sx={{ p: 'var(--ob-space-200)' }}>
+      <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
         <Stack spacing={1.5}>
           <Stack
             direction={{ xs: 'column', md: 'row' }}
@@ -104,7 +126,11 @@ export function EvidencePage() {
                 Liability-ready package for finance origin, workbook lineage,
                 recipients, and regulatory submission history.
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.5 }}
+              >
                 Project: {projectName}
               </Typography>
             </Box>
@@ -137,7 +163,10 @@ export function EvidencePage() {
       </Card>
 
       {loading ? (
-        <Card variant="glass" sx={{ p: 'var(--ob-space-200)', textAlign: 'center' }}>
+        <Card
+          variant="default"
+          sx={{ p: 'var(--ob-space-200)', textAlign: 'center' }}
+        >
           <CircularProgress />
         </Card>
       ) : null}
@@ -148,7 +177,10 @@ export function EvidencePage() {
         <>
           <Grid container spacing={2}>
             <Grid item xs={12} md={4}>
-              <Card variant="glass" sx={{ p: 'var(--ob-space-200)', height: '100%' }}>
+              <Card
+                variant="default"
+                sx={{ p: 'var(--ob-space-200)', height: '100%' }}
+              >
                 <Stack spacing={1}>
                   <Typography variant="h6">Chain health</Typography>
                   <Chip
@@ -158,7 +190,8 @@ export function EvidencePage() {
                     sx={{ width: 'fit-content' }}
                   />
                   <Typography variant="body2" color="text.secondary">
-                    {evidence.chain.signedEntries}/{evidence.chain.entryCount} signed entries
+                    {evidence.chain.signedEntries}/{evidence.chain.entryCount}{' '}
+                    signed entries
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Latest hash: {evidence.chain.latestHash ?? 'Not available'}
@@ -167,7 +200,10 @@ export function EvidencePage() {
               </Card>
             </Grid>
             <Grid item xs={12} md={4}>
-              <Card variant="glass" sx={{ p: 'var(--ob-space-200)', height: '100%' }}>
+              <Card
+                variant="default"
+                sx={{ p: 'var(--ob-space-200)', height: '100%' }}
+              >
                 <Stack spacing={1}>
                   <Typography variant="h6">Finance origin</Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -184,7 +220,10 @@ export function EvidencePage() {
               </Card>
             </Grid>
             <Grid item xs={12} md={4}>
-              <Card variant="glass" sx={{ p: 'var(--ob-space-200)', height: '100%' }}>
+              <Card
+                variant="default"
+                sx={{ p: 'var(--ob-space-200)', height: '100%' }}
+              >
                 <Stack spacing={1}>
                   <Typography variant="h6">Recipients</Typography>
                   {evidence.recipients.length > 0 ? (
@@ -203,16 +242,23 @@ export function EvidencePage() {
 
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
-              <Card variant="glass" sx={{ p: 'var(--ob-space-200)', height: '100%' }}>
+              <Card
+                variant="default"
+                sx={{ p: 'var(--ob-space-200)', height: '100%' }}
+              >
                 <Stack spacing={1}>
                   <Typography variant="h6">Workbook lineage</Typography>
                   {latestImport ? (
                     <>
                       <Typography variant="body2" color="text.secondary">
-                        Latest import: {latestImport.scenarioName ?? 'Workbook scenario'}
+                        Latest import:{' '}
+                        {latestImport.scenarioName ?? 'Workbook scenario'}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Format: {latestImport.workbookFormat ?? latestImport.format ?? 'unknown'}
+                        Format:{' '}
+                        {latestImport.workbookFormat ??
+                          latestImport.format ??
+                          'unknown'}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Assets mapped: {latestImport.assetCount ?? 0}
@@ -227,19 +273,27 @@ export function EvidencePage() {
               </Card>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Card variant="glass" sx={{ p: 'var(--ob-space-200)', height: '100%' }}>
+              <Card
+                variant="default"
+                sx={{ p: 'var(--ob-space-200)', height: '100%' }}
+              >
                 <Stack spacing={1}>
                   <Typography variant="h6">Submission history</Typography>
                   {latestSubmission ? (
                     <>
                       <Typography variant="body2" color="text.secondary">
-                        {latestSubmission.agencyName ?? latestSubmission.agency ?? 'Agency'}
+                        {latestSubmission.agencyName ??
+                          latestSubmission.agency ??
+                          'Agency'}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Mode: {latestSubmission.submissionMode ?? 'n/a'}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Package: {latestSubmission.packageStatus ?? latestSubmission.status ?? 'n/a'}
+                        Package:{' '}
+                        {latestSubmission.packageStatus ??
+                          latestSubmission.status ??
+                          'n/a'}
                       </Typography>
                     </>
                   ) : (

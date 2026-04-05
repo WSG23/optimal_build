@@ -149,7 +149,7 @@ export function AdvisoryPage() {
       <Box sx={{ p: 3 }}>
         <Container maxWidth="xl" sx={{ mt: 3 }}>
           {/* Search Section */}
-          <Card variant="glass" sx={{ p: 3, mb: 4 }}>
+          <Card variant="default" sx={{ p: 3, mb: 4 }}>
             <Typography variant="h6" gutterBottom>
               Load property analysis
             </Typography>
@@ -213,7 +213,7 @@ export function AdvisoryPage() {
                   {summary.asset_mix.mix_recommendations.map((segment, idx) => (
                     <Grid item xs={12} md={4} key={idx}>
                       <Card
-                        variant="glass"
+                        variant="default"
                         sx={{ height: '100%', p: 3 }}
                         hover="lift"
                       >
@@ -252,7 +252,7 @@ export function AdvisoryPage() {
                 <Typography variant="h5" fontWeight={600} gutterBottom>
                   Market Positioning
                 </Typography>
-                <Card variant="glass" sx={{ p: 3 }}>
+                <Card variant="default" sx={{ p: 3 }}>
                   <Stack direction="row" spacing={2} mb={3}>
                     <Chip
                       label={`Market Tier: ${summary.market_positioning.market_tier}`}
@@ -345,7 +345,7 @@ export function AdvisoryPage() {
                   </Grid>
                 </Grid>
 
-                <Card variant="glass" sx={{ p: 3, overflowX: 'auto' }}>
+                <Card variant="default" sx={{ p: 3, overflowX: 'auto' }}>
                   <Stack direction="row" spacing={4} sx={{ minWidth: 600 }}>
                     {summary.absorption_forecast.timeline.map(
                       (milestone, idx) => (
@@ -424,7 +424,7 @@ export function AdvisoryPage() {
                   </Button>
                 </Stack>
 
-                <Card variant="glass" sx={{ p: 3 }}>
+                <Card variant="default" sx={{ p: 3 }}>
                   <Grid container spacing={3}>
                     {/* Inputs */}
                     <Grid item xs={12} md={3}>
@@ -576,7 +576,7 @@ export function AdvisoryPage() {
 
                 {feedbackOpen && (
                   <Card
-                    variant="glass"
+                    variant="default"
                     sx={{
                       p: 3,
                       mb: 3,
@@ -632,7 +632,7 @@ export function AdvisoryPage() {
                   </Card>
                 )}
 
-                <Card variant="glass" sx={{ p: 0 }}>
+                <Card variant="default" sx={{ p: 0 }}>
                   {summary.feedback.length === 0 ? (
                     <Box p={4} textAlign="center">
                       <Typography color="text.secondary">
@@ -678,7 +678,7 @@ export function AdvisoryPage() {
 
           {/* Empty State */}
           {!summary && !loading && (
-            <Card variant="glass" sx={{ p: 8, textAlign: 'center', mt: 4 }}>
+            <Card variant="default" sx={{ p: 8, textAlign: 'center', mt: 4 }}>
               <Typography variant="h1" sx={{ mb: 2 }}>
                 📊
               </Typography>

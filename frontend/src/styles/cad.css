@@ -24,8 +24,8 @@
 
 .cad-uploader__dropzone--dragging {
     background: rgba(0, 243, 255, 0.08);
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .cad-uploader__input {
@@ -45,22 +45,22 @@
     background: linear-gradient(
         135deg,
         #0096cc 0%,
-        var(--ob-color-neon-cyan) 100%
+        var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: var(--ob-glow-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .cad-uploader__browse:hover {
     background: linear-gradient(
         135deg,
-        var(--ob-color-neon-cyan) 0%,
+        var(--ob-color-brand-primary) 0%,
         #0096cc 100%
     );
-    box-shadow: var(--ob-glow-neon-cyan-strong);
+    box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
 }
 
@@ -136,8 +136,8 @@
 .cad-upload__label select:focus,
 .cad-upload__label input:focus {
     outline: none;
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .cad-upload__error,
@@ -175,7 +175,7 @@
     height: 2px;
     background: linear-gradient(
         90deg,
-        var(--ob-color-neon-cyan),
+        var(--ob-color-brand-primary),
         transparent 80%
     );
     border-radius: var(--ob-radius-sm) var(--ob-radius-sm) 0 0;
@@ -724,7 +724,7 @@
     height: 2px;
     background: linear-gradient(
         90deg,
-        var(--ob-color-neon-cyan),
+        var(--ob-color-brand-primary),
         transparent 80%
     );
     border-radius: var(--ob-radius-sm) var(--ob-radius-sm) 0 0;
@@ -755,16 +755,15 @@
 }
 
 .cad-layer-toggle__button:hover {
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .cad-layer-toggle__button--active {
     background: rgba(0, 243, 255, 0.15);
-    color: var(--ob-color-neon-cyan);
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
-    text-shadow: var(--ob-glow-neon-text);
+    color: var(--ob-color-brand-primary);
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .cad-layer-toggle__hint {
@@ -796,13 +795,13 @@
     background: linear-gradient(
         135deg,
         #0096cc 0%,
-        var(--ob-color-neon-cyan) 100%
+        var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: var(--ob-glow-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .cad-bulk-controls button:hover,
@@ -810,10 +809,10 @@
 .cad-export button:hover {
     background: linear-gradient(
         135deg,
-        var(--ob-color-neon-cyan) 0%,
+        var(--ob-color-brand-primary) 0%,
         #0096cc 100%
     );
-    box-shadow: var(--ob-glow-neon-cyan-strong);
+    box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
 }
 
@@ -1078,7 +1077,7 @@
     height: 2px;
     background: linear-gradient(
         90deg,
-        var(--ob-color-neon-cyan),
+        var(--ob-color-brand-primary),
         transparent 80%
     );
     border-radius: var(--ob-radius-sm) var(--ob-radius-sm) 0 0;

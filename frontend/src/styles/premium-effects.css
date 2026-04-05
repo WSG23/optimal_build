@@ -1,14 +1,14 @@
 /* =============================================================================
-   PREMIUM EFFECTS CSS - Cyber/Mission Control Aesthetic
+   EFFECTS CSS - Subtle UI utilities
    =============================================================================
-   Inspired by Google AI Studio "optimal-build-pro" reference.
-   Provides glassmorphism, neon glows, pulsing indicators, and premium animations.
+   Provides glassmorphism surfaces, hover effects, status indicators,
+   and layout architecture classes.
 
    Usage: Import this file in main.tsx or App.tsx
    ============================================================================= */
 
 /* ===========================================================================
-   1. GLASSMORPHISM
+   1. GLASSMORPHISM SURFACES
    =========================================================================== */
 
 .ob-glass {
@@ -26,31 +26,7 @@
 }
 
 /* ===========================================================================
-   2. NEON TEXT & GLOW EFFECTS
-   =========================================================================== */
-
-.ob-neon-text {
-    color: var(--ob-color-neon-cyan);
-    text-shadow: var(--ob-glow-neon-text);
-}
-
-.ob-neon-text-strong {
-    color: var(--ob-color-neon-cyan);
-    text-shadow: var(--ob-glow-neon-cyan);
-}
-
-.ob-neon-border {
-    border: var(--ob-border-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
-}
-
-.ob-neon-bg {
-    background-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
-}
-
-/* ===========================================================================
-   3. BACKGROUND GRID PATTERN
+   2. BACKGROUND GRID PATTERN
    =========================================================================== */
 
 .ob-grid-bg {
@@ -71,7 +47,7 @@
 }
 
 /* ===========================================================================
-   4. PREMIUM CARD TOP ACCENT BORDER
+   3. CARD TOP ACCENT BORDER
    =========================================================================== */
 
 .ob-card-accent {
@@ -85,12 +61,12 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: var(--ob-gradient-accent-fade);
+    background: var(--ob-color-brand-primary);
     border-radius: var(--ob-radius-sm) var(--ob-radius-sm) 0 0;
 }
 
 /* ===========================================================================
-   5. PULSING STATUS INDICATORS
+   4. STATUS INDICATORS
    =========================================================================== */
 
 @keyframes ob-pulse {
@@ -105,24 +81,8 @@
     }
 }
 
-@keyframes ob-pulse-glow {
-    0% {
-        box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.6);
-    }
-    70% {
-        box-shadow: 0 0 0 8px rgba(0, 243, 255, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(0, 243, 255, 0);
-    }
-}
-
 .ob-status-pulse {
     animation: ob-pulse var(--ob-motion-pulse-duration) ease-in-out infinite;
-}
-
-.ob-status-pulse-glow {
-    animation: ob-pulse-glow var(--ob-motion-pulse-duration) infinite;
 }
 
 /* Status dot variants */
@@ -130,12 +90,12 @@
     width: 8px;
     height: 8px;
     border-radius: var(--ob-radius-xs);
-    background-color: var(--ob-color-neon-cyan);
+    background-color: var(--ob-color-brand-primary);
 }
 
 .ob-status-dot--live {
-    background-color: var(--ob-color-neon-cyan);
-    animation: ob-pulse-glow var(--ob-motion-pulse-duration) infinite;
+    background-color: var(--ob-success-500);
+    animation: ob-pulse var(--ob-motion-pulse-duration) ease-in-out infinite;
 }
 
 .ob-status-dot--success {
@@ -155,42 +115,7 @@
 }
 
 /* ===========================================================================
-   6. SCANLINE ANIMATION (Dark mode only, subtle)
-   =========================================================================== */
-
-@keyframes ob-scanline {
-    0% {
-        top: -100px;
-    }
-    100% {
-        top: 100vh;
-    }
-}
-
-.ob-scanline {
-    width: 100%;
-    height: 100px;
-    z-index: 1000;
-    background: linear-gradient(
-        0deg,
-        rgba(0, 243, 255, 0) 0%,
-        rgba(0, 243, 255, 0.02) 50%,
-        rgba(0, 243, 255, 0) 100%
-    );
-    position: fixed;
-    top: -100px;
-    left: 0;
-    pointer-events: none;
-    /* Promote to own compositing layer for smoother animation */
-    will-change: transform;
-    transform: translateZ(0);
-    /* Delay animation start to allow page content to render first */
-    animation: ob-scanline var(--ob-motion-scanline-duration) linear infinite;
-    animation-delay: 0.5s;
-}
-
-/* ===========================================================================
-   7. HOVER EFFECTS
+   5. HOVER EFFECTS
    =========================================================================== */
 
 .ob-hover-lift {
@@ -204,19 +129,8 @@
     box-shadow: var(--ob-shadow-lg);
 }
 
-.ob-hover-glow {
-    transition:
-        box-shadow 0.2s ease,
-        border-color 0.2s ease;
-}
-
-.ob-hover-glow:hover {
-    box-shadow: var(--ob-glow-neon-cyan);
-    border-color: var(--ob-color-neon-cyan);
-}
-
 /* ===========================================================================
-   8. FADE IN ANIMATION
+   6. FADE IN ANIMATION
    =========================================================================== */
 
 @keyframes ob-fade-in {
@@ -235,41 +149,7 @@
 }
 
 /* ===========================================================================
-   9. HOLOGRAPHIC SHINE EFFECT (for premium cards)
-   =========================================================================== */
-
-@keyframes ob-holographic-shine {
-    0% {
-        background-position: -200% center;
-    }
-    100% {
-        background-position: 200% center;
-    }
-}
-
-.ob-holographic {
-    position: relative;
-    overflow: hidden;
-}
-
-.ob-holographic::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        120deg,
-        transparent 30%,
-        rgba(0, 243, 255, 0.1) 50%,
-        transparent 70%
-    );
-    background-size: 200% 100%;
-    animation: ob-holographic-shine var(--ob-motion-shine-duration) ease-in-out
-        infinite;
-    pointer-events: none;
-}
-
-/* ===========================================================================
-   10. PROGRESS BAR STRIPES
+   7. PROGRESS BAR STRIPES
    =========================================================================== */
 
 @keyframes ob-progress-stripes {
@@ -297,43 +177,29 @@
 }
 
 /* ===========================================================================
-   11. LAYOUT ARCHITECTURE - Macro/Micro Hierarchy (AI Studio Protocol)
+   8. LAYOUT ARCHITECTURE
    ===========================================================================
-   Depth 0 (Direct): Headers, titles, global actions - NO glass, NO cyan edge
-   Depth 1 (Cards): Data modules, forms, tables - glass + cyan top edge
+   Depth 0 (Direct): Headers, titles - on background surface
+   Depth 1 (Cards): Data modules, forms, tables - card surface
    =========================================================================== */
 
-/* Glass Card Module - for data tables, forms, charts (Depth 1) */
+/* Card Module - for data tables, forms, charts (Depth 1) */
 .ob-card-module {
-    background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(var(--ob-blur-xl)); /* 16px - matches V3 reference */
-    -webkit-backdrop-filter: blur(var(--ob-blur-xl));
+    background: var(--ob-color-bg-surface);
     border: var(--ob-border-fine);
     border-radius: var(--ob-radius-sm);
-    padding: var(--ob-space-200); /* 16px internal - tightened from 24px */
+    padding: var(--ob-space-200);
     position: relative;
 }
 
-/* Light mode: "frosted ice" effect with preserved premium identity */
+/* Light mode card module */
 html[data-theme='light'] .ob-card-module {
-    background: rgba(255, 255, 255, 0.7); /* More opaque glass for light mode */
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    background: rgba(255, 255, 255, 0.85);
     border: 1px solid rgba(0, 0, 0, 0.06);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
-/* Light mode: preserve cyan accent edge glow */
-html[data-theme='light'] .ob-card-module::before {
-    background: linear-gradient(
-        90deg,
-        var(--ob-color-neon-cyan),
-        transparent 80%
-    );
-    /* Cyan stays visible in light mode for brand identity */
-}
-
-/* Cyan top edge accent - signals "this is an interactive panel" */
+/* Brand accent on top of card modules */
 .ob-card-module::before {
     content: '';
     position: absolute;
@@ -341,22 +207,18 @@ html[data-theme='light'] .ob-card-module::before {
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(
-        90deg,
-        var(--ob-color-neon-cyan),
-        transparent 80%
-    );
+    background: var(--ob-color-brand-primary);
     border-radius: var(--ob-radius-sm) var(--ob-radius-sm) 0 0;
 }
 
-/* Page section spacing (between modules) - TIGHTENED for information density */
+/* Page section spacing (between modules) */
 .ob-section-gap {
-    margin-bottom: var(--ob-space-200); /* 16px - was 24px */
+    margin-bottom: var(--ob-space-200);
 }
 
 /* Large breathing room for hero sections */
 .ob-hero-gap {
-    margin-bottom: var(--ob-space-400); /* 32px - was 48px */
+    margin-bottom: var(--ob-space-400);
 }
 
 /* 12-column grid for card alignment */
@@ -383,22 +245,20 @@ html[data-theme='light'] .ob-card-module::before {
     grid-column: span 12;
 }
 
-/* Direct content header - no glass, just typography
-   TIGHT LAYOUT: Reduced margins for command-center information density */
+/* Page header - typography only, no glass */
 .ob-page-header {
-    margin-bottom: var(--ob-space-200); /* 16px - tighter spacing */
+    margin-bottom: var(--ob-space-200);
 }
 
-/* When header has ob-section-gap, DON'T stack margins */
 .ob-page-header.ob-section-gap {
-    margin-bottom: var(--ob-space-200); /* Override stacked margin */
+    margin-bottom: var(--ob-space-200);
 }
 
 .ob-page-header__title {
-    font-size: var(--ob-font-size-xl); /* Slightly smaller for density */
+    font-size: var(--ob-font-size-xl);
     font-weight: 700;
     color: var(--ob-color-text-primary);
-    margin: 0 0 var(--ob-space-025) 0; /* Tighter title-subtitle gap */
+    margin: 0 0 var(--ob-space-025) 0;
 }
 
 .ob-page-header__subtitle {
@@ -408,10 +268,9 @@ html[data-theme='light'] .ob-card-module::before {
 }
 
 /* ===========================================================================
-   12. TABLE STYLING - V2/V3 Reference Match
+   9. TABLE STYLING - For MUI tables inside card modules
    =========================================================================== */
 
-/* Table styling for MUI tables inside glass cards */
 .ob-card-module .MuiTable-root {
     border-collapse: collapse;
 }
@@ -435,7 +294,6 @@ html[data-theme='light'] .ob-card-module::before {
     transition: background-color 0.15s ease;
 }
 
-/* Light mode table styling */
 html[data-theme='light'] .ob-card-module .MuiTableHead-root {
     background: rgba(0, 0, 0, 0.03);
 }
@@ -452,7 +310,7 @@ html[data-theme='light']
     .ob-card-module
     .MuiTableBody-root
     .MuiTableRow-root:hover {
-    background-color: rgba(0, 243, 255, 0.04); /* Subtle cyan tint on hover */
+    background-color: rgba(0, 0, 0, 0.02);
 }
 
 .ob-card-module .MuiTableBody-root .MuiTableRow-root:hover {
@@ -467,15 +325,12 @@ html[data-theme='light']
 }
 
 /* ===========================================================================
-   13. ACCESSIBILITY - Respect reduced motion
+   10. ACCESSIBILITY - Respect reduced motion
    =========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
     .ob-status-pulse,
-    .ob-status-pulse-glow,
     .ob-status-dot--live,
-    .ob-scanline,
-    .ob-holographic::after,
     .ob-progress-striped {
         animation: none;
     }
@@ -492,58 +347,44 @@ html[data-theme='light']
 }
 
 /* ===========================================================================
-   14. SEAMLESS COMMAND SURFACE - Zero-Card Architecture
-   ===========================================================================
-   Eliminates opaque card containers in favor of:
-   - Semi-transparent backgrounds with backdrop blur
-   - 1px hairline borders for section delineation
-   - Edge-to-edge tiling with global grid visible through panels
-   - Technical precision labeling (9px, all-caps, tracking)
+   11. SEAMLESS COMMAND SURFACE - Zero-Card Architecture
    =========================================================================== */
 
-/* Base seamless panel - hairline border, no background by default */
+/* Base seamless panel - hairline border */
 .ob-seamless-panel {
     position: relative;
     border: 1px solid var(--ob-color-border-subtle);
 }
 
-/* Add glass background when needed (makes content more readable)
-   NOTE: No backdrop-filter here to avoid scroll jank from nested blur layers.
-   Blur is applied only at the page/section level, not on individual panels. */
 .ob-seamless-panel--glass {
     background: var(--ob-surface-glass-1);
-    /* No backdrop-filter - performance optimization */
 }
 
-/* Light mode glass panel */
 html[data-theme='light'] .ob-seamless-panel--glass {
     background: rgba(255, 255, 255, 0.5);
     border-color: rgba(0, 0, 0, 0.08);
 }
 
-/* Hover state with neon cyan accent */
 .ob-seamless-panel--interactive:hover {
-    border-color: var(--ob-color-neon-cyan);
+    border-color: var(--ob-color-text-secondary);
 }
 
-/* Edge-to-edge tile (no border-radius, butts against adjacent panels) */
+/* Edge-to-edge tile */
 .ob-tile {
     border-radius: 0;
 }
 
-/* Tile with minimal radius (1px) for very subtle softening */
 .ob-tile--soft {
     border-radius: 1px;
 }
 
-/* Seamless grid container - edge-to-edge tiles with 1px gaps (hairline grid) */
+/* Seamless grid container */
 .ob-seamless-grid {
     display: grid;
     gap: 1px;
-    background: var(--ob-color-border-subtle); /* Gap color */
+    background: var(--ob-color-border-subtle);
 }
 
-/* Seamless grid children need their own backgrounds */
 .ob-seamless-grid > * {
     background: var(--ob-surface-glass-1);
 }
@@ -552,7 +393,7 @@ html[data-theme='light'] .ob-seamless-grid > * {
     background: rgba(255, 255, 255, 0.5);
 }
 
-/* Technical precision label - 9px, all-caps, wide tracking */
+/* Technical precision label */
 .ob-precision-label {
     font-size: 9px;
     font-weight: 600;
@@ -561,7 +402,7 @@ html[data-theme='light'] .ob-seamless-grid > * {
     color: var(--ob-color-text-tertiary);
 }
 
-/* Section divider - hairline horizontal rule */
+/* Section divider */
 .ob-hairline {
     height: 1px;
     background: var(--ob-color-border-subtle);
@@ -569,7 +410,7 @@ html[data-theme='light'] .ob-seamless-grid > * {
     margin: 0;
 }
 
-/* Seamless section - full-width with internal padding */
+/* Seamless section */
 .ob-seamless-section {
     padding: var(--ob-space-200);
     border-bottom: 1px solid var(--ob-color-border-subtle);

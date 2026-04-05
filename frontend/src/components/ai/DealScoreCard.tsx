@@ -140,7 +140,7 @@ export function DealScoreCard({
 
   if (loading) {
     return (
-      <Card variant="glass" sx={{ p: 'var(--ob-space-200)' }}>
+      <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
         <Skeleton variant="circular" width={60} height={60} sx={{ mb: 2 }} />
         <Skeleton variant="text" width="60%" />
         <Skeleton variant="text" width="80%" />
@@ -175,7 +175,7 @@ export function DealScoreCard({
   const isPositive = score.overall_score >= 60
 
   return (
-    <Card variant="glass" hover="subtle" sx={{ p: 'var(--ob-space-200)' }}>
+    <Card variant="default" hover="subtle" sx={{ p: 'var(--ob-space-200)' }}>
       {/* Header */}
       <Box
         sx={{

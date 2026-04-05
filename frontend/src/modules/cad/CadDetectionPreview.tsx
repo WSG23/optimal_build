@@ -266,7 +266,7 @@ export function CadDetectionPreview({
               metrics={displayMetrics}
               loading={loopLoading}
               isLive={true}
-              variant="glass"
+              variant="default"
             />
           </Box>
         </Box>

@@ -15,7 +15,7 @@ import { Box, Typography } from '@mui/material'
 
 import type { FinanceScenarioSummary } from '../../../api/finance'
 import { useTranslation } from '../../../i18n'
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
 import { CapitalStackChart } from './CapitalStackChart'
 import { CapitalStackFacilityTable } from './CapitalStackFacilityTable'
 import { FinanceMetricsGrid } from './FinanceMetricsGrid'
@@ -92,7 +92,7 @@ export function FinanceCapitalStack({
 
   if (scenarioList.length === 0) {
     return (
-      <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
+      <Card sx={{ p: 'var(--ob-space-200)' }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
           {t('finance.capitalStack.empty.title', {
             defaultValue: 'Capital stack details',
@@ -104,7 +104,7 @@ export function FinanceCapitalStack({
               'Run a feasibility scenario to see the capital stack breakdown.',
           })}
         </Typography>
-      </GlassCard>
+      </Card>
     )
   }
 
@@ -170,7 +170,7 @@ export function FinanceCapitalStack({
             <CapitalStackFacilityTable scenario={activeScenario} />
           </Box>
           <Box sx={{ minWidth: 0 }}>
-            <GlassCard sx={{ p: 'var(--ob-space-100)', height: '100%' }}>
+            <Card sx={{ p: 'var(--ob-space-100)', height: '100%' }}>
               <Typography
                 variant="h6"
                 sx={{ mb: 'var(--ob-space-100)', fontWeight: 600 }}
@@ -187,7 +187,7 @@ export function FinanceCapitalStack({
                   activeScenarioId={activeScenarioId}
                 />
               </Box>
-            </GlassCard>
+            </Card>
           </Box>
         </Box>
       </Box>

@@ -89,7 +89,7 @@ export function AnalyticsPanel({
           </Typography>
         </Stack>
         <Card
-          variant="glass"
+          variant="default"
           className="bp-analytics__chart"
           sx={{ height: 300, position: 'relative', p: 2 }}
         >

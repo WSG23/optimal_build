@@ -11,7 +11,7 @@
 
 import { Box, Typography, SxProps, Theme } from '@mui/material'
 import { ReactNode } from 'react'
-import { GlassCard } from '../../../../../components/canonical/GlassCard'
+import { Card } from '../../../../../components/canonical/Card'
 import { PulsingStatusDot } from '../../../../../components/canonical/PulsingStatusDot'
 
 export interface StatCardProps {
@@ -58,7 +58,7 @@ export function StatCard({
   }
 
   return (
-    <GlassCard
+    <Card
       sx={{
         p: compact ? 'var(--ob-space-100)' : 'var(--ob-space-150)',
         display: 'flex',
@@ -171,6 +171,6 @@ export function StatCard({
           />
         </Box>
       )}
-    </GlassCard>
+    </Card>
   )
 }

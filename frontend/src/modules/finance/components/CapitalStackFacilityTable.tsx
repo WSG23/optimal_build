@@ -14,7 +14,7 @@
 
 import { Box, Typography, useTheme, alpha } from '@mui/material'
 
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
 import { StatusChip } from '../../../components/canonical/StatusChip'
 import { useTranslation } from '../../../i18n'
 import type { FinanceScenarioSummary } from '../../../api/finance'
@@ -88,7 +88,7 @@ export function CapitalStackFacilityTable({
   }
 
   return (
-    <GlassCard sx={{ overflow: 'hidden' }}>
+    <Card sx={{ overflow: 'hidden' }}>
       {/* Header */}
       <Box
         sx={{
@@ -351,7 +351,7 @@ export function CapitalStackFacilityTable({
           </tbody>
         </Box>
       </Box>
-    </GlassCard>
+    </Card>
   )
 }
 

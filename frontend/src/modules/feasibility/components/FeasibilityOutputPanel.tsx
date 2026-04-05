@@ -364,7 +364,7 @@ export function FeasibilityOutputPanel({
 
       <div className="feasibility-output__grid">
         <Card
-          variant="glass"
+          variant="default"
           className="feasibility-output__card feasibility-output__card--span-8"
         >
           <div className="feasibility-output__card-header">
@@ -454,7 +454,7 @@ export function FeasibilityOutputPanel({
         </Card>
 
         <Card
-          variant="glass"
+          variant="default"
           className="feasibility-output__card feasibility-output__card--span-4"
         >
           <div className="feasibility-output__card-header">
@@ -509,7 +509,7 @@ export function FeasibilityOutputPanel({
         </Card>
 
         <Card
-          variant="glass"
+          variant="default"
           className="feasibility-output__card feasibility-output__card--span-8"
         >
           <div className="feasibility-output__card-header">
@@ -563,7 +563,7 @@ export function FeasibilityOutputPanel({
         </Card>
 
         <Card
-          variant="glass"
+          variant="default"
           className="feasibility-output__card feasibility-output__card--span-4"
         >
           <div className="feasibility-output__card-header">
@@ -640,7 +640,7 @@ export function FeasibilityOutputPanel({
         </Card>
 
         <Card
-          variant="glass"
+          variant="default"
           className="feasibility-output__card feasibility-output__card--span-4"
         >
           <div className="feasibility-output__card-header">
@@ -706,7 +706,7 @@ export function FeasibilityOutputPanel({
         </Card>
 
         <Card
-          variant="glass"
+          variant="default"
           className="feasibility-output__card feasibility-output__card--span-12"
         >
           <div className="feasibility-output__card-header">

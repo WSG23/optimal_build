@@ -94,8 +94,8 @@
 }
 
 .bp-pipeline__column--dropping {
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .bp-pipeline__column-header {
@@ -135,7 +135,7 @@
 }
 
 .bp-pipeline__deal:focus-visible .bp-pipeline__deal-surface {
-    outline: 2px solid var(--ob-color-neon-cyan);
+    outline: 2px solid var(--ob-color-brand-primary);
     outline-offset: 2px;
 }
 
@@ -156,8 +156,8 @@
 }
 
 .bp-pipeline__deal--selected .bp-pipeline__deal-surface {
-    border: 1px solid var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    border: 1px solid var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .bp-pipeline__deal-handle {
@@ -192,9 +192,8 @@
 }
 
 .bp-pipeline__deal-moving {
-    color: var(--ob-color-neon-cyan);
+    color: var(--ob-color-brand-primary);
     font-size: var(--ob-font-size-xs);
-    text-shadow: var(--ob-glow-neon-text);
 }
 
 .bp-pipeline__deal--flagged::after {
@@ -285,8 +284,7 @@
     margin: 0;
     font-family: var(--ob-font-family-mono);
     font-size: var(--ob-font-size-xs);
-    color: var(--ob-color-neon-cyan);
-    text-shadow: var(--ob-glow-neon-text);
+    color: var(--ob-color-brand-primary);
 }
 
 .bp-commission-table {

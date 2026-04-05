@@ -53,8 +53,8 @@
 
 .agents-capture__field input:focus {
     outline: none;
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .agents-capture__scenarios {
@@ -87,9 +87,9 @@
 }
 
 .agents-capture__scenario-option:has(input:checked) {
-    border-color: var(--ob-color-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
     background: rgba(0, 243, 255, 0.08);
-    box-shadow: var(--ob-glow-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .agents-capture__scenario-option input {
@@ -114,23 +114,23 @@
     background: linear-gradient(
         135deg,
         #0096cc 0%,
-        var(--ob-color-neon-cyan) 100%
+        var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
     font-weight: 600;
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: var(--ob-glow-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .agents-capture__submit:hover:not(:disabled) {
     background: linear-gradient(
         135deg,
-        var(--ob-color-neon-cyan) 0%,
+        var(--ob-color-brand-primary) 0%,
         #0096cc 100%
     );
-    box-shadow: var(--ob-glow-neon-cyan-strong);
+    box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
 }
 
@@ -205,16 +205,16 @@
     padding: var(--ob-spacing-150) var(--ob-spacing-350);
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     background: transparent;
-    border: 1px solid var(--ob-color-neon-cyan);
+    border: 1px solid var(--ob-color-brand-primary);
     font-weight: 600;
-    color: var(--ob-color-neon-cyan);
+    color: var(--ob-color-brand-primary);
     text-decoration: none;
     transition: all 0.2s ease;
 }
 
 .agents-capture__cta-link:hover {
     background: rgba(0, 243, 255, 0.1);
-    box-shadow: var(--ob-glow-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .agents-capture__scenario-card {
@@ -432,8 +432,8 @@
 
 .agents-capture__pack-field select:focus {
     outline: none;
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .agents-capture__pack-description {
@@ -450,23 +450,23 @@
     background: linear-gradient(
         135deg,
         #0096cc 0%,
-        var(--ob-color-neon-cyan) 100%
+        var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
     font-weight: 600;
     border: none;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: var(--ob-glow-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .agents-capture__pack-button:hover:not(:disabled) {
     background: linear-gradient(
         135deg,
-        var(--ob-color-neon-cyan) 0%,
+        var(--ob-color-brand-primary) 0%,
         #0096cc 100%
     );
-    box-shadow: var(--ob-glow-neon-cyan-strong);
+    box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
 }
 

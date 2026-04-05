@@ -10,7 +10,7 @@
  */
 
 import { Box, LinearProgress, Typography, SxProps, Theme } from '@mui/material'
-import { GlassCard } from '../../../../../components/canonical/GlassCard'
+import { Card } from '../../../../../components/canonical/Card'
 import { PulsingStatusDot } from '../../../../../components/canonical/PulsingStatusDot'
 
 export type ProcessingStatus =
@@ -89,7 +89,7 @@ export function ProcessingStatusCard({
     progress ?? (isComplete ? 100 : isProcessing ? undefined : 0)
 
   return (
-    <GlassCard
+    <Card
       sx={{
         p: 'var(--ob-space-150)',
         display: 'flex',
@@ -263,6 +263,6 @@ export function ProcessingStatusCard({
           ))}
         </Box>
       )}
-    </GlassCard>
+    </Card>
   )
 }

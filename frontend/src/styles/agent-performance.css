@@ -82,13 +82,13 @@
 }
 
 .agent-performance__deal:hover {
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .agent-performance__deal--selected {
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan-strong);
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-md);
 }
 
 .agent-performance__deal strong {

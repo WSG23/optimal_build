@@ -27,7 +27,7 @@ import {
   Timeline as TimelineIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material'
-import { GlassCard } from '../../../../components/canonical/GlassCard'
+import { Card } from '../../../../components/canonical/Card'
 import {
   getMockPhases,
   type ProjectPhase,
@@ -338,7 +338,7 @@ export const ProjectProgressDashboard: React.FC<
       {/* KPI Cards - 4-column grid for metrics (atomic data) */}
       <Grid container spacing="var(--ob-space-150)">
         <Grid item xs={12} sm={6} md={3}>
-          <GlassCard
+          <Card
             sx={{
               p: 'var(--ob-space-150)',
               background:
@@ -382,11 +382,11 @@ export const ProjectProgressDashboard: React.FC<
                 '& .MuiLinearProgress-bar': { bgcolor: 'white' },
               }}
             />
-          </GlassCard>
+          </Card>
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <GlassCard
+          <Card
             sx={{
               p: 'var(--ob-space-150)',
               background:
@@ -421,11 +421,11 @@ export const ProjectProgressDashboard: React.FC<
             >
               {totalCompletedTasks}
             </Typography>
-          </GlassCard>
+          </Card>
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <GlassCard
+          <Card
             sx={{
               p: 'var(--ob-space-150)',
               background:
@@ -460,11 +460,11 @@ export const ProjectProgressDashboard: React.FC<
             >
               {totalPendingTasks}
             </Typography>
-          </GlassCard>
+          </Card>
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <GlassCard
+          <Card
             sx={{
               p: 'var(--ob-space-150)',
               background:
@@ -499,7 +499,7 @@ export const ProjectProgressDashboard: React.FC<
             >
               {teamActivity.length}
             </Typography>
-          </GlassCard>
+          </Card>
         </Grid>
       </Grid>
 
@@ -520,7 +520,7 @@ export const ProjectProgressDashboard: React.FC<
             <Typography variant="h6">Phase Progress</Typography>
           </Box>
           {/* Data in GlassCard */}
-          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
+          <Card sx={{ p: 'var(--ob-space-200)' }}>
             {phases.map((phase, index) => (
               <Box
                 key={phase.id}
@@ -614,7 +614,7 @@ export const ProjectProgressDashboard: React.FC<
                 </Box>
               </Box>
             ))}
-          </GlassCard>
+          </Card>
         </Grid>
 
         {/* Pending Approvals */}
@@ -637,7 +637,7 @@ export const ProjectProgressDashboard: React.FC<
             />
           </Box>
           {/* Data in GlassCard */}
-          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
+          <Card sx={{ p: 'var(--ob-space-200)' }}>
             <List dense disablePadding>
               {pendingApprovals.map((approval) => (
                 <ListItem
@@ -705,7 +705,7 @@ export const ProjectProgressDashboard: React.FC<
                 </Typography>
               )}
             </List>
-          </GlassCard>
+          </Card>
         </Grid>
       </Grid>
 
@@ -726,7 +726,7 @@ export const ProjectProgressDashboard: React.FC<
         <Grid container spacing="var(--ob-space-150)">
           {teamActivity.map((member) => (
             <Grid item xs={12} sm={6} md={3} key={member.id}>
-              <GlassCard sx={{ p: 'var(--ob-space-150)', height: '100%' }}>
+              <Card sx={{ p: 'var(--ob-space-150)', height: '100%' }}>
                 <Box
                   sx={{
                     display: 'flex',
@@ -791,7 +791,7 @@ export const ProjectProgressDashboard: React.FC<
                 >
                   Active {member.lastActive}
                 </Typography>
-              </GlassCard>
+              </Card>
             </Grid>
           ))}
         </Grid>

@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material'
 
 import type { FinanceScenarioSummary } from '../../../api/finance'
 import { useTranslation } from '../../../i18n'
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
 import { formatCurrencyShort, formatPercent } from '../utils/chartTheme'
 
 function toNumber(value: string | null | undefined): number | null {
@@ -101,7 +101,7 @@ export function CapitalStackInsightBox({
   })
 
   return (
-    <GlassCard
+    <Card
       sx={{
         p: 'var(--ob-space-150)',
         border: 1,
@@ -145,7 +145,7 @@ export function CapitalStackInsightBox({
           <span>{recommendation}</span>
         </Typography>
       </Box>
-    </GlassCard>
+    </Card>
   )
 }
 

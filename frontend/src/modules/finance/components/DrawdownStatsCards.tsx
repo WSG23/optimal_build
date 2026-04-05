@@ -14,7 +14,7 @@ import {
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material'
 
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
 import { useTranslation } from '../../../i18n'
 import type { FinanceScenarioSummary } from '../../../api/finance'
 import { formatCurrencyFull } from '../utils/chartTheme'
@@ -35,7 +35,7 @@ interface StatsCardProps {
  */
 function StatsCard({ label, value, subtext, icon: Icon }: StatsCardProps) {
   return (
-    <GlassCard
+    <Card
       sx={{
         p: 'var(--ob-space-150)',
         display: 'flex',
@@ -89,7 +89,7 @@ function StatsCard({ label, value, subtext, icon: Icon }: StatsCardProps) {
       >
         <Icon sx={{ fontSize: 20 }} />
       </Box>
-    </GlassCard>
+    </Card>
   )
 }
 

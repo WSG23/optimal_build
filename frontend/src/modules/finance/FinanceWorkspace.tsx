@@ -287,10 +287,11 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
   )
   const [quickScreenDraft, setQuickScreenDraft] =
     useState<QuickScreenFinanceDraft | null>(null)
-  const [auditEvidence, setAuditEvidence] = useState<FinanceAuditEvidence | null>(
+  const [auditEvidence, setAuditEvidence] =
+    useState<FinanceAuditEvidence | null>(null)
+  const [auditEvidenceError, setAuditEvidenceError] = useState<string | null>(
     null,
   )
-  const [auditEvidenceError, setAuditEvidenceError] = useState<string | null>(null)
   const workbookInputRef = useRef<HTMLInputElement | null>(null)
   const identityErrorRegex = /restricted/i
   const needsScenarioIdentity =
@@ -367,7 +368,7 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
   const showEmptyState = !loading && !error && scenarios.length === 0
   const renderEmptyPanel = useCallback(
     (title: string) => (
-      <Card variant="glass" sx={{ p: 'var(--ob-space-300)' }}>
+      <Card variant="default" sx={{ p: 'var(--ob-space-300)' }}>
         <Stack spacing={1} alignItems="flex-start">
           <Typography variant="h6">{title}</Typography>
           <Typography variant="body2" color="text.secondary">
@@ -568,7 +569,9 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
     setExportingWorkbook(true)
     setScenarioError(null)
     try {
-      const blob = await exportFinanceScenarioWorkbook(primaryScenario.scenarioId)
+      const blob = await exportFinanceScenarioWorkbook(
+        primaryScenario.scenarioId,
+      )
       const url = URL.createObjectURL(blob)
       const filename = `finance_scenario_${primaryScenario.scenarioId}.xlsx`
       const anchor = document.createElement('a')
@@ -637,7 +640,13 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
         setPreviewingWorkbook(false)
       }
     },
-    [hasProject, effectiveProjectId, effectiveProjectName, projectDisplayName, t],
+    [
+      hasProject,
+      effectiveProjectId,
+      effectiveProjectName,
+      projectDisplayName,
+      t,
+    ],
   )
 
   const handleDismissWorkbookPreview = useCallback(() => {
@@ -716,7 +725,12 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
         )
       })
     return () => controller.abort()
-  }, [effectiveProjectId, hasProject, scenarios.length, primaryScenario?.scenarioId])
+  }, [
+    effectiveProjectId,
+    hasProject,
+    scenarios.length,
+    primaryScenario?.scenarioId,
+  ])
 
   const handleImportQuickScreenDraft = useCallback(async () => {
     if (!quickScreenDraft || !hasProject) {
@@ -735,7 +749,9 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
       const summary = await runFinanceFeasibility({
         projectId: effectiveProjectId,
         projectName:
-          effectiveProjectName ?? quickScreenDraft.projectName ?? projectDisplayName,
+          effectiveProjectName ??
+          quickScreenDraft.projectName ??
+          projectDisplayName,
         scenario,
       })
       addScenario(summary)
@@ -979,7 +995,7 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
 
   const panelFallback = (
     <Card
-      variant="glass"
+      variant="default"
       sx={{
         p: 'var(--ob-space-200)',
         display: 'flex',
@@ -1109,7 +1125,7 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
           ) : (
             <>
               {showProjectGate && (
-                <Card variant="glass" sx={{ p: 'var(--ob-space-200)' }}>
+                <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
                   <Stack spacing={1}>
                     <Typography variant="h6">
                       Select a project to continue
@@ -1157,7 +1173,7 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
 
                   {loading && (
                     <Card
-                      variant="glass"
+                      variant="default"
                       sx={{
                         p: 'var(--ob-space-200)',
                         display: 'flex',
@@ -1196,9 +1212,10 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                     <Alert severity="info" sx={{ mb: 'var(--ob-space-150)' }}>
                       <Stack spacing={1}>
                         <Typography variant="body2">
-                          Workbook onboarding is active for this project. Import an
-                          existing Excel model to structure it into the Singapore
-                          finance workflow without rebuilding assumptions manually.
+                          Workbook onboarding is active for this project. Import
+                          an existing Excel model to structure it into the
+                          Singapore finance workflow without rebuilding
+                          assumptions manually.
                         </Typography>
                         <Box>
                           <Button
@@ -1219,22 +1236,29 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                     <Alert severity="info" sx={{ mb: 'var(--ob-space-150)' }}>
                       <Stack spacing={1}>
                         <Typography variant="body2">
-                          This sample project starts with a Singapore underwriting
-                          template. Review the template guidance below, then export
-                          lender or investor materials once the scenario is ready.
+                          This sample project starts with a Singapore
+                          underwriting template. Review the template guidance
+                          below, then export lender or investor materials once
+                          the scenario is ready.
                         </Typography>
                         <Stack direction="row" spacing={1}>
                           <Button
                             variant="secondary"
                             size="sm"
-                            onClick={() => navigate('/developers/why-not-excel')}
+                            onClick={() =>
+                              navigate('/developers/why-not-excel')
+                            }
                           >
                             Why not Excel?
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/projects/${effectiveProjectId}/evidence`)}
+                            onClick={() =>
+                              navigate(
+                                `/projects/${effectiveProjectId}/evidence`,
+                              )
+                            }
                           >
                             Review evidence pack
                           </Button>
@@ -1270,7 +1294,10 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                                   mt: 'var(--ob-space-050)',
                                 }}
                               >
-                                Screened {new Date(quickScreenDraft.assessment.generatedAt).toLocaleString()}
+                                Screened{' '}
+                                {new Date(
+                                  quickScreenDraft.assessment.generatedAt,
+                                ).toLocaleString()}
                               </Box>
                             ) : null}
                           </Box>
@@ -1315,9 +1342,10 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                         <Box>
                           <strong>{workbookPreview.filename}</strong>
                           <Box component="span" sx={{ display: 'block' }}>
-                            {workbookPreview.scenarioName ?? 'Workbook preview'} •{' '}
-                            {workbookPreview.assetCount} assets •{' '}
-                            {workbookPreview.detectedSheets.length} sheets mapped
+                            {workbookPreview.scenarioName ?? 'Workbook preview'}{' '}
+                            • {workbookPreview.assetCount} assets •{' '}
+                            {workbookPreview.detectedSheets.length} sheets
+                            mapped
                           </Box>
                         </Box>
                         {workbookPreview.warnings.length > 0 && (
@@ -1366,15 +1394,20 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                   )}
                   {hasProject && (
                     <Card
-                      variant="glass"
-                      sx={{ mb: 'var(--ob-space-150)', p: 'var(--ob-space-200)' }}
+                      variant="default"
+                      sx={{
+                        mb: 'var(--ob-space-150)',
+                        p: 'var(--ob-space-200)',
+                      }}
                     >
                       <Stack spacing={1.25}>
                         <Box>
-                          <Typography variant="h6">Audit evidence snapshot</Typography>
+                          <Typography variant="h6">
+                            Audit evidence snapshot
+                          </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Evidence chain health for finance modeling, workbook imports,
-                            and regulatory submission prep.
+                            Evidence chain health for finance modeling, workbook
+                            imports, and regulatory submission prep.
                           </Typography>
                         </Box>
                         {auditEvidenceError ? (
@@ -1395,44 +1428,74 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                                   bgcolor: auditEvidence.valid
                                     ? 'rgba(15,118,110,0.10)'
                                     : 'rgba(185,28,28,0.10)',
-                                  color: auditEvidence.valid ? '#0f766e' : '#b91c1c',
+                                  color: auditEvidence.valid
+                                    ? '#0f766e'
+                                    : '#b91c1c',
                                   fontSize: '0.8rem',
                                   fontWeight: 700,
                                 }}
                               >
-                                {auditEvidence.valid ? 'Chain valid' : 'Chain needs review'}
+                                {auditEvidence.valid
+                                  ? 'Chain valid'
+                                  : 'Chain needs review'}
                               </Box>
-                              <Typography variant="body2" color="text.secondary">
-                                {auditEvidence.chain.signedEntries}/{auditEvidence.chain.entryCount}{' '}
-                                signed entries
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                {auditEvidence.chain.signedEntries}/
+                                {auditEvidence.chain.entryCount} signed entries
                               </Typography>
                               {auditEvidence.recipients.length > 0 ? (
-                                <Typography variant="body2" color="text.secondary">
-                                  Recipients: {auditEvidence.recipients.join(', ')}
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  Recipients:{' '}
+                                  {auditEvidence.recipients.join(', ')}
                                 </Typography>
                               ) : null}
                             </Stack>
                             <Stack spacing={0.75}>
                               {latestFinanceAuditEvent ? (
-                                <Typography variant="body2" color="text.secondary">
-                                  Latest finance scenario: {latestFinanceAuditEvent.scenarioName ?? 'Scenario'} via{' '}
-                                  <strong>{latestFinanceAuditEvent.origin ?? 'manual'}</strong>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  Latest finance scenario:{' '}
+                                  {latestFinanceAuditEvent.scenarioName ??
+                                    'Scenario'}{' '}
+                                  via{' '}
+                                  <strong>
+                                    {latestFinanceAuditEvent.origin ?? 'manual'}
+                                  </strong>
                                   {latestFinanceAuditEvent.recordedAt
                                     ? ` on ${new Date(latestFinanceAuditEvent.recordedAt).toLocaleString()}`
                                     : ''}
                                 </Typography>
                               ) : null}
                               {latestWorkbookImport ? (
-                                <Typography variant="body2" color="text.secondary">
-                                  Latest workbook import: {latestWorkbookImport.scenarioName ?? 'Workbook scenario'}
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  Latest workbook import:{' '}
+                                  {latestWorkbookImport.scenarioName ??
+                                    'Workbook scenario'}
                                   {latestWorkbookImport.workbookFormat
                                     ? ` (${latestWorkbookImport.workbookFormat})`
                                     : ''}
                                 </Typography>
                               ) : null}
                               {latestSubmissionEvent ? (
-                                <Typography variant="body2" color="text.secondary">
-                                  Latest submission event: {latestSubmissionEvent.agencyName ?? latestSubmissionEvent.agency ?? 'Agency'}{' '}
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  Latest submission event:{' '}
+                                  {latestSubmissionEvent.agencyName ??
+                                    latestSubmissionEvent.agency ??
+                                    'Agency'}{' '}
                                   {latestSubmissionEvent.submissionMode
                                     ? `• ${latestSubmissionEvent.submissionMode.replace('_', ' ')}`
                                     : ''}
@@ -1446,7 +1509,11 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                               <Button
                                 variant="secondary"
                                 size="sm"
-                                onClick={() => navigate(`/projects/${effectiveProjectId}/evidence`)}
+                                onClick={() =>
+                                  navigate(
+                                    `/projects/${effectiveProjectId}/evidence`,
+                                  )
+                                }
                               >
                                 Open evidence pack
                               </Button>
@@ -1462,7 +1529,7 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                   )}
 
                   <Card
-                    variant="glass"
+                    variant="default"
                     sx={{ mb: 'var(--ob-space-150)', p: 'var(--ob-space-200)' }}
                   >
                     <Stack
@@ -1471,11 +1538,14 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                       justifyContent="space-between"
                     >
                       <Box>
-                        <Typography variant="h6">Finance mode for Singapore developers</Typography>
+                        <Typography variant="h6">
+                          Finance mode for Singapore developers
+                        </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Build a scenario from a deal screen, import a workbook, or
-                          start from an SG template. Then package outputs for lenders,
-                          investors, and internal approvals.
+                          Build a scenario from a deal screen, import a
+                          workbook, or start from an SG template. Then package
+                          outputs for lenders, investors, and internal
+                          approvals.
                         </Typography>
                       </Box>
                       <Stack direction="row" spacing={1}>
@@ -1492,7 +1562,9 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                           onClick={handleExportWorkbook}
                           disabled={!primaryScenario || exportingWorkbook}
                         >
-                          {exportingWorkbook ? 'Preparing workbook...' : 'Lender workbook'}
+                          {exportingWorkbook
+                            ? 'Preparing workbook...'
+                            : 'Lender workbook'}
                         </Button>
                         <Button
                           variant="ghost"
@@ -1500,7 +1572,9 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                           onClick={handleExportCsv}
                           disabled={!primaryScenario || exportingScenario}
                         >
-                          {exportingScenario ? 'Preparing export...' : 'Investor export'}
+                          {exportingScenario
+                            ? 'Preparing export...'
+                            : 'Investor export'}
                         </Button>
                       </Stack>
                     </Stack>
@@ -1544,7 +1618,7 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
 
                         {showEmptyState && (
                           <Card
-                            variant="glass"
+                            variant="default"
                             sx={{
                               p: 'var(--ob-space-300)',
                               textAlign: 'center',

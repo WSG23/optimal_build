@@ -37,7 +37,7 @@ import {
 import { useMemo, ComponentType, ReactNode } from 'react'
 import { ProcessingStatusCard, ProcessingStatus } from './ProcessingStatusCard'
 // AssetMixChart is now rendered in SiteAcquisitionPage Development Preview section
-import { GlassCard } from '../../../../../components/canonical/GlassCard'
+import { Card } from '../../../../../components/canonical/Card'
 import '../../../../../styles/site-acquisition.css'
 
 // ============================================================================
@@ -291,7 +291,7 @@ function LocationTenureCard({ card }: { card: OverviewCard }) {
   )
 
   return (
-    <GlassCard
+    <Card
       sx={{
         p: 'var(--ob-space-125)',
         display: 'flex',
@@ -357,7 +357,7 @@ function LocationTenureCard({ card }: { card: OverviewCard }) {
           </Box>
         )}
       </Box>
-    </GlassCard>
+    </Card>
   )
 }
 
@@ -385,7 +385,7 @@ function BuildEnvelopeCard({ card }: { card: OverviewCard }) {
   )
 
   return (
-    <GlassCard
+    <Card
       sx={{
         p: 'var(--ob-space-125)',
         display: 'flex',
@@ -469,7 +469,7 @@ function BuildEnvelopeCard({ card }: { card: OverviewCard }) {
 
       {/* Note */}
       {card.note && <CardNote>{card.note}</CardNote>}
-    </GlassCard>
+    </Card>
   )
 }
 
@@ -495,7 +495,7 @@ function HeritageCard({ card }: { card: OverviewCard }) {
   )
 
   return (
-    <GlassCard
+    <Card
       sx={{
         p: 'var(--ob-space-125)',
         display: 'flex',
@@ -585,7 +585,7 @@ function HeritageCard({ card }: { card: OverviewCard }) {
         {/* Regular note for low risk */}
         {!isHighRisk && card.note && <CardNote>{card.note}</CardNote>}
       </Box>
-    </GlassCard>
+    </Card>
   )
 }
 
@@ -613,7 +613,7 @@ function FinancialCard({ card }: { card: OverviewCard }) {
   )
 
   return (
-    <GlassCard
+    <Card
       sx={{
         p: 'var(--ob-space-125)',
         display: 'flex',
@@ -696,7 +696,7 @@ function FinancialCard({ card }: { card: OverviewCard }) {
 
       {/* Note */}
       {card.note && <CardNote>{card.note}</CardNote>}
-    </GlassCard>
+    </Card>
   )
 }
 
@@ -707,7 +707,7 @@ function FinancialCard({ card }: { card: OverviewCard }) {
  */
 function ZoningCard({ card }: { card: OverviewCard }) {
   return (
-    <GlassCard
+    <Card
       sx={{
         p: 'var(--ob-space-125)',
         display: 'flex',
@@ -791,7 +791,7 @@ function ZoningCard({ card }: { card: OverviewCard }) {
           </Box>
         )}
       </Box>
-    </GlassCard>
+    </Card>
   )
 }
 
@@ -803,7 +803,7 @@ function GenericCard({ card }: { card: OverviewCard }) {
   const Icon = getCardIcon(card.title)
 
   return (
-    <GlassCard
+    <Card
       sx={{
         p: 'var(--ob-space-125)',
         display: 'flex',
@@ -904,7 +904,7 @@ function GenericCard({ card }: { card: OverviewCard }) {
 
       {/* Note */}
       {card.note && <CardNote>{card.note}</CardNote>}
-    </GlassCard>
+    </Card>
   )
 }
 

@@ -103,8 +103,8 @@
 }
 
 .toggle-switch__track--active {
-    background-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    background-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .toggle-switch__knob {

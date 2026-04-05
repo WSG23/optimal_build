@@ -56,25 +56,11 @@
    ============================================================================= */
 
 .text-gradient-gold {
-    background: linear-gradient(
-        135deg,
-        var(--ob-accent-400) 0%,
-        var(--ob-accent-600) 100%
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--ob-accent-400);
 }
 
 .text-gradient-brand {
-    background: linear-gradient(
-        135deg,
-        var(--ob-color-brand-primary) 0%,
-        var(--ob-color-brand-accent) 100%
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--ob-color-brand-primary);
 }
 
 /* =============================================================================

@@ -10,7 +10,7 @@
 import { Button, Typography, useTheme, alpha } from '@mui/material'
 
 import type { FinanceScenarioSummary } from '../../../api/finance'
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
 
 interface ScenarioSelectorProps {
   scenarios: FinanceScenarioSummary[]
@@ -30,7 +30,7 @@ export function ScenarioSelector({
   }
 
   return (
-    <GlassCard
+    <Card
       sx={{
         display: 'inline-flex',
         flexWrap: 'wrap',
@@ -90,7 +90,7 @@ export function ScenarioSelector({
           </Button>
         )
       })}
-    </GlassCard>
+    </Card>
   )
 }
 

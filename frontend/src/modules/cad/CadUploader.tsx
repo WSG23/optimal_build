@@ -16,7 +16,7 @@ import {
 
 import type { CadImportSummary, ParseStatusUpdate } from '../../api/client'
 import { useTranslation } from '../../i18n'
-import { GlassCard } from '../../components/canonical/GlassCard'
+import { Card } from '../../components/canonical/Card'
 import { StatusChip } from '../../components/canonical/StatusChip'
 
 interface CadUploaderProps {
@@ -349,20 +349,22 @@ export function CadUploader({
     >
       <Stack sx={{ gap: 'var(--ob-space-200)' }}>
         {/* Top: Compact Hero Drop Zone */}
-        <GlassCard
-          className="cad-drop-zone"
-          onClick={!isUploading ? handleBrowse : undefined}
-          onDrop={!isUploading ? handleDrop : undefined}
-          onDragOver={!isUploading ? handleDragOver : undefined}
-          onDragLeave={!isUploading ? handleDragLeave : undefined}
-          sx={dropZoneStyles}
-        >
-          {DropZoneContent}
-        </GlassCard>
+        <Card sx={dropZoneStyles}>
+          <Box
+            className="cad-drop-zone"
+            onClick={!isUploading ? handleBrowse : undefined}
+            onDrop={!isUploading ? handleDrop : undefined}
+            onDragOver={!isUploading ? handleDragOver : undefined}
+            onDragLeave={!isUploading ? handleDragLeave : undefined}
+            sx={{ cursor: isUploading ? 'default' : 'pointer' }}
+          >
+            {DropZoneContent}
+          </Box>
+        </Card>
 
         {/* Bottom: Active Job Strip */}
         {(isUploading || status || summary) && (
-          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
+          <Card sx={{ p: 'var(--ob-space-200)' }}>
             <Grid container spacing="var(--ob-space-200)" alignItems="center">
               {/* File Info */}
               <Grid item xs={12} md={3}>
@@ -468,7 +470,7 @@ export function CadUploader({
                 <Typography variant="caption">{status.error}</Typography>
               </Box>
             )}
-          </GlassCard>
+          </Card>
         )}
       </Stack>
     </Box>

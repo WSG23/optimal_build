@@ -20,7 +20,7 @@ import { useState, useCallback, useMemo } from 'react'
 import { Box, Typography, SxProps, Theme } from '@mui/material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from 'recharts'
 import type { PieSectorDataItem } from 'recharts/types/polar/Pie'
-import { GlassCard } from '../../../../../components/canonical/GlassCard'
+import { Card } from '../../../../../components/canonical/Card'
 
 export interface AssetMixItem {
   /** Asset type label (e.g., "Residential", "Commercial") */
@@ -179,7 +179,7 @@ export function AssetMixChart({
   }
 
   return (
-    <GlassCard
+    <Card
       sx={{
         p: 'var(--ob-space-150)',
         display: 'flex',
@@ -482,6 +482,6 @@ export function AssetMixChart({
           </Box>
         </Box>
       )}
-    </GlassCard>
+    </Card>
   )
 }

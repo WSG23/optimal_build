@@ -103,7 +103,10 @@ export default function AgentPerformancePage() {
         <Grid container spacing={3}>
           {/* Kanban Section */}
           <Grid item xs={12} lg={8}>
-            <Card variant="glass" sx={{ p: 2, height: '100%', minHeight: 400 }}>
+            <Card
+              variant="default"
+              sx={{ p: 2, height: '100%', minHeight: 400 }}
+            >
               <Stack
                 direction="row"
                 spacing={2}
@@ -149,7 +152,7 @@ export default function AgentPerformancePage() {
                       <Stack spacing={1}>
                         {items.map((deal) => (
                           <Card
-                            variant="glass"
+                            variant="default"
                             key={deal.id}
                             hover="lift"
                             sx={{
@@ -275,7 +278,7 @@ export default function AgentPerformancePage() {
               {trendData.length > 0 && (
                 <Grid container spacing={3}>
                   <Grid item xs={12} md={6}>
-                    <Card variant="glass" sx={{ p: 2, height: 320 }}>
+                    <Card variant="default" sx={{ p: 2, height: 320 }}>
                       <Typography variant="h6" gutterBottom>
                         {t('agentPerformance.analytics.trend.pipelineHeading')}
                       </Typography>
@@ -332,7 +335,7 @@ export default function AgentPerformancePage() {
                     </Card>
                   </Grid>
                   <Grid item xs={12} md={6}>
-                    <Card variant="glass" sx={{ p: 2, height: 320 }}>
+                    <Card variant="default" sx={{ p: 2, height: 320 }}>
                       <Typography variant="h6" gutterBottom>
                         {t(
                           'agentPerformance.analytics.trend.conversionHeading',
@@ -371,7 +374,7 @@ export default function AgentPerformancePage() {
               )}
 
               {benchmarksHasContent && (
-                <Card variant="glass" sx={{ p: 2, mt: 3 }}>
+                <Card variant="default" sx={{ p: 2, mt: 3 }}>
                   <Typography variant="h6" gutterBottom>
                     {t('agentPerformance.analytics.benchmarks.title')}
                   </Typography>

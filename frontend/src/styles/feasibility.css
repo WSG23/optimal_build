@@ -87,22 +87,22 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     background: linear-gradient(
         135deg,
         #0096cc 0%,
-        var(--ob-color-neon-cyan) 100%
+        var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: var(--ob-glow-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .feasibility-wizard__copy:hover:not(:disabled) {
     background: linear-gradient(
         135deg,
-        var(--ob-color-neon-cyan) 0%,
+        var(--ob-color-brand-primary) 0%,
         #0096cc 100%
     );
-    box-shadow: var(--ob-glow-neon-cyan-strong);
+    box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
 }
 
@@ -114,8 +114,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
 
 .feasibility-wizard__copy-status {
     font-size: var(--ob-font-size-sm);
-    color: var(--ob-color-neon-cyan);
-    text-shadow: var(--ob-glow-neon-text);
+    color: var(--ob-color-brand-primary);
 }
 
 .feasibility-wizard__layout {
@@ -180,8 +179,8 @@ html[data-theme='light'] .feasibility-split-layout__footer {
 
 .feasibility-form__field input:focus {
     outline: none;
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .feasibility-form__error {
@@ -201,22 +200,22 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     background: linear-gradient(
         135deg,
         #0096cc 0%,
-        var(--ob-color-neon-cyan) 100%
+        var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: var(--ob-glow-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .feasibility-form__submit:hover:not(:disabled) {
     background: linear-gradient(
         135deg,
-        var(--ob-color-neon-cyan) 0%,
+        var(--ob-color-brand-primary) 0%,
         #0096cc 100%
     );
-    box-shadow: var(--ob-glow-neon-cyan-strong);
+    box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
 }
 
@@ -272,8 +271,8 @@ html[data-theme='light'] .feasibility-split-layout__footer {
 
 .feasibility-assumptions__grid input:focus {
     outline: none;
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .feasibility-assumptions__hint {
@@ -361,8 +360,8 @@ html[data-theme='light'] .feasibility-split-layout__footer {
 .feasibility-pack__field input:focus,
 .feasibility-pack__field select:focus {
     outline: none;
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .feasibility-pack__field small {
@@ -378,22 +377,22 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     background: linear-gradient(
         135deg,
         #0096cc 0%,
-        var(--ob-color-neon-cyan) 100%
+        var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: var(--ob-glow-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .feasibility-pack__submit:hover:not(:disabled) {
     background: linear-gradient(
         135deg,
-        var(--ob-color-neon-cyan) 0%,
+        var(--ob-color-brand-primary) 0%,
         #0096cc 100%
     );
-    box-shadow: var(--ob-glow-neon-cyan-strong);
+    box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
 }
 
@@ -574,8 +573,8 @@ html[data-theme='light'] .feasibility-section--card {
 }
 
 .smart-search__container:focus-within {
-    box-shadow: var(--ob-glow-neon-cyan);
-    border-color: var(--ob-color-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
+    border-color: var(--ob-color-brand-primary);
     transform: translateY(-1px);
 }
 
@@ -775,15 +774,15 @@ html[data-theme='light'] .smart-search {
 }
 
 .pack-card:hover {
-    border-color: var(--ob-color-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
     transform: translateY(-2px);
-    box-shadow: var(--ob-glow-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .pack-card--selected {
-    border-color: var(--ob-color-neon-cyan);
-    background: rgba(0, 243, 255, 0.08);
-    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
+    background: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .pack-card__icon {
@@ -792,8 +791,7 @@ html[data-theme='light'] .smart-search {
 }
 
 .pack-card--selected .pack-card__icon {
-    color: var(--ob-color-neon-cyan);
-    text-shadow: var(--ob-glow-neon-text);
+    color: var(--ob-color-brand-primary);
 }
 
 .pack-card__title {
@@ -835,14 +833,14 @@ html[data-theme='light'] .smart-search {
     background: linear-gradient(
         135deg,
         #0096cc 0%,
-        var(--ob-color-neon-cyan) 100%
+        var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
     border: none;
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     font-weight: 600;
     font-size: 0.9375rem;
-    box-shadow: var(--ob-glow-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Spring-like release */
     letter-spacing: 0.01em;
@@ -851,11 +849,11 @@ html[data-theme='light'] .smart-search {
 .scenario-fab:hover {
     background: linear-gradient(
         135deg,
-        var(--ob-color-neon-cyan) 0%,
+        var(--ob-color-brand-primary) 0%,
         #0096cc 100%
     );
     transform: translateY(-2px) scale(1.05);
-    box-shadow: var(--ob-glow-neon-cyan-strong);
+    box-shadow: var(--ob-shadow-md);
 }
 
 .scenario-fab:active {
@@ -891,8 +889,8 @@ html[data-theme='light'] .smart-search {
     margin-top: var(--ob-spacing-100);
     padding: var(--ob-spacing-100) var(--ob-spacing-150);
     border-radius: var(--ob-radius-xs); /* 2px - tags */
-    background: rgba(0, 243, 255, 0.1);
-    color: var(--ob-color-neon-cyan);
+    background: var(--ob-color-brand-primary);
+    color: var(--ob-color-brand-primary);
     font-size: var(--ob-font-size-xs);
     font-weight: 500;
 }
@@ -1038,9 +1036,9 @@ html[data-theme='light'] .smart-search {
 }
 
 .feasibility-project-card__link:hover {
-    border-color: var(--ob-color-neon-cyan);
-    color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan-soft);
+    border-color: var(--ob-color-brand-primary);
+    color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 /* --- Feasibility Workspace Layout --- */
@@ -1156,15 +1154,15 @@ html[data-theme='light'] .smart-search {
     flex-direction: column;
     gap: var(--ob-space-150);
     --ob-feasibility-asset-residential: var(--ob-color-brand-primary);
-    --ob-feasibility-asset-commercial: var(--ob-color-neon-cyan);
+    --ob-feasibility-asset-commercial: var(--ob-color-brand-primary);
     --ob-feasibility-asset-office: var(--ob-color-brand-primary-emphasis);
     --ob-feasibility-asset-retail: var(--ob-color-warning-strong);
     --ob-feasibility-asset-industrial: var(--ob-color-info-strong);
     --ob-feasibility-asset-mixed: var(--ob-color-success-strong);
     --ob-feasibility-asset-hospitality: var(--ob-color-brand-primary);
-    --ob-feasibility-asset-default: var(--ob-color-neon-cyan);
+    --ob-feasibility-asset-default: var(--ob-color-brand-primary);
     --ob-feasibility-chart-gfa: var(--ob-color-brand-primary-emphasis);
-    --ob-feasibility-chart-nia: var(--ob-color-neon-cyan);
+    --ob-feasibility-chart-nia: var(--ob-color-brand-primary);
 }
 
 .feasibility-output-stack {
@@ -1199,7 +1197,7 @@ html[data-theme='light'] .smart-search {
     font-size: var(--ob-font-size-xs);
     text-transform: uppercase;
     letter-spacing: var(--ob-letter-spacing-wider);
-    color: var(--ob-color-neon-cyan);
+    color: var(--ob-color-brand-primary);
 }
 
 .feasibility-output__kpis {
@@ -1267,9 +1265,9 @@ html[data-theme='light'] .smart-search {
 }
 
 .feasibility-output__toggle:hover {
-    border-color: var(--ob-color-neon-cyan);
-    color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan-soft);
+    border-color: var(--ob-color-brand-primary);
+    color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .feasibility-output__empty {
@@ -1356,10 +1354,10 @@ html[data-theme='light'] .smart-search {
 
 /* Zoning Envelope Layer - cyan dashed boundary */
 .feasibility-canvas__layer--zoning {
-    border: 2px dashed var(--ob-color-neon-cyan);
+    border: 2px dashed var(--ob-color-brand-primary);
     margin: var(--ob-space-100);
     border-radius: var(--ob-radius-sm);
-    box-shadow: inset 0 0 20px rgba(0, 243, 255, 0.15);
+    box-shadow: inset 0 0 20px var(--ob-color-brand-primary);
 }
 
 /* Structural Grid Layer - vertical/horizontal grid lines */
@@ -1406,8 +1404,8 @@ html[data-theme='light'] .smart-search {
 /* Toggle button active state */
 .feasibility-output__toggle--active {
     background: var(--ob-color-brand-soft);
-    color: var(--ob-color-neon-cyan);
-    border-color: var(--ob-color-neon-cyan);
+    color: var(--ob-color-brand-primary);
+    border-color: var(--ob-color-brand-primary);
 }
 
 .feasibility-canvas__legend {
@@ -1602,14 +1600,14 @@ html[data-theme='light'] .smart-search {
 }
 
 .scenario-selector__option:hover {
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan-soft);
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .scenario-selector__option--selected {
-    border-color: var(--ob-color-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
     background: var(--ob-color-brand-soft);
-    box-shadow: var(--ob-glow-neon-cyan-soft);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .scenario-selector__icon {
@@ -1620,7 +1618,7 @@ html[data-theme='light'] .smart-search {
 }
 
 .scenario-selector__option--selected .scenario-selector__icon {
-    color: var(--ob-color-neon-cyan);
+    color: var(--ob-color-brand-primary);
 }
 
 .scenario-selector__label {
@@ -1635,7 +1633,7 @@ html[data-theme='light'] .smart-search {
 }
 
 .scenario-selector__option--selected .scenario-selector__label {
-    color: var(--ob-color-neon-cyan);
+    color: var(--ob-color-brand-primary);
 }
 
 /* --- Actions / Compute Button --- */

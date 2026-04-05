@@ -216,37 +216,45 @@
     padding-bottom: 0.75rem; /* Align with input text baseline */
 }
 
-/* ── Ghost Inputs ── */
+/* ── Ghost Inputs — element-qualified selectors for specificity ── */
 
-.gps-input-ghost {
+input.gps-input-ghost,
+select.gps-input-ghost,
+textarea.gps-input-ghost {
     width: 100%;
-    background: transparent !important;
-    border: none !important;
-    border-bottom: var(--ob-border-fine) !important;
-    border-radius: 0 !important;
-    padding: var(--ob-space-075) 0 !important;
-    color: var(--ob-color-text-primary) !important;
-    font-size: var(--ob-font-size-sm) !important;
+    background: transparent;
+    border: none;
+    border-bottom: var(--ob-border-fine);
+    border-radius: 0;
+    padding: var(--ob-space-075) 0;
+    color: var(--ob-color-text-primary);
+    font-size: var(--ob-font-size-sm);
+    font-family: inherit;
     transition: border-color 0.2s ease;
     outline: none;
     box-sizing: border-box;
 }
 
-.gps-input-ghost--lg {
-    font-size: var(--ob-font-size-md) !important;
+input.gps-input-ghost--lg,
+select.gps-input-ghost--lg {
+    font-size: var(--ob-font-size-md);
 }
 
-.gps-input-ghost--sm {
-    font-size: var(--ob-font-size-sm) !important;
-    padding: var(--ob-space-050) 0 !important;
+input.gps-input-ghost--sm,
+select.gps-input-ghost--sm {
+    font-size: var(--ob-font-size-sm);
+    padding: var(--ob-space-050) 0;
 }
 
-.gps-input-ghost::placeholder {
-    color: var(--ob-color-text-muted) !important;
+input.gps-input-ghost::placeholder,
+textarea.gps-input-ghost::placeholder {
+    color: var(--ob-color-text-muted);
 }
 
-.gps-input-ghost:focus {
-    border-bottom-color: var(--ob-color-brand-primary) !important;
+input.gps-input-ghost:focus,
+select.gps-input-ghost:focus,
+textarea.gps-input-ghost:focus {
+    border-bottom-color: var(--ob-color-brand-primary);
 }
 
 /* ── Geocode Buttons ── */

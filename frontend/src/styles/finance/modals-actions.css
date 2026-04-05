@@ -25,7 +25,7 @@
 }
 
 .finance-table__actions-button:focus-visible {
-    outline: 2px solid var(--ob-color-neon-cyan);
+    outline: 2px solid var(--ob-color-brand-primary);
     outline-offset: 2px;
 }
 
@@ -59,7 +59,7 @@
 .finance-table__actions-menu button:hover,
 .finance-table__actions-menu button:focus-visible {
     background: rgba(0, 243, 255, 0.08);
-    color: var(--ob-color-neon-cyan);
+    color: var(--ob-color-brand-primary);
 }
 
 .finance-table__actions-menu button:disabled {
@@ -121,7 +121,7 @@
 
 .finance-modal__button:hover:not(:disabled) {
     background: rgba(0, 243, 255, 0.08);
-    border-color: var(--ob-color-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
 }
 
 .finance-modal__danger {

@@ -14,7 +14,7 @@
 import { Box, Button, Typography, useTheme, alpha } from '@mui/material'
 import { ArrowForward as ArrowForwardIcon } from '@mui/icons-material'
 
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
 import { StatusChip } from '../../../components/canonical/StatusChip'
 import { useTranslation } from '../../../i18n'
 import type { FinanceScenarioSummary } from '../../../api/finance'
@@ -58,7 +58,7 @@ export function DrawdownDetailsPanel({
   }
 
   return (
-    <GlassCard
+    <Card
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -307,7 +307,7 @@ export function DrawdownDetailsPanel({
           {t('finance.drawdown.details.viewFull')}
         </Button>
       </Box>
-    </GlassCard>
+    </Card>
   )
 }
 

@@ -1,5 +1,12 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
-import { Box, Typography, IconButton, Stack, useTheme, alpha } from '@mui/material'
+import {
+  Box,
+  Typography,
+  IconButton,
+  Stack,
+  useTheme,
+  alpha,
+} from '@mui/material'
 import { ArrowForward, Close } from '@mui/icons-material'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
@@ -9,7 +16,7 @@ import type {
   FinanceFeasibilityRequest,
 } from '../../../api/finance'
 import { Button } from '../../../components/canonical/Button'
-import { GlassCard } from '../../../components/canonical/GlassCard'
+import { Card } from '../../../components/canonical/Card'
 import { Input } from '../../../components/canonical/Input'
 import { useTranslation } from '../../../i18n'
 
@@ -206,7 +213,12 @@ const SG_FINANCE_TEMPLATES: FinanceTemplateDefinition[] = [
       sensitivityBands: [
         { parameter: 'Rent', low: '-10', base: '0', high: '8' },
         { parameter: 'Construction Cost', low: '12', base: '0', high: '-4' },
-        { parameter: 'Interest Rate (delta %)', low: '1.75', base: '0', high: '-0.5' },
+        {
+          parameter: 'Interest Rate (delta %)',
+          low: '1.75',
+          base: '0',
+          high: '-0.5',
+        },
       ],
     },
     assets: [
@@ -325,7 +337,9 @@ function cloneScenarioDefaults(
           ...template.constructionLoan,
           facilities: template.constructionLoan.facilities?.map((facility) => ({
             ...facility,
-            metadata: facility.metadata ? { ...facility.metadata } : facility.metadata,
+            metadata: facility.metadata
+              ? { ...facility.metadata }
+              : facility.metadata,
           })),
         }
       : template.constructionLoan,
@@ -354,10 +368,13 @@ export function FinanceScenarioCreator({
   const theme = useTheme()
   const [selectedTemplateId, setSelectedTemplateId] =
     useState<string>('sg_mixed_use')
-  const [requestDefaults, setRequestDefaults] = useState<FinanceScenarioDefaults>(
-    () => cloneScenarioDefaults(BASE_FINANCE_REQUEST),
+  const [requestDefaults, setRequestDefaults] =
+    useState<FinanceScenarioDefaults>(() =>
+      cloneScenarioDefaults(BASE_FINANCE_REQUEST),
+    )
+  const [scenarioName, setScenarioName] = useState(
+    'Singapore Mixed-Use Base Case',
   )
-  const [scenarioName, setScenarioName] = useState('Singapore Mixed-Use Base Case')
   const [assets, setAssets] = useState<AssetFormRow[]>(() =>
     createAssetRows(SG_FINANCE_TEMPLATES[0].assets),
   )
@@ -542,8 +559,9 @@ export function FinanceScenarioCreator({
   }
 
   const selectedTemplate =
-    SG_FINANCE_TEMPLATES.find((template) => template.id === selectedTemplateId) ??
-    SG_FINANCE_TEMPLATES[0]
+    SG_FINANCE_TEMPLATES.find(
+      (template) => template.id === selectedTemplateId,
+    ) ?? SG_FINANCE_TEMPLATES[0]
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
@@ -559,15 +577,18 @@ export function FinanceScenarioCreator({
       >
         {/* LEFT COLUMN: ASSET MIX INPUTS */}
         <Box sx={{ minWidth: 0 }}>
-          <GlassCard
-            sx={{ p: 'var(--ob-space-100)', mb: 'var(--ob-space-100)' }}
-          >
+          <Card sx={{ p: 'var(--ob-space-100)', mb: 'var(--ob-space-100)' }}>
             <Stack spacing={1.25}>
               <Box>
                 <Typography variant="subtitle2" sx={{ mb: 0.75 }}>
                   Singapore deal templates
                 </Typography>
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} useFlexGap flexWrap="wrap">
+                <Stack
+                  direction={{ xs: 'column', md: 'row' }}
+                  spacing={1}
+                  useFlexGap
+                  flexWrap="wrap"
+                >
                   {SG_FINANCE_TEMPLATES.map((template) => {
                     const active = template.id === selectedTemplateId
                     return (
@@ -582,7 +603,9 @@ export function FinanceScenarioCreator({
                           borderRadius: 'var(--ob-radius-sm)',
                           border: '1px solid',
                           borderColor: active ? 'primary.main' : 'divider',
-                          backgroundColor: active ? 'rgba(0, 243, 255, 0.08)' : 'transparent',
+                          backgroundColor: active
+                            ? 'rgba(0, 243, 255, 0.08)'
+                            : 'transparent',
                           color: 'inherit',
                           cursor: 'pointer',
                           minWidth: { xs: '100%', md: 180 },
@@ -591,7 +614,10 @@ export function FinanceScenarioCreator({
                         <Typography variant="body2" sx={{ fontWeight: 700 }}>
                           {template.label}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: 'text.secondary' }}
+                        >
                           {template.description}
                         </Typography>
                       </Box>
@@ -622,9 +648,9 @@ export function FinanceScenarioCreator({
                 placeholder={t('finance.scenarioCreator.placeholders.name')}
               />
             </Stack>
-          </GlassCard>
+          </Card>
 
-          <GlassCard sx={{ overflow: 'hidden' }}>
+          <Card sx={{ overflow: 'hidden' }}>
             <Box
               sx={{
                 px: 'var(--ob-space-150)',
@@ -875,12 +901,12 @@ export function FinanceScenarioCreator({
                 {t('finance.scenarioCreator.actions.addAsset')}
               </Button>
             </Box>
-          </GlassCard>
+          </Card>
         </Box>
 
         {/* RIGHT COLUMN: ALLOCATION CHART */}
         <Box sx={{ minWidth: 0 }}>
-          <GlassCard
+          <Card
             sx={{
               p: 'var(--ob-space-150)',
               height: '100%',
@@ -1013,7 +1039,7 @@ export function FinanceScenarioCreator({
               </Box>
             </Box>
 
-            <GlassCard
+            <Card
               sx={{
                 mt: 'var(--ob-space-200)',
                 p: 'var(--ob-space-100)',
@@ -1034,7 +1060,7 @@ export function FinanceScenarioCreator({
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
                 ${totalRevenue.toLocaleString()}
               </Typography>
-            </GlassCard>
+            </Card>
 
             <Button
               type="submit"
@@ -1049,7 +1075,7 @@ export function FinanceScenarioCreator({
                 ? t('finance.scenarioCreator.actions.saving')
                 : t('finance.scenarioCreator.actions.submit')}
             </Button>
-          </GlassCard>
+          </Card>
         </Box>
       </Box>
     </Box>

@@ -93,8 +93,8 @@
 .finance-project-selector__input-row input:focus,
 .finance-project-selector__recent select:focus {
     outline: none;
-    border-color: var(--ob-color-neon-cyan);
-    box-shadow: var(--ob-glow-neon-cyan);
+    border-color: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .finance-project-selector__input-row button,
@@ -105,23 +105,23 @@
     background: linear-gradient(
         135deg,
         #0096cc 0%,
-        var(--ob-color-neon-cyan) 100%
+        var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: var(--ob-glow-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .finance-project-selector__input-row button:hover:not(:disabled),
 .finance-project-selector__refresh:hover:not(:disabled) {
     background: linear-gradient(
         135deg,
-        var(--ob-color-neon-cyan) 0%,
+        var(--ob-color-brand-primary) 0%,
         #0096cc 100%
     );
-    box-shadow: var(--ob-glow-neon-cyan-strong);
+    box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
 }
 
@@ -177,28 +177,28 @@
     background: linear-gradient(
         135deg,
         #0096cc 0%,
-        var(--ob-color-neon-cyan) 100%
+        var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
     font-weight: 600;
     cursor: pointer;
     width: fit-content;
     transition: all 0.2s ease;
-    box-shadow: var(--ob-glow-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .finance-access-gate__action:hover:not(:disabled) {
     background: linear-gradient(
         135deg,
-        var(--ob-color-neon-cyan) 0%,
+        var(--ob-color-brand-primary) 0%,
         #0096cc 100%
     );
-    box-shadow: var(--ob-glow-neon-cyan-strong);
+    box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
 }
 
 .finance-access-gate__action:focus-visible {
-    outline: 2px solid var(--ob-color-neon-cyan);
+    outline: 2px solid var(--ob-color-brand-primary);
     outline-offset: 2px;
 }
 
@@ -242,23 +242,23 @@
     background: linear-gradient(
         135deg,
         #0096cc 0%,
-        var(--ob-color-neon-cyan) 100%
+        var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: var(--ob-glow-neon-cyan);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .finance-workspace__refresh:hover:not(:disabled),
 .finance-workspace__export:hover:not(:disabled) {
     background: linear-gradient(
         135deg,
-        var(--ob-color-neon-cyan) 0%,
+        var(--ob-color-brand-primary) 0%,
         #0096cc 100%
     );
-    box-shadow: var(--ob-glow-neon-cyan-strong);
+    box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
 }
 
@@ -362,9 +362,9 @@
 }
 
 .finance-table__primary-button {
-    border: 1px solid var(--ob-color-neon-cyan);
+    border: 1px solid var(--ob-color-brand-primary);
     background: transparent;
-    color: var(--ob-color-neon-cyan);
+    color: var(--ob-color-brand-primary);
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     padding: var(--ob-spacing-150) var(--ob-spacing-300);
     font-size: var(--ob-font-size-sm);
@@ -381,8 +381,8 @@
 
 .finance-table__primary-button:not(:disabled):hover,
 .finance-table__primary-button:not(:disabled):focus-visible {
-    background: rgba(0, 243, 255, 0.1);
-    box-shadow: var(--ob-glow-neon-cyan);
+    background: var(--ob-color-brand-primary);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .finance-table__actions-cell {

@@ -7,6 +7,7 @@ import {
   MenuItem,
   Select,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import { ExpandMore, ExpandLess } from '@mui/icons-material'
@@ -366,6 +367,22 @@ export function DealCalculatorPage() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    // Validate numeric fields before submitting
+    const numericFields: Array<[keyof FormState, string]> = [
+      ['siteAreaSqm', 'Site area'],
+      ['allowablePlotRatio', 'Plot ratio'],
+      ['currentGfaSqm', 'Current GFA'],
+      ['targetGrossFloorAreaSqm', 'Target GFA'],
+    ]
+    for (const [key, label] of numericFields) {
+      const val = form[key].trim()
+      if (val && !Number.isFinite(Number(val))) {
+        setError(`${label} must be a number.`)
+        return
+      }
+    }
+
     setIsSubmitting(true)
     setError(null)
 
@@ -558,31 +575,55 @@ export function DealCalculatorPage() {
                 />
               </Grid>
               <Grid item xs={6}>
-                <Input
-                  label="Plot ratio"
-                  value={form.allowablePlotRatio}
-                  onChange={updateField('allowablePlotRatio')}
-                  size="small"
-                  inputProps={{ inputMode: 'decimal' }}
-                />
+                <Tooltip
+                  title="Maximum ratio of floor area to land area allowed by zoning"
+                  arrow
+                  placement="top"
+                >
+                  <div>
+                    <Input
+                      label="Plot ratio"
+                      value={form.allowablePlotRatio}
+                      onChange={updateField('allowablePlotRatio')}
+                      size="small"
+                      inputProps={{ inputMode: 'decimal' }}
+                    />
+                  </div>
+                </Tooltip>
               </Grid>
               <Grid item xs={6}>
-                <Input
-                  label="Current GFA"
-                  value={form.currentGfaSqm}
-                  onChange={updateField('currentGfaSqm')}
-                  size="small"
-                  inputProps={{ inputMode: 'decimal' }}
-                />
+                <Tooltip
+                  title="Current Gross Floor Area of existing structures on site"
+                  arrow
+                  placement="top"
+                >
+                  <div>
+                    <Input
+                      label="Current GFA"
+                      value={form.currentGfaSqm}
+                      onChange={updateField('currentGfaSqm')}
+                      size="small"
+                      inputProps={{ inputMode: 'decimal' }}
+                    />
+                  </div>
+                </Tooltip>
               </Grid>
               <Grid item xs={6}>
-                <Input
-                  label="Target GFA"
-                  value={form.targetGrossFloorAreaSqm}
-                  onChange={updateField('targetGrossFloorAreaSqm')}
-                  size="small"
-                  inputProps={{ inputMode: 'decimal' }}
-                />
+                <Tooltip
+                  title="Target Gross Floor Area for the proposed development"
+                  arrow
+                  placement="top"
+                >
+                  <div>
+                    <Input
+                      label="Target GFA"
+                      value={form.targetGrossFloorAreaSqm}
+                      onChange={updateField('targetGrossFloorAreaSqm')}
+                      size="small"
+                      inputProps={{ inputMode: 'decimal' }}
+                    />
+                  </div>
+                </Tooltip>
               </Grid>
             </Grid>
 
@@ -656,22 +697,38 @@ export function DealCalculatorPage() {
                     />
                   </Grid>
                   <Grid item xs={6}>
-                    <Input
-                      label="Discount %"
-                      value={form.discountRatePct}
-                      onChange={updateField('discountRatePct')}
-                      size="small"
-                      inputProps={{ inputMode: 'decimal' }}
-                    />
+                    <Tooltip
+                      title="Rate used to discount future cash flows to present value"
+                      arrow
+                      placement="top"
+                    >
+                      <div>
+                        <Input
+                          label="Discount %"
+                          value={form.discountRatePct}
+                          onChange={updateField('discountRatePct')}
+                          size="small"
+                          inputProps={{ inputMode: 'decimal' }}
+                        />
+                      </div>
+                    </Tooltip>
                   </Grid>
                   <Grid item xs={6}>
-                    <Input
-                      label="Exit cap %"
-                      value={form.exitCapRatePct}
-                      onChange={updateField('exitCapRatePct')}
-                      size="small"
-                      inputProps={{ inputMode: 'decimal' }}
-                    />
+                    <Tooltip
+                      title="Capitalization rate applied to NOI to estimate exit value"
+                      arrow
+                      placement="top"
+                    >
+                      <div>
+                        <Input
+                          label="Exit cap %"
+                          value={form.exitCapRatePct}
+                          onChange={updateField('exitCapRatePct')}
+                          size="small"
+                          inputProps={{ inputMode: 'decimal' }}
+                        />
+                      </div>
+                    </Tooltip>
                   </Grid>
                   <Grid item xs={6}>
                     <Input
