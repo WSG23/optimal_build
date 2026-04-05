@@ -429,8 +429,12 @@ export function useUnifiedCapture({
       title: 'Drag to reposition or click the map',
     })
 
+    // Guard against setState after unmount
+    let mounted = true
+
     // Handle marker drag — update coords and reverse-geocode
     marker.addListener('dragend', () => {
+      if (!mounted) return
       const position = marker.getPosition()
       if (position) {
         const lat = position.lat()
@@ -439,7 +443,7 @@ export function useUnifiedCapture({
         setLongitude(lng.toFixed(6))
         reverseGeocodeCoords(lat, lng)
           .then((result) => {
-            if (result?.formattedAddress) {
+            if (mounted && result?.formattedAddress) {
               setAddress(result.formattedAddress)
               lastGeocodedAddressRef.current = result.formattedAddress
             }
@@ -450,23 +454,21 @@ export function useUnifiedCapture({
 
     // Handle map click — set pin and reverse-geocode for address
     map.addListener('click', (event: google.maps.MapMouseEvent) => {
+      if (!mounted) return
       if (event.latLng) {
         const lat = event.latLng.lat()
         const lng = event.latLng.lng()
         setLatitude(lat.toFixed(6))
         setLongitude(lng.toFixed(6))
         marker.setPosition({ lat, lng })
-        // Auto reverse-geocode to populate address
         reverseGeocodeCoords(lat, lng)
           .then((result) => {
-            if (result?.formattedAddress) {
+            if (mounted && result?.formattedAddress) {
               setAddress(result.formattedAddress)
               lastGeocodedAddressRef.current = result.formattedAddress
             }
           })
-          .catch(() => {
-            // Silently ignore — coords are already set
-          })
+          .catch(() => {})
       }
     })
 
@@ -474,6 +476,7 @@ export function useUnifiedCapture({
     mapMarkerRef.current = marker
 
     return () => {
+      mounted = false
       if (mapMarkerRef.current) {
         mapMarkerRef.current.setMap(null)
       }

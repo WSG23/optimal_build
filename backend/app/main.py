@@ -224,6 +224,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
         # Seed regulatory compliance paths if empty
         try:
+            import importlib
+            import sys
+            from pathlib import Path
+
             from app.core.database import AsyncSessionLocal
             from app.models.regulatory import AssetCompliancePath
 
@@ -234,13 +238,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                     sa_select(AssetCompliancePath).limit(1)
                 )
                 if not existing.scalar_one_or_none():
-                    from scripts.seed_compliance_paths import (
-                        seed_agencies,
-                        seed_compliance_paths,
+                    # Ensure scripts directory is importable
+                    scripts_dir = Path(__file__).resolve().parents[1] / "scripts"
+                    if str(scripts_dir.parent) not in sys.path:
+                        sys.path.insert(0, str(scripts_dir.parent))
+                    seed_module = importlib.import_module(
+                        "scripts.seed_compliance_paths"
                     )
 
-                    agency_map = await seed_agencies(seed_db)
-                    count = await seed_compliance_paths(seed_db, agency_map)
+                    agency_map = await seed_module.seed_agencies(seed_db)
+                    count = await seed_module.seed_compliance_paths(seed_db, agency_map)
                     log_event(
                         logger,
                         "compliance_paths_seeded",
