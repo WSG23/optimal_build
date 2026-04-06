@@ -42,6 +42,9 @@ export type { InputProps } from './Input'
 export { MetricTile } from './MetricTile'
 export type { MetricTileProps } from './MetricTile'
 
+export { PremiumMetricCard } from './PremiumMetricCard'
+export type { PremiumMetricCardProps } from './PremiumMetricCard'
+
 export { Tag } from './Tag'
 export type { TagProps } from './Tag'
 

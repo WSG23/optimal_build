@@ -1,8 +1,26 @@
-import { Box, Button, Typography } from '@mui/material'
+import { useMemo, useState } from 'react'
+import { Box, Button, Stack, TextField, Typography } from '@mui/material'
 
 import { Link } from '../../router'
 
 export function NotFoundPage() {
+  const [query, setQuery] = useState('')
+  const quickLinks = useMemo(
+    () =>
+      [
+        { label: 'Projects', to: '/projects' },
+        { label: 'Deal Calculator', to: '/developers/deal-calculator' },
+        { label: 'Site Acquisition', to: '/app/site-acquisition' },
+        { label: 'Financial Control', to: '/developers/finance' },
+        { label: 'Team Coordination', to: '/developers/team-coordination' },
+      ].filter((item) =>
+        query.trim()
+          ? item.label.toLowerCase().includes(query.trim().toLowerCase())
+          : true,
+      ),
+    [query],
+  )
+
   return (
     <Box
       sx={{
@@ -44,6 +62,34 @@ export function NotFoundPage() {
       >
         This page doesn't exist — but your next project could.
       </Typography>
+      <Box sx={{ width: '100%', maxWidth: 420 }}>
+        <TextField
+          fullWidth
+          size="small"
+          label="Find a workspace"
+          placeholder="Search projects, finance, site acquisition..."
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+      </Box>
+      <Stack
+        direction="row"
+        spacing="var(--ob-space-075)"
+        flexWrap="wrap"
+        useFlexGap
+      >
+        {quickLinks.map((item) => (
+          <Button
+            key={item.to}
+            component={Link}
+            to={item.to}
+            variant="outlined"
+            sx={{ borderRadius: 'var(--ob-radius-xs)' }}
+          >
+            {item.label}
+          </Button>
+        ))}
+      </Stack>
       <Box
         sx={{
           display: 'flex',

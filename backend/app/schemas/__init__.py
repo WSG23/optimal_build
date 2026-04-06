@@ -7,10 +7,11 @@ the entire Pydantic graph into startup or route registration.
 from __future__ import annotations
 
 from functools import lru_cache
-from importlib import import_module
 import sys
 from types import ModuleType
 from typing import Final
+
+from app.schemas._typing import typed_import_module
 
 
 def _counterpart(name: str) -> str | None:
@@ -128,7 +129,7 @@ _EXPORTS: Final[dict[str, str]] = {
 
 
 def _load_submodule(module_name: str) -> ModuleType:
-    module = import_module(f".{module_name}", __name__)
+    module = typed_import_module(f"{__name__}.{module_name}")
     globals()[module_name] = module
     _register_alias(f"{__name__}.{module_name}", module)
     return module

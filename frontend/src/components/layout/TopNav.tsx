@@ -61,26 +61,6 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
   const navGroups: NavGroup[] = useMemo(() => {
     const groups: NavGroup[] = [
       {
-        title: 'CAD',
-        items: [
-          {
-            path: '/cad/upload',
-            label: t('nav.upload'),
-            description: 'Upload CAD files for analysis',
-          },
-          {
-            path: '/cad/detection',
-            label: t('nav.detection'),
-            description: 'AI-powered feature detection',
-          },
-          {
-            path: '/cad/pipelines',
-            label: t('nav.pipelines'),
-            description: 'Processing pipeline status',
-          },
-        ],
-      },
-      {
         title: 'Analysis',
         items: [
           {
@@ -94,7 +74,7 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
             description: 'Development feasibility analysis',
           },
           {
-            path: projectBase ? `${projectBase}/finance` : '/projects/finance',
+            path: projectBase ? `${projectBase}/finance` : '/projects',
             label: t('nav.finance'),
             description: 'Financial modeling and scenarios',
           },
@@ -151,6 +131,27 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
         ],
       })
     }
+
+    groups.push({
+      title: 'CAD',
+      items: [
+        {
+          path: '/cad/upload',
+          label: t('nav.upload'),
+          description: 'Upload CAD files for analysis',
+        },
+        {
+          path: '/cad/detection',
+          label: t('nav.detection'),
+          description: 'AI-powered feature detection',
+        },
+        {
+          path: '/cad/pipelines',
+          label: t('nav.pipelines'),
+          description: 'Processing pipeline status',
+        },
+      ],
+    })
 
     return groups
   }, [isDeveloperMode, t, projectBase])
@@ -465,6 +466,7 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
                 <Typography
                   component="span"
                   sx={{
+                    display: { xs: 'none', sm: 'inline' },
                     color: 'var(--ob-color-brand-primary)',
                     textShadow: 'none',
                     fontWeight: 700,
@@ -670,7 +672,7 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
               textTransform: 'uppercase',
             }}
           >
-            OPTIMAL BUILD
+            {isMobile ? 'OB' : 'OPTIMAL BUILD'}
           </Typography>
           <IconButton
             aria-label="Close navigation"

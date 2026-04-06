@@ -20,6 +20,7 @@ from app.services.finance.workbook_exchange import (
     build_finance_workbook,
     preview_finance_workbook,
 )
+from app.schemas._typing import validate_model
 
 from .finance_feasibility import run_finance_feasibility
 from .finance_scenarios import _ensure_project_owner, summarise_persisted_scenario
@@ -157,7 +158,7 @@ async def import_finance_workbook(
             },
         )
 
-    payload = FinanceFeasibilityRequest.model_validate(preview.request_payload)
+    payload = validate_model(FinanceFeasibilityRequest, preview.request_payload)
     payload.scenario.description = _build_workbook_import_description(
         payload.scenario.description,
         workbook_format=preview.workbook_format,

@@ -67,6 +67,55 @@ function mapOverlaySuggestion(payload) {
     }
 }
 
+function buildErrorMessage({ path, status, text, correlationId }) {
+    let problem = null
+    if (typeof text === 'string' && text.trim() !== '') {
+        try {
+            problem = JSON.parse(text)
+        } catch {
+            problem = null
+        }
+    }
+
+    const nestedError = problem?.error
+    const detail =
+        typeof problem?.detail === 'string' && problem.detail.trim() !== ''
+            ? problem.detail.trim()
+            : typeof nestedError?.detail === 'string' &&
+                nestedError.detail.trim() !== ''
+              ? nestedError.detail.trim()
+              : typeof nestedError?.message === 'string' &&
+                  nestedError.message.trim() !== ''
+                ? nestedError.message.trim()
+                : typeof problem?.message === 'string' &&
+                    problem.message.trim() !== ''
+                  ? problem.message.trim()
+                  : String(text ?? '').trim()
+    const title =
+        typeof problem?.title === 'string' && problem.title.trim() !== ''
+            ? problem.title.trim()
+            : typeof nestedError?.code === 'string' &&
+                nestedError.code.trim() !== ''
+              ? nestedError.code.trim()
+            : null
+    const resolvedCorrelationId =
+        typeof problem?.correlation_id === 'string' &&
+        problem.correlation_id.trim() !== ''
+            ? problem.correlation_id.trim()
+            : correlationId
+
+    const segments = [`Request to ${path} failed with ${status}`]
+    if (title && detail && title !== detail) {
+        segments.push(`${title}: ${detail}`)
+    } else if (detail) {
+        segments.push(detail)
+    }
+    if (resolvedCorrelationId) {
+        segments.push(`correlation_id=${resolvedCorrelationId}`)
+    }
+    return segments.join(' - ')
+}
+
 class ApiClient {
     constructor(baseUrl = '/api/v1/') {
         this.baseUrl = normaliseBaseUrl(baseUrl)
@@ -159,6 +208,47 @@ class ApiClient {
         const payload = await response.json()
         const item = payload.item ?? payload
         return mapOverlaySuggestion(item)
+    }
+
+    async runOverlay(projectId) {
+        const path = `overlay/${projectId}/run`
+        const response = await fetch(joinUrl(this.baseUrl, path), {
+            method: 'POST',
+        })
+        if (!response.ok) {
+            const text = await response.text()
+            throw new Error(
+                buildErrorMessage({
+                    path,
+                    status: response.status,
+                    text,
+                    correlationId: response.headers.get('x-correlation-id'),
+                }),
+            )
+        }
+        return response.json()
+    }
+
+    async getLatestImport(projectId) {
+        const response = await fetch(
+            joinUrl(this.baseUrl, `import/latest?project_id=${projectId}`),
+        )
+        if (response.status === 204) {
+            return null
+        }
+        if (!response.ok) {
+            const text = await response.text()
+            throw new Error(
+                buildErrorMessage({
+                    path: `import/latest?project_id=${projectId}`,
+                    status: response.status,
+                    text,
+                    correlationId: response.headers.get('x-correlation-id'),
+                }),
+            )
+        }
+        const payload = await response.json()
+        return mapCadImportSummary(payload)
     }
 
     async listRules() {

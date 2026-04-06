@@ -18,6 +18,7 @@ from app.schemas.rulesets import (
     RulesetValidationRequest,
     RulesetValidationResponse,
 )
+from app.schemas._typing import validate_model
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -87,11 +88,11 @@ async def validate_ruleset(
     evaluation = engine.evaluate(graph)
 
     results = [
-        RuleEvaluationResult.model_validate(item)
+        validate_model(RuleEvaluationResult, item)
         for item in evaluation.get("results", [])
     ]
-    summary = RulesetEvaluationSummary.model_validate(evaluation.get("summary", {}))
-    ruleset_summary = RulePackSummary.model_validate(ruleset, from_attributes=True)
+    summary = validate_model(RulesetEvaluationSummary, evaluation.get("summary", {}))
+    ruleset_summary = validate_model(RulePackSummary, ruleset, from_attributes=True)
 
     citations: list[dict[str, object]] = []
     seen: set[str] = set()

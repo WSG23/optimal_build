@@ -14,6 +14,7 @@ from sqlalchemy.orm import selectinload
 from app.api import deps
 from app.core.database import get_session
 from app.models.projects import Project, ProjectPhase, ProjectType
+from app.schemas._typing import dump_model
 
 if TYPE_CHECKING:
     from app.models.development_phase import PhaseStatus
@@ -362,7 +363,7 @@ async def update_project(
         )
 
     # Update fields
-    update_data = project_update.model_dump(exclude_unset=True)
+    update_data = dump_model(project_update, exclude_unset=True)
 
     if "name" in update_data:
         project.project_name = update_data["name"]

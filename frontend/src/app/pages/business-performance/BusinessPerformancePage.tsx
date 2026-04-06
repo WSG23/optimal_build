@@ -8,30 +8,26 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
-import { AccessTime, AttachMoney, Assessment } from '@mui/icons-material'
 import {
   DEAL_STAGE_ORDER,
   fetchDealCommissions,
   fetchDealTimeline,
   fetchDeals,
   changeDealStage,
-  type DealCommission,
   type DealSummary,
-  type DealTimelineEvent,
 } from '../../../api/deals'
 import {
   fetchBenchmarks,
   fetchLatestSnapshot,
   fetchSnapshotsHistory,
-  type PerformanceBenchmarkEntry,
-  type PerformanceSnapshot,
 } from '../../../api/performance'
 import { PipelineBoard } from './components/PipelineBoard'
 import { DealInsightsPanel } from './components/DealInsightsPanel'
 import { AnalyticsPanel } from './components/AnalyticsPanel'
 import { RoiPanel } from './components/RoiPanel'
-import { MetricTile } from '../../../components/canonical/MetricTile'
+import { KpiSummarySection } from './components/KpiSummarySection'
 import { Card } from '../../../components/canonical/Card'
+import { getOpenPipelineMetricDisplay } from './metricDisplay'
 import type {
   AnalyticsMetric,
   BenchmarkEntry,
@@ -43,35 +39,17 @@ import type {
   CommissionEntry,
   TrendPoint,
 } from './types'
-
-const EMPTY_ROI_SUMMARY: RoiSummary = {
-  projectCount: 0,
-  totalReviewHoursSaved: null,
-  averageAutomationScore: null,
-  averageAcceptanceRate: null,
-  averageSavingsPercent: null,
-  bestPaybackWeeks: null,
-  projects: [],
-}
-
-const NOT_AVAILABLE_TEXT = 'Not available yet'
-export const OPEN_PIPELINE_PENDING_COPY = 'Waiting for data...'
-
-export function getOpenPipelineMetricDisplay(
-  pipelineLoading: boolean,
-  totalPipelineValue: number | null,
-) {
-  if (pipelineLoading) {
-    return { kind: 'loading' as const, text: '-' }
-  }
-  if (totalPipelineValue === null) {
-    return { kind: 'pending' as const, text: OPEN_PIPELINE_PENDING_COPY }
-  }
-  return {
-    kind: 'value' as const,
-    text: formatCurrency(totalPipelineValue),
-  }
-}
+import {
+  EMPTY_ROI_SUMMARY,
+  buildMetrics,
+  buildTrend,
+  buildBenchmarks,
+  buildRoiSummary,
+  convertTimeline,
+  mapCommissionEntry,
+  totalPipeline,
+  formatRelativeDate,
+} from './utils'
 
 export function BusinessPerformancePage() {
   const [deals, setDeals] = useState<DealSummary[]>([])
@@ -278,7 +256,6 @@ export function BusinessPerformancePage() {
       setRoiSummary(EMPTY_ROI_SUMMARY)
       return
     }
-    // Type guard: agentId is guaranteed to be string after the check above
     const validAgentId: string = agentId
     const controller = new AbortController()
     async function loadAnalytics() {
@@ -380,8 +357,6 @@ export function BusinessPerformancePage() {
     pipelineLoading,
     totalPipelineValue,
   )
-  // Reserved for weighted pipeline display (future feature)
-  // const weightPipelineValue = useMemo(() => totalWeightedPipeline(columns), [columns])
 
   return (
     <Box className="bp-page" sx={{ width: '100%' }} role="main">
@@ -412,72 +387,13 @@ export function BusinessPerformancePage() {
         </Box>
       </Box>
 
-      {/* KPI Summary - Depth 1 (Glass Card with brand edge) */}
-      <Box className="ob-card-module ob-section-gap">
-        <Typography
-          variant="subtitle2"
-          sx={{
-            color: 'text.secondary',
-            mb: 'var(--ob-space-200)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-          }}
-        >
-          Key Metrics
-        </Typography>
-        <Grid
-          container
-          spacing="var(--ob-space-200)"
-          className="bp-page__summary"
-          role="region"
-          aria-label="Key performance metrics"
-        >
-          <Grid item xs={12} sm={6} md={3}>
-            <MetricTile
-              label="Last Snapshot"
-              value={analyticsLoading ? '-' : lastSnapshot}
-              icon={<AccessTime fontSize="small" />}
-              variant="compact"
-            />
-          </Grid>
-          <Grid item xs={12} sm={12} md={6}>
-            <MetricTile
-              label="Open Pipeline Value"
-              value={
-                openPipelineMetric.kind === 'pending' ? (
-                  <Box
-                    component="span"
-                    sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      color: 'var(--ob-color-text-secondary)',
-                      fontSize: '0.34em',
-                      fontWeight: 'var(--ob-font-weight-semibold)',
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {openPipelineMetric.text}
-                  </Box>
-                ) : (
-                  openPipelineMetric.text
-                )
-              }
-              icon={<AttachMoney fontSize="small" />}
-              variant="hero"
-              trend={openPipelineMetric.kind === 'value' ? '+12%' : undefined}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <MetricTile
-              label="ROI Projects Tracked"
-              value={analyticsLoading ? '-' : roiSummary.projectCount}
-              icon={<Assessment fontSize="small" />}
-              variant="compact"
-            />
-          </Grid>
-        </Grid>
-      </Box>
+      {/* KPI Summary */}
+      <KpiSummarySection
+        analyticsLoading={analyticsLoading}
+        lastSnapshot={lastSnapshot}
+        openPipelineMetric={openPipelineMetric}
+        roiProjectCount={roiSummary.projectCount}
+      />
 
       {/* Alerts */}
       <Stack
@@ -508,7 +424,7 @@ export function BusinessPerformancePage() {
       </Stack>
 
       <Grid container spacing="var(--ob-space-300)" className="bp-page__layout">
-        <Grid item xs={12} lg={8} className="bp-page__pipeline">
+        <Grid item xs={12} md={8} className="bp-page__pipeline">
           <Card
             variant="default"
             className="bp-pipeline-wrapper"
@@ -555,7 +471,7 @@ export function BusinessPerformancePage() {
             )}
           </Card>
         </Grid>
-        <Grid item xs={12} lg={4} className="bp-page__sidebar">
+        <Grid item xs={12} md={4} className="bp-page__sidebar">
           <Stack spacing="var(--ob-space-300)">
             <DealInsightsPanel
               deal={selectedDeal}
@@ -596,282 +512,4 @@ export function BusinessPerformancePage() {
       </Grid>
     </Box>
   )
-}
-
-function mapCommissionEntry(entry: DealCommission): CommissionEntry {
-  return {
-    id: entry.id,
-    type: entry.commissionType,
-    status: entry.status,
-    amount: entry.commissionAmount,
-    currency: entry.basisCurrency,
-    basisAmount: entry.basisAmount,
-    confirmedAt: entry.confirmedAt,
-    disputedAt: entry.disputedAt,
-  }
-}
-
-function convertTimeline(timelineData: DealTimelineEvent[]): StageEvent[] {
-  return timelineData.map((event) => ({
-    id: event.id,
-    toStage: event.toStage,
-    fromStage: event.fromStage,
-    recordedAt: formatDateTime(event.recordedAt),
-    durationSeconds: event.durationSeconds,
-    changedBy: event.changedBy,
-    note: event.note,
-    auditHash: event.auditLog?.hash ?? null,
-    auditSignature: event.auditLog?.signature ?? null,
-  }))
-}
-
-function buildMetrics(snapshot: PerformanceSnapshot | null): AnalyticsMetric[] {
-  if (!snapshot) {
-    return []
-  }
-  const currencyFormatter = new Intl.NumberFormat('en-SG', {
-    style: 'currency',
-    currency: 'SGD',
-    maximumFractionDigits: 0,
-  })
-  return [
-    {
-      key: 'dealsOpen',
-      label: 'Open deals',
-      value: snapshot.dealsOpen.toString(),
-    },
-    {
-      key: 'dealsWon',
-      label: 'Deals won (30d)',
-      value: snapshot.dealsClosedWon.toString(),
-    },
-    {
-      key: 'grossPipeline',
-      label: 'Gross pipeline',
-      value:
-        snapshot.grossPipelineValue !== null
-          ? currencyFormatter.format(snapshot.grossPipelineValue)
-          : NOT_AVAILABLE_TEXT,
-      helperText: 'All open opportunities, unweighted.',
-    },
-    {
-      key: 'weightedPipeline',
-      label: 'Weighted pipeline',
-      value:
-        snapshot.weightedPipelineValue !== null
-          ? currencyFormatter.format(snapshot.weightedPipelineValue)
-          : NOT_AVAILABLE_TEXT,
-      helperText: 'Weighted by confidence percentage.',
-    },
-    {
-      key: 'conversionRate',
-      label: 'Conversion rate',
-      value:
-        snapshot.conversionRate !== null
-          ? `${(snapshot.conversionRate * 100).toFixed(1)}%`
-          : NOT_AVAILABLE_TEXT,
-    },
-    {
-      key: 'avgCycle',
-      label: 'Average cycle',
-      value:
-        snapshot.avgCycleDays !== null
-          ? `${snapshot.avgCycleDays.toFixed(0)} days`
-          : NOT_AVAILABLE_TEXT,
-    },
-    {
-      key: 'confirmedCommission',
-      label: 'Confirmed commission',
-      value:
-        snapshot.confirmedCommissionAmount !== null
-          ? currencyFormatter.format(snapshot.confirmedCommissionAmount)
-          : NOT_AVAILABLE_TEXT,
-    },
-    {
-      key: 'disputedCommission',
-      label: 'Disputed commission',
-      value:
-        snapshot.disputedCommissionAmount !== null
-          ? currencyFormatter.format(snapshot.disputedCommissionAmount)
-          : NOT_AVAILABLE_TEXT,
-    },
-  ]
-}
-
-function buildTrend(history: PerformanceSnapshot[]): TrendPoint[] {
-  return history
-    .slice()
-    .reverse()
-    .map((snapshot) => ({
-      label: snapshot.asOfDate,
-      gross:
-        snapshot.grossPipelineValue !== null
-          ? snapshot.grossPipelineValue / 1_000_000
-          : null,
-      weighted:
-        snapshot.weightedPipelineValue !== null
-          ? snapshot.weightedPipelineValue / 1_000_000
-          : null,
-      conversion: snapshot.conversionRate,
-      cycle: snapshot.avgCycleDays,
-    }))
-}
-
-function buildBenchmarks(
-  conversion: PerformanceBenchmarkEntry[],
-  cycle: PerformanceBenchmarkEntry[],
-  pipeline: PerformanceBenchmarkEntry[],
-): BenchmarkEntry[] {
-  const entries: BenchmarkEntry[] = []
-  const convertLabel = (cohort: string | null) => cohort ?? 'benchmark'
-  if (conversion[0]) {
-    entries.push({
-      key: 'conversion',
-      label: 'Conversion rate',
-      actual:
-        conversion[0].valueNumeric !== null
-          ? `${(conversion[0].valueNumeric * 100).toFixed(1)}%`
-          : (conversion[0].valueText ?? NOT_AVAILABLE_TEXT),
-      benchmark:
-        conversion[1]?.valueNumeric !== null
-          ? `${(conversion[1].valueNumeric * 100).toFixed(1)}%`
-          : (conversion[1]?.valueText ?? null),
-      cohort: convertLabel(conversion[0].cohort),
-      deltaText: null,
-    })
-  }
-  if (cycle[0]) {
-    entries.push({
-      key: 'cycle',
-      label: 'Average cycle time',
-      actual:
-        cycle[0].valueNumeric !== null
-          ? `${cycle[0].valueNumeric.toFixed(0)} days`
-          : (cycle[0].valueText ?? NOT_AVAILABLE_TEXT),
-      benchmark:
-        cycle[1]?.valueNumeric !== null
-          ? `${cycle[1].valueNumeric.toFixed(0)} days`
-          : (cycle[1]?.valueText ?? null),
-      cohort: convertLabel(cycle[0].cohort),
-      deltaText: null,
-    })
-  }
-  if (pipeline[0]) {
-    const currencyFormatter = new Intl.NumberFormat('en-SG', {
-      style: 'currency',
-      currency: 'SGD',
-      maximumFractionDigits: 0,
-    })
-    entries.push({
-      key: 'pipeline',
-      label: 'Weighted pipeline value',
-      actual:
-        pipeline[0].valueNumeric !== null
-          ? currencyFormatter.format(pipeline[0].valueNumeric)
-          : (pipeline[0].valueText ?? NOT_AVAILABLE_TEXT),
-      benchmark:
-        pipeline[1]?.valueNumeric !== null
-          ? currencyFormatter.format(pipeline[1].valueNumeric)
-          : (pipeline[1]?.valueText ?? null),
-      cohort: convertLabel(pipeline[0].cohort),
-      deltaText: null,
-    })
-  }
-  return entries
-}
-
-function buildRoiSummary(snapshot: PerformanceSnapshot | null): RoiSummary {
-  if (!snapshot) {
-    return EMPTY_ROI_SUMMARY
-  }
-  const metrics = snapshot.roiMetrics
-  const summary = (metrics?.summary ?? {}) as Record<string, unknown>
-  const projects = Array.isArray(metrics?.projects)
-    ? (metrics.projects as Record<string, unknown>[])
-    : []
-  return {
-    projectCount: Number(summary.project_count ?? projects.length ?? 0),
-    totalReviewHoursSaved: toNullableNumber(summary.total_review_hours_saved),
-    averageAutomationScore: toNullableNumber(summary.average_automation_score),
-    averageAcceptanceRate: toNullableNumber(summary.average_acceptance_rate),
-    averageSavingsPercent: toNullableNumber(summary.savings_percent_average),
-    bestPaybackWeeks: summary.best_payback_weeks
-      ? Number(summary.best_payback_weeks)
-      : null,
-    projects: projects.map((project) => ({
-      projectId: Number(project.project_id ?? 0),
-      hoursSaved: toNullableNumber(project.review_hours_saved),
-      automationScore: toNullableNumber(project.automation_score),
-      acceptanceRate: toNullableNumber(project.acceptance_rate),
-      paybackWeeks: project.payback_weeks
-        ? Number(project.payback_weeks)
-        : null,
-    })),
-  }
-}
-
-function totalPipeline(columns: PipelineColumn[]): number | null {
-  const total = columns.reduce(
-    (sum, column) => sum + (column.totalValue ?? 0),
-    0,
-  )
-  return total === 0 ? null : total
-}
-
-// Reserved for weighted pipeline display (future feature)
-// function totalWeightedPipeline(columns: PipelineColumn[]): number | null {
-//   const total = columns.reduce(
-//     (sum, column) => sum + (column.weightedValue ?? 0),
-//     0,
-//   )
-//   return total === 0 ? null : total
-// }
-
-function formatCurrency(value: number | null) {
-  if (value === null) {
-    return NOT_AVAILABLE_TEXT
-  }
-  return new Intl.NumberFormat('en-SG', {
-    style: 'currency',
-    currency: 'SGD',
-    maximumFractionDigits: 0,
-  }).format(value)
-}
-
-function formatRelativeDate(value: string | null) {
-  if (!value) {
-    return null
-  }
-  try {
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) {
-      return value
-    }
-    return date.toLocaleDateString()
-  } catch {
-    return value
-  }
-}
-
-function formatDateTime(value: string | null) {
-  if (!value) {
-    return ''
-  }
-  try {
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) {
-      return value
-    }
-    return date.toLocaleString()
-  } catch {
-    return value
-  }
-}
-
-function toNullableNumber(value: unknown): number | null {
-  if (value === null || value === undefined) {
-    return null
-  }
-  const parsed = Number(value)
-  return Number.isNaN(parsed) ? null : parsed
 }

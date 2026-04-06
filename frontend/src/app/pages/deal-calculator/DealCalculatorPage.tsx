@@ -9,11 +9,8 @@ import type { FinanceScenarioInput } from '../../../api/finance'
 import type { ExternalSourceMetadata } from '../../../api/externalSources'
 import { saveQuickScreenFinanceDraft } from '../../../modules/finance/quickScreenDraft'
 import { EmptyState } from '../../../components/canonical'
-import {
-  DealInputsForm,
-  INITIAL_FORM_STATE,
-  type FormState,
-} from './components/DealInputsForm'
+import { INITIAL_FORM_STATE, type FormState } from './components/dealFormState'
+import { DealInputsForm } from './components/DealInputsForm'
 import { DealResultsPanel } from './components/DealResultsPanel'
 
 function parseOptionalNumber(value: string): number | undefined {
@@ -35,6 +32,21 @@ function pctToRate(value: string, fallback: string) {
     return fallback
   }
   return (parsed / 100).toFixed(4)
+}
+
+function toUserFacingDealError(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return 'Unable to run the deal calculator.'
+  }
+
+  if (
+    /404/.test(error.message) ||
+    /Unable to resolve address/i.test(error.message)
+  ) {
+    return 'We could not match that address. Check the address or switch to manual assumptions.'
+  }
+
+  return error.message
 }
 
 function buildQuickScreenScenario(
@@ -212,6 +224,11 @@ export function DealCalculatorPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
+    if (!form.projectName.trim()) {
+      setError('Project name is required.')
+      return
+    }
+
     const numericFields: Array<[keyof FormState, string]> = [
       ['siteAreaSqm', 'Site area'],
       ['allowablePlotRatio', 'Plot ratio'],
@@ -260,11 +277,7 @@ export function DealCalculatorPage() {
         setSuccessMessage('Deal screen complete')
       })
     } catch (submissionError) {
-      setError(
-        submissionError instanceof Error
-          ? submissionError.message
-          : 'Unable to run the deal calculator.',
-      )
+      setError(toUserFacingDealError(submissionError))
     } finally {
       setIsSubmitting(false)
     }
@@ -298,6 +311,7 @@ export function DealCalculatorPage() {
         width: '100%',
         maxWidth: '1200px',
         mx: 'auto',
+        pb: 'var(--ob-space-300)',
         display: 'grid',
         gridTemplateColumns: {
           xs: '1fr',

@@ -31,28 +31,6 @@ export interface ProviderOptions {
   topOffset?: number | string
 }
 
-interface AllProvidersProps {
-  children: ReactNode
-  options?: ProviderOptions
-}
-
-/**
- * Wraps children with all app providers needed for testing.
- */
-function AllProviders({ children, options = {} }: AllProvidersProps) {
-  const { inBaseLayout = true, topOffset = 0 } = options
-
-  return (
-    <ThemeModeProvider>
-      <TranslationProvider>
-        <BaseLayoutProvider value={{ inBaseLayout, topOffset }}>
-          {children}
-        </BaseLayoutProvider>
-      </TranslationProvider>
-    </ThemeModeProvider>
-  )
-}
-
 /**
  * Custom render function that wraps components with all necessary providers.
  *
@@ -77,16 +55,19 @@ export function renderWithProviders(
     ...renderOptions
   }: RenderOptions & { providerOptions?: ProviderOptions } = {},
 ): RenderResult {
+  const { inBaseLayout = true, topOffset = 0 } = providerOptions ?? {}
+
   function Wrapper({ children }: { children: ReactNode }) {
-    return <AllProviders options={providerOptions}>{children}</AllProviders>
+    return (
+      <ThemeModeProvider>
+        <TranslationProvider>
+          <BaseLayoutProvider value={{ inBaseLayout, topOffset }}>
+            {children}
+          </BaseLayoutProvider>
+        </TranslationProvider>
+      </ThemeModeProvider>
+    )
   }
 
   return render(ui, { wrapper: Wrapper, ...renderOptions })
 }
-
-/**
- * Re-export everything from @testing-library/react for convenience.
- * This allows tests to import everything from one place.
- */
-export * from '@testing-library/react'
-export { renderWithProviders as render }

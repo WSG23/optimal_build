@@ -22,6 +22,7 @@ from app.models.business_performance import (
     DealType,
     PipelineStage,
 )
+from app.schemas._typing import dump_model, validate_model
 
 
 class DealCreate(BaseModel):
@@ -101,10 +102,10 @@ class DealStageEventSchema(BaseModel):
         duration_seconds: float | None = None,
         audit_log: dict[str, Any] | None = None,
     ) -> Self:
-        payload = cls.model_validate(event).model_dump()
+        payload = dump_model(validate_model(cls, event))
         payload["duration_seconds"] = duration_seconds
         payload["audit_log"] = audit_log
-        return cls.model_validate(payload)
+        return validate_model(cls, payload)
 
 
 class DealSchema(BaseModel):
@@ -141,7 +142,7 @@ class DealSchema(BaseModel):
         payload = getattr(deal, "__dict__", {}).copy()
         payload.pop("_sa_instance_state", None)
         payload["metadata"] = metadata_value
-        return cls.model_validate(payload)
+        return validate_model(cls, payload)
 
 
 class DealWithTimelineSchema(DealSchema):
@@ -158,7 +159,7 @@ class DealWithTimelineSchema(DealSchema):
         audit_logs: dict[str, dict[str, Any]] | None = None,
         **kwargs: Any,
     ) -> Self:
-        data = DealSchema.from_orm_deal(deal).model_dump()
+        data = dump_model(DealSchema.from_orm_deal(deal))
         data["timeline"] = []
         if timeline is not None:
             for index, event in enumerate(timeline):
@@ -187,7 +188,7 @@ class DealWithTimelineSchema(DealSchema):
                         audit_log=audit_log,
                     )
                 )
-        return cls.model_validate(data)
+        return validate_model(cls, data)
 
 
 class CommissionCreate(BaseModel):
@@ -247,7 +248,7 @@ class CommissionAdjustmentResponse(BaseModel):
         payload = getattr(adjustment, "__dict__", {}).copy()
         payload.pop("_sa_instance_state", None)
         payload["metadata"] = metadata_value
-        return cls.model_validate(payload)
+        return validate_model(cls, payload)
 
 
 class CommissionResponse(BaseModel):
@@ -314,7 +315,7 @@ class CommissionResponse(BaseModel):
             "updated_at": record.updated_at,
             "adjustments": adjustments_list,
         }
-        return cls.model_validate(data)
+        return validate_model(cls, data)
 
 
 __all__ = [

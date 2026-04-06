@@ -12,6 +12,7 @@ from app.models.business_performance import (
     AgentPerformanceSnapshot,
     PerformanceBenchmark,
 )
+from app.schemas._typing import validate_model
 
 
 class SnapshotRequest(BaseModel):
@@ -45,7 +46,7 @@ class AgentPerformanceSnapshotResponse(BaseModel):
 
     @classmethod
     def from_orm_snapshot(cls, snapshot: AgentPerformanceSnapshot) -> Self:
-        return cls.model_validate(snapshot)
+        return validate_model(cls, snapshot)
 
 
 class BenchmarkResponse(BaseModel):
@@ -68,7 +69,7 @@ class BenchmarkResponse(BaseModel):
 
     @classmethod
     def from_orm_benchmark(cls, benchmark: PerformanceBenchmark) -> Self:
-        return cls.model_validate(benchmark)
+        return validate_model(cls, benchmark)
 
 
 __all__ = [

@@ -33,6 +33,7 @@ from app.schemas.regulatory import (
     HeritageSubmissionUpdate,
 )
 from app.services.regulatory_service import RegulatoryService
+from app.schemas._typing import dump_model
 
 router = APIRouter(prefix="/regulatory", tags=["regulatory"])
 
@@ -286,7 +287,7 @@ async def update_change_of_use_application(
             detail="Change of use application not found",
         )
 
-    update_data = data.model_dump(exclude_unset=True)
+    update_data = dump_model(data, exclude_unset=True)
     status_value = update_data.get("status")
     if isinstance(status_value, str):
         normalized = status_value.upper()
@@ -421,7 +422,7 @@ async def update_heritage_submission(
             detail="Heritage submission not found",
         )
 
-    for field, value in data.model_dump(exclude_unset=True).items():
+    for field, value in dump_model(data, exclude_unset=True).items():
         setattr(submission, field, value)
 
     await db.commit()

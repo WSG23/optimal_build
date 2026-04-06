@@ -242,27 +242,42 @@ def _build_finance_summary(
     npv_value = None
     irr_value = None
     moic_value = None
-    raw_moic = None
+    raw_equity_multiple = None
     if cash_flows:
+        lease_up_years = _average_absorption_years(asset_optimizations)
         npv_value = _quantize_money(npv(discount_fraction, cash_flows))
         invested = abs(cash_flows[0]) if cash_flows[0] < 0 else Decimal("0")
         distributions = sum((flow for flow in cash_flows[1:] if flow > 0), Decimal("0"))
         if invested > 0 and distributions > 0:
-            raw_moic = distributions / invested
-            moic_value = _quantize_ratio(raw_moic)
+            raw_equity_multiple = distributions / invested
+        if total_capex is not None and total_capex > 0:
+            stabilized_years = max(financing.hold_years - lease_up_years + 1, 0)
+            operating_distributions = Decimal("0")
+            if annual_noi is not None and stabilized_years > 0:
+                operating_distributions = annual_noi * Decimal(stabilized_years)
+            exit_distributions = Decimal("0")
+            if estimated_exit_value is not None:
+                exit_distributions = estimated_exit_value * (
+                    Decimal("1") - sale_cost_fraction
+                )
+            gross_project_multiple = (
+                operating_distributions + exit_distributions
+            ) / total_capex
+            moic_value = _quantize_ratio(gross_project_multiple)
         try:
             irr_value = _quantize_ratio(irr(cash_flows))
         except ValueError:
             irr_value = None
-            if raw_moic is not None and financing.hold_years > 0:
+            if raw_equity_multiple is not None and financing.hold_years > 0:
                 fallback_irr = Decimal(
-                    str(pow(float(raw_moic), 1 / financing.hold_years) - 1)
+                    str(pow(float(raw_equity_multiple), 1 / financing.hold_years) - 1)
                 )
                 irr_value = _quantize_ratio(fallback_irr)
 
     notes = [
         "Standalone quick screen. Validate planning, construction, and financing assumptions before investment committee use.",
         "Finance outputs are derived from the suggested asset mix and a simplified construction-to-stabilisation hold model.",
+        "MOIC is shown as a gross project multiple to avoid overstating levered equity outcomes in the quick screen.",
     ]
 
     if metrics and metrics.dscr is not None:

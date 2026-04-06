@@ -17,7 +17,7 @@ import TimelineIcon from '@mui/icons-material/Timeline'
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import PeopleIcon from '@mui/icons-material/People'
 import BarChartIcon from '@mui/icons-material/BarChart'
-import { PremiumMetricCard } from '@/components/canonical'
+import { PremiumMetricCard, EmptyState } from '@/components/canonical'
 import { GanttChart } from './components/GanttChart'
 import { PhaseEditor } from './components/PhaseEditor'
 import { TenantRelocationDashboard } from './components/TenantRelocationDashboard'
@@ -36,8 +36,8 @@ import {
   type CreatePhasePayload,
   type UpdatePhasePayload,
 } from '../../../api/development'
-import { useProject } from '../../../contexts/useProject'
-import { Link } from '../../../router'
+import { useProjectScope } from '../../../contexts/useProjectScope'
+import { Link, useRouterController } from '../../../router'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -60,8 +60,9 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 }
 
 export function PhaseManagementPage() {
-  const { currentProject, isProjectLoading, projectError } = useProject()
-  const projectId = currentProject?.id ?? ''
+  const navigate = useRouterController().navigate
+  const { currentProject, isProjectLoading, projectError, projectId } =
+    useProjectScope()
   const [activeTab, setActiveTab] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -216,10 +217,17 @@ export function PhaseManagementPage() {
             />
           </Box>
         ) : (
-          <Alert severity={projectError ? 'error' : 'info'}>
-            {projectError?.message ??
-              'Select a project to manage development phases.'}
-          </Alert>
+          <EmptyState
+            title="Select a project to manage development phases"
+            description={
+              projectError?.message ??
+              'Phase plans, sequencing, and relocation workflows are tied to a project context.'
+            }
+            actionLabel="Go to projects"
+            onAction={() => navigate('/projects')}
+            size="md"
+            sx={{ alignItems: 'flex-start', textAlign: 'left' }}
+          />
         )}
       </Box>
     )

@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import csv
 import io
-from importlib import import_module
 import json
 from types import ModuleType
 import zipfile
@@ -41,6 +40,7 @@ from app.schemas.finance import (
 from app.services.finance import calculator
 from app.services.finance.argus_export import get_argus_export_service
 from app.utils import metrics
+from app.schemas._typing import typed_import_module, validate_model
 from app.utils.logging import get_logger, log_event
 
 from .finance_common import (
@@ -86,7 +86,7 @@ class _JobQueueLike(Protocol):
 
 
 def _load_finance_jobs_module(name: str) -> ModuleType:
-    return import_module(name)
+    return typed_import_module(name)
 
 
 def _ensure_finance_sensitivity_loaded() -> None:
@@ -202,7 +202,7 @@ def build_construction_interest_schedule(
         "facilities": facility_payloads,
         "entries": entry_payloads,
     }
-    schema = ConstructionLoanInterestSchema.model_validate(schema_payload)
+    schema = validate_model(ConstructionLoanInterestSchema, schema_payload)
     return schema, schema_payload
 
 
@@ -1042,7 +1042,7 @@ async def rerun_finance_sensitivity(
     loan_config: ConstructionLoanInput | None = None
     if isinstance(raw_loan, Mapping):
         try:
-            loan_config = ConstructionLoanInput.model_validate(raw_loan)
+            loan_config = validate_model(ConstructionLoanInput, dict(raw_loan))
         except Exception:  # pragma: no cover - tolerate legacy payloads
             loan_config = None
 

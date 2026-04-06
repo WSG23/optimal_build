@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime
-from importlib import import_module
 from types import ModuleType
 from typing import Any, Awaitable, Callable, Protocol, cast
 
@@ -20,6 +19,7 @@ from app.schemas.overlay import (
     OverlayDecisionPayload,
     OverlaySuggestion as OverlaySuggestionSchema,
 )
+from app.schemas._typing import dump_model, typed_import_module, validate_model
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -43,7 +43,7 @@ class _OverlayRunResultLike(Protocol):
 
 
 def _load_overlay_module(name: str) -> ModuleType:
-    return import_module(name)
+    return typed_import_module(name)
 
 
 def _get_job_queue() -> _JobQueueLike:
@@ -121,7 +121,7 @@ async def list_project_overlays(
     suggestions: list[OverlaySuggestion] = list(result.scalars().unique().all())
     items = [
         _serialise_suggestion(
-            OverlaySuggestionSchema.model_validate(suggestion, from_attributes=True)
+            validate_model(OverlaySuggestionSchema, suggestion, from_attributes=True)
         )
         for suggestion in suggestions
     ]
@@ -205,7 +205,7 @@ async def decide_overlay(
 
     await session.commit()
     await session.refresh(suggestion)
-    item = OverlaySuggestionSchema.model_validate(suggestion, from_attributes=True)
+    item = validate_model(OverlaySuggestionSchema, suggestion, from_attributes=True)
     return {"item": _serialise_suggestion(item)}
 
 
@@ -227,7 +227,7 @@ def _serialise_suggestion(
 ) -> dict[str, object]:
     """Convert overlay suggestion model into a JSON-ready dict."""
 
-    payload = cast(dict[str, object], item.model_dump(mode="json"))
+    payload = cast(dict[str, object], dump_model(item, mode="json"))
     decision = payload.get("decision")
     if decision is None or isinstance(decision, Mapping):
         return payload

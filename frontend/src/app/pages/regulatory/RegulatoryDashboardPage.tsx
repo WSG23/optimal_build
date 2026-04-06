@@ -21,9 +21,10 @@ import { HeritageSubmissionForm } from './components/HeritageSubmissionForm'
 import { QuickActionsSection } from './components/QuickActionsSection'
 import { SubmissionsTabContent } from './components/SubmissionsTabContent'
 import { getTableSx } from '../../../utils/themeStyles'
-import { useProject } from '../../../contexts/useProject'
+import { useProjectScope } from '../../../contexts/useProjectScope'
 import { Button } from '../../../components/canonical/Button'
-import { SkeletonCard } from '../../../components/canonical'
+import { EmptyState, SkeletonCard } from '../../../components/canonical'
+import { useRouterController } from '../../../router'
 
 const STORAGE_PREFIX = 'ob_regulatory'
 
@@ -79,8 +80,9 @@ function TabPanel({ children, value, index }: TabPanelProps) {
 export const RegulatoryDashboardPage: React.FC = () => {
   const theme = useTheme()
   const isDarkMode = theme.palette.mode === 'dark'
-  const { currentProject, isProjectLoading, projectError } = useProject()
-  const projectId = currentProject?.id ?? ''
+  const { navigate } = useRouterController()
+  const { currentProject, isProjectLoading, projectError, projectId } =
+    useProjectScope()
 
   const [tabValue, setTabValue] = useState(0)
   const [submissions, setSubmissions] = useState<AuthoritySubmission[]>([])
@@ -251,10 +253,17 @@ export const RegulatoryDashboardPage: React.FC = () => {
         {isProjectLoading ? (
           <SkeletonCard contentLines={3} />
         ) : (
-          <Alert severity={projectError ? 'error' : 'info'}>
-            {projectError?.message ??
-              'Select a project to manage regulatory submissions.'}
-          </Alert>
+          <EmptyState
+            title="Select a project to manage regulatory submissions"
+            description={
+              projectError?.message ??
+              'Submission tracking, compliance paths, and heritage workflows are tied to a project.'
+            }
+            actionLabel="Go to projects"
+            onAction={() => navigate('/projects')}
+            size="md"
+            sx={{ alignItems: 'flex-start', textAlign: 'left' }}
+          />
         )}
       </Box>
     )

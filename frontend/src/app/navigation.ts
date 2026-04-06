@@ -170,6 +170,22 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
 
 export const NAV_ITEMS: NavItem[] = [...AGENT_NAV_ITEMS, ...DEVELOPER_NAV_ITEMS]
 
+const PROJECT_SCOPED_ROUTE_MAP: Record<string, string> = {
+  '/app/due-diligence': 'due-diligence',
+  '/app/asset-feasibility': 'feasibility',
+  '/developers/asset-feasibility': 'feasibility',
+  '/app/financial-control': 'finance',
+  '/developers/financial-control': 'finance',
+  '/developers/finance': 'finance',
+  '/finance': 'finance',
+  '/app/phase-management': 'phases',
+  '/app/team-coordination': 'team',
+  '/developers/team-coordination': 'team',
+  '/app/regulatory': 'regulatory',
+  '/developers/regulatory': 'regulatory',
+  '/developers/evidence': 'evidence',
+}
+
 export function resolveNavPath(
   item: NavItem,
   projectId?: string | null,
@@ -178,4 +194,31 @@ export function resolveNavPath(
     return item.projectPath(projectId)
   }
   return item.path
+}
+
+export function resolveProjectScopedPath(
+  path: string,
+  projectId: string,
+): string | null {
+  const moduleSegment = PROJECT_SCOPED_ROUTE_MAP[path]
+  if (!moduleSegment) {
+    return null
+  }
+  return `/projects/${projectId}/${moduleSegment}`
+}
+
+export function resolveProjectlessPath(path: string): string | null {
+  if (!path.startsWith('/projects/')) {
+    return null
+  }
+
+  const segments = path.split('/').filter(Boolean)
+  const moduleSegment = segments[2]
+  const genericModulePath = moduleSegment
+    ? Object.entries(PROJECT_SCOPED_ROUTE_MAP).find(
+        ([, mappedSegment]) => mappedSegment === moduleSegment,
+      )?.[0]
+    : null
+
+  return genericModulePath ?? '/projects'
 }

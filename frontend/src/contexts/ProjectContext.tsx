@@ -75,6 +75,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [currentProject, setCurrentProjectState] =
     useState<ProjectSummary | null>(() => readStoredProject())
   const [projects, setProjects] = useState<ProjectSummary[]>([])
+  const [hasLoadedProjects, setHasLoadedProjects] = useState(false)
   const [isProjectLoading, setIsProjectLoading] = useState(false)
   const [projectError, setProjectError] = useState<ProjectError | null>(null)
   const loadController = useRef<AbortController | null>(null)
@@ -91,6 +92,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       }
       setProjectError(mapProjectError(error))
     } finally {
+      setHasLoadedProjects(true)
       setIsProjectLoading(false)
     }
   }, [])
@@ -167,7 +169,12 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   }, [refreshProjects])
 
   useEffect(() => {
-    if (!currentProject || isProjectLoading || projectError) {
+    if (
+      !currentProject ||
+      isProjectLoading ||
+      projectError ||
+      !hasLoadedProjects
+    ) {
       return
     }
     const exists = projects.some((project) => project.id === currentProject.id)
@@ -179,7 +186,13 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       setCurrentProjectState(null)
       persistProject(null)
     }
-  }, [currentProject, isProjectLoading, projectError, projects])
+  }, [
+    currentProject,
+    hasLoadedProjects,
+    isProjectLoading,
+    projectError,
+    projects,
+  ])
 
   useEffect(() => {
     if (!params.projectId) {

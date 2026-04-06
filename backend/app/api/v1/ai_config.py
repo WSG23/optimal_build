@@ -19,6 +19,7 @@ from app.schemas.ai_config import (
     AIConfigUpdate,
 )
 from app.services.ai.config_service import ai_config_service
+from app.schemas._typing import validate_model
 
 router = APIRouter()
 
@@ -121,7 +122,7 @@ async def get_ai_config(
             detail="AI configuration not found",
         )
 
-    return AIConfigResponse.model_validate(config)
+    return validate_model(AIConfigResponse, config)
 
 
 @router.post(
@@ -157,7 +158,7 @@ async def create_ai_config(
             organization_id=payload.organization_id,
             created_by=user_id,
         )
-        return AIConfigResponse.model_validate(config)
+        return validate_model(AIConfigResponse, config)
     except Exception as e:
         if "duplicate key" in str(e).lower() or "unique constraint" in str(e).lower():
             raise HTTPException(
@@ -204,7 +205,7 @@ async def update_ai_config(
             detail="AI configuration not found",
         )
 
-    return AIConfigResponse.model_validate(config)
+    return validate_model(AIConfigResponse, config)
 
 
 @router.delete("/ai-config/{config_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -235,7 +236,7 @@ async def get_ai_config_audit(
 ) -> list[AIConfigAuditResponse]:
     """Get audit log for an AI configuration."""
     audits = await ai_config_service.get_audit_log(db, config_id, limit=limit)
-    return [AIConfigAuditResponse.model_validate(a) for a in audits]
+    return [validate_model(AIConfigAuditResponse, a) for a in audits]
 
 
 @router.post("/ai-config/seed", status_code=status.HTTP_201_CREATED)

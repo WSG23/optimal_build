@@ -43,6 +43,7 @@ from app.schemas.finance import (
 from app.services.finance import (
     calculator,
 )
+from app.schemas._typing import validate_model
 from app.utils.logging import get_logger, log_event
 
 from .finance_common import (
@@ -178,8 +179,8 @@ async def summarise_persisted_scenario(
     raw_construction = assumptions.get("construction_loan")
     if isinstance(raw_construction, Mapping):
         try:
-            construction_loan_config = ConstructionLoanInput.model_validate(
-                raw_construction
+            construction_loan_config = validate_model(
+                ConstructionLoanInput, dict(raw_construction)
             )
         except Exception:  # pragma: no cover - defensive for legacy records
             construction_loan_config = None
@@ -198,7 +199,7 @@ async def summarise_persisted_scenario(
                 continue
             try:
                 sensitivity_band_inputs.append(
-                    SensitivityBandInput.model_validate(entry)
+                    validate_model(SensitivityBandInput, dict(entry))
                 )
             except Exception:  # pragma: no cover - tolerate invalid legacy rows
                 continue
@@ -490,8 +491,8 @@ async def summarise_persisted_scenario(
             summary_meta = result_metadata.get("summary")
             if summary_meta:
                 try:
-                    asset_mix_summary_schema = (
-                        AssetFinancialSummarySchema.model_validate(summary_meta)
+                    asset_mix_summary_schema = validate_model(
+                        AssetFinancialSummarySchema, summary_meta
                     )
                 except Exception:  # pragma: no cover - defensive for historical data
                     asset_mix_summary_schema = None
@@ -503,7 +504,7 @@ async def summarise_persisted_scenario(
                         continue
                     try:
                         converted.append(
-                            FinanceAssetBreakdownSchema.model_validate(entry)
+                            validate_model(FinanceAssetBreakdownSchema, entry)
                         )
                     except Exception:  # pragma: no cover - defensive
                         continue
@@ -524,7 +525,7 @@ async def summarise_persisted_scenario(
                         continue
                     try:
                         parsed_entries.append(
-                            FinanceSensitivityOutcomeSchema.model_validate(entry)
+                            validate_model(FinanceSensitivityOutcomeSchema, entry)
                         )
                     except Exception:  # pragma: no cover - tolerate legacy rows
                         continue
@@ -536,8 +537,8 @@ async def summarise_persisted_scenario(
 
         if stored.name == "construction_loan_interest" and result_metadata:
             try:
-                construction_interest_schema = (
-                    ConstructionLoanInterestSchema.model_validate(result_metadata)
+                construction_interest_schema = validate_model(
+                    ConstructionLoanInterestSchema, result_metadata
                 )
                 construction_interest_metadata = result_metadata
                 construction_interest_value = stored.value

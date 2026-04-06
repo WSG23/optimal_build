@@ -211,3 +211,70 @@ test('getDefaultPipelineSuggestions prioritises overlay matches', async () => {
     assert.strictEqual(suggestions[0].relatedRuleIds.includes(1), true)
     assert.ok(suggestions[0].focus.toLowerCase().includes('fire'))
 })
+
+test('getLatestImport returns null on 204 no content', async () => {
+    const originalFetch = global.fetch
+    global.fetch = async () => new Response(null, { status: 204 })
+
+    const client = new ApiClient('http://example.com/')
+    const summary = await client.getLatestImport(1)
+
+    restoreFetch(originalFetch)
+
+    assert.strictEqual(summary, null)
+})
+
+test('request surfaces problem detail and correlation id', async () => {
+    const originalFetch = global.fetch
+    global.fetch = async () =>
+        new Response(
+            JSON.stringify({
+                title: 'Internal Server Error',
+                detail: 'Overlay engine failed to acquire source geometry',
+                correlation_id: 'corr-123',
+            }),
+            {
+                status: 500,
+                headers: {
+                    'Content-Type': 'application/problem+json',
+                    'x-correlation-id': 'corr-header',
+                },
+            },
+        )
+
+    const client = new ApiClient('http://example.com/')
+
+    await assert.rejects(
+        () => client.runOverlay(1),
+        /Overlay engine failed to acquire source geometry.*correlation_id=corr-123/,
+    )
+
+    restoreFetch(originalFetch)
+})
+
+test('request normalises nested error payloads', async () => {
+    const originalFetch = global.fetch
+    global.fetch = async () =>
+        new Response(
+            JSON.stringify({
+                error: {
+                    code: 'InternalServerError',
+                    message: 'Internal server error',
+                },
+                correlation_id: null,
+            }),
+            {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+            },
+        )
+
+    const client = new ApiClient('http://example.com/')
+
+    await assert.rejects(
+        () => client.runOverlay(1),
+        /InternalServerError: Internal server error/,
+    )
+
+    restoreFetch(originalFetch)
+})

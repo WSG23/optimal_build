@@ -25,6 +25,10 @@ import {
 
 import { useProject } from '../../contexts/useProject'
 import { useRouterController, useRouterParams } from '../../router'
+import {
+  resolveProjectScopedPath,
+  resolveProjectlessPath,
+} from '../../app/navigation'
 
 export function ProjectSelector() {
   const theme = useTheme()
@@ -60,20 +64,9 @@ export function ProjectSelector() {
 
   const handleClearSelection = useCallback(() => {
     clearProject()
-
-    const segments = path.split('/').filter(Boolean)
-    if (segments[0] === 'projects' && segments[1]) {
-      const moduleSegment = segments[2] ?? ''
-      const moduleFallbacks: Record<string, string> = {
-        capture: '/app/capture',
-        'due-diligence': '/app/due-diligence',
-        feasibility: '/app/asset-feasibility',
-        finance: '/app/financial-control',
-        phases: '/app/phase-management',
-        team: '/developers/team-coordination',
-        regulatory: '/developers/regulatory',
-      }
-      navigate(moduleFallbacks[moduleSegment] ?? '/projects')
+    const nextPath = resolveProjectlessPath(path)
+    if (nextPath) {
+      navigate(nextPath)
     }
 
     handleCloseMenu()
@@ -95,6 +88,11 @@ export function ProjectSelector() {
         navigate(updatedPath)
       } else if (path.startsWith('/projects')) {
         navigate(`/projects/${projectId}`)
+      } else {
+        const projectScopedPath = resolveProjectScopedPath(path, projectId)
+        if (projectScopedPath) {
+          navigate(projectScopedPath)
+        }
       }
       handleCloseMenu()
     },

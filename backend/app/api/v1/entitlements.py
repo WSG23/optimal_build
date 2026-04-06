@@ -28,6 +28,7 @@ from app.schemas.entitlements import (
     EntStudyUpdate,
 )
 from app.services.entitlements import EntitlementsService
+from app.schemas._typing import dump_model, validate_model
 from app.utils import metrics
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -67,7 +68,7 @@ def _normalise_pagination(limit: int, offset: int) -> tuple[int, int]:
 
 
 def _model_list(schema: Any, records: Any) -> list[Any]:
-    return [schema.model_validate(record, from_attributes=True) for record in records]
+    return [validate_model(schema, record, from_attributes=True) for record in records]
 
 
 @router.api_route(
@@ -150,7 +151,7 @@ async def create_roadmap_item(
     await session.refresh(item)
 
     metrics.ENTITLEMENTS_ROADMAP_COUNTER.labels(operation="create").inc()
-    return EntRoadmapItemSchema.model_validate(item, from_attributes=True)
+    return validate_model(EntRoadmapItemSchema, item, from_attributes=True)
 
 
 @router.put(
@@ -168,7 +169,7 @@ async def update_roadmap_item(
     """Update an existing roadmap item."""
 
     service = EntitlementsService(session)
-    data = payload.model_dump(exclude_unset=True)
+    data = dump_model(payload, exclude_unset=True)
     item = await service.update_roadmap_item(
         item_id=item_id,
         project_id=project_id,
@@ -178,7 +179,7 @@ async def update_roadmap_item(
     await session.refresh(item)
 
     metrics.ENTITLEMENTS_ROADMAP_COUNTER.labels(operation="update").inc()
-    return EntRoadmapItemSchema.model_validate(item, from_attributes=True)
+    return validate_model(EntRoadmapItemSchema, item, from_attributes=True)
 
 
 @router.delete(
@@ -250,7 +251,7 @@ async def create_study(
     await session.commit()
     await session.refresh(record)
     metrics.ENTITLEMENTS_STUDY_COUNTER.labels(operation="create").inc()
-    return EntStudySchema.model_validate(record, from_attributes=True)
+    return validate_model(EntStudySchema, record, from_attributes=True)
 
 
 @router.put(
@@ -267,7 +268,7 @@ async def update_study(
 ) -> EntStudySchema:
     """Modify an existing entitlement study."""
 
-    data = payload.model_dump(exclude_unset=True)
+    data = dump_model(payload, exclude_unset=True)
     service = EntitlementsService(session)
     record = await service.update_study(
         study_id=study_id,
@@ -277,7 +278,7 @@ async def update_study(
     await session.commit()
     await session.refresh(record)
     metrics.ENTITLEMENTS_STUDY_COUNTER.labels(operation="update").inc()
-    return EntStudySchema.model_validate(record, from_attributes=True)
+    return validate_model(EntStudySchema, record, from_attributes=True)
 
 
 @router.delete(
@@ -349,7 +350,7 @@ async def create_engagement(
     await session.commit()
     await session.refresh(record)
     metrics.ENTITLEMENTS_ENGAGEMENT_COUNTER.labels(operation="create").inc()
-    return EntEngagementSchema.model_validate(record, from_attributes=True)
+    return validate_model(EntEngagementSchema, record, from_attributes=True)
 
 
 @router.put(
@@ -366,7 +367,7 @@ async def update_engagement(
 ) -> EntEngagementSchema:
     """Modify an existing engagement record."""
 
-    data = payload.model_dump(exclude_unset=True)
+    data = dump_model(payload, exclude_unset=True)
     service = EntitlementsService(session)
     record = await service.update_engagement(
         engagement_id=engagement_id,
@@ -376,7 +377,7 @@ async def update_engagement(
     await session.commit()
     await session.refresh(record)
     metrics.ENTITLEMENTS_ENGAGEMENT_COUNTER.labels(operation="update").inc()
-    return EntEngagementSchema.model_validate(record, from_attributes=True)
+    return validate_model(EntEngagementSchema, record, from_attributes=True)
 
 
 @router.delete(
@@ -448,7 +449,7 @@ async def create_legal_instrument(
     await session.commit()
     await session.refresh(record)
     metrics.ENTITLEMENTS_LEGAL_COUNTER.labels(operation="create").inc()
-    return EntLegalInstrumentSchema.model_validate(record, from_attributes=True)
+    return validate_model(EntLegalInstrumentSchema, record, from_attributes=True)
 
 
 @router.put(
@@ -465,7 +466,7 @@ async def update_legal_instrument(
 ) -> EntLegalInstrumentSchema:
     """Update an existing legal instrument."""
 
-    data = payload.model_dump(exclude_unset=True)
+    data = dump_model(payload, exclude_unset=True)
     service = EntitlementsService(session)
     record = await service.update_legal_instrument(
         instrument_id=instrument_id,
@@ -475,7 +476,7 @@ async def update_legal_instrument(
     await session.commit()
     await session.refresh(record)
     metrics.ENTITLEMENTS_LEGAL_COUNTER.labels(operation="update").inc()
-    return EntLegalInstrumentSchema.model_validate(record, from_attributes=True)
+    return validate_model(EntLegalInstrumentSchema, record, from_attributes=True)
 
 
 @router.delete(

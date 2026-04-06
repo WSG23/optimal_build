@@ -14,6 +14,7 @@ from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.developer_checklists import ChecklistStatus, DeveloperChecklistTemplate
 from app.services.developer_checklist_service import DeveloperChecklistService
+from app.schemas._typing import dump_model
 
 router = APIRouter(prefix="/developers", tags=["developers"])
 
@@ -235,7 +236,7 @@ async def create_checklist_template(
 
     try:
         template = await DeveloperChecklistService.create_template(
-            session, request.model_dump(exclude_none=True, by_alias=False)
+            session, dump_model(request, exclude_none=True, by_alias=False)
         )
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
@@ -258,7 +259,9 @@ async def update_checklist_template(
 
     try:
         template = await DeveloperChecklistService.update_template(
-            session, template_id, request.model_dump(exclude_none=True, by_alias=False)
+            session,
+            template_id,
+            dump_model(request, exclude_none=True, by_alias=False),
         )
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
@@ -301,7 +304,7 @@ async def bulk_import_checklist_templates(
     """Bulk import checklist templates from a JSON payload."""
 
     templates_payload = [
-        template.model_dump(exclude_none=True, by_alias=False)
+        dump_model(template, exclude_none=True, by_alias=False)
         for template in request.templates
     ]
 

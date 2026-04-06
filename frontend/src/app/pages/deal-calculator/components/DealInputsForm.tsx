@@ -16,44 +16,7 @@ import { Button } from '../../../../components/canonical/Button'
 import { Card } from '../../../../components/canonical/Card'
 import { Input } from '../../../../components/canonical/Input'
 import { AlertBlock } from '../../../../components/canonical/AlertBlock'
-
-export type FormState = {
-  projectName: string
-  address: string
-  landUse: string
-  zoneCode: string
-  siteAreaSqm: string
-  allowablePlotRatio: string
-  currentGfaSqm: string
-  targetGrossFloorAreaSqm: string
-  buildingHeightMeters: string
-  equityPct: string
-  debtPct: string
-  annualInterestRatePct: string
-  discountRatePct: string
-  exitCapRatePct: string
-  saleCostPct: string
-  holdYears: string
-}
-
-export const INITIAL_FORM_STATE: FormState = {
-  projectName: 'Singapore quick screen',
-  address: '1 Marina Boulevard, Singapore',
-  landUse: 'residential',
-  zoneCode: 'R',
-  siteAreaSqm: '5000',
-  allowablePlotRatio: '3.5',
-  currentGfaSqm: '9000',
-  targetGrossFloorAreaSqm: '14000',
-  buildingHeightMeters: '45',
-  equityPct: '40',
-  debtPct: '60',
-  annualInterestRatePct: '4.8',
-  discountRatePct: '8',
-  exitCapRatePct: '4',
-  saleCostPct: '2',
-  holdYears: '3',
-}
+import type { FormState } from './dealFormState'
 
 interface DealInputsFormProps {
   form: FormState
@@ -93,8 +56,16 @@ export function DealInputsForm({
 
   const validate = (state: FormState): Record<string, string> => {
     const errors: Record<string, string> = {}
-    if (!isManualMode && state.address.trim() === '') {
-      errors.address = 'Address is required'
+    if (!state.projectName.trim()) {
+      errors.projectName = 'Project name is required'
+    }
+    if (
+      state.address.trim() === '' &&
+      !state.landUse.trim() &&
+      !state.zoneCode.trim() &&
+      !state.siteAreaSqm.trim()
+    ) {
+      errors.address = 'Address or manual site assumptions are required'
     }
     if (!isPositiveNumber(state.siteAreaSqm)) {
       errors.siteAreaSqm = 'Must be a positive number'
@@ -204,6 +175,8 @@ export function DealInputsForm({
             value={form.projectName}
             onChange={updateField('projectName')}
             size="small"
+            error={Boolean(validationErrors.projectName)}
+            helperText={validationErrors.projectName}
           />
           <Input
             label="Address"
@@ -212,7 +185,12 @@ export function DealInputsForm({
             placeholder="1 Marina Boulevard, Singapore"
             size="small"
             error={Boolean(validationErrors.address)}
-            helperText={validationErrors.address}
+            helperText={
+              validationErrors.address ??
+              (isManualMode
+                ? 'Leave blank to run from manual site assumptions.'
+                : undefined)
+            }
           />
 
           {isManualMode && (
@@ -222,7 +200,7 @@ export function DealInputsForm({
           )}
 
           <Grid container spacing="var(--ob-space-100)">
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <Box>
                 <Typography
                   component="label"
@@ -253,7 +231,7 @@ export function DealInputsForm({
                 </Select>
               </Box>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <Input
                 label="Zone code"
                 value={form.zoneCode}
@@ -261,7 +239,7 @@ export function DealInputsForm({
                 size="small"
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <Input
                 label="Site area (sqm)"
                 value={form.siteAreaSqm}
@@ -272,7 +250,7 @@ export function DealInputsForm({
                 helperText={validationErrors.siteAreaSqm}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <Tooltip
                 title="Maximum ratio of floor area to land area allowed by zoning"
                 arrow
@@ -291,7 +269,7 @@ export function DealInputsForm({
                 </div>
               </Tooltip>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <Tooltip
                 title="Current Gross Floor Area of existing structures on site"
                 arrow
@@ -308,7 +286,7 @@ export function DealInputsForm({
                 </div>
               </Tooltip>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <Tooltip
                 title="Target Gross Floor Area for the proposed development"
                 arrow
@@ -370,7 +348,7 @@ export function DealInputsForm({
                 spacing="var(--ob-space-100)"
                 sx={{ mt: 'var(--ob-space-050)' }}
               >
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <Input
                     label="Equity %"
                     value={form.equityPct}
@@ -381,7 +359,7 @@ export function DealInputsForm({
                     helperText={validationErrors.equityPct}
                   />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <Input
                     label="Debt %"
                     value={form.debtPct}
@@ -392,7 +370,7 @@ export function DealInputsForm({
                     helperText={validationErrors.debtPct}
                   />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <Input
                     label="Interest %"
                     value={form.annualInterestRatePct}
@@ -403,7 +381,7 @@ export function DealInputsForm({
                     helperText={validationErrors.annualInterestRatePct}
                   />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <Tooltip
                     title="Rate used to discount future cash flows to present value"
                     arrow
@@ -422,7 +400,7 @@ export function DealInputsForm({
                     </div>
                   </Tooltip>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <Tooltip
                     title="Capitalization rate applied to NOI to estimate exit value"
                     arrow
@@ -441,7 +419,7 @@ export function DealInputsForm({
                     </div>
                   </Tooltip>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <Input
                     label="Hold years"
                     value={form.holdYears}

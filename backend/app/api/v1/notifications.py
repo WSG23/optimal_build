@@ -16,6 +16,7 @@ from app.schemas.notification import (
     NotificationResponse,
 )
 from app.services.notification import NotificationService
+from app.schemas._typing import validate_model
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
@@ -82,7 +83,7 @@ async def list_notifications(
     )
 
     return NotificationListResponse(
-        items=[NotificationResponse.model_validate(n) for n in notifications],
+        items=[validate_model(NotificationResponse, n) for n in notifications],
         total=total,
         unread_count=unread,
         page=page,
@@ -136,7 +137,7 @@ async def get_notification(
     if not notification:
         raise HTTPException(status_code=404, detail="Notification not found")
 
-    return NotificationResponse.model_validate(notification)
+    return validate_model(NotificationResponse, notification)
 
 
 @router.post("/mark-read", response_model=NotificationMarkReadResponse)

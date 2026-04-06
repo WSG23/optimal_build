@@ -29,6 +29,7 @@ from app.services.developer_condition_service import (
     DeveloperConditionService,
 )
 from app.utils.render import render_html_to_pdf
+from app.schemas._typing import dump_model
 
 router = APIRouter(prefix="/developers", tags=["developers"])
 
@@ -333,8 +334,7 @@ def _render_condition_report_html(report: ConditionReportResponse) -> str:
             f"<li>{_escape(action)}</li>"
             for action in scenario_assessment.recommended_actions
         )
-        scenario_rows.append(
-            f"""
+        scenario_rows.append(f"""
             <section>
               <h3>{_escape(scenario_assessment.scenario or "All scenarios")}</h3>
               <p><strong>Rating:</strong> {scenario_assessment.overall_rating} &nbsp;
@@ -346,13 +346,11 @@ def _render_condition_report_html(report: ConditionReportResponse) -> str:
               <ul>{systems_html}</ul>
               {"<h4>Recommended actions</h4><ul>" + recommended_html + "</ul>" if recommended_html else ""}
             </section>
-            """
-        )
+            """)
 
     history_rows = []
     for history_entry in report.history:
-        history_rows.append(
-            f"""
+        history_rows.append(f"""
             <li>
               <strong>{_escape(history_entry.recorded_at or '')}</strong>:
               scenario {_escape(history_entry.scenario or 'n/a')},
@@ -360,8 +358,7 @@ def _render_condition_report_html(report: ConditionReportResponse) -> str:
               score {history_entry.overall_score}/100,
               risk {_escape(history_entry.risk_level)}
             </li>
-            """
-        )
+            """)
 
     comparison_html = ""
     if report.scenario_comparison:
@@ -384,8 +381,7 @@ def _render_condition_report_html(report: ConditionReportResponse) -> str:
             else:
                 insight_text = "N/A"
 
-            comparison_rows.append(
-                f"""
+            comparison_rows.append(f"""
                 <tr>
                   <td>{_escape(entry.label)}</td>
                   <td>{_escape(entry.overall_rating or '–')}</td>
@@ -397,8 +393,7 @@ def _render_condition_report_html(report: ConditionReportResponse) -> str:
                   <td>{_escape(entry.inspector_name or 'N/A')}</td>
                   <td>{_escape('Manual inspection' if entry.source == 'manual' else 'Automated baseline')}</td>
                 </tr>
-                """
-            )
+                """)
 
         comparison_html = f"""
         <section>
@@ -701,4 +696,4 @@ async def export_condition_report(
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
-    return JSONResponse(content=report.model_dump(by_alias=True))
+    return JSONResponse(content=dump_model(report, by_alias=True))

@@ -61,6 +61,7 @@ from app.services.geocoding import Address
 from app.services.jurisdictions import get_jurisdiction_config
 from app.services.preview_jobs import PreviewJobService, PreviewJobStatus
 from app.utils.lazy import LazyProxy
+from app.schemas._typing import copy_model
 
 router = APIRouter(prefix="/developers", tags=["developers"])
 logger = structlog.get_logger()
@@ -825,7 +826,7 @@ PHASE2B_FINANCE_BLUEPRINT = DeveloperFinanceBlueprint(
 
 def _phase2b_finance_blueprint() -> DeveloperFinanceBlueprint:
     """Return a defensive copy of the Phase 2B finance blueprint."""
-    return PHASE2B_FINANCE_BLUEPRINT.model_copy(deep=True)
+    return copy_model(PHASE2B_FINANCE_BLUEPRINT, deep=True)
 
 
 def _build_finance_asset_mix_inputs(
@@ -1242,7 +1243,8 @@ async def developer_log_property_by_gps(
     preview_metadata_url = preview_job.metadata_url if preview_available else None
     thumbnail_url = preview_job.thumbnail_url if preview_available else None
     status_for_response = preview_status
-    visualization = visualization.model_copy(
+    visualization = copy_model(
+        visualization,
         update={
             "status": status_for_response,
             "preview_available": preview_available,
@@ -1250,7 +1252,7 @@ async def developer_log_property_by_gps(
             "preview_metadata_url": preview_metadata_url,
             "thumbnail_url": thumbnail_url,
             "preview_job_id": preview_job.id,
-        }
+        },
     )
     preview_jobs_payload = [_serialise_preview_job(preview_job)]
     constraint_log = [

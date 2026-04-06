@@ -694,6 +694,10 @@ textarea.gps-input-ghost:focus {
 }
 
 @media (max-width: 640px) {
+    .gps-form__coord {
+        min-width: 100%;
+    }
+
     .gps-scenarios-grid {
         grid-template-columns: 1fr;
     }

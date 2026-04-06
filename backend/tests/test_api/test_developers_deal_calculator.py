@@ -145,6 +145,8 @@ async def test_evaluate_deal_from_address_returns_one_screen_summary(
     assert body["financeSummary"]["totalCapexSgd"] is not None
     assert body["financeSummary"]["dscr"] is not None
     assert body["financeSummary"]["irr"] is not None
+    assert body["financeSummary"]["moic"] is not None
+    assert body["financeSummary"]["moic"] < 100
     assert body["assetBreakdowns"]
 
 

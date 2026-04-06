@@ -228,6 +228,20 @@ interface OverlayRunResponse {
   evaluated?: number
 }
 
+interface ProblemResponse {
+  detail?: string
+  title?: string
+  status?: number
+  code?: string
+  correlation_id?: string
+  message?: string
+  error?: {
+    code?: string
+    message?: string
+    detail?: string
+  }
+}
+
 interface RulesResponse {
   items: RuleSummary[]
 }
@@ -319,9 +333,14 @@ export class ApiClient {
 
     const response = await fetch(this.buildUrl(path), requestInit)
     if (!response.ok) {
-      const message = await response.text()
+      const text = await response.text()
       throw new Error(
-        message || `Request to ${path} failed with ${String(response.status)}`,
+        this.buildErrorMessage({
+          path,
+          status: response.status,
+          text,
+          correlationId: response.headers.get('x-correlation-id'),
+        }),
       )
     }
     if (response.status === 204) {
@@ -338,6 +357,67 @@ export class ApiClient {
         `Invalid JSON response from ${path}: ${text.slice(0, 100)}`,
       )
     }
+  }
+
+  private buildErrorMessage({
+    path,
+    status,
+    text,
+    correlationId,
+  }: {
+    path: string
+    status: number
+    text: string
+    correlationId: string | null
+  }): string {
+    let problem: ProblemResponse | null = null
+
+    if (text.trim() !== '') {
+      try {
+        problem = JSON.parse(text) as ProblemResponse
+      } catch {
+        problem = null
+      }
+    }
+
+    const nestedError = problem?.error
+    const detail =
+      typeof problem?.detail === 'string' && problem.detail.trim() !== ''
+        ? problem.detail.trim()
+        : typeof nestedError?.detail === 'string' &&
+            nestedError.detail.trim() !== ''
+          ? nestedError.detail.trim()
+          : typeof nestedError?.message === 'string' &&
+              nestedError.message.trim() !== ''
+            ? nestedError.message.trim()
+            : typeof problem?.message === 'string' &&
+                problem.message.trim() !== ''
+              ? problem.message.trim()
+              : text.trim()
+    const title =
+      typeof problem?.title === 'string' && problem.title.trim() !== ''
+        ? problem.title.trim()
+        : typeof nestedError?.code === 'string' &&
+            nestedError.code.trim() !== ''
+          ? nestedError.code.trim()
+          : null
+    const problemCorrelationId =
+      typeof problem?.correlation_id === 'string' &&
+      problem.correlation_id.trim() !== ''
+        ? problem.correlation_id.trim()
+        : null
+    const resolvedCorrelationId = problemCorrelationId || correlationId
+
+    const segments = [`Request to ${path} failed with ${String(status)}`]
+    if (title && detail && title !== detail) {
+      segments.push(`${title}: ${detail}`)
+    } else if (detail) {
+      segments.push(detail)
+    }
+    if (resolvedCorrelationId) {
+      segments.push(`correlation_id=${resolvedCorrelationId}`)
+    }
+    return segments.join(' - ')
   }
 
   public async get<T>(
@@ -681,17 +761,13 @@ export class ApiClient {
   }
 
   async getLatestImport(projectId: number): Promise<CadImportSummary | null> {
-    try {
-      const payload = await this.request<ImportResultResponse>(
-        `api/v1/import/latest?project_id=${String(projectId)}`,
-      )
-      return this.mapImportResult(payload)
-    } catch (error) {
-      if (error instanceof Error && /404/.test(error.message)) {
-        return null
-      }
-      throw error
+    const payload = await this.request<ImportResultResponse | undefined>(
+      `api/v1/import/latest?project_id=${String(projectId)}`,
+    )
+    if (!payload) {
+      return null
     }
+    return this.mapImportResult(payload)
   }
 
   async updateImportOverrides(

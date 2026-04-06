@@ -11,7 +11,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
-from importlib import import_module
 from time import perf_counter
 from types import ModuleType
 from typing import Any, Callable, Protocol, TypedDict, cast
@@ -56,6 +55,7 @@ from app.services.finance import (
 )
 from app.services.jurisdictions import get_jurisdiction_config
 from app.utils import metrics
+from app.schemas._typing import typed_import_module
 from app.utils.logging import get_logger, log_event
 
 from .finance_common import (
@@ -109,7 +109,7 @@ class _DscrBucket(TypedDict):
 
 
 def _load_finance_jobs_module(name: str) -> ModuleType:
-    return import_module(name)
+    return typed_import_module(name)
 
 
 def _ensure_finance_sensitivity_loaded() -> None:

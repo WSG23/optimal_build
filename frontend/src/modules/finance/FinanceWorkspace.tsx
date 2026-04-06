@@ -53,6 +53,8 @@ import {
   CircularProgress,
   Tabs,
   Tab,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material'
 import {
   Warning,
@@ -193,6 +195,8 @@ interface FinanceWorkspaceProps {
 }
 
 export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const { t } = useTranslation()
   const router = useRouterController()
   const { path, search, navigate } = router
@@ -238,6 +242,7 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
     [effectiveProjectId],
   )
   const showProjectGate = !hasProject && !isProjectLoading
+  const showFinanceOverview = activeTab === 0
   const handleProjectChange = useCallback(
     (projectId: string, projectName?: string | null) => {
       const trimmed = projectId.trim()
@@ -1107,14 +1112,42 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                     },
                   }}
                 >
-                  <Tab label={t('finance.tabs.capitalStack')} />
-                  <Tab label={t('finance.tabs.drawdownSchedule')} />
-                  <Tab label={t('finance.tabs.assetBreakdown')} />
-                  <Tab label={t('finance.tabs.facilityEditor')} />
-                  <Tab label={t('finance.tabs.jobTimeline')} />
-                  <Tab label={t('finance.tabs.loanInterest')} />
-                  <Tab label={t('finance.tabs.analytics')} />
-                  <Tab label={t('finance.tabs.sensitivity')} />
+                  <Tab
+                    label={
+                      isMobile ? 'Capital' : t('finance.tabs.capitalStack')
+                    }
+                  />
+                  <Tab
+                    label={
+                      isMobile ? 'Drawdown' : t('finance.tabs.drawdownSchedule')
+                    }
+                  />
+                  <Tab
+                    label={
+                      isMobile ? 'Assets' : t('finance.tabs.assetBreakdown')
+                    }
+                  />
+                  <Tab
+                    label={
+                      isMobile ? 'Facilities' : t('finance.tabs.facilityEditor')
+                    }
+                  />
+                  <Tab
+                    label={isMobile ? 'Jobs' : t('finance.tabs.jobTimeline')}
+                  />
+                  <Tab
+                    label={
+                      isMobile ? 'Interest' : t('finance.tabs.loanInterest')
+                    }
+                  />
+                  <Tab
+                    label={isMobile ? 'Analytics' : t('finance.tabs.analytics')}
+                  />
+                  <Tab
+                    label={
+                      isMobile ? 'Sensitivity' : t('finance.tabs.sensitivity')
+                    }
+                  />
                 </Tabs>
               </Box>
             </Box>
@@ -1392,7 +1425,7 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                       </Stack>
                     </Alert>
                   )}
-                  {hasProject && (
+                  {hasProject && showFinanceOverview && (
                     <Card
                       variant="default"
                       sx={{
@@ -1429,8 +1462,8 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                                     ? 'rgba(15,118,110,0.10)'
                                     : 'rgba(185,28,28,0.10)',
                                   color: auditEvidence.valid
-                                    ? '#0f766e'
-                                    : '#b91c1c',
+                                    ? 'var(--ob-success-700)'
+                                    : 'var(--ob-error-700)',
                                   fontSize: '0.8rem',
                                   fontWeight: 700,
                                 }}
@@ -1528,57 +1561,69 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                     </Card>
                   )}
 
-                  <Card
-                    variant="default"
-                    sx={{ mb: 'var(--ob-space-150)', p: 'var(--ob-space-200)' }}
-                  >
-                    <Stack
-                      direction={{ xs: 'column', md: 'row' }}
-                      spacing={1.5}
-                      justifyContent="space-between"
+                  {showFinanceOverview && (
+                    <Card
+                      variant="default"
+                      sx={{
+                        mb: 'var(--ob-space-150)',
+                        p: 'var(--ob-space-200)',
+                      }}
                     >
-                      <Box>
-                        <Typography variant="h6">
-                          Finance mode for Singapore developers
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Build a scenario from a deal screen, import a
-                          workbook, or start from an SG template. Then package
-                          outputs for lenders, investors, and internal
-                          approvals.
-                        </Typography>
-                      </Box>
-                      <Stack direction="row" spacing={1}>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => navigate('/developers/why-not-excel')}
+                      <Stack
+                        direction={{ xs: 'column', md: 'row' }}
+                        spacing={1.5}
+                        justifyContent="space-between"
+                      >
+                        <Box>
+                          <Typography variant="h6">
+                            Finance mode for Singapore developers
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Build a scenario from a deal screen, import a
+                            workbook, or start from an SG template. Then package
+                            outputs for lenders, investors, and internal
+                            approvals.
+                          </Typography>
+                        </Box>
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          flexWrap="wrap"
+                          useFlexGap
                         >
-                          Why not Excel?
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleExportWorkbook}
-                          disabled={!primaryScenario || exportingWorkbook}
-                        >
-                          {exportingWorkbook
-                            ? 'Preparing workbook...'
-                            : 'Lender workbook'}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleExportCsv}
-                          disabled={!primaryScenario || exportingScenario}
-                        >
-                          {exportingScenario
-                            ? 'Preparing export...'
-                            : 'Investor export'}
-                        </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() =>
+                              navigate('/developers/why-not-excel')
+                            }
+                          >
+                            Why not Excel?
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleExportWorkbook}
+                            disabled={!primaryScenario || exportingWorkbook}
+                          >
+                            {exportingWorkbook
+                              ? 'Preparing workbook...'
+                              : 'Lender workbook'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleExportCsv}
+                            disabled={!primaryScenario || exportingScenario}
+                          >
+                            {exportingScenario
+                              ? 'Preparing export...'
+                              : 'Investor export'}
+                          </Button>
+                        </Stack>
                       </Stack>
-                    </Stack>
-                  </Card>
+                    </Card>
+                  )}
 
                   {/* Tab Panels - Depth 1 (Glass Cards with ob-card-module) */}
                   <div role="tabpanel" hidden={activeTab !== 0}>

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -39,7 +39,8 @@ class RulePackSchema(BaseModel):
             A RulePackSchema instance.
         """
         data: dict[str, Any] = {}
-        for name in cls.model_fields:
+        model_fields = cast(dict[str, Any], getattr(cls, "model_fields", {}))
+        for name in model_fields:
             if name == "metadata":
                 if hasattr(obj, "metadata_json"):
                     value = obj.metadata_json

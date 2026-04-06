@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from importlib import import_module
 import json
 from collections import Counter
 from collections.abc import Iterable, Mapping
@@ -20,6 +19,7 @@ from fastapi import (
     Header,
     HTTPException,
     Query,
+    Response,
     UploadFile,
     status,
 )
@@ -31,6 +31,7 @@ from app.core.database import get_session
 from app.models.imports import ImportRecord
 from app.schemas.imports import DetectedFloor, ImportResult, ParseStatusResponse
 from app.services.storage import get_storage_service
+from app.schemas._typing import dump_model, typed_import_module
 from app.utils.logging import get_logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,7 +44,7 @@ class MetricOverridePayload(BaseModel):
     front_setback_m: float | None = Field(default=None, gt=0)
 
     def normalized(self) -> dict[str, float]:
-        values = self.model_dump(exclude_none=True)
+        values = dump_model(self, exclude_none=True)
         return {key: float(value) for key, value in values.items()}
 
 
@@ -87,14 +88,14 @@ def _load_job_symbol(name: str) -> Any:
         return existing
 
     module_name = _JOB_SYMBOL_MODULES[name]
-    module = import_module(module_name)
+    module = typed_import_module(module_name)
     resolved = getattr(module, name)
     globals()[name] = resolved
     return resolved
 
 
 def _get_job_queue() -> _JobQueueLike:
-    module = import_module("backend.jobs")
+    module = typed_import_module("backend.jobs")
     return cast(_JobQueueLike, module.job_queue)
 
 
@@ -720,12 +721,16 @@ async def upload_import(
     return _import_result_from_record(record)
 
 
-@router.get("/import/latest", response_model=ImportResult)
+@router.get(
+    "/import/latest",
+    response_model=ImportResult,
+    responses={204: {"description": "No import exists for the project yet."}},
+)
 async def get_latest_import(
     project_id: int = Query(..., gt=0),
     session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
-) -> ImportResult:
+) -> ImportResult | Response:
     stmt = (
         select(ImportRecord)
         .where(ImportRecord.project_id == project_id)
@@ -735,9 +740,7 @@ async def get_latest_import(
     result = await session.execute(stmt)
     record = result.scalars().first()
     if record is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Import not found"
-        )
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
     return _import_result_from_record(record)
 
 

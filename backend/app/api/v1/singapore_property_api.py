@@ -34,6 +34,7 @@ from app.utils.singapore_compliance import (
     run_full_compliance_check,
     update_property_compliance,
 )
+from app.schemas._typing import dump_model
 from backend._compat.datetime import utcnow
 
 router = APIRouter(prefix="/singapore-property", tags=["Singapore Property"])
@@ -356,7 +357,7 @@ async def update_property(
         raise HTTPException(status_code=404, detail="Property not found")
 
     # Update fields
-    update_data = property_update.model_dump(exclude_unset=True)
+    update_data = dump_model(property_update, exclude_unset=True)
     for field, value in update_data.items():
         setattr(property_obj, field, value)
 

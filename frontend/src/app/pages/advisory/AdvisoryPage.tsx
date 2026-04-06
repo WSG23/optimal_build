@@ -38,6 +38,16 @@ import { Card } from '../../../components/canonical/Card'
 import { EmptyState } from '../../../components/canonical'
 import { MetricTile } from '../../../components/canonical/MetricTile'
 
+function toUserFacingAdvisoryError(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return 'Unable to load advisory data right now.'
+  }
+  if (/422|404/.test(error.message)) {
+    return 'Property not found. Check the property ID and try again.'
+  }
+  return error.message
+}
+
 export function AdvisoryPage() {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
@@ -90,9 +100,7 @@ export function AdvisoryPage() {
       const data = await fetchAdvisorySummary(propertyId.trim())
       setSummary(data)
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Failed to load advisory data',
-      )
+      setError(toUserFacingAdvisoryError(err))
       setSummary(null)
     } finally {
       setLoading(false)

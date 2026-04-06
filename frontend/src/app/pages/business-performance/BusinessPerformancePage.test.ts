@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getOpenPipelineMetricDisplay,
   OPEN_PIPELINE_PENDING_COPY,
-} from './BusinessPerformancePage'
+} from './metricDisplay'
 
 describe('getOpenPipelineMetricDisplay', () => {
   it('returns loading state while the pipeline is still fetching', () => {

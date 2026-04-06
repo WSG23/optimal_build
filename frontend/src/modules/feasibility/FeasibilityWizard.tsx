@@ -1,6 +1,6 @@
 import type { ChangeEvent, FormEvent } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Snackbar, Alert, CircularProgress, Box } from '@mui/material'
+import { Alert, Box, CircularProgress, Snackbar } from '@mui/material'
 
 import { AppLayout } from '../../App'
 import {
@@ -9,9 +9,10 @@ import {
 } from '../../api/agents'
 import { useTranslation } from '../../i18n'
 import { useRouterController, useRouterLocation } from '../../router'
-import { useProject } from '../../contexts/useProject'
+import { useProjectScope } from '../../contexts/useProjectScope'
 import { loadCaptureForProject } from '../../app/pages/capture/utils/captureStorage'
 import type { SiteAcquisitionResult } from '../../api/siteAcquisition'
+import { EmptyState } from '../../components/canonical'
 
 import {
   AssumptionsPanel,
@@ -70,8 +71,8 @@ export function FeasibilityWizard({
   const { t, i18n } = useTranslation()
   const { search: routerSearch } = useRouterLocation()
   const { navigate } = useRouterController()
-  const { currentProject, isProjectLoading, projectError } = useProject()
-  const projectId = currentProject?.id ?? ''
+  const { currentProject, isProjectLoading, projectError, projectId } =
+    useProjectScope()
   const projectName = currentProject?.name ?? ''
 
   // Address state
@@ -644,10 +645,17 @@ export function FeasibilityWizard({
       {isProjectLoading ? (
         <CircularProgress size={24} />
       ) : (
-        <Alert severity={projectError ? 'error' : 'info'}>
-          {projectError?.message ??
-            'Select a project to run feasibility analysis.'}
-        </Alert>
+        <EmptyState
+          title="Select a project to run feasibility analysis"
+          description={
+            projectError?.message ??
+            'Feasibility simulations, generated packs, and captured site data all sit inside a project.'
+          }
+          actionLabel="Go to projects"
+          onAction={() => navigate('/projects')}
+          size="md"
+          sx={{ alignItems: 'flex-start', textAlign: 'left' }}
+        />
       )}
     </Box>
   )

@@ -22,7 +22,7 @@ const PACK_TYPES: Array<{
     type: 'universal',
     label: 'Universal Site Pack',
     description: 'Comprehensive analysis with all development scenarios',
-    icon: '📊',
+    icon: '\u{1F4CA}',
     estimatedTime: '45-60s',
     estimatedSize: '~2.5 MB',
   },
@@ -30,7 +30,7 @@ const PACK_TYPES: Array<{
     type: 'investment',
     label: 'Investment Memorandum',
     description: 'Financial analysis for institutional investors',
-    icon: '💼',
+    icon: '\u{1F4BC}',
     estimatedTime: '30-40s',
     estimatedSize: '~1.5 MB',
   },
@@ -38,7 +38,7 @@ const PACK_TYPES: Array<{
     type: 'sales',
     label: 'Sales Brief',
     description: 'Professional marketing material for property sales',
-    icon: '🏢',
+    icon: '\u{1F3E2}',
     estimatedTime: '20-30s',
     estimatedSize: '~1.2 MB',
   },
@@ -46,7 +46,7 @@ const PACK_TYPES: Array<{
     type: 'lease',
     label: 'Lease Brochure',
     description: 'Leasing collateral with amenity documentation',
-    icon: '📋',
+    icon: '\u{1F4CB}',
     estimatedTime: '20-30s',
     estimatedSize: '~1.2 MB',
   },
@@ -65,17 +65,20 @@ export function MarketingPage() {
   const [selectedPackType, setSelectedPackType] =
     useState<ProfessionalPackType>('universal')
   const [notice, setNotice] = useState<string | null>(null)
+  const [showPropertyIdError, setShowPropertyIdError] = useState(false)
 
   const selectedPackInfo = PACK_TYPES.find((p) => p.type === selectedPackType)
 
   async function handleGenerate() {
     if (!propertyId.trim()) {
+      setShowPropertyIdError(true)
       return
     }
     try {
       const summary = await generatePack(propertyId.trim(), selectedPackType)
       setNotice(summary.warning ?? null)
       setPropertyId('')
+      setShowPropertyIdError(false)
       clearError()
     } catch {
       setNotice(null)
@@ -87,19 +90,29 @@ export function MarketingPage() {
   }
 
   return (
-    <Box sx={{ p: 4, maxWidth: 'var(--ob-max-width-content)', mx: 'auto' }}>
-      <Box sx={{ mb: 4 }}>
+    <Box
+      sx={{
+        p: 'var(--ob-space-200)',
+        maxWidth: 'var(--ob-max-width-content)',
+        mx: 'auto',
+      }}
+    >
+      <Box sx={{ mb: 'var(--ob-space-200)' }}>
         <Typography variant="h1">Marketing Packs</Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          sx={{ mt: 'var(--ob-space-050)' }}
+        >
           Professional materials for investors and stakeholders
         </Typography>
       </Box>
 
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h2" sx={{ mb: 2 }}>
+      <Box sx={{ mb: 'var(--ob-space-200)' }}>
+        <Typography variant="h2" sx={{ mb: 'var(--ob-space-100)' }}>
           Choose a template
         </Typography>
-        <Grid container spacing={2}>
+        <Grid container spacing="var(--ob-space-100)">
           {PACK_TYPES.map((pack) => {
             const isSelected = selectedPackType === pack.type
             const isDisabled = isGenerating
@@ -143,8 +156,12 @@ export function MarketingPage() {
                     </Box>
                   )}
 
-                  <Stack spacing={1}>
-                    <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack spacing="var(--ob-space-050)">
+                    <Stack
+                      direction="row"
+                      spacing="var(--ob-space-050)"
+                      alignItems="center"
+                    >
                       <Box
                         component="span"
                         sx={{ fontSize: 'var(--ob-font-size-2xl)' }}
@@ -158,12 +175,12 @@ export function MarketingPage() {
                       {pack.description}
                     </Typography>
 
-                    <Stack direction="row" spacing={2}>
+                    <Stack direction="row" spacing="var(--ob-space-100)">
                       <Typography variant="caption" color="text.secondary">
-                        ⏱️ {pack.estimatedTime}
+                        \u23F1\uFE0F {pack.estimatedTime}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        📦 {pack.estimatedSize}
+                        {'\u{1F4E6}'} {pack.estimatedSize}
                       </Typography>
                     </Stack>
                   </Stack>
@@ -174,19 +191,32 @@ export function MarketingPage() {
         </Grid>
       </Box>
 
-      <Card variant="default" sx={{ p: 'var(--ob-space-200)', mb: 4 }}>
-        <Typography variant="h3" sx={{ mb: 2 }}>
+      <Card
+        variant="default"
+        sx={{ p: 'var(--ob-space-200)', mb: 'var(--ob-space-200)' }}
+      >
+        <Typography variant="h3" sx={{ mb: 'var(--ob-space-100)' }}>
           Generate {selectedPackInfo?.label}
         </Typography>
 
-        <Stack spacing={2}>
+        <Stack spacing="var(--ob-space-100)">
           <Input
             label="Property ID"
             placeholder="Enter property identifier"
             value={propertyId}
-            onChange={(event) => setPropertyId(event.target.value)}
+            onChange={(event) => {
+              setPropertyId(event.target.value)
+              if (event.target.value.trim()) {
+                setShowPropertyIdError(false)
+              }
+            }}
+            onBlur={() => setShowPropertyIdError(propertyId.trim() === '')}
             disabled={isGenerating}
             inputProps={{ inputMode: 'text' }}
+            error={showPropertyIdError}
+            helperText={
+              showPropertyIdError ? 'Property ID is required.' : undefined
+            }
           />
 
           <Button
@@ -215,7 +245,7 @@ export function MarketingPage() {
         direction="row"
         alignItems="baseline"
         justifyContent="space-between"
-        sx={{ mb: 2 }}
+        sx={{ mb: 'var(--ob-space-100)' }}
       >
         <Typography variant="h2">Library</Typography>
         <Typography variant="body2" color="text.secondary">
@@ -225,13 +255,13 @@ export function MarketingPage() {
 
       {packs.length === 0 ? (
         <EmptyState
-          icon={<span>📄</span>}
+          icon={<span>{'\u{1F4C4}'}</span>}
           title="No packs yet"
           description="Generated materials will appear here."
           size="md"
         />
       ) : (
-        <Stack spacing={1}>
+        <Stack spacing="var(--ob-space-050)">
           {packs.map((pack, index) => (
             <Card
               key={`${pack.propertyId}-${pack.packType}-${pack.generatedAt}-${index}`}
@@ -252,7 +282,11 @@ export function MarketingPage() {
                 >
                   {formatPackLabel(pack.packType)}
                 </Typography>
-                <Stack direction="row" spacing={1} alignItems="center">
+                <Stack
+                  direction="row"
+                  spacing="var(--ob-space-050)"
+                  alignItems="center"
+                >
                   <Typography
                     variant="caption"
                     sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
@@ -262,7 +296,7 @@ export function MarketingPage() {
                       : pack.propertyId}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    ·
+                    \u00B7
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {formatSize(pack.sizeBytes)}
@@ -310,7 +344,7 @@ function formatPackLabel(type: ProfessionalPackType) {
 
 function formatSize(value: number | null) {
   if (!value || Number.isNaN(value)) {
-    return '—'
+    return '\u2014'
   }
   if (value < 1024) {
     return `${value} B`

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   Box,
   Typography,
@@ -29,10 +29,12 @@ import {
 } from '@mui/icons-material'
 import { Button } from '../../../components/canonical/Button'
 import { Card } from '../../../components/canonical/Card'
+import { EmptyState } from '../../../components/canonical'
 import { teamApi, TeamMember } from '../../../api/team'
 import { WorkflowDashboard } from './components/WorkflowDashboard'
 import { ProjectProgressDashboard } from './components/ProjectProgressDashboard'
-import { useProject } from '../../../contexts/useProject'
+import { useProjectScope } from '../../../contexts/useProjectScope'
+import { useRouterController } from '../../../router'
 
 const STORAGE_PREFIX = 'ob_team_members'
 
@@ -60,20 +62,11 @@ const persistMembers = (pid: string, data: TeamMember[]) => {
   }
   window.localStorage.setItem(buildStorageKey(pid), JSON.stringify(data))
 }
-// If not using react-router params for project ID, we might need to get it from context or props.
-// For now, I'll assume we grab it from URL or a hardcoded one for dev if not available.
-// Actually, let's try to get it from context/store if typical, or just use a placeholder if we can't find it.
-// Wait, the page is likely routed with /projects/:projectId/team or similar?
-// Let's assume useParams() works or we need to pass a prop.
-// To be safe I will use a hook if I can find one, or just assume useParams() has it or a prop.
-// checking imports... I don't see useParams in original file. The original file didn't use props either.
-// Maybe it's a top level page that gets the project from a global store.
-// Let's assume for now we might need to extract it or pass it.
-// I'll add `projectId` as a prop but also try to get it from useParams.
 
 export const TeamManagementPage: React.FC = () => {
-  const { currentProject, isProjectLoading, projectError } = useProject()
-  const projectId = currentProject?.id ?? ''
+  const { navigate } = useRouterController()
+  const { currentProject, isProjectLoading, projectError, projectId } =
+    useProjectScope()
 
   const [activeTab, setActiveTab] = useState(0)
   const [members, setMembers] = useState<TeamMember[]>([])
@@ -215,10 +208,17 @@ export const TeamManagementPage: React.FC = () => {
         {isProjectLoading ? (
           <CircularProgress />
         ) : (
-          <Alert severity={projectError ? 'error' : 'info'}>
-            {projectError?.message ??
-              'Select a project to manage team coordination.'}
-          </Alert>
+          <EmptyState
+            title="Select a project to manage team coordination"
+            description={
+              projectError?.message ??
+              'Consultant invites, approvals, and progress tracking need an active project.'
+            }
+            actionLabel="Go to projects"
+            onAction={() => navigate('/projects')}
+            size="md"
+            sx={{ alignItems: 'flex-start', textAlign: 'left' }}
+          />
         )}
       </Box>
     )

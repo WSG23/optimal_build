@@ -15,10 +15,8 @@ import { useDueDiligenceScenarioComparison } from '../site-acquisition/hooks/use
 import { DueDiligenceChecklistSection } from '../site-acquisition/components/checklist/DueDiligenceChecklistSection'
 import { InspectionHistorySummary } from '../site-acquisition/components/InspectionHistorySummary'
 import { InspectionHistoryContent } from '../site-acquisition/components/inspection-history'
-import {
-  ConditionAssessmentTab,
-  buildImmediateActions,
-} from './components/ConditionAssessmentTab'
+import { ConditionAssessmentTab } from './components/ConditionAssessmentTab'
+import { buildImmediateActions } from './components/conditionAssessmentUtils'
 import { OverridesTab } from './components/OverridesTab'
 
 const CAPTURED_PROPERTY_STORAGE_KEY = 'site-acquisition:captured-property'
