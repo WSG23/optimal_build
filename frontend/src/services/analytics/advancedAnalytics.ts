@@ -255,17 +255,14 @@ function normaliseCorrelationResponse(
 }
 
 export async function fetchGraphIntelligence(
-  workspaceId: string,
+  projectId: string,
 ): Promise<GraphIntelligenceResponse> {
-  debugLog(
-    '[fetchGraphIntelligence] Calling API with workspaceId:',
-    workspaceId,
-  )
+  debugLog('[fetchGraphIntelligence] Calling API with projectId:', projectId)
   try {
     const response = await requestWithTimeout(
       (signal) =>
         apiClient.get<unknown>('/api/v1/analytics/intelligence/graph', {
-          params: { workspaceId },
+          params: { projectId },
           signal,
         }),
       'Graph intelligence request timed out',
@@ -294,17 +291,14 @@ export async function fetchGraphIntelligence(
 }
 
 export async function fetchPredictiveIntelligence(
-  workspaceId: string,
+  projectId: string,
 ): Promise<PredictiveIntelligenceResponse> {
-  debugLog(
-    '[fetchPredictiveIntelligence] Calling API for workspace:',
-    workspaceId,
-  )
+  debugLog('[fetchPredictiveIntelligence] Calling API for project:', projectId)
   try {
     const response = await requestWithTimeout(
       (signal) =>
         apiClient.get<unknown>('/api/v1/analytics/intelligence/predictive', {
-          params: { workspaceId },
+          params: { projectId },
           signal,
         }),
       'Predictive intelligence request timed out',
@@ -330,11 +324,11 @@ export async function fetchPredictiveIntelligence(
 }
 
 export async function fetchCrossCorrelationIntelligence(
-  workspaceId: string,
+  projectId: string,
 ): Promise<CrossCorrelationIntelligenceResponse> {
   debugLog(
-    '[fetchCrossCorrelationIntelligence] Calling API for workspace:',
-    workspaceId,
+    '[fetchCrossCorrelationIntelligence] Calling API for project:',
+    projectId,
   )
   try {
     const response = await requestWithTimeout(
@@ -342,7 +336,7 @@ export async function fetchCrossCorrelationIntelligence(
         apiClient.get<unknown>(
           '/api/v1/analytics/intelligence/cross-correlation',
           {
-            params: { workspaceId },
+            params: { projectId },
             signal,
           },
         ),

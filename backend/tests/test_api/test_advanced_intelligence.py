@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import uuid
+
 import pytest
 from sqlalchemy import select
 
@@ -8,26 +10,43 @@ from app.models.advanced_intelligence import (
     WorkspaceGraphSnapshot,
     WorkspacePredictiveSnapshot,
 )
+from app.models.projects import Project, ProjectPhase, ProjectType
 from app.services.intelligence import intelligence_service
 from app.services.analytics import WorkspaceAnalyticsSnapshotService
 
 
+async def _create_project(db_session) -> str:
+    project_id = str(uuid.uuid4())
+    project = Project(
+        id=project_id,
+        project_name="Analytics Project",
+        project_code=f"AN-{project_id[:8]}",
+        project_type=ProjectType.NEW_DEVELOPMENT,
+        current_phase=ProjectPhase.CONCEPT,
+    )
+    db_session.add(project)
+    await db_session.commit()
+    return project_id
+
+
 @pytest.mark.asyncio
 async def test_graph_intelligence_persists_empty_snapshot(client, db_session):
+    project_id = await _create_project(db_session)
+
     response = await client.get(
         "/api/v1/analytics/intelligence/graph",
-        params={"workspaceId": "ws-123"},
+        params={"projectId": project_id},
     )
 
     assert response.status_code == 200
     payload = response.json()
     assert payload["kind"] == "graph"
     assert payload["status"] == "empty"
-    assert "ws-123" in payload["summary"]
+    assert "project:" in payload["summary"]
 
     snapshot = await db_session.scalar(
         select(WorkspaceGraphSnapshot).where(
-            WorkspaceGraphSnapshot.workspace_id == "ws-123"
+            WorkspaceGraphSnapshot.workspace_id == f"project:{project_id}"
         )
     )
     assert snapshot is not None
@@ -38,9 +57,10 @@ async def test_graph_intelligence_persists_empty_snapshot(client, db_session):
 
 @pytest.mark.asyncio
 async def test_graph_intelligence_returns_persisted_snapshot(client, db_session):
+    project_id = await _create_project(db_session)
     service = WorkspaceAnalyticsSnapshotService(db_session)
     await service.save_graph_snapshot(
-        "ws-graph-ok",
+        f"project:{project_id}",
         payload={
             "kind": "graph",
             "status": "ok",
@@ -70,7 +90,7 @@ async def test_graph_intelligence_returns_persisted_snapshot(client, db_session)
 
     response = await client.get(
         "/api/v1/analytics/intelligence/graph",
-        params={"workspaceId": "ws-graph-ok"},
+        params={"projectId": project_id},
     )
 
     assert response.status_code == 200
@@ -83,20 +103,21 @@ async def test_graph_intelligence_returns_persisted_snapshot(client, db_session)
 async def test_predictive_intelligence_persists_empty_snapshot_without_query(
     client, db_session
 ):
+    project_id = await _create_project(db_session)
     response = await client.get(
         "/api/v1/analytics/intelligence/predictive",
-        params={"workspaceId": "ws-789"},
+        params={"projectId": project_id},
     )
 
     assert response.status_code == 200
     payload = response.json()
     assert payload["kind"] == "predictive"
     assert payload["status"] == "empty"
-    assert "ws-789" in payload["summary"]
+    assert "project:" in payload["summary"]
 
     snapshot = await db_session.scalar(
         select(WorkspacePredictiveSnapshot).where(
-            WorkspacePredictiveSnapshot.workspace_id == "ws-789"
+            WorkspacePredictiveSnapshot.workspace_id == f"project:{project_id}"
         )
     )
     assert snapshot is not None
@@ -106,9 +127,10 @@ async def test_predictive_intelligence_persists_empty_snapshot_without_query(
 
 @pytest.mark.asyncio
 async def test_predictive_intelligence_returns_persisted_snapshot(client, db_session):
+    project_id = await _create_project(db_session)
     service = WorkspaceAnalyticsSnapshotService(db_session)
     await service.save_predictive_snapshot(
-        "ws-predictive-ok",
+        f"project:{project_id}",
         payload={
             "kind": "predictive",
             "status": "ok",
@@ -130,7 +152,7 @@ async def test_predictive_intelligence_returns_persisted_snapshot(client, db_ses
 
     response = await client.get(
         "/api/v1/analytics/intelligence/predictive",
-        params={"workspaceId": "ws-predictive-ok"},
+        params={"projectId": project_id},
     )
 
     assert response.status_code == 200
@@ -165,20 +187,21 @@ async def test_predictive_intelligence_query_path_still_returns_agent_payload(
 async def test_cross_correlation_intelligence_persists_empty_snapshot(
     client, db_session
 ):
+    project_id = await _create_project(db_session)
     response = await client.get(
         "/api/v1/analytics/intelligence/cross-correlation",
-        params={"workspaceId": "ws-456"},
+        params={"projectId": project_id},
     )
 
     assert response.status_code == 200
     payload = response.json()
     assert payload["kind"] == "correlation"
     assert payload["status"] == "empty"
-    assert "ws-456" in payload["summary"]
+    assert "project:" in payload["summary"]
 
     snapshot = await db_session.scalar(
         select(WorkspaceCorrelationSnapshot).where(
-            WorkspaceCorrelationSnapshot.workspace_id == "ws-456"
+            WorkspaceCorrelationSnapshot.workspace_id == f"project:{project_id}"
         )
     )
     assert snapshot is not None
@@ -190,9 +213,10 @@ async def test_cross_correlation_intelligence_persists_empty_snapshot(
 async def test_cross_correlation_intelligence_returns_persisted_snapshot(
     client, db_session
 ):
+    project_id = await _create_project(db_session)
     service = WorkspaceAnalyticsSnapshotService(db_session)
     await service.save_correlation_snapshot(
-        "ws-correlation-ok",
+        f"project:{project_id}",
         payload={
             "kind": "correlation",
             "status": "ok",
@@ -213,10 +237,20 @@ async def test_cross_correlation_intelligence_returns_persisted_snapshot(
 
     response = await client.get(
         "/api/v1/analytics/intelligence/cross-correlation",
-        params={"workspaceId": "ws-correlation-ok"},
+        params={"projectId": project_id},
     )
 
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == "ok"
     assert payload["relationships"][0]["pairId"] == "finance_speed"
+
+
+@pytest.mark.asyncio
+async def test_graph_intelligence_rejects_unknown_project(client):
+    response = await client.get(
+        "/api/v1/analytics/intelligence/graph",
+        params={"projectId": str(uuid.uuid4())},
+    )
+
+    assert response.status_code == 404
