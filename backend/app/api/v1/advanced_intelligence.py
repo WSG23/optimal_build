@@ -2,49 +2,33 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import require_viewer
+from app.api.deps import RequestIdentity, get_db, require_viewer
+from app.schemas.advanced_intelligence import (
+    CrossCorrelationIntelligenceResponse,
+    GraphIntelligenceResponse,
+    PredictiveIntelligenceResponse,
+)
+from app.services.analytics import WorkspaceAnalyticsSnapshotService
 
 router = APIRouter(prefix="/analytics/intelligence", tags=["advanced-intelligence"])
 
 
-def _empty_graph_payload(_: str) -> dict[str, Any]:
-    return {
-        "kind": "graph",
-        "status": "empty",
-        "summary": ("No investigation graph is available for this workspace yet."),
-    }
-
-
-def _empty_predictive_payload(_: str) -> dict[str, Any]:
-    return {
-        "kind": "predictive",
-        "status": "empty",
-        "summary": ("No predictive analytics are available for this workspace yet."),
-    }
-
-
-def _empty_correlation_payload(_: str) -> dict[str, Any]:
-    return {
-        "kind": "correlation",
-        "status": "empty",
-        "summary": (
-            "No cross-correlation signals are available for this workspace yet."
-        ),
-    }
-
-
-@router.get("/graph")
+@router.get("/graph", response_model=GraphIntelligenceResponse)
 async def graph_intelligence(
     workspace_id: str = Query(..., alias="workspaceId"),
-    _: str = Depends(require_viewer),
-) -> dict[str, Any]:
+    _: RequestIdentity = Depends(require_viewer),
+    db: AsyncSession = Depends(get_db),
+) -> GraphIntelligenceResponse:
     """Return relationship intelligence for the requested workspace."""
 
-    return _empty_graph_payload(workspace_id)
+    service = WorkspaceAnalyticsSnapshotService(db)
+    payload = await service.get_graph_snapshot(workspace_id)
+    return cast(GraphIntelligenceResponse, payload)
 
 
 @router.post("/ingest")
@@ -68,9 +52,10 @@ async def ingest_knowledge(
 @router.get("/predictive")
 async def predictive_intelligence(
     workspace_id: str = Query(..., alias="workspaceId"),
-    query: str = Query(None, description="Optional natural language query"),
-    _: str = Depends(require_viewer),
-) -> dict[str, Any]:
+    query: str | None = Query(None, description="Optional natural language query"),
+    _: RequestIdentity = Depends(require_viewer),
+    db: AsyncSession = Depends(get_db),
+) -> PredictiveIntelligenceResponse | dict[str, object]:
     """Return predictive analytics. If 'query' is provided, uses RAG agent."""
 
     if query:
@@ -88,14 +73,22 @@ async def predictive_intelligence(
             "segments": [],
         }
 
-    return _empty_predictive_payload(workspace_id)
+    service = WorkspaceAnalyticsSnapshotService(db)
+    payload = await service.get_predictive_snapshot(workspace_id)
+    return cast(PredictiveIntelligenceResponse, payload)
 
 
-@router.get("/cross-correlation")
+@router.get(
+    "/cross-correlation",
+    response_model=CrossCorrelationIntelligenceResponse,
+)
 async def cross_correlation_intelligence(
     workspace_id: str = Query(..., alias="workspaceId"),
-    _: str = Depends(require_viewer),
-) -> dict[str, Any]:
+    _: RequestIdentity = Depends(require_viewer),
+    db: AsyncSession = Depends(get_db),
+) -> CrossCorrelationIntelligenceResponse:
     """Return cross-correlation analytics for the requested workspace."""
 
-    return _empty_correlation_payload(workspace_id)
+    service = WorkspaceAnalyticsSnapshotService(db)
+    payload = await service.get_correlation_snapshot(workspace_id)
+    return cast(CrossCorrelationIntelligenceResponse, payload)
