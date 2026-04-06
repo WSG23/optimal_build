@@ -55,7 +55,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: var(--ob-font-size-sm);
-    min-width: 800px;
+    min-width: 600px;
 }
 
 .finance-capital__tranche-table th,
@@ -402,4 +402,21 @@
 .integrations__hint {
     margin: 0;
     color: #64748b;
+}
+
+@media (max-width: 640px) {
+    .finance-capital__tranche-table {
+        min-width: 0;
+        font-size: var(--ob-font-size-xs);
+    }
+
+    .finance-capital__tranche-table th,
+    .finance-capital__tranche-table td {
+        padding: var(--ob-space-025) var(--ob-space-050);
+    }
+
+    .finance-capital__grid,
+    .finance-drawdown__grid {
+        grid-template-columns: 1fr;
+    }
 }

@@ -3,10 +3,10 @@ import {
   Alert,
   Box,
   Button,
-  CircularProgress,
   Divider,
   Grid,
   Paper,
+  Skeleton,
   Stack,
   Tab,
   Tabs,
@@ -17,6 +17,7 @@ import TimelineIcon from '@mui/icons-material/Timeline'
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import PeopleIcon from '@mui/icons-material/People'
 import BarChartIcon from '@mui/icons-material/BarChart'
+import { PremiumMetricCard } from '@/components/canonical'
 import { GanttChart } from './components/GanttChart'
 import { PhaseEditor } from './components/PhaseEditor'
 import { TenantRelocationDashboard } from './components/TenantRelocationDashboard'
@@ -37,152 +38,6 @@ import {
 } from '../../../api/development'
 import { useProject } from '../../../contexts/useProject'
 import { Link } from '../../../router'
-
-// Custom Holographic Card Component
-function HolographicCard({
-  icon,
-  value,
-  label,
-  progress,
-  status,
-  color = '#fff',
-  suffix,
-}: {
-  icon?: React.ReactNode
-  value: number | string
-  label: string
-  progress?: number
-  status?: 'good' | 'alert'
-  color?: string
-  suffix?: string
-}) {
-  return (
-    <Box
-      sx={{
-        position: 'relative',
-        minWidth: 160,
-        flex: 1,
-        p: 2,
-        borderRadius: 3,
-        background: 'rgba(30, 30, 30, 0.6)',
-        backdropFilter: 'blur(var(--ob-blur-md))',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 2,
-        transition: 'transform 0.2s, box-shadow 0.2s',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow:
-            '0 12px 40px 0 rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 243, 255, 0.1)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-        },
-      }}
-    >
-      {/* Progress Ring or Icon Container */}
-      <Box sx={{ position: 'relative', display: 'flex' }}>
-        {progress !== undefined ? (
-          <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-            <CircularProgress
-              variant="determinate"
-              value={100}
-              size={52}
-              thickness={4}
-              sx={{ color: 'rgba(255, 255, 255, 0.1)' }}
-            />
-            <CircularProgress
-              variant="determinate"
-              value={progress}
-              size={52}
-              thickness={4}
-              sx={{
-                color: color,
-                position: 'absolute',
-                left: 0,
-                // Add a glow effect to the progress bar
-                filter: `drop-shadow(0 0 4px ${color})`,
-                '& .MuiCircularProgress-circle': { strokeLinecap: 'round' },
-              }}
-            />
-            <Box
-              sx={{
-                top: 0,
-                left: 0,
-                bottom: 0,
-                right: 0,
-                position: 'absolute',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {icon}
-            </Box>
-          </Box>
-        ) : (
-          icon && <Box sx={{ p: 1 }}>{icon}</Box>
-        )}
-      </Box>
-
-      <Box>
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 700,
-            color: '#fff',
-            textShadow: '0 2px 10px rgba(0,0,0,0.5)',
-            fontSize: '1.75rem',
-            lineHeight: 1,
-            mb: 0.5,
-          }}
-        >
-          {value}
-          {suffix && (
-            <Typography
-              component="span"
-              variant="h6"
-              sx={{ ml: 0.5, opacity: 0.7 }}
-            >
-              {suffix}
-            </Typography>
-          )}
-        </Typography>
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Typography
-            variant="body2"
-            sx={{
-              color: 'rgba(255, 255, 255, 0.6)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              fontWeight: 500,
-              fontSize: '0.7rem',
-            }}
-          >
-            {label}
-          </Typography>
-          {status && (
-            <Box
-              sx={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                bgcolor: status === 'good' ? '#00ff9d' : '#ff3366',
-                boxShadow: `0 0 8px ${status === 'good' ? '#00ff9d' : '#ff3366'}`,
-                animation: 'pulse 2s infinite',
-                '@keyframes pulse': {
-                  '0%': { opacity: 1, transform: 'scale(1)' },
-                  '50%': { opacity: 0.5, transform: 'scale(1.2)' },
-                  '100%': { opacity: 1, transform: 'scale(1)' },
-                },
-              }}
-            />
-          )}
-        </Stack>
-      </Box>
-    </Box>
-  )
-}
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -342,7 +197,24 @@ export function PhaseManagementPage() {
     return (
       <Box sx={{ width: '100%' }}>
         {isProjectLoading ? (
-          <CircularProgress />
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-100)',
+            }}
+          >
+            <Skeleton
+              variant="rectangular"
+              height={48}
+              sx={{ borderRadius: 'var(--ob-radius-sm)' }}
+            />
+            <Skeleton
+              variant="rectangular"
+              height={300}
+              sx={{ borderRadius: 'var(--ob-radius-sm)' }}
+            />
+          </Box>
         ) : (
           <Alert severity={projectError ? 'error' : 'info'}>
             {projectError?.message ??
@@ -355,20 +227,25 @@ export function PhaseManagementPage() {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: 400,
-        }}
-      >
-        <Stack alignItems="center" spacing={2}>
-          <CircularProgress />
-          <Typography color="text.secondary">
-            Loading project phases...
-          </Typography>
-        </Stack>
+      <Box sx={{ width: '100%' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--ob-space-100)',
+          }}
+        >
+          <Skeleton
+            variant="rectangular"
+            height={48}
+            sx={{ borderRadius: 'var(--ob-radius-sm)' }}
+          />
+          <Skeleton
+            variant="rectangular"
+            height={300}
+            sx={{ borderRadius: 'var(--ob-radius-sm)' }}
+          />
+        </Box>
       </Box>
     )
   }
@@ -470,7 +347,7 @@ export function PhaseManagementPage() {
         </Alert>
       )}
 
-      {/* KPI Metrics - Depth 1 (Glass Card with cyan edge) */}
+      {/* KPI Metrics - Depth 1 (Glass Card with brand edge) */}
       <Box className="ob-card-module ob-section-gap">
         <Typography
           variant="subtitle2"
@@ -486,56 +363,51 @@ export function PhaseManagementPage() {
         <Box
           sx={{ display: 'flex', gap: 'var(--ob-space-200)', flexWrap: 'wrap' }}
         >
-          <HolographicCard
-            icon={<TimelineIcon sx={{ fontSize: 28, color: '#00f3ff' }} />}
+          <PremiumMetricCard
+            icon={<TimelineIcon sx={{ fontSize: 28 }} />}
             value={stats.totalPhases}
             label="Total Phases"
-            progress={75} // Example progress
-            color="#00f3ff"
+            progress={75}
+            compact
+            sx={{ minWidth: 160, flex: 1 }}
           />
-          <HolographicCard
-            icon={
-              <BarChartIcon
-                sx={{
-                  fontSize: 28,
-                  color: stats.criticalPhases > 0 ? '#ff3366' : '#00ff9d',
-                }}
-              />
-            }
+          <PremiumMetricCard
+            icon={<BarChartIcon sx={{ fontSize: 28 }} />}
             value={stats.criticalPhases}
             label="Critical Path"
-            status={stats.criticalPhases > 0 ? 'alert' : 'good'}
-            color={stats.criticalPhases > 0 ? '#ff3366' : '#00ff9d'}
+            status={stats.criticalPhases > 0 ? 'error' : 'success'}
+            compact
+            sx={{ minWidth: 160, flex: 1 }}
           />
-          <HolographicCard
-            icon={
-              <AccountBalanceIcon sx={{ fontSize: 28, color: '#f59e0b' }} />
-            }
+          <PremiumMetricCard
+            icon={<AccountBalanceIcon sx={{ fontSize: 28 }} />}
             value={stats.heritagePhases}
             label="Heritage Phases"
             progress={45}
-            color="#f59e0b"
+            compact
+            sx={{ minWidth: 160, flex: 1 }}
           />
-          <HolographicCard
-            icon={<PeopleIcon sx={{ fontSize: 28, color: '#a855f7' }} />}
+          <PremiumMetricCard
+            icon={<PeopleIcon sx={{ fontSize: 28 }} />}
             value={stats.tenantPhases}
             label="Tenant Coord"
             progress={60}
-            color="#a855f7"
+            compact
+            sx={{ minWidth: 160, flex: 1 }}
           />
-          <HolographicCard
-            value={stats.totalDuration}
+          <PremiumMetricCard
+            value={`${stats.totalDuration}d`}
             label="Total Days"
-            suffix="d"
-            progress={35} // Just an example, ideally calculated (elapsed / total)
-            color="#fff"
+            progress={35}
+            compact
+            sx={{ minWidth: 160, flex: 1 }}
           />
-          <HolographicCard
-            value={stats.criticalDuration}
+          <PremiumMetricCard
+            value={`${stats.criticalDuration}d`}
             label="Critical Days"
-            suffix="d"
-            color="#ff3366"
-            status="alert"
+            status="error"
+            compact
+            sx={{ minWidth: 160, flex: 1 }}
           />
         </Box>
       </Box>
@@ -572,7 +444,7 @@ export function PhaseManagementPage() {
         </Tabs>
       </Box>
 
-      {/* Tab Content - Depth 1 (Glass Card with cyan edge) */}
+      {/* Tab Content - Depth 1 (Glass Card with brand edge) */}
       <Box className="ob-card-module" sx={{ overflow: 'hidden' }}>
         {/* Gantt Chart Tab */}
         <TabPanel value={activeTab} index={0}>

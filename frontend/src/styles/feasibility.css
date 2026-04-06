@@ -36,7 +36,7 @@
 
 .feasibility-split-layout__controls {
     width: 28%; /* Slender profile */
-    min-width: 400px;
+    min-width: 280px;
     max-width: 480px;
     background: rgba(255, 255, 255, 0.85); /* Proper glass */
     backdrop-filter: blur(var(--ob-blur-lg)) saturate(180%);
@@ -45,6 +45,22 @@
     flex-direction: column;
     z-index: 50;
     box-shadow: 10px 0 30px rgba(0, 0, 0, 0.02); /* Sidebar separation shadow */
+}
+
+@media (max-width: 640px) {
+    .feasibility-split-layout {
+        flex-direction: column;
+    }
+
+    .feasibility-split-layout__controls {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        border-right: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        max-height: 50vh;
+        overflow-y: auto;
+    }
 }
 
 .feasibility-split-layout__scroll-container {
@@ -86,7 +102,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     border: none;
     background: linear-gradient(
         135deg,
-        #0096cc 0%,
+        #1d4ed8 0%,
         var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
@@ -100,7 +116,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     background: linear-gradient(
         135deg,
         var(--ob-color-brand-primary) 0%,
-        #0096cc 100%
+        #1d4ed8 100%
     );
     box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
@@ -199,7 +215,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     border: none;
     background: linear-gradient(
         135deg,
-        #0096cc 0%,
+        #1d4ed8 0%,
         var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
@@ -213,7 +229,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     background: linear-gradient(
         135deg,
         var(--ob-color-brand-primary) 0%,
-        #0096cc 100%
+        #1d4ed8 100%
     );
     box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
@@ -376,7 +392,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     border: none;
     background: linear-gradient(
         135deg,
-        #0096cc 0%,
+        #1d4ed8 0%,
         var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
@@ -390,7 +406,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     background: linear-gradient(
         135deg,
         var(--ob-color-brand-primary) 0%,
-        #0096cc 100%
+        #1d4ed8 100%
     );
     box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
@@ -550,7 +566,7 @@ html[data-theme='light'] .feasibility-section--card {
 
 /* DEPRECATED: When used with ob-card-module - avoid nested glass */
 .feasibility-section.ob-card-module {
-    /* ob-card-module provides the glass background + cyan top edge */
+    /* ob-card-module provides the glass background + brand top edge */
     /* Override the nested section margin since card handles spacing */
     margin-bottom: 0;
 }
@@ -832,7 +848,7 @@ html[data-theme='light'] .smart-search {
     padding: var(--ob-space-3) var(--ob-space-6);
     background: linear-gradient(
         135deg,
-        #0096cc 0%,
+        #1d4ed8 0%,
         var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
@@ -850,7 +866,7 @@ html[data-theme='light'] .smart-search {
     background: linear-gradient(
         135deg,
         var(--ob-color-brand-primary) 0%,
-        #0096cc 100%
+        #1d4ed8 100%
     );
     transform: translateY(-2px) scale(1.05);
     box-shadow: var(--ob-shadow-md);
@@ -1352,7 +1368,7 @@ html[data-theme='light'] .smart-search {
     transition: opacity 0.3s ease;
 }
 
-/* Zoning Envelope Layer - cyan dashed boundary */
+/* Zoning Envelope Layer - brand dashed boundary */
 .feasibility-canvas__layer--zoning {
     border: 2px dashed var(--ob-color-brand-primary);
     margin: var(--ob-space-100);
@@ -1927,7 +1943,7 @@ html[data-theme='light'] .live-scorecard {
     opacity: 0.8;
 }
 
-.live-scorecard__icon--cyan {
+.live-scorecard__icon--brand {
     color: var(--ob-brand-600);
 }
 
@@ -2129,9 +2145,9 @@ html[data-theme='light'] .live-scorecard {
     outline: none;
 }
 
-.assumptions-panel__input--cyan {
-    background: rgba(6, 182, 212, 0.1);
-    border-color: rgba(6, 182, 212, 0.3);
+.assumptions-panel__input--brand {
+    background: rgba(37, 99, 235, 0.1);
+    border-color: rgba(37, 99, 235, 0.3);
     color: var(--ob-brand-600);
 }
 
@@ -2150,7 +2166,7 @@ html[data-theme='light'] .live-scorecard {
     right: var(--ob-space-050);
     top: 50%;
     transform: translateY(-50%);
-    color: rgba(6, 182, 212, 0.7);
+    color: rgba(37, 99, 235, 0.7);
     font-size: var(--ob-font-size-xs);
     pointer-events: none;
 }

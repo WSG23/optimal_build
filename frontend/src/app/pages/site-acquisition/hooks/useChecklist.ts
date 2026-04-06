@@ -37,6 +37,7 @@ export interface UseChecklistResult {
   setChecklistItems: React.Dispatch<React.SetStateAction<ChecklistItem[]>>
   checklistSummary: ChecklistSummary | null
   isLoadingChecklist: boolean
+  checklistError: string | null
 
   // Filter state
   selectedCategory: string | null
@@ -79,6 +80,7 @@ export function useChecklist({
   const [checklistSummary, setChecklistSummary] =
     useState<ChecklistSummary | null>(null)
   const [isLoadingChecklist, setIsLoadingChecklist] = useState(false)
+  const [checklistError, setChecklistError] = useState<string | null>(null)
 
   // Filter state
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -109,6 +111,7 @@ export function useChecklist({
     }
 
     setIsLoadingChecklist(true)
+    setChecklistError(null)
     try {
       if (capturedProperty.propertyId === OFFLINE_PROPERTY_ID) {
         const offlineItems = buildOfflineChecklistItems(
@@ -177,6 +180,11 @@ export function useChecklist({
       setSelectedCategory(null)
     } catch (err) {
       console.error('Failed to load checklist:', err)
+      setChecklistError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to load checklist. Please try again.',
+      )
     } finally {
       setIsLoadingChecklist(false)
     }
@@ -279,6 +287,7 @@ export function useChecklist({
     setChecklistItems,
     checklistSummary,
     isLoadingChecklist,
+    checklistError,
 
     // Filter state
     selectedCategory,

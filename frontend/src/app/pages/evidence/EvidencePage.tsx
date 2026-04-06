@@ -173,6 +173,32 @@ export function EvidencePage() {
 
       {error ? <Alert severity="error">{error}</Alert> : null}
 
+      {!evidence && !loading && !error ? (
+        <Card
+          variant="default"
+          sx={{
+            p: 'var(--ob-space-300)',
+            textAlign: 'center',
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              color: 'var(--ob-color-text-secondary)',
+              mb: 'var(--ob-space-050)',
+            }}
+          >
+            No evidence packs available
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: 'var(--ob-color-text-secondary)' }}
+          >
+            Run a finance scenario to generate audit evidence for this project.
+          </Typography>
+        </Card>
+      ) : null}
+
       {evidence ? (
         <>
           <Grid container spacing={2}>

@@ -11,6 +11,7 @@ import './styles/index.css'
 import './styles/premium-effects.css'
 import { AppShell } from './app/layout/AppShell'
 import { BaseLayout } from './app/layout/BaseLayout'
+import { NotFoundPage } from './app/pages/NotFoundPage'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -357,261 +358,270 @@ const projectHubElement = (
   </AppShell>
 )
 
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: developerDashboardElement,
-  },
-  {
-    path: '/agents',
-    element: agentDashboardElement,
-  },
-  {
-    path: '/developers',
-    element: developerDashboardElement,
-  },
-  {
-    path: '/app/performance',
-    element: businessPerformanceElement,
-  },
-  {
-    path: '/agents/performance',
-    element: businessPerformanceElement,
-  },
-  // Unified capture page - all capture routes point to the same unified experience
-  {
-    path: '/app/capture',
-    element: developerCaptureElement,
-  },
-  {
-    path: '/app/gps-capture',
-    element: agentCaptureElement,
-  },
-  {
-    path: '/agents/site-capture',
-    element: agentCaptureElement,
-  },
-  {
-    path: '/app/marketing',
-    element: marketingElement,
-  },
-  {
-    path: '/agents/marketing',
-    element: marketingElement,
-  },
-  {
-    path: '/app/advisory',
-    element: advisoryElement,
-  },
-  {
-    path: '/agents/advisory',
-    element: advisoryElement,
-  },
-  {
-    path: '/app/integrations',
-    element: integrationsElement,
-  },
-  {
-    path: '/agents/integrations',
-    element: integrationsElement,
-  },
-  {
-    path: '/app/site-acquisition',
-    element: developerCaptureElement,
-  },
-  {
-    path: '/app/deal-calculator',
-    element: dealCalculatorElement,
-  },
-  {
-    path: '/developers/site-acquisition',
-    element: developerCaptureElement,
-  },
-  {
-    path: '/developers/deal-calculator',
-    element: dealCalculatorElement,
-  },
-  {
-    path: '/app/evidence',
-    element: evidenceElement,
-  },
-  {
-    path: '/developers/evidence',
-    element: evidenceElement,
-  },
-  {
-    path: '/why-not-excel',
-    element: whyNotExcelElement,
-  },
-  {
-    path: '/developers/why-not-excel',
-    element: whyNotExcelElement,
-  },
-  {
-    path: '/agents/developers/:propertyId/preview',
-    element: developerPreviewStandaloneElement,
-  },
-  {
-    path: '/app/site-acquisition/checklist-templates',
-    element: checklistTemplateManagerElement,
-  },
-  {
-    path: '/app/due-diligence',
-    element: dueDiligenceElement,
-  },
-  {
-    path: '/app/asset-feasibility',
-    element: developerFeasibilityElement,
-  },
-  {
-    path: '/developers/asset-feasibility',
-    element: developerFeasibilityElement,
-  },
-  {
-    path: '/app/financial-control',
-    element: financialControlElement,
-  },
-  {
-    path: '/developers/financial-control',
-    element: financialControlElement,
-  },
-  {
-    path: '/developers/finance',
-    element: financialControlElement,
-  },
-  {
-    path: '/app/phase-management',
-    element: phaseManagementElement,
-  },
-  {
-    path: '/app/team-coordination',
-    element: teamCoordinationElement,
-  },
-  {
-    path: '/developers/team-coordination',
-    element: teamCoordinationElement,
-  },
-  {
-    path: '/app/regulatory',
-    element: regulatoryNavigationElement,
-  },
-  {
-    path: '/developers/regulatory',
-    element: regulatoryNavigationElement,
-  },
-  {
-    path: '/projects/:projectId/regulatory',
-    element: regulatoryNavigationElement,
-  },
-  {
-    path: '/projects',
-    element: projectListElement,
-  },
-  {
-    path: '/projects/:projectId',
-    element: projectHubElement,
-  },
-  {
-    path: '/projects/:projectId/capture',
-    element: developerCaptureElement,
-  },
-  {
-    path: '/projects/:projectId/due-diligence',
-    element: dueDiligenceElement,
-  },
-  {
-    path: '/projects/:projectId/feasibility',
-    element: developerFeasibilityElement,
-  },
-  {
-    path: '/projects/:projectId/finance',
-    element: financialControlElement,
-  },
-  {
-    path: '/projects/:projectId/phases',
-    element: phaseManagementElement,
-  },
-  {
-    path: '/projects/:projectId/team',
-    element: teamCoordinationElement,
-  },
-  {
-    path: '/projects/:projectId/evidence',
-    element: evidenceElement,
-  },
-  {
-    path: '/developer',
-    element: developerControlPanelElement,
-  },
-  {
-    path: '/legacy/home',
-    element: <HomeOverview />,
-  },
-  {
-    path: '/legacy/cad/upload',
-    element: suspense(<CadUploadPage />),
-  },
-  {
-    path: '/legacy/cad/detection',
-    element: suspense(<CadDetectionPage />),
-  },
-  {
-    path: '/legacy/cad/pipelines',
-    element: suspense(<CadPipelinesPage />),
-  },
-  {
-    path: '/cad/pipelines',
-    element: suspense(<CadPipelinesPage />),
-  },
-  {
-    path: '/cad/upload',
-    element: suspense(<CadUploadPage />),
-  },
-  {
-    path: '/cad/detection',
-    element: suspense(<CadDetectionPage />),
-  },
-  {
-    path: '/legacy/feasibility',
-    element: developerFeasibilityElement,
-  },
-  {
-    path: '/feasibility',
-    element: developerFeasibilityElement,
-  },
-  {
-    path: '/finance',
-    element: financialControlElement,
-  },
-  {
-    path: '/legacy/finance',
-    element: financialControlElement,
-  },
-  {
-    path: '/legacy/agents/site-capture',
-    element: suspense(<AgentsGpsCapturePage />),
-  },
-  {
-    path: '/legacy/agents/advisory',
-    element: suspense(<AgentAdvisoryPage />),
-  },
-  {
-    path: '/legacy/agents/integrations',
-    element: suspense(<AgentIntegrationsPage />),
-  },
-  {
-    path: '/legacy/agents/performance',
-    element: suspense(<AgentPerformancePage />),
-  },
-  {
-    path: '/visualizations/intelligence',
-    element: suspense(<AdvancedIntelligencePage />),
-  },
-  {
-    path: '/legacy/visualizations/intelligence',
-    element: suspense(<AdvancedIntelligencePage />),
-  },
-])
+const notFoundElement = (
+  <AppShell title="Not found" hideSidebar workspace="developer">
+    <NotFoundPage />
+  </AppShell>
+)
+
+const router = createBrowserRouter(
+  [
+    {
+      path: '/',
+      element: developerDashboardElement,
+    },
+    {
+      path: '/agents',
+      element: agentDashboardElement,
+    },
+    {
+      path: '/developers',
+      element: developerDashboardElement,
+    },
+    {
+      path: '/app/performance',
+      element: businessPerformanceElement,
+    },
+    {
+      path: '/agents/performance',
+      element: businessPerformanceElement,
+    },
+    // Unified capture page - all capture routes point to the same unified experience
+    {
+      path: '/app/capture',
+      element: developerCaptureElement,
+    },
+    {
+      path: '/app/gps-capture',
+      element: agentCaptureElement,
+    },
+    {
+      path: '/agents/site-capture',
+      element: agentCaptureElement,
+    },
+    {
+      path: '/app/marketing',
+      element: marketingElement,
+    },
+    {
+      path: '/agents/marketing',
+      element: marketingElement,
+    },
+    {
+      path: '/app/advisory',
+      element: advisoryElement,
+    },
+    {
+      path: '/agents/advisory',
+      element: advisoryElement,
+    },
+    {
+      path: '/app/integrations',
+      element: integrationsElement,
+    },
+    {
+      path: '/agents/integrations',
+      element: integrationsElement,
+    },
+    {
+      path: '/app/site-acquisition',
+      element: developerCaptureElement,
+    },
+    {
+      path: '/app/deal-calculator',
+      element: dealCalculatorElement,
+    },
+    {
+      path: '/developers/site-acquisition',
+      element: developerCaptureElement,
+    },
+    {
+      path: '/developers/deal-calculator',
+      element: dealCalculatorElement,
+    },
+    {
+      path: '/app/evidence',
+      element: evidenceElement,
+    },
+    {
+      path: '/developers/evidence',
+      element: evidenceElement,
+    },
+    {
+      path: '/why-not-excel',
+      element: whyNotExcelElement,
+    },
+    {
+      path: '/developers/why-not-excel',
+      element: whyNotExcelElement,
+    },
+    {
+      path: '/agents/developers/:propertyId/preview',
+      element: developerPreviewStandaloneElement,
+    },
+    {
+      path: '/app/site-acquisition/checklist-templates',
+      element: checklistTemplateManagerElement,
+    },
+    {
+      path: '/app/due-diligence',
+      element: dueDiligenceElement,
+    },
+    {
+      path: '/app/asset-feasibility',
+      element: developerFeasibilityElement,
+    },
+    {
+      path: '/developers/asset-feasibility',
+      element: developerFeasibilityElement,
+    },
+    {
+      path: '/app/financial-control',
+      element: financialControlElement,
+    },
+    {
+      path: '/developers/financial-control',
+      element: financialControlElement,
+    },
+    {
+      path: '/developers/finance',
+      element: financialControlElement,
+    },
+    {
+      path: '/app/phase-management',
+      element: phaseManagementElement,
+    },
+    {
+      path: '/app/team-coordination',
+      element: teamCoordinationElement,
+    },
+    {
+      path: '/developers/team-coordination',
+      element: teamCoordinationElement,
+    },
+    {
+      path: '/app/regulatory',
+      element: regulatoryNavigationElement,
+    },
+    {
+      path: '/developers/regulatory',
+      element: regulatoryNavigationElement,
+    },
+    {
+      path: '/projects/:projectId/regulatory',
+      element: regulatoryNavigationElement,
+    },
+    {
+      path: '/projects',
+      element: projectListElement,
+    },
+    {
+      path: '/projects/:projectId',
+      element: projectHubElement,
+    },
+    {
+      path: '/projects/:projectId/capture',
+      element: developerCaptureElement,
+    },
+    {
+      path: '/projects/:projectId/due-diligence',
+      element: dueDiligenceElement,
+    },
+    {
+      path: '/projects/:projectId/feasibility',
+      element: developerFeasibilityElement,
+    },
+    {
+      path: '/projects/:projectId/finance',
+      element: financialControlElement,
+    },
+    {
+      path: '/projects/:projectId/phases',
+      element: phaseManagementElement,
+    },
+    {
+      path: '/projects/:projectId/team',
+      element: teamCoordinationElement,
+    },
+    {
+      path: '/projects/:projectId/evidence',
+      element: evidenceElement,
+    },
+    {
+      path: '/developer',
+      element: developerControlPanelElement,
+    },
+    {
+      path: '/legacy/home',
+      element: <HomeOverview />,
+    },
+    {
+      path: '/legacy/cad/upload',
+      element: suspense(<CadUploadPage />),
+    },
+    {
+      path: '/legacy/cad/detection',
+      element: suspense(<CadDetectionPage />),
+    },
+    {
+      path: '/legacy/cad/pipelines',
+      element: suspense(<CadPipelinesPage />),
+    },
+    {
+      path: '/cad/pipelines',
+      element: suspense(<CadPipelinesPage />),
+    },
+    {
+      path: '/cad/upload',
+      element: suspense(<CadUploadPage />),
+    },
+    {
+      path: '/cad/detection',
+      element: suspense(<CadDetectionPage />),
+    },
+    {
+      path: '/legacy/feasibility',
+      element: developerFeasibilityElement,
+    },
+    {
+      path: '/feasibility',
+      element: developerFeasibilityElement,
+    },
+    {
+      path: '/finance',
+      element: financialControlElement,
+    },
+    {
+      path: '/legacy/finance',
+      element: financialControlElement,
+    },
+    {
+      path: '/legacy/agents/site-capture',
+      element: suspense(<AgentsGpsCapturePage />),
+    },
+    {
+      path: '/legacy/agents/advisory',
+      element: suspense(<AgentAdvisoryPage />),
+    },
+    {
+      path: '/legacy/agents/integrations',
+      element: suspense(<AgentIntegrationsPage />),
+    },
+    {
+      path: '/legacy/agents/performance',
+      element: suspense(<AgentPerformancePage />),
+    },
+    {
+      path: '/visualizations/intelligence',
+      element: suspense(<AdvancedIntelligencePage />),
+    },
+    {
+      path: '/legacy/visualizations/intelligence',
+      element: suspense(<AdvancedIntelligencePage />),
+    },
+  ],
+  { notFoundElement },
+)
 
 const container = document.getElementById('root')
 

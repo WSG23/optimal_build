@@ -9,7 +9,7 @@
  * Also shows an upsell card to encourage Developer mode upgrade.
  */
 
-import { useState, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import LockIcon from '@mui/icons-material/Lock'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import DescriptionIcon from '@mui/icons-material/Description'
@@ -23,6 +23,38 @@ import {
   type DevelopmentScenario,
 } from '../../../../api/agents'
 import { Button } from '../../../../components/canonical/Button'
+
+interface PackButtonProps {
+  packType: ProfessionalPackType
+  isLoading: boolean
+  disabled: boolean
+  onGenerate: (packType: ProfessionalPackType) => void
+}
+
+const PackButton = React.memo(function PackButton({
+  packType,
+  isLoading,
+  disabled,
+  onGenerate,
+}: PackButtonProps) {
+  return (
+    <button
+      type="button"
+      className="gps-pack-btn"
+      disabled={isLoading || disabled}
+      onClick={() => onGenerate(packType)}
+    >
+      {isLoading ? (
+        <div className="gps-spinner gps-spinner--xs"></div>
+      ) : packType === 'investment' || packType === 'sales' ? (
+        <PictureAsPdfIcon />
+      ) : (
+        <DescriptionIcon />
+      )}
+      <span>{formatPackLabel(packType).split(' ')[0]}</span>
+    </button>
+  )
+})
 
 export interface AgentResultsPanelProps {
   captureSummary: GpsCaptureSummaryWithFeatures | null
@@ -46,6 +78,7 @@ export function AgentResultsPanel({
 }: AgentResultsPanelProps) {
   const [packLoadingType, setPackLoadingType] =
     useState<ProfessionalPackType | null>(null)
+  const [packError, setPackError] = useState<string | null>(null)
 
   const quickAnalysis = captureSummary?.quickAnalysis ?? null
 
@@ -53,10 +86,16 @@ export function AgentResultsPanel({
     async (packType: ProfessionalPackType) => {
       if (!captureSummary) return
       try {
+        setPackError(null)
         setPackLoadingType(packType)
         await generateProfessionalPack(captureSummary.propertyId, packType)
       } catch (error) {
         console.error('Failed to generate pack', error)
+        setPackError(
+          error instanceof Error
+            ? error.message
+            : `Failed to generate ${packType} pack. Please try again.`,
+        )
       } finally {
         setPackLoadingType(null)
       }
@@ -163,24 +202,16 @@ export function AgentResultsPanel({
         </h3>
         <div className="gps-pack-grid gps-hud-content">
           {PACK_TYPES.map((packType) => (
-            <button
+            <PackButton
               key={packType}
-              type="button"
-              className="gps-pack-btn"
-              disabled={packLoadingType === packType || !captureSummary}
-              onClick={() => handleGeneratePack(packType)}
-            >
-              {packLoadingType === packType ? (
-                <div className="gps-spinner gps-spinner--xs"></div>
-              ) : packType === 'investment' || packType === 'sales' ? (
-                <PictureAsPdfIcon />
-              ) : (
-                <DescriptionIcon />
-              )}
-              <span>{formatPackLabel(packType).split(' ')[0]}</span>
-            </button>
+              packType={packType}
+              isLoading={packLoadingType === packType}
+              disabled={!captureSummary}
+              onGenerate={handleGeneratePack}
+            />
           ))}
         </div>
+        {packError && <p className="gps-error-text">{packError}</p>}
       </div>
 
       {/* Upsell Card */}

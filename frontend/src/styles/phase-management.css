@@ -12,3 +12,9 @@
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
 }
+
+@media (max-width: 640px) {
+    .phase-management-page {
+        gap: var(--ob-spacing-300);
+    }
+}

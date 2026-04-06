@@ -3,8 +3,8 @@ import {
   Alert,
   Box,
   Button,
-  CircularProgress,
   Grid,
+  Skeleton,
   Stack,
   Typography,
 } from '@mui/material'
@@ -412,7 +412,7 @@ export function BusinessPerformancePage() {
         </Box>
       </Box>
 
-      {/* KPI Summary - Depth 1 (Glass Card with cyan edge) */}
+      {/* KPI Summary - Depth 1 (Glass Card with brand edge) */}
       <Box className="ob-card-module ob-section-gap">
         <Typography
           variant="subtitle2"
@@ -515,16 +515,35 @@ export function BusinessPerformancePage() {
             sx={{ height: '100%', p: 'var(--ob-space-200)' }}
           >
             {pipelineLoading ? (
-              <Stack
-                alignItems="center"
-                py="var(--ob-space-400)"
-                spacing="var(--ob-space-100)"
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 'var(--ob-space-150)',
+                }}
               >
-                <CircularProgress size={28} />
-                <Typography variant="body2" color="text.secondary">
-                  Loading pipeline…
-                </Typography>
-              </Stack>
+                <Skeleton
+                  variant="rectangular"
+                  height={40}
+                  sx={{ borderRadius: 'var(--ob-radius-sm)' }}
+                />
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 'var(--ob-space-100)',
+                  }}
+                >
+                  {[1, 2, 3, 4].map((i) => (
+                    <Skeleton
+                      key={i}
+                      variant="rectangular"
+                      height={200}
+                      sx={{ borderRadius: 'var(--ob-radius-sm)' }}
+                    />
+                  ))}
+                </Box>
+              </Box>
             ) : (
               <PipelineBoard
                 columns={columns}
@@ -550,16 +569,24 @@ export function BusinessPerformancePage() {
             />
             <RoiPanel summary={roiSummary} />
             {(dealLoading || analyticsLoading) && (
-              <Stack
-                alignItems="center"
-                spacing="var(--ob-space-100)"
-                py="var(--ob-space-200)"
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 'var(--ob-space-100)',
+                }}
               >
-                <CircularProgress size={24} />
-                <Typography variant="body2" color="text.secondary">
-                  Loading insights…
-                </Typography>
-              </Stack>
+                <Skeleton
+                  variant="rectangular"
+                  height={120}
+                  sx={{ borderRadius: 'var(--ob-radius-sm)' }}
+                />
+                <Skeleton
+                  variant="rectangular"
+                  height={120}
+                  sx={{ borderRadius: 'var(--ob-radius-sm)' }}
+                />
+              </Box>
             )}
             {(dealError || analyticsError) && (
               <Alert severity="error">{dealError ?? analyticsError}</Alert>

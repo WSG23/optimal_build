@@ -306,5 +306,45 @@ h6 {
     background: var(--ob-color-surface-elevated) !important;
     border: var(--ob-border-fine-subtle) !important;
     border-radius: var(--ob-radius-lg) !important;
-    min-width: 400px;
+    min-width: min(400px, 90vw);
+}
+
+/* =============================================================================
+   TOUCH TARGETS: Enforce 44px minimum for interactive elements
+   ============================================================================= */
+
+button,
+[role='button'],
+a,
+input[type='checkbox'],
+input[type='radio'],
+select,
+.MuiIconButton-root,
+.MuiButton-root,
+.MuiMenuItem-root {
+    min-height: 44px;
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+    min-width: 44px;
+}
+
+/* =============================================================================
+   REDUCED MOTION: Respect user preference
+   ============================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .ob-scanline {
+        display: none !important;
+    }
 }

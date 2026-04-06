@@ -692,3 +692,13 @@ textarea.gps-input-ghost:focus {
         flex-wrap: wrap;
     }
 }
+
+@media (max-width: 640px) {
+    .gps-scenarios-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .gps-pack-grid {
+        grid-template-columns: 1fr;
+    }
+}

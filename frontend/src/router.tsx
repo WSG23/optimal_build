@@ -22,6 +22,7 @@ interface RouteDefinition {
 
 interface RouterInstance {
   routes: RouteDefinition[]
+  notFoundElement?: ReactNode
 }
 
 interface RouterContextValue {
@@ -85,8 +86,11 @@ const resolveSearch = (value: string): string => {
   }
 }
 
-export function createBrowserRouter(routes: RouteDefinition[]): RouterInstance {
-  return { routes }
+export function createBrowserRouter(
+  routes: RouteDefinition[],
+  options?: { notFoundElement?: ReactNode },
+): RouterInstance {
+  return { routes, notFoundElement: options?.notFoundElement }
 }
 
 interface RouterProviderProps {
@@ -158,8 +162,8 @@ export function RouterProvider({
       return paramMatch.element
     }
 
-    return routes.find((route) => route.path === '/')?.element ?? null
-  }, [path, routes])
+    return router.notFoundElement ?? null // 404 — no matching route
+  }, [path, routes, router.notFoundElement])
 
   // Debug log for routing
   useEffect(() => {

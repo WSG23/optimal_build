@@ -41,6 +41,7 @@ export interface DueDiligenceChecklistSectionProps {
   activeScenarioDetails: ScenarioOption | null | undefined
   selectedCategory: string | null
   isLoadingChecklist: boolean
+  checklistError?: string | null
 
   // Handlers (stable callbacks from parent hook)
   setSelectedCategory: (category: string | null) => void
@@ -63,11 +64,27 @@ export function DueDiligenceChecklistSection({
   activeScenarioDetails,
   selectedCategory,
   isLoadingChecklist,
+  checklistError,
   setSelectedCategory,
   handleChecklistUpdate,
 }: DueDiligenceChecklistSectionProps) {
   return (
     <section className="due-diligence">
+      {checklistError && (
+        <div
+          role="alert"
+          style={{
+            padding: 'var(--ob-space-100) var(--ob-space-150)',
+            marginBottom: 'var(--ob-space-150)',
+            borderRadius: 'var(--ob-radius-sm)',
+            backgroundColor: 'var(--ob-color-status-error-bg, #fef2f2)',
+            color: 'var(--ob-color-status-error, #dc2626)',
+            fontSize: 'var(--ob-font-size-sm)',
+          }}
+        >
+          {checklistError}
+        </div>
+      )}
       {/* Header on background - Content vs Context pattern */}
       <div className="due-diligence__header">
         <div className="due-diligence__header-content">

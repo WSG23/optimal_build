@@ -12,6 +12,7 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
+  Skeleton,
   Stack,
   TextField,
   Typography,
@@ -88,7 +89,9 @@ export function ProjectListPage() {
       navigate(`/projects/${created.id}/finance?onboarding=workbook`)
     } catch (error) {
       setCreateError(
-        error instanceof Error ? error.message : 'Unable to start workbook intake.',
+        error instanceof Error
+          ? error.message
+          : 'Unable to start workbook intake.',
       )
     } finally {
       setLaunchingAction(null)
@@ -109,7 +112,9 @@ export function ProjectListPage() {
       )
     } catch (error) {
       setCreateError(
-        error instanceof Error ? error.message : 'Unable to open the sample project.',
+        error instanceof Error
+          ? error.message
+          : 'Unable to open the sample project.',
       )
     } finally {
       setLaunchingAction(null)
@@ -139,7 +144,9 @@ export function ProjectListPage() {
                     label={`Primary UX: ${PUBLIC_JURISDICTIONS.join(', ')}`}
                   />
                 </Stack>
-                <Typography variant="h4">Singapore developer workspace</Typography>
+                <Typography variant="h4">
+                  Singapore developer workspace
+                </Typography>
                 <Typography variant="body1" color="text.secondary">
                   Start where real underwriting starts: model a deal, import an
                   existing workbook, or open a guided Singapore sample project.
@@ -147,8 +154,9 @@ export function ProjectListPage() {
               </Box>
               <Box sx={{ maxWidth: 320 }}>
                 <Typography variant="body2" color="text.secondary">
-                  The primary workflow is now Singapore-only on the surface. Multi-jurisdiction
-                  support stays in the architecture, behind internal flags.
+                  The primary workflow is now Singapore-only on the surface.
+                  Multi-jurisdiction support stays in the architecture, behind
+                  internal flags.
                 </Typography>
               </Box>
             </Stack>
@@ -237,10 +245,12 @@ export function ProjectListPage() {
                 1. Run a quick deal screen or import a workbook.
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                2. Turn the result into a finance scenario and compare export presets.
+                2. Turn the result into a finance scenario and compare export
+                presets.
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                3. Review evidence packs before handing numbers to lenders, IC, or compliance.
+                3. Review evidence packs before handing numbers to lenders, IC,
+                or compliance.
               </Typography>
             </Stack>
           </Stack>
@@ -257,7 +267,8 @@ export function ProjectListPage() {
         <Box>
           <Typography variant="h4">Projects</Typography>
           <Typography variant="body2" color="text.secondary">
-            Select an existing Singapore development workflow or create a new project.
+            Select an existing Singapore development workflow or create a new
+            project.
           </Typography>
         </Box>
         <Button variant="contained" onClick={() => setCreateOpen(true)}>
@@ -272,7 +283,22 @@ export function ProjectListPage() {
       )}
 
       {isProjectLoading && (
-        <Typography color="text.secondary">Loading projects...</Typography>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: 'var(--ob-space-150)',
+          }}
+        >
+          {[1, 2, 3].map((i) => (
+            <Skeleton
+              key={i}
+              variant="rectangular"
+              height={120}
+              sx={{ borderRadius: 'var(--ob-radius-sm)' }}
+            />
+          ))}
+        </Box>
       )}
 
       {!isProjectLoading && projects.length === 0 && (

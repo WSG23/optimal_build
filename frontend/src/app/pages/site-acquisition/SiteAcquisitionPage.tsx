@@ -144,8 +144,12 @@ export function SiteAcquisitionPage() {
         setAddress(result.formattedAddress)
       }
     } catch (err) {
-      // Silently fail - user can still enter coordinates manually
       console.warn('Forward geocoding failed:', err)
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Geocoding failed. You can enter coordinates manually.',
+      )
     } finally {
       setIsGeocoding(false)
     }
@@ -321,12 +325,9 @@ export function SiteAcquisitionPage() {
           })}`
         : null,
       envelope.maxBuildableGfaSqm != null
-        ? `max buildable GFA ${formatNumberMetric(
-            envelope.maxBuildableGfaSqm,
-            {
-              maximumFractionDigits: 0,
-            },
-          )} sqm`
+        ? `max buildable GFA ${formatNumberMetric(envelope.maxBuildableGfaSqm, {
+            maximumFractionDigits: 0,
+          })} sqm`
         : null,
       envelope.buildingHeightLimitM != null
         ? `height limit ${formatNumberMetric(envelope.buildingHeightLimitM, {
@@ -340,8 +341,9 @@ export function SiteAcquisitionPage() {
         : null,
     ].filter(Boolean)
     const previewStatus =
-      capturedProperty.visualization?.status?.replace(/_/g, ' ').toLowerCase() ??
-      'pending'
+      capturedProperty.visualization?.status
+        ?.replace(/_/g, ' ')
+        .toLowerCase() ?? 'pending'
     const isFallbackCapture =
       capturedProperty.visualization?.status?.toLowerCase() === 'placeholder' ||
       envelope.buildingHeightLimitM == null ||
@@ -454,7 +456,10 @@ export function SiteAcquisitionPage() {
         value: entry.allocationPct,
         allocatedGfa: entry.allocatedGfaSqm ?? undefined,
       }))
-  }, [capturedProperty?.optimizations, capturedProperty?.visualization?.massingLayers])
+  }, [
+    capturedProperty?.optimizations,
+    capturedProperty?.visualization?.massingLayers,
+  ])
 
   // Unified layer action handler for PreviewLayersTable
   const handleLayerAction = useCallback(

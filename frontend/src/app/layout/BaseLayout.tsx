@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from 'react'
 import { Box } from '@mui/material'
 import { BaseLayoutProvider } from './BaseLayoutContext'
 import { YosaiTopNav } from '../../components/layout/YosaiTopNav'
+import { ErrorBoundary } from '../../components/ErrorBoundary'
 import { useThemeMode } from '../../theme/ThemeContext'
 
 export function BaseLayout({ children }: { children: ReactNode }) {
@@ -74,7 +75,7 @@ export function BaseLayout({ children }: { children: ReactNode }) {
             zIndex: 1,
           }}
         >
-          {children}
+          <ErrorBoundary>{children}</ErrorBoundary>
         </Box>
       </Box>
     </BaseLayoutProvider>

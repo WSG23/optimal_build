@@ -88,7 +88,7 @@
 
 .agents-capture__scenario-option:has(input:checked) {
     border-color: var(--ob-color-brand-primary);
-    background: rgba(0, 243, 255, 0.08);
+    background: rgba(59, 130, 246, 0.08);
     box-shadow: var(--ob-shadow-sm);
 }
 
@@ -113,7 +113,7 @@
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     background: linear-gradient(
         135deg,
-        #0096cc 0%,
+        #1d4ed8 0%,
         var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
@@ -128,7 +128,7 @@
     background: linear-gradient(
         135deg,
         var(--ob-color-brand-primary) 0%,
-        #0096cc 100%
+        #1d4ed8 100%
     );
     box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
@@ -213,7 +213,7 @@
 }
 
 .agents-capture__cta-link:hover {
-    background: rgba(0, 243, 255, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     box-shadow: var(--ob-shadow-sm);
 }
 
@@ -449,7 +449,7 @@
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     background: linear-gradient(
         135deg,
-        #0096cc 0%,
+        #1d4ed8 0%,
         var(--ob-color-brand-primary) 100%
     );
     color: #0a1628;
@@ -464,7 +464,7 @@
     background: linear-gradient(
         135deg,
         var(--ob-color-brand-primary) 0%,
-        #0096cc 100%
+        #1d4ed8 100%
     );
     box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
@@ -497,4 +497,11 @@
 .agents-capture__pack-download:hover {
     background: var(--ob-success-subtle);
     box-shadow: var(--ob-glow-status-success);
+}
+
+@media (max-width: 640px) {
+    .gps-capture__sidebar {
+        width: 100%;
+        max-width: none;
+    }
 }

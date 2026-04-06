@@ -36,11 +36,35 @@
     }
 
     .app-shell__sidebar {
-        padding: 2rem 1rem;
+        padding: var(--ob-space-200) var(--ob-space-100);
     }
 
     .app-shell__main {
-        padding: 1.5rem 2rem;
+        padding: var(--ob-space-150) var(--ob-space-200);
+    }
+}
+
+@media (max-width: 640px) {
+    .app-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .app-shell__sidebar {
+        display: none;
+    }
+
+    .app-shell__main {
+        padding: var(--ob-space-100) var(--ob-space-100);
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .app-shell__header h1 {
+        font-size: var(--ob-font-size-xl);
+    }
+
+    .app-shell__content {
+        padding: var(--ob-space-150) var(--ob-space-100);
     }
 }
 
@@ -52,18 +76,18 @@
     border-right: 1px solid var(--ob-border-glass);
 
     color: var(--ob-color-text-secondary);
-    padding: 2.5rem 1.5rem;
+    padding: var(--ob-space-250) var(--ob-space-150);
     display: flex;
     flex-direction: column;
-    gap: 2.5rem;
+    gap: var(--ob-space-250);
     z-index: 10;
 }
 
 .app-shell__main {
     display: flex;
     flex-direction: column;
-    padding: 2.5rem 3.5rem;
-    gap: 2.5rem;
+    padding: var(--ob-space-250) var(--ob-space-350);
+    gap: var(--ob-space-250);
     overflow-y: auto; /* Scroll main area */
     height: 100vh;
 }
@@ -73,28 +97,28 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 1.5rem;
+    gap: var(--ob-space-150);
 }
 
 .app-shell__header h1 {
     margin: 0;
-    font-size: 2.25rem;
+    font-size: var(--ob-font-size-3xl);
     font-weight: 700;
     color: var(--ob-color-text-primary);
     letter-spacing: -0.02em;
 }
 
 .app-shell__subtitle {
-    margin: 0.5rem 0 0;
+    margin: var(--ob-space-050) 0 0;
     color: var(--ob-color-text-secondary);
-    font-size: 1rem;
+    font-size: var(--ob-font-size-base);
     max-width: 640px;
     line-height: 1.6;
 }
 
 .app-shell__actions {
     display: flex;
-    gap: 1rem;
+    gap: var(--ob-space-100);
 }
 
 /* Main content glass card */
@@ -112,18 +136,18 @@
 .app-nav {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: var(--ob-space-200);
 }
 
 .app-nav__header {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    padding-left: 0.5rem; /* Optical alignment */
+    gap: var(--ob-space-050);
+    padding-left: var(--ob-space-050); /* Optical alignment */
 }
 
 .app-nav__product {
-    font-size: 0.75rem;
+    font-size: var(--ob-font-size-xs);
     letter-spacing: 0.2rem;
     text-transform: uppercase;
     color: var(--ob-color-brand-primary);
@@ -131,7 +155,7 @@
 }
 
 .app-nav__subheading {
-    font-size: 1.1rem;
+    font-size: var(--ob-font-size-lg);
     font-weight: 600;
     color: var(--ob-color-text-primary);
 }
@@ -142,7 +166,7 @@
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--ob-space-050);
 }
 
 .app-nav__item button {
@@ -150,11 +174,11 @@
     border: none;
     background: transparent;
     text-align: left;
-    padding: 0.85rem 1.1rem;
+    padding: var(--ob-space-075) var(--ob-space-100);
     border-radius: var(--ob-radius-lg);
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: var(--ob-space-025);
     color: var(--ob-color-text-secondary);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -186,21 +210,21 @@
 
 .app-nav__label {
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: var(--ob-font-size-sm);
 }
 
 .app-nav__description {
-    font-size: 0.8rem;
+    font-size: var(--ob-font-size-xs);
     color: var(--ob-color-text-muted);
 }
 
 .app-nav__badge {
     align-self: flex-start;
-    font-size: 0.65rem;
+    font-size: var(--ob-font-size-2xs);
     text-transform: uppercase;
-    letter-spacing: 0.05rem;
-    padding: 0.15rem 0.5rem;
-    border-radius: 999px;
+    letter-spacing: 0.05em;
+    padding: var(--ob-space-025) var(--ob-space-050);
+    border-radius: var(--ob-radius-pill);
     background: var(--ob-color-brand-soft);
     color: var(--ob-brand-600); /* Use specific tone for contrast on dark */
     font-weight: 700;

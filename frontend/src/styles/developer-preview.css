@@ -18,19 +18,19 @@
 .developer-preview-standalone__header {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--ob-space-050);
 }
 
 .developer-preview-standalone__subtitle {
     margin: 0;
     color: var(--ob-neutral-600);
-    font-size: 0.95rem;
+    font-size: var(--ob-font-size-sm);
 }
 
 .developer-preview-standalone__help {
     margin: 0;
     color: var(--ob-color-text-subtle);
-    font-size: 0.9rem;
+    font-size: var(--ob-font-size-sm);
     max-width: 620px;
 }
 
@@ -38,7 +38,7 @@
 .developer-preview-standalone__error {
     background: var(--ob-neutral-50);
     border-radius: 1rem;
-    padding: 1.25rem 1.5rem;
+    padding: var(--ob-space-125) var(--ob-space-150);
     border: 1px solid var(--ob-color-border-neutral);
     color: var(--ob-neutral-900);
 }
@@ -50,21 +50,21 @@
 }
 
 .developer-preview-standalone__hint {
-    margin-top: 0.5rem;
+    margin-top: var(--ob-space-050);
     color: var(--ob-warning-700);
-    font-size: 0.9rem;
+    font-size: var(--ob-font-size-sm);
 }
 
 .developer-preview-standalone__viewer {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--ob-space-150);
 }
 
 .developer-preview-standalone__status-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: var(--ob-space-075);
     align-items: center;
 }
 
@@ -76,7 +76,7 @@
     border-radius: 999px;
     font-weight: 600;
     letter-spacing: 0.05em;
-    font-size: 0.75rem;
+    font-size: var(--ob-font-size-xs);
     background: var(--ob-neutral-200);
     color: var(--ob-neutral-900);
 }
@@ -100,7 +100,7 @@
 
 .developer-preview-standalone__status-note {
     color: var(--ob-neutral-600);
-    font-size: 0.9rem;
+    font-size: var(--ob-font-size-sm);
 }
 
 .developer-preview-standalone__details {
@@ -108,8 +108,8 @@
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     background: var(--ob-color-bg-surface);
     border-radius: 1.25rem;
-    padding: 1.5rem 1.75rem;
-    gap: 1.25rem;
+    padding: var(--ob-space-150) 1.75rem;
+    gap: var(--ob-space-125);
     box-shadow: var(--ob-shadow-lg);
     margin: 0;
 }
@@ -121,7 +121,7 @@
 }
 
 .developer-preview-standalone__details dt {
-    font-size: 0.85rem;
+    font-size: var(--ob-font-size-sm);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--ob-color-text-subtle);
@@ -139,20 +139,20 @@
 }
 
 .developer-preview-standalone__layers {
-    margin-top: 2rem;
+    margin-top: var(--ob-space-200);
     background: var(--ob-color-bg-surface);
     border-radius: 1.5rem;
-    padding: 1.75rem 2rem;
+    padding: 1.75rem var(--ob-space-200);
     box-shadow: var(--ob-shadow-lg);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--ob-space-100);
 }
 
 .developer-preview-standalone__layers-header {
     display: flex;
     justify-content: space-between;
-    gap: 1rem;
+    gap: var(--ob-space-100);
     align-items: flex-start;
 }
 
@@ -197,8 +197,8 @@
 
 .developer-preview-standalone__layers-table th,
 .developer-preview-standalone__layers-table td {
-    padding: 0.65rem 0.75rem;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+    padding: 0.65rem var(--ob-space-075);
+    border-bottom: 1px solid var(--ob-color-border-subtle);
     text-align: left;
 }
 
@@ -215,7 +215,7 @@
 .developer-preview-standalone__layer-name {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--ob-space-050);
     font-weight: 600;
     text-transform: capitalize;
 }
@@ -223,17 +223,17 @@
 .developer-preview-standalone__layer-swatch {
     width: 16px;
     height: 16px;
-    border-radius: 6px;
-    border: 1px solid rgba(15, 23, 42, 0.15);
+    border-radius: var(--ob-radius-md);
+    border: 1px solid var(--ob-color-border-faint);
     flex-shrink: 0;
 }
 
 .developer-preview-standalone__layers-controls {
     display: flex;
     justify-content: flex-end;
-    gap: 0.5rem;
+    gap: var(--ob-space-050);
     flex-wrap: wrap;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--ob-space-050);
 }
 
 .developer-preview-standalone__layers-button {
@@ -261,8 +261,8 @@
     border-radius: 999px;
     border: 1px solid var(--ob-color-border-neutral);
     background: var(--ob-color-bg-surface);
-    padding: 0.25rem 0.75rem;
-    font-size: 0.85rem;
+    padding: var(--ob-space-025) var(--ob-space-075);
+    font-size: var(--ob-font-size-sm);
     font-weight: 600;
     color: var(--ob-color-text-secondary);
     cursor: pointer;
@@ -281,33 +281,33 @@
 }
 
 .developer-preview-standalone__inspection {
-    margin-top: 2rem;
-    padding: 1.5rem;
-    border-radius: 12px;
+    margin-top: var(--ob-space-200);
+    padding: var(--ob-space-150);
+    border-radius: var(--ob-radius-lg);
     background: var(--ob-neutral-900);
     border: 1px solid var(--ob-color-border-subtle);
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: var(--ob-space-125);
 }
 
 .developer-preview-standalone__inspection-header {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    gap: 1.5rem;
+    gap: var(--ob-space-150);
     align-items: center;
 }
 
 .developer-preview-standalone__inspection-title {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--ob-space-100);
 }
 
 .developer-preview-standalone__inspection-swatch {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: var(--ob-space-250);
+    height: var(--ob-space-250);
     border-radius: 0.9rem;
     border: 2px solid rgba(255, 255, 255, 0.25);
 }
@@ -323,7 +323,7 @@
 .developer-preview-standalone__inspection-select {
     display: flex;
     flex-direction: column;
-    font-size: 0.8rem;
+    font-size: var(--ob-font-size-xs);
     color: var(--ob-neutral-300);
     gap: 0.35rem;
 }
@@ -333,18 +333,18 @@
     border: 1px solid var(--ob-color-border-neutral);
     background: var(--ob-surface-glass-1);
     color: var(--ob-neutral-50);
-    padding: 0.4rem 0.75rem;
+    padding: 0.4rem var(--ob-space-075);
 }
 
 .developer-preview-standalone__inspection-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
+    gap: var(--ob-space-100);
 }
 
 .developer-preview-standalone__inspection-grid dt {
     margin: 0 0 0.35rem;
-    font-size: 0.7rem;
+    font-size: var(--ob-font-size-2xs);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--ob-neutral-400);
@@ -359,24 +359,24 @@
 .developer-preview-standalone__inspection-footprint,
 .developer-preview-standalone__inspection-floorlines {
     border-top: 1px solid rgba(148, 163, 184, 0.25);
-    padding-top: 1rem;
+    padding-top: var(--ob-space-100);
 }
 
 .developer-preview-standalone__inspection-footprint h4,
 .developer-preview-standalone__inspection-floorlines h4 {
-    margin: 0 0 0.5rem;
+    margin: 0 0 var(--ob-space-050);
     color: var(--ob-neutral-200);
 }
 
 .developer-preview-standalone__inspection-floorlines {
     color: var(--ob-neutral-300);
-    font-size: 0.95rem;
+    font-size: var(--ob-font-size-sm);
 }
 
 .developer-preview-standalone__inspection-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: var(--ob-space-075);
 }
 
 .developer-preview-standalone__layers-button.is-active {
@@ -386,16 +386,16 @@
 }
 
 .developer-preview-standalone__legend {
-    margin-top: 1.5rem;
+    margin-top: var(--ob-space-150);
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--ob-space-075);
 }
 
 .developer-preview-standalone__legend-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 0.75rem;
+    gap: var(--ob-space-075);
 }
 
 .developer-preview-standalone__legend-item {
@@ -403,7 +403,7 @@
     gap: 0.65rem;
     padding: 0.85rem;
     border: 1px solid var(--ob-color-border-neutral);
-    border-radius: 12px;
+    border-radius: var(--ob-radius-lg);
     background: var(--ob-color-bg-surface-elevated);
 }
 
@@ -425,5 +425,21 @@
 .developer-preview-standalone__legend-description {
     margin: 0.15rem 0 0;
     color: var(--ob-color-text-secondary);
-    font-size: 0.85rem;
+    font-size: var(--ob-font-size-sm);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Responsive: Mobile                                                          */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 640px) {
+    .developer-preview__layers-table {
+        min-width: 0;
+        font-size: var(--ob-font-size-xs);
+    }
+
+    .developer-preview__layers-table th,
+    .developer-preview__layers-table td {
+        padding: var(--ob-space-025) var(--ob-space-050);
+    }
 }

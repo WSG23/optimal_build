@@ -36,6 +36,16 @@ const LANGUAGES = [
   { code: 'zh', label: '中文', flag: '🇨🇳' },
 ]
 
+const DEVELOPER_LINKS = [
+  { to: '/app/site-acquisition', label: 'Site Acquisition' },
+  { to: '/app/asset-feasibility', label: 'Asset Feasibility' },
+  { to: '/app/financial-control', label: 'Financial Control' },
+  { to: '/app/phase-management', label: 'Phase Management' },
+  { to: '/developers/team-coordination', label: 'Team Coordination' },
+  { to: '/app/regulatory', label: 'Regulatory Navigation' },
+  { to: '/developer', label: 'Developer Console' },
+]
+
 export function TopUtilityMenu() {
   const theme = useTheme()
   const { i18n } = useTranslation()
@@ -298,76 +308,19 @@ export function TopUtilityMenu() {
               </ListItemIcon>
               <ListItemText>Developer workspace</ListItemText>
             </MenuItem>
-            <MenuItem
-              component={Link}
-              to="/app/site-acquisition"
-              onClick={() => setAnchorEl(null)}
-            >
-              <ListItemIcon>
-                <CodeIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Site Acquisition</ListItemText>
-            </MenuItem>
-            <MenuItem
-              component={Link}
-              to="/app/asset-feasibility"
-              onClick={() => setAnchorEl(null)}
-            >
-              <ListItemIcon>
-                <CodeIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Asset Feasibility</ListItemText>
-            </MenuItem>
-            <MenuItem
-              component={Link}
-              to="/app/financial-control"
-              onClick={() => setAnchorEl(null)}
-            >
-              <ListItemIcon>
-                <CodeIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Financial Control</ListItemText>
-            </MenuItem>
-            <MenuItem
-              component={Link}
-              to="/app/phase-management"
-              onClick={() => setAnchorEl(null)}
-            >
-              <ListItemIcon>
-                <CodeIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Phase Management</ListItemText>
-            </MenuItem>
-            <MenuItem
-              component={Link}
-              to="/developers/team-coordination"
-              onClick={() => setAnchorEl(null)}
-            >
-              <ListItemIcon>
-                <CodeIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Team Coordination</ListItemText>
-            </MenuItem>
-            <MenuItem
-              component={Link}
-              to="/app/regulatory"
-              onClick={() => setAnchorEl(null)}
-            >
-              <ListItemIcon>
-                <CodeIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Regulatory Navigation</ListItemText>
-            </MenuItem>
-            <MenuItem
-              component={Link}
-              to="/developer"
-              onClick={() => setAnchorEl(null)}
-            >
-              <ListItemIcon>
-                <CodeIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Developer Console</ListItemText>
-            </MenuItem>
+            {DEVELOPER_LINKS.map(({ to, label }) => (
+              <MenuItem
+                key={to}
+                component={Link}
+                to={to}
+                onClick={() => setAnchorEl(null)}
+              >
+                <ListItemIcon>
+                  <CodeIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>{label}</ListItemText>
+              </MenuItem>
+            ))}
           </>
         )}
 
@@ -413,6 +366,7 @@ export function TopUtilityMenu() {
         autoHideDuration={2000}
         onClose={() => setSnackbarMessage(null)}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        ContentProps={{ role: 'status', 'aria-live': 'polite' as const }}
       />
     </>
   )
