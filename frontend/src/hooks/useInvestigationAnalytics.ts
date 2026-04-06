@@ -5,9 +5,11 @@ import {
   fetchCrossCorrelationIntelligence,
   fetchGraphIntelligence,
   fetchPredictiveIntelligence,
+  fetchWorkspaceSignals,
   type CrossCorrelationIntelligenceResponse,
   type GraphIntelligenceResponse,
   type PredictiveIntelligenceResponse,
+  type WorkspaceSignalsResponse,
 } from '../services/analytics/advancedAnalytics'
 
 const IS_DEV = import.meta.env?.DEV ?? false
@@ -26,6 +28,7 @@ function debugError(...args: unknown[]): void {
 }
 
 export interface InvestigationAnalyticsServices {
+  fetchWorkspaceSignals: typeof fetchWorkspaceSignals
   fetchGraphIntelligence: typeof fetchGraphIntelligence
   fetchPredictiveIntelligence: typeof fetchPredictiveIntelligence
   fetchCrossCorrelationIntelligence: typeof fetchCrossCorrelationIntelligence
@@ -44,8 +47,12 @@ export type PredictiveIntelligenceState =
 export type CrossCorrelationIntelligenceState =
   | CrossCorrelationIntelligenceResponse
   | { kind: 'correlation'; status: 'loading' }
+export type WorkspaceSignalsState =
+  | WorkspaceSignalsResponse
+  | { kind: 'signals'; status: 'loading' }
 
 export interface UseInvestigationAnalyticsResult {
+  signals: WorkspaceSignalsState
   graph: GraphIntelligenceState
   predictive: PredictiveIntelligenceState
   correlation: CrossCorrelationIntelligenceState
@@ -63,6 +70,10 @@ const loadingPredictiveState: PredictiveIntelligenceState = {
 }
 const loadingCorrelationState: CrossCorrelationIntelligenceState = {
   kind: 'correlation',
+  status: 'loading',
+}
+const loadingSignalsState: WorkspaceSignalsState = {
+  kind: 'signals',
   status: 'loading',
 }
 
@@ -103,7 +114,17 @@ function toCorrelationErrorState(
   }
 }
 
+function toSignalsErrorState(reason: unknown): WorkspaceSignalsResponse {
+  return {
+    kind: 'signals',
+    status: 'error',
+    error:
+      reason instanceof Error ? reason.message : 'Unknown workspace signals error',
+  }
+}
+
 interface CachedAnalyticsEntry {
+  signals: WorkspaceSignalsState
   graph: GraphIntelligenceState
   predictive: PredictiveIntelligenceState
   correlation: CrossCorrelationIntelligenceState
@@ -126,6 +147,8 @@ export function useInvestigationAnalytics(
 
   // Remove isMountedRef - it doesn't work with React StrictMode
 
+  const [signals, setSignals] =
+    useState<WorkspaceSignalsState>(loadingSignalsState)
   const [graph, setGraph] = useState<GraphIntelligenceState>(loadingGraphState)
   const [predictive, setPredictive] = useState<PredictiveIntelligenceState>(
     loadingPredictiveState,
@@ -154,6 +177,7 @@ export function useInvestigationAnalytics(
           '[useInvestigationAnalytics] Serving analytics from cache for workspace:',
           workspaceId,
         )
+        setSignals(cachedEntry.signals)
         setGraph(cachedEntry.graph)
         setPredictive(cachedEntry.predictive)
         setCorrelation(cachedEntry.correlation)
@@ -162,13 +186,15 @@ export function useInvestigationAnalytics(
       }
 
       setIsLoading(true)
+      setSignals(loadingSignalsState)
       setGraph(loadingGraphState)
       setPredictive(loadingPredictiveState)
       setCorrelation(loadingCorrelationState)
 
       try {
-        const [graphResult, predictiveResult, correlationResult] =
+        const [signalsResult, graphResult, predictiveResult, correlationResult] =
           await Promise.allSettled([
+            services.fetchWorkspaceSignals(workspaceId),
             services.fetchGraphIntelligence(workspaceId),
             services.fetchPredictiveIntelligence(workspaceId),
             services.fetchCrossCorrelationIntelligence(workspaceId),
@@ -180,10 +206,12 @@ export function useInvestigationAnalytics(
         })
 
         const allRejected =
+          signalsResult.status === 'rejected' &&
           graphResult.status === 'rejected' &&
           predictiveResult.status === 'rejected' &&
           correlationResult.status === 'rejected'
 
+        let nextSignals: WorkspaceSignalsState
         let nextGraph: GraphIntelligenceState
         let nextPredictive: PredictiveIntelligenceState
         let nextCorrelation: CrossCorrelationIntelligenceState
@@ -192,6 +220,20 @@ export function useInvestigationAnalytics(
           debugError(
             '[useInvestigationAnalytics] All analytics requests failed.',
           )
+        }
+
+        if (signalsResult.status === 'fulfilled') {
+          debugLog(
+            '[useInvestigationAnalytics] Setting signal data:',
+            signalsResult.value,
+          )
+          nextSignals = signalsResult.value
+        } else {
+          debugError(
+            '[useInvestigationAnalytics] Signal request failed:',
+            signalsResult.reason,
+          )
+          nextSignals = toSignalsErrorState(signalsResult.reason)
         }
 
         if (graphResult.status === 'fulfilled') {
@@ -236,10 +278,12 @@ export function useInvestigationAnalytics(
           nextCorrelation = toCorrelationErrorState(correlationResult.reason)
         }
 
+        setSignals(nextSignals)
         setGraph(nextGraph)
         setPredictive(nextPredictive)
         setCorrelation(nextCorrelation)
         cacheRef.current.set(cacheKey, {
+          signals: nextSignals,
           graph: nextGraph,
           predictive: nextPredictive,
           correlation: nextCorrelation,
@@ -250,13 +294,16 @@ export function useInvestigationAnalytics(
           '[useInvestigationAnalytics] Unexpected error during analytics load:',
           error,
         )
+        const signalsErrorState = toSignalsErrorState(error)
         const graphErrorState = toGraphErrorState(error)
         const predictiveErrorState = toPredictiveErrorState(error)
         const correlationErrorState = toCorrelationErrorState(error)
+        setSignals(signalsErrorState)
         setGraph(graphErrorState)
         setPredictive(predictiveErrorState)
         setCorrelation(correlationErrorState)
         cacheRef.current.set(cacheKey, {
+          signals: signalsErrorState,
           graph: graphErrorState,
           predictive: predictiveErrorState,
           correlation: correlationErrorState,
@@ -281,6 +328,7 @@ export function useInvestigationAnalytics(
   }, [loadAnalytics])
 
   return {
+    signals,
     graph,
     predictive,
     correlation,

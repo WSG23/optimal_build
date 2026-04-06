@@ -16,6 +16,7 @@ import {
   type GraphIntelligenceState,
   type InvestigationAnalyticsServices,
   type PredictiveIntelligenceState,
+  type WorkspaceSignalsState,
   useInvestigationAnalytics,
 } from '../../hooks/useInvestigationAnalytics'
 import { KPITickerCard } from './components/KPITickerCard'
@@ -63,6 +64,14 @@ type CorrelationErrorState = Extract<
   CrossCorrelationIntelligenceState,
   { status: 'error' }
 >
+type SignalsOkState = Extract<WorkspaceSignalsState, { status: 'ok' }>
+
+const DEFAULT_SIGNAL_CARDS = [
+  'Approval Readiness',
+  'Finance Coverage',
+  'Active Workflows',
+  'Intelligence Score',
+] as const
 
 function IntelligenceStatusPanel({
   status,
@@ -204,6 +213,26 @@ function isCorrelationError(
   return correlation.status === 'error'
 }
 
+function isSignalsOk(signals: WorkspaceSignalsState): signals is SignalsOkState {
+  return signals.status === 'ok'
+}
+
+function formatSignalValue(
+  value: number | null | undefined,
+  unit: string | null | undefined,
+): string {
+  if (value === null || value === undefined) {
+    return 'N/A'
+  }
+  if (unit === '%') {
+    return `${value.toFixed(1)}%`
+  }
+  if (unit === 'count') {
+    return Math.round(value).toString()
+  }
+  return Math.round(value).toString()
+}
+
 interface AdvancedIntelligenceContentProps {
   projectId: string
   services?: Partial<InvestigationAnalyticsServices>
@@ -213,7 +242,7 @@ function AdvancedIntelligenceContent({
   projectId,
   services,
 }: AdvancedIntelligenceContentProps) {
-  const { graph, predictive, correlation, isLoading, refetch } =
+  const { signals, graph, predictive, correlation, isLoading, refetch } =
     useInvestigationAnalytics(projectId, services)
   const theme = useTheme()
 
@@ -221,39 +250,29 @@ function AdvancedIntelligenceContent({
     return refetch()
   }, [refetch])
 
-  // --- Derived Metrics ---
-  const adoptionRate = useMemo(() => {
-    if (predictive.status !== 'ok') return 0
-    if (predictive.segments.length === 0) return 0
-    const sum = predictive.segments.reduce((acc, s) => acc + s.probability, 0)
-    return (sum / predictive.segments.length) * 100
-  }, [predictive])
-
-  const uplift = useMemo(() => {
-    if (predictive.status !== 'ok') return 0
-    let count = 0
-    const sum = predictive.segments.reduce((acc, s) => {
-      if (s.baseline === 0) return acc
-      count++
-      return acc + ((s.projection - s.baseline) / s.baseline) * 100
-    }, 0)
-    return count === 0 ? 0 : sum / count
-  }, [predictive])
-
-  const predictiveSegments =
-    predictive.status === 'ok' ? predictive.segments : []
-  const experimentCount = predictiveSegments.length
-  const hasPredictiveSignals = predictive.status === 'ok' && experimentCount > 0
-  const intelligenceScore = useMemo(() => {
-    if (graph.status !== 'ok') {
-      return null
+  const signalCards = useMemo(() => {
+    if (!isSignalsOk(signals)) {
+      return DEFAULT_SIGNAL_CARDS.map((label) => ({
+        label,
+        value: 'N/A',
+        trend: null,
+        data: null,
+      }))
     }
-    if (graph.graph.nodes.length === 0) {
-      return null
-    }
-    const total = graph.graph.nodes.reduce((sum, node) => sum + node.score, 0)
-    return (total / graph.graph.nodes.length) * 100
-  }, [graph])
+
+    return DEFAULT_SIGNAL_CARDS.map((defaultLabel) => {
+      const signal = signals.signals.find((item) => item.label === defaultLabel)
+      return {
+        label: defaultLabel,
+        value: formatSignalValue(signal?.value, signal?.unit),
+        trend: null,
+        data:
+          signal && signal.trend.length > 1
+            ? signal.trend.map((point) => point.value)
+            : null,
+      }
+    })
+  }, [signals])
   const graphStatus = getGraphStatus(graph)
   const predictiveStatus = getPredictiveStatus(predictive)
   const correlationStatus = getCorrelationStatus(correlation)
@@ -322,41 +341,35 @@ function AdvancedIntelligenceContent({
           <Grid container spacing="var(--ob-space-150)">
             <Grid item xs={12} md={3}>
               <KPITickerCard
-                label="Adoption Likelihood"
-                value={
-                  hasPredictiveSignals ? `${adoptionRate.toFixed(1)}%` : 'N/A'
-                }
-                trend={null}
-                data={null}
+                label={signalCards[0].label}
+                value={signalCards[0].value}
+                trend={signalCards[0].trend}
+                data={signalCards[0].data}
                 active={true}
               />
             </Grid>
             <Grid item xs={12} md={3}>
               <KPITickerCard
-                label="Projected Uplift"
-                value={hasPredictiveSignals ? `${uplift.toFixed(1)}%` : 'N/A'}
-                trend={null}
-                data={null}
+                label={signalCards[1].label}
+                value={signalCards[1].value}
+                trend={signalCards[1].trend}
+                data={signalCards[1].data}
               />
             </Grid>
             <Grid item xs={12} md={3}>
               <KPITickerCard
-                label="Active Experiments"
-                value={hasPredictiveSignals ? String(experimentCount) : 'N/A'}
-                trend={null}
-                data={null}
+                label={signalCards[2].label}
+                value={signalCards[2].value}
+                trend={signalCards[2].trend}
+                data={signalCards[2].data}
               />
             </Grid>
             <Grid item xs={12} md={3}>
               <KPITickerCard
-                label="Intelligence Score"
-                value={
-                  intelligenceScore === null
-                    ? 'N/A'
-                    : Math.round(intelligenceScore).toString()
-                }
-                trend={null}
-                data={null}
+                label={signalCards[3].label}
+                value={signalCards[3].value}
+                trend={signalCards[3].trend}
+                data={signalCards[3].data}
               />
             </Grid>
           </Grid>
@@ -386,7 +399,11 @@ function AdvancedIntelligenceContent({
                   nodes={graphData!.graph.nodes.map((n) => ({
                     id: n.id,
                     label: n.label,
-                    category: n.category as 'Team' | 'Workflow',
+                    category: n.category as
+                      | 'Team'
+                      | 'Workflow'
+                      | 'Project'
+                      | 'Finance',
                     weight: n.score,
                   }))}
                   links={graphData!.graph.edges.map((e) => ({
@@ -581,7 +598,7 @@ export function AdvancedIntelligencePage({
             <Grid container spacing="var(--ob-space-150)">
               <Grid item xs={12} md={3}>
                 <KPITickerCard
-                  label="Adoption Likelihood"
+                  label={DEFAULT_SIGNAL_CARDS[0]}
                   value="N/A"
                   trend={null}
                   data={null}
@@ -590,7 +607,7 @@ export function AdvancedIntelligencePage({
               </Grid>
               <Grid item xs={12} md={3}>
                 <KPITickerCard
-                  label="Projected Uplift"
+                  label={DEFAULT_SIGNAL_CARDS[1]}
                   value="N/A"
                   trend={null}
                   data={null}
@@ -598,7 +615,7 @@ export function AdvancedIntelligencePage({
               </Grid>
               <Grid item xs={12} md={3}>
                 <KPITickerCard
-                  label="Active Experiments"
+                  label={DEFAULT_SIGNAL_CARDS[2]}
                   value="N/A"
                   trend={null}
                   data={null}
@@ -606,7 +623,7 @@ export function AdvancedIntelligencePage({
               </Grid>
               <Grid item xs={12} md={3}>
                 <KPITickerCard
-                  label="Intelligence Score"
+                  label={DEFAULT_SIGNAL_CARDS[3]}
                   value="N/A"
                   trend={null}
                   data={null}
