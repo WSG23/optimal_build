@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import { useTranslation } from './i18n'
 import { Link } from './router'
-import { AppShell } from './components/layout/YosaiShell'
+import { AppShell } from './components/layout/Shell'
 
 export interface AppLayoutProps {
   title: string
@@ -61,8 +61,8 @@ export function HomeOverview() {
               style={{
                 width: '40px',
                 height: '40px',
-                borderRadius: '50%',
-                background: 'rgba(59, 130, 246, 0.1)',
+                borderRadius: 'var(--ob-radius-pill)',
+                background: 'var(--ob-accent-brand-bg)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -96,8 +96,8 @@ export function HomeOverview() {
               style={{
                 width: '40px',
                 height: '40px',
-                borderRadius: '50%',
-                background: 'rgba(16, 185, 129, 0.1)',
+                borderRadius: 'var(--ob-radius-pill)',
+                background: 'var(--ob-accent-success-bg)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -121,8 +121,9 @@ export function HomeOverview() {
           className="app-home__card"
           style={{
             background:
-              'linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,1) 100%)',
-            border: '1px solid rgba(59,130,246,0.3)',
+              'linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,1) 100%)' /* theme-mapped: dark surface gradient */,
+            border:
+              '1px solid rgba(59,130,246,0.3)' /* theme-mapped: brand border */,
           }}
         >
           <div
@@ -135,8 +136,8 @@ export function HomeOverview() {
           >
             <h3
               style={{
-                color: '#94A3B8',
-                fontSize: '0.875rem',
+                color: 'var(--ob-neutral-400)',
+                fontSize: 'var(--ob-font-size-sm)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
               }}
@@ -145,8 +146,8 @@ export function HomeOverview() {
             </h3>
             <span
               style={{
-                color: '#10B981',
-                fontSize: '0.875rem',
+                color: 'var(--ob-success-500)',
+                fontSize: 'var(--ob-font-size-sm)',
                 fontWeight: 600,
               }}
             >
@@ -157,14 +158,19 @@ export function HomeOverview() {
             style={{
               fontSize: '2.5rem',
               fontWeight: 700,
-              color: '#F8FAFC',
+              color: 'var(--ob-neutral-50)',
               fontFamily: 'JetBrains Mono, monospace',
               marginBottom: '0.5rem',
             }}
           >
             $42.8M
           </div>
-          <p style={{ fontSize: '0.875rem', color: '#64748B' }}>
+          <p
+            style={{
+              fontSize: 'var(--ob-font-size-sm)',
+              color: 'var(--ob-neutral-500)',
+            }}
+          >
             Weighted probability across 12 active deals.
           </p>
           {/* Sparkline Placeholder */}
@@ -172,8 +178,8 @@ export function HomeOverview() {
             style={{
               height: '30px',
               marginTop: '1rem',
-              background: 'rgba(255,255,255,0.05)',
-              borderRadius: '4px',
+              background: 'var(--ob-overlay-white-subtle)',
+              borderRadius: 'var(--ob-radius-sm)',
               position: 'relative',
               overflow: 'hidden',
             }}
@@ -186,14 +192,14 @@ export function HomeOverview() {
                 width: '100%',
                 height: '100%',
                 background:
-                  'linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.2) 100%)',
+                  'linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.2) 100%)' /* theme-mapped: brand gradient */,
               }}
             ></div>
             <svg width="100%" height="100%" preserveAspectRatio="none">
               <path
                 d="M0,30 L50,20 L100,25 L150,10 L200,15 L250,5 L300,20"
                 fill="none"
-                stroke="#3B82F6"
+                stroke="var(--ob-brand-500)"
                 strokeWidth="2"
               />
             </svg>
@@ -204,8 +210,8 @@ export function HomeOverview() {
             style={{
               marginTop: '1rem',
               width: '100%',
-              background: 'rgba(59,130,246,0.1)',
-              color: '#60A5FA',
+              background: 'var(--ob-accent-brand-bg)',
+              color: 'var(--ob-brand-400)',
             }}
           >
             View Operations
@@ -227,8 +233,8 @@ export function HomeOverview() {
               style={{
                 width: '40px',
                 height: '40px',
-                borderRadius: '50%',
-                background: 'rgba(245, 158, 11, 0.1)',
+                borderRadius: 'var(--ob-radius-pill)',
+                background: 'var(--ob-accent-warning-bg)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -262,8 +268,8 @@ export function HomeOverview() {
               style={{
                 width: '40px',
                 height: '40px',
-                borderRadius: '50%',
-                background: 'rgba(239, 68, 68, 0.1)',
+                borderRadius: 'var(--ob-radius-pill)',
+                background: 'var(--ob-accent-error-bg)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

@@ -517,6 +517,15 @@ export const RegulatoryDashboardPage: React.FC = () => {
         onClose={() => setSuccessMessage(null)}
         message={successMessage}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        ContentProps={{
+          sx: {
+            bgcolor: 'var(--ob-gold-bg)',
+            color: 'var(--ob-gold-text)',
+            border: '1px solid var(--ob-gold-400)',
+            borderRadius: 'var(--ob-radius-sm)',
+            fontWeight: 600,
+          },
+        }}
       />
     </Box>
   )

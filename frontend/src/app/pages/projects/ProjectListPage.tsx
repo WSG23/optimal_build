@@ -126,16 +126,20 @@ export function ProjectListPage() {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Card variant="outlined" sx={{ mb: 3 }}>
+      <Card variant="outlined" sx={{ mb: 'var(--ob-space-300)' }}>
         <CardContent>
-          <Stack spacing={2.5}>
+          <Stack spacing="var(--ob-space-250)">
             <Stack
               direction={{ xs: 'column', md: 'row' }}
               justifyContent="space-between"
-              spacing={2}
+              spacing="var(--ob-space-200)"
             >
               <Box>
-                <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+                <Stack
+                  direction="row"
+                  spacing="var(--ob-space-100)"
+                  sx={{ mb: 'var(--ob-space-100)' }}
+                >
                   <Chip
                     size="small"
                     color="primary"
@@ -164,11 +168,11 @@ export function ProjectListPage() {
               </Box>
             </Stack>
 
-            <Grid container spacing={2}>
+            <Grid container spacing="var(--ob-space-200)">
               <Grid item xs={12} md={4}>
                 <Card variant="outlined" sx={{ height: '100%' }}>
                   <CardContent>
-                    <Stack spacing={1.25}>
+                    <Stack spacing="var(--ob-space-125)">
                       <CalculateOutlined color="primary" />
                       <Typography variant="h6">Model a deal</Typography>
                       <Typography variant="body2" color="text.secondary">
@@ -191,7 +195,7 @@ export function ProjectListPage() {
               <Grid item xs={12} md={4}>
                 <Card variant="outlined" sx={{ height: '100%' }}>
                   <CardContent>
-                    <Stack spacing={1.25}>
+                    <Stack spacing="var(--ob-space-125)">
                       <UploadFileOutlined color="primary" />
                       <Typography variant="h6">Import workbook</Typography>
                       <Typography variant="body2" color="text.secondary">
@@ -217,7 +221,7 @@ export function ProjectListPage() {
               <Grid item xs={12} md={4}>
                 <Card variant="outlined" sx={{ height: '100%' }}>
                   <CardContent>
-                    <Stack spacing={1.25}>
+                    <Stack spacing="var(--ob-space-125)">
                       <AutoStoriesOutlined color="primary" />
                       <Typography variant="h6">Open sample project</Typography>
                       <Typography variant="body2" color="text.secondary">
@@ -242,7 +246,7 @@ export function ProjectListPage() {
               </Grid>
             </Grid>
 
-            <Stack spacing={1}>
+            <Stack spacing="var(--ob-space-100)">
               <Typography variant="subtitle2">What to do next</Typography>
               <Typography variant="body2" color="text.secondary">
                 1. Run a quick deal screen or import a workbook.
@@ -264,8 +268,8 @@ export function ProjectListPage() {
         direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
         alignItems={{ xs: 'flex-start', sm: 'center' }}
-        spacing={2}
-        sx={{ mb: 3 }}
+        spacing="var(--ob-space-200)"
+        sx={{ mb: 'var(--ob-space-300)' }}
       >
         <Box>
           <Typography variant="h4">Projects</Typography>
@@ -280,7 +284,7 @@ export function ProjectListPage() {
       </Stack>
 
       {createError && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 'var(--ob-space-200)' }}>
           {createError}
         </Alert>
       )}
@@ -314,11 +318,11 @@ export function ProjectListPage() {
           secondaryActionLabel="Import workbook"
           onSecondaryAction={() => void handleLaunchWorkbook()}
           size="lg"
-          sx={{ py: 8, mb: 3 }}
+          sx={{ py: 'var(--ob-space-400)', mb: 'var(--ob-space-300)' }}
         />
       )}
 
-      <Grid container spacing={2}>
+      <Grid container spacing="var(--ob-space-200)">
         {projects.map((project) => (
           <Grid item xs={12} md={6} lg={4} key={project.id}>
             <Card variant="outlined">
@@ -355,7 +359,11 @@ export function ProjectListPage() {
             margin="dense"
           />
           {createError && (
-            <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+            <Typography
+              variant="body2"
+              color="error"
+              sx={{ mt: 'var(--ob-space-100)' }}
+            >
               {createError}
             </Typography>
           )}
@@ -376,6 +384,15 @@ export function ProjectListPage() {
         onClose={() => setSuccessMessage(null)}
         message={successMessage}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        ContentProps={{
+          sx: {
+            bgcolor: 'var(--ob-gold-bg)',
+            color: 'var(--ob-gold-text)',
+            border: '1px solid var(--ob-gold-400)',
+            borderRadius: 'var(--ob-radius-sm)',
+            fontWeight: 600,
+          },
+        }}
       />
     </Box>
   )

@@ -23,6 +23,17 @@
     }
 }
 
+@keyframes ob-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* =============================================================================
    SQUARE CYBER-MINIMALISM: Border Radius Enforcement
    =============================================================================
@@ -205,7 +216,7 @@ h6 {
         auto-fit,
         minmax(280px, 1fr)
     ); /* Wider minimum */
-    /* padding removed - YosaiShell provides canonical 16px layout padding */
+    /* padding removed - Shell provides canonical 16px layout padding */
     max-width: 1400px;
     margin: 0 auto;
 }

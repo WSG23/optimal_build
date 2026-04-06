@@ -522,13 +522,3 @@ export const theme = darkTheme
 export function getTheme(mode: ThemeMode): Theme {
   return mode === 'dark' ? darkTheme : lightTheme
 }
-
-// Deprecated exports for backward compatibility
-/** @deprecated Use darkTheme instead */
-export const yosaiDarkTheme = darkTheme
-/** @deprecated Use lightTheme instead */
-export const yosaiLightTheme = lightTheme
-/** @deprecated Use theme instead */
-export const yosaiTheme = theme
-/** @deprecated Use getTheme instead */
-export const getYosaiTheme = getTheme

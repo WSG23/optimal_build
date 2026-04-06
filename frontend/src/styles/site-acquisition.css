@@ -13,7 +13,7 @@
     /* No gap - use explicit margins like canonical pages (Team, Business Performance) */
     width: 100%;
     /* No max-width - use full width like other pages */
-    /* padding removed - YosaiShell provides canonical 16px layout padding */
+    /* padding removed - Shell provides canonical 16px layout padding */
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
 }
@@ -169,9 +169,7 @@
 
 .site-acquisition__empty-state {
     padding: var(--ob-space-200);
-    background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(var(--ob-blur-md));
-    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    background: var(--ob-color-surface-secondary, rgba(15, 23, 42, 0.85));
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
     text-align: center;
@@ -1028,9 +1026,7 @@
 
 .due-diligence__category {
     /* margin-bottom removed - parent .due-diligence uses gap for uniform spacing */
-    background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(var(--ob-blur-md));
-    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    background: var(--ob-color-surface-secondary, rgba(15, 23, 42, 0.85));
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
     overflow: hidden;
@@ -1502,9 +1498,7 @@
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
     padding: var(--ob-space-200);
-    background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(var(--ob-blur-md));
-    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    background: var(--ob-color-surface-secondary, rgba(15, 23, 42, 0.85));
     display: flex;
     flex-direction: column;
     gap: var(--ob-space-175);
@@ -1746,9 +1740,7 @@
     margin-top: var(--ob-space-200);
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
-    background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(var(--ob-blur-md));
-    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    background: var(--ob-color-surface-secondary, rgba(15, 23, 42, 0.85));
 }
 
 @media (max-width: 640px) {
@@ -1811,9 +1803,7 @@
 .multi-scenario__workspace-card {
     position: relative;
     padding: var(--ob-space-200);
-    background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(var(--ob-blur-md));
-    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    background: var(--ob-color-surface-secondary, rgba(15, 23, 42, 0.85));
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
     transition:
@@ -1901,7 +1891,7 @@
     color: var(--ob-color-text-primary);
 }
 
-.multi-scenario__workspace-metric-value--cyan {
+.multi-scenario__workspace-metric-value--brand {
     color: var(--ob-color-brand-primary);
 }
 
@@ -2001,9 +1991,7 @@
 .multi-scenario__path-module {
     position: relative;
     display: flex;
-    background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(var(--ob-blur-md));
-    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    background: var(--ob-color-surface-secondary, rgba(15, 23, 42, 0.85));
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
     overflow: hidden;
@@ -2156,7 +2144,7 @@
     color: var(--ob-color-text-primary);
 }
 
-.multi-scenario__path-metric-value--cyan {
+.multi-scenario__path-metric-value--brand {
     color: var(--ob-color-brand-primary);
 }
 
@@ -2263,9 +2251,7 @@
     flex-direction: column;
     gap: var(--ob-space-150);
     padding: var(--ob-space-200);
-    background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(var(--ob-blur-md));
-    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    background: var(--ob-color-surface-secondary, rgba(15, 23, 42, 0.85));
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
 }
@@ -2477,9 +2463,7 @@
     flex-direction: column;
     gap: var(--ob-space-100);
     padding: var(--ob-space-150);
-    background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(var(--ob-blur-md));
-    -webkit-backdrop-filter: blur(var(--ob-blur-md));
+    background: var(--ob-color-surface-secondary, rgba(15, 23, 42, 0.85));
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
 }
@@ -2812,7 +2796,7 @@
 
 /* -------------------------------------------------------------------------- */
 /* Condition Assessment Card Hover States                                      */
-/* Per Card Interaction States: Cyan border glow on hover                      */
+/* Per Card Interaction States: Brand border glow on hover                      */
 /* -------------------------------------------------------------------------- */
 
 /* Insight Card - glass surface with left border accent */

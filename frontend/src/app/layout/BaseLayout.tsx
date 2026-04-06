@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react'
 import { Box } from '@mui/material'
 import { BaseLayoutProvider } from './BaseLayoutContext'
-import { YosaiTopNav } from '../../components/layout/YosaiTopNav'
+import { TopNav } from '../../components/layout/TopNav'
 import { ErrorBoundary } from '../../components/ErrorBoundary'
 import { useThemeMode } from '../../theme/ThemeContext'
 
@@ -55,10 +55,7 @@ export function BaseLayout({ children }: { children: ReactNode }) {
           }}
         />
 
-        {/* Scanline Animation (dark mode only) */}
-        {mode === 'dark' && <Box className="ob-scanline" aria-hidden />}
-
-        <YosaiTopNav
+        <TopNav
           isPinned={isNavPinned}
           onTogglePinned={() => setIsNavPinned((prev) => !prev)}
         />
@@ -69,7 +66,7 @@ export function BaseLayout({ children }: { children: ReactNode }) {
             display: 'flex',
             flexDirection: 'column',
             minHeight: 0,
-            // Allow child components (AppShell, YosaiShell) to handle their own scrolling
+            // Allow child components (AppShell, Shell) to handle their own scrolling
             overflow: 'visible',
             position: 'relative',
             zIndex: 1,
