@@ -5,7 +5,7 @@ import { Box, useTheme, alpha } from '@mui/material'
 interface Node {
   id: string
   label: string
-  category: 'Team' | 'Workflow'
+  category: 'Team' | 'Workflow' | 'Project' | 'Finance'
   weight: number
 }
 
@@ -275,10 +275,18 @@ export function RelationshipGraph({
           const pos = positions[node.id]
           if (!pos) return null
 
-          const isTeam = node.category === 'Team'
-          const color = isTeam
-            ? theme.palette.info.main
-            : theme.palette.secondary.main
+          const color = (() => {
+            switch (node.category) {
+              case 'Team':
+                return theme.palette.info.main
+              case 'Project':
+                return theme.palette.success.main
+              case 'Finance':
+                return theme.palette.warning.main
+              default:
+                return theme.palette.secondary.main
+            }
+          })()
           const radius = 8 + node.weight * 5 // Size by weight
 
           return (

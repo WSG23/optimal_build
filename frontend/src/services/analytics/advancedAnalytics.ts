@@ -172,6 +172,45 @@ const correlationResponseSchema = z.discriminatedUnion('status', [
   correlationErrorSchema,
 ])
 
+const signalHistoryPointSchema = z.object({
+  timestamp: z.string(),
+  value: z.number(),
+})
+
+const workspaceSignalSchema = z.object({
+  signalId: z.string(),
+  label: z.string(),
+  value: z.number().nullable().optional(),
+  unit: z.string().nullable().optional(),
+  trend: z.array(signalHistoryPointSchema).default([]),
+})
+
+const signalsSuccessSchema = z.object({
+  kind: z.literal('signals'),
+  status: z.literal('ok'),
+  summary: z.string(),
+  generatedAt: z.string(),
+  signals: z.array(workspaceSignalSchema),
+})
+
+const signalsEmptySchema = z.object({
+  kind: z.literal('signals'),
+  status: z.literal('empty'),
+  summary: z.string().optional(),
+})
+
+const signalsErrorSchema = z.object({
+  kind: z.literal('signals'),
+  status: z.literal('error'),
+  error: z.string(),
+})
+
+const signalsResponseSchema = z.discriminatedUnion('status', [
+  signalsSuccessSchema,
+  signalsEmptySchema,
+  signalsErrorSchema,
+])
+
 export type GraphIntelligenceResponse = z.infer<typeof graphResponseSchema>
 export type PredictiveIntelligenceResponse = z.infer<
   typeof predictiveResponseSchema
@@ -179,6 +218,7 @@ export type PredictiveIntelligenceResponse = z.infer<
 export type CrossCorrelationIntelligenceResponse = z.infer<
   typeof correlationResponseSchema
 >
+export type WorkspaceSignalsResponse = z.infer<typeof signalsResponseSchema>
 
 function parseOrThrow<T>(
   schema: z.ZodType<T>,
@@ -249,6 +289,28 @@ function normaliseCorrelationResponse(
       kind: 'correlation',
       status: 'empty',
       summary: payload.summary,
+    }
+  }
+  return payload
+}
+
+function normaliseSignalsResponse(
+  payload: WorkspaceSignalsResponse,
+): WorkspaceSignalsResponse {
+  if (payload.status === 'ok') {
+    if (payload.signals.length === 0) {
+      return {
+        kind: 'signals',
+        status: 'empty',
+        summary: payload.summary,
+      }
+    }
+    return {
+      ...payload,
+      signals: payload.signals.map((signal) => ({
+        ...signal,
+        trend: signal.trend ?? [],
+      })),
     }
   }
   return payload
@@ -362,7 +424,38 @@ export async function fetchCrossCorrelationIntelligence(
   }
 }
 
+export async function fetchWorkspaceSignals(
+  projectId: string,
+): Promise<WorkspaceSignalsResponse> {
+  debugLog('[fetchWorkspaceSignals] Calling API for project:', projectId)
+  try {
+    const response = await requestWithTimeout(
+      (signal) =>
+        apiClient.get<unknown>('/api/v1/analytics/intelligence/signals', {
+          params: { projectId },
+          signal,
+        }),
+      'Workspace signals request timed out',
+    )
+    debugLog('[fetchWorkspaceSignals] Response:', response.data)
+    const payload = parseOrThrow(
+      signalsResponseSchema,
+      response.data,
+      'Workspace signals payload failed validation',
+    ) as WorkspaceSignalsResponse
+    debugLog('[fetchWorkspaceSignals] Returning:', payload)
+    return normaliseSignalsResponse(payload)
+  } catch (error) {
+    debugError('[fetchWorkspaceSignals] Error:', error)
+    if (error instanceof IntelligenceValidationError) {
+      throw error
+    }
+    throw new IntelligenceRequestError('Failed to load workspace signals', error)
+  }
+}
+
 export const advancedAnalyticsService = {
+  fetchWorkspaceSignals,
   fetchGraphIntelligence,
   fetchPredictiveIntelligence,
   fetchCrossCorrelationIntelligence,

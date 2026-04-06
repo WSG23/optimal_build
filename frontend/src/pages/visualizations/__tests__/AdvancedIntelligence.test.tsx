@@ -8,6 +8,7 @@ import type {
   CrossCorrelationIntelligenceResponse,
   GraphIntelligenceResponse,
   PredictiveIntelligenceResponse,
+  WorkspaceSignalsResponse,
 } from '../../../services/analytics/advancedAnalytics'
 
 vi.mock('../../../App', () => ({
@@ -54,6 +55,7 @@ vi.mock('../components/CorrelationHeatmap', () => ({
 }))
 
 function renderPage(services: {
+  fetchWorkspaceSignals: () => Promise<WorkspaceSignalsResponse>
   fetchGraphIntelligence: () => Promise<GraphIntelligenceResponse>
   fetchPredictiveIntelligence: () => Promise<PredictiveIntelligenceResponse>
   fetchCrossCorrelationIntelligence: () => Promise<CrossCorrelationIntelligenceResponse>
@@ -68,6 +70,7 @@ describe('AdvancedIntelligencePage', () => {
     const pending = new Promise<never>(() => undefined)
 
     renderPage({
+      fetchWorkspaceSignals: () => pending,
       fetchGraphIntelligence: () => pending,
       fetchPredictiveIntelligence: () => pending,
       fetchCrossCorrelationIntelligence: () => pending,
@@ -82,6 +85,11 @@ describe('AdvancedIntelligencePage', () => {
 
   it('renders narrative empty states when analytics payloads are empty', async () => {
     renderPage({
+      fetchWorkspaceSignals: async () => ({
+        kind: 'signals',
+        status: 'empty',
+        summary: 'No workspace signals.',
+      }),
       fetchGraphIntelligence: async () => ({
         kind: 'graph',
         status: 'empty',
@@ -113,14 +121,50 @@ describe('AdvancedIntelligencePage', () => {
       screen.getByText('No significant cross-correlations detected yet'),
     ).toBeInTheDocument()
     expect(screen.getByText('No correlation signals.')).toBeInTheDocument()
-    expect(screen.getByText('Adoption Likelihood: N/A')).toBeInTheDocument()
-    expect(screen.getByText('Projected Uplift: N/A')).toBeInTheDocument()
-    expect(screen.getByText('Active Experiments: N/A')).toBeInTheDocument()
+    expect(screen.getByText('Approval Readiness: N/A')).toBeInTheDocument()
+    expect(screen.getByText('Finance Coverage: N/A')).toBeInTheDocument()
+    expect(screen.getByText('Active Workflows: N/A')).toBeInTheDocument()
     expect(screen.getByText('Intelligence Score: N/A')).toBeInTheDocument()
   })
 
   it('renders explicit graph error copy without collapsing other panels', async () => {
     renderPage({
+      fetchWorkspaceSignals: async () => ({
+        kind: 'signals',
+        status: 'ok',
+        summary: 'Signal snapshot ready.',
+        generatedAt: '2026-04-06T00:00:00Z',
+        signals: [
+          {
+            signalId: 'approval-readiness',
+            label: 'Approval Readiness',
+            value: 67.5,
+            unit: '%',
+            trend: [],
+          },
+          {
+            signalId: 'finance-coverage',
+            label: 'Finance Coverage',
+            value: 81.4,
+            unit: '%',
+            trend: [],
+          },
+          {
+            signalId: 'active-workflows',
+            label: 'Active Workflows',
+            value: 2,
+            unit: 'count',
+            trend: [],
+          },
+          {
+            signalId: 'intelligence-score',
+            label: 'Intelligence Score',
+            value: 74,
+            unit: 'score',
+            trend: [],
+          },
+        ],
+      }),
       fetchGraphIntelligence: async () => {
         throw new Error('graph service unavailable')
       },
@@ -146,6 +190,7 @@ describe('AdvancedIntelligencePage', () => {
     expect(
       screen.getByText('No significant cross-correlations detected yet'),
     ).toBeInTheDocument()
+    expect(screen.getByText('Approval Readiness: 67.5%')).toBeInTheDocument()
   })
 
   it('renders a strict select-project empty state when no project is scoped', () => {
