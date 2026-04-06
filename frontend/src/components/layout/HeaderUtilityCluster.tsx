@@ -12,18 +12,19 @@ import {
   Avatar,
 } from '@mui/material'
 import {
+  Language as LanguageIcon,
   Settings as SettingsIcon,
   LightMode as LightModeIcon,
   DarkMode as DarkModeIcon,
   KeyboardArrowDown,
   Code as CodeIcon,
 } from '@mui/icons-material'
-import { useTranslation } from '../../i18n'
+import { getSupportedLanguage, supportedLanguages, useTranslation } from '../../i18n'
 import { useThemeMode } from '../../theme/ThemeContext'
 import { useDeveloperMode } from '../../contexts/useDeveloperMode'
 
 export function HeaderUtilityCluster() {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const { mode, toggleMode } = useThemeMode()
   const { isDeveloperMode, toggleDeveloperMode } = useDeveloperMode()
   const theme = useTheme()
@@ -50,15 +51,7 @@ export function HeaderUtilityCluster() {
       ? i18n.resolvedLanguage
       : i18n.language
 
-  // Map for display
-  const LANGUAGES = [
-    { code: 'en', label: 'English', flag: '🇺🇸' },
-    { code: 'ja', label: '日本語', flag: '🇯🇵' },
-    { code: 'zh', label: '中文', flag: '🇨🇳' },
-  ]
-
-  const currentLangObj =
-    LANGUAGES.find((l) => l.code === currentLanguage) || LANGUAGES[0]
+  const currentLangObj = getSupportedLanguage(currentLanguage)
 
   const buttonSx = {
     color: 'text.primary',
@@ -127,17 +120,18 @@ export function HeaderUtilityCluster() {
           />
         }
         startIcon={
-          <Box
-            component="span"
-            sx={{ fontSize: 'var(--ob-font-size-lg)', lineHeight: 1 }}
-          >
-            {currentLangObj.flag}
-          </Box>
+          <LanguageIcon
+            sx={{
+              color: 'text.secondary',
+              fontSize: 'var(--ob-font-size-base)',
+            }}
+          />
         }
+        aria-label={t('common.language.label')}
         sx={buttonSx}
       >
         <Box component="span" sx={{ mr: 'var(--ob-space-025)' }}>
-          {currentLangObj.code.toUpperCase()}
+          {currentLangObj.menuCode}
         </Box>
       </Button>
 
@@ -159,17 +153,63 @@ export function HeaderUtilityCluster() {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        {LANGUAGES.map((lang) => (
+        {supportedLanguages.map((lang) => (
           <MenuItem
-            key={lang.code}
-            onClick={() => handleLanguageChange(lang.code)}
-            selected={currentLanguage === lang.code}
-            sx={{ gap: 2, fontSize: 'var(--ob-font-size-sm)' }}
+            key={lang.value}
+            onClick={() => handleLanguageChange(lang.value)}
+            selected={currentLanguage === lang.value}
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 'var(--ob-space-150)',
+              py: 'var(--ob-space-075)',
+            }}
           >
-            <Box component="span" sx={{ fontSize: 'var(--ob-font-size-lg)' }}>
-              {lang.flag}
+            <Box sx={{ minWidth: 0 }}>
+              <Box
+                component="span"
+                sx={{
+                  display: 'block',
+                  fontSize: 'var(--ob-font-size-sm)',
+                  fontWeight: currentLanguage === lang.value ? 600 : 500,
+                }}
+              >
+                {t(lang.labelKey)}
+              </Box>
+              <Box
+                component="span"
+                sx={{
+                  display: 'block',
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                }}
+              >
+                {lang.nativeLabel}
+              </Box>
             </Box>
-            {lang.label}
+            <Box
+              component="span"
+              sx={{
+                minWidth: '2.5rem',
+                px: 'var(--ob-space-050)',
+                py: '2px',
+                borderRadius: 'var(--ob-radius-pill)',
+                border: '1px solid',
+                borderColor:
+                  currentLanguage === lang.value
+                    ? 'var(--ob-color-neon-cyan)'
+                    : alpha(theme.palette.divider, 0.2),
+                color:
+                  currentLanguage === lang.value
+                    ? 'var(--ob-color-neon-cyan)'
+                    : 'text.secondary',
+                fontFamily: 'var(--ob-font-family-mono)',
+                fontSize: 'var(--ob-font-size-xs)',
+                textAlign: 'center',
+              }}
+            >
+              {lang.menuCode}
+            </Box>
           </MenuItem>
         ))}
       </Menu>
@@ -214,12 +254,13 @@ export function HeaderUtilityCluster() {
             color: 'var(--ob-color-neon-cyan)',
             fontSize: 'var(--ob-font-size-sm)',
             fontWeight: 700,
+            fontFamily: 'var(--ob-font-family-mono)',
             '&:hover': {
               boxShadow: 'var(--ob-glow-neon-cyan)',
             },
           }}
         >
-          US
+          OB
         </Avatar>
       </Tooltip>
     </Stack>
