@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useMemo } from 'react'
+import { ReactNode, useCallback, useContext, useMemo } from 'react'
 import { Box, Grid, Typography, useTheme } from '@mui/material'
 import {
   AccountTreeOutlined,
@@ -9,6 +9,8 @@ import {
 
 import { AppLayout } from '../../App'
 import { EmptyState, Skeleton, SkeletonText } from '../../components/canonical'
+import { ProjectContext } from '../../contexts/projectContextDef'
+import { useRouterParams } from '../../router'
 import {
   type CrossCorrelationIntelligenceState,
   type GraphIntelligenceState,
@@ -22,11 +24,9 @@ import { ConfidenceGauge } from './components/ConfidenceGauge'
 import { CorrelationHeatmap } from './components/CorrelationHeatmap'
 
 export interface AdvancedIntelligencePageProps {
-  workspaceId?: string
+  projectId?: string
   services?: Partial<InvestigationAnalyticsServices>
 }
-
-const DEFAULT_WORKSPACE_ID = 'default-investigation'
 
 interface IntelligenceStatusPanelProps {
   status: 'loading' | 'empty' | 'error'
@@ -204,12 +204,17 @@ function isCorrelationError(
   return correlation.status === 'error'
 }
 
-export function AdvancedIntelligencePage({
-  workspaceId = DEFAULT_WORKSPACE_ID,
+interface AdvancedIntelligenceContentProps {
+  projectId: string
+  services?: Partial<InvestigationAnalyticsServices>
+}
+
+function AdvancedIntelligenceContent({
+  projectId,
   services,
-}: AdvancedIntelligencePageProps) {
+}: AdvancedIntelligenceContentProps) {
   const { graph, predictive, correlation, isLoading, refetch } =
-    useInvestigationAnalytics(workspaceId, services)
+    useInvestigationAnalytics(projectId, services)
   const theme = useTheme()
 
   const handleRefresh = useCallback(() => {
@@ -291,7 +296,7 @@ export function AdvancedIntelligencePage({
             fontSize: 'var(--ob-font-size-sm)',
           }}
         >
-          {isLoading ? 'SYNCING...' : 'SYNC WORKSPACE'}
+          {isLoading ? 'SYNCING...' : 'SYNC PROJECT'}
         </button>
       }
     >
@@ -301,7 +306,7 @@ export function AdvancedIntelligencePage({
           pb: 'var(--ob-space-400)',
         }}
       >
-        {/* 1. Hero Section: Workspace Signals - Depth 1 (Glass Card with cyan edge) */}
+        {/* 1. Hero Section: Project Signals - Depth 1 (Glass Card with cyan edge) */}
         <Box className="ob-card-module ob-section-gap">
           <Typography
             variant="subtitle2"
@@ -312,7 +317,7 @@ export function AdvancedIntelligencePage({
               letterSpacing: '0.05em',
             }}
           >
-            Workspace Signals
+            Project Signals
           </Typography>
           <Grid container spacing="var(--ob-space-150)">
             <Grid item xs={12} md={3}>
@@ -456,7 +461,7 @@ export function AdvancedIntelligencePage({
                     )
                   }
                   loadingLabel="Running predictive models..."
-                  emptyTitle="No predictive signals available for this workspace yet"
+                  emptyTitle="No predictive signals available for this project yet"
                   emptyDescription={predictiveEmptySummary}
                   errorTitle="Unable to load predictive forecast"
                   errorMessage={predictiveErrorMessage}
@@ -514,6 +519,204 @@ export function AdvancedIntelligencePage({
         </Grid>
       </Box>
     </AppLayout>
+  )
+}
+
+export function AdvancedIntelligencePage({
+  projectId,
+  services,
+}: AdvancedIntelligencePageProps) {
+  const params = useRouterParams()
+  const projectContext = useContext(ProjectContext)
+  const theme = useTheme()
+  const effectiveProjectId =
+    projectId?.trim() ||
+    params.projectId?.trim() ||
+    projectContext?.currentProject?.id ||
+    ''
+
+  if (!effectiveProjectId) {
+    return (
+      <AppLayout
+        title="Advanced Intelligence"
+        subtitle="Predictive analytics and relationship insights"
+        actions={
+          <button
+            type="button"
+            className="advanced-intelligence__refresh"
+            disabled={true}
+            style={{
+              background: 'transparent',
+              border: `1px solid ${theme.palette.primary.main}`,
+              color: theme.palette.primary.main,
+              padding: '6px 12px',
+              borderRadius: '2px',
+              cursor: 'not-allowed',
+              opacity: 0.5,
+              fontSize: 'var(--ob-font-size-sm)',
+            }}
+          >
+            SELECT PROJECT
+          </button>
+        }
+      >
+        <Box
+          sx={{
+            width: '100%',
+            pb: 'var(--ob-space-400)',
+          }}
+        >
+          <Box className="ob-card-module ob-section-gap">
+            <Typography
+              variant="subtitle2"
+              sx={{
+                color: 'text.secondary',
+                mb: 'var(--ob-space-200)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              Project Signals
+            </Typography>
+            <Grid container spacing="var(--ob-space-150)">
+              <Grid item xs={12} md={3}>
+                <KPITickerCard
+                  label="Adoption Likelihood"
+                  value="N/A"
+                  trend={null}
+                  data={null}
+                  active={true}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <KPITickerCard
+                  label="Projected Uplift"
+                  value="N/A"
+                  trend={null}
+                  data={null}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <KPITickerCard
+                  label="Active Experiments"
+                  value="N/A"
+                  trend={null}
+                  data={null}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <KPITickerCard
+                  label="Intelligence Score"
+                  value="N/A"
+                  trend={null}
+                  data={null}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Grid container spacing="var(--ob-space-300)">
+            <Grid item xs={12} lg={8}>
+              <Box
+                className="ob-card-module"
+                sx={{ height: '100%', minHeight: 500 }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    color: 'text.secondary',
+                    mb: 'var(--ob-space-200)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  Relationship Intelligence
+                </Typography>
+                <IntelligenceStatusPanel
+                  status="empty"
+                  icon={
+                    <HubOutlined
+                      sx={{ color: 'var(--ob-color-brand-primary)' }}
+                    />
+                  }
+                  loadingLabel="Mapping organization network..."
+                  emptyTitle="Select a project to load intelligence graph"
+                  emptyDescription="Advanced Intelligence now runs against a real project scope. Pick a project from the selector or open a project route first."
+                  errorTitle="Unable to load intelligence graph"
+                  minHeight={600}
+                />
+              </Box>
+            </Grid>
+
+            <Grid item xs={12} lg={4}>
+              <Box
+                className="ob-card-module"
+                sx={{ mb: 'var(--ob-space-300)' }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    color: 'text.secondary',
+                    mb: 'var(--ob-space-200)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  Predictive Forecast
+                </Typography>
+                <IntelligenceStatusPanel
+                  status="empty"
+                  icon={
+                    <AutoGraph
+                      sx={{ color: 'var(--ob-color-brand-primary)' }}
+                    />
+                  }
+                  loadingLabel="Running predictive models..."
+                  emptyTitle="Select a project to load predictive signals"
+                  emptyDescription="Choose a project to evaluate workflow, finance, and delivery signals."
+                  errorTitle="Unable to load predictive forecast"
+                  minHeight={280}
+                />
+              </Box>
+
+              <Box className="ob-card-module">
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    color: 'text.secondary',
+                    mb: 'var(--ob-space-200)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  Cross-Correlation
+                </Typography>
+                <IntelligenceStatusPanel
+                  status="empty"
+                  icon={
+                    <AccountTreeOutlined
+                      sx={{ color: 'var(--ob-color-brand-primary)' }}
+                    />
+                  }
+                  loadingLabel="Analyzing correlations..."
+                  emptyTitle="Select a project to analyze correlations"
+                  emptyDescription="Correlation analysis needs a concrete project scope before it can inspect approvals, workflow activity, and finance history."
+                  errorTitle="Unable to load correlation analysis"
+                  minHeight={280}
+                />
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+      </AppLayout>
+    )
+  }
+
+  return (
+    <AdvancedIntelligenceContent
+      projectId={effectiveProjectId}
+      services={services}
+    />
   )
 }
 

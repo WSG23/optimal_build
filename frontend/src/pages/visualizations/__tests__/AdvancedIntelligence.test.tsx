@@ -11,7 +11,22 @@ import type {
 } from '../../../services/analytics/advancedAnalytics'
 
 vi.mock('../../../App', () => ({
-  AppLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  AppLayout: ({
+    children,
+    actions,
+  }: {
+    children: ReactNode
+    actions?: ReactNode
+  }) => (
+    <div>
+      {actions}
+      {children}
+    </div>
+  ),
+}))
+
+vi.mock('../../../router', () => ({
+  useRouterParams: () => ({}),
 }))
 
 vi.mock('../components/KPITickerCard', () => ({
@@ -44,10 +59,7 @@ function renderPage(services: {
   fetchCrossCorrelationIntelligence: () => Promise<CrossCorrelationIntelligenceResponse>
 }) {
   return render(
-    <AdvancedIntelligencePage
-      workspaceId="workspace-test"
-      services={services}
-    />,
+    <AdvancedIntelligencePage projectId="project-test" services={services} />,
   )
 }
 
@@ -94,9 +106,7 @@ describe('AdvancedIntelligencePage', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('No graph signals.')).toBeInTheDocument()
     expect(
-      screen.getByText(
-        'No predictive signals available for this workspace yet',
-      ),
+      screen.getByText('No predictive signals available for this project yet'),
     ).toBeInTheDocument()
     expect(screen.getByText('No predictive signals.')).toBeInTheDocument()
     expect(
@@ -131,12 +141,24 @@ describe('AdvancedIntelligencePage', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('graph service unavailable')).toBeInTheDocument()
     expect(
-      screen.getByText(
-        'No predictive signals available for this workspace yet',
-      ),
+      screen.getByText('No predictive signals available for this project yet'),
     ).toBeInTheDocument()
     expect(
       screen.getByText('No significant cross-correlations detected yet'),
     ).toBeInTheDocument()
+  })
+
+  it('renders a strict select-project empty state when no project is scoped', () => {
+    render(<AdvancedIntelligencePage services={undefined} />)
+
+    expect(
+      screen.getByText('Select a project to load intelligence graph'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Advanced Intelligence now runs against a real project scope. Pick a project from the selector or open a project route first.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('SELECT PROJECT')).toBeInTheDocument()
   })
 })

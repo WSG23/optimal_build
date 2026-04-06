@@ -13,21 +13,30 @@ from app.schemas.advanced_intelligence import (
     GraphIntelligenceResponse,
     PredictiveIntelligenceResponse,
 )
-from app.services.analytics import WorkspaceAnalyticsSnapshotService
+from app.services.analytics import (
+    WorkspaceAnalyticsSnapshotService,
+    resolve_analytics_scope,
+)
 
 router = APIRouter(prefix="/analytics/intelligence", tags=["advanced-intelligence"])
 
 
 @router.get("/graph", response_model=GraphIntelligenceResponse)
 async def graph_intelligence(
-    workspace_id: str = Query(..., alias="workspaceId"),
+    project_id: str | None = Query(None, alias="projectId"),
+    workspace_id: str | None = Query(None, alias="workspaceId"),
     _: RequestIdentity = Depends(require_viewer),
     db: AsyncSession = Depends(get_db),
 ) -> GraphIntelligenceResponse:
     """Return relationship intelligence for the requested workspace."""
 
+    scope = await resolve_analytics_scope(
+        db,
+        project_id=project_id,
+        workspace_id=workspace_id,
+    )
     service = WorkspaceAnalyticsSnapshotService(db)
-    payload = await service.get_graph_snapshot(workspace_id)
+    payload = await service.get_graph_snapshot(scope.scope_id)
     return cast(GraphIntelligenceResponse, payload)
 
 
@@ -51,7 +60,8 @@ async def ingest_knowledge(
 
 @router.get("/predictive")
 async def predictive_intelligence(
-    workspace_id: str = Query(..., alias="workspaceId"),
+    project_id: str | None = Query(None, alias="projectId"),
+    workspace_id: str | None = Query(None, alias="workspaceId"),
     query: str | None = Query(None, description="Optional natural language query"),
     _: RequestIdentity = Depends(require_viewer),
     db: AsyncSession = Depends(get_db),
@@ -73,8 +83,13 @@ async def predictive_intelligence(
             "segments": [],
         }
 
+    scope = await resolve_analytics_scope(
+        db,
+        project_id=project_id,
+        workspace_id=workspace_id,
+    )
     service = WorkspaceAnalyticsSnapshotService(db)
-    payload = await service.get_predictive_snapshot(workspace_id)
+    payload = await service.get_predictive_snapshot(scope.scope_id)
     return cast(PredictiveIntelligenceResponse, payload)
 
 
@@ -83,12 +98,18 @@ async def predictive_intelligence(
     response_model=CrossCorrelationIntelligenceResponse,
 )
 async def cross_correlation_intelligence(
-    workspace_id: str = Query(..., alias="workspaceId"),
+    project_id: str | None = Query(None, alias="projectId"),
+    workspace_id: str | None = Query(None, alias="workspaceId"),
     _: RequestIdentity = Depends(require_viewer),
     db: AsyncSession = Depends(get_db),
 ) -> CrossCorrelationIntelligenceResponse:
     """Return cross-correlation analytics for the requested workspace."""
 
+    scope = await resolve_analytics_scope(
+        db,
+        project_id=project_id,
+        workspace_id=workspace_id,
+    )
     service = WorkspaceAnalyticsSnapshotService(db)
-    payload = await service.get_correlation_snapshot(workspace_id)
+    payload = await service.get_correlation_snapshot(scope.scope_id)
     return cast(CrossCorrelationIntelligenceResponse, payload)
