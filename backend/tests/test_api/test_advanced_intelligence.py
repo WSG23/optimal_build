@@ -4,7 +4,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_graph_intelligence_returns_stub(client):
+async def test_graph_intelligence_returns_empty_state(client):
     response = await client.get(
         "/api/v1/analytics/intelligence/graph",
         params={"workspaceId": "ws-123"},
@@ -13,13 +13,12 @@ async def test_graph_intelligence_returns_stub(client):
     assert response.status_code == 200
     payload = response.json()
     assert payload["kind"] == "graph"
-    assert payload["status"] == "ok"
-    assert payload["graph"]["nodes"]
-    assert payload["generatedAt"].endswith("Z")
+    assert payload["status"] == "empty"
+    assert "available" in payload["summary"]
 
 
 @pytest.mark.asyncio
-async def test_predictive_intelligence_returns_segments(client):
+async def test_predictive_intelligence_returns_empty_state_without_query(client):
     response = await client.get(
         "/api/v1/analytics/intelligence/predictive",
         params={"workspaceId": "ws-789"},
@@ -28,13 +27,12 @@ async def test_predictive_intelligence_returns_segments(client):
     assert response.status_code == 200
     payload = response.json()
     assert payload["kind"] == "predictive"
-    assert payload["horizonMonths"] == 6
-    assert len(payload["segments"]) >= 1
-    assert payload["segments"][0]["baseline"] > 0
+    assert payload["status"] == "empty"
+    assert "available" in payload["summary"]
 
 
 @pytest.mark.asyncio
-async def test_cross_correlation_intelligence_returns_relationships(client):
+async def test_cross_correlation_intelligence_returns_empty_state(client):
     response = await client.get(
         "/api/v1/analytics/intelligence/cross-correlation",
         params={"workspaceId": "ws-456"},
@@ -43,6 +41,5 @@ async def test_cross_correlation_intelligence_returns_relationships(client):
     assert response.status_code == 200
     payload = response.json()
     assert payload["kind"] == "correlation"
-    assert payload["relationships"]
-    first = payload["relationships"][0]
-    assert "driver" in first and "outcome" in first
+    assert payload["status"] == "empty"
+    assert "available" in payload["summary"]

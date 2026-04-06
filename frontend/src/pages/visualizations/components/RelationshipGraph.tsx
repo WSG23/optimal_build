@@ -22,6 +22,50 @@ export interface RelationshipGraphProps {
   height?: number | string
 }
 
+function hashNodeId(value: string): number {
+  let hash = 0
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0
+  }
+  return hash
+}
+
+function buildInitialPositions(
+  nodes: Node[],
+  width: number,
+  height: number,
+): Record<string, { x: number; y: number; vx: number; vy: number }> {
+  const initial: Record<
+    string,
+    { x: number; y: number; vx: number; vy: number }
+  > = {}
+  const orderedNodes = [...nodes].sort((left, right) =>
+    left.id.localeCompare(right.id),
+  )
+  const baseRadius = Math.max(Math.min(width, height) * 0.18, 32)
+  const centerX = width / 2
+  const centerY = height / 2
+
+  orderedNodes.forEach((node, index) => {
+    const hash = hashNodeId(node.id)
+    const angle =
+      ((index / Math.max(orderedNodes.length, 1)) * Math.PI * 2) % (Math.PI * 2)
+    const radialOffset = ((hash % 17) - 8) * 2
+    const angleOffset = (((hash >> 8) % 21) - 10) * 0.01
+    const radius = baseRadius + radialOffset
+    const resolvedAngle = angle + angleOffset
+
+    initial[node.id] = {
+      x: centerX + Math.cos(resolvedAngle) * radius,
+      y: centerY + Math.sin(resolvedAngle) * radius,
+      vx: 0,
+      vy: 0,
+    }
+  })
+
+  return initial
+}
+
 // Simple Force Simulation Hooks
 function useForceSimulation(
   nodes: Node[],
@@ -29,26 +73,16 @@ function useForceSimulation(
   width: number,
   height: number,
 ) {
-  // Initialize positions randomly but centered
+  // Seed a stable starting layout so identical data renders consistently.
   const [positions, setPositions] = useState<
     Record<string, { x: number; y: number; vx: number; vy: number }>
-  >(() => {
-    const initial: Record<
-      string,
-      { x: number; y: number; vx: number; vy: number }
-    > = {}
-    nodes.forEach((node) => {
-      initial[node.id] = {
-        x: width / 2 + (Math.random() - 0.5) * 50,
-        y: height / 2 + (Math.random() - 0.5) * 50,
-        vx: 0,
-        vy: 0,
-      }
-    })
-    return initial
-  })
+  >(() => buildInitialPositions(nodes, width, height))
 
   const requestRef = useRef<number>()
+
+  useEffect(() => {
+    setPositions(buildInitialPositions(nodes, width, height))
+  }, [nodes, width, height])
 
   useEffect(() => {
     const animate = () => {

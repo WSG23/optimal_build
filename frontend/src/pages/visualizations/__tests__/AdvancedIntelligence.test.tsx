@@ -103,6 +103,10 @@ describe('AdvancedIntelligencePage', () => {
       screen.getByText('No significant cross-correlations detected yet'),
     ).toBeInTheDocument()
     expect(screen.getByText('No correlation signals.')).toBeInTheDocument()
+    expect(screen.getByText('Adoption Likelihood: N/A')).toBeInTheDocument()
+    expect(screen.getByText('Projected Uplift: N/A')).toBeInTheDocument()
+    expect(screen.getByText('Active Experiments: N/A')).toBeInTheDocument()
+    expect(screen.getByText('Intelligence Score: N/A')).toBeInTheDocument()
   })
 
   it('renders explicit graph error copy without collapsing other panels', async () => {

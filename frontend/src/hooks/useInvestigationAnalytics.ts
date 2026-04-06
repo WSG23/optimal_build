@@ -9,11 +9,6 @@ import {
   type GraphIntelligenceResponse,
   type PredictiveIntelligenceResponse,
 } from '../services/analytics/advancedAnalytics'
-import {
-  buildSampleCorrelationIntelligence,
-  buildSampleGraphIntelligence,
-  buildSamplePredictiveIntelligence,
-} from '../services/analytics/fixtures'
 
 const IS_DEV = import.meta.env?.DEV ?? false
 const CACHE_TTL_MS = 60000
@@ -194,54 +189,51 @@ export function useInvestigationAnalytics(
         let nextCorrelation: CrossCorrelationIntelligenceState
 
         if (allRejected) {
-          nextGraph = buildSampleGraphIntelligence()
-          nextPredictive = buildSamplePredictiveIntelligence()
-          nextCorrelation = buildSampleCorrelationIntelligence()
           debugError(
-            '[useInvestigationAnalytics] All analytics requests failed; using fixture data.',
+            '[useInvestigationAnalytics] All analytics requests failed.',
           )
+        }
+
+        if (graphResult.status === 'fulfilled') {
+          debugLog(
+            '[useInvestigationAnalytics] Setting graph data:',
+            graphResult.value,
+          )
+          nextGraph = graphResult.value
         } else {
-          if (graphResult.status === 'fulfilled') {
-            debugLog(
-              '[useInvestigationAnalytics] Setting graph data:',
-              graphResult.value,
-            )
-            nextGraph = graphResult.value
-          } else {
-            debugError(
-              '[useInvestigationAnalytics] Graph request failed:',
-              graphResult.reason,
-            )
-            nextGraph = toGraphErrorState(graphResult.reason)
-          }
+          debugError(
+            '[useInvestigationAnalytics] Graph request failed:',
+            graphResult.reason,
+          )
+          nextGraph = toGraphErrorState(graphResult.reason)
+        }
 
-          if (predictiveResult.status === 'fulfilled') {
-            debugLog(
-              '[useInvestigationAnalytics] Setting predictive data:',
-              predictiveResult.value,
-            )
-            nextPredictive = predictiveResult.value
-          } else {
-            debugError(
-              '[useInvestigationAnalytics] Predictive request failed:',
-              predictiveResult.reason,
-            )
-            nextPredictive = toPredictiveErrorState(predictiveResult.reason)
-          }
+        if (predictiveResult.status === 'fulfilled') {
+          debugLog(
+            '[useInvestigationAnalytics] Setting predictive data:',
+            predictiveResult.value,
+          )
+          nextPredictive = predictiveResult.value
+        } else {
+          debugError(
+            '[useInvestigationAnalytics] Predictive request failed:',
+            predictiveResult.reason,
+          )
+          nextPredictive = toPredictiveErrorState(predictiveResult.reason)
+        }
 
-          if (correlationResult.status === 'fulfilled') {
-            debugLog(
-              '[useInvestigationAnalytics] Setting correlation data:',
-              correlationResult.value,
-            )
-            nextCorrelation = correlationResult.value
-          } else {
-            debugError(
-              '[useInvestigationAnalytics] Correlation request failed:',
-              correlationResult.reason,
-            )
-            nextCorrelation = toCorrelationErrorState(correlationResult.reason)
-          }
+        if (correlationResult.status === 'fulfilled') {
+          debugLog(
+            '[useInvestigationAnalytics] Setting correlation data:',
+            correlationResult.value,
+          )
+          nextCorrelation = correlationResult.value
+        } else {
+          debugError(
+            '[useInvestigationAnalytics] Correlation request failed:',
+            correlationResult.reason,
+          )
+          nextCorrelation = toCorrelationErrorState(correlationResult.reason)
         }
 
         setGraph(nextGraph)
@@ -255,19 +247,19 @@ export function useInvestigationAnalytics(
         })
       } catch (error) {
         debugError(
-          '[useInvestigationAnalytics] Unexpected error during analytics load; using fixture data:',
+          '[useInvestigationAnalytics] Unexpected error during analytics load:',
           error,
         )
-        const fallbackGraph = buildSampleGraphIntelligence()
-        const fallbackPredictive = buildSamplePredictiveIntelligence()
-        const fallbackCorrelation = buildSampleCorrelationIntelligence()
-        setGraph(fallbackGraph)
-        setPredictive(fallbackPredictive)
-        setCorrelation(fallbackCorrelation)
+        const graphErrorState = toGraphErrorState(error)
+        const predictiveErrorState = toPredictiveErrorState(error)
+        const correlationErrorState = toCorrelationErrorState(error)
+        setGraph(graphErrorState)
+        setPredictive(predictiveErrorState)
+        setCorrelation(correlationErrorState)
         cacheRef.current.set(cacheKey, {
-          graph: fallbackGraph,
-          predictive: fallbackPredictive,
-          correlation: fallbackCorrelation,
+          graph: graphErrorState,
+          predictive: predictiveErrorState,
+          correlation: correlationErrorState,
           timestamp: Date.now(),
         })
       } finally {
