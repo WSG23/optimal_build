@@ -402,3 +402,197 @@ class CorrelationAnalyzer:
 - Analytics Service: `frontend/src/services/analytics/advancedAnalytics.ts`
 - RAG Engine: `backend/app/core/rag.py`
 - Intelligence Service: `backend/app/services/intelligence.py`
+
+---
+
+## Execution Plan For Real Implementation
+
+### Goal
+
+Replace the current empty-state placeholder implementation with real, workspace-derived analytics for:
+
+- relationship intelligence
+- predictive forecast
+- cross-correlation analysis
+- KPI summaries and trend history
+
+The implementation must never synthesize analytics in the UI. If the workspace does not have enough data, the API should return an explicit `empty` state with a concrete reason.
+
+### Non-goals
+
+- no fixture or demo data in production routes
+- no client-side trend generation
+- no analytics computed directly in React components
+
+### Data Contract
+
+Keep the current response envelope shape:
+
+- `kind`
+- `status`
+- `summary`
+
+Extend the `ok` payloads with data that is persisted or reproducibly computed from workspace records. For `empty`, include a concrete reason such as:
+
+- not enough completed investigations
+- no linked projects
+- no workflow or audit history
+
+### Source Systems
+
+The analytics service should derive signals from first-party workspace data:
+
+- projects
+- audit log events
+- workflow state transitions
+- finance scenarios and exports
+- review decisions
+- team and assignment activity
+- investigation documents or notes once linked to a workspace
+
+### Proposed Backend Architecture
+
+#### 1. Workspace analytics snapshot layer
+
+Introduce persisted snapshot tables keyed by `workspace_id`:
+
+- `workspace_graph_snapshots`
+- `workspace_predictive_snapshots`
+- `workspace_correlation_snapshots`
+- `workspace_signal_snapshots`
+
+Each snapshot row should store:
+
+- `workspace_id`
+- `computed_at`
+- `sample_size`
+- `status`
+- `summary`
+- `payload_json`
+- `version`
+
+#### 2. Analytics feature extraction service
+
+Create a backend service that normalizes raw workspace records into reusable feature sets:
+
+- project throughput metrics
+- approval latency
+- iteration counts
+- review decision outcomes
+- team collaboration frequency
+- finance readiness signals
+- schedule and compliance risk inputs
+
+Suggested module layout:
+
+- `backend/app/services/analytics/workspace_features.py`
+- `backend/app/services/analytics/workspace_snapshots.py`
+
+#### 3. Computation services
+
+Split analytics computation by concern:
+
+- graph builder
+- predictive forecaster
+- correlation engine
+- KPI and trend aggregator
+
+Suggested module layout:
+
+- `backend/app/services/analytics/graph_intelligence.py`
+- `backend/app/services/analytics/predictive_intelligence.py`
+- `backend/app/services/analytics/correlation_intelligence.py`
+- `backend/app/services/analytics/workspace_signals.py`
+
+#### 4. Refresh model
+
+Use asynchronous recomputation triggered by:
+
+- project creation or update
+- audit event append
+- review decision write
+- workflow state changes
+- finance scenario changes
+
+For reliability:
+
+- enqueue refresh jobs
+- coalesce repeated refreshes per workspace
+- persist the last successful snapshot
+- serve the latest snapshot synchronously from API routes
+
+#### 5. API routes
+
+Refactor `backend/app/api/v1/advanced_intelligence.py` to delegate entirely to snapshot-backed services.
+
+Route behavior:
+
+- return `ok` only when a valid snapshot exists
+- return `empty` when the workspace exists but sample size or feature coverage is insufficient
+- return `error` only for true operational failures
+
+### Proposed PR Breakdown
+
+#### PR 1: Analytics schema and snapshot persistence
+
+Scope:
+
+- add snapshot models and migrations
+- add response schemas for graph, predictive, correlation, and KPI history
+- add a repository layer for reading and writing workspace analytics snapshots
+
+Acceptance criteria:
+
+- migrations apply cleanly
+- snapshot rows can be inserted and queried by workspace
+- routes can read empty snapshots without stubs
+
+#### PR 2: Feature extraction and refresh pipeline
+
+Scope:
+
+- implement workspace feature extraction from projects, audit logs, reviews, and workflows
+- add refresh job orchestration and deduplication
+- compute and persist signal snapshots
+
+Acceptance criteria:
+
+- a workspace with seeded records produces persisted feature sets
+- refresh jobs update snapshots deterministically
+- insufficient-data workspaces return structured `empty` results with reasons
+
+#### PR 3: Graph and predictive analytics
+
+Scope:
+
+- implement collaboration graph generation
+- implement predictive segment generation
+- expose trend history for KPI cards
+- wire the UI to backend-provided trend arrays
+
+Acceptance criteria:
+
+- graph nodes and edges come from workspace-derived features
+- predictive segments are reproducible from seeded historical data
+- KPI cards render only backend-supplied values and histories
+
+#### PR 4: Correlation analytics and UI hardening
+
+Scope:
+
+- implement cross-correlation computation with minimum sample thresholds
+- add backend confidence and data-quality metadata
+- polish UI handling for empty and degraded analytics
+
+Acceptance criteria:
+
+- correlation outputs are omitted when statistical thresholds are not met
+- UI shows reasoned empty states instead of generic placeholders
+- no client-side synthetic analytics remain
+
+### Rollout Guardrails
+
+- keep empty states explicit until real snapshots exist
+- log sample-size reasons in backend summaries
+- add dashboards for snapshot refresh failures
+- do not merge any route that reintroduces sample analytics
