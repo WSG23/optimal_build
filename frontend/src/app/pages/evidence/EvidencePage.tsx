@@ -1,16 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
-  Alert,
-  Box,
-  Chip,
-  CircularProgress,
-  Grid,
-  Stack,
-  Typography,
-} from '@mui/material'
+import { Alert, Box, Chip, Grid, Stack, Typography } from '@mui/material'
 
 import { Button } from '../../../components/canonical/Button'
 import { Card } from '../../../components/canonical/Card'
+import { EmptyState } from '../../../components/canonical'
+import { SkeletonCard } from '../../../components/canonical'
 import {
   fetchFinanceAuditEvidence,
   type FinanceAuditEvidence,
@@ -162,41 +156,16 @@ export function EvidencePage() {
         </Stack>
       </Card>
 
-      {loading ? (
-        <Card
-          variant="default"
-          sx={{ p: 'var(--ob-space-200)', textAlign: 'center' }}
-        >
-          <CircularProgress />
-        </Card>
-      ) : null}
+      {loading ? <SkeletonCard contentLines={4} /> : null}
 
       {error ? <Alert severity="error">{error}</Alert> : null}
 
       {!evidence && !loading && !error ? (
-        <Card
-          variant="default"
-          sx={{
-            p: 'var(--ob-space-300)',
-            textAlign: 'center',
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              color: 'var(--ob-color-text-secondary)',
-              mb: 'var(--ob-space-050)',
-            }}
-          >
-            No evidence packs available
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{ color: 'var(--ob-color-text-secondary)' }}
-          >
-            Run a finance scenario to generate audit evidence for this project.
-          </Typography>
-        </Card>
+        <EmptyState
+          title="No evidence packs available"
+          description="Run a finance scenario to generate audit evidence for this project."
+          size="md"
+        />
       ) : null}
 
       {evidence ? (

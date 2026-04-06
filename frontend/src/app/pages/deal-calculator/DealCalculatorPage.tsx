@@ -1,5 +1,5 @@
 import React, { startTransition, useMemo, useState } from 'react'
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Snackbar, Stack } from '@mui/material'
 
 import {
   evaluateDealCalculator,
@@ -8,6 +8,7 @@ import {
 import type { FinanceScenarioInput } from '../../../api/finance'
 import type { ExternalSourceMetadata } from '../../../api/externalSources'
 import { saveQuickScreenFinanceDraft } from '../../../modules/finance/quickScreenDraft'
+import { EmptyState } from '../../../components/canonical'
 import {
   DealInputsForm,
   INITIAL_FORM_STATE,
@@ -186,6 +187,7 @@ export function DealCalculatorPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [handoffMessage, setHandoffMessage] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const sourceNotes = useMemo(() => {
     if (!result) {
@@ -255,6 +257,7 @@ export function DealCalculatorPage() {
       startTransition(() => {
         setResult(response)
         setHandoffMessage(null)
+        setSuccessMessage('Deal screen complete')
       })
     } catch (submissionError) {
       setError(
@@ -314,26 +317,11 @@ export function DealCalculatorPage() {
 
       <Stack spacing="var(--ob-space-200)">
         {!result && !isSubmitting && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              py: 'var(--ob-space-300)',
-              px: 'var(--ob-space-200)',
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                color: 'var(--ob-color-text-secondary)',
-                textAlign: 'center',
-              }}
-            >
-              Enter site details and run a deal screen to see feasibility
-              results.
-            </Typography>
-          </Box>
+          <EmptyState
+            title="Ready to screen"
+            description="Enter site details and run a deal screen to see feasibility results."
+            size="sm"
+          />
         )}
         <DealResultsPanel
           result={result}
@@ -342,6 +330,14 @@ export function DealCalculatorPage() {
           onFinanceHandoff={handleFinanceHandoff}
         />
       </Stack>
+
+      <Snackbar
+        open={Boolean(successMessage)}
+        autoHideDuration={3000}
+        onClose={() => setSuccessMessage(null)}
+        message={successMessage}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
     </Box>
   )
 }

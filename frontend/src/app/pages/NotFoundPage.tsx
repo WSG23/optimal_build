@@ -35,6 +35,15 @@ export function NotFoundPage() {
       >
         Page not found
       </Typography>
+      <Typography
+        variant="body1"
+        sx={{
+          fontSize: 'var(--ob-font-size-md)',
+          color: 'var(--ob-color-text-muted)',
+        }}
+      >
+        This page doesn't exist — but your next project could.
+      </Typography>
       <Box
         sx={{
           display: 'flex',
@@ -48,7 +57,7 @@ export function NotFoundPage() {
           variant="contained"
           sx={{ borderRadius: 'var(--ob-radius-xs)' }}
         >
-          Go to Developer workspace
+          Start a project
         </Button>
         <Button
           component={Link}
@@ -56,7 +65,7 @@ export function NotFoundPage() {
           variant="outlined"
           sx={{ borderRadius: 'var(--ob-radius-xs)' }}
         >
-          Go to Agent workspace
+          View pipeline
         </Button>
       </Box>
     </Box>

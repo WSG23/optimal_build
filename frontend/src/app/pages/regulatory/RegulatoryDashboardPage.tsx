@@ -1,29 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import {
-  Box,
-  CircularProgress,
-  Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tab,
-  Tabs,
-  useTheme,
-} from '@mui/material'
+import { Box, Alert, Snackbar, Tab, Tabs, useTheme } from '@mui/material'
 import {
   Add as AddIcon,
   Refresh as RefreshIcon,
-  CheckCircle as ApprovedIcon,
-  HourglassEmpty as PendingIcon,
-  Error as RejectedIcon,
-  QuestionAnswer as RfiIcon,
-  Business as AgencyIcon,
   Timeline as TimelineIcon,
-  SwapHoriz as SwapIcon,
-  AccountBalance as HeritageIcon,
   Assignment as SubmissionIcon,
 } from '@mui/icons-material'
 import {
@@ -38,18 +18,12 @@ import { SubmissionWizard } from './components/SubmissionWizard'
 import { CompliancePathTimeline } from './components/CompliancePathTimeline'
 import { ChangeOfUseWizard } from './components/ChangeOfUseWizard'
 import { HeritageSubmissionForm } from './components/HeritageSubmissionForm'
+import { QuickActionsSection } from './components/QuickActionsSection'
+import { SubmissionsTabContent } from './components/SubmissionsTabContent'
 import { getTableSx } from '../../../utils/themeStyles'
 import { useProject } from '../../../contexts/useProject'
 import { Button } from '../../../components/canonical/Button'
-import { StatusChip } from '../../../components/canonical/StatusChip'
-import { Card } from '../../../components/canonical/Card'
-
-const AGENCIES_INFO = [
-  { code: 'URA', name: 'Urban Redevelopment Authority' },
-  { code: 'BCA', name: 'Building & Construction Authority' },
-  { code: 'SCDF', name: 'Singapore Civil Defence Force' },
-  { code: 'NEA', name: 'National Environment Agency' },
-]
+import { SkeletonCard } from '../../../components/canonical'
 
 const STORAGE_PREFIX = 'ob_regulatory'
 
@@ -128,6 +102,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
     HeritageSubmission | undefined
   >(undefined)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [capability, setCapability] = useState<CorenetCapability | null>(null)
   const previousProjectId = useRef<string | null>(null)
   const fetchRequestId = useRef(0)
@@ -150,7 +125,6 @@ export const RegulatoryDashboardPage: React.FC = () => {
     return undefined
   }, [changeOfUseApps, heritageSubmissions])
 
-  // Theme-aware styles
   const tableSx = getTableSx(isDarkMode)
 
   const fetchSubmissions = useCallback(
@@ -190,7 +164,6 @@ export const RegulatoryDashboardPage: React.FC = () => {
           )
         }
 
-        // Fetch authority submissions
         const data = await regulatoryApi.listSubmissions(projectId)
         if (requestId !== fetchRequestId.current) {
           return
@@ -198,7 +171,6 @@ export const RegulatoryDashboardPage: React.FC = () => {
         setSubmissions(data)
         persistList(projectId, 'submissions', data)
 
-        // Fetch change of use applications
         const couApps =
           await regulatoryApi.listChangeOfUseApplications(projectId)
         if (requestId !== fetchRequestId.current) {
@@ -207,7 +179,6 @@ export const RegulatoryDashboardPage: React.FC = () => {
         setChangeOfUseApps(couApps)
         persistList(projectId, 'change-of-use', couApps)
 
-        // Fetch heritage submissions
         const heritageData =
           await regulatoryApi.listHeritageSubmissions(projectId)
         if (requestId !== fetchRequestId.current) {
@@ -216,7 +187,6 @@ export const RegulatoryDashboardPage: React.FC = () => {
         setHeritageSubmissions(heritageData)
         persistList(projectId, 'heritage', heritageData)
 
-        // Poll recent submissions for updates
         const pendingItems = data.filter((s) =>
           ['SUBMITTED', 'IN_REVIEW'].includes(s.status),
         )
@@ -279,7 +249,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
     return (
       <Box sx={{ width: '100%' }}>
         {isProjectLoading ? (
-          <CircularProgress />
+          <SkeletonCard contentLines={3} />
         ) : (
           <Alert severity={projectError ? 'error' : 'info'}>
             {projectError?.message ??
@@ -300,23 +270,24 @@ export const RegulatoryDashboardPage: React.FC = () => {
       return next
     })
     setWizardOpen(false)
+    setSuccessMessage('Submission created successfully')
   }
 
   const handleHeritageSuccess = (submission: HeritageSubmission) => {
-    // Update or add to the list
     setHeritageSubmissions((prev) => {
       const existingIndex = prev.findIndex((s) => s.id === submission.id)
       if (existingIndex >= 0) {
         const updated = [...prev]
         updated[existingIndex] = submission
         persistList(projectId, 'heritage', updated)
+        setSuccessMessage('Heritage submission updated')
         return updated
       }
       const next = [submission, ...prev]
       persistList(projectId, 'heritage', next)
+      setSuccessMessage('Heritage submission created')
       return next
     })
-    // Don't close the form - let user continue editing or submit to STB
   }
 
   const openHeritageForm = (submission?: HeritageSubmission) => {
@@ -343,48 +314,8 @@ export const RegulatoryDashboardPage: React.FC = () => {
     setTabValue(newValue)
   }
 
-  const getStatusChipStatus = (
-    status: string,
-  ):
-    | 'success'
-    | 'warning'
-    | 'error'
-    | 'info'
-    | 'neutral'
-    | 'brand'
-    | 'live' => {
-    switch (status.toUpperCase()) {
-      case 'APPROVED':
-        return 'success'
-      case 'REJECTED':
-        return 'error'
-      case 'RFI':
-        return 'warning'
-      case 'IN_REVIEW':
-        return 'info'
-      case 'SUBMITTED':
-        return 'brand'
-      case 'DRAFT':
-        return 'neutral'
-      default:
-        return 'neutral'
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status.toUpperCase()) {
-      case 'APPROVED':
-        return <ApprovedIcon fontSize="small" />
-      case 'REJECTED':
-        return <RejectedIcon fontSize="small" />
-      case 'RFI':
-        return <RfiIcon fontSize="small" />
-      case 'IN_REVIEW':
-      case 'SUBMITTED':
-        return <PendingIcon fontSize="small" />
-      default:
-        return <PendingIcon fontSize="small" />
-    }
+  const handleRefreshSubmission = (id: string) => {
+    regulatoryApi.getSubmissionStatus(id).then(() => fetchSubmissions(false))
   }
 
   const integrationState = capability?.integration_status.state ?? 'unavailable'
@@ -396,7 +327,7 @@ export const RegulatoryDashboardPage: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* Page Header - Content on background (Content vs Context pattern) */}
+      {/* Page Header */}
       <Box
         component="header"
         sx={{
@@ -486,189 +417,18 @@ export const RegulatoryDashboardPage: React.FC = () => {
         >
           CORENET mode: <strong>{integrationModeLabel}</strong>
           {capability.delivery_blockers.length > 0
-            ? ` — ${capability.delivery_blockers[0]}`
+            ? ` \u2014 ${capability.delivery_blockers[0]}`
             : ''}
         </Alert>
       ) : null}
 
-      {/* Quick Actions - Flat section (no wrapper, cards as siblings) */}
-      <Box
-        component="section"
-        sx={{
-          mb: 'var(--ob-space-200)',
-        }}
-      >
-        <Box
-          component="h2"
-          sx={{
-            fontSize: 'var(--ob-font-size-xs)',
-            fontWeight: 600,
-            color: 'var(--ob-color-text-tertiary)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.1em',
-            m: 0,
-            mb: 'var(--ob-space-100)',
-          }}
-        >
-          Quick Actions
-        </Box>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
-            gap: 'var(--ob-space-150)',
-          }}
-        >
-          <Card
-            variant="default"
-            hover="lift"
-            onClick={() => openChangeOfUseForm()}
-            sx={{
-              p: 'var(--ob-space-150)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--ob-space-150)',
-            }}
-          >
-            <SwapIcon
-              sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 32 }}
-            />
-            <Box>
-              <Box
-                component="span"
-                sx={{
-                  fontSize: 'var(--ob-font-size-base)',
-                  fontWeight: 600,
-                  color: 'var(--ob-color-text-primary)',
-                  display: 'block',
-                }}
-              >
-                Change of Use
-              </Box>
-              <Box
-                component="span"
-                sx={{
-                  fontSize: 'var(--ob-font-size-xs)',
-                  color: 'var(--ob-color-text-secondary)',
-                }}
-              >
-                Apply for land use conversion
-              </Box>
-            </Box>
-          </Card>
-
-          <Card
-            variant="default"
-            hover="lift"
-            onClick={() =>
-              latestHeritageSubmission
-                ? openHeritageForm(latestHeritageSubmission)
-                : openHeritageForm()
-            }
-            sx={{
-              p: 'var(--ob-space-150)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--ob-space-150)',
-            }}
-          >
-            <HeritageIcon
-              sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 32 }}
-            />
-            <Box>
-              <Box
-                component="span"
-                sx={{
-                  fontSize: 'var(--ob-font-size-base)',
-                  fontWeight: 600,
-                  color: 'var(--ob-color-text-primary)',
-                  display: 'block',
-                }}
-              >
-                Heritage Submission
-              </Box>
-              <Box
-                component="span"
-                sx={{
-                  fontSize: 'var(--ob-font-size-xs)',
-                  color: 'var(--ob-color-text-secondary)',
-                }}
-              >
-                STB conservation application
-              </Box>
-              {latestHeritageSubmission ? (
-                <Box sx={{ mt: 'var(--ob-space-050)' }}>
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: 'var(--ob-font-size-2xs)',
-                      color: 'var(--ob-color-text-tertiary)',
-                      display: 'block',
-                    }}
-                  >
-                    Latest draft{' '}
-                    {new Date(
-                      latestHeritageSubmission.created_at,
-                    ).toLocaleDateString()}
-                    {' • '}Click to reopen
-                  </Box>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      openHeritageForm()
-                    }}
-                  >
-                    Start new submission
-                  </Button>
-                </Box>
-              ) : null}
-            </Box>
-          </Card>
-
-          <Card
-            variant="default"
-            hover="lift"
-            onClick={() => setTabValue(1)}
-            sx={{
-              p: 'var(--ob-space-150)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--ob-space-150)',
-            }}
-          >
-            <TimelineIcon
-              sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 32 }}
-            />
-            <Box>
-              <Box
-                component="span"
-                sx={{
-                  fontSize: 'var(--ob-font-size-base)',
-                  fontWeight: 600,
-                  color: 'var(--ob-color-text-primary)',
-                  display: 'block',
-                }}
-              >
-                Compliance Timeline
-              </Box>
-              <Box
-                component="span"
-                sx={{
-                  fontSize: 'var(--ob-font-size-xs)',
-                  color: 'var(--ob-color-text-secondary)',
-                }}
-              >
-                View regulatory path by asset type
-              </Box>
-            </Box>
-          </Card>
-        </Box>
-      </Box>
+      {/* Quick Actions */}
+      <QuickActionsSection
+        latestHeritageSubmission={latestHeritageSubmission}
+        onOpenChangeOfUse={() => openChangeOfUseForm()}
+        onOpenHeritageForm={openHeritageForm}
+        onNavigateToCompliance={() => setTabValue(1)}
+      />
 
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -688,467 +448,21 @@ export const RegulatoryDashboardPage: React.FC = () => {
 
       {/* Tab 0: Submissions */}
       <TabPanel value={tabValue} index={0}>
-        {/* Agency Status Cards - Flat section pattern */}
-        <Box component="section" sx={{ mb: 'var(--ob-space-200)' }}>
-          <Box
-            component="h3"
-            sx={{
-              fontSize: 'var(--ob-font-size-xs)',
-              fontWeight: 600,
-              color: 'var(--ob-color-text-tertiary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              m: 0,
-              mb: 'var(--ob-space-100)',
-            }}
-          >
-            Connected Agencies
-          </Box>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                sm: 'repeat(2, 1fr)',
-                md: 'repeat(4, 1fr)',
-              },
-              gap: 'var(--ob-space-100)',
-            }}
-          >
-            {AGENCIES_INFO.map((agency) => (
-              <Card
-                key={agency.code}
-                variant="default"
-                sx={{
-                  p: 'var(--ob-space-100)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--ob-space-100)',
-                }}
-              >
-                <AgencyIcon
-                  sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 28 }}
-                />
-                <Box>
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: 'var(--ob-font-size-sm)',
-                      fontWeight: 600,
-                      color: 'var(--ob-color-text-primary)',
-                      display: 'block',
-                    }}
-                  >
-                    {agency.code}
-                  </Box>
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: 'var(--ob-font-size-2xs)',
-                      color: 'var(--ob-color-text-secondary)',
-                    }}
-                  >
-                    {agency.name}
-                  </Box>
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: 'var(--ob-font-size-2xs)',
-                      color: 'var(--ob-color-text-tertiary)',
-                      display: 'block',
-                      mt: 'var(--ob-space-025)',
-                    }}
-                  >
-                    {integrationModeLabel} • {integrationState}
-                  </Box>
-                </Box>
-              </Card>
-            ))}
-          </Box>
-        </Box>
-
-        {/* Submissions Table - Flat section with GlassCard for data */}
-        <Box component="section" sx={{ mb: 'var(--ob-space-200)' }}>
-          <Box
-            component="h3"
-            sx={{
-              fontSize: 'var(--ob-font-size-xs)',
-              fontWeight: 600,
-              color: 'var(--ob-color-text-tertiary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              m: 0,
-              mb: 'var(--ob-space-100)',
-            }}
-          >
-            Authority Submissions
-          </Box>
-          {loading ? (
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                p: 'var(--ob-space-400)',
-              }}
-            >
-              <CircularProgress />
-            </Box>
-          ) : submissions.length === 0 ? (
-            <Card
-              variant="default"
-              sx={{ p: 'var(--ob-space-200)', textAlign: 'center' }}
-            >
-              <Box
-                component="p"
-                sx={{
-                  color: 'var(--ob-color-text-secondary)',
-                  fontSize: 'var(--ob-font-size-sm)',
-                  m: 0,
-                }}
-              >
-                No authority submissions yet. Change of Use and Heritage drafts
-                appear below.
-              </Box>
-            </Card>
-          ) : (
-            <Card variant="default" sx={{ overflow: 'hidden' }}>
-              <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
-                <Table sx={tableSx}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Reference No.</TableCell>
-                      <TableCell>Title</TableCell>
-                      <TableCell>Agency</TableCell>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Delivery</TableCell>
-                      <TableCell>Submitted</TableCell>
-                      <TableCell align="right">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {submissions.map((row) => (
-                      <TableRow key={row.id} hover>
-                        <TableCell
-                          sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
-                        >
-                          {row.submission_no || 'PENDING'}
-                        </TableCell>
-                        <TableCell sx={{ fontWeight: 500 }}>
-                          {row.title}
-                          {row.description && (
-                            <Box
-                              component="span"
-                              sx={{
-                                display: 'block',
-                                fontSize: 'var(--ob-font-size-xs)',
-                                color: 'var(--ob-color-text-secondary)',
-                              }}
-                            >
-                              {row.description}
-                            </Box>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {row.agency_code ?? row.agency_name ?? row.agency_id}
-                          {row.agency_name ? (
-                            <Box
-                              component="span"
-                              sx={{
-                                display: 'block',
-                                fontSize: 'var(--ob-font-size-2xs)',
-                                color: 'var(--ob-color-text-tertiary)',
-                              }}
-                            >
-                              {row.agency_name}
-                            </Box>
-                          ) : null}
-                        </TableCell>
-                        <TableCell>{row.submission_type}</TableCell>
-                        <TableCell>
-                          <StatusChip
-                            status={getStatusChipStatus(row.status)}
-                            size="sm"
-                            icon={getStatusIcon(row.status)}
-                          >
-                            {row.status.replace('_', ' ')}
-                          </StatusChip>
-                        </TableCell>
-                        <TableCell>
-                          <Box
-                            component="span"
-                            sx={{
-                              display: 'block',
-                              fontSize: 'var(--ob-font-size-xs)',
-                              color: 'var(--ob-color-text-primary)',
-                              fontWeight: 500,
-                              textTransform: 'capitalize',
-                            }}
-                          >
-                            {(row.submission_mode ?? 'submission_prep').replace(
-                              '_',
-                              ' ',
-                            )}
-                          </Box>
-                          <Box
-                            component="span"
-                            sx={{
-                              display: 'block',
-                              fontSize: 'var(--ob-font-size-2xs)',
-                              color: 'var(--ob-color-text-tertiary)',
-                            }}
-                          >
-                            {row.package_status ??
-                              row.integration_status?.state ??
-                              'pending'}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(
-                            row.submitted_at || Date.now(),
-                          ).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell align="right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              regulatoryApi
-                                .getSubmissionStatus(row.id)
-                                .then(() => fetchSubmissions(false))
-                            }
-                          >
-                            {row.submission_mode === 'live_submit'
-                              ? 'Track'
-                              : 'Refresh'}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Card>
-          )}
-        </Box>
-
-        {/* Change of Use Applications Section - Flat pattern */}
-        <Box component="section" sx={{ mb: 'var(--ob-space-200)' }}>
-          <Box
-            component="h3"
-            sx={{
-              fontSize: 'var(--ob-font-size-xs)',
-              fontWeight: 600,
-              color: 'var(--ob-color-text-tertiary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              m: 0,
-              mb: 'var(--ob-space-100)',
-            }}
-          >
-            Change of Use Applications
-          </Box>
-          {changeOfUseApps.length === 0 ? (
-            <Card
-              variant="default"
-              sx={{ p: 'var(--ob-space-150)', textAlign: 'center' }}
-            >
-              <Box
-                component="p"
-                sx={{
-                  fontSize: 'var(--ob-font-size-sm)',
-                  color: 'var(--ob-color-text-secondary)',
-                  m: 0,
-                }}
-              >
-                No change of use applications yet.
-              </Box>
-            </Card>
-          ) : (
-            <Card variant="default" sx={{ overflow: 'hidden' }}>
-              <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
-                <Table sx={tableSx}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>ID</TableCell>
-                      <TableCell>Current Use</TableCell>
-                      <TableCell>Proposed Use</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>DC Amendment</TableCell>
-                      <TableCell>Planning Permission</TableCell>
-                      <TableCell>Created</TableCell>
-                      <TableCell align="right">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {changeOfUseApps.map((app) => {
-                      const isDraft = app.status.toUpperCase() === 'DRAFT'
-                      return (
-                        <TableRow key={app.id} hover>
-                          <TableCell
-                            sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
-                          >
-                            {app.id.slice(0, 8)}...
-                          </TableCell>
-                          <TableCell sx={{ textTransform: 'capitalize' }}>
-                            {app.current_use}
-                          </TableCell>
-                          <TableCell sx={{ textTransform: 'capitalize' }}>
-                            {app.proposed_use}
-                          </TableCell>
-                          <TableCell>
-                            <StatusChip
-                              status={getStatusChipStatus(app.status)}
-                              size="sm"
-                            >
-                              {app.status.replace('_', ' ')}
-                            </StatusChip>
-                          </TableCell>
-                          <TableCell>
-                            {app.requires_dc_amendment ? 'Yes' : 'No'}
-                          </TableCell>
-                          <TableCell>
-                            {app.requires_planning_permission ? 'Yes' : 'No'}
-                          </TableCell>
-                          <TableCell>
-                            {new Date(app.created_at).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell align="right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openChangeOfUseForm(app)}
-                            >
-                              {isDraft ? 'Edit' : 'View'}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Card>
-          )}
-        </Box>
-
-        {/* Heritage Submissions Section - Flat pattern */}
-        <Box component="section">
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--ob-space-075)',
-              mb: 'var(--ob-space-100)',
-            }}
-          >
-            <HeritageIcon
-              sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 20 }}
-            />
-            <Box
-              component="h3"
-              sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                fontWeight: 600,
-                color: 'var(--ob-color-text-tertiary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                m: 0,
-              }}
-            >
-              Heritage Submissions (STB)
-            </Box>
-          </Box>
-          {heritageSubmissions.length === 0 ? (
-            <Card
-              variant="default"
-              sx={{
-                p: 'var(--ob-space-200)',
-                textAlign: 'center',
-                border: '1px dashed var(--ob-color-border-subtle)',
-              }}
-            >
-              <Box
-                component="p"
-                sx={{
-                  fontSize: 'var(--ob-font-size-sm)',
-                  color: 'var(--ob-color-text-secondary)',
-                  m: 0,
-                  mb: 'var(--ob-space-100)',
-                }}
-              >
-                No heritage submissions yet. Start a draft to capture the
-                conservation details.
-              </Box>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => openHeritageForm()}
-              >
-                Start heritage submission
-              </Button>
-            </Card>
-          ) : (
-            <Card variant="default" sx={{ overflow: 'hidden' }}>
-              <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
-                <Table sx={tableSx}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Reference</TableCell>
-                      <TableCell>Conservation Status</TableCell>
-                      <TableCell>Year Built</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Created</TableCell>
-                      <TableCell align="right">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {heritageSubmissions.map((sub) => (
-                      <TableRow key={sub.id} hover>
-                        <TableCell
-                          sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
-                        >
-                          {sub.stb_reference || sub.id.slice(0, 8) + '...'}
-                        </TableCell>
-                        <TableCell sx={{ textTransform: 'capitalize' }}>
-                          {sub.conservation_status.replace(/_/g, ' ')}
-                        </TableCell>
-                        <TableCell>
-                          {sub.original_construction_year || '-'}
-                        </TableCell>
-                        <TableCell>
-                          <StatusChip
-                            status={getStatusChipStatus(sub.status)}
-                            size="sm"
-                          >
-                            {sub.status.replace('_', ' ')}
-                          </StatusChip>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(sub.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell align="right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openHeritageForm(sub)}
-                          >
-                            {sub.status.toUpperCase() === 'DRAFT'
-                              ? 'Edit'
-                              : 'View'}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Card>
-          )}
-        </Box>
+        <SubmissionsTabContent
+          submissions={submissions}
+          changeOfUseApps={changeOfUseApps}
+          heritageSubmissions={heritageSubmissions}
+          loading={loading}
+          integrationModeLabel={integrationModeLabel}
+          integrationState={integrationState}
+          tableSx={tableSx}
+          onRefreshSubmission={handleRefreshSubmission}
+          onOpenChangeOfUseForm={openChangeOfUseForm}
+          onOpenHeritageForm={openHeritageForm}
+        />
       </TabPanel>
 
-      {/* Tab 1: Compliance Path - Content directly on background */}
+      {/* Tab 1: Compliance Path */}
       <TabPanel value={tabValue} index={1}>
         <CompliancePathTimeline
           projectId={projectId}
@@ -1178,10 +492,12 @@ export const RegulatoryDashboardPage: React.FC = () => {
               const updated = [...prev]
               updated[existingIndex] = application
               persistList(projectId, 'change-of-use', updated)
+              setSuccessMessage('Change of use application updated')
               return updated
             }
             const next = [application, ...prev]
             persistList(projectId, 'change-of-use', next)
+            setSuccessMessage('Change of use application submitted')
             return next
           })
         }}
@@ -1193,6 +509,14 @@ export const RegulatoryDashboardPage: React.FC = () => {
         projectId={projectId}
         existingSubmission={selectedHeritageSubmission}
         onSuccess={handleHeritageSuccess}
+      />
+
+      <Snackbar
+        open={Boolean(successMessage)}
+        autoHideDuration={3000}
+        onClose={() => setSuccessMessage(null)}
+        message={successMessage}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
     </Box>
   )

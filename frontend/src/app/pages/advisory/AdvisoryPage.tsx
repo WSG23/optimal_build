@@ -10,6 +10,8 @@ import {
   Stack,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material'
 import {
   Assignment,
@@ -33,9 +35,12 @@ import {
 
 // Canonical Components
 import { Card } from '../../../components/canonical/Card'
+import { EmptyState } from '../../../components/canonical'
 import { MetricTile } from '../../../components/canonical/MetricTile'
 
 export function AdvisoryPage() {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [propertyId, setPropertyId] = useState('')
   const [summary, setSummary] = useState<AdvisorySummary | null>(null)
   const [loading, setLoading] = useState(false)
@@ -199,9 +204,10 @@ export function AdvisoryPage() {
               {/* Asset Mix Strategy */}
               <Box>
                 <Stack
-                  direction="row"
+                  direction={isMobile ? 'column' : 'row'}
                   justifyContent="space-between"
-                  alignItems="center"
+                  alignItems={isMobile ? 'flex-start' : 'center'}
+                  spacing={isMobile ? 'var(--ob-space-050)' : undefined}
                   mb="var(--ob-space-100)"
                 >
                   <Typography variant="h5" fontWeight={600}>
@@ -419,9 +425,10 @@ export function AdvisoryPage() {
               {/* Sales Velocity Model (Calculator) */}
               <Box>
                 <Stack
-                  direction="row"
+                  direction={isMobile ? 'column' : 'row'}
                   justifyContent="space-between"
-                  alignItems="center"
+                  alignItems={isMobile ? 'flex-start' : 'center'}
+                  spacing={isMobile ? 'var(--ob-space-100)' : undefined}
                   mb="var(--ob-space-100)"
                 >
                   <Box>
@@ -437,6 +444,7 @@ export function AdvisoryPage() {
                     variant="contained"
                     onClick={handleComputeVelocity}
                     disabled={velocityLoading}
+                    fullWidth={isMobile}
                     startIcon={
                       velocityLoading ? (
                         <Speed className="fa-spin" />
@@ -452,7 +460,7 @@ export function AdvisoryPage() {
                 <Card variant="default" sx={{ p: 'var(--ob-space-150)' }}>
                   <Grid container spacing="var(--ob-space-150)">
                     {/* Inputs */}
-                    <Grid item xs={12} md={3}>
+                    <Grid item xs={12} md={isMobile ? 12 : 3}>
                       <Stack spacing="var(--ob-space-100)">
                         <TextField
                           select
@@ -514,7 +522,7 @@ export function AdvisoryPage() {
                     </Grid>
 
                     {/* Results Area */}
-                    <Grid item xs={12} md={9}>
+                    <Grid item xs={12} md={isMobile ? 12 : 9}>
                       {velocityError && (
                         <Typography color="error">{velocityError}</Typography>
                       )}
@@ -706,24 +714,12 @@ export function AdvisoryPage() {
 
           {/* Empty State */}
           {!summary && !loading && (
-            <Card
-              variant="default"
-              sx={{
-                p: 'var(--ob-space-300)',
-                textAlign: 'center',
-                mt: 'var(--ob-space-200)',
-              }}
-            >
-              <Typography variant="h1" sx={{ mb: 'var(--ob-space-100)' }}>
-                📊
-              </Typography>
-              <Typography variant="h5" gutterBottom>
-                No advisory data loaded
-              </Typography>
-              <Typography sx={{ color: 'var(--ob-color-text-secondary)' }}>
-                Enter a property ID to load advisory data.
-              </Typography>
-            </Card>
+            <EmptyState
+              title="No advisory data loaded"
+              description="Enter a property ID to load advisory data."
+              size="md"
+              sx={{ mt: 'var(--ob-space-200)' }}
+            />
           )}
         </Container>
       </Box>

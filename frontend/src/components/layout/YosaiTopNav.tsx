@@ -2,16 +2,23 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Box,
   Button,
+  Divider,
+  Drawer,
   IconButton,
+  List,
+  ListItemButton,
+  ListItemText,
   Stack,
   Tooltip,
   Typography,
   alpha,
+  useMediaQuery,
   useTheme,
 } from '@mui/material'
 import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  Menu as MenuIcon,
   PushPin as PushPinIcon,
   PushPinOutlined as PushPinOutlinedIcon,
 } from '@mui/icons-material'
@@ -151,6 +158,8 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
   const navRef = useRef<HTMLDivElement | null>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [isRevealed, setIsRevealed] = useState(false)
   const hideTimerRef = useRef<number | null>(null)
 
@@ -485,137 +494,150 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
               </Stack>
             </Button>
 
-            <Box
-              sx={{
-                position: 'relative',
-                flex: 1,
-                minWidth: 0,
-                height: '100%',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              {/* Left scroll affordance */}
+            {!isMobile ? (
               <Box
                 sx={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  pr: 'var(--ob-space-075)',
-                  background: `linear-gradient(90deg, ${alpha(theme.palette.background.default, 0.95)} 0%, ${alpha(theme.palette.background.default, 0.85)} 60%, ${alpha(theme.palette.background.default, 0)} 100%)`,
-                  opacity: canScrollLeft ? 1 : 0,
-                  pointerEvents: canScrollLeft ? 'auto' : 'none',
-                  transition: 'opacity 200ms ease',
-                  zIndex: 'calc(var(--ob-z-base) + 1)',
-                }}
-              >
-                <IconButton
-                  aria-label="Scroll navigation left"
-                  onClick={() => scroll('left')}
-                  size="small"
-                  sx={{
-                    borderRadius: 'var(--ob-radius-pill)',
-                    border: 1,
-                    borderColor: alpha(theme.palette.divider, 0.4),
-                    bgcolor: alpha(theme.palette.background.paper, 0.45),
-                    backdropFilter: 'blur(var(--ob-blur-sm))',
-                    '&:hover': {
-                      bgcolor: alpha(theme.palette.background.paper, 0.65),
-                    },
-                  }}
-                >
-                  <ChevronLeftIcon fontSize="small" />
-                </IconButton>
-              </Box>
-
-              <Box
-                ref={navRef}
-                onScroll={checkScroll}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  height: '100%',
+                  position: 'relative',
+                  flex: 1,
                   minWidth: 0,
-                  gap: 'var(--ob-space-150)',
-                  overflowX: 'auto',
-                  scrollbarWidth: 'none',
-                  scrollBehavior: 'smooth',
-                  '&::-webkit-scrollbar': { display: 'none' },
-                  px: 'var(--ob-space-025)',
-                }}
-              >
-                {navGroups.map((group, idx) => (
-                  <Stack
-                    key={group.items.map((item) => item.path).join('|')}
-                    direction="row"
-                    alignItems="center"
-                    sx={{ gap: 'var(--ob-space-050)', flexShrink: 0 }}
-                  >
-                    {group.title && (
-                      <Typography
-                        component="span"
-                        sx={{
-                          fontSize: 'var(--ob-font-size-2xs)',
-                          fontFamily: 'var(--ob-font-family-mono)',
-                          fontWeight: 700,
-                          color: 'text.disabled',
-                          textTransform: 'uppercase',
-                          letterSpacing: 'var(--ob-letter-spacing-widest)',
-                          pr: 'var(--ob-space-050)',
-                          pl: idx > 0 ? 'var(--ob-space-050)' : 0,
-                          borderLeft: idx > 0 ? 1 : 0,
-                          borderColor: alpha(theme.palette.divider, 0.2),
-                          whiteSpace: 'nowrap',
-                          userSelect: 'none',
-                        }}
-                      >
-                        {group.title}
-                      </Typography>
-                    )}
-                    {group.items.map(renderItem)}
-                  </Stack>
-                ))}
-              </Box>
-
-              {/* Right scroll affordance */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
+                  height: '100%',
                   display: 'flex',
                   alignItems: 'center',
-                  pl: 'var(--ob-space-075)',
-                  background: `linear-gradient(270deg, ${alpha(theme.palette.background.default, 0.95)} 0%, ${alpha(theme.palette.background.default, 0.85)} 60%, ${alpha(theme.palette.background.default, 0)} 100%)`,
-                  opacity: canScrollRight ? 1 : 0,
-                  pointerEvents: canScrollRight ? 'auto' : 'none',
-                  transition: 'opacity 200ms ease',
-                  zIndex: 'calc(var(--ob-z-base) + 1)',
                 }}
               >
-                <IconButton
-                  aria-label="Scroll navigation right"
-                  onClick={() => scroll('right')}
-                  size="small"
+                {/* Left scroll affordance */}
+                <Box
                   sx={{
-                    borderRadius: 'var(--ob-radius-pill)',
-                    border: 1,
-                    borderColor: alpha(theme.palette.divider, 0.4),
-                    bgcolor: alpha(theme.palette.background.paper, 0.45),
-                    backdropFilter: 'blur(var(--ob-blur-sm))',
-                    '&:hover': {
-                      bgcolor: alpha(theme.palette.background.paper, 0.65),
-                    },
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    pr: 'var(--ob-space-075)',
+                    background: `linear-gradient(90deg, ${alpha(theme.palette.background.default, 0.95)} 0%, ${alpha(theme.palette.background.default, 0.85)} 60%, ${alpha(theme.palette.background.default, 0)} 100%)`,
+                    opacity: canScrollLeft ? 1 : 0,
+                    pointerEvents: canScrollLeft ? 'auto' : 'none',
+                    transition: 'opacity 200ms ease',
+                    zIndex: 'calc(var(--ob-z-base) + 1)',
                   }}
                 >
-                  <ChevronRightIcon fontSize="small" />
-                </IconButton>
+                  <IconButton
+                    aria-label="Scroll navigation left"
+                    onClick={() => scroll('left')}
+                    size="small"
+                    sx={{
+                      borderRadius: 'var(--ob-radius-pill)',
+                      border: 1,
+                      borderColor: alpha(theme.palette.divider, 0.4),
+                      bgcolor: alpha(theme.palette.background.paper, 0.45),
+                      backdropFilter: 'blur(var(--ob-blur-sm))',
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.background.paper, 0.65),
+                      },
+                    }}
+                  >
+                    <ChevronLeftIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+
+                <Box
+                  ref={navRef}
+                  onScroll={checkScroll}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '100%',
+                    minWidth: 0,
+                    gap: 'var(--ob-space-150)',
+                    overflowX: 'auto',
+                    scrollbarWidth: 'none',
+                    scrollBehavior: 'smooth',
+                    '&::-webkit-scrollbar': { display: 'none' },
+                    px: 'var(--ob-space-025)',
+                  }}
+                >
+                  {navGroups.map((group, idx) => (
+                    <Stack
+                      key={group.items.map((item) => item.path).join('|')}
+                      direction="row"
+                      alignItems="center"
+                      sx={{ gap: 'var(--ob-space-050)', flexShrink: 0 }}
+                    >
+                      {group.title && (
+                        <Typography
+                          component="span"
+                          sx={{
+                            fontSize: 'var(--ob-font-size-2xs)',
+                            fontFamily: 'var(--ob-font-family-mono)',
+                            fontWeight: 700,
+                            color: 'text.disabled',
+                            textTransform: 'uppercase',
+                            letterSpacing: 'var(--ob-letter-spacing-widest)',
+                            pr: 'var(--ob-space-050)',
+                            pl: idx > 0 ? 'var(--ob-space-050)' : 0,
+                            borderLeft: idx > 0 ? 1 : 0,
+                            borderColor: alpha(theme.palette.divider, 0.2),
+                            whiteSpace: 'nowrap',
+                            userSelect: 'none',
+                          }}
+                        >
+                          {group.title}
+                        </Typography>
+                      )}
+                      {group.items.map(renderItem)}
+                    </Stack>
+                  ))}
+                </Box>
+
+                {/* Right scroll affordance */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    pl: 'var(--ob-space-075)',
+                    background: `linear-gradient(270deg, ${alpha(theme.palette.background.default, 0.95)} 0%, ${alpha(theme.palette.background.default, 0.85)} 60%, ${alpha(theme.palette.background.default, 0)} 100%)`,
+                    opacity: canScrollRight ? 1 : 0,
+                    pointerEvents: canScrollRight ? 'auto' : 'none',
+                    transition: 'opacity 200ms ease',
+                    zIndex: 'calc(var(--ob-z-base) + 1)',
+                  }}
+                >
+                  <IconButton
+                    aria-label="Scroll navigation right"
+                    onClick={() => scroll('right')}
+                    size="small"
+                    sx={{
+                      borderRadius: 'var(--ob-radius-pill)',
+                      border: 1,
+                      borderColor: alpha(theme.palette.divider, 0.4),
+                      bgcolor: alpha(theme.palette.background.paper, 0.45),
+                      backdropFilter: 'blur(var(--ob-blur-sm))',
+                      '&:hover': {
+                        bgcolor: alpha(theme.palette.background.paper, 0.65),
+                      },
+                    }}
+                  >
+                    <ChevronRightIcon fontSize="small" />
+                  </IconButton>
+                </Box>
               </Box>
-            </Box>
+            ) : (
+              <IconButton
+                aria-label="Open navigation menu"
+                onClick={() => setMobileDrawerOpen(true)}
+                sx={{
+                  color: 'text.secondary',
+                  ml: 'var(--ob-space-050)',
+                }}
+              >
+                <MenuIcon />
+              </IconButton>
+            )}
 
             <Box
               sx={{
@@ -634,6 +656,85 @@ export function YosaiTopNav({ isPinned, onTogglePinned }: YosaiTopNavProps) {
           </Stack>
         </Box>
       </Box>
+
+      <Drawer
+        anchor="left"
+        open={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        PaperProps={{
+          sx: {
+            width: 280,
+            bgcolor: 'background.default',
+            borderRight: 'var(--ob-border-fine)',
+          },
+        }}
+      >
+        <Box sx={{ p: 'var(--ob-space-150)' }}>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              fontSize: 'var(--ob-font-size-sm)',
+              color: 'var(--ob-color-brand-primary)',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              mb: 'var(--ob-space-100)',
+            }}
+          >
+            OPTIMAL BUILD
+          </Typography>
+        </Box>
+        <Divider />
+        <List sx={{ pt: 'var(--ob-space-050)' }}>
+          {navGroups.map((group) => (
+            <Box key={group.title ?? 'default'}>
+              {group.title && (
+                <Typography
+                  sx={{
+                    px: 'var(--ob-space-100)',
+                    pt: 'var(--ob-space-100)',
+                    pb: 'var(--ob-space-025)',
+                    fontSize: 'var(--ob-font-size-2xs)',
+                    fontWeight: 700,
+                    color: 'text.disabled',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                  }}
+                >
+                  {group.title}
+                </Typography>
+              )}
+              {group.items.map((item) => (
+                <ListItemButton
+                  key={item.path}
+                  component={Link}
+                  to={item.path}
+                  selected={path === item.path}
+                  onClick={() => setMobileDrawerOpen(false)}
+                  sx={{
+                    borderRadius: 'var(--ob-radius-sm)',
+                    mx: 'var(--ob-space-050)',
+                    '&.Mui-selected': {
+                      bgcolor: 'var(--ob-color-action-hover)',
+                    },
+                  }}
+                >
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{
+                      fontSize: 'var(--ob-font-size-sm)',
+                      fontWeight: 600,
+                    }}
+                    secondary={item.description}
+                    secondaryTypographyProps={{
+                      fontSize: 'var(--ob-font-size-xs)',
+                    }}
+                  />
+                </ListItemButton>
+              ))}
+            </Box>
+          ))}
+        </List>
+      </Drawer>
     </>
   )
 }

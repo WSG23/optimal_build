@@ -1,5 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
 /* =============================================================================
-   CANONICAL DESIGN TOKENS - Obsidian & Gold Theme
+   CANONICAL DESIGN TOKENS - Obsidian & Sapphire Theme
    =============================================================================
    This is the SINGLE SOURCE OF TRUTH for all design tokens in the application.
 
@@ -29,8 +31,8 @@
      =========================================================================== */
 
     /* Neutrals: Deep Slate (AI Studio Premium Dark Mode)
-       Using blue-tinted slates creates "chromatic harmony" with Cyan accents.
-       Pure grays feel "muddy" next to neon cyan; slates feel "electrified". */
+       Blue-tinted slates create chromatic harmony with Sapphire brand accents.
+       Pure grays feel "muddy" next to blue; slates feel cohesive and premium. */
     --ob-neutral-950: #060910; /* Nearly black deep slate - Root Background */
     --ob-neutral-900: #0b0f1a; /* Very dark blue-tinted slate - Card Background */
     --ob-neutral-800: #1e293b; /* Surface Elevated (was neutral-900) */
@@ -43,15 +45,15 @@
     --ob-neutral-100: #f1f5f9; /* Primary Text */
     --ob-neutral-50: #f8fafc;
 
-    /* Brand: Action Cyan - Interactive affordance, buttons, selections, active states */
-    --ob-brand-700: #0891b2;
-    --ob-brand-600: #06b6d4;
-    --ob-brand-500: #22d3ee; /* Primary Action */
-    --ob-brand-400: #67e8f9;
-    --ob-brand-300: #a5f3fc;
-    --ob-brand-200: #cffafe;
-    --ob-brand-100: #ecfeff;
-    --ob-brand-glow: rgba(34, 211, 238, 0.5);
+    /* Brand: Institutional Sapphire - Authority, trust, financial precision */
+    --ob-brand-700: #1d4ed8;
+    --ob-brand-600: #2563eb;
+    --ob-brand-500: #3b82f6; /* Primary Action */
+    --ob-brand-400: #60a5fa;
+    --ob-brand-300: #93bbfd;
+    --ob-brand-200: #bfdbfe;
+    --ob-brand-100: #dbeafe;
+    --ob-brand-glow: rgba(59, 130, 246, 0.5);
 
     /* Accent: Emerald Green (Growth/ROI) & Burnt Orange (Alerts) */
     --ob-accent-600: #059669;
@@ -59,6 +61,15 @@
     --ob-accent-400: #34d399;
     --ob-accent-300: #6ee7b7;
     --ob-accent-200: #d1fae5;
+
+    /* Gold Accent (Warmth/Premium) */
+    --ob-gold-600: #b45309;
+    --ob-gold-500: #d97706;
+    --ob-gold-400: #f59e0b;
+    --ob-gold-300: #fbbf24;
+    --ob-gold-200: #fde68a;
+    --ob-gold-bg: rgba(245, 158, 11, 0.12);
+    --ob-gold-text: #fbbf24;
 
     /* Semantic Status Colors */
 
@@ -86,13 +97,13 @@
     --ob-error-bg: rgba(239, 68, 68, 0.15);
     --ob-error-text: #f87171;
 
-    /* Info: Contextual Indigo - Informational states, AI insights, metadata */
-    --ob-info-700: #4338ca;
-    --ob-info-600: #4f46e5;
-    --ob-info-500: #6366f1;
-    --ob-info-400: #818cf8;
-    --ob-info-bg: rgba(99, 102, 241, 0.15);
-    --ob-info-text: #818cf8;
+    /* Info: Soft Violet - Informational states, AI insights, metadata (distinct from sapphire brand) */
+    --ob-info-700: #7c3aed;
+    --ob-info-600: #8b5cf6;
+    --ob-info-500: #a78bfa;
+    --ob-info-400: #c4b5fd;
+    --ob-info-bg: rgba(139, 92, 246, 0.15);
+    --ob-info-text: #c4b5fd;
 
     /* ===========================================================================
      2. SEMANTIC COLORS - Surfaces
@@ -127,7 +138,7 @@
      =========================================================================== */
 
     /* Text colors - Typographic hierarchy via "dimming" (AI Studio protocol)
-       Primary Data: Pure White or Cyan - High contrast
+       Primary Data: Pure White or Sapphire - High contrast
        Secondary Text: Slate-400 - Dimmed but readable
        Tertiary/Meta: Slate-500 - Recedes into background */
     --ob-color-text: var(--ob-neutral-100);
@@ -176,27 +187,31 @@
      5. SEMANTIC COLORS - Brand & Actions
      =========================================================================== */
 
-    --ob-color-brand-primary: var(--ob-brand-500); /* Action Cyan */
+    --ob-color-brand-primary: var(--ob-brand-500); /* Institutional Sapphire */
     --ob-color-brand-primary-emphasis: var(
         --ob-brand-400
     ); /* Lighter on hover for dark mode */
     --ob-color-brand-primary-glow: var(--ob-brand-glow);
-    --ob-color-brand-primary-rgb: 34 211 238;
-    --ob-color-brand-primary-emphasis-rgb: 34 211 238;
+    --ob-color-brand-primary-rgb: 59 130 246;
+    --ob-color-brand-primary-emphasis-rgb: 96 165 250;
     --ob-color-brand-primary-strong: var(--ob-brand-700);
     --ob-color-brand-accent: var(--ob-accent-500);
-    --ob-color-brand-soft: rgba(6, 182, 212, 0.2);
-    --ob-color-brand-soft-rgb: 6 182 212;
-    --ob-color-brand-muted: rgba(34, 211, 238, 0.15);
+    --ob-color-brand-soft: rgba(59, 130, 246, 0.2);
+    --ob-color-brand-soft-rgb: 59 130 246;
+    --ob-color-brand-muted: rgba(59, 130, 246, 0.15);
     --ob-color-brand-strong: var(--ob-brand-600);
+
+    /* Warm accent semantics */
+    --ob-color-accent-warm: var(--ob-gold-400);
+    --ob-color-accent-warm-muted: var(--ob-gold-bg);
 
     /* Interactive States - Dark mode uses white overlays to "lift" elements
        These provide clearer feedback than the base action-hover alone */
     --ob-color-action-hover: rgba(255, 255, 255, 0.08); /* Increased from 0.05 for visibility */
     --ob-color-action-active: rgba(255, 255, 255, 0.12); /* Pressed/active state */
-    --ob-color-action-selected: rgba(34, 211, 238, 0.1); /* Cyan tint for selected items */
-    --ob-color-action-selected-strong: rgba(34, 211, 238, 0.15); /* Stronger selection */
-    --ob-color-action-focus-ring: rgba(34, 211, 238, 0.5); /* Focus ring color */
+    --ob-color-action-selected: rgba(59, 130, 246, 0.1); /* Sapphire tint for selected items */
+    --ob-color-action-selected-strong: rgba(59, 130, 246, 0.15); /* Stronger selection */
+    --ob-color-action-focus-ring: rgba(59, 130, 246, 0.5); /* Focus ring color */
 
     /* Input Surfaces - Slightly lighter than card surface for distinguishability */
     --ob-color-surface-input: rgba(255, 255, 255, 0.04); /* Form input backgrounds */
@@ -206,8 +221,8 @@
 
     /* Table/List Surfaces - For data-dense views */
     --ob-color-table-row-alt: rgba(255, 255, 255, 0.02); /* Alternating row background */
-    --ob-color-table-row-hover: rgba(0, 243, 255, 0.05); /* Cyan hint on row hover */
-    --ob-color-table-row-selected: rgba(0, 243, 255, 0.08); /* Selected row */
+    --ob-color-table-row-hover: rgba(59, 130, 246, 0.05); /* Sapphire hint on row hover */
+    --ob-color-table-row-selected: rgba(59, 130, 246, 0.08); /* Selected row */
     --ob-color-table-header: rgba(255, 255, 255, 0.03); /* Table header background */
 
     /* ===========================================================================
@@ -251,20 +266,20 @@
     --ob-color-critical-muted: var(--ob-error-400);
 
     /* Info */
-    --ob-color-info-soft: rgba(99, 102, 241, 0.15);
+    --ob-color-info-soft: rgba(139, 92, 246, 0.15);
     --ob-color-info-strong: var(--ob-info-700);
-    --ob-color-info-strong-rgb: 67 56 202;
-    --ob-color-info-muted: rgba(99, 102, 241, 0.25);
+    --ob-color-info-strong-rgb: 124 58 237;
+    --ob-color-info-muted: rgba(139, 92, 246, 0.25);
     --ob-color-status-info-bg: var(--ob-info-bg);
     --ob-color-status-info-text: var(--ob-info-text);
-    --ob-color-status-info-text-rgb: 129 140 248;
+    --ob-color-status-info-text-rgb: 196 181 253;
 
     /* ===========================================================================
      7. TYPOGRAPHY
      =========================================================================== */
 
     /* Font Families */
-    --ob-font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
+    --ob-font-family-base: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --ob-font-family-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
 
     /* Font Sizes */
@@ -381,9 +396,9 @@
      9.2 GLOW EFFECTS - Consistent across components
      =========================================================================== */
 
-    --ob-glow-brand-subtle: 0 0 8px rgba(34, 211, 238, 0.15);
-    --ob-glow-brand-medium: 0 0 12px rgba(34, 211, 238, 0.25);
-    --ob-glow-brand-strong: 0 0 20px rgba(34, 211, 238, 0.4);
+    --ob-glow-brand-subtle: 0 0 8px rgba(59, 130, 246, 0.15);
+    --ob-glow-brand-medium: 0 0 12px rgba(59, 130, 246, 0.25);
+    --ob-glow-brand-strong: 0 0 20px rgba(59, 130, 246, 0.4);
     --ob-glow-gold: 0 0 12px rgba(245, 158, 11, 0.25);
     --ob-glow-success: 0 0 10px rgba(34, 197, 94, 0.2);
     --ob-glow-error: 0 0 10px rgba(239, 68, 68, 0.2);
@@ -393,30 +408,50 @@
      9.3 PREMIUM NEON EFFECTS - Cyber/Mission Control Aesthetic
      =========================================================================== */
 
-    /* Neon Cyan Accent (Premium data visualization) */
-    --ob-color-neon-cyan: #00f3ff;
-    --ob-color-neon-cyan-rgb: 0 243 255;
-    --ob-color-neon-cyan-dim: rgba(0, 243, 255, 0.15);
-    --ob-color-neon-cyan-dark: #0096cc; /* Darker cyan for gradients */
-    --ob-color-neon-cyan-subtle: rgba(0, 243, 255, 0.05); /* Very subtle cyan bg */
-    --ob-color-neon-cyan-muted: rgba(0, 243, 255, 0.1); /* Subtle cyan background */
-    --ob-color-neon-cyan-soft: rgba(0, 243, 255, 0.2); /* Soft cyan for hover */
-    --ob-border-neon-cyan-muted: rgba(0, 243, 255, 0.3); /* Muted cyan border */
+    /* Neon Brand Accent (Premium data visualization — variable names retain "cyan" for back-compat) */
+    --ob-color-neon-cyan: #6ea8fe;
+    --ob-color-neon-cyan-rgb: 110 168 254;
+    --ob-color-neon-cyan-dim: rgba(59, 130, 246, 0.15);
+    --ob-color-neon-cyan-dark: #1d4ed8; /* Deeper sapphire for gradients */
+    --ob-color-neon-cyan-subtle: rgba(59, 130, 246, 0.05); /* Very subtle brand bg */
+    --ob-color-neon-cyan-muted: rgba(59, 130, 246, 0.1); /* Subtle brand background */
+    --ob-color-neon-cyan-soft: rgba(59, 130, 246, 0.2); /* Soft brand for hover */
+    --ob-border-neon-cyan-muted: rgba(59, 130, 246, 0.3); /* Muted brand border */
 
     /* Neon Glow Effects */
-    --ob-glow-neon-cyan: 0 0 15px rgba(0, 243, 255, 0.4);
-    --ob-glow-neon-cyan-strong: 0 0 20px rgba(0, 243, 255, 0.5);
-    --ob-glow-neon-cyan-soft: 0 2px 8px rgba(0, 243, 255, 0.25);
-    --ob-glow-neon-cyan-hover: 0 4px 12px rgba(0, 243, 255, 0.35);
-    --ob-glow-neon-cyan-focus: 0 0 0 3px rgba(0, 243, 255, 0.15);
-    --ob-glow-neon-cyan-card: 0 4px 16px rgba(0, 243, 255, 0.25);
-    --ob-glow-neon-text: 0 0 8px rgba(0, 243, 255, 0.4);
+    --ob-glow-neon-cyan: 0 0 15px rgba(59, 130, 246, 0.4);
+    --ob-glow-neon-cyan-strong: 0 0 20px rgba(59, 130, 246, 0.5);
+    --ob-glow-neon-cyan-soft: 0 2px 8px rgba(59, 130, 246, 0.25);
+    --ob-glow-neon-cyan-hover: 0 4px 12px rgba(59, 130, 246, 0.35);
+    --ob-glow-neon-cyan-focus: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    --ob-glow-neon-cyan-card: 0 4px 16px rgba(59, 130, 246, 0.25);
+    --ob-glow-neon-text: 0 0 8px rgba(59, 130, 246, 0.4);
 
     /* Status Glows (pulsing indicators) */
-    --ob-glow-status-live: 0 0 8px rgba(0, 243, 255, 0.6);
+    --ob-glow-status-live: 0 0 8px rgba(59, 130, 246, 0.6);
     --ob-glow-status-success: 0 0 8px rgba(0, 255, 157, 0.6);
     --ob-glow-status-error: 0 0 8px rgba(255, 51, 102, 0.6);
     --ob-glow-status-warning: 0 0 8px rgba(245, 158, 11, 0.6);
+
+    /* Component Glow Values (text-shadow / drop-shadow building blocks) */
+    --ob-glow-brand-color-30: rgba(59, 130, 246, 0.3);
+    --ob-glow-brand-color-50: rgba(59, 130, 246, 0.5);
+    --ob-glow-success-color-30: rgba(0, 255, 157, 0.3);
+    --ob-glow-success-color-40: rgba(0, 255, 157, 0.4);
+    --ob-glow-warning-color-30: rgba(245, 158, 11, 0.3);
+    --ob-glow-warning-color-40: rgba(245, 158, 11, 0.4);
+    --ob-glow-error-color-30: rgba(255, 51, 102, 0.3);
+    --ob-glow-error-color-40: rgba(255, 51, 102, 0.4);
+
+    /* Accent Backgrounds (low-opacity status tints for badges/trends) */
+    --ob-accent-success-bg: rgba(0, 255, 157, 0.1);
+    --ob-accent-error-bg: rgba(255, 51, 102, 0.1);
+
+    /* Tag/Chip Border Colors (semantic borders at 0.2 opacity) */
+    --ob-border-brand-soft: rgba(59, 130, 246, 0.2);
+    --ob-border-success-soft: rgba(34, 197, 94, 0.2);
+    --ob-border-warning-soft: rgba(234, 179, 8, 0.2);
+    --ob-border-error-soft: rgba(239, 68, 68, 0.2);
 
     /* Premium Glass Surface - darker for contrast against deep slate bg */
     --ob-surface-premium: rgba(11, 15, 26, 0.85); /* Matches --ob-neutral-900 with alpha */
@@ -425,17 +460,22 @@
     /* Overlay colors (for dark backgrounds) */
     --ob-overlay-subtle: rgba(0, 0, 0, 0.05);
     --ob-overlay-light: rgba(0, 0, 0, 0.1);
+    --ob-overlay-heavy: rgba(0, 0, 0, 0.15);
     --ob-overlay-medium: rgba(0, 0, 0, 0.2);
     --ob-overlay-strong: rgba(0, 0, 0, 0.3);
     --ob-overlay-dark: rgba(0, 0, 0, 0.45); /* Modal backdrop */
 
-    /* Background grid pattern - subtle cyan tint for "electrified" feel */
-    --ob-bg-grid-color: rgba(0, 243, 255, 0.03); /* Cyan-tinted grid */
+    /* White overlay colors (for shine/lightening effects) */
+    --ob-overlay-white-subtle: rgba(255, 255, 255, 0.1);
+    --ob-overlay-white-medium: rgba(255, 255, 255, 0.2);
+
+    /* Background grid pattern - subtle sapphire tint for depth */
+    --ob-bg-grid-color: rgba(59, 130, 246, 0.03); /* Sapphire-tinted grid */
     --ob-bg-grid-size: 40px;
 
     /* Neon Borders */
     --ob-border-neon-cyan: 1px solid var(--ob-color-neon-cyan);
-    --ob-border-neon-hover: 1px solid rgba(0, 243, 255, 0.3);
+    --ob-border-neon-hover: 1px solid rgba(59, 130, 246, 0.3);
 
     /* Gradient Accent (for card top borders) */
     --ob-gradient-accent-fade: linear-gradient(to right, var(--ob-color-neon-cyan), transparent);
@@ -581,16 +621,16 @@ html[data-theme='light'] {
     --ob-border-glass-strong: rgba(0, 0, 0, 0.1);
 
     /* Brand */
-    --ob-color-brand-soft: rgba(6, 182, 212, 0.1);
-    --ob-color-brand-soft-rgb: 6 182 212;
-    --ob-color-brand-muted: rgba(34, 211, 238, 0.1);
+    --ob-color-brand-soft: rgba(59, 130, 246, 0.1);
+    --ob-color-brand-soft-rgb: 59 130 246;
+    --ob-color-brand-muted: rgba(59, 130, 246, 0.1);
 
     /* Interactive States - Light mode uses black overlays to "dim" elements */
     --ob-color-action-hover: rgba(0, 0, 0, 0.05);
     --ob-color-action-active: rgba(0, 0, 0, 0.1); /* Pressed/active state */
-    --ob-color-action-selected: rgba(34, 211, 238, 0.1); /* Cyan tint for selected items */
-    --ob-color-action-selected-strong: rgba(34, 211, 238, 0.15); /* Stronger selection */
-    --ob-color-action-focus-ring: rgba(34, 211, 238, 0.4); /* Focus ring color */
+    --ob-color-action-selected: rgba(59, 130, 246, 0.1); /* Sapphire tint for selected items */
+    --ob-color-action-selected-strong: rgba(59, 130, 246, 0.15); /* Stronger selection */
+    --ob-color-action-focus-ring: rgba(59, 130, 246, 0.4); /* Focus ring color */
 
     /* Input Surfaces - White with subtle distinction from card */
     --ob-color-surface-input: #ffffff; /* Form input backgrounds */
@@ -600,8 +640,8 @@ html[data-theme='light'] {
 
     /* Table/List Surfaces - For data-dense views */
     --ob-color-table-row-alt: rgba(0, 0, 0, 0.02); /* Alternating row background */
-    --ob-color-table-row-hover: rgba(34, 211, 238, 0.05); /* Cyan hint on row hover */
-    --ob-color-table-row-selected: rgba(34, 211, 238, 0.1); /* Selected row */
+    --ob-color-table-row-hover: rgba(59, 130, 246, 0.05); /* Sapphire hint on row hover */
+    --ob-color-table-row-selected: rgba(59, 130, 246, 0.1); /* Selected row */
     --ob-color-table-header: rgba(0, 0, 0, 0.03); /* Table header background */
 
     /* Status soft backgrounds for light mode */
@@ -609,8 +649,8 @@ html[data-theme='light'] {
     --ob-color-warning-soft: #fef3c7;
     --ob-color-error-soft: #fee2e2;
     --ob-color-error-soft-rgb: 254 226 226;
-    --ob-color-info-soft: #e0e7ff;
-    --ob-color-info-muted: rgba(99, 102, 241, 0.15);
+    --ob-color-info-soft: #ede9fe;
+    --ob-color-info-muted: rgba(139, 92, 246, 0.15);
 
     /* Shadows (lighter for light mode) */
     --ob-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -629,12 +669,13 @@ html[data-theme='light'] {
 
     /* Premium Effects (light mode adjustments) */
     --ob-surface-premium: rgba(255, 255, 255, 0.4); /* frosted ice, not white paper */
-    --ob-glow-neon-cyan: 0 0 10px rgba(0, 243, 255, 0.3);
+    --ob-glow-neon-cyan: 0 0 10px rgba(59, 130, 246, 0.3);
     --ob-bg-grid-color: rgba(0, 0, 0, 0.04); /* slightly more visible grid */
 
     /* Overlay colors (for light backgrounds - higher opacity for visibility) */
     --ob-overlay-subtle: rgba(0, 0, 0, 0.06);
     --ob-overlay-light: rgba(0, 0, 0, 0.10);
+    --ob-overlay-heavy: rgba(0, 0, 0, 0.12);
     --ob-overlay-medium: rgba(0, 0, 0, 0.15);
     --ob-overlay-strong: rgba(0, 0, 0, 0.22);
 

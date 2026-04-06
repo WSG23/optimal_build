@@ -124,8 +124,8 @@
 /* Main content glass card */
 .app-shell__content {
     background: var(--ob-color-bg-surface);
-    border-radius: var(--ob-radius-xl);
-    padding: 2.5rem 3rem;
+    border-radius: var(--ob-radius-sm);
+    padding: var(--ob-space-250) var(--ob-space-300);
     box-shadow: var(--ob-shadow-glass);
     border: 1px solid var(--ob-border-glass);
 
@@ -148,7 +148,7 @@
 
 .app-nav__product {
     font-size: var(--ob-font-size-xs);
-    letter-spacing: 0.2rem;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--ob-color-brand-primary);
     font-weight: 700;
@@ -175,7 +175,7 @@
     background: transparent;
     text-align: left;
     padding: var(--ob-space-075) var(--ob-space-100);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-sm);
     display: flex;
     flex-direction: column;
     gap: var(--ob-space-025);
@@ -199,7 +199,7 @@
     );
     color: var(--ob-color-brand-primary);
     border-color: var(--ob-color-border-brand);
-    box-shadow: 0 0 15px var(--ob-color-brand-muted);
+    box-shadow: none;
 }
 
 .app-nav__item--disabled button {

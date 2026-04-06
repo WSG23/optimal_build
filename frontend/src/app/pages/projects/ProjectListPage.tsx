@@ -13,6 +13,7 @@ import {
   DialogTitle,
   Grid,
   Skeleton,
+  Snackbar,
   Stack,
   TextField,
   Typography,
@@ -49,6 +50,7 @@ export function ProjectListPage() {
   const [launchingAction, setLaunchingAction] = useState<
     'workbook' | 'sample' | null
   >(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   useEffect(() => {
     void refreshProjects()
@@ -66,6 +68,7 @@ export function ProjectListPage() {
       setCurrentProject(created)
       setProjectName('')
       setCreateOpen(false)
+      setSuccessMessage('Project created successfully')
       navigate(`/projects/${created.id}`)
     } catch (error) {
       setCreateError(
@@ -304,8 +307,8 @@ export function ProjectListPage() {
       {!isProjectLoading && projects.length === 0 && (
         <EmptyState
           icon={<FolderOpenOutlined />}
-          title="No projects yet"
-          description="Start with the deal calculator, import an existing workbook, or open the seeded Singapore sample project."
+          title="Welcome to Optimal Build"
+          description="Start by screening a deal, then build your project through site capture, feasibility, finance, and regulatory. Each step creates evidence for the next."
           actionLabel="Model a deal"
           onAction={() => navigate('/developers/deal-calculator')}
           secondaryActionLabel="Import workbook"
@@ -366,6 +369,14 @@ export function ProjectListPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={Boolean(successMessage)}
+        autoHideDuration={3000}
+        onClose={() => setSuccessMessage(null)}
+        message={successMessage}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
     </Box>
   )
 }

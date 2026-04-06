@@ -10,6 +10,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import { EmptyState } from '../../../../components/canonical'
 import type {
   PipelineColumn,
   PipelineDealCard,
@@ -291,32 +292,11 @@ export function PipelineBoard({
 
   if (totalDeals === 0) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: 'var(--ob-space-400)',
-          px: 'var(--ob-space-200)',
-        }}
-      >
-        <Typography
-          variant="h6"
-          sx={{
-            color: 'var(--ob-color-text-secondary)',
-            mb: 'var(--ob-space-050)',
-          }}
-        >
-          No deals in the pipeline yet
-        </Typography>
-        <Typography
-          variant="body2"
-          sx={{ color: 'var(--ob-color-text-secondary)' }}
-        >
-          Create your first deal to get started.
-        </Typography>
-      </Box>
+      <EmptyState
+        title="No deals in the pipeline yet"
+        description="Create your first deal to get started."
+        size="md"
+      />
     )
   }
 

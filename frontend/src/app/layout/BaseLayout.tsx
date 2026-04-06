@@ -42,7 +42,7 @@ export function BaseLayout({ children }: { children: ReactNode }) {
             position: 'fixed',
             inset: 0,
             pointerEvents: 'none',
-            opacity: mode === 'dark' ? 0.5 : 0.3,
+            opacity: mode === 'dark' ? 0.15 : 0.08,
             backgroundImage: `
               linear-gradient(var(--ob-bg-grid-color) 1px, transparent 1px),
               linear-gradient(90deg, var(--ob-bg-grid-color) 1px, transparent 1px)
