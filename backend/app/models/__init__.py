@@ -32,6 +32,7 @@ def _register_alias(module_name: str, module: ModuleType) -> None:
 
 
 _MODEL_MODULES: Final[tuple[str, ...]] = (
+    "advanced_intelligence",
     "agent_advisory",
     "ai_agents",
     "ai_config",
