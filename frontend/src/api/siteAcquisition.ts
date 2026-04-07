@@ -34,6 +34,7 @@ import {
   type ChecklistCategory,
   type ChecklistPriority,
   type DevelopmentScenario,
+  type CoordinatePair,
   type GpsCaptureSummary,
   type UpdateChecklistRequest,
   type RawQuickAnalysis,
@@ -89,6 +90,141 @@ export interface DeveloperColorLegendEntry {
   label: string
   color: string
   description: string | null
+}
+
+export interface StarterModelScenarioRequest {
+  propertyId: string
+  scenario: DevelopmentScenario
+  detailLevel?: GeometryDetailLevel
+  colorLegend?: DeveloperColorLegendEntry[]
+}
+
+export interface StarterModelScenarioResult {
+  job: DeveloperPreviewJob | null
+  outcome: 'created' | 'unsupported' | 'failed'
+}
+
+export type CaptureCurrentVsCodeStatus =
+  | 'below'
+  | 'at_limit'
+  | 'above'
+  | 'unknown'
+
+export type CaptureGrandfatheredLikelihood =
+  | 'low'
+  | 'medium'
+  | 'high'
+  | 'unknown'
+
+export type CaptureSlopeClass = 'flat' | 'gentle' | 'steep' | 'unknown'
+
+export type CaptureSolarOrientation =
+  | 'west_facing'
+  | 'east_facing'
+  | 'mixed'
+  | 'unknown'
+
+export type CaptureStarterModelStatus =
+  | 'queued'
+  | 'processing'
+  | 'ready'
+  | 'failed'
+  | 'placeholder'
+
+export type CaptureGeometryScope =
+  | 'scalar_envelope'
+  | 'setback_envelope'
+  | 'massing_stack'
+
+export interface CaptureSetbacksV2 {
+  frontM: number | null
+  rearM: number | null
+  sideM: number | null
+}
+
+export interface CaptureStepBackV2 {
+  level: number
+  depthM: number
+}
+
+export interface CaptureSiteContextV2 {
+  siteAreaSqm: number | null
+  frontageM: number | null
+  depthM: number | null
+  slopeClass: CaptureSlopeClass
+  solarOrientation: CaptureSolarOrientation
+  heritageOverlay: string | null
+  environmentalFlags: string[]
+}
+
+export interface CaptureCodeConstraintsV2 {
+  zoningCode: string | null
+  zoningDescription: string | null
+  allowablePlotRatio: number | null
+  maxBuildableGfaSqm: number | null
+  currentGfaSqm: number | null
+  currentVsCodeStatus: CaptureCurrentVsCodeStatus
+  grandfatheredLikelihood: CaptureGrandfatheredLikelihood
+  setbacks: CaptureSetbacksV2
+  stepBacks: CaptureStepBackV2[]
+  buildingHeightLimitM: number | null
+  siteCoveragePct: number | null
+  airRightsNote: string | null
+  constraintFlags: string[]
+}
+
+export interface CaptureEngineeringAssumptionsV2 {
+  wallThicknessMm: number | null
+  coreRatioPct: number | null
+  commonAreaRatioPct: number | null
+  floorToFloorM: number | null
+  clearCeilingM: number | null
+  hvacSpaceRatioPct: number | null
+  electricalSpaceRatioPct: number | null
+  structuralGridNote: string | null
+  source: 'rules' | 'learned' | 'hybrid'
+}
+
+export interface CaptureStarterModelV2 {
+  status: CaptureStarterModelStatus
+  modelUrl: string | null
+  metadataUrl: string | null
+  thumbnailUrl: string | null
+  floorsEstimate: number | null
+  generatedFrom: string[]
+  geometryScope: CaptureGeometryScope
+}
+
+export interface CaptureScenarioRecommendationV2 {
+  recommended: DevelopmentScenario
+  alternatives: DevelopmentScenario[]
+  reasonCodes: string[]
+  explanation: string
+  userOverride: boolean
+  confidence: 'low' | 'medium' | 'high'
+}
+
+export interface CaptureAnalysisStatusV2 {
+  completenessPct: number
+  missingInputs: string[]
+  supportsFullCompliance: boolean
+}
+
+export interface CaptureResultV2 {
+  propertyId: string
+  address: {
+    fullAddress: string
+    district: string | null
+    coordinates: CoordinatePair
+    jurisdictionCode: string
+  }
+  siteContext: CaptureSiteContextV2
+  codeConstraints: CaptureCodeConstraintsV2
+  engineeringAssumptions: CaptureEngineeringAssumptionsV2
+  starterModel: CaptureStarterModelV2
+  scenarioRecommendation: CaptureScenarioRecommendationV2
+  analysisStatus: CaptureAnalysisStatusV2
+  sourceCapture: SiteAcquisitionResult
 }
 
 export interface SiteAcquisitionResult extends GpsCaptureSummary {
@@ -687,7 +823,9 @@ function mapDeveloperVisualization(
     } else if (status.toLowerCase() === 'processing') {
       notes.push('Preview job processing; mesh and metadata are still pending.')
     } else {
-      notes.push('Preview geometry unavailable; capture remains in instant-analysis mode.')
+      notes.push(
+        'Preview geometry unavailable; capture remains in instant-analysis mode.',
+      )
     }
   }
   return {
@@ -1584,6 +1722,49 @@ export async function listPreviewJobs(
   }
   const payload = await response.json()
   return mapPreviewJobs(payload)
+}
+
+export async function requestStarterModelForScenario(
+  request: StarterModelScenarioRequest,
+): Promise<StarterModelScenarioResult> {
+  const requestPayload: Record<string, unknown> = {
+    scenario: request.scenario,
+  }
+  if (request.detailLevel) {
+    requestPayload.geometry_detail_level = request.detailLevel
+  }
+  if (request.colorLegend && request.colorLegend.length > 0) {
+    requestPayload.color_legend = request.colorLegend.map((entry) => ({
+      asset_type: entry.assetType,
+      label: entry.label,
+      color: entry.color,
+      description: entry.description,
+    }))
+  }
+
+  const response = await fetch(
+    buildUrl(`api/v1/developers/properties/${request.propertyId}/preview-jobs`),
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestPayload),
+    },
+  )
+
+  if ([404, 405, 501].includes(response.status)) {
+    return { job: null, outcome: 'unsupported' }
+  }
+
+  if (!response.ok) {
+    return { job: null, outcome: 'failed' }
+  }
+
+  const payload = await response.json()
+  const [job] = mapPreviewJobs([payload])
+  return {
+    job: job ?? null,
+    outcome: job ? 'created' : 'failed',
+  }
 }
 
 export async function createFinanceProjectFromCapture(

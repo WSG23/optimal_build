@@ -572,6 +572,226 @@ def _build_visualization_summary(
     )
 
 
+async def _build_property_preview_inputs(
+    property_record: Property,
+    session: AsyncSession,
+    scenario: str,
+) -> tuple[
+    DeveloperBuildEnvelope,
+    DeveloperVisualizationSummary,
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+]:
+    """Derive preview-job inputs from a persisted property record."""
+
+    existing_use = (
+        property_record.property_type.value
+        if hasattr(property_record.property_type, "value")
+        else str(property_record.property_type or "existing_building")
+    )
+    property_info: dict[str, Any] = {
+        "site_area_sqm": (
+            float(property_record.land_area_sqm)
+            if property_record.land_area_sqm is not None
+            else None
+        ),
+        "gross_floor_area_sqm": (
+            float(property_record.gross_floor_area_sqm)
+            if property_record.gross_floor_area_sqm is not None
+            else None
+        ),
+        "gfa_approved": (
+            float(property_record.gross_floor_area_sqm)
+            if property_record.gross_floor_area_sqm is not None
+            else None
+        ),
+        "building_height": (
+            float(property_record.building_height_m)
+            if property_record.building_height_m is not None
+            else None
+        ),
+        "is_conservation": bool(property_record.is_conservation),
+        "conservation_status": property_record.conservation_status,
+        "heritage_overlay": property_record.conservation_status,
+    }
+    pseudo_result = PropertyLogResult(
+        property_id=property_record.id,
+        address=Address(
+            full_address=property_record.address,
+            district=property_record.district,
+        ),
+        coordinates=(0.0, 0.0),
+        ura_zoning={
+            "zone_code": property_record.zoning_code,
+            "plot_ratio": (
+                float(property_record.plot_ratio)
+                if property_record.plot_ratio is not None
+                else None
+            ),
+            "building_height_limit": (
+                float(property_record.building_height_m)
+                if property_record.building_height_m is not None
+                else None
+            ),
+        },
+        existing_use=existing_use,
+        property_info=property_info,
+        nearby_amenities=None,
+        quick_analysis=None,
+        heritage_overlay=(
+            {"name": property_record.conservation_status}
+            if property_record.is_conservation or property_record.conservation_status
+            else None
+        ),
+        jurisdiction_code=property_record.jurisdiction_code or "SG",
+    )
+
+    envelope = await _derive_build_envelope(
+        pseudo_result,
+        session,
+        property_record.jurisdiction_code or "SG",
+    )
+    scenario_envelope, scenario_existing_use, scenario_heritage_overlay = (
+        _apply_preview_scenario_rules(
+            envelope,
+            existing_use=existing_use,
+            heritage_overlay=pseudo_result.heritage_overlay,
+            scenario=scenario,
+        )
+    )
+    optimizations, _, _ = _build_asset_optimizations(
+        scenario_existing_use,
+        scenario_envelope,
+        scenario_existing_use,
+        property_info,
+        None,
+        scenario_heritage_overlay,
+    )
+    visualization = _build_visualization_summary(
+        None,
+        property_record.id,
+        optimizations,
+        scenario_envelope,
+    )
+    massing_payload = [
+        layer.model_dump() if hasattr(layer, "model_dump") else layer.__dict__
+        for layer in visualization.massing_layers
+    ]
+    legend_payload = [
+        entry.model_dump() if hasattr(entry, "model_dump") else entry.__dict__
+        for entry in visualization.color_legend
+    ]
+    return scenario_envelope, visualization, massing_payload, legend_payload
+
+
+def _apply_preview_scenario_rules(
+    envelope: DeveloperBuildEnvelope,
+    *,
+    existing_use: str,
+    heritage_overlay: dict[str, Any] | None,
+    scenario: str,
+) -> tuple[DeveloperBuildEnvelope, str, dict[str, Any] | None]:
+    """Adjust preview inputs so starter models differ meaningfully by scenario."""
+
+    scenario_key = scenario.strip().lower()
+    current_gfa = envelope.current_gfa_sqm or 0.0
+    max_gfa = envelope.max_buildable_gfa_sqm or current_gfa or None
+    additional_gfa = (
+        envelope.additional_potential_gfa_sqm
+        if envelope.additional_potential_gfa_sqm is not None
+        else (
+            max(max_gfa - current_gfa, 0.0)
+            if max_gfa is not None and current_gfa is not None
+            else None
+        )
+    )
+    assumptions = list(envelope.assumptions)
+
+    if scenario_key == "raw_land":
+        assumptions.append(
+            "Starter model uses a ground-up envelope assumption for raw land."
+        )
+        return (
+            copy_model(
+                envelope,
+                update={
+                    "current_gfa_sqm": 0.0,
+                    "additional_potential_gfa_sqm": _round_optional(max_gfa),
+                    "assumptions": assumptions,
+                },
+            ),
+            "land",
+            None,
+        )
+
+    if scenario_key == "existing_building":
+        preserved_gfa = current_gfa or max_gfa
+        assumptions.append(
+            "Starter model preserves existing bulk as the renovation baseline."
+        )
+        return (
+            copy_model(
+                envelope,
+                update={
+                    "max_buildable_gfa_sqm": _round_optional(preserved_gfa),
+                    "additional_potential_gfa_sqm": 0.0,
+                    "assumptions": assumptions,
+                },
+            ),
+            existing_use,
+            heritage_overlay,
+        )
+
+    if scenario_key == "underused_asset":
+        uplift = (
+            additional_gfa * 0.5
+            if additional_gfa is not None
+            else (max((max_gfa or 0.0) - current_gfa, 0.0) * 0.5)
+        )
+        target_gfa = current_gfa + uplift if current_gfa > 0 else max_gfa
+        assumptions.append(
+            "Starter model applies moderate uplift to existing bulk for reuse potential."
+        )
+        return (
+            copy_model(
+                envelope,
+                update={
+                    "max_buildable_gfa_sqm": _round_optional(target_gfa),
+                    "additional_potential_gfa_sqm": _round_optional(uplift),
+                    "assumptions": assumptions,
+                },
+            ),
+            existing_use,
+            heritage_overlay,
+        )
+
+    if scenario_key == "heritage_property":
+        heritage_height = (
+            envelope.building_height_limit_m * 0.75
+            if envelope.building_height_limit_m is not None
+            else None
+        )
+        preserved_gfa = current_gfa or (max_gfa * 0.75 if max_gfa is not None else None)
+        assumptions.append(
+            "Starter model applies conservative heritage retention assumptions."
+        )
+        return (
+            copy_model(
+                envelope,
+                update={
+                    "max_buildable_gfa_sqm": _round_optional(preserved_gfa),
+                    "additional_potential_gfa_sqm": 0.0,
+                    "building_height_limit_m": _round_optional(heritage_height),
+                    "assumptions": assumptions,
+                },
+            ),
+            existing_use,
+            heritage_overlay or {"name": "Heritage overlay detected", "risk": "medium"},
+        )
+
+    return envelope, existing_use, heritage_overlay
+
+
 def _build_asset_optimizations(
     land_use: str,
     envelope: DeveloperBuildEnvelope,
@@ -983,6 +1203,38 @@ class PreviewJobRefreshRequest(BaseModel):
 
     geometry_detail_level: str | None = Field(
         default=None, description="Optional geometry detail level override"
+    )
+    color_legend: list[DeveloperColorLegendEntry] | None = Field(
+        default=None,
+        description="Optional colour legend overrides to persist on the preview job",
+    )
+
+    @field_validator("geometry_detail_level")
+    @classmethod
+    def _validate_detail_level(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        normalised = value.strip().lower()
+        if normalised not in preview_generator.SUPPORTED_GEOMETRY_DETAIL_LEVELS:
+            valid = ", ".join(
+                sorted(preview_generator.SUPPORTED_GEOMETRY_DETAIL_LEVELS)
+            )
+            raise ValueError(f"geometry_detail_level must be one of: {valid}")
+        return normalised
+
+
+class PreviewJobCreateRequest(BaseModel):
+    """Request body for scenario-specific starter model generation."""
+
+    model_config = {"populate_by_name": True}
+
+    scenario: CaptureScenario = Field(
+        ...,
+        description="Development scenario that the starter model should represent.",
+    )
+    geometry_detail_level: str | None = Field(
+        default=None,
+        description="Optional geometry detail level override",
     )
     color_legend: list[DeveloperColorLegendEntry] | None = Field(
         default=None,
@@ -1511,6 +1763,57 @@ async def list_preview_jobs(
     service = PreviewJobService(session)
     jobs = await service.list_jobs(property_id)
     return [_serialise_preview_job(job) for job in jobs]
+
+
+@router.post(
+    "/properties/{property_id}/preview-jobs",
+    response_model=PreviewJobSchema,
+)
+async def create_preview_job(
+    property_id: UUID,
+    payload: PreviewJobCreateRequest,
+    session: AsyncSession = Depends(get_session),
+) -> PreviewJobSchema:
+    """Queue a starter-model preview job for the requested scenario."""
+
+    property_record = await session.get(Property, property_id)
+    if property_record is None:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    _, visualization, massing_payload, legend_payload = (
+        await _build_property_preview_inputs(
+            property_record,
+            session,
+            (
+                payload.scenario.value
+                if isinstance(payload.scenario, CaptureScenario)
+                else str(payload.scenario)
+            ),
+        )
+    )
+    service = PreviewJobService(session)
+    preview_job = await service.queue_preview(
+        property_id=property_id,
+        scenario=(
+            payload.scenario.value
+            if isinstance(payload.scenario, CaptureScenario)
+            else str(payload.scenario)
+        ),
+        massing_layers=massing_payload,
+        camera_orbit=visualization.camera_orbit_hint or {},
+        geometry_detail_level=payload.geometry_detail_level,
+        color_legend=(
+            [
+                entry.model_dump() if hasattr(entry, "model_dump") else entry.__dict__
+                for entry in payload.color_legend
+            ]
+            if payload.color_legend
+            else legend_payload
+        ),
+    )
+    await session.commit()
+    await session.refresh(preview_job)
+    return _serialise_preview_job(preview_job)
 
 
 @router.get(

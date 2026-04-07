@@ -2,18 +2,19 @@
  * DeveloperResults - Developer workspace wrapper for unified capture page
  *
  * Renders the full developer workspace sections after capture:
- * - Property Overview Section
- * - Concept Preview (3D Viewer + Asset Mix)
- * - Preview Layers Table
+ * - Concept Preview (starter model first)
+ * - Capture recommendation
  * - Scenario Focus Section
  * - Multi-Scenario Comparison
+ * - Property Overview Section
+ * - Preview Layers inspection
  * - Due Diligence handoff
  * - Project save CTA
  *
  * This component should be lazy-loaded to avoid bundle bloat for agent users.
  */
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import {
   Box,
   Typography,
@@ -28,10 +29,13 @@ import {
   Stack,
 } from '@mui/material'
 import RefreshIcon from '@mui/icons-material/Refresh'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
+import ViewInArIcon from '@mui/icons-material/ViewInAr'
 
 import type { SiteAcquisitionResult } from '../../../../api/siteAcquisition'
 import type { DevelopmentScenario } from '../../../../api/agents'
 import { Button } from '../../../../components/canonical/Button'
+import { Card } from '../../../../components/canonical/Card'
 import { Link } from '../../../../router'
 import { useProject } from '../../../../contexts/useProject'
 import {
@@ -56,6 +60,7 @@ import { SCENARIO_OPTIONS } from '../../site-acquisition/constants'
 
 // Import card builder utility
 import { buildPropertyOverviewCards } from '../../site-acquisition/utils/cardBuilders'
+import { mapSiteAcquisitionResultToCaptureResultV2 } from '../utils/captureResultV2'
 
 // Import OptimalIntelligenceCard for AI insights
 import { OptimalIntelligenceCard } from '../../site-acquisition/components/OptimalIntelligenceCard'
@@ -69,10 +74,11 @@ export function DeveloperResults({
   result,
   selectedScenarios,
 }: DeveloperResultsProps) {
+  const autoRequestedStarterModelRef = useRef<Set<string>>(new Set())
   // Active scenario for filtering
   const [activeScenario, setActiveScenario] = useState<
     DevelopmentScenario | 'all'
-  >(selectedScenarios[0] ?? 'all')
+  >('all')
   const { currentProject, projects, setCurrentProject, refreshProjects } =
     useProject()
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
@@ -90,12 +96,25 @@ export function DeveloperResults({
     () => new Map(SCENARIO_OPTIONS.map((option) => [option.value, option])),
     [],
   )
+
+  const captureResultV2 = useMemo(
+    () =>
+      mapSiteAcquisitionResultToCaptureResultV2(result, {
+        selectedScenarios,
+        overrideScenario: activeScenario !== 'all' ? activeScenario : undefined,
+      }),
+    [activeScenario, result, selectedScenarios],
+  )
+
   // Preview job state - use hook with options object
   const {
     previewJob,
     previewDetailLevel,
     setPreviewDetailLevel,
     isRefreshingPreview,
+    isGeneratingStarterModel,
+    hasPreferredScenarioPreview,
+    previewGenerationError,
     previewLayerMetadata,
     previewLayerVisibility,
     previewFocusLayerId,
@@ -104,7 +123,7 @@ export function DeveloperResults({
     hiddenLayerCount,
     colorLegendEntries,
     legendHasPendingChanges,
-    handleRefreshPreview,
+    handleEnsureStarterModel,
     handleToggleLayerVisibility,
     handleSoloPreviewLayer,
     handleShowAllLayers,
@@ -112,7 +131,44 @@ export function DeveloperResults({
     handleResetLayerFocus,
     handleLegendEntryChange,
     handleLegendReset,
-  } = usePreviewJob({ capturedProperty: result })
+  } = usePreviewJob({
+    capturedProperty: result,
+    preferredScenario: captureResultV2.scenarioRecommendation.recommended,
+  })
+
+  const effectiveStarterModel = useMemo(() => {
+    const baseModel = captureResultV2.starterModel
+    if (previewJob) {
+      const rawStatus = previewJob.status.toLowerCase()
+      const status =
+        rawStatus === 'ready' ||
+        rawStatus === 'failed' ||
+        rawStatus === 'queued' ||
+        rawStatus === 'processing' ||
+        rawStatus === 'placeholder'
+          ? rawStatus
+          : baseModel.status
+      return {
+        ...baseModel,
+        status,
+        modelUrl: previewJob.previewUrl ?? baseModel.modelUrl,
+        metadataUrl: previewJob.metadataUrl ?? baseModel.metadataUrl,
+        thumbnailUrl: previewJob.thumbnailUrl ?? baseModel.thumbnailUrl,
+        generatedFrom: Array.from(
+          new Set(['preview_job', ...baseModel.generatedFrom]),
+        ),
+      }
+    }
+
+    if (isGeneratingStarterModel) {
+      return {
+        ...baseModel,
+        status: 'processing' as const,
+      }
+    }
+
+    return baseModel
+  }, [captureResultV2.starterModel, isGeneratingStarterModel, previewJob])
 
   // Unified layer action handler for PreviewLayersTable
   const handleLayerAction = useCallback(
@@ -282,7 +338,7 @@ export function DeveloperResults({
   const overviewCards = useMemo(() => {
     return buildPropertyOverviewCards({
       capturedProperty: result,
-      previewJob: result.previewJobs?.[0] ?? null,
+      previewJob,
       colorLegendEntries: colorLegendEntries ?? [],
       formatters: {
         formatNumber,
@@ -290,44 +346,44 @@ export function DeveloperResults({
         formatTimestamp: formatRecordedTimestamp,
       },
     })
-  }, [result, colorLegendEntries, formatNumber, formatRecordedTimestamp])
+  }, [
+    colorLegendEntries,
+    formatNumber,
+    formatRecordedTimestamp,
+    previewJob,
+    result,
+  ])
 
   // Instant capture insight based on captured property data
   const aiInsight = useMemo(() => {
     if (!result) return null
-    const scenarios = selectedScenarios
-      .map((s) => scenarioLookup.get(s)?.label ?? s)
-      .join(', ')
-    const envelope = result.buildEnvelope
+    const recommendation = captureResultV2.scenarioRecommendation
+    const starterModel = effectiveStarterModel
+    const envelope = captureResultV2.codeConstraints
     const analysisPoints = [
-      envelope.allowablePlotRatio !== null
+      envelope.allowablePlotRatio != null
         ? `plot ratio ${formatNumber(envelope.allowablePlotRatio, {
             maximumFractionDigits: 2,
           })}`
         : null,
-      envelope.maxBuildableGfaSqm !== null
+      envelope.maxBuildableGfaSqm != null
         ? `max buildable GFA ${formatNumber(envelope.maxBuildableGfaSqm, {
             maximumFractionDigits: 0,
           })} sqm`
         : null,
-      envelope.buildingHeightLimitM !== null
+      envelope.buildingHeightLimitM != null
         ? `height limit ${formatNumber(envelope.buildingHeightLimitM, {
             maximumFractionDigits: 0,
           })} m`
         : null,
-      envelope.siteCoveragePct !== null
+      envelope.siteCoveragePct != null
         ? `site coverage ${formatNumber(envelope.siteCoveragePct, {
             maximumFractionDigits: 0,
           })}%`
         : null,
     ].filter(Boolean)
-    const previewStatus =
-      result.visualization?.status?.replace(/_/g, ' ').toLowerCase() ??
-      'pending'
-    const isFallbackCapture =
-      result.visualization?.status?.toLowerCase() === 'placeholder' ||
-      result.buildEnvelope?.buildingHeightLimitM == null ||
-      result.buildEnvelope?.siteCoveragePct == null
+    const previewStatus = starterModel.status.replace(/_/g, ' ').toLowerCase()
+    const isFallbackCapture = starterModel.geometryScope === 'scalar_envelope'
     const analysisSummary =
       analysisPoints.length > 0
         ? analysisPoints.slice(0, 3).join(', ')
@@ -335,17 +391,83 @@ export function DeveloperResults({
     const scopeNote = isFallbackCapture
       ? 'This is a preliminary capture: scalar controls only, with no setback or floor-by-floor compliance modelling.'
       : 'Capture reflects the currently resolved scalar controls for this site, without setback or floor-by-floor compliance modelling.'
-    return `Instant capture analysis for ${result.address?.district ?? 'this location'} highlights ${analysisSummary}. Active scenarios: ${scenarios}. Preview status: ${previewStatus}. ${scopeNote}`
-  }, [formatNumber, result, selectedScenarios, scenarioLookup])
+    const scenarioNote = recommendation.userOverride
+      ? `User override active: ${formatScenarioLabel(recommendation.recommended)} remains selected even though Capture would otherwise prefer ${recommendation.alternatives[0] ? formatScenarioLabel(recommendation.alternatives[0]) : 'another scenario'}.`
+      : `Capture currently recommends ${formatScenarioLabel(recommendation.recommended)} first.`
+    return `Instant capture analysis for ${result.address?.district ?? 'this location'} highlights ${analysisSummary}. Preview status: ${previewStatus}. ${scenarioNote} ${scopeNote}`
+  }, [
+    captureResultV2,
+    effectiveStarterModel,
+    formatNumber,
+    formatScenarioLabel,
+    result,
+  ])
+
+  const starterModelActionLabel = isGeneratingStarterModel
+    ? 'Generating Starter Model...'
+    : isRefreshingPreview
+      ? 'Refreshing Starter Model...'
+      : hasPreferredScenarioPreview
+        ? 'Refresh Starter Model'
+        : 'Generate Starter Model'
+
+  const starterModelStatusSummary = useMemo(() => {
+    const scenarioLabel = formatScenarioLabel(
+      captureResultV2.scenarioRecommendation.recommended,
+    )
+    switch (effectiveStarterModel.status) {
+      case 'queued':
+        return `A ${scenarioLabel.toLowerCase()} starter model has been queued. Capture will replace the fallback preview when the render is ready.`
+      case 'processing':
+        return `Capture is generating the ${scenarioLabel.toLowerCase()} starter model now.`
+      case 'ready':
+        return hasPreferredScenarioPreview
+          ? `The ${scenarioLabel.toLowerCase()} starter model is ready for review.`
+          : 'Capture is still showing the current fallback preview for this site.'
+      case 'failed':
+        return `Capture could not generate the ${scenarioLabel.toLowerCase()} starter model yet. Retry generation from this panel.`
+      case 'placeholder':
+      default:
+        return 'No scenario-specific starter model is available yet. Capture is currently showing the best available fallback preview.'
+    }
+  }, [
+    captureResultV2.scenarioRecommendation.recommended,
+    effectiveStarterModel.status,
+    formatScenarioLabel,
+    hasPreferredScenarioPreview,
+  ])
+
+  useEffect(() => {
+    const preferredScenario = captureResultV2.scenarioRecommendation.recommended
+    const propertyId = result.propertyId
+    if (
+      !propertyId ||
+      !preferredScenario ||
+      hasPreferredScenarioPreview ||
+      isGeneratingStarterModel ||
+      previewGenerationError
+    ) {
+      return
+    }
+
+    const requestKey = `${propertyId}:${preferredScenario}`
+    if (autoRequestedStarterModelRef.current.has(requestKey)) {
+      return
+    }
+
+    autoRequestedStarterModelRef.current.add(requestKey)
+    void handleEnsureStarterModel()
+  }, [
+    captureResultV2.scenarioRecommendation.recommended,
+    handleEnsureStarterModel,
+    hasPreferredScenarioPreview,
+    isGeneratingStarterModel,
+    previewGenerationError,
+    result.propertyId,
+  ])
 
   return (
     <div className="site-acquisition__developer-results">
-      {/* Property Overview Section */}
-      <PropertyOverviewSection cards={overviewCards} />
-
-      {/* AI Insight Card - Key intelligence from Optimal AI */}
-      <OptimalIntelligenceCard insight={aiInsight} hasProperty={!!result} />
-
       {/* Concept Preview Section */}
       <section className="site-acquisition__preview">
         <Box
@@ -378,7 +500,7 @@ export function DeveloperResults({
                 onChange={(e) =>
                   setPreviewDetailLevel(e.target.value as 'simple' | 'medium')
                 }
-                disabled={!previewJob}
+                disabled={isGeneratingStarterModel || isRefreshingPreview}
                 sx={{ minWidth: 'var(--ob-size-600)' }}
               >
                 <MenuItem value="simple">Simple</MenuItem>
@@ -388,8 +510,8 @@ export function DeveloperResults({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => handleRefreshPreview()}
-              disabled={isRefreshingPreview || !previewJob}
+              onClick={() => void handleEnsureStarterModel()}
+              disabled={isRefreshingPreview || isGeneratingStarterModel}
             >
               <RefreshIcon
                 sx={{
@@ -397,7 +519,7 @@ export function DeveloperResults({
                   mr: 'var(--ob-space-025)',
                 }}
               />
-              Refresh Preview Status
+              {starterModelActionLabel}
             </Button>
           </Box>
         </Box>
@@ -411,29 +533,101 @@ export function DeveloperResults({
         >
           {/* 3D Viewer */}
           <Preview3DViewer
-            previewUrl={previewJob?.previewUrl ?? null}
-            metadataUrl={previewJob?.metadataUrl ?? null}
-            status={previewJob?.status ?? 'pending'}
-            thumbnailUrl={previewJob?.thumbnailUrl ?? null}
+            previewUrl={effectiveStarterModel.modelUrl}
+            metadataUrl={effectiveStarterModel.metadataUrl}
+            status={effectiveStarterModel.status}
+            thumbnailUrl={effectiveStarterModel.thumbnailUrl}
           />
 
-          {/* Preview Layers Table */}
-          <PreviewLayersTable
-            layers={previewLayerMetadata}
-            visibility={previewLayerVisibility}
-            focusLayerId={previewFocusLayerId}
-            hiddenLayerCount={hiddenLayerCount}
-            isLoading={isPreviewMetadataLoading}
-            error={previewMetadataError}
-            onLayerAction={handleLayerAction}
-            onShowAll={handleShowAllLayers}
-            onResetFocus={handleResetLayerFocus}
-            formatNumber={formatNumber}
-            legendEntries={colorLegendEntries}
-            onLegendChange={handleLegendEntryChange}
-            legendHasPendingChanges={legendHasPendingChanges}
-            onLegendReset={handleLegendReset}
-          />
+          <Card
+            sx={{
+              p: 'var(--ob-space-125)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-075)',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-050)',
+              }}
+            >
+              <ViewInArIcon
+                sx={{
+                  fontSize: 'var(--ob-size-icon-sm)',
+                  color: 'info.main',
+                }}
+              />
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  color: 'text.secondary',
+                }}
+              >
+                Starter Model Status
+              </Typography>
+            </Box>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-lg)',
+                fontWeight: 'var(--ob-font-weight-bold)',
+                color: 'text.primary',
+                textTransform: 'capitalize',
+              }}
+            >
+              {effectiveStarterModel.status.replace(/_/g, ' ')}
+              {isGeneratingStarterModel ? ' (updating)' : ''}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-sm)',
+                color: 'text.secondary',
+                lineHeight: 1.5,
+              }}
+            >
+              {starterModelStatusSummary}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-sm)',
+                color: 'text.secondary',
+                lineHeight: 1.5,
+              }}
+            >
+              Geometry scope:{' '}
+              {effectiveStarterModel.geometryScope.replace(/_/g, ' ')}.
+              {effectiveStarterModel.floorsEstimate != null
+                ? ` Estimated floors: ${effectiveStarterModel.floorsEstimate}.`
+                : ' Floor count estimate pending.'}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-xs)',
+                color: 'text.secondary',
+              }}
+            >
+              Starter model scenario:{' '}
+              {formatScenarioLabel(
+                captureResultV2.scenarioRecommendation.recommended,
+              )}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-xs)',
+                color: 'text.secondary',
+              }}
+            >
+              Full compliance support:{' '}
+              {captureResultV2.analysisStatus.supportsFullCompliance
+                ? 'Yes'
+                : 'No'}
+            </Typography>
+          </Card>
         </Box>
 
         {previewMetadataError && (
@@ -441,6 +635,81 @@ export function DeveloperResults({
             {previewMetadataError}
           </Typography>
         )}
+        {previewGenerationError && (
+          <Typography color="error" sx={{ mt: 'var(--ob-space-050)' }}>
+            {previewGenerationError}
+          </Typography>
+        )}
+      </section>
+
+      <section className="site-acquisition__capture-summary">
+        <Box sx={{ mb: 'var(--ob-space-150)' }}>
+          <Card
+            sx={{
+              p: 'var(--ob-space-125)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-075)',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-050)',
+              }}
+            >
+              <AutoAwesomeIcon
+                sx={{
+                  fontSize: 'var(--ob-size-icon-sm)',
+                  color: 'info.main',
+                }}
+              />
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  color: 'text.secondary',
+                }}
+              >
+                Capture Recommendation
+              </Typography>
+            </Box>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-lg)',
+                fontWeight: 'var(--ob-font-weight-bold)',
+                color: 'text.primary',
+              }}
+            >
+              {formatScenarioLabel(
+                captureResultV2.scenarioRecommendation.recommended,
+              )}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-sm)',
+                color: 'text.secondary',
+                lineHeight: 1.5,
+              }}
+            >
+              {captureResultV2.scenarioRecommendation.explanation}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-xs)',
+                color: 'text.secondary',
+              }}
+            >
+              Reasons:{' '}
+              {captureResultV2.scenarioRecommendation.reasonCodes
+                .map((code) => code.replace(/_/g, ' ').toLowerCase())
+                .join(', ')}
+            </Typography>
+          </Card>
+        </Box>
       </section>
 
       {/* Scenario Focus Section */}
@@ -462,7 +731,25 @@ export function DeveloperResults({
           >
             Scenario Focus
           </Typography>
-          <Box sx={{ display: 'flex', gap: 'var(--ob-space-050)' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 'var(--ob-space-050)',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-xs)',
+                color: 'text.secondary',
+              }}
+            >
+              Recommended:{' '}
+              {formatScenarioLabel(
+                captureResultV2.scenarioRecommendation.recommended,
+              )}
+            </Typography>
             <Button
               key="all"
               variant={activeScenario === 'all' ? 'primary' : 'ghost'}
@@ -498,6 +785,43 @@ export function DeveloperResults({
         setActiveScenario={setActiveScenario}
         formatRecordedTimestamp={formatRecordedTimestamp}
       />
+
+      {/* Property Overview Section */}
+      <PropertyOverviewSection cards={overviewCards} />
+
+      {/* AI Insight Card - Key intelligence from Optimal AI */}
+      <OptimalIntelligenceCard insight={aiInsight} hasProperty={!!result} />
+
+      <section className="site-acquisition__preview-layers-inspection">
+        <Box sx={{ mt: 'var(--ob-space-150)' }}>
+          <Typography
+            variant="h6"
+            sx={{
+              mb: 'var(--ob-space-125)',
+              fontWeight: 'var(--ob-font-weight-semibold)',
+              color: 'var(--ob-color-text-primary)',
+            }}
+          >
+            Preview Layer Inspection
+          </Typography>
+          <PreviewLayersTable
+            layers={previewLayerMetadata}
+            visibility={previewLayerVisibility}
+            focusLayerId={previewFocusLayerId}
+            hiddenLayerCount={hiddenLayerCount}
+            isLoading={isPreviewMetadataLoading}
+            error={previewMetadataError}
+            onLayerAction={handleLayerAction}
+            onShowAll={handleShowAllLayers}
+            onResetFocus={handleResetLayerFocus}
+            formatNumber={formatNumber}
+            legendEntries={colorLegendEntries}
+            onLegendChange={handleLegendEntryChange}
+            legendHasPendingChanges={legendHasPendingChanges}
+            onLegendReset={handleLegendReset}
+          />
+        </Box>
+      </section>
 
       <section className="site-acquisition__finance-cta">
         <Box

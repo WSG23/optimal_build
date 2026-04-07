@@ -56,14 +56,21 @@ vi.mock('@mui/material', async (importOriginal) => {
 })
 
 const mockHandleRefreshPreview = vi.fn()
+const mockHandleEnsureStarterModel = vi.fn()
 const mockHandleToggleLayerVisibility = vi.fn()
 const mockHandleSoloPreviewLayer = vi.fn()
 const mockHandleFocusLayer = vi.fn()
 const mockSetPreviewDetailLevel = vi.fn()
 
 let previewMetadataErrorValue: string | null = null
+let previewGenerationErrorValue: string | null = null
+let isGeneratingStarterModelValue = false
 let lastMultiScenarioProps: unknown = null
 let lastInsightProps: unknown = null
+let lastPreviewViewerProps: unknown = null
+let lastUsePreviewJobOptions: unknown = null
+let lastOverviewCardArgs: unknown = null
+let previewJobsByScenarioValue: Record<string, unknown> = {}
 
 const mockUseCaptureScenarioComparison = vi.fn()
 
@@ -118,14 +125,17 @@ function buildResult(): SiteAcquisitionResult {
 
 vi.mock('../../site-acquisition/utils/cardBuilders', () => ({
   buildPropertyOverviewCards: ({
+    previewJob,
     formatters,
   }: {
+    previewJob: unknown
     formatters: {
       formatNumber: (value: number) => string
       formatCurrency: (value: number) => string
       formatTimestamp: (timestamp?: string | null) => string
     }
   }) => {
+    lastOverviewCardArgs = { previewJob }
     formatters.formatNumber(1.23)
     formatters.formatCurrency(1234)
     formatters.formatTimestamp(null)
@@ -135,42 +145,47 @@ vi.mock('../../site-acquisition/utils/cardBuilders', () => ({
 }))
 
 vi.mock('../../site-acquisition/hooks/usePreviewJob', () => ({
-  usePreviewJob: () => ({
-    previewJob: {
-      id: 'preview-1',
-      propertyId: 'prop-123',
-      scenario: 'raw_land',
-      status: 'queued',
-      previewUrl: null,
-      metadataUrl: null,
-      thumbnailUrl: null,
-      assetVersion: null,
-      requestedAt: '2026-01-06T10:00:00Z',
-      startedAt: null,
-      finishedAt: null,
-      message: null,
-      geometryDetailLevel: 'medium',
-    },
-    previewDetailLevel: 'medium',
-    setPreviewDetailLevel: mockSetPreviewDetailLevel,
-    isRefreshingPreview: false,
-    previewLayerMetadata: [],
-    previewLayerVisibility: {},
-    previewFocusLayerId: null,
-    isPreviewMetadataLoading: false,
-    previewMetadataError: previewMetadataErrorValue,
-    hiddenLayerCount: 0,
-    colorLegendEntries: [],
-    legendHasPendingChanges: false,
-    handleRefreshPreview: mockHandleRefreshPreview,
-    handleToggleLayerVisibility: mockHandleToggleLayerVisibility,
-    handleSoloPreviewLayer: mockHandleSoloPreviewLayer,
-    handleShowAllLayers: vi.fn(),
-    handleFocusLayer: mockHandleFocusLayer,
-    handleResetLayerFocus: vi.fn(),
-    handleLegendEntryChange: vi.fn(),
-    handleLegendReset: vi.fn(),
-  }),
+  usePreviewJob: (options: unknown) => {
+    lastUsePreviewJobOptions = options
+    const preferredScenario =
+      typeof options === 'object' &&
+      options !== null &&
+      'preferredScenario' in options
+        ? String(
+            (options as { preferredScenario?: string | null })
+              .preferredScenario ?? '',
+          )
+        : ''
+    const previewJob = preferredScenario
+      ? (previewJobsByScenarioValue[preferredScenario] ?? null)
+      : null
+    return {
+      previewJob,
+      previewDetailLevel: 'medium',
+      setPreviewDetailLevel: mockSetPreviewDetailLevel,
+      isRefreshingPreview: false,
+      isGeneratingStarterModel: isGeneratingStarterModelValue,
+      hasPreferredScenarioPreview: Boolean(previewJob),
+      previewGenerationError: previewGenerationErrorValue,
+      previewLayerMetadata: [],
+      previewLayerVisibility: {},
+      previewFocusLayerId: null,
+      isPreviewMetadataLoading: false,
+      previewMetadataError: previewMetadataErrorValue,
+      hiddenLayerCount: 0,
+      colorLegendEntries: [],
+      legendHasPendingChanges: false,
+      handleEnsureStarterModel: mockHandleEnsureStarterModel,
+      handleRefreshPreview: mockHandleRefreshPreview,
+      handleToggleLayerVisibility: mockHandleToggleLayerVisibility,
+      handleSoloPreviewLayer: mockHandleSoloPreviewLayer,
+      handleShowAllLayers: vi.fn(),
+      handleFocusLayer: mockHandleFocusLayer,
+      handleResetLayerFocus: vi.fn(),
+      handleLegendEntryChange: vi.fn(),
+      handleLegendReset: vi.fn(),
+    }
+  },
 }))
 
 vi.mock('../../site-acquisition/hooks/useCaptureScenarioComparison', () => ({
@@ -185,7 +200,10 @@ vi.mock(
   }),
 )
 vi.mock('../../../components/site-acquisition/Preview3DViewer', () => ({
-  Preview3DViewer: () => <div data-testid="preview-3d" />,
+  Preview3DViewer: (props: unknown) => {
+    lastPreviewViewerProps = props
+    return <div data-testid="preview-3d" />
+  },
 }))
 vi.mock(
   '../../site-acquisition/components/property-overview/PreviewLayersTable',
@@ -274,8 +292,30 @@ describe('DeveloperResults', () => {
     vi.clearAllMocks()
     currentProjectValue = null
     previewMetadataErrorValue = null
+    previewGenerationErrorValue = null
+    isGeneratingStarterModelValue = false
     lastMultiScenarioProps = null
     lastInsightProps = null
+    lastPreviewViewerProps = null
+    lastUsePreviewJobOptions = null
+    lastOverviewCardArgs = null
+    previewJobsByScenarioValue = {
+      underused_asset: {
+        id: 'preview-underused',
+        propertyId: 'prop-123',
+        scenario: 'underused_asset',
+        status: 'queued',
+        previewUrl: null,
+        metadataUrl: null,
+        thumbnailUrl: null,
+        assetVersion: null,
+        requestedAt: '2026-01-06T10:00:00Z',
+        startedAt: null,
+        finishedAt: null,
+        message: null,
+        geometryDetailLevel: 'medium',
+      },
+    }
 
     mockUseCaptureScenarioComparison.mockImplementation(() => ({
       quickAnalysisScenarios: [
@@ -299,7 +339,9 @@ describe('DeveloperResults', () => {
           ? 'Raw Land'
           : scenario === 'existing_building'
             ? 'Renovation'
-            : scenario,
+            : scenario === 'underused_asset'
+              ? 'Adaptive Reuse'
+              : scenario,
     }))
   })
 
@@ -313,8 +355,10 @@ describe('DeveloperResults', () => {
       />,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: /refresh/i }))
-    expect(mockHandleRefreshPreview).toHaveBeenCalled()
+    fireEvent.click(
+      screen.getByRole('button', { name: /refresh starter model/i }),
+    )
+    expect(mockHandleEnsureStarterModel).toHaveBeenCalled()
 
     fireEvent.change(screen.getByTestId('preview-detail-select'), {
       target: { value: 'simple' },
@@ -427,13 +471,222 @@ describe('DeveloperResults', () => {
       'Instant capture analysis for Downtown highlights',
     )
     expect(screen.getByTestId('ai-insight-text').textContent).toContain(
-      'without setback or floor-by-floor compliance',
+      'Capture currently recommends Adaptive Reuse first.',
+    )
+    expect(screen.getByTestId('ai-insight-text').textContent).toContain(
+      'with no setback or floor-by-floor compliance modelling',
     )
     expect(screen.getByTestId('ai-is-generating').textContent).toBe('idle')
     expect(
       screen.queryByRole('button', { name: /generate-report/i }),
     ).not.toBeInTheDocument()
     expect(lastInsightProps).toBeTruthy()
+  })
+
+  it('renders the capture recommendation and starter-model summary from CaptureResultV2', () => {
+    const result = buildResult()
+    result.previewJobs = [
+      {
+        id: 'preview-1',
+        propertyId: 'prop-123',
+        scenario: 'raw_land',
+        status: 'ready',
+        previewUrl: '/static/dev-previews/example/raw-land.gltf',
+        metadataUrl: '/static/dev-previews/example/raw-land.json',
+        thumbnailUrl: '/static/dev-previews/example/raw-land.png',
+        assetVersion: '20260407093405',
+        requestedAt: '2026-01-06T10:00:00Z',
+        startedAt: '2026-01-06T10:00:02Z',
+        finishedAt: '2026-01-06T10:00:10Z',
+        message: null,
+        geometryDetailLevel: 'medium',
+      },
+      {
+        id: 'preview-2',
+        propertyId: 'prop-123',
+        scenario: 'existing_building',
+        status: 'ready',
+        previewUrl: '/static/dev-previews/example/preview.gltf',
+        metadataUrl: '/static/dev-previews/example/preview.json',
+        thumbnailUrl: '/static/dev-previews/example/thumb.png',
+        assetVersion: '20260407093405',
+        requestedAt: '2026-01-06T10:00:00Z',
+        startedAt: '2026-01-06T10:00:02Z',
+        finishedAt: '2026-01-06T10:00:10Z',
+        message: null,
+        geometryDetailLevel: 'medium',
+      },
+    ] as SiteAcquisitionResult['previewJobs']
+    result.visualization = {
+      ...result.visualization,
+      status: 'ready',
+      previewAvailable: true,
+      conceptMeshUrl: '/static/dev-previews/example/preview.gltf',
+      previewMetadataUrl: '/static/dev-previews/example/preview.json',
+      thumbnailUrl: '/static/dev-previews/example/thumb.png',
+      massingLayers: [
+        {
+          assetType: 'office',
+          allocationPct: 100,
+          gfaSqm: 21000,
+          niaSqm: 17850,
+          estimatedHeightM: 24,
+          color: '#3366ff',
+        },
+      ],
+    }
+    previewJobsByScenarioValue = {
+      existing_building: {
+        id: 'preview-2',
+        propertyId: 'prop-123',
+        scenario: 'existing_building',
+        status: 'ready',
+        previewUrl: '/static/dev-previews/example/preview.gltf',
+        metadataUrl: '/static/dev-previews/example/preview.json',
+        thumbnailUrl: '/static/dev-previews/example/thumb.png',
+        assetVersion: '20260407093405',
+        requestedAt: '2026-01-06T10:00:00Z',
+        startedAt: '2026-01-06T10:00:02Z',
+        finishedAt: '2026-01-06T10:00:10Z',
+        message: null,
+        geometryDetailLevel: 'medium',
+      },
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={['existing_building'] as DevelopmentScenario[]}
+      />,
+    )
+
+    expect(screen.getByText('Capture Recommendation')).toBeInTheDocument()
+    expect(screen.getByText('Starter Model Status')).toBeInTheDocument()
+    expect(
+      screen.getByText('The renovation starter model is ready for review.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'User-selected existing building overrides the default capture recommendation.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('ready')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Geometry scope: massing stack/i),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Estimated floors: 6/i)).toBeInTheDocument()
+    expect(screen.getByText(/Recommended: Renovation/i)).toBeInTheDocument()
+
+    expect(lastPreviewViewerProps).toMatchObject({
+      previewUrl: '/static/dev-previews/example/preview.gltf',
+      metadataUrl: '/static/dev-previews/example/preview.json',
+      status: 'ready',
+      thumbnailUrl: '/static/dev-previews/example/thumb.png',
+    })
+    expect(lastUsePreviewJobOptions).toMatchObject({
+      preferredScenario: 'existing_building',
+    })
+    expect(lastOverviewCardArgs).toMatchObject({
+      previewJob: expect.objectContaining({ scenario: 'existing_building' }),
+    })
+  })
+
+  it('switches the starter model to the user-selected scenario when scenario focus overrides the recommendation', () => {
+    const result = buildResult()
+    result.previewJobs = [
+      {
+        id: 'preview-1',
+        propertyId: 'prop-123',
+        scenario: 'raw_land',
+        status: 'ready',
+        previewUrl: '/static/dev-previews/example/raw-land.gltf',
+        metadataUrl: '/static/dev-previews/example/raw-land.json',
+        thumbnailUrl: '/static/dev-previews/example/raw-land.png',
+        assetVersion: '20260407093405',
+        requestedAt: '2026-01-06T10:00:00Z',
+        startedAt: '2026-01-06T10:00:02Z',
+        finishedAt: '2026-01-06T10:00:10Z',
+        message: null,
+        geometryDetailLevel: 'medium',
+      },
+      {
+        id: 'preview-2',
+        propertyId: 'prop-123',
+        scenario: 'existing_building',
+        status: 'ready',
+        previewUrl: '/static/dev-previews/example/renovation.gltf',
+        metadataUrl: '/static/dev-previews/example/renovation.json',
+        thumbnailUrl: '/static/dev-previews/example/renovation.png',
+        assetVersion: '20260407093406',
+        requestedAt: '2026-01-06T10:01:00Z',
+        startedAt: '2026-01-06T10:01:02Z',
+        finishedAt: '2026-01-06T10:01:10Z',
+        message: null,
+        geometryDetailLevel: 'medium',
+      },
+    ] as SiteAcquisitionResult['previewJobs']
+    result.visualization = {
+      ...result.visualization,
+      status: 'ready',
+      previewAvailable: true,
+      conceptMeshUrl: '/static/dev-previews/example/fallback.gltf',
+      previewMetadataUrl: '/static/dev-previews/example/fallback.json',
+      thumbnailUrl: '/static/dev-previews/example/fallback.png',
+      massingLayers: [
+        {
+          assetType: 'office',
+          allocationPct: 100,
+          gfaSqm: 21000,
+          niaSqm: 17850,
+          estimatedHeightM: 24,
+          color: '#3366ff',
+        },
+      ],
+    }
+    previewJobsByScenarioValue = {
+      existing_building: {
+        id: 'preview-2',
+        propertyId: 'prop-123',
+        scenario: 'existing_building',
+        status: 'ready',
+        previewUrl: '/static/dev-previews/example/renovation.gltf',
+        metadataUrl: '/static/dev-previews/example/renovation.json',
+        thumbnailUrl: '/static/dev-previews/example/renovation.png',
+        assetVersion: '20260407093406',
+        requestedAt: '2026-01-06T10:01:00Z',
+        startedAt: '2026-01-06T10:01:02Z',
+        finishedAt: '2026-01-06T10:01:10Z',
+        message: null,
+        geometryDetailLevel: 'medium',
+      },
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={
+          ['raw_land', 'existing_building'] as DevelopmentScenario[]
+        }
+      />,
+    )
+
+    expect(screen.getByText(/Recommended: Adaptive Reuse/i)).toBeInTheDocument()
+    expect(lastPreviewViewerProps).toMatchObject({
+      previewUrl: '/static/dev-previews/example/fallback.gltf',
+      status: 'ready',
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /renovation/i }))
+
+    expect(lastPreviewViewerProps).toMatchObject({
+      previewUrl: '/static/dev-previews/example/renovation.gltf',
+      metadataUrl: '/static/dev-previews/example/renovation.json',
+      thumbnailUrl: '/static/dev-previews/example/renovation.png',
+      status: 'ready',
+    })
+    expect(lastUsePreviewJobOptions).toMatchObject({
+      preferredScenario: 'existing_building',
+    })
   })
 
   it('renders preview metadata errors when present', () => {
@@ -451,6 +704,74 @@ describe('DeveloperResults', () => {
     expect(screen.getByText(/Preview metadata failed/i)).toBeInTheDocument()
   })
 
+  it('auto-requests a starter model when the preferred scenario has no preview yet', () => {
+    previewJobsByScenarioValue = {}
+
+    render(
+      <DeveloperResults
+        result={buildResult()}
+        selectedScenarios={
+          ['raw_land', 'existing_building'] as DevelopmentScenario[]
+        }
+      />,
+    )
+
+    expect(
+      screen.getByRole('button', { name: /generate starter model/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/starter model has been queued/i),
+    ).toBeInTheDocument()
+    expect(mockHandleEnsureStarterModel).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows active generation copy while a starter model request is in flight', () => {
+    previewJobsByScenarioValue = {}
+    isGeneratingStarterModelValue = true
+
+    render(
+      <DeveloperResults
+        result={buildResult()}
+        selectedScenarios={
+          ['raw_land', 'existing_building'] as DevelopmentScenario[]
+        }
+      />,
+    )
+
+    expect(
+      screen.getByRole('button', { name: /generating starter model/i }),
+    ).toBeDisabled()
+    expect(
+      screen.getByText(
+        /Capture is generating the adaptive reuse starter model now/i,
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('shows generate starter model action and generation errors when no preferred preview exists yet', () => {
+    previewJobsByScenarioValue = {}
+    previewGenerationErrorValue =
+      'Scenario-specific starter model generation is not available yet.'
+
+    render(
+      <DeveloperResults
+        result={buildResult()}
+        selectedScenarios={
+          ['raw_land', 'existing_building'] as DevelopmentScenario[]
+        }
+      />,
+    )
+
+    expect(
+      screen.getByRole('button', { name: /generate starter model/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Scenario-specific starter model generation is not available yet/i,
+      ),
+    ).toBeInTheDocument()
+  })
+
   it('updates active scenario and propagates it to MultiScenarioComparisonSection', () => {
     render(
       <DeveloperResults
@@ -462,12 +783,47 @@ describe('DeveloperResults', () => {
     )
 
     const module = screen.getByTestId('multi-scenario')
-    expect(module.getAttribute('data-active')).toBe('raw_land')
+    expect(module.getAttribute('data-active')).toBe('all')
 
     fireEvent.click(screen.getByRole('button', { name: /all scenarios/i }))
     expect(module.getAttribute('data-active')).toBe('all')
 
     fireEvent.click(screen.getByRole('button', { name: /renovation/i }))
     expect(module.getAttribute('data-active')).toBe('existing_building')
+  })
+
+  it('keeps the post-scan workspace model-first with layer inspection below supporting facts', () => {
+    render(
+      <DeveloperResults
+        result={buildResult()}
+        selectedScenarios={
+          ['raw_land', 'existing_building'] as DevelopmentScenario[]
+        }
+      />,
+    )
+
+    const preview = screen.getByTestId('preview-3d')
+    const recommendation = screen.getByText('Capture Recommendation')
+    const comparison = screen.getByTestId('multi-scenario')
+    const overview = screen.getByTestId('property-overview')
+    const layers = screen.getByTestId('preview-layers')
+
+    expect(
+      preview.compareDocumentPosition(recommendation) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      recommendation.compareDocumentPosition(comparison) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      comparison.compareDocumentPosition(overview) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      overview.compareDocumentPosition(layers) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(screen.getByText('Preview Layer Inspection')).toBeInTheDocument()
   })
 })

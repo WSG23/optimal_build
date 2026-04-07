@@ -271,6 +271,148 @@ async def test_developer_log_property_returns_envelope(
 
 
 @pytest.mark.asyncio
+async def test_create_preview_job_for_scenario(
+    app_client: AsyncClient,
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    async with async_session_factory() as session:
+        session.add(
+            Property(
+                id=property_id,
+                name="Starter Model Tower",
+                address="8 Scenario Way",
+                jurisdiction_code="SG",
+                property_type=PropertyType.OFFICE,
+                status=PropertyStatus.EXISTING,
+                location="POINT(103.8198 1.2801)",
+                district="D01",
+                land_area_sqm=Decimal("5000"),
+                gross_floor_area_sqm=Decimal("18000"),
+                building_height_m=Decimal("36"),
+                zoning_code="C1",
+                plot_ratio=Decimal("4.0"),
+                is_conservation=False,
+            )
+        )
+        await session.commit()
+
+    response = await app_client.post(
+        f"/api/v1/developers/properties/{property_id}/preview-jobs",
+        json={
+            "scenario": "existing_building",
+            "geometry_detail_level": "medium",
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["property_id"] == str(property_id)
+    assert payload["scenario"] == "existing_building"
+    assert payload["status"] in {"ready", "processing", "queued"}
+    assert payload["geometry_detail_level"] == "medium"
+
+    async with async_session_factory() as session:
+        jobs = (
+            (
+                await session.execute(
+                    select(PreviewJob).where(PreviewJob.property_id == property_id)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        assert jobs
+        assert any(job.scenario == "existing_building" for job in jobs)
+
+
+@pytest.mark.asyncio
+async def test_create_preview_jobs_differentiate_massing_by_scenario(
+    app_client: AsyncClient,
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    async with async_session_factory() as session:
+        session.add(
+            Property(
+                id=property_id,
+                name="Scenario Delta Tower",
+                address="18 Scenario Way",
+                jurisdiction_code="SG",
+                property_type=PropertyType.OFFICE,
+                status=PropertyStatus.EXISTING,
+                location="POINT(103.8198 1.2801)",
+                district="D01",
+                land_area_sqm=Decimal("5000"),
+                gross_floor_area_sqm=Decimal("18000"),
+                building_height_m=Decimal("36"),
+                zoning_code="C1",
+                plot_ratio=Decimal("4.0"),
+                is_conservation=False,
+            )
+        )
+        await session.commit()
+
+    raw_land_response = await app_client.post(
+        f"/api/v1/developers/properties/{property_id}/preview-jobs",
+        json={"scenario": "raw_land"},
+    )
+    assert raw_land_response.status_code == 200, raw_land_response.text
+
+    renovation_response = await app_client.post(
+        f"/api/v1/developers/properties/{property_id}/preview-jobs",
+        json={"scenario": "existing_building"},
+    )
+    assert renovation_response.status_code == 200, renovation_response.text
+
+    async with async_session_factory() as session:
+        jobs = (
+            (
+                await session.execute(
+                    select(PreviewJob)
+                    .where(PreviewJob.property_id == property_id)
+                    .order_by(PreviewJob.requested_at.asc())
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        raw_land_job = next(job for job in jobs if job.scenario == "raw_land")
+        renovation_job = next(
+            job for job in jobs if job.scenario == "existing_building"
+        )
+
+        raw_land_layers = (raw_land_job.metadata or {}).get("massing_layers") or []
+        renovation_layers = (renovation_job.metadata or {}).get("massing_layers") or []
+        assert raw_land_layers
+        assert renovation_layers
+
+        raw_land_gfa = sum(
+            float(layer.get("gfa_sqm") or 0.0) for layer in raw_land_layers
+        )
+        renovation_gfa = sum(
+            float(layer.get("gfa_sqm") or 0.0) for layer in renovation_layers
+        )
+
+        assert raw_land_gfa > renovation_gfa
+        assert raw_land_job.payload_checksum != renovation_job.payload_checksum
+
+
+@pytest.mark.asyncio
+async def test_create_preview_job_returns_404_for_unknown_property(
+    app_client: AsyncClient,
+) -> None:
+    response = await app_client.post(
+        f"/api/v1/developers/properties/{uuid4()}/preview-jobs",
+        json={"scenario": "raw_land"},
+    )
+
+    assert response.status_code == 404, response.text
+    assert response.json()["detail"] == "Property not found"
+
+
+@pytest.mark.asyncio
 async def test_create_finance_project_requires_identity_headers(
     app_client: AsyncClient,
     async_session_factory,

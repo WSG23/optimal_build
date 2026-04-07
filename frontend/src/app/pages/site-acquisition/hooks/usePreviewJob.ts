@@ -15,11 +15,13 @@ import {
   fetchPreviewJob,
   refreshPreviewJob,
   listPreviewJobs,
+  requestStarterModelForScenario,
   type DeveloperPreviewJob,
   type DeveloperColorLegendEntry,
   type GeometryDetailLevel,
   type SiteAcquisitionResult,
 } from '../../../../api/siteAcquisition'
+import type { DevelopmentScenario } from '../../../../api/agents'
 import {
   normalisePreviewLayer,
   normaliseLegendEntry,
@@ -28,6 +30,7 @@ import {
 } from '../previewMetadata'
 import type { LayerBreakdownItem } from '../types'
 import { toTitleCase } from '../utils/formatters'
+import { selectPreviewJobForScenario } from '../utils/previewJobSelection'
 
 // ============================================================================
 // Types
@@ -36,6 +39,8 @@ import { toTitleCase } from '../utils/formatters'
 export interface UsePreviewJobOptions {
   /** The captured property result (may be null before capture) */
   capturedProperty: SiteAcquisitionResult | null
+  /** Preferred scenario whose preview should be shown when available */
+  preferredScenario?: DevelopmentScenario | null
 }
 
 export interface UsePreviewJobResult {
@@ -49,6 +54,9 @@ export interface UsePreviewJobResult {
     React.SetStateAction<GeometryDetailLevel>
   >
   isRefreshingPreview: boolean
+  isGeneratingStarterModel: boolean
+  hasPreferredScenarioPreview: boolean
+  previewGenerationError: string | null
 
   // Layer metadata
   previewLayerMetadata: PreviewLayerMetadata[]
@@ -71,6 +79,7 @@ export interface UsePreviewJobResult {
   layerBreakdown: LayerBreakdownItem[]
 
   // Actions
+  handleEnsureStarterModel: () => Promise<void>
   handleRefreshPreview: () => Promise<void>
   handleToggleLayerVisibility: (layerId: string) => void
   handleSoloPreviewLayer: (layerId: string) => void
@@ -91,12 +100,18 @@ export interface UsePreviewJobResult {
 
 export function usePreviewJob({
   capturedProperty,
+  preferredScenario,
 }: UsePreviewJobOptions): UsePreviewJobResult {
   // Preview job state
   const [previewJob, setPreviewJob] = useState<DeveloperPreviewJob | null>(null)
   const [previewDetailLevel, setPreviewDetailLevel] =
     useState<GeometryDetailLevel>('medium')
   const [isRefreshingPreview, setIsRefreshingPreview] = useState(false)
+  const [isGeneratingStarterModel, setIsGeneratingStarterModel] =
+    useState(false)
+  const [previewGenerationError, setPreviewGenerationError] = useState<
+    string | null
+  >(null)
 
   // Layer metadata state
   const [previewLayerMetadata, setPreviewLayerMetadata] = useState<
@@ -163,6 +178,13 @@ export function usePreviewJob({
       ).length,
     [previewLayerMetadata, previewLayerVisibility],
   )
+
+  const hasPreferredScenarioPreview = useMemo(() => {
+    if (!preferredScenario) {
+      return previewJob !== null
+    }
+    return previewJob?.scenario === preferredScenario
+  }, [preferredScenario, previewJob])
 
   // Layer breakdown for massing summary panel
   const layerBreakdown = useMemo((): LayerBreakdownItem[] => {
@@ -233,8 +255,13 @@ export function usePreviewJob({
       setPreviewJob(null)
       return
     }
-    setPreviewJob(capturedProperty.previewJobs[0])
-  }, [capturedProperty?.previewJobs])
+    setPreviewJob(
+      selectPreviewJobForScenario(
+        capturedProperty.previewJobs,
+        preferredScenario,
+      ),
+    )
+  }, [capturedProperty?.previewJobs, preferredScenario])
 
   // Fetch preview jobs if not included in captured property
   useEffect(() => {
@@ -244,13 +271,17 @@ export function usePreviewJob({
     let cancelled = false
     listPreviewJobs(capturedProperty.propertyId).then((jobs) => {
       if (!cancelled && jobs.length) {
-        setPreviewJob(jobs[0])
+        setPreviewJob(selectPreviewJobForScenario(jobs, preferredScenario))
       }
     })
     return () => {
       cancelled = true
     }
-  }, [capturedProperty?.propertyId, capturedProperty?.previewJobs])
+  }, [
+    capturedProperty?.propertyId,
+    capturedProperty?.previewJobs,
+    preferredScenario,
+  ])
 
   // Poll for preview job status updates
   useEffect(() => {
@@ -314,6 +345,10 @@ export function usePreviewJob({
     capturedProperty?.propertyId,
     capturedProperty?.visualization?.colorLegend,
   ])
+
+  useEffect(() => {
+    setPreviewGenerationError(null)
+  }, [capturedProperty?.propertyId, preferredScenario])
 
   // Load preview metadata
   useEffect(() => {
@@ -426,6 +461,60 @@ export function usePreviewJob({
     setIsRefreshingPreview(false)
   }, [legendPayloadForPreview, previewDetailLevel, previewJob])
 
+  const handleEnsureStarterModel = useCallback(async () => {
+    setPreviewGenerationError(null)
+
+    if (previewJob) {
+      await handleRefreshPreview()
+      return
+    }
+
+    if (!capturedProperty?.propertyId || !preferredScenario) {
+      return
+    }
+
+    setIsGeneratingStarterModel(true)
+    try {
+      const result = await requestStarterModelForScenario({
+        propertyId: capturedProperty.propertyId,
+        scenario: preferredScenario,
+        detailLevel: previewDetailLevel,
+        colorLegend: legendPayloadForPreview,
+      })
+
+      if (result.outcome === 'unsupported') {
+        setPreviewGenerationError(
+          'Scenario-specific starter model generation is not available yet.',
+        )
+        return
+      }
+
+      if (result.job) {
+        setPreviewJob(result.job)
+        return
+      }
+
+      setPreviewGenerationError(
+        'Unable to generate a starter model for the selected scenario.',
+      )
+    } catch (error) {
+      setPreviewGenerationError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to generate a starter model for the selected scenario.',
+      )
+    } finally {
+      setIsGeneratingStarterModel(false)
+    }
+  }, [
+    capturedProperty?.propertyId,
+    handleRefreshPreview,
+    legendPayloadForPreview,
+    preferredScenario,
+    previewDetailLevel,
+    previewJob,
+  ])
+
   const handleToggleLayerVisibility = useCallback((layerId: string) => {
     setPreviewLayerVisibility((prev) => {
       const next = { ...prev }
@@ -507,6 +596,9 @@ export function usePreviewJob({
     previewDetailLevel,
     setPreviewDetailLevel,
     isRefreshingPreview,
+    isGeneratingStarterModel,
+    hasPreferredScenarioPreview,
+    previewGenerationError,
 
     // Layer metadata
     previewLayerMetadata,
@@ -528,6 +620,7 @@ export function usePreviewJob({
     layerBreakdown,
 
     // Actions
+    handleEnsureStarterModel,
     handleRefreshPreview,
     handleToggleLayerVisibility,
     handleSoloPreviewLayer,
