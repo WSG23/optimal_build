@@ -88,7 +88,7 @@ function IntelligenceStatusPanel({
           borderRadius: 'var(--ob-radius-sm)',
           border: '1px solid var(--ob-border-fine)',
           background:
-            'radial-gradient(circle at top, rgba(0, 214, 255, 0.08), transparent 65%), var(--ob-surface-glass-1)',
+            'radial-gradient(circle at top, var(--ob-overlay-brand-faint), transparent 65%), var(--ob-surface-glass-1)',
         }}
       >
         <Typography
@@ -128,11 +128,11 @@ function IntelligenceStatusPanel({
       sx={{
         minHeight,
         border: isError
-          ? '1px solid rgba(255, 99, 132, 0.28)'
-          : '1px dashed rgba(255, 255, 255, 0.12)',
+          ? '1px solid var(--ob-overlay-error-subtle)'
+          : '1px dashed var(--ob-overlay-white-subtle)',
         background: isError
-          ? 'radial-gradient(circle at top, rgba(255, 99, 132, 0.08), transparent 65%), var(--ob-surface-glass-1)'
-          : 'radial-gradient(circle at top, rgba(0, 214, 255, 0.08), transparent 65%), var(--ob-surface-glass-1)',
+          ? 'radial-gradient(circle at top, var(--ob-overlay-error-faint), transparent 65%), var(--ob-surface-glass-1)'
+          : 'radial-gradient(circle at top, var(--ob-overlay-brand-faint), transparent 65%), var(--ob-surface-glass-1)',
       }}
     />
   )
@@ -204,15 +204,6 @@ function isCorrelationError(
   return correlation.status === 'error'
 }
 
-// --- Mock Data Generators (until API provides trends) ---
-function generateSparkline(seedValue: number, length = 20): number[] {
-  let current = seedValue
-  return Array.from({ length }, () => {
-    current = current * (1 + (Math.random() - 0.5) * 0.1)
-    return current
-  })
-}
-
 export function AdvancedIntelligencePage({
   workspaceId = DEFAULT_WORKSPACE_ID,
   services,
@@ -244,9 +235,20 @@ export function AdvancedIntelligencePage({
     return count === 0 ? 0 : sum / count
   }, [predictive])
 
-  // Mock trends for the Hero Cards
-  const adoptionTrend = 12.5 // Fixed mock for demo
-  const upliftTrend = 44.7
+  const predictiveSegments =
+    predictive.status === 'ok' ? predictive.segments : []
+  const experimentCount = predictiveSegments.length
+  const hasPredictiveSignals = predictive.status === 'ok' && experimentCount > 0
+  const intelligenceScore = useMemo(() => {
+    if (graph.status !== 'ok') {
+      return null
+    }
+    if (graph.graph.nodes.length === 0) {
+      return null
+    }
+    const total = graph.graph.nodes.reduce((sum, node) => sum + node.score, 0)
+    return (total / graph.graph.nodes.length) * 100
+  }, [graph])
   const graphStatus = getGraphStatus(graph)
   const predictiveStatus = getPredictiveStatus(predictive)
   const correlationStatus = getCorrelationStatus(correlation)
@@ -286,7 +288,7 @@ export function AdvancedIntelligencePage({
             borderRadius: '2px',
             cursor: isLoading ? 'not-allowed' : 'pointer',
             opacity: isLoading ? 0.5 : 1,
-            fontSize: '0.875rem',
+            fontSize: 'var(--ob-font-size-sm)',
           }}
         >
           {isLoading ? 'SYNCING...' : 'SYNC WORKSPACE'}
@@ -312,38 +314,44 @@ export function AdvancedIntelligencePage({
           >
             Workspace Signals
           </Typography>
-          <Grid container spacing={3}>
+          <Grid container spacing="var(--ob-space-150)">
             <Grid item xs={12} md={3}>
               <KPITickerCard
                 label="Adoption Likelihood"
-                value={`${adoptionRate.toFixed(1)}%`}
-                trend={adoptionTrend}
-                data={generateSparkline(adoptionRate)}
+                value={
+                  hasPredictiveSignals ? `${adoptionRate.toFixed(1)}%` : 'N/A'
+                }
+                trend={null}
+                data={null}
                 active={true}
               />
             </Grid>
             <Grid item xs={12} md={3}>
               <KPITickerCard
                 label="Projected Uplift"
-                value={`${uplift.toFixed(1)}%`}
-                trend={upliftTrend}
-                data={generateSparkline(uplift)}
+                value={hasPredictiveSignals ? `${uplift.toFixed(1)}%` : 'N/A'}
+                trend={null}
+                data={null}
               />
             </Grid>
             <Grid item xs={12} md={3}>
               <KPITickerCard
                 label="Active Experiments"
-                value="12"
-                trend={8.2}
-                data={generateSparkline(12)}
+                value={hasPredictiveSignals ? String(experimentCount) : 'N/A'}
+                trend={null}
+                data={null}
               />
             </Grid>
             <Grid item xs={12} md={3}>
               <KPITickerCard
                 label="Intelligence Score"
-                value="94"
-                trend={-2.4}
-                data={generateSparkline(94)}
+                value={
+                  intelligenceScore === null
+                    ? 'N/A'
+                    : Math.round(intelligenceScore).toString()
+                }
+                trend={null}
+                data={null}
               />
             </Grid>
           </Grid>

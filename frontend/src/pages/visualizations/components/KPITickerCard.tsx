@@ -4,8 +4,8 @@ import { ResponsiveContainer, AreaChart, Area } from 'recharts'
 export interface KPITickerCardProps {
   label: string
   value: string | number
-  trend: number // Percentage, e.g. 44.7
-  data: number[] // Array of numbers for the sparkline
+  trend?: number | null // Percentage, e.g. 44.7
+  data?: number[] | null // Array of numbers for the sparkline
   active?: boolean
 }
 
@@ -19,9 +19,13 @@ export function KPITickerCard({
   const theme = useTheme()
 
   // Transform flat array to object array for Recharts
-  const chartData = data.map((val, i) => ({ i, val }))
+  const chartData = Array.isArray(data)
+    ? data.map((val, i) => ({ i, val }))
+    : []
+  const hasTrend = typeof trend === 'number'
+  const hasChart = chartData.length > 0
 
-  const isPositive = trend >= 0
+  const isPositive = (trend ?? 0) >= 0
   const trendColor = isPositive
     ? theme.palette.success.main
     : theme.palette.error.main
@@ -80,57 +84,79 @@ export function KPITickerCard({
           >
             {value}
           </Typography>
-          <Box
-            sx={{
-              bgcolor: alpha(trendColor, 0.1),
-              color: trendColor,
-              px: 1,
-              py: 0.25,
-              borderRadius: '2px', // Square Cyber-Minimalism: xs for badges
-              fontSize: '0.75rem',
-              fontWeight: 700,
-            }}
-          >
-            {isPositive ? '+' : ''}
-            {trend.toFixed(1)}%
-          </Box>
+          {hasTrend ? (
+            <Box
+              sx={{
+                bgcolor: alpha(trendColor, 0.1),
+                color: trendColor,
+                px: 1,
+                py: 0.25,
+                borderRadius: '2px', // Square Cyber-Minimalism: xs for badges
+                fontSize: '0.75rem',
+                fontWeight: 700,
+              }}
+            >
+              {isPositive ? '+' : ''}
+              {trend.toFixed(1)}%
+            </Box>
+          ) : null}
         </Stack>
       </Box>
 
-      <Box sx={{ height: 60, width: '100%', opacity: 0.8 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData}>
-            <defs>
-              <linearGradient
-                id={`gradient-${label}`}
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-              >
-                <stop
-                  offset="5%"
-                  stopColor={theme.palette.primary.main}
-                  stopOpacity={0.3}
-                />
-                <stop
-                  offset="95%"
-                  stopColor={theme.palette.primary.main}
-                  stopOpacity={0}
-                />
-              </linearGradient>
-            </defs>
-            <Area
-              type="monotone"
-              dataKey="val"
-              stroke={theme.palette.primary.main}
-              strokeWidth={2}
-              fill={`url(#gradient-${label})`}
-              isAnimationActive={false} // Performance
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </Box>
+      {hasChart ? (
+        <Box sx={{ height: 60, width: '100%', opacity: 0.8 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient
+                  id={`gradient-${label}`}
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="5%"
+                    stopColor={theme.palette.primary.main}
+                    stopOpacity={0.3}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor={theme.palette.primary.main}
+                    stopOpacity={0}
+                  />
+                </linearGradient>
+              </defs>
+              <Area
+                type="monotone"
+                dataKey="val"
+                stroke={theme.palette.primary.main}
+                strokeWidth={2}
+                fill={`url(#gradient-${label})`}
+                isAnimationActive={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            height: 60,
+            width: '100%',
+            borderRadius: '4px',
+            border: `1px dashed ${alpha(theme.palette.divider, 0.25)}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'text.secondary',
+            fontSize: '0.8rem',
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+          }}
+        >
+          No trend data
+        </Box>
+      )}
     </Box>
   )
 }
