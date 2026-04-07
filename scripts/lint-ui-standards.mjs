@@ -30,6 +30,20 @@ const SCOPED_DIRS = [
 ]
 
 const SCOPED_FILES = [resolve(projectRoot, 'frontend/src/styles/site-acquisition.css')]
+const CAPTURE_SCOPED_FILES = [
+  resolve(
+    projectRoot,
+    'frontend/src/styles/gps-capture/core.css',
+  ),
+  resolve(
+    projectRoot,
+    'frontend/src/app/pages/site-acquisition/components/VoiceObservationsPanel.tsx',
+  ),
+  resolve(
+    projectRoot,
+    'frontend/src/app/pages/site-acquisition/components/property-overview/PropertyOverviewSection.tsx',
+  ),
+]
 
 const ALLOWED_FONT_FAMILY_VALUE = /^\s*(var\(--ob-font-family-[^)]+\)|inherit|unset|initial)\s*$/i
 const RAW_FONT_FAMILY_MARKERS = [
@@ -212,6 +226,7 @@ async function run() {
     files.push(...(await walk(dir)))
   }
   files.push(...SCOPED_FILES)
+  files.push(...CAPTURE_SCOPED_FILES)
 
   const scopedFiles = files.filter((p) => {
     const ext = extname(p)

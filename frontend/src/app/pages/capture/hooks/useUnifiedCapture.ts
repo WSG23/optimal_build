@@ -74,14 +74,12 @@ export interface UseUnifiedCaptureReturn {
   latitude: string
   longitude: string
   address: string
-  jurisdictionCode: string
   selectedScenarios: DevelopmentScenario[]
 
   // Setters
   setLatitude: (value: string) => void
   setLongitude: (value: string) => void
   setAddress: (value: string) => void
-  setJurisdictionCode: (value: string) => void
   handleScenarioToggle: (scenario: DevelopmentScenario) => void
 
   // Capture state
@@ -102,10 +100,6 @@ export interface UseUnifiedCaptureReturn {
 
   // Geocoding
   geocodeError: string | null
-  handleForwardGeocode: (
-    addressToGeocode?: string,
-  ) => Promise<{ latitude: number; longitude: number } | null>
-  handleReverseGeocode: () => Promise<void>
 
   // Map
   mapContainerRef: React.RefObject<HTMLDivElement>
@@ -219,28 +213,6 @@ export function useUnifiedCapture({
     },
     [address],
   )
-
-  // Reverse geocode (coordinates → address)
-  const handleReverseGeocode = useCallback(async () => {
-    const parsedLat = Number(latitude)
-    const parsedLon = Number(longitude)
-    if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLon)) {
-      setGeocodeError(
-        'Please provide valid coordinates before reverse geocoding.',
-      )
-      return
-    }
-    try {
-      setGeocodeError(null)
-      const result = await reverseGeocodeCoords(parsedLat, parsedLon)
-      setAddress(result.formattedAddress)
-    } catch (error) {
-      console.error('Reverse geocode failed', error)
-      setGeocodeError(
-        error instanceof Error ? error.message : 'Unable to reverse geocode.',
-      )
-    }
-  }, [latitude, longitude])
 
   // Auto-geocode when address changes (debounced)
   // This provides Google Maps-like behavior where typing an address
@@ -691,14 +663,12 @@ export function useUnifiedCapture({
     latitude,
     longitude,
     address,
-    jurisdictionCode,
     selectedScenarios,
 
     // Setters
     setLatitude,
     setLongitude,
     setAddress,
-    setJurisdictionCode,
     handleScenarioToggle,
 
     // Capture state
@@ -719,8 +689,6 @@ export function useUnifiedCapture({
 
     // Geocoding
     geocodeError,
-    handleForwardGeocode,
-    handleReverseGeocode,
 
     // Map
     mapContainerRef,

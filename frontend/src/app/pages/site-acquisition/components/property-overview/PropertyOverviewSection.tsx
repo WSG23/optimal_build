@@ -49,6 +49,7 @@ export interface OverviewCard {
   items: Array<{ label: string; value: string }>
   tags?: string[]
   note?: string | null
+  layout?: 'default' | 'status'
 }
 
 export interface PropertyOverviewSectionProps {
@@ -179,7 +180,7 @@ function CardHeader({
       <Typography
         sx={{
           fontSize: 'var(--ob-font-size-base)',
-          fontWeight: 700,
+          fontWeight: 'var(--ob-font-weight-bold)',
           color: 'text.primary',
           letterSpacing: '-0.01em',
         }}
@@ -198,7 +199,7 @@ function ItemLabel({ children }: { children: ReactNode }) {
     <Typography
       sx={{
         fontSize: 'var(--ob-font-size-2xs)',
-        fontWeight: 600,
+        fontWeight: 'var(--ob-font-weight-semibold)',
         letterSpacing: '0.05em',
         textTransform: 'uppercase',
         color: 'text.secondary',
@@ -222,17 +223,17 @@ function ItemValue({
   const styles = {
     default: {
       fontSize: 'var(--ob-font-size-sm)',
-      fontWeight: 600,
+      fontWeight: 'var(--ob-font-weight-semibold)',
       color: 'text.primary',
     },
     large: {
       fontSize: 'var(--ob-font-size-lg)',
-      fontWeight: 700,
+      fontWeight: 'var(--ob-font-weight-bold)',
       color: 'text.primary',
     },
     accent: {
       fontSize: 'var(--ob-font-size-sm)',
-      fontWeight: 700,
+      fontWeight: 'var(--ob-font-weight-bold)',
       color: 'info.main',
     },
   }
@@ -315,7 +316,7 @@ function LocationTenureCard({ card }: { card: OverviewCard }) {
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-sm)',
-                fontWeight: 600,
+                fontWeight: 'var(--ob-font-weight-semibold)',
                 color: 'text.primary',
                 lineHeight: 1.4,
                 mt: 'var(--ob-space-025)',
@@ -455,7 +456,7 @@ function BuildEnvelopeCard({ card }: { card: OverviewCard }) {
               <Typography
                 sx={{
                   fontSize: 'var(--ob-font-size-xs)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                   color: 'text.primary',
                 }}
               >
@@ -525,7 +526,7 @@ function HeritageCard({ card }: { card: OverviewCard }) {
                   py: 'var(--ob-space-025)',
                   borderRadius: 'var(--ob-radius-pill)',
                   fontSize: 'var(--ob-font-size-xs)',
-                  fontWeight: 700,
+                  fontWeight: 'var(--ob-font-weight-bold)',
                   bgcolor: isLowRisk
                     ? 'color-mix(in srgb, var(--ob-success-500) 15%, transparent)'
                     : 'color-mix(in srgb, var(--ob-warning-500) 15%, transparent)',
@@ -682,7 +683,7 @@ function FinancialCard({ card }: { card: OverviewCard }) {
               <Typography
                 sx={{
                   fontSize: 'var(--ob-font-size-sm)',
-                  fontWeight: 700,
+                  fontWeight: 'var(--ob-font-weight-bold)',
                   color: 'text.primary',
                 }}
               >
@@ -750,7 +751,7 @@ function ZoningCard({ card }: { card: OverviewCard }) {
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-sm)',
-                fontWeight: 700,
+                fontWeight: 'var(--ob-font-weight-bold)',
                 color: 'text.primary',
               }}
             >
@@ -780,7 +781,7 @@ function ZoningCard({ card }: { card: OverviewCard }) {
                   color: 'info.main',
                   borderRadius: 'var(--ob-radius-xs)',
                   fontSize: 'var(--ob-font-size-2xs)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                   textTransform: 'uppercase',
                 }}
               >
@@ -790,6 +791,114 @@ function ZoningCard({ card }: { card: OverviewCard }) {
           </Box>
         )}
       </Box>
+    </Card>
+  )
+}
+
+/**
+ * Status Card - for analysis and preview states
+ * - Accent subtitle with optional status pill
+ * - Two-column detail grid
+ * - Left-aligned wrapped values
+ */
+function StatusCard({ card }: { card: OverviewCard }) {
+  const Icon = getCardIcon(card.title)
+
+  return (
+    <Card
+      sx={{
+        p: 'var(--ob-space-125)',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+      }}
+    >
+      <CardHeader title={card.title} icon={Icon} />
+
+      {(card.subtitle || (card.tags && card.tags.length > 0)) && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 'var(--ob-space-075)',
+            mb: 'var(--ob-space-075)',
+          }}
+        >
+          {card.subtitle && (
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-sm)',
+                fontWeight: 'var(--ob-font-weight-bold)',
+                color: 'info.main',
+                lineHeight: 1.4,
+              }}
+            >
+              {card.subtitle}
+            </Typography>
+          )}
+          {card.tags && card.tags.length > 0 && (
+            <Box
+              component="span"
+              sx={{
+                px: 'var(--ob-space-050)',
+                py: 'var(--ob-space-025)',
+                borderRadius: 'var(--ob-radius-xs)',
+                bgcolor:
+                  'color-mix(in srgb, var(--ob-success-500) 12%, transparent)',
+                color: 'success.main',
+                fontSize: 'var(--ob-font-size-2xs)',
+                fontWeight: 'var(--ob-font-weight-bold)',
+                textTransform: 'uppercase',
+                flexShrink: 0,
+              }}
+            >
+              {card.tags[0]}
+            </Box>
+          )}
+        </Box>
+      )}
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, minmax(0, 1fr))',
+          },
+          gap: 'var(--ob-space-075)',
+          flex: 1,
+        }}
+      >
+        {card.items.map((item) => (
+          <Box
+            key={item.label}
+            sx={{
+              p: 'var(--ob-space-050)',
+              borderRadius: 'var(--ob-radius-xs)',
+              bgcolor: 'var(--ob-surface-glass-subtle)',
+              minWidth: 0,
+            }}
+          >
+            <ItemLabel>{item.label}</ItemLabel>
+            <Typography
+              sx={{
+                mt: 'var(--ob-space-025)',
+                fontSize: 'var(--ob-font-size-sm)',
+                fontWeight: 'var(--ob-font-weight-semibold)',
+                color: 'text.primary',
+                lineHeight: 1.45,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+              }}
+            >
+              {item.value}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+
+      {card.note && <CardNote>{card.note}</CardNote>}
     </Card>
   )
 }
@@ -817,7 +926,7 @@ function GenericCard({ card }: { card: OverviewCard }) {
         <Typography
           sx={{
             fontSize: 'var(--ob-font-size-sm)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             color: 'info.main',
             mb: 'var(--ob-space-075)',
           }}
@@ -847,7 +956,7 @@ function GenericCard({ card }: { card: OverviewCard }) {
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-2xs)',
-                fontWeight: 500,
+                fontWeight: 'var(--ob-font-weight-medium)',
                 letterSpacing: '0.05em',
                 textTransform: 'uppercase',
                 color: 'text.secondary',
@@ -859,7 +968,7 @@ function GenericCard({ card }: { card: OverviewCard }) {
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-sm)',
-                fontWeight: 600,
+                fontWeight: 'var(--ob-font-weight-semibold)',
                 color: 'text.primary',
                 textAlign: 'right',
               }}
@@ -890,7 +999,7 @@ function GenericCard({ card }: { card: OverviewCard }) {
                   color: 'info.main',
                   borderRadius: 'var(--ob-radius-xs)',
                   fontSize: 'var(--ob-font-size-2xs)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                   textTransform: 'uppercase',
                 }}
               >
@@ -943,6 +1052,10 @@ function getCardType(
  * @see frontend/UX_ARCHITECTURE.md - "No More Uniform Label-Value Pairs"
  */
 function SmartCard({ card }: { card: OverviewCard }) {
+  if (card.layout === 'status') {
+    return <StatusCard card={card} />
+  }
+
   const cardType = getCardType(card.title)
 
   // ⚠️ DO NOT simplify to single component - each layout is intentionally unique

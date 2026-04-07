@@ -43,12 +43,10 @@ describe('UnifiedCapturePage', () => {
       latitude: '1.3',
       longitude: '103.85',
       address: '',
-      jurisdictionCode: 'SG',
       selectedScenarios: ['raw_land'],
       setLatitude: vi.fn(),
       setLongitude: vi.fn(),
       setAddress: vi.fn(),
-      setJurisdictionCode: vi.fn(),
       handleScenarioToggle,
       isCapturing: false,
       isScanning: false,
@@ -59,8 +57,6 @@ describe('UnifiedCapturePage', () => {
       capturedSites: [],
       siteAcquisitionResult: null,
       geocodeError: null,
-      handleForwardGeocode: vi.fn(),
-      handleReverseGeocode: vi.fn(),
       mapContainerRef: { current: null },
       mapError: null,
       handleCapture: vi.fn((e: React.FormEvent<HTMLFormElement>) =>
@@ -78,6 +74,53 @@ describe('UnifiedCapturePage', () => {
     expect(handleScenarioToggle).toHaveBeenCalledWith('raw_land')
   })
 
+  it('keeps the location form focused on address and coordinates', () => {
+    mockUseDeveloperMode.mockReturnValue({
+      isDeveloperMode: false,
+      toggleDeveloperMode: mockToggleDeveloperMode,
+    })
+
+    mockUseUnifiedCapture.mockReturnValue({
+      latitude: '1.3',
+      longitude: '103.85',
+      address: '45 Burghley Dr, Singapore 559022',
+      selectedScenarios: ['raw_land'],
+      setLatitude: vi.fn(),
+      setLongitude: vi.fn(),
+      setAddress: vi.fn(),
+      handleScenarioToggle: vi.fn(),
+      isCapturing: false,
+      isScanning: false,
+      captureError: null,
+      captureSummary: null,
+      marketSummary: null,
+      marketLoading: false,
+      capturedSites: [],
+      siteAcquisitionResult: null,
+      geocodeError: null,
+      mapContainerRef: { current: null },
+      mapError: null,
+      handleCapture: vi.fn((e: React.FormEvent<HTMLFormElement>) =>
+        e.preventDefault(),
+      ),
+    })
+
+    render(<UnifiedCapturePage />)
+
+    expect(
+      screen.getByText(
+        'Address updates the map and coordinates automatically.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Region')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /geocode address/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /reverse geocode/i }),
+    ).not.toBeInTheDocument()
+  })
+
   it('renders the developer workspace when developer mode has results', async () => {
     mockUseDeveloperMode.mockReturnValue({
       isDeveloperMode: true,
@@ -88,12 +131,10 @@ describe('UnifiedCapturePage', () => {
       latitude: '1.3',
       longitude: '103.85',
       address: '',
-      jurisdictionCode: 'SG',
       selectedScenarios: ['raw_land'],
       setLatitude: vi.fn(),
       setLongitude: vi.fn(),
       setAddress: vi.fn(),
-      setJurisdictionCode: vi.fn(),
       handleScenarioToggle: vi.fn(),
       isCapturing: false,
       isScanning: false,
@@ -104,8 +145,6 @@ describe('UnifiedCapturePage', () => {
       capturedSites: [],
       siteAcquisitionResult: { propertyId: 'prop-1' },
       geocodeError: null,
-      handleForwardGeocode: vi.fn(),
-      handleReverseGeocode: vi.fn(),
       mapContainerRef: { current: null },
       mapError: null,
       handleCapture: vi.fn((e: React.FormEvent<HTMLFormElement>) =>

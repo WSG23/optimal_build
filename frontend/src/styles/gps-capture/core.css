@@ -177,7 +177,6 @@
 
 .gps-form__address-row {
     display: flex;
-    gap: var(--ob-space-075);
     align-items: flex-end;
 }
 
@@ -186,13 +185,14 @@
     min-width: 0;
 }
 
-.gps-form__address-actions {
-    display: flex;
-    gap: var(--ob-space-025);
-    flex-shrink: 0;
+.gps-form__assistive-copy {
+    margin: calc(var(--ob-space-025) * -1) 0 0;
+    font-size: var(--ob-font-size-2xs);
+    color: var(--ob-color-text-muted);
+    line-height: 1.45;
 }
 
-/* ── Coords + Jurisdiction (compact row) ── */
+/* ── Coords (compact row) ── */
 
 .gps-form__coords-row {
     display: flex;
@@ -255,37 +255,6 @@ input.gps-input-ghost:focus,
 select.gps-input-ghost:focus,
 textarea.gps-input-ghost:focus {
     border-bottom-color: var(--ob-color-brand-primary);
-}
-
-/* ── Geocode Buttons ── */
-
-.gps-geocode-btn {
-    background: transparent;
-    color: var(--ob-color-text-secondary);
-    border: var(--ob-border-fine);
-    padding: var(--ob-space-025) var(--ob-space-075);
-    border-radius: var(--ob-radius-xs);
-    font-size: var(--ob-font-size-sm);
-    cursor: pointer;
-    transition: all 0.15s ease;
-    line-height: 1.4;
-}
-
-.gps-geocode-btn:hover {
-    color: var(--ob-color-text-primary);
-    background: var(--ob-color-action-hover);
-}
-
-/* ── Select ── */
-
-.gps-select-ghost {
-    color: var(--ob-color-text-primary);
-    background: transparent;
-}
-
-.gps-select-ghost option {
-    background: var(--ob-color-surface-default);
-    color: var(--ob-color-text-primary);
 }
 
 /* ── Scenario Tiles ── */

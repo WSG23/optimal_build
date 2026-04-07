@@ -148,6 +148,7 @@ export type PropertyOverviewCard = {
   items: Array<{ label: string; value: string }>
   tags?: string[]
   note?: string | null
+  layout?: 'default' | 'status'
 }
 
 // ============================================================================

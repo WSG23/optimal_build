@@ -92,7 +92,6 @@ function createSiteCoverageFormatter(formatNumber: NumberFormatter) {
 
 function buildLocationCard(
   capturedProperty: SiteAcquisitionResult,
-  formatNumber: NumberFormatter,
 ): PropertyOverviewCard {
   const info = capturedProperty.propertyInfo
   return {
@@ -112,9 +111,7 @@ function buildLocationCard(
       },
       {
         label: 'Completion year',
-        value: info?.completionYear
-          ? formatNumber(info.completionYear, { maximumFractionDigits: 0 })
-          : '—',
+        value: info?.completionYear ? String(info.completionYear) : '—',
       },
     ],
   }
@@ -143,6 +140,33 @@ function buildEnvelopeCard(
     noteText = envelope.assumptions[0]
   }
 
+  const currentGfa = envelope.currentGfaSqm
+  const maxGfa = envelope.maxBuildableGfaSqm
+  const hasCurrentAndMax =
+    currentGfa !== null &&
+    currentGfa !== undefined &&
+    maxGfa !== null &&
+    maxGfa !== undefined
+
+  let gfaRelationshipValue = '—'
+  let gfaReadingValue = '—'
+  let additionalPotentialValue = formatArea(envelope.additionalPotentialGfaSqm)
+
+  if (hasCurrentAndMax) {
+    const comparisonSymbol =
+      currentGfa > maxGfa ? '>' : currentGfa < maxGfa ? '<' : '='
+    gfaRelationshipValue = `${formatArea(currentGfa)} ${comparisonSymbol} ${formatArea(maxGfa)}`
+
+    if (currentGfa > maxGfa) {
+      gfaReadingValue = 'Likely grandfathered from a former code baseline'
+      additionalPotentialValue = 'No current code-compliant uplift'
+    } else if (currentGfa < maxGfa) {
+      gfaReadingValue = 'Existing bulk remains below today’s envelope'
+    } else {
+      gfaReadingValue = 'Existing bulk matches today’s envelope'
+    }
+  }
+
   return {
     title: 'Build envelope',
     subtitle:
@@ -161,12 +185,16 @@ function buildEnvelopeCard(
         value: formatArea(envelope.maxBuildableGfaSqm),
       },
       {
-        label: 'Current GFA',
-        value: formatArea(envelope.currentGfaSqm),
+        label: 'Current vs max GFA',
+        value: gfaRelationshipValue,
+      },
+      {
+        label: 'Envelope reading',
+        value: gfaReadingValue,
       },
       {
         label: 'Additional potential',
-        value: formatArea(envelope.additionalPotentialGfaSqm),
+        value: additionalPotentialValue,
       },
       {
         label: 'Building height limit',
@@ -238,36 +266,31 @@ function buildPreviewJobCard(
 ): PropertyOverviewCard {
   const statusLabel = previewJob.status.toUpperCase()
   const statusLower = previewJob.status.toLowerCase()
-  const previewItems: Array<{ label: string; value: string }> = [
-    { label: 'Status', value: statusLabel },
-    { label: 'Scenario', value: previewJob.scenario },
-    {
-      label: 'Requested',
-      value: previewJob.requestedAt
-        ? formatTimestamp(previewJob.requestedAt)
-        : '—',
-    },
-  ]
-  if (previewJob.startedAt) {
-    previewItems.push({
-      label: 'Started',
-      value: formatTimestamp(previewJob.startedAt),
-    })
-  }
+  const previewItems: Array<{ label: string; value: string }> = []
+  previewItems.push({ label: 'Status', value: statusLabel })
+  previewItems.push({ label: 'Scenario', value: previewJob.scenario })
+  previewItems.push({
+    label: 'Requested',
+    value: previewJob.requestedAt
+      ? formatTimestamp(previewJob.requestedAt)
+      : '—',
+  })
   if (previewJob.finishedAt) {
     previewItems.push({
-      label: 'Finished',
+      label: 'Completed',
       value: formatTimestamp(previewJob.finishedAt),
     })
   }
-  if (previewJob.previewUrl) {
-    previewItems.push({ label: 'Preview URL', value: previewJob.previewUrl })
-  }
-  if (previewJob.metadataUrl) {
-    previewItems.push({ label: 'Metadata', value: previewJob.metadataUrl })
-  }
-  if (previewJob.thumbnailUrl) {
-    previewItems.push({ label: 'Thumbnail', value: previewJob.thumbnailUrl })
+  const assetLabels = [
+    previewJob.previewUrl ? 'mesh' : null,
+    previewJob.metadataUrl ? 'metadata' : null,
+    previewJob.thumbnailUrl ? 'thumbnail' : null,
+  ].filter(Boolean)
+  if (assetLabels.length > 0) {
+    previewItems.push({
+      label: 'Assets returned',
+      value: assetLabels.join(', '),
+    })
   }
   if (previewJob.assetVersion) {
     previewItems.push({
@@ -294,10 +317,12 @@ function buildPreviewJobCard(
 
   return {
     title: 'Preview Job Status',
-    subtitle: `Job ${previewJob.id.slice(0, 8)}…`,
+    subtitle:
+      statusLower === 'ready' ? 'Preview job completed' : 'Preview job summary',
     items: previewItems,
     tags: [statusLabel],
     note: previewNote,
+    layout: 'status',
   }
 }
 
@@ -353,6 +378,7 @@ function buildAnalysisStatusCard(
       },
     ],
     note: 'Capture currently reports parcel-level zoning and build-envelope signals. Setbacks, step-backs, and floor-by-floor compliance remain out of scope here.',
+    layout: 'status',
   }
 }
 
@@ -391,10 +417,6 @@ function buildVisualizationCard(
         : 'Pending',
     },
     {
-      label: 'Concept mesh',
-      value: visualization.conceptMeshUrl ?? 'No mesh asset returned',
-    },
-    {
       label: 'Camera orbit hint',
       value: visualization.cameraOrbitHint
         ? `${formatNumber(visualization.cameraOrbitHint.theta ?? 0, {
@@ -405,6 +427,17 @@ function buildVisualizationCard(
         : '—',
     },
   ]
+
+  const assetBundle = [
+    visualization.conceptMeshUrl ? 'Mesh' : null,
+    visualization.previewMetadataUrl ? 'Metadata' : null,
+    visualization.thumbnailUrl ? 'Thumbnail' : null,
+  ].filter(Boolean)
+  visualizationItems.push({
+    label: 'Asset bundle',
+    value:
+      assetBundle.length > 0 ? assetBundle.join(' • ') : 'No preview assets',
+  })
 
   if (visualization.massingLayers?.length > 0) {
     const primaryLayer = visualization.massingLayers[0]
@@ -443,6 +476,8 @@ function buildVisualizationCard(
         : 'Preview pending',
     items: visualizationItems,
     note: visualization.notes?.length ? visualization.notes[0] : null,
+    tags: [visualization.status.toUpperCase()],
+    layout: 'status',
   }
 }
 
@@ -454,8 +489,38 @@ function buildZoningCard(
   formatNumber: NumberFormatter,
 ): PropertyOverviewCard {
   const zoning = capturedProperty.uraZoning
-  const formatHeight = createHeightFormatter(formatNumber)
-  const formatSiteCoverage = createSiteCoverageFormatter(formatNumber)
+  const envelope = capturedProperty.buildEnvelope
+  const planningItems: Array<{ label: string; value: string }> = []
+
+  if (zoning?.plotRatio != null && envelope.allowablePlotRatio == null) {
+    planningItems.push({
+      label: 'Plot ratio',
+      value: formatNumber(zoning.plotRatio, { maximumFractionDigits: 2 }),
+    })
+  }
+  if (
+    zoning?.buildingHeightLimit != null &&
+    envelope.buildingHeightLimitM == null
+  ) {
+    planningItems.push({
+      label: 'Building height limit',
+      value: `${formatNumber(zoning.buildingHeightLimit, {
+        maximumFractionDigits: 1,
+      })} m`,
+    })
+  }
+  if (zoning?.siteCoverage != null && envelope.siteCoveragePct == null) {
+    planningItems.push({
+      label: 'Site coverage',
+      value: `${formatNumber(zoning.siteCoverage, {
+        maximumFractionDigits: zoning.siteCoverage >= 100 ? 0 : 1,
+      })}%`,
+    })
+  }
+  planningItems.push({
+    label: 'Special conditions',
+    value: zoning?.specialConditions ?? '—',
+  })
 
   return {
     title: 'Zoning & planning',
@@ -463,23 +528,7 @@ function buildZoningCard(
       zoning?.zoneDescription ??
       zoning?.zoneCode ??
       'Zoning details unavailable',
-    items: [
-      {
-        label: 'Building height limit',
-        value: formatHeight(zoning?.buildingHeightLimit),
-      },
-      {
-        label: 'Site coverage',
-        value:
-          zoning?.siteCoverage !== null && zoning?.siteCoverage !== undefined
-            ? formatSiteCoverage(zoning.siteCoverage)
-            : '—',
-      },
-      {
-        label: 'Special conditions',
-        value: zoning?.specialConditions ?? '—',
-      },
-    ],
+    items: planningItems,
     tags: zoning?.useGroups ?? [],
   }
 }
@@ -504,7 +553,7 @@ export function buildPropertyOverviewCards(
   const cards: PropertyOverviewCard[] = []
 
   // Location & tenure
-  cards.push(buildLocationCard(capturedProperty, formatNumber))
+  cards.push(buildLocationCard(capturedProperty))
 
   // Build envelope
   cards.push(buildEnvelopeCard(capturedProperty, formatNumber))
@@ -517,11 +566,6 @@ export function buildPropertyOverviewCards(
 
   cards.push(buildAnalysisStatusCard(capturedProperty, previewJob))
 
-  // Preview job (optional)
-  if (previewJob) {
-    cards.push(buildPreviewJobCard(previewJob, formatTimestamp))
-  }
-
   // Visualization readiness
   const visualizationCard = buildVisualizationCard(
     capturedProperty,
@@ -530,6 +574,11 @@ export function buildPropertyOverviewCards(
   )
   if (visualizationCard) {
     cards.push(visualizationCard)
+  }
+
+  // Preview job details (optional)
+  if (previewJob) {
+    cards.push(buildPreviewJobCard(previewJob, formatTimestamp))
   }
 
   // Site metrics card removed - data is now consolidated in Build Envelope card

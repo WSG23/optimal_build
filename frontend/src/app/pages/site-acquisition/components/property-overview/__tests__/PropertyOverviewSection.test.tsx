@@ -50,6 +50,9 @@ const mockCards: OverviewCard[] = [
   },
   {
     title: 'Analysis Status',
+    subtitle: 'Capture with preview job',
+    tags: ['READY'],
+    layout: 'status',
     items: [
       { label: 'Envelope Completeness', value: '3/5 scalar controls' },
       { label: 'Geometry Status', value: 'Placeholder only' },
@@ -110,6 +113,8 @@ describe('PropertyOverviewSection', () => {
     // Analysis status card should show completeness/scope values
     expect(screen.getByText('3/5 scalar controls')).toBeTruthy()
     expect(screen.getByText('Placeholder only')).toBeTruthy()
+    expect(screen.getByText('Capture with preview job')).toBeTruthy()
+    expect(screen.getByText('READY')).toBeTruthy()
 
     // Heritage card should show risk as badge
     expect(screen.getByText('Low Risk')).toBeTruthy()

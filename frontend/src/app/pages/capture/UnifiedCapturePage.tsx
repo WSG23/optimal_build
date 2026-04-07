@@ -62,8 +62,6 @@ const SCENARIOS: {
   },
 ]
 
-const JURISDICTIONS = [{ value: 'SG', label: 'Singapore' }]
-
 export function UnifiedCapturePage() {
   const { isDeveloperMode, toggleDeveloperMode } = useDeveloperMode()
   const { projectId } = useRouterParams()
@@ -72,12 +70,10 @@ export function UnifiedCapturePage() {
     latitude,
     longitude,
     address,
-    jurisdictionCode,
     selectedScenarios,
     setLatitude,
     setLongitude,
     setAddress,
-    setJurisdictionCode,
     handleScenarioToggle,
     isCapturing,
     isScanning,
@@ -89,8 +85,6 @@ export function UnifiedCapturePage() {
     capturedSites,
     siteAcquisitionResult,
     geocodeError,
-    handleForwardGeocode,
-    handleReverseGeocode,
     mapContainerRef,
     mapError,
     handleCapture,
@@ -147,34 +141,15 @@ export function UnifiedCapturePage() {
                     onChange={(e) => setAddress(e.target.value)}
                     aria-label="Address"
                   />
-                  <div className="gps-form__address-actions">
-                    <button
-                      type="button"
-                      className="gps-geocode-btn"
-                      onClick={() => {
-                        void handleForwardGeocode()
-                      }}
-                      title="Geocode address to coordinates"
-                      aria-label="Geocode address"
-                    >
-                      →
-                    </button>
-                    <button
-                      type="button"
-                      className="gps-geocode-btn"
-                      onClick={handleReverseGeocode}
-                      title="Get address from coordinates"
-                      aria-label="Reverse geocode"
-                    >
-                      ←
-                    </button>
-                  </div>
                 </div>
+                <p className="gps-form__assistive-copy">
+                  Address updates the map and coordinates automatically.
+                </p>
                 {geocodeError && (
                   <p className="gps-error-text">{geocodeError}</p>
                 )}
 
-                {/* Coords + Jurisdiction — compact row */}
+                {/* Coords — compact row */}
                 <div className="gps-form__coords-row">
                   <div className="gps-form__coord">
                     <label className="gps-form__inline-label">Lat</label>
@@ -197,20 +172,6 @@ export function UnifiedCapturePage() {
                       onChange={(e) => setLongitude(e.target.value)}
                       inputMode="decimal"
                     />
-                  </div>
-                  <div className="gps-form__coord">
-                    <label className="gps-form__inline-label">Region</label>
-                    <select
-                      className="gps-select-ghost gps-input-ghost--sm"
-                      value={jurisdictionCode}
-                      onChange={(e) => setJurisdictionCode(e.target.value)}
-                    >
-                      {JURISDICTIONS.map((j) => (
-                        <option key={j.value} value={j.value}>
-                          {j.label}
-                        </option>
-                      ))}
-                    </select>
                   </div>
                 </div>
               </fieldset>
@@ -299,7 +260,7 @@ export function UnifiedCapturePage() {
               </div>
             )}
 
-            {/* Voice Observations Panel */}
+            {/* Voice notes */}
             <VoiceObservationsPanel
               propertyId={propertyId}
               latitude={parseFloat(latitude) || undefined}

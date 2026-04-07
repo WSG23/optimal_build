@@ -1,17 +1,16 @@
 /**
- * Voice Observations Panel Component
+ * Voice Notes Panel Component
  *
- * Sidebar panel for voice note recording and management.
- * Displays in a compact format suitable for sidebar placement.
- *
- * Design Principles:
- * - Square Cyber-Minimalism: 4px radius cards, 2px radius buttons
- * - Functional Color Language: Red for recording state
- * - Progressive Disclosure: Expandable note details
+ * Sidebar panel for recording voice notes, uploading them to a property,
+ * and surfacing saved transcripts when available.
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Mic, Stop, Delete } from '@mui/icons-material'
+import {
+  fetchPropertyVoiceNotes,
+  type PropertyVoiceNote,
+} from '../../../../api/siteAcquisition'
 
 // ============================================================================
 // Types
@@ -43,19 +42,59 @@ export interface VoiceObservationsPanelProps {
 // Helper Functions
 // ============================================================================
 
-function formatDuration(seconds: number): string {
+function formatDuration(seconds: number | null): string {
+  if (seconds == null || Number.isNaN(seconds)) {
+    return '0:00'
+  }
   const mins = Math.floor(seconds / 60)
-  const secs = seconds % 60
+  const secs = Math.floor(seconds % 60)
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
+function formatDate(date: Date | string | null): string {
+  if (!date) {
+    return 'Unknown date'
+  }
+
+  const parsed = typeof date === 'string' ? new Date(date) : date
+  if (Number.isNaN(parsed.getTime())) {
+    return 'Unknown date'
+  }
+
+  return parsed.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+async function readUploadErrorMessage(response: Response): Promise<string> {
+  const jsonResponse = response.clone()
+  try {
+    const payload = await jsonResponse.json()
+    if (typeof payload?.detail === 'string' && payload.detail.trim()) {
+      return payload.detail.trim()
+    }
+    if (typeof payload?.message === 'string' && payload.message.trim()) {
+      return payload.message.trim()
+    }
+  } catch {
+    // Fall through to text parsing.
+  }
+
+  try {
+    const text = await response.text()
+    if (text.trim()) {
+      return text.trim()
+    }
+  } catch {
+    // Ignore text parsing failures and use status fallback below.
+  }
+
+  return response.status
+    ? `Upload failed (${response.status})`
+    : 'Upload failed'
 }
 
 // ============================================================================
@@ -72,8 +111,10 @@ export function VoiceObservationsPanel({
   const [isRecording, setIsRecording] = useState(false)
   const [duration, setDuration] = useState(0)
   const [recordings, setRecordings] = useState<VoiceRecording[]>([])
+  const [savedNotes, setSavedNotes] = useState<PropertyVoiceNote[]>([])
   const [error, setError] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [isLoadingSavedNotes, setIsLoadingSavedNotes] = useState(false)
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -96,6 +137,29 @@ export function VoiceObservationsPanel({
   useEffect(() => {
     return cleanup
   }, [cleanup])
+
+  const loadSavedNotes = useCallback(async () => {
+    if (!propertyId) {
+      setSavedNotes([])
+      return
+    }
+
+    setIsLoadingSavedNotes(true)
+    try {
+      const notes = await fetchPropertyVoiceNotes(propertyId)
+      setSavedNotes(notes)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to load voice notes'
+      setError(message)
+    } finally {
+      setIsLoadingSavedNotes(false)
+    }
+  }, [propertyId])
+
+  useEffect(() => {
+    void loadSavedNotes()
+  }, [loadSavedNotes])
 
   const startRecording = useCallback(async () => {
     try {
@@ -181,15 +245,11 @@ export function VoiceObservationsPanel({
         )
 
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.detail || 'Upload failed')
+          throw new Error(await readUploadErrorMessage(response))
         }
 
-        setRecordings((prev) =>
-          prev.map((r) =>
-            r.id === recording.id ? { ...r, uploaded: true } : r,
-          ),
-        )
+        setRecordings((prev) => prev.filter((r) => r.id !== recording.id))
+        await loadSavedNotes()
         onUploadComplete?.()
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to upload'
@@ -198,72 +258,51 @@ export function VoiceObservationsPanel({
         setIsUploading(false)
       }
     },
-    [propertyId, latitude, longitude, onUploadComplete],
+    [propertyId, latitude, longitude, onUploadComplete, loadSavedNotes],
   )
 
   const canRecord = !disabled && !isRecording
 
   return (
     <div className="voice-observations-panel">
-      {/* Header */}
-      <div className="voice-observations-panel__header">
-        <Mic sx={{ fontSize: 20, color: 'var(--ob-color-text-secondary)' }} />
-        <span className="voice-observations-panel__title">
-          Voice Observations
+      <button
+        type="button"
+        onClick={isRecording ? stopRecording : startRecording}
+        disabled={!canRecord && !isRecording}
+        className={`voice-observations-panel__primary-btn ${isRecording ? 'voice-observations-panel__primary-btn--active' : ''}`}
+        title="Site notes. Transcripts appear after upload."
+      >
+        <span className="voice-observations-panel__primary-btn-icon">
+          {isRecording ? (
+            <Stop sx={{ fontSize: 24 }} />
+          ) : (
+            <Mic sx={{ fontSize: 24 }} />
+          )}
         </span>
-      </div>
+        <span className="voice-observations-panel__primary-btn-text">
+          {isRecording ? 'Stop Recording' : 'Voice Record'}
+        </span>
+      </button>
 
-      {/* Capture Sequence Module - Machined Edge Style */}
-      <div className="voice-capture-module">
-        <div className="voice-capture-module__header">
-          <span className="voice-capture-module__label">CAPTURE SEQUENCE</span>
-          <span
-            className={`voice-capture-module__status voice-capture-module__status--${isRecording ? 'active' : 'idle'}`}
-          >
-            <span className="voice-capture-module__status-dot" />
-            {isRecording ? 'RECORDING' : 'STANDBY'}
+      {isRecording && (
+        <div className="voice-observations-panel__telemetry">
+          <span className="voice-observations-panel__duration">
+            {formatDuration(duration)}
+          </span>
+          <span className="voice-observations-panel__duration-label">
+            elapsed
           </span>
         </div>
-
-        <button
-          type="button"
-          onClick={isRecording ? stopRecording : startRecording}
-          disabled={!canRecord && !isRecording}
-          className={`voice-capture-module__trigger ${isRecording ? 'voice-capture-module__trigger--active' : ''}`}
-          aria-label={isRecording ? 'Stop recording' : 'Start recording'}
-        >
-          <div className="voice-capture-module__trigger-icon">
-            {isRecording ? (
-              <Stop sx={{ fontSize: 24 }} />
-            ) : (
-              <Mic sx={{ fontSize: 24 }} />
-            )}
-          </div>
-          <div className="voice-capture-module__trigger-text">
-            {isRecording ? 'TERMINATE' : 'INITIATE'}
-          </div>
-        </button>
-
-        {isRecording && (
-          <div className="voice-capture-module__telemetry">
-            <span className="voice-capture-module__duration">
-              {formatDuration(duration)}
-            </span>
-            <span className="voice-capture-module__duration-label">
-              ELAPSED
-            </span>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Error */}
       {error && <div className="voice-observations-panel__error">{error}</div>}
 
-      {/* Recordings List */}
+      {/* Local recordings awaiting upload */}
       {recordings.length > 0 && (
         <div className="voice-observations-panel__list">
           <div className="voice-observations-panel__list-header">
-            Recorded ({recordings.length})
+            Pending Uploads ({recordings.length})
           </div>
           {recordings.map((recording) => (
             <div key={recording.id} className="voice-observations-panel__item">
@@ -279,20 +318,14 @@ export function VoiceObservationsPanel({
                   {formatDuration(recording.duration)}
                 </div>
               </div>
-              {recording.uploaded ? (
-                <span className="voice-observations-panel__uploaded-badge">
-                  ✓
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => uploadRecording(recording)}
-                  disabled={isUploading || !propertyId}
-                  className="voice-observations-panel__upload-btn"
-                >
-                  {isUploading ? '...' : 'Upload'}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => uploadRecording(recording)}
+                disabled={isUploading || !propertyId}
+                className="voice-observations-panel__upload-btn"
+              >
+                {isUploading ? 'Uploading…' : 'Upload'}
+              </button>
               <button
                 type="button"
                 onClick={() => deleteRecording(recording.id)}
@@ -306,7 +339,57 @@ export function VoiceObservationsPanel({
         </div>
       )}
 
-      {/* Instructions */}
+      {/* Saved notes and transcripts */}
+      {propertyId && (isLoadingSavedNotes || savedNotes.length > 0) && (
+        <div className="voice-observations-panel__list voice-observations-panel__list--saved">
+          <div className="voice-observations-panel__list-header voice-observations-panel__list-header--with-action">
+            <span>Saved Notes ({savedNotes.length})</span>
+            <button
+              type="button"
+              onClick={() => void loadSavedNotes()}
+              className="voice-observations-panel__refresh-btn"
+              disabled={isLoadingSavedNotes}
+            >
+              {isLoadingSavedNotes ? 'Refreshing…' : 'Refresh'}
+            </button>
+          </div>
+
+          {savedNotes.map((note) => (
+            <div
+              key={note.voiceNoteId}
+              className="voice-observations-panel__saved-item"
+            >
+              <div className="voice-observations-panel__saved-header">
+                <div className="voice-observations-panel__saved-info">
+                  <div className="voice-observations-panel__saved-title">
+                    {note.title || note.filename || 'Voice Note'}
+                  </div>
+                  <div className="voice-observations-panel__saved-meta">
+                    {formatDate(note.captureDate)} •{' '}
+                    {formatDuration(note.durationSeconds)}
+                  </div>
+                </div>
+                <audio
+                  controls
+                  preload="metadata"
+                  src={note.publicUrl}
+                  className="voice-observations-panel__audio"
+                />
+              </div>
+
+              <div className="voice-observations-panel__transcript-block">
+                <div className="voice-observations-panel__transcript-label">
+                  Transcript
+                </div>
+                <div className="voice-observations-panel__transcript-copy">
+                  {note.transcript?.trim() || 'Transcript pending.'}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {!propertyId && recordings.length > 0 && (
         <div className="voice-observations-panel__instructions">
           Capture a property to upload recordings

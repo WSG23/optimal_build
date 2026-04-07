@@ -697,7 +697,7 @@ export function SiteAcquisitionPage() {
               </div>
             </div>
 
-            {/* Voice Capture Module */}
+            {/* Voice notes */}
             <VoiceObservationsPanel
               propertyId={capturedProperty?.propertyId ?? null}
               latitude={latitude ? parseFloat(latitude) : undefined}

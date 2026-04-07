@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import type { SiteAcquisitionResult } from '../../../../api/siteAcquisition'
+import type {
+  PreviewJob,
+  SiteAcquisitionResult,
+} from '../../../../api/siteAcquisition'
 import { buildPropertyOverviewCards } from './cardBuilders'
 
 function buildCapturedProperty(): SiteAcquisitionResult {
@@ -118,5 +121,213 @@ describe('buildPropertyOverviewCards', () => {
     expect(cards.map((card) => card.title)).not.toContain(
       'Recommended asset mix',
     )
+  })
+
+  it('surfaces explicit GFA relationship and avoids raw preview URLs', () => {
+    const capturedProperty = buildCapturedProperty()
+    capturedProperty.propertyInfo!.completionYear = 2015
+    capturedProperty.buildEnvelope.maxBuildableGfaSqm = 14000
+    capturedProperty.buildEnvelope.currentGfaSqm = 25000
+    capturedProperty.buildEnvelope.additionalPotentialGfaSqm = 0
+    capturedProperty.uraZoning!.specialConditions = 'Minimum unit size applies'
+    capturedProperty.visualization = {
+      ...capturedProperty.visualization,
+      status: 'ready',
+      previewAvailable: true,
+      conceptMeshUrl: '/static/dev-previews/example/preview.gltf',
+      previewMetadataUrl: '/static/dev-previews/example/preview.json',
+      thumbnailUrl: '/static/dev-previews/example/thumb.png',
+      cameraOrbitHint: { theta: 48, phi: 32 },
+      massingLayers: [
+        {
+          assetType: 'office',
+          allocationPct: 100,
+          gfaSqm: 14000,
+          estimatedHeightM: 36,
+        },
+      ],
+    } as SiteAcquisitionResult['visualization']
+
+    const previewJob: PreviewJob = {
+      id: 'preview-job-1',
+      scenario: 'base',
+      status: 'ready',
+      requestedAt: '2026-04-07T09:34:05Z',
+      startedAt: '2026-04-07T09:34:05Z',
+      finishedAt: '2026-04-07T09:34:12Z',
+      previewUrl: '/static/dev-previews/example/preview.gltf',
+      metadataUrl: '/static/dev-previews/example/preview.json',
+      thumbnailUrl: '/static/dev-previews/example/thumb.png',
+      assetVersion: '20260407093405',
+      message: null,
+      geometryDetailLevel: 'medium',
+    }
+
+    const cards = buildPropertyOverviewCards({
+      capturedProperty,
+      previewJob,
+      colorLegendEntries: [
+        {
+          assetType: 'office',
+          label: 'Office',
+          color: '#3366ff',
+          description: 'Office layer',
+        },
+      ],
+      formatters: {
+        formatNumber: (value, options) =>
+          new Intl.NumberFormat('en-SG', options).format(value),
+        formatCurrency: (value) =>
+          `S$${new Intl.NumberFormat('en-SG', {
+            maximumFractionDigits: 0,
+          }).format(value)}`,
+        formatTimestamp: (value) =>
+          new Intl.DateTimeFormat('en-SG', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+          }).format(new Date(value)),
+      },
+      currencySymbol: 'S$',
+    })
+
+    const locationCard = cards.find(
+      (card) => card.title === 'Location & tenure',
+    )
+    const buildEnvelopeCard = cards.find(
+      (card) => card.title === 'Build envelope',
+    )
+    const previewCard = cards.find(
+      (card) => card.title === 'Preview Availability',
+    )
+    const previewJobCard = cards.find(
+      (card) => card.title === 'Preview Job Status',
+    )
+    const zoningCard = cards.find((card) => card.title === 'Zoning & planning')
+
+    expect(
+      locationCard?.items.find((item) => item.label === 'Completion year')
+        ?.value,
+    ).toBe('2015')
+    expect(
+      buildEnvelopeCard?.items.find(
+        (item) => item.label === 'Current vs max GFA',
+      )?.value,
+    ).toBe('25,000 sqm > 14,000 sqm')
+    expect(
+      buildEnvelopeCard?.items.find((item) => item.label === 'Envelope reading')
+        ?.value,
+    ).toBe('Likely grandfathered from a former code baseline')
+    expect(
+      buildEnvelopeCard?.items.find(
+        (item) => item.label === 'Additional potential',
+      )?.value,
+    ).toBe('No current code-compliant uplift')
+    expect(previewCard?.layout).toBe('status')
+    expect(previewJobCard?.layout).toBe('status')
+    expect(
+      previewCard?.items.find((item) => item.label === 'Asset bundle')?.value,
+    ).toBe('Mesh • Metadata • Thumbnail')
+    expect(
+      previewJobCard?.items.find((item) => item.label === 'Assets returned')
+        ?.value,
+    ).toBe('mesh, metadata, thumbnail')
+    expect(
+      previewCard?.items.some((item) =>
+        item.value.includes('/static/dev-previews'),
+      ),
+    ).toBe(false)
+    expect(
+      previewJobCard?.items.some((item) =>
+        item.value.includes('/static/dev-previews'),
+      ),
+    ).toBe(false)
+    expect(zoningCard?.items.map((item) => item.label)).toEqual([
+      'Special conditions',
+    ])
+  })
+
+  it('shows remaining code-compliant capacity when current GFA is below the envelope', () => {
+    const capturedProperty = buildCapturedProperty()
+    capturedProperty.buildEnvelope.maxBuildableGfaSqm = 21000
+    capturedProperty.buildEnvelope.currentGfaSqm = 18000
+    capturedProperty.buildEnvelope.additionalPotentialGfaSqm = 3000
+
+    const cards = buildPropertyOverviewCards({
+      capturedProperty,
+      previewJob: null,
+      colorLegendEntries: [],
+      formatters: {
+        formatNumber: (value, options) =>
+          new Intl.NumberFormat('en-SG', options).format(value),
+        formatCurrency: (value) =>
+          `S$${new Intl.NumberFormat('en-SG', {
+            maximumFractionDigits: 0,
+          }).format(value)}`,
+        formatTimestamp: (value) => value,
+      },
+      currencySymbol: 'S$',
+    })
+
+    const buildEnvelopeCard = cards.find(
+      (card) => card.title === 'Build envelope',
+    )
+    expect(
+      buildEnvelopeCard?.items.find(
+        (item) => item.label === 'Current vs max GFA',
+      )?.value,
+    ).toBe('18,000 sqm < 21,000 sqm')
+    expect(
+      buildEnvelopeCard?.items.find((item) => item.label === 'Envelope reading')
+        ?.value,
+    ).toBe('Existing bulk remains below today’s envelope')
+    expect(
+      buildEnvelopeCard?.items.find(
+        (item) => item.label === 'Additional potential',
+      )?.value,
+    ).toBe('3,000 sqm')
+  })
+
+  it('shows no uplift when current GFA matches the envelope exactly', () => {
+    const capturedProperty = buildCapturedProperty()
+    capturedProperty.buildEnvelope.maxBuildableGfaSqm = 21000
+    capturedProperty.buildEnvelope.currentGfaSqm = 21000
+    capturedProperty.buildEnvelope.additionalPotentialGfaSqm = 0
+
+    const cards = buildPropertyOverviewCards({
+      capturedProperty,
+      previewJob: null,
+      colorLegendEntries: [],
+      formatters: {
+        formatNumber: (value, options) =>
+          new Intl.NumberFormat('en-SG', options).format(value),
+        formatCurrency: (value) =>
+          `S$${new Intl.NumberFormat('en-SG', {
+            maximumFractionDigits: 0,
+          }).format(value)}`,
+        formatTimestamp: (value) => value,
+      },
+      currencySymbol: 'S$',
+    })
+
+    const buildEnvelopeCard = cards.find(
+      (card) => card.title === 'Build envelope',
+    )
+    expect(
+      buildEnvelopeCard?.items.find(
+        (item) => item.label === 'Current vs max GFA',
+      )?.value,
+    ).toBe('21,000 sqm = 21,000 sqm')
+    expect(
+      buildEnvelopeCard?.items.find((item) => item.label === 'Envelope reading')
+        ?.value,
+    ).toBe('Existing bulk matches today’s envelope')
+    expect(
+      buildEnvelopeCard?.items.find(
+        (item) => item.label === 'Additional potential',
+      )?.value,
+    ).toBe('0 sqm')
   })
 })
