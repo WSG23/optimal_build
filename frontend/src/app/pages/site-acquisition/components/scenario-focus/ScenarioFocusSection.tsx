@@ -60,8 +60,8 @@ export function ScenarioFocusSection({
       {/* Header on background - Content vs Context pattern */}
       <h3 className="scenario-focus__title">Scenario Focus</h3>
       <p className="scenario-focus__description">
-        Switch context to review instant zoning, envelope, and scenario analysis
-        for the selected development path.
+        Switch context to review instant zoning, envelope, and capture scenario
+        scans for the selected development path.
       </p>
 
       {/* Content - seamless glass surface */}

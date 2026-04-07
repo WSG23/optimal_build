@@ -94,14 +94,14 @@ describe('MultiScenarioComparisonSection', () => {
       />,
     )
 
-    expect(screen.getByText('ANALYSIS COVERAGE')).toBeInTheDocument()
-    expect(screen.getByText('CODE CONSTRAINTS')).toBeInTheDocument()
+    expect(screen.getByText('CAPTURE COVERAGE')).toBeInTheDocument()
+    expect(screen.getByText('CONSTRAINT FLAGS')).toBeInTheDocument()
     expect(screen.getByText('BUILDABLE GFA')).toBeInTheDocument()
     expect(screen.getByText('AVG_COVERAGE')).toBeInTheDocument()
     expect(screen.getByText('CONSTRAINTS_FLAGGED')).toBeInTheDocument()
     expect(screen.getByText('INSTANT_SIGNALS (1)')).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: /open feasibility/i }),
+      screen.getByRole('link', { name: /continue to feasibility/i }),
     ).toHaveAttribute('href', '/app/asset-feasibility?propertyId=prop-1')
     expect(screen.queryByText('DILIGENCE GAUGE')).not.toBeInTheDocument()
     expect(screen.queryByText('AVG_CONDITION')).not.toBeInTheDocument()

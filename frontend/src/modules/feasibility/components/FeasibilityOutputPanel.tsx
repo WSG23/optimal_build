@@ -458,7 +458,7 @@ export function FeasibilityOutputPanel({
           className="feasibility-output__card feasibility-output__card--span-4"
         >
           <div className="feasibility-output__card-header">
-            <Typography variant="h6">Asset Mix</Typography>
+            <Typography variant="h6">Asset Allocation</Typography>
           </div>
           {hasAssetMix && shouldRenderCharts ? (
             <Box className="feasibility-chart">
@@ -503,7 +503,7 @@ export function FeasibilityOutputPanel({
             </Box>
           ) : (
             <div className="feasibility-output__empty">
-              Asset mix appears after simulation.
+              Asset allocation appears after simulation.
             </div>
           )}
         </Card>

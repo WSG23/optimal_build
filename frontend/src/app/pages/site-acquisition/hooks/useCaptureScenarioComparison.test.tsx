@@ -104,7 +104,7 @@ describe('useCaptureScenarioComparison', () => {
 
     expect(rawLand).toBeTruthy()
     expect(rawLand?.quickHeadline).toBe(
-      'New Construction instant zoning and envelope scan available.',
+      'New Construction capture scenario scan available.',
     )
     expect(rawLand?.quickMetrics.map((metric) => metric.key)).toEqual([
       'potential_gfa_sqm',

@@ -12,6 +12,11 @@ import './styles/premium-effects.css'
 import { AppShell } from './app/layout/AppShell'
 import { BaseLayout } from './app/layout/BaseLayout'
 import { NotFoundPage } from './app/pages/NotFoundPage'
+import {
+  AGENT_CAPTURE_ROUTE_PATHS,
+  DEVELOPER_CAPTURE_ROUTE_PATHS,
+  PROJECT_CAPTURE_ROUTE_PATH,
+} from './app/pages/capture/routeAliases'
 
 const hash = window.location.hash
 if (hash.startsWith('#/')) {
@@ -387,18 +392,14 @@ const router = createBrowserRouter(
       element: businessPerformanceElement,
     },
     // Unified capture page - all capture routes point to the same unified experience
-    {
-      path: '/app/capture',
+    ...DEVELOPER_CAPTURE_ROUTE_PATHS.map((path) => ({
+      path,
       element: developerCaptureElement,
-    },
-    {
-      path: '/app/gps-capture',
+    })),
+    ...AGENT_CAPTURE_ROUTE_PATHS.map((path) => ({
+      path,
       element: agentCaptureElement,
-    },
-    {
-      path: '/agents/site-capture',
-      element: agentCaptureElement,
-    },
+    })),
     {
       path: '/app/marketing',
       element: marketingElement,
@@ -424,16 +425,8 @@ const router = createBrowserRouter(
       element: integrationsElement,
     },
     {
-      path: '/app/site-acquisition',
-      element: developerCaptureElement,
-    },
-    {
       path: '/app/deal-calculator',
       element: dealCalculatorElement,
-    },
-    {
-      path: '/developers/site-acquisition',
-      element: developerCaptureElement,
     },
     {
       path: '/developers/deal-calculator',
@@ -520,7 +513,7 @@ const router = createBrowserRouter(
       element: projectHubElement,
     },
     {
-      path: '/projects/:projectId/capture',
+      path: PROJECT_CAPTURE_ROUTE_PATH,
       element: developerCaptureElement,
     },
     {

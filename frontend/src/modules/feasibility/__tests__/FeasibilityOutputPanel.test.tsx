@@ -50,7 +50,26 @@ function buildCaptureResult(): SiteAcquisitionResult {
       massingLayers: [],
       colorLegend: [],
     },
-    optimizations: [],
+    optimizations: [
+      {
+        assetType: 'Office',
+        allocationPct: 54,
+        allocatedGfaSqm: 7616,
+        niaEfficiency: 0.82,
+        targetFloorHeightM: 3.8,
+        parkingRatioPer1000Sqm: 1.2,
+        rentPsmMonth: null,
+        stabilisedVacancyPct: null,
+        opexPctOfRent: null,
+        estimatedRevenueSgd: null,
+        estimatedCapexSgd: null,
+        fitoutCostPsm: null,
+        absorptionMonths: null,
+        riskLevel: null,
+        heritagePremiumPct: null,
+        notes: [],
+      },
+    ],
     financialSummary: {
       totalEstimatedRevenueSgd: null,
       totalEstimatedCapexSgd: null,
@@ -95,17 +114,22 @@ describe('FeasibilityOutputPanel', () => {
         result={null}
         captureResult={buildCaptureResult()}
         activeSiteLabel="1 Example Street"
-        numberFormatter={new Intl.NumberFormat('en-SG', {
-          maximumFractionDigits: 0,
-        })}
-        oneDecimalFormatter={new Intl.NumberFormat('en-SG', {
-          minimumFractionDigits: 1,
-          maximumFractionDigits: 1,
-        })}
+        numberFormatter={
+          new Intl.NumberFormat('en-SG', {
+            maximumFractionDigits: 0,
+          })
+        }
+        oneDecimalFormatter={
+          new Intl.NumberFormat('en-SG', {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+          })
+        }
       />,
     )
 
     expect(screen.getByText('Market & Connectivity')).toBeInTheDocument()
+    expect(screen.getByText('Asset Allocation')).toBeInTheDocument()
     expect(screen.getByText('Commercial office tower')).toBeInTheDocument()
     expect(screen.getByText(/Raffles Place \(180 m\)/)).toBeInTheDocument()
     expect(screen.getByText(/One Raffles Quay \(120 m\)/)).toBeInTheDocument()

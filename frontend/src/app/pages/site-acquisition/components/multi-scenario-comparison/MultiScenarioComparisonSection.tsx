@@ -198,7 +198,8 @@ function getAnalysisCoverage(
   quickAnalysisTimestamp: string | null,
 ): number {
   const envelope = capturedProperty?.buildEnvelope
-  const visualizationStatus = capturedProperty?.visualization?.status?.toLowerCase()
+  const visualizationStatus =
+    capturedProperty?.visualization?.status?.toLowerCase()
   const baseChecks = [
     !!quickAnalysisTimestamp,
     !!row.quickHeadline,
@@ -387,7 +388,7 @@ export function MultiScenarioComparisonSection({
                         </div>
                         <div className="multi-scenario__path-metric">
                           <span className="multi-scenario__path-metric-label">
-                            CODE CONSTRAINTS
+                            CONSTRAINT FLAGS
                           </span>
                           <span className="multi-scenario__path-metric-value">
                             {constraintDisplay}
@@ -397,7 +398,7 @@ export function MultiScenarioComparisonSection({
 
                       {/* Analysis Coverage - Segmented */}
                       <SegmentedGauge
-                        label="ANALYSIS COVERAGE"
+                        label="CAPTURE COVERAGE"
                         value={analysisCoverage}
                         valueLabel={`${analysisCoverage}%`}
                         segments={8}
@@ -438,7 +439,7 @@ export function MultiScenarioComparisonSection({
                   className="multi-scenario__full-feasibility-link"
                 >
                   <Button variant="primary" size="sm">
-                    OPEN FEASIBILITY →
+                    Continue To Feasibility →
                   </Button>
                 </Link>
               )}

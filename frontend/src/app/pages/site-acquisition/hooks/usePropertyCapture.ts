@@ -5,7 +5,7 @@
  * - Selected development scenarios
  * - Capture loading/error state
  * - Captured property result
- * - Session storage for asset mix snapshots
+ * - Session storage for feasibility handoff snapshots
  */
 
 import { useCallback, useState } from 'react'
@@ -135,7 +135,10 @@ export function usePropertyCapture(
               }),
             )
           } catch (storageError) {
-            console.warn('Unable to persist asset mix snapshot', storageError)
+            console.warn(
+              'Unable to persist feasibility handoff snapshot',
+              storageError,
+            )
           }
         }
       } catch (err) {

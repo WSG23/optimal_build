@@ -284,7 +284,7 @@ function buildPreviewJobCard(
     if (statusLower === 'ready') {
       previewNote = 'Concept mesh ready for review.'
     } else if (statusLower === 'failed') {
-      previewNote = 'Preview generation failed — try refreshing.'
+      previewNote = 'Preview request failed — try refreshing status.'
     } else if (statusLower === 'expired') {
       previewNote = 'Preview expired — refresh to regenerate assets.'
     } else {
@@ -293,7 +293,7 @@ function buildPreviewJobCard(
   }
 
   return {
-    title: 'Preview generation',
+    title: 'Preview Job Status',
     subtitle: `Job ${previewJob.id.slice(0, 8)}…`,
     items: previewItems,
     tags: [statusLabel],
@@ -352,8 +352,7 @@ function buildAnalysisStatusCard(
         value: 'No setbacks or floor-by-floor compliance',
       },
     ],
-    note:
-      'Capture currently reports parcel-level zoning and build-envelope signals. Setbacks, step-backs, and floor-by-floor compliance remain out of scope here.',
+    note: 'Capture currently reports parcel-level zoning and build-envelope signals. Setbacks, step-backs, and floor-by-floor compliance remain out of scope here.',
   }
 }
 
@@ -419,7 +418,7 @@ function buildVisualizationCard(
           })} m`
         : '—'
     visualizationItems.push({
-      label: 'Primary massing',
+      label: 'Preview layer',
       value: `${layerLabel} · ${heightValue}`,
     })
   }
@@ -436,7 +435,7 @@ function buildVisualizationCard(
   }
 
   return {
-    title: 'Visualization readiness',
+    title: 'Preview Availability',
     subtitle: visualization.previewAvailable
       ? 'Preview ready'
       : visualization.status.toLowerCase() === 'placeholder'
@@ -498,12 +497,8 @@ function buildZoningCard(
 export function buildPropertyOverviewCards(
   context: CardBuilderContext,
 ): PropertyOverviewCard[] {
-  const {
-    capturedProperty,
-    previewJob,
-    colorLegendEntries,
-    formatters,
-  } = context
+  const { capturedProperty, previewJob, colorLegendEntries, formatters } =
+    context
   const { formatNumber, formatTimestamp } = formatters
 
   const cards: PropertyOverviewCard[] = []

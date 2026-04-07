@@ -36,7 +36,6 @@ import {
 } from '@mui/icons-material'
 import { useMemo, ComponentType, ReactNode } from 'react'
 import { ProcessingStatusCard, ProcessingStatus } from './ProcessingStatusCard'
-// AssetMixChart is now rendered in SiteAcquisitionPage Development Preview section
 import { Card } from '../../../../../components/canonical/Card'
 import '../../../../../styles/site-acquisition.css'
 
@@ -85,7 +84,7 @@ function getCardIcon(title: string): MuiIconComponent {
 
 /**
  * Get column span for card based on content type
- * Asset Mix cards span 2 columns, others span 1
+ * Asset mix cards still span 2 columns when rendered by downstream workflows
  */
 function getCardColSpan(title: string): 1 | 2 {
   const titleLower = title.toLowerCase()
@@ -105,7 +104,7 @@ function isProcessingCard(card: OverviewCard): boolean {
 }
 
 /**
- * Determine if card should be rendered as AssetMixChart
+ * Determine if card should be treated as an asset-mix card
  */
 function isAssetMixCard(card: OverviewCard): boolean {
   return card.title.toLowerCase().includes('asset mix')
@@ -138,8 +137,8 @@ function extractProcessingStatus(card: OverviewCard): ProcessingStatus {
   return 'pending'
 }
 
-// Note: Asset mix parsing functions moved to SiteAcquisitionPage.tsx
-// AssetMixChart is now rendered in Development Preview section next to 3D viewer
+// Note: Capture no longer renders asset-mix charts. Any asset-mix cards are
+// filtered out here so downstream workflows such as Feasibility can own them.
 
 // ============================================================================
 // Sub-Components - Card-Type-Specific Layouts (AI Studio Pattern)
@@ -970,16 +969,15 @@ function SmartCard({ card }: { card: OverviewCard }) {
 export function PropertyOverviewSection({
   cards,
 }: PropertyOverviewSectionProps) {
-  // Categorize cards for rendering
-  // Note: Asset mix cards are filtered out here - they're rendered in SiteAcquisitionPage
-  // Development Preview section next to the 3D viewer
+  // Categorize cards for rendering. Asset-mix cards are filtered out so
+  // Capture stays focused on overview and preview status.
   const { processingCards, standardCards } = useMemo(() => {
     const processing: OverviewCard[] = []
     const standard: OverviewCard[] = []
 
     for (const card of cards) {
       if (isAssetMixCard(card)) {
-        // Skip - rendered in Development Preview section
+        // Skip - owned by downstream workflows such as Feasibility
         continue
       } else if (isProcessingCard(card)) {
         processing.push(card)
@@ -1073,9 +1071,6 @@ export function PropertyOverviewSection({
           </Box>
         )
       })}
-
-      {/* Asset Mix Charts are now rendered in Development Preview section next to 3D viewer */}
-      {/* See SiteAcquisitionPage.tsx - assetMixData is extracted from overview cards */}
     </Box>
   )
 }

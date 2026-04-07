@@ -89,7 +89,7 @@ export const DEVELOPER_NAV_ITEMS: NavItem[] = [
     key: 'siteAcquisition',
     label: 'Site Acquisition',
     path: '/app/site-acquisition',
-    description: 'GPS capture and comprehensive due diligence for developers.',
+    description: 'Address capture, zoning envelope, and instant site signals.',
     workspace: 'developer',
   },
   {

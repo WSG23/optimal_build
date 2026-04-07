@@ -3,7 +3,7 @@
  *
  * Renders the full developer workspace sections after capture:
  * - Property Overview Section
- * - Development Preview (3D Viewer + Asset Mix)
+ * - Concept Preview (3D Viewer + Asset Mix)
  * - Preview Layers Table
  * - Scenario Focus Section
  * - Multi-Scenario Comparison
@@ -290,12 +290,7 @@ export function DeveloperResults({
         formatTimestamp: formatRecordedTimestamp,
       },
     })
-  }, [
-    result,
-    colorLegendEntries,
-    formatNumber,
-    formatRecordedTimestamp,
-  ])
+  }, [result, colorLegendEntries, formatNumber, formatRecordedTimestamp])
 
   // Instant capture insight based on captured property data
   const aiInsight = useMemo(() => {
@@ -351,7 +346,7 @@ export function DeveloperResults({
       {/* AI Insight Card - Key intelligence from Optimal AI */}
       <OptimalIntelligenceCard insight={aiInsight} hasProperty={!!result} />
 
-      {/* Development Preview Section */}
+      {/* Concept Preview Section */}
       <section className="site-acquisition__preview">
         <Box
           sx={{
@@ -368,7 +363,7 @@ export function DeveloperResults({
               color: 'var(--ob-color-text-primary)',
             }}
           >
-            Development Preview
+            Concept Preview
           </Typography>
           <Box
             sx={{
@@ -402,7 +397,7 @@ export function DeveloperResults({
                   mr: 'var(--ob-space-025)',
                 }}
               />
-              Refresh
+              Refresh Preview Status
             </Button>
           </Box>
         </Box>

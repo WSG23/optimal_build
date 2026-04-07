@@ -3,8 +3,8 @@
  *
  * Consolidated component that provides ALL layer data and controls:
  * - Visibility toggle (Eye icon)
- * - Layer metrics (Allocation, GFA, NIA, Height, Floors)
- * - Risk level indicator
+ * - Layer metrics (share, GFA, NIA, height, optional floors)
+ * - Capture flag indicator
  * - Solo and Focus actions
  * - Inline accordion editor for legend entries (color, label, description)
  *
@@ -132,18 +132,18 @@ export function PreviewLayersTable({
   }
 
   const hasLegendEditor = legendEntries.length > 0 && onLegendChange
+  const showFloorsColumn = layers.some((layer) => layer.metrics.floors != null)
+  const columnCount = showFloorsColumn ? 9 : 8
 
   return (
     <section className="preview-layers-master-table">
       {/* Header */}
       <div className="preview-layers-master-table__header">
         <div className="preview-layers-master-table__header-text">
-          <h4 className="preview-layers-master-table__title">
-            Development Preview Layers
-          </h4>
+          <h4 className="preview-layers-master-table__title">Preview Layers</h4>
           <p className="preview-layers-master-table__subtitle">
-            Single source of truth for layer visibility, metrics, and legend
-            customization
+            Inspect returned preview layers, visibility, metrics, and legend
+            labels
           </p>
         </div>
         <div className="preview-layers-master-table__header-status">
@@ -208,8 +208,8 @@ export function PreviewLayersTable({
       {/* Empty State */}
       {!isLoading && !error && layers.length === 0 && (
         <p className="preview-layers-master-table__empty">
-          Layer metrics will populate once the preview metadata asset is ready.
-          Refresh the render if the queue has expired.
+          Layer metrics appear when preview metadata is available. Refresh
+          preview status if the queue has expired.
         </p>
       )}
 
@@ -224,7 +224,7 @@ export function PreviewLayersTable({
                 </th>
                 <th className="preview-layers-master-table__th">Layer</th>
                 <th className="preview-layers-master-table__th preview-layers-master-table__th--numeric">
-                  Mix %
+                  Layer Share
                 </th>
                 <th className="preview-layers-master-table__th preview-layers-master-table__th--numeric">
                   GFA
@@ -235,10 +235,12 @@ export function PreviewLayersTable({
                 <th className="preview-layers-master-table__th preview-layers-master-table__th--numeric">
                   Height
                 </th>
-                <th className="preview-layers-master-table__th preview-layers-master-table__th--numeric">
-                  Floors
-                </th>
-                <th className="preview-layers-master-table__th">Risk</th>
+                {showFloorsColumn && (
+                  <th className="preview-layers-master-table__th preview-layers-master-table__th--numeric">
+                    Floors
+                  </th>
+                )}
+                <th className="preview-layers-master-table__th">Flag</th>
                 <th className="preview-layers-master-table__th preview-layers-master-table__th--actions">
                   Actions
                 </th>
@@ -330,13 +332,15 @@ export function PreviewLayersTable({
                       </td>
 
                       {/* Floors */}
-                      <td className="preview-layers-master-table__td preview-layers-master-table__td--numeric">
-                        {layer.metrics.floors != null
-                          ? formatNumber(layer.metrics.floors, {
-                              maximumFractionDigits: 0,
-                            })
-                          : '—'}
-                      </td>
+                      {showFloorsColumn && (
+                        <td className="preview-layers-master-table__td preview-layers-master-table__td--numeric">
+                          {layer.metrics.floors != null
+                            ? formatNumber(layer.metrics.floors, {
+                                maximumFractionDigits: 0,
+                              })
+                            : '—'}
+                        </td>
+                      )}
 
                       {/* Risk Badge */}
                       <td className="preview-layers-master-table__td">
@@ -395,7 +399,7 @@ export function PreviewLayersTable({
                     {/* Accordion Row - Inline Legend Editor */}
                     {isExpanded && legendEntry && onLegendChange && (
                       <tr className="preview-layers-master-table__accordion-row">
-                        <td colSpan={9}>
+                        <td colSpan={columnCount}>
                           <div className="preview-layers-master-table__accordion-content">
                             {/* Color Picker */}
                             <div className="preview-layers-master-table__editor-field">

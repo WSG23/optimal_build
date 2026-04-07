@@ -29,7 +29,6 @@ import { useCaptureScenarioComparison } from './hooks/useCaptureScenarioComparis
 import {
   PropertyOverviewSection,
   PreviewLayersTable,
-  AssetMixChart,
   type LayerAction,
 } from './components/property-overview'
 import { ScenarioFocusSection } from './components/scenario-focus'
@@ -68,6 +67,9 @@ import { useRouterController } from '../../../router'
 const CAPTURED_PROPERTY_STORAGE_KEY = 'site-acquisition:captured-property'
 
 /**
+ * Legacy developer capture page retained as an internal fallback while the
+ * unified capture workspace is the active route.
+ *
  * Get captured property from sessionStorage
  */
 function getStoredCapturedProperty(): SiteAcquisitionResult | null {
@@ -436,31 +438,6 @@ export function SiteAcquisitionPage() {
     return undefined
   }, [capturedProperty?.heritageContext, latitude, longitude])
 
-  // Asset mix data for the donut chart in Development Preview sidebar
-  // Derived directly from massing or optimisation payloads.
-  const assetMixData = useMemo(() => {
-    const massingLayers = capturedProperty?.visualization?.massingLayers ?? []
-    if (massingLayers.length > 0) {
-      return massingLayers.map((layer) => ({
-        label: layer.assetType,
-        value: layer.allocationPct,
-        allocatedGfa: layer.gfaSqm ?? undefined,
-      }))
-    }
-
-    const optimizations = capturedProperty?.optimizations ?? []
-    return optimizations
-      .filter((entry) => typeof entry.allocationPct === 'number')
-      .map((entry) => ({
-        label: entry.assetType,
-        value: entry.allocationPct,
-        allocatedGfa: entry.allocatedGfaSqm ?? undefined,
-      }))
-  }, [
-    capturedProperty?.optimizations,
-    capturedProperty?.visualization?.massingLayers,
-  ])
-
   // Unified layer action handler for PreviewLayersTable
   const handleLayerAction = useCallback(
     (layerId: string, action: LayerAction) => {
@@ -524,6 +501,7 @@ export function SiteAcquisitionPage() {
     )
   }
 
+  // Persist optimization outputs so downstream feasibility views can hydrate.
   const buildAssetMixStorageKey = (propertyId: string) =>
     `developer-asset-mix:${propertyId}`
 
@@ -583,7 +561,10 @@ export function SiteAcquisitionPage() {
             }),
           )
         } catch (storageError) {
-          console.warn('Unable to persist asset mix snapshot', storageError)
+          console.warn(
+            'Unable to persist feasibility handoff snapshot',
+            storageError,
+          )
         }
       }
     } catch (err) {
@@ -788,7 +769,7 @@ export function SiteAcquisitionPage() {
                         borderColor: 'divider',
                       }}
                     >
-                      <Typography variant="h6">Development Preview</Typography>
+                      <Typography variant="h6">Concept Preview</Typography>
                       <Typography
                         variant="overline"
                         sx={{
@@ -802,13 +783,10 @@ export function SiteAcquisitionPage() {
                       </Typography>
                     </Box>
 
-                    {/* Split view: 3D Viewer + Asset Mix (tokenized gap, responsive) */}
+                    {/* Preview surface */}
                     <Box
                       sx={{
-                        display: 'grid',
-                        gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' },
-                        gap: 'var(--ob-space-150)',
-                        alignItems: 'stretch',
+                        display: 'block',
                       }}
                     >
                       <Box
@@ -828,14 +806,6 @@ export function SiteAcquisitionPage() {
                           focusLayerId={previewFocusLayerId}
                         />
                       </Box>
-
-                      <AssetMixChart
-                        data={assetMixData}
-                        title="Asset Allocation"
-                        sx={{
-                          minHeight: 'var(--ob-size-controls-min)',
-                        }}
-                      />
                     </Box>
 
                     {/* Controls bar - full width below */}
@@ -855,10 +825,10 @@ export function SiteAcquisitionPage() {
                           size="small"
                           sx={{ minWidth: 'var(--ob-size-input-sm)' }}
                         >
-                          <InputLabel>Geometry Detail</InputLabel>
+                          <InputLabel>Preview Detail</InputLabel>
                           <Select
                             value={previewDetailLevel}
-                            label="Geometry Detail"
+                            label="Preview Detail"
                             onChange={(e) =>
                               setPreviewDetailLevel(
                                 e.target.value as GeometryDetailLevel,
@@ -889,11 +859,11 @@ export function SiteAcquisitionPage() {
                           />
                           {isRefreshingPreview
                             ? 'Refreshing...'
-                            : 'Refresh Render'}
+                            : 'Refresh Preview Status'}
                         </Button>
 
                         <Typography variant="caption" color="text.secondary">
-                          Geometry detail:{' '}
+                          Preview detail:{' '}
                           <strong>
                             {describeDetailLevel(
                               previewJob.geometryDetailLevel,

@@ -70,7 +70,7 @@ function sanitiseCaptureHeadline(
     return null
   }
   if (FINANCE_HEADLINE_PATTERN.test(trimmed)) {
-    return `${fallbackLabel} instant zoning and envelope scan available.`
+    return `${fallbackLabel} capture scenario scan available.`
   }
   return trimmed
 }
@@ -297,7 +297,7 @@ export function useCaptureScenarioComparison({
           key: scenarioKey,
           label: 'All scenarios',
           icon: '🌐',
-          quickHeadline: `Instant capture analysis across ${scenarioCount} tracked scenarios.`,
+          quickHeadline: `Instant capture scan across ${scenarioCount} tracked scenarios.`,
           quickMetrics: buildAggregateMetrics(
             capturedProperty,
             formatNumberMetric,
