@@ -25,16 +25,10 @@ import {
   Share as ShareIcon,
   UploadFile as UploadFileIcon,
 } from '@mui/icons-material'
-import { useTranslation } from '../../i18n'
+import { getSupportedLanguage, supportedLanguages, useTranslation } from '../../i18n'
 import { Link } from '../../router'
 import { useDeveloperMode } from '../../contexts/useDeveloperMode'
 import { useThemeMode } from '../../theme/ThemeContext'
-
-const LANGUAGES = [
-  { code: 'en', label: 'English', flag: '🇺🇸' },
-  { code: 'ja', label: '日本語', flag: '🇯🇵' },
-  { code: 'zh', label: '中文', flag: '🇨🇳' },
-]
 
 const DEVELOPER_LINKS = [
   { to: '/app/site-acquisition', label: 'Site Acquisition' },
@@ -48,7 +42,7 @@ const DEVELOPER_LINKS = [
 
 export function TopUtilityMenu() {
   const theme = useTheme()
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const { mode, toggleMode } = useThemeMode()
   const { isDeveloperMode, toggleDeveloperMode } = useDeveloperMode()
   const showDeveloperLinks = isDeveloperMode
@@ -64,7 +58,7 @@ export function TopUtilityMenu() {
       : i18n.language
 
   const currentLangObj = useMemo(() => {
-    return LANGUAGES.find((l) => l.code === currentLanguage) || LANGUAGES[0]
+    return getSupportedLanguage(currentLanguage)
   }, [currentLanguage])
 
   const getCurrentUrl = () => {
@@ -177,11 +171,15 @@ export function TopUtilityMenu() {
                 width: 'var(--ob-space-250)',
                 height: 'var(--ob-space-250)',
                 borderRadius: 'var(--ob-radius-pill)',
-                bgcolor: 'primary.main',
+                bgcolor: 'var(--ob-color-neon-cyan-dim)',
+                color: 'var(--ob-color-neon-cyan)',
+                border: '1px solid var(--ob-color-neon-cyan)',
                 fontSize: 'var(--ob-font-size-sm)',
+                fontFamily: 'var(--ob-font-family-mono)',
+                fontWeight: 700,
               }}
             >
-              US
+              {currentLangObj.menuCode}
             </Avatar>
             <Box sx={{ minWidth: 0 }}>
               <Typography
@@ -200,7 +198,7 @@ export function TopUtilityMenu() {
                   color: 'text.secondary',
                 }}
               >
-                {currentLangObj.flag} {currentLangObj.code.toUpperCase()}
+                {t('common.language.label')} · {t(currentLangObj.labelKey)}
               </Typography>
             </Box>
           </Stack>
@@ -238,34 +236,90 @@ export function TopUtilityMenu() {
 
         <Divider />
 
-        <MenuItem disabled>
-          <ListItemIcon>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--ob-space-100)',
+            px: 'var(--ob-space-150)',
+            py: 'var(--ob-space-075)',
+            color: 'text.secondary',
+            fontSize: 'var(--ob-font-size-xs)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+          }}
+        >
+          <Box
+            component="span"
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'text.secondary',
+            }}
+          >
             <LanguageIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Language</ListItemText>
-        </MenuItem>
-        {LANGUAGES.map((lang) => (
+          </Box>
+          <Typography component="span" variant="inherit">
+            {t('common.language.label')}
+          </Typography>
+        </Box>
+        {supportedLanguages.map((lang) => (
           <MenuItem
-            key={lang.code}
-            selected={currentLanguage === lang.code}
+            key={lang.value}
+            selected={currentLanguage === lang.value}
             onClick={() => {
               setAnchorEl(null)
-              void handleLanguageChange(lang.code)
+              void handleLanguageChange(lang.value)
             }}
-            sx={{ pl: 'var(--ob-space-300)' }}
+            sx={{
+              px: 'var(--ob-space-150)',
+              py: 'var(--ob-space-075)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 'var(--ob-space-100)',
+            }}
           >
-            <ListItemText>
-              <Box
-                component="span"
-                sx={{
-                  mr: 'var(--ob-space-050)',
-                  fontSize: 'var(--ob-font-size-lg)',
-                }}
-              >
-                {lang.flag}
-              </Box>
-              {lang.label}
-            </ListItemText>
+            <ListItemText
+              primary={t(lang.labelKey)}
+              secondary={lang.nativeLabel}
+              primaryTypographyProps={{
+                sx: {
+                  fontSize: 'var(--ob-font-size-sm)',
+                  fontWeight: currentLanguage === lang.value ? 600 : 500,
+                },
+              }}
+              secondaryTypographyProps={{
+                sx: {
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                },
+              }}
+            />
+            <Box
+              component="span"
+              sx={{
+                minWidth: '2.5rem',
+                px: 'var(--ob-space-050)',
+                py: '2px',
+                borderRadius: 'var(--ob-radius-pill)',
+                border: '1px solid',
+                borderColor:
+                  currentLanguage === lang.value
+                    ? 'var(--ob-color-neon-cyan)'
+                    : alpha(theme.palette.divider, 0.2),
+                color:
+                  currentLanguage === lang.value
+                    ? 'var(--ob-color-neon-cyan)'
+                    : 'text.secondary',
+                fontFamily: 'var(--ob-font-family-mono)',
+                fontSize: 'var(--ob-font-size-xs)',
+                textAlign: 'center',
+              }}
+            >
+              {lang.menuCode}
+            </Box>
           </MenuItem>
         ))}
 
