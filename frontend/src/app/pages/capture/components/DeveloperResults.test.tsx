@@ -535,6 +535,45 @@ describe('DeveloperResults', () => {
         },
       ],
     }
+    result.previewJobs = [
+      {
+        id: 'preview-2',
+        propertyId: 'prop-123',
+        scenario: 'existing_building',
+        status: 'ready',
+        previewUrl: '/static/dev-previews/example/preview.gltf',
+        metadataUrl: '/static/dev-previews/example/preview.json',
+        thumbnailUrl: '/static/dev-previews/example/thumb.png',
+        assetVersion: '20260407093405',
+        requestedAt: '2026-01-06T10:00:00Z',
+        startedAt: '2026-01-06T10:00:02Z',
+        finishedAt: '2026-01-06T10:00:10Z',
+        message: null,
+        geometryDetailLevel: 'medium',
+        starterModelAssumptions: {
+          wallThicknessMm: 210,
+          coreRatioPct: 15,
+          commonAreaRatioPct: 11,
+          floorToFloorM: 3.7,
+          clearCeilingM: 2.7,
+          hvacSpaceRatioPct: 7,
+          electricalSpaceRatioPct: 4,
+          structuralGridNote: 'preserve existing bulk',
+          source: 'hybrid',
+          retentionStrategy: 'preserve_existing_bulk',
+          efficiencyFactor: 0.96,
+          provenance: {
+            summary: 'rules_with_property_adjustments',
+            fields: {
+              floor_to_floor_m: 'property_specific',
+              efficiency_factor: 'property_specific',
+              wall_thickness_mm: 'rules',
+            },
+            adjustments: ['older_building_age'],
+          },
+        },
+      },
+    ] as SiteAcquisitionResult['previewJobs']
     previewJobsByScenarioValue = {
       existing_building: {
         id: 'preview-2',
@@ -550,6 +589,28 @@ describe('DeveloperResults', () => {
         finishedAt: '2026-01-06T10:00:10Z',
         message: null,
         geometryDetailLevel: 'medium',
+        starterModelAssumptions: {
+          wallThicknessMm: 210,
+          coreRatioPct: 15,
+          commonAreaRatioPct: 11,
+          floorToFloorM: 3.7,
+          clearCeilingM: 2.7,
+          hvacSpaceRatioPct: 7,
+          electricalSpaceRatioPct: 4,
+          structuralGridNote: 'preserve existing bulk',
+          source: 'hybrid',
+          retentionStrategy: 'preserve_existing_bulk',
+          efficiencyFactor: 0.96,
+          provenance: {
+            summary: 'rules_with_property_adjustments',
+            fields: {
+              floor_to_floor_m: 'property_specific',
+              efficiency_factor: 'property_specific',
+              wall_thickness_mm: 'rules',
+            },
+            adjustments: ['older_building_age'],
+          },
+        },
       },
     }
 
@@ -562,6 +623,7 @@ describe('DeveloperResults', () => {
 
     expect(screen.getByText('Capture Recommendation')).toBeInTheDocument()
     expect(screen.getByText('Starter Model Status')).toBeInTheDocument()
+    expect(screen.getByText('Starter Model Assumptions')).toBeInTheDocument()
     expect(
       screen.getByText('The renovation starter model is ready for review.'),
     ).toBeInTheDocument()
@@ -576,6 +638,28 @@ describe('DeveloperResults', () => {
     ).toBeInTheDocument()
     expect(screen.getByText(/Estimated floors: 6/i)).toBeInTheDocument()
     expect(screen.getByText(/Recommended: Renovation/i)).toBeInTheDocument()
+    expect(screen.getByText(/Mode: User override/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Code fit: Current GFA remains below today’s code envelope/i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/Floor-to-floor 3.7 m \/ clear ceiling 2.7 m/i),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/Wall thickness 210 mm \/ core ratio 15%/i),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Retention strategy preserve existing bulk \/ efficiency factor 0.96/i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Assumption source: Rule defaults with property-specific adjustments \(older building age\)\./i,
+      ),
+    ).toBeInTheDocument()
 
     expect(lastPreviewViewerProps).toMatchObject({
       previewUrl: '/static/dev-previews/example/preview.gltf',
@@ -687,6 +771,36 @@ describe('DeveloperResults', () => {
     expect(lastUsePreviewJobOptions).toMatchObject({
       preferredScenario: 'existing_building',
     })
+  })
+
+  it('updates starter model assumptions when the user overrides to a ground-up scenario', () => {
+    const result = buildResult()
+    previewJobsByScenarioValue = {}
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={
+          ['raw_land', 'existing_building'] as DevelopmentScenario[]
+        }
+      />,
+    )
+
+    expect(
+      screen.getByText(/Floor-to-floor 3.9 m \/ clear ceiling 2.8 m/i),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/Assumption source: Frontend fallback defaults\./i),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /raw land/i }))
+
+    expect(
+      screen.getByText(/Floor-to-floor 4.2 m \/ clear ceiling 3.2 m/i),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/Wall thickness 250 mm \/ core ratio 18%/i),
+    ).toBeInTheDocument()
   })
 
   it('renders preview metadata errors when present', () => {

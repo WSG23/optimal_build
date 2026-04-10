@@ -24,6 +24,27 @@ describe('requestStarterModelForScenario', () => {
           finished_at: null,
           message: null,
           geometry_detail_level: 'medium',
+          starter_model_assumptions: {
+            wall_thickness_mm: 210,
+            core_ratio_pct: 15,
+            common_area_ratio_pct: 11,
+            floor_to_floor_m: 3.7,
+            clear_ceiling_m: 2.7,
+            hvac_space_ratio_pct: 7,
+            electrical_space_ratio_pct: 4,
+            retention_strategy: 'preserve_existing_bulk',
+            efficiency_factor: 0.96,
+            source: 'hybrid',
+            provenance: {
+              summary: 'rules_with_property_adjustments',
+              fields: {
+                floor_to_floor_m: 'property_specific',
+                efficiency_factor: 'property_specific',
+                wall_thickness_mm: 'rules',
+              },
+              adjustments: ['older_building_age'],
+            },
+          },
         }),
         {
           status: 200,
@@ -73,6 +94,19 @@ describe('requestStarterModelForScenario', () => {
       scenario: 'existing_building',
       status: 'queued',
       geometryDetailLevel: 'medium',
+      starterModelAssumptions: {
+        floorToFloorM: 3.7,
+        source: 'hybrid',
+        retentionStrategy: 'preserve_existing_bulk',
+        efficiencyFactor: 0.96,
+        provenance: {
+          summary: 'rules_with_property_adjustments',
+          fields: expect.objectContaining({
+            floor_to_floor_m: 'property_specific',
+          }),
+          adjustments: ['older_building_age'],
+        },
+      },
     })
   })
 

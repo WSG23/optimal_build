@@ -311,6 +311,18 @@ async def test_create_preview_job_for_scenario(
     assert payload["scenario"] == "existing_building"
     assert payload["status"] in {"ready", "processing", "queued"}
     assert payload["geometry_detail_level"] == "medium"
+    assert payload["starter_model_assumptions"]["retention_strategy"] == (
+        "preserve_existing_bulk"
+    )
+    assert payload["starter_model_assumptions"]["floor_to_floor_m"] == 3.7
+    assert payload["starter_model_assumptions"]["source"] == "rules"
+    assert payload["starter_model_assumptions"]["provenance"]["summary"] == (
+        "rules_only"
+    )
+    assert (
+        payload["starter_model_assumptions"]["provenance"]["fields"]["floor_to_floor_m"]
+        == "rules"
+    )
 
     async with async_session_factory() as session:
         jobs = (
@@ -324,6 +336,61 @@ async def test_create_preview_job_for_scenario(
         )
         assert jobs
         assert any(job.scenario == "existing_building" for job in jobs)
+
+
+@pytest.mark.asyncio
+async def test_create_preview_job_exposes_property_specific_assumption_provenance(
+    app_client: AsyncClient,
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    async with async_session_factory() as session:
+        session.add(
+            Property(
+                id=property_id,
+                name="Conservation Retrofit House",
+                address="88 Provenance Walk",
+                jurisdiction_code="SG",
+                property_type=PropertyType.OFFICE,
+                status=PropertyStatus.EXISTING,
+                location="POINT(103.8198 1.2801)",
+                district="D01",
+                land_area_sqm=Decimal("4000"),
+                gross_floor_area_sqm=Decimal("12000"),
+                building_height_m=Decimal("28"),
+                floors_above_ground=8,
+                year_built=1985,
+                zoning_code="C1",
+                plot_ratio=Decimal("3.5"),
+                is_conservation=True,
+            )
+        )
+        await session.commit()
+
+    response = await app_client.post(
+        f"/api/v1/developers/properties/{property_id}/preview-jobs",
+        json={"scenario": "existing_building"},
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assumptions = payload["starter_model_assumptions"]
+    provenance = assumptions["provenance"]
+
+    assert assumptions["source"] == "hybrid"
+    assert assumptions["retention_strategy"] == "conservation_retention"
+    assert assumptions["floor_to_floor_m"] == 3.6
+    assert assumptions["efficiency_factor"] == 0.93
+    assert provenance["summary"] == "rules_with_property_adjustments"
+    assert set(provenance["adjustments"]) == {
+        "heritage_context",
+        "older_building_age",
+        "existing_floor_count",
+    }
+    assert provenance["fields"]["retention_strategy"] == "property_specific"
+    assert provenance["fields"]["floor_to_floor_m"] == "property_specific"
+    assert provenance["fields"]["efficiency_factor"] == "property_specific"
+    assert provenance["fields"]["wall_thickness_mm"] == "rules"
 
 
 @pytest.mark.asyncio
@@ -353,17 +420,17 @@ async def test_create_preview_jobs_differentiate_massing_by_scenario(
         )
         await session.commit()
 
-    raw_land_response = await app_client.post(
-        f"/api/v1/developers/properties/{property_id}/preview-jobs",
-        json={"scenario": "raw_land"},
-    )
-    assert raw_land_response.status_code == 200, raw_land_response.text
-
-    renovation_response = await app_client.post(
-        f"/api/v1/developers/properties/{property_id}/preview-jobs",
-        json={"scenario": "existing_building"},
-    )
-    assert renovation_response.status_code == 200, renovation_response.text
+    for scenario in (
+        "raw_land",
+        "existing_building",
+        "underused_asset",
+        "heritage_property",
+    ):
+        response = await app_client.post(
+            f"/api/v1/developers/properties/{property_id}/preview-jobs",
+            json={"scenario": scenario},
+        )
+        assert response.status_code == 200, response.text
 
     async with async_session_factory() as session:
         jobs = (
@@ -382,11 +449,17 @@ async def test_create_preview_jobs_differentiate_massing_by_scenario(
         renovation_job = next(
             job for job in jobs if job.scenario == "existing_building"
         )
+        underused_job = next(job for job in jobs if job.scenario == "underused_asset")
+        heritage_job = next(job for job in jobs if job.scenario == "heritage_property")
 
         raw_land_layers = (raw_land_job.metadata or {}).get("massing_layers") or []
         renovation_layers = (renovation_job.metadata or {}).get("massing_layers") or []
+        underused_layers = (underused_job.metadata or {}).get("massing_layers") or []
+        heritage_layers = (heritage_job.metadata or {}).get("massing_layers") or []
         assert raw_land_layers
         assert renovation_layers
+        assert underused_layers
+        assert heritage_layers
 
         raw_land_gfa = sum(
             float(layer.get("gfa_sqm") or 0.0) for layer in raw_land_layers
@@ -394,9 +467,84 @@ async def test_create_preview_jobs_differentiate_massing_by_scenario(
         renovation_gfa = sum(
             float(layer.get("gfa_sqm") or 0.0) for layer in renovation_layers
         )
+        underused_gfa = sum(
+            float(layer.get("gfa_sqm") or 0.0) for layer in underused_layers
+        )
+        heritage_gfa = sum(
+            float(layer.get("gfa_sqm") or 0.0) for layer in heritage_layers
+        )
+
+        raw_land_height = max(
+            float(layer.get("estimated_height_m") or 0.0) for layer in raw_land_layers
+        )
+        heritage_height = max(
+            float(layer.get("estimated_height_m") or 0.0) for layer in heritage_layers
+        )
 
         assert raw_land_gfa > renovation_gfa
+        assert underused_gfa > renovation_gfa
+        assert heritage_gfa <= renovation_gfa
+        assert heritage_height < raw_land_height
         assert raw_land_job.payload_checksum != renovation_job.payload_checksum
+        assert underused_job.payload_checksum != renovation_job.payload_checksum
+        assert heritage_job.payload_checksum != raw_land_job.payload_checksum
+
+        def _allocation_map(layers: list[dict[str, Any]]) -> dict[str, float]:
+            return {
+                str(layer.get("asset_type")): float(layer.get("allocation_pct") or 0.0)
+                for layer in layers
+            }
+
+        raw_land_allocations = _allocation_map(raw_land_layers)
+        renovation_allocations = _allocation_map(renovation_layers)
+        heritage_allocations = _allocation_map(heritage_layers)
+
+        raw_land_assumptions = (raw_land_job.metadata or {}).get(
+            "starter_model_assumptions"
+        ) or {}
+        renovation_assumptions = (renovation_job.metadata or {}).get(
+            "starter_model_assumptions"
+        ) or {}
+        underused_assumptions = (underused_job.metadata or {}).get(
+            "starter_model_assumptions"
+        ) or {}
+        heritage_assumptions = (heritage_job.metadata or {}).get(
+            "starter_model_assumptions"
+        ) or {}
+
+        assert "retail" in raw_land_allocations
+        assert renovation_allocations.get("office", 0.0) > renovation_allocations.get(
+            "retail", 0.0
+        )
+        assert renovation_allocations.get("office", 0.0) > renovation_allocations.get(
+            "amenities", 0.0
+        )
+        assert renovation_allocations.get("office", 0.0) > raw_land_allocations.get(
+            "office", 0.0
+        )
+        assert renovation_allocations.get("retail", 0.0) < raw_land_allocations.get(
+            "retail", 0.0
+        )
+        assert "amenities" in heritage_allocations
+        assert heritage_allocations.get("office", 0.0) < renovation_allocations.get(
+            "office", 0.0
+        )
+        assert raw_land_assumptions["retention_strategy"] == "ground_up_envelope"
+        assert renovation_assumptions["retention_strategy"] == "preserve_existing_bulk"
+        assert underused_assumptions["retention_strategy"] == "selective_repositioning"
+        assert heritage_assumptions["retention_strategy"] == "conservation_retention"
+        assert (
+            raw_land_assumptions["floor_to_floor_m"]
+            > renovation_assumptions["floor_to_floor_m"]
+        )
+        assert (
+            heritage_assumptions["efficiency_factor"]
+            < raw_land_assumptions["efficiency_factor"]
+        )
+        assert any(
+            "Engineering defaults:" in note
+            for note in ((heritage_job.metadata or {}).get("visualization_notes") or [])
+        )
 
 
 @pytest.mark.asyncio

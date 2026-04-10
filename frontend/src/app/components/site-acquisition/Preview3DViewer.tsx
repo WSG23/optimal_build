@@ -17,6 +17,14 @@ type PreviewMetadata = {
   cameraOrbitHint?: Record<string, number>
 }
 
+type NormalizedPreviewStatus =
+  | 'queued'
+  | 'processing'
+  | 'ready'
+  | 'failed'
+  | 'placeholder'
+  | 'unknown'
+
 const FALLBACK_HEIGHT = 420
 type LayerObjectMap = Map<string, THREE.Object3D[]>
 
@@ -60,6 +68,7 @@ export function Preview3DViewer({
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [metadataWarning, setMetadataWarning] = useState<string | null>(null)
+  const normalizedStatus = normalizePreviewStatus(status)
 
   layerVisibilityRef.current = layerVisibility
   focusLayerIdRef.current = focusLayerId
@@ -333,11 +342,6 @@ export function Preview3DViewer({
   }, [previewUrl, metadataUrl])
 
   useEffect(() => {
-    console.log('[Preview3DViewer] Layer visibility changed:', layerVisibility)
-    console.log(
-      '[Preview3DViewer] Available layers:',
-      Array.from(layerObjectsRef.current.keys()),
-    )
     updateMeshVisibility(layerObjectsRef.current, layerVisibility)
     // Re-render scene after visibility changes
     if (rendererRef.current && sceneRef.current && cameraRef.current) {
@@ -346,11 +350,6 @@ export function Preview3DViewer({
   }, [layerVisibility])
 
   useEffect(() => {
-    console.log('[Preview3DViewer] Focus layer changed:', focusLayerId)
-    console.log(
-      '[Preview3DViewer] Available layers:',
-      Array.from(layerObjectsRef.current.keys()),
-    )
     updateMeshHighlight(layerObjectsRef.current, focusLayerId)
     focusCameraOnLayer(
       focusLayerId,
@@ -366,89 +365,145 @@ export function Preview3DViewer({
   }, [focusLayerId])
 
   if (!previewUrl) {
+    const statusState = getPreviewStatusState(normalizedStatus)
+
     return (
       <div
-        style={{
-          border: '1px dashed #d1d5db',
-          borderRadius: '4px',
-          padding: '1.5rem',
-          textAlign: 'center',
-          background: '#f9fafb',
-        }}
+        className="site-acquisition__preview-viewer-empty"
+        data-testid="preview-viewer-empty"
       >
-        <p style={{ margin: 0, fontSize: '0.95rem', color: '#6b7280' }}>
-          Preview assets are not ready yet. Status:{' '}
-          <strong>{status.toUpperCase()}</strong>
-        </p>
+        <div className="site-acquisition__preview-viewer-state">
+          <span
+            className={`ob-status-dot ${statusState.dotClassName}`}
+            aria-hidden="true"
+          />
+          <div className="site-acquisition__preview-viewer-copy">
+            <p className="site-acquisition__preview-viewer-eyebrow">
+              Starter model
+            </p>
+            <p className="site-acquisition__preview-viewer-title">
+              {statusState.title}
+            </p>
+            <p className="site-acquisition__preview-viewer-body">
+              {statusState.body}
+            </p>
+          </div>
+        </div>
+        {thumbnailUrl ? (
+          <div className="site-acquisition__preview-viewer-thumb">
+            <span className="site-acquisition__preview-viewer-thumb-label">
+              Latest thumbnail
+            </span>
+            <img
+              src={thumbnailUrl}
+              alt="Starter model thumbnail"
+              className="site-acquisition__preview-viewer-thumb-image"
+            />
+          </div>
+        ) : null}
       </div>
     )
   }
 
   return (
-    <div
-      style={{
-        border: '1px solid #e5e7eb',
-        borderRadius: '4px',
-        padding: '1rem',
-        background: '#ffffff',
-      }}
-    >
+    <div className="site-acquisition__preview-viewer-shell">
       <div
         ref={containerRef}
-        style={{
-          width: '100%',
-          height: `${FALLBACK_HEIGHT}px`,
-          borderRadius: '4px',
-          overflow: 'hidden',
-        }}
+        className="site-acquisition__preview-viewer-canvas"
+        style={{ height: `${FALLBACK_HEIGHT}px` }}
       />
       {isLoading && (
-        <p
-          style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#6b7280' }}
-        >
-          Loading preview assets…
+        <p className="site-acquisition__preview-viewer-note">
+          Loading starter model assets…
         </p>
       )}
       {metadataWarning && !error && (
-        <p
-          style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#b45309' }}
-        >
+        <p className="site-acquisition__preview-viewer-note site-acquisition__preview-viewer-note--warning">
           {metadataWarning}
         </p>
       )}
       {error && (
-        <p
-          style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#b91c1c' }}
-        >
-          Failed to load preview: {error}
+        <p className="site-acquisition__preview-viewer-note site-acquisition__preview-viewer-note--error">
+          Failed to load starter model: {error}
         </p>
       )}
       {!error && !isLoading && thumbnailUrl && (
-        <div
-          style={{
-            marginTop: '0.75rem',
-            display: 'flex',
-            gap: '0.5rem',
-            alignItems: 'center',
-          }}
-        >
-          <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>
-            Thumbnail:
+        <div className="site-acquisition__preview-viewer-thumb">
+          <span className="site-acquisition__preview-viewer-thumb-label">
+            Thumbnail
           </span>
           <img
             src={thumbnailUrl}
             alt="Preview thumbnail"
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '4px',
-              objectFit: 'cover',
-            }}
+            className="site-acquisition__preview-viewer-thumb-image"
           />
         </div>
       )}
     </div>
   )
+}
+
+function normalizePreviewStatus(status: string): NormalizedPreviewStatus {
+  switch (status.trim().toLowerCase()) {
+    case 'queued':
+      return 'queued'
+    case 'processing':
+      return 'processing'
+    case 'ready':
+      return 'ready'
+    case 'failed':
+      return 'failed'
+    case 'placeholder':
+      return 'placeholder'
+    default:
+      return 'unknown'
+  }
+}
+
+function getPreviewStatusState(status: NormalizedPreviewStatus): {
+  title: string
+  body: string
+  dotClassName: string
+} {
+  switch (status) {
+    case 'queued':
+      return {
+        title: 'Starter model queued',
+        body: 'Capture has queued a scenario-specific starter model and will show it here when the assets are ready.',
+        dotClassName: 'ob-status-dot--warning',
+      }
+    case 'processing':
+      return {
+        title: 'Generating starter model',
+        body: 'Capture is generating the starter model now. This placeholder will switch to the 3D model when processing completes.',
+        dotClassName: 'ob-status-dot--live',
+      }
+    case 'failed':
+      return {
+        title: 'Starter model unavailable',
+        body: 'The last starter-model generation attempt failed. Retry the generation action to request a new model for this scenario.',
+        dotClassName: 'ob-status-dot--error',
+      }
+    case 'ready':
+      return {
+        title: 'Starter model syncing',
+        body: 'Capture marked this starter model ready, but the 3D asset is not available in the viewer yet. Refresh to sync the latest model.',
+        dotClassName: 'ob-status-dot--warning',
+      }
+    case 'placeholder':
+      return {
+        title: 'Fallback preview only',
+        body: 'Capture is still working from parcel-level scalar controls. A full scenario-specific starter model has not been generated yet.',
+        dotClassName: 'ob-status-dot--inactive',
+      }
+    case 'unknown':
+    default:
+      return {
+        title: 'Starter model pending',
+        body: 'Capture has not provided a starter model for this scenario yet.',
+        dotClassName: 'ob-status-dot--inactive',
+      }
+  }
 }
 
 function updateMeshVisibility(

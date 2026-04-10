@@ -11,7 +11,6 @@ from pydantic import BaseModel, Field
 
 from app.services.preview_jobs import PreviewJobStatus
 
-
 # =============================================================================
 # Helper Functions
 # =============================================================================
@@ -171,6 +170,7 @@ class PreviewJobSchema(BaseModel):
     finished_at: datetime | None = None
     message: str | None = None
     geometry_detail_level: str | None = None
+    starter_model_assumptions: dict[str, Any] | None = None
 
 
 class DeveloperConstraintViolation(BaseModel):
@@ -347,10 +347,14 @@ def _serialise_preview_job(job: Any) -> PreviewJobSchema:
         job.thumbnail_url if status == PreviewJobStatus.READY.value else None
     )
     detail_level = None
+    starter_model_assumptions = None
     if isinstance(job.metadata, dict):
         raw_level = job.metadata.get("geometry_detail_level")
         if isinstance(raw_level, str):
             detail_level = raw_level
+        raw_assumptions = job.metadata.get("starter_model_assumptions")
+        if isinstance(raw_assumptions, dict):
+            starter_model_assumptions = raw_assumptions
     return PreviewJobSchema(
         id=job.id,
         property_id=job.property_id,
@@ -365,4 +369,5 @@ def _serialise_preview_job(job: Any) -> PreviewJobSchema:
         message=job.message,
         asset_version=job.asset_version,
         geometry_detail_level=detail_level,
+        starter_model_assumptions=starter_model_assumptions,
     )

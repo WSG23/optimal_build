@@ -581,6 +581,7 @@ async def _build_property_preview_inputs(
     DeveloperVisualizationSummary,
     list[dict[str, Any]],
     list[dict[str, Any]],
+    dict[str, Any],
 ]:
     """Derive preview-job inputs from a persisted property record."""
 
@@ -610,6 +611,8 @@ async def _build_property_preview_inputs(
             if property_record.building_height_m is not None
             else None
         ),
+        "floors_above_ground": property_record.floors_above_ground,
+        "year_built": property_record.year_built,
         "is_conservation": bool(property_record.is_conservation),
         "conservation_status": property_record.conservation_status,
         "heritage_overlay": property_record.conservation_status,
@@ -651,21 +654,36 @@ async def _build_property_preview_inputs(
         session,
         property_record.jurisdiction_code or "SG",
     )
-    scenario_envelope, scenario_existing_use, scenario_heritage_overlay = (
-        _apply_preview_scenario_rules(
-            envelope,
-            existing_use=existing_use,
-            heritage_overlay=pseudo_result.heritage_overlay,
-            scenario=scenario,
-        )
+    (
+        scenario_envelope,
+        scenario_land_use,
+        scenario_existing_use,
+        scenario_heritage_overlay,
+        scenario_quick_metrics,
+    ) = _apply_preview_scenario_rules(
+        envelope,
+        existing_use=existing_use,
+        heritage_overlay=pseudo_result.heritage_overlay,
+        scenario=scenario,
+    )
+    engineering_assumptions = _build_preview_engineering_assumptions(
+        scenario=scenario,
+        property_info=property_info,
+        existing_use=scenario_existing_use,
+        heritage_overlay=scenario_heritage_overlay,
     )
     optimizations, _, _ = _build_asset_optimizations(
-        scenario_existing_use,
+        scenario_land_use,
         scenario_envelope,
         scenario_existing_use,
         property_info,
-        None,
+        {"scenarios": [{"scenario": scenario, "metrics": scenario_quick_metrics}]},
         scenario_heritage_overlay,
+    )
+    optimizations = _apply_preview_engineering_defaults(
+        optimizations,
+        engineering_assumptions=engineering_assumptions,
+        site_area_sqm=scenario_envelope.site_area_sqm,
     )
     visualization = _build_visualization_summary(
         None,
@@ -673,6 +691,7 @@ async def _build_property_preview_inputs(
         optimizations,
         scenario_envelope,
     )
+    _append_visualization_assumption_notes(visualization, engineering_assumptions)
     massing_payload = [
         layer.model_dump() if hasattr(layer, "model_dump") else layer.__dict__
         for layer in visualization.massing_layers
@@ -681,7 +700,13 @@ async def _build_property_preview_inputs(
         entry.model_dump() if hasattr(entry, "model_dump") else entry.__dict__
         for entry in visualization.color_legend
     ]
-    return scenario_envelope, visualization, massing_payload, legend_payload
+    return (
+        scenario_envelope,
+        visualization,
+        massing_payload,
+        legend_payload,
+        engineering_assumptions,
+    )
 
 
 def _apply_preview_scenario_rules(
@@ -690,7 +715,13 @@ def _apply_preview_scenario_rules(
     existing_use: str,
     heritage_overlay: dict[str, Any] | None,
     scenario: str,
-) -> tuple[DeveloperBuildEnvelope, str, dict[str, Any] | None]:
+) -> tuple[
+    DeveloperBuildEnvelope,
+    str,
+    str | None,
+    dict[str, Any] | None,
+    dict[str, Any],
+]:
     """Adjust preview inputs so starter models differ meaningfully by scenario."""
 
     scenario_key = scenario.strip().lower()
@@ -706,6 +737,7 @@ def _apply_preview_scenario_rules(
         )
     )
     assumptions = list(envelope.assumptions)
+    primary_asset = _infer_primary_asset_type(existing_use)
 
     if scenario_key == "raw_land":
         assumptions.append(
@@ -720,8 +752,15 @@ def _apply_preview_scenario_rules(
                     "assumptions": assumptions,
                 },
             ),
-            "land",
+            "mixed_use",
             None,
+            None,
+            {
+                "user_constraints": {
+                    "min": {"office": 45.0, "retail": 15.0},
+                    "max": {"amenities": 12.0},
+                }
+            },
         )
 
     if scenario_key == "existing_building":
@@ -739,7 +778,14 @@ def _apply_preview_scenario_rules(
                 },
             ),
             existing_use,
+            existing_use,
             heritage_overlay,
+            {
+                "user_constraints": {
+                    "min": {primary_asset: 65.0},
+                    "max": {"retail": 20.0, "amenities": 10.0},
+                }
+            },
         )
 
     if scenario_key == "underused_asset":
@@ -752,6 +798,10 @@ def _apply_preview_scenario_rules(
         assumptions.append(
             "Starter model applies moderate uplift to existing bulk for reuse potential."
         )
+        underused_constraints = {
+            "min": {primary_asset: 35.0, "retail": 15.0, "amenities": 10.0},
+            "max": {"office": 55.0 if primary_asset == "office" else 45.0},
+        }
         return (
             copy_model(
                 envelope,
@@ -761,8 +811,10 @@ def _apply_preview_scenario_rules(
                     "assumptions": assumptions,
                 },
             ),
+            "mixed_use",
             existing_use,
             heritage_overlay,
+            {"user_constraints": underused_constraints},
         )
 
     if scenario_key == "heritage_property":
@@ -785,11 +837,264 @@ def _apply_preview_scenario_rules(
                     "assumptions": assumptions,
                 },
             ),
+            "mixed_use",
             existing_use,
             heritage_overlay or {"name": "Heritage overlay detected", "risk": "medium"},
+            {
+                "user_constraints": {
+                    "min": {"retail": 20.0, "amenities": 10.0},
+                    "max": {"office": 45.0, "hospitality": 30.0},
+                }
+            },
         )
 
-    return envelope, existing_use, heritage_overlay
+    return envelope, existing_use, existing_use, heritage_overlay, {}
+
+
+def _infer_primary_asset_type(existing_use: str | None) -> str:
+    use_lower = (existing_use or "").lower()
+    if any(token in use_lower for token in ("retail", "mall", "shopping")):
+        return "retail"
+    if any(token in use_lower for token in ("hotel", "hospitality")):
+        return "hospitality"
+    if any(token in use_lower for token in ("residential", "apartment", "condo")):
+        return "residential"
+    if any(
+        token in use_lower for token in ("industrial", "logistics", "manufacturing")
+    ):
+        return "industrial"
+    return "office"
+
+
+def _build_preview_engineering_assumptions(
+    *,
+    scenario: str,
+    property_info: dict[str, Any] | None,
+    existing_use: str | None,
+    heritage_overlay: dict[str, Any] | None,
+) -> dict[str, Any]:
+    assumption_fields = (
+        "wall_thickness_mm",
+        "core_ratio_pct",
+        "common_area_ratio_pct",
+        "floor_to_floor_m",
+        "clear_ceiling_m",
+        "hvac_space_ratio_pct",
+        "electrical_space_ratio_pct",
+        "efficiency_factor",
+        "retention_strategy",
+    )
+    scenario_key = scenario.strip().lower()
+    year_built = property_info.get("year_built") if property_info else None
+    existing_floors = (
+        property_info.get("floors_above_ground") if property_info else None
+    )
+    conservation = bool(heritage_overlay) or bool(
+        property_info and property_info.get("is_conservation")
+    )
+
+    assumptions: dict[str, Any] = {
+        "wall_thickness_mm": 220,
+        "core_ratio_pct": 16,
+        "common_area_ratio_pct": 12,
+        "floor_to_floor_m": 3.9,
+        "clear_ceiling_m": 2.8,
+        "hvac_space_ratio_pct": 8,
+        "electrical_space_ratio_pct": 4,
+        "efficiency_factor": 0.98,
+        "retention_strategy": "adaptive_reuse_baseline",
+    }
+    field_sources: dict[str, str] = {
+        field_name: "rules" for field_name in assumption_fields
+    }
+    adjustments: list[str] = []
+
+    if scenario_key == "raw_land":
+        assumptions.update(
+            {
+                "wall_thickness_mm": 260,
+                "core_ratio_pct": 18,
+                "common_area_ratio_pct": 15,
+                "floor_to_floor_m": 4.2,
+                "clear_ceiling_m": 3.2,
+                "hvac_space_ratio_pct": 6,
+                "electrical_space_ratio_pct": 3,
+                "efficiency_factor": 1.02,
+                "retention_strategy": "ground_up_envelope",
+            }
+        )
+    elif scenario_key == "existing_building":
+        assumptions.update(
+            {
+                "wall_thickness_mm": 210,
+                "core_ratio_pct": 15,
+                "common_area_ratio_pct": 11,
+                "floor_to_floor_m": 3.7,
+                "clear_ceiling_m": 2.7,
+                "hvac_space_ratio_pct": 7,
+                "electrical_space_ratio_pct": 4,
+                "efficiency_factor": 0.96,
+                "retention_strategy": "preserve_existing_bulk",
+            }
+        )
+    elif scenario_key == "underused_asset":
+        assumptions.update(
+            {
+                "wall_thickness_mm": 230,
+                "core_ratio_pct": 17,
+                "common_area_ratio_pct": 13,
+                "floor_to_floor_m": 4.0,
+                "clear_ceiling_m": 2.9,
+                "hvac_space_ratio_pct": 7,
+                "electrical_space_ratio_pct": 4,
+                "efficiency_factor": 0.99,
+                "retention_strategy": "selective_repositioning",
+            }
+        )
+    elif scenario_key == "heritage_property":
+        assumptions.update(
+            {
+                "wall_thickness_mm": 240,
+                "core_ratio_pct": 14,
+                "common_area_ratio_pct": 14,
+                "floor_to_floor_m": 3.6,
+                "clear_ceiling_m": 2.7,
+                "hvac_space_ratio_pct": 9,
+                "electrical_space_ratio_pct": 5,
+                "efficiency_factor": 0.92,
+                "retention_strategy": "conservation_retention",
+            }
+        )
+
+    if conservation:
+        assumptions["retention_strategy"] = "conservation_retention"
+        assumptions["efficiency_factor"] = min(
+            float(assumptions["efficiency_factor"]),
+            0.93,
+        )
+        field_sources["retention_strategy"] = "property_specific"
+        field_sources["efficiency_factor"] = "property_specific"
+        adjustments.append("heritage_context")
+
+    if isinstance(year_built, int) and year_built > 0 and year_built < 1990:
+        assumptions["efficiency_factor"] = round(
+            min(float(assumptions["efficiency_factor"]), 0.95), 2
+        )
+        assumptions["floor_to_floor_m"] = max(
+            3.5,
+            round(float(assumptions["floor_to_floor_m"]) - 0.1, 1),
+        )
+        field_sources["efficiency_factor"] = "property_specific"
+        field_sources["floor_to_floor_m"] = "property_specific"
+        adjustments.append("older_building_age")
+
+    if isinstance(existing_floors, int) and existing_floors > 0:
+        assumptions["existing_floor_count"] = existing_floors
+        adjustments.append("existing_floor_count")
+
+    primary_asset = _infer_primary_asset_type(existing_use)
+    assumptions["primary_asset_bias"] = primary_asset
+    assumptions["source"] = (
+        "hybrid"
+        if any(value == "property_specific" for value in field_sources.values())
+        else "rules"
+    )
+    assumptions["provenance"] = {
+        "summary": (
+            "rules_with_property_adjustments"
+            if assumptions["source"] == "hybrid"
+            else "rules_only"
+        ),
+        "fields": field_sources,
+        "adjustments": list(dict.fromkeys(adjustments)),
+    }
+    return assumptions
+
+
+def _target_floor_height_for_asset(
+    asset_type: str,
+    *,
+    default_floor_to_floor_m: float,
+) -> float:
+    asset_key = asset_type.lower()
+    if asset_key == "retail":
+        return max(default_floor_to_floor_m, 4.8)
+    if asset_key == "hospitality":
+        return max(default_floor_to_floor_m - 0.1, 3.5)
+    if asset_key == "residential":
+        return max(default_floor_to_floor_m - 0.6, 3.2)
+    if asset_key == "amenities":
+        return max(default_floor_to_floor_m - 0.2, 3.6)
+    return default_floor_to_floor_m
+
+
+def _apply_preview_engineering_defaults(
+    optimizations: list[DeveloperAssetOptimization],
+    *,
+    engineering_assumptions: dict[str, Any],
+    site_area_sqm: float | None,
+) -> list[DeveloperAssetOptimization]:
+    default_floor_to_floor = float(engineering_assumptions["floor_to_floor_m"])
+    efficiency_factor = float(engineering_assumptions["efficiency_factor"])
+    updated: list[DeveloperAssetOptimization] = []
+    for optimization in optimizations:
+        target_floor_height = _target_floor_height_for_asset(
+            optimization.asset_type,
+            default_floor_to_floor_m=default_floor_to_floor,
+        )
+        base_efficiency = optimization.nia_efficiency or 0.82
+        adjusted_efficiency = max(
+            0.65,
+            min(round(base_efficiency * efficiency_factor, 3), 0.92),
+        )
+        allocated_gfa = optimization.allocated_gfa_sqm
+        nia_sqm = (
+            round(allocated_gfa * adjusted_efficiency, 2)
+            if allocated_gfa is not None
+            else None
+        )
+        estimated_height = None
+        if site_area_sqm and site_area_sqm > 0 and allocated_gfa:
+            estimated_height = round(
+                (allocated_gfa / site_area_sqm) * target_floor_height, 1
+            )
+
+        note = (
+            f"Preview defaults: {engineering_assumptions['retention_strategy'].replace('_', ' ')} "
+            f"with floor-to-floor {target_floor_height:.1f} m and efficiency factor {adjusted_efficiency:.2f}."
+        )
+        notes = list(optimization.notes)
+        if note not in notes:
+            notes.append(note)
+
+        updated.append(
+            copy_model(
+                optimization,
+                update={
+                    "target_floor_height_m": target_floor_height,
+                    "nia_efficiency": adjusted_efficiency,
+                    "nia_sqm": nia_sqm,
+                    "estimated_height_m": estimated_height,
+                    "notes": notes,
+                },
+            )
+        )
+    return updated
+
+
+def _append_visualization_assumption_notes(
+    visualization: DeveloperVisualizationSummary,
+    engineering_assumptions: dict[str, Any],
+) -> None:
+    assumption_note = (
+        "Engineering defaults: "
+        f"floor-to-floor {engineering_assumptions['floor_to_floor_m']:.1f} m, "
+        f"clear ceiling {engineering_assumptions['clear_ceiling_m']:.1f} m, "
+        f"core {engineering_assumptions['core_ratio_pct']:.0f}%, "
+        f"common area {engineering_assumptions['common_area_ratio_pct']:.0f}%."
+    )
+    if assumption_note not in visualization.notes:
+        visualization.notes.append(assumption_note)
 
 
 def _build_asset_optimizations(
@@ -1780,7 +2085,7 @@ async def create_preview_job(
     if property_record is None:
         raise HTTPException(status_code=404, detail="Property not found")
 
-    _, visualization, massing_payload, legend_payload = (
+    _, visualization, massing_payload, legend_payload, engineering_assumptions = (
         await _build_property_preview_inputs(
             property_record,
             session,
@@ -1810,6 +2115,10 @@ async def create_preview_job(
             if payload.color_legend
             else legend_payload
         ),
+        metadata_extras={
+            "starter_model_assumptions": engineering_assumptions,
+            "visualization_notes": list(visualization.notes),
+        },
     )
     await session.commit()
     await session.refresh(preview_job)

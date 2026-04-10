@@ -437,6 +437,129 @@ export function DeveloperResults({
     hasPreferredScenarioPreview,
   ])
 
+  const scenarioFitSummary = useMemo(() => {
+    const codeConstraints = captureResultV2.codeConstraints
+    const comparisonSummary =
+      codeConstraints.currentVsCodeStatus === 'above'
+        ? 'Current GFA exceeds today’s code envelope and may reflect a grandfathered condition.'
+        : codeConstraints.currentVsCodeStatus === 'below'
+          ? 'Current GFA remains below today’s code envelope, leaving compliant headroom to study.'
+          : codeConstraints.currentVsCodeStatus === 'at_limit'
+            ? 'Current GFA appears to match today’s code envelope.'
+            : 'Current-versus-code envelope relationship is still unresolved.'
+
+    const headroomSummary =
+      codeConstraints.maxBuildableGfaSqm != null &&
+      codeConstraints.currentGfaSqm != null
+        ? `${formatNumber(codeConstraints.currentGfaSqm, {
+            maximumFractionDigits: 0,
+          })} sqm current vs ${formatNumber(
+            codeConstraints.maxBuildableGfaSqm,
+            {
+              maximumFractionDigits: 0,
+            },
+          )} sqm current-code max.`
+        : 'Current and maximum GFA comparison is still pending.'
+
+    const heritageSummary = captureResultV2.siteContext.heritageOverlay
+      ? `Context: ${captureResultV2.siteContext.heritageOverlay}.`
+      : 'No heritage overlay is currently driving the starter model.'
+
+    return {
+      comparisonSummary,
+      headroomSummary,
+      heritageSummary,
+    }
+  }, [
+    captureResultV2.codeConstraints,
+    captureResultV2.siteContext,
+    formatNumber,
+  ])
+
+  const starterModelAssumptionLines = useMemo(() => {
+    const assumptions = captureResultV2.engineeringAssumptions
+    const lines = [
+      assumptions.floorToFloorM != null && assumptions.clearCeilingM != null
+        ? `Floor-to-floor ${formatNumber(assumptions.floorToFloorM, {
+            maximumFractionDigits: 1,
+          })} m / clear ceiling ${formatNumber(assumptions.clearCeilingM, {
+            maximumFractionDigits: 1,
+          })} m`
+        : null,
+      assumptions.wallThicknessMm != null && assumptions.coreRatioPct != null
+        ? `Wall thickness ${formatNumber(assumptions.wallThicknessMm, {
+            maximumFractionDigits: 0,
+          })} mm / core ratio ${formatNumber(assumptions.coreRatioPct, {
+            maximumFractionDigits: 0,
+          })}%`
+        : null,
+      assumptions.commonAreaRatioPct != null &&
+      assumptions.hvacSpaceRatioPct != null &&
+      assumptions.electricalSpaceRatioPct != null
+        ? `Common area ${formatNumber(assumptions.commonAreaRatioPct, {
+            maximumFractionDigits: 0,
+          })}% / HVAC ${formatNumber(assumptions.hvacSpaceRatioPct, {
+            maximumFractionDigits: 0,
+          })}% / electrical ${formatNumber(
+            assumptions.electricalSpaceRatioPct,
+            {
+              maximumFractionDigits: 0,
+            },
+          )}%`
+        : null,
+      assumptions.retentionStrategy
+        ? `Retention strategy ${assumptions.retentionStrategy.replace(/_/g, ' ')}${
+            assumptions.efficiencyFactor != null
+              ? ` / efficiency factor ${formatNumber(
+                  assumptions.efficiencyFactor,
+                  {
+                    maximumFractionDigits: 2,
+                  },
+                )}`
+              : ''
+          }`
+        : assumptions.efficiencyFactor != null
+          ? `Efficiency factor ${formatNumber(assumptions.efficiencyFactor, {
+              maximumFractionDigits: 2,
+            })}`
+          : null,
+      assumptions.structuralGridNote ?? null,
+    ].filter((line): line is string => Boolean(line))
+
+    return lines
+  }, [captureResultV2.engineeringAssumptions, formatNumber])
+
+  const starterModelAssumptionSourceLine = useMemo(() => {
+    const assumptions = captureResultV2.engineeringAssumptions
+    const summary = assumptions.provenance?.summary ?? null
+    const adjustments = assumptions.provenance?.adjustments ?? []
+
+    const summaryLabel =
+      summary === 'rules_with_property_adjustments'
+        ? 'Rule defaults with property-specific adjustments'
+        : summary === 'rules_only'
+          ? 'Rule defaults only'
+          : summary === 'frontend_fallback_defaults'
+            ? 'Frontend fallback defaults'
+            : assumptions.source === 'hybrid'
+              ? 'Mixed-source assumptions'
+              : assumptions.source === 'heuristic_fallback'
+                ? 'Heuristic fallback defaults'
+                : assumptions.source === 'rules'
+                  ? 'Rule defaults'
+                  : assumptions.source.replace(/_/g, ' ')
+
+    if (!adjustments.length) {
+      return `Assumption source: ${summaryLabel}.`
+    }
+
+    const adjustmentLabel = adjustments
+      .map((adjustment) => adjustment.replace(/_/g, ' '))
+      .join(', ')
+
+    return `Assumption source: ${summaryLabel} (${adjustmentLabel}).`
+  }, [captureResultV2.engineeringAssumptions])
+
   useEffect(() => {
     const preferredScenario = captureResultV2.scenarioRecommendation.recommended
     const propertyId = result.propertyId
@@ -643,7 +766,14 @@ export function DeveloperResults({
       </section>
 
       <section className="site-acquisition__capture-summary">
-        <Box sx={{ mb: 'var(--ob-space-150)' }}>
+        <Box
+          sx={{
+            mb: 'var(--ob-space-150)',
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', xl: '1fr 1fr' },
+            gap: 'var(--ob-space-150)',
+          }}
+        >
           <Card
             sx={{
               p: 'var(--ob-space-125)',
@@ -703,11 +833,127 @@ export function DeveloperResults({
                 color: 'text.secondary',
               }}
             >
+              Mode:{' '}
+              {captureResultV2.scenarioRecommendation.userOverride
+                ? 'User override'
+                : 'Rule-based default'}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-xs)',
+                color: 'text.secondary',
+              }}
+            >
+              Confidence:{' '}
+              {captureResultV2.scenarioRecommendation.confidence.replace(
+                /_/g,
+                ' ',
+              )}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-xs)',
+                color: 'text.secondary',
+                lineHeight: 1.5,
+              }}
+            >
+              Code fit: {scenarioFitSummary.comparisonSummary}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-xs)',
+                color: 'text.secondary',
+                lineHeight: 1.5,
+              }}
+            >
+              Envelope check: {scenarioFitSummary.headroomSummary}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-xs)',
+                color: 'text.secondary',
+                lineHeight: 1.5,
+              }}
+            >
+              {scenarioFitSummary.heritageSummary}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-xs)',
+                color: 'text.secondary',
+              }}
+            >
               Reasons:{' '}
               {captureResultV2.scenarioRecommendation.reasonCodes
                 .map((code) => code.replace(/_/g, ' ').toLowerCase())
                 .join(', ')}
             </Typography>
+          </Card>
+
+          <Card
+            sx={{
+              p: 'var(--ob-space-125)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-075)',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-050)',
+              }}
+            >
+              <ViewInArIcon
+                sx={{
+                  fontSize: 'var(--ob-size-icon-sm)',
+                  color: 'info.main',
+                }}
+              />
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  color: 'text.secondary',
+                }}
+              >
+                Starter Model Assumptions
+              </Typography>
+            </Box>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-sm)',
+                color: 'text.secondary',
+                lineHeight: 1.5,
+              }}
+            >
+              These defaults shape the first scenario-specific model before
+              deeper engineering inputs are added.
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-xs)',
+                color: 'text.secondary',
+                lineHeight: 1.5,
+              }}
+            >
+              {starterModelAssumptionSourceLine}
+            </Typography>
+            {starterModelAssumptionLines.map((line) => (
+              <Typography
+                key={line}
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                  lineHeight: 1.5,
+                }}
+              >
+                {line}
+              </Typography>
+            ))}
           </Card>
         </Box>
       </section>

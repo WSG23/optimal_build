@@ -57,6 +57,104 @@
     color: var(--ob-color-text-secondary);
 }
 
+.site-acquisition__preview-viewer-shell,
+.site-acquisition__preview-viewer-empty {
+    border: 1px solid var(--ob-color-border-subtle);
+    border-radius: var(--ob-radius-sm);
+    background: var(--ob-color-surface-secondary, rgba(15, 23, 42, 0.82));
+}
+
+.site-acquisition__preview-viewer-shell {
+    padding: var(--ob-space-200);
+}
+
+.site-acquisition__preview-viewer-canvas {
+    width: 100%;
+    border-radius: var(--ob-radius-sm);
+    overflow: hidden;
+}
+
+.site-acquisition__preview-viewer-empty {
+    padding: var(--ob-space-250);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--ob-space-200);
+}
+
+.site-acquisition__preview-viewer-state {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ob-space-150);
+    min-width: 0;
+    flex: 1 1 20rem;
+}
+
+.site-acquisition__preview-viewer-copy {
+    min-width: 0;
+}
+
+.site-acquisition__preview-viewer-eyebrow {
+    margin: 0 0 var(--ob-space-050);
+    font-size: var(--ob-font-size-xs);
+    font-weight: var(--ob-font-weight-semibold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ob-color-text-muted);
+}
+
+.site-acquisition__preview-viewer-title {
+    margin: 0 0 var(--ob-space-050);
+    font-size: var(--ob-font-size-lg);
+    font-weight: var(--ob-font-weight-semibold);
+    color: var(--ob-color-text-primary);
+}
+
+.site-acquisition__preview-viewer-body {
+    margin: 0;
+    max-width: 34rem;
+    font-size: var(--ob-font-size-sm);
+    line-height: 1.6;
+    color: var(--ob-color-text-secondary);
+}
+
+.site-acquisition__preview-viewer-note {
+    margin: var(--ob-space-150) 0 0;
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-secondary);
+}
+
+.site-acquisition__preview-viewer-note--warning {
+    color: var(--ob-warning-600);
+}
+
+.site-acquisition__preview-viewer-note--error {
+    color: var(--ob-error-500);
+}
+
+.site-acquisition__preview-viewer-thumb {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-100);
+    margin-top: var(--ob-space-150);
+}
+
+.site-acquisition__preview-viewer-thumb-label {
+    font-size: var(--ob-font-size-xs);
+    color: var(--ob-color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.site-acquisition__preview-viewer-thumb-image {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--ob-radius-sm);
+    object-fit: cover;
+    border: 1px solid var(--ob-color-border-subtle);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Geometry Detail Controls                                                    */
 /* -------------------------------------------------------------------------- */

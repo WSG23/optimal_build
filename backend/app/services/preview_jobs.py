@@ -32,7 +32,7 @@ from app.utils import metrics
 
 
 def _serialise_layers(
-    layers: Sequence[Mapping[str, object] | _HasModelDump]
+    layers: Sequence[Mapping[str, object] | _HasModelDump],
 ) -> list[dict[str, object]]:
     serialised: list[dict[str, object]] = []
     for entry in layers:
@@ -83,6 +83,7 @@ class PreviewJobService:
         camera_orbit: Mapping[str, float] | None = None,
         geometry_detail_level: str | None = None,
         color_legend: Sequence[Mapping[str, object]] | None = None,
+        metadata_extras: Mapping[str, object] | None = None,
     ) -> PreviewJob:
         """Create a preview job and enqueue it for asynchronous rendering."""
 
@@ -121,6 +122,8 @@ class PreviewJobService:
                 "color_legend": legend_payload,
                 "jurisdiction_code": jurisdiction_code,
             }
+            if metadata_extras:
+                job_metadata.update(dict(metadata_extras))
             job = PreviewJob(
                 property_id=property_id,
                 scenario=scenario,

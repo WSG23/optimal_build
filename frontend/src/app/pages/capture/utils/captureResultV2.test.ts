@@ -166,6 +166,7 @@ describe('captureResultV2', () => {
     const capturedProperty = buildCapturedProperty()
     const previewJob: PreviewJob = {
       id: 'preview-job-1',
+      propertyId: capturedProperty.propertyId,
       scenario: 'underused_asset',
       status: 'ready',
       requestedAt: '2026-04-07T09:34:05Z',
@@ -177,6 +178,27 @@ describe('captureResultV2', () => {
       assetVersion: '20260407093405',
       message: null,
       geometryDetailLevel: 'medium',
+      starterModelAssumptions: {
+        wallThicknessMm: 230,
+        coreRatioPct: 17,
+        commonAreaRatioPct: 13,
+        floorToFloorM: 4,
+        clearCeilingM: 2.9,
+        hvacSpaceRatioPct: 7,
+        electricalSpaceRatioPct: 4,
+        structuralGridNote: 'selective repositioning',
+        source: 'hybrid',
+        retentionStrategy: 'selective_repositioning',
+        efficiencyFactor: 0.99,
+        provenance: {
+          summary: 'rules_with_property_adjustments',
+          fields: {
+            floor_to_floor_m: 'property_specific',
+            efficiency_factor: 'property_specific',
+          },
+          adjustments: ['older_building_age'],
+        },
+      },
     }
 
     capturedProperty.previewJobs = [previewJob]
@@ -217,7 +239,17 @@ describe('captureResultV2', () => {
         'massing_layers',
       ]),
     )
-    expect(resultV2.engineeringAssumptions.source).toBe('rules')
+    expect(resultV2.engineeringAssumptions.source).toBe('hybrid')
+    expect(resultV2.engineeringAssumptions.floorToFloorM).toBe(4)
+    expect(resultV2.engineeringAssumptions.retentionStrategy).toBe(
+      'selective_repositioning',
+    )
+    expect(resultV2.engineeringAssumptions.provenance).toEqual(
+      expect.objectContaining({
+        summary: 'rules_with_property_adjustments',
+        adjustments: ['older_building_age'],
+      }),
+    )
   })
 
   it('binds the starter model to the recommended or overridden scenario instead of the first preview job', () => {

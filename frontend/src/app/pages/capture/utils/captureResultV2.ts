@@ -166,9 +166,22 @@ export function buildScenarioRecommendation(
   }
 }
 
-function buildEngineeringAssumptions(
+function buildFallbackEngineeringAssumptions(
   recommendedScenario: DevelopmentScenario,
 ): CaptureEngineeringAssumptionsV2 {
+  const rulesOnlyProvenance = {
+    summary: 'frontend_fallback_defaults',
+    fields: {
+      wallThicknessMm: 'heuristic_fallback',
+      coreRatioPct: 'heuristic_fallback',
+      commonAreaRatioPct: 'heuristic_fallback',
+      floorToFloorM: 'heuristic_fallback',
+      clearCeilingM: 'heuristic_fallback',
+      hvacSpaceRatioPct: 'heuristic_fallback',
+      electricalSpaceRatioPct: 'heuristic_fallback',
+    },
+    adjustments: [],
+  }
   switch (recommendedScenario) {
     case 'raw_land':
     case 'mixed_use_redevelopment':
@@ -181,7 +194,8 @@ function buildEngineeringAssumptions(
         hvacSpaceRatioPct: 6,
         electricalSpaceRatioPct: 3,
         structuralGridNote: 'Preliminary new-build defaults',
-        source: 'rules',
+        source: 'heuristic_fallback',
+        provenance: rulesOnlyProvenance,
       }
     case 'heritage_property':
       return {
@@ -193,7 +207,8 @@ function buildEngineeringAssumptions(
         hvacSpaceRatioPct: 8,
         electricalSpaceRatioPct: 4,
         structuralGridNote: 'Preliminary conservation retrofit defaults',
-        source: 'rules',
+        source: 'heuristic_fallback',
+        provenance: rulesOnlyProvenance,
       }
     case 'existing_building':
     case 'underused_asset':
@@ -207,9 +222,26 @@ function buildEngineeringAssumptions(
         hvacSpaceRatioPct: 8,
         electricalSpaceRatioPct: 4,
         structuralGridNote: 'Preliminary renovation defaults',
-        source: 'rules',
+        source: 'heuristic_fallback',
+        provenance: rulesOnlyProvenance,
       }
   }
+}
+
+function buildEngineeringAssumptions(
+  capturedProperty: SiteAcquisitionResult,
+  recommendedScenario: DevelopmentScenario,
+): CaptureEngineeringAssumptionsV2 {
+  const previewJob = selectPreviewJobForScenario(
+    capturedProperty.previewJobs,
+    recommendedScenario,
+  )
+
+  if (previewJob?.starterModelAssumptions) {
+    return previewJob.starterModelAssumptions
+  }
+
+  return buildFallbackEngineeringAssumptions(recommendedScenario)
 }
 
 function buildStarterModel(
@@ -380,6 +412,7 @@ export function mapSiteAcquisitionResultToCaptureResultV2(
     },
     codeConstraints,
     engineeringAssumptions: buildEngineeringAssumptions(
+      capturedProperty,
       scenarioRecommendation.recommended,
     ),
     starterModel: buildStarterModel(

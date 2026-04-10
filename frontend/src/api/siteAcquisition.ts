@@ -182,7 +182,21 @@ export interface CaptureEngineeringAssumptionsV2 {
   hvacSpaceRatioPct: number | null
   electricalSpaceRatioPct: number | null
   structuralGridNote: string | null
-  source: 'rules' | 'learned' | 'hybrid'
+  source:
+    | 'rules'
+    | 'learned'
+    | 'hybrid'
+    | 'property_specific'
+    | 'jurisdiction_default'
+    | 'heuristic_fallback'
+    | 'user_override'
+  retentionStrategy?: string | null
+  efficiencyFactor?: number | null
+  provenance?: {
+    summary: string | null
+    fields: Record<string, string>
+    adjustments: string[]
+  } | null
 }
 
 export interface CaptureStarterModelV2 {
@@ -565,6 +579,7 @@ export interface DeveloperPreviewJob {
   finishedAt: string | null
   message: string | null
   geometryDetailLevel: GeometryDetailLevel | null
+  starterModelAssumptions?: CaptureEngineeringAssumptionsV2 | null
 }
 
 const DEVELOPER_GPS_ENDPOINT = '/api/v1/developers/properties/log-gps'
@@ -978,63 +993,157 @@ function normaliseGeometryDetailLevel(
   return null
 }
 
+function mapCaptureEngineeringAssumptions(
+  payload: unknown,
+): CaptureEngineeringAssumptionsV2 | null {
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+
+  const item = payload as Record<string, unknown>
+  const retentionStrategy =
+    coerceString(item.retention_strategy) ??
+    coerceString(item.retentionStrategy) ??
+    null
+  const efficiencyFactor =
+    coerceNumeric(item.efficiency_factor) ??
+    coerceNumeric(item.efficiencyFactor) ??
+    null
+  const rawProvenance =
+    item.provenance && typeof item.provenance === 'object'
+      ? (item.provenance as Record<string, unknown>)
+      : null
+  const provenanceFieldsRaw =
+    rawProvenance?.fields && typeof rawProvenance.fields === 'object'
+      ? (rawProvenance.fields as Record<string, unknown>)
+      : null
+  const provenanceFields = provenanceFieldsRaw
+    ? Object.fromEntries(
+        Object.entries(provenanceFieldsRaw)
+          .map(([key, value]) => [key, coerceString(value)])
+          .filter((entry): entry is [string, string] => Boolean(entry[1])),
+      )
+    : {}
+  const provenanceAdjustments = Array.isArray(rawProvenance?.adjustments)
+    ? rawProvenance.adjustments
+        .map((value) => coerceString(value) ?? '')
+        .filter((value): value is string => value.length > 0)
+    : []
+  const sourceValue =
+    coerceString(item.source)?.toLowerCase() ??
+    (Object.keys(provenanceFields).length > 0 ? 'rules' : null)
+  const source: CaptureEngineeringAssumptionsV2['source'] =
+    sourceValue === 'rules' ||
+    sourceValue === 'learned' ||
+    sourceValue === 'hybrid' ||
+    sourceValue === 'property_specific' ||
+    sourceValue === 'jurisdiction_default' ||
+    sourceValue === 'heuristic_fallback' ||
+    sourceValue === 'user_override'
+      ? sourceValue
+      : 'rules'
+
+  return {
+    wallThicknessMm:
+      coerceNumeric(item.wall_thickness_mm) ??
+      coerceNumeric(item.wallThicknessMm) ??
+      null,
+    coreRatioPct:
+      coerceNumeric(item.core_ratio_pct) ??
+      coerceNumeric(item.coreRatioPct) ??
+      null,
+    commonAreaRatioPct:
+      coerceNumeric(item.common_area_ratio_pct) ??
+      coerceNumeric(item.commonAreaRatioPct) ??
+      null,
+    floorToFloorM:
+      coerceNumeric(item.floor_to_floor_m) ??
+      coerceNumeric(item.floorToFloorM) ??
+      null,
+    clearCeilingM:
+      coerceNumeric(item.clear_ceiling_m) ??
+      coerceNumeric(item.clearCeilingM) ??
+      null,
+    hvacSpaceRatioPct:
+      coerceNumeric(item.hvac_space_ratio_pct) ??
+      coerceNumeric(item.hvacSpaceRatioPct) ??
+      null,
+    electricalSpaceRatioPct:
+      coerceNumeric(item.electrical_space_ratio_pct) ??
+      coerceNumeric(item.electricalSpaceRatioPct) ??
+      null,
+    structuralGridNote: retentionStrategy
+      ? retentionStrategy.replace(/_/g, ' ')
+      : null,
+    source,
+    retentionStrategy,
+    efficiencyFactor,
+    provenance: rawProvenance
+      ? {
+          summary: coerceString(rawProvenance.summary) ?? null,
+          fields: provenanceFields,
+          adjustments: provenanceAdjustments,
+        }
+      : null,
+  }
+}
+
 function mapPreviewJobs(payload: unknown): DeveloperPreviewJob[] {
   if (!Array.isArray(payload)) {
     return []
   }
 
-  return payload
-    .map((entry) => {
-      if (!entry || typeof entry !== 'object') {
-        return null
-      }
-      const item = entry as Record<string, unknown>
-      const id = coerceString(item.id) ?? coerceString(item.preview_job_id)
-      const propertyId =
-        coerceString(item.property_id) ?? coerceString(item.propertyId)
-      const scenario = coerceString(item.scenario)
-      const status = coerceString(item.status)
-      if (!id || !propertyId || !scenario || !status) {
-        return null
-      }
-      return {
-        id,
-        propertyId,
-        scenario,
-        status,
-        previewUrl:
-          coerceString(item.preview_url) ??
-          coerceString(item.previewUrl) ??
-          null,
-        metadataUrl:
-          coerceString(item.metadata_url) ??
-          coerceString(item.metadataUrl) ??
-          null,
-        thumbnailUrl:
-          coerceString(item.thumbnail_url) ??
-          coerceString(item.thumbnailUrl) ??
-          null,
-        assetVersion:
-          coerceString(item.asset_version) ??
-          coerceString(item.assetVersion) ??
-          null,
-        requestedAt:
-          coerceString(item.requested_at) ??
-          coerceString(item.requestedAt) ??
-          '',
-        startedAt:
-          coerceString(item.started_at) ?? coerceString(item.startedAt) ?? null,
-        finishedAt:
-          coerceString(item.finished_at) ??
-          coerceString(item.finishedAt) ??
-          null,
-        message: coerceString(item.message) ?? null,
-        geometryDetailLevel: normaliseGeometryDetailLevel(
-          item.geometry_detail_level ?? item.geometryDetailLevel,
-        ),
-      }
+  const jobs: DeveloperPreviewJob[] = []
+
+  for (const entry of payload) {
+    if (!entry || typeof entry !== 'object') {
+      continue
+    }
+    const item = entry as Record<string, unknown>
+    const id = coerceString(item.id) ?? coerceString(item.preview_job_id)
+    const propertyId =
+      coerceString(item.property_id) ?? coerceString(item.propertyId)
+    const scenario = coerceString(item.scenario)
+    const status = coerceString(item.status)
+    if (!id || !propertyId || !scenario || !status) {
+      continue
+    }
+    jobs.push({
+      id,
+      propertyId,
+      scenario,
+      status,
+      previewUrl:
+        coerceString(item.preview_url) ?? coerceString(item.previewUrl) ?? null,
+      metadataUrl:
+        coerceString(item.metadata_url) ??
+        coerceString(item.metadataUrl) ??
+        null,
+      thumbnailUrl:
+        coerceString(item.thumbnail_url) ??
+        coerceString(item.thumbnailUrl) ??
+        null,
+      assetVersion:
+        coerceString(item.asset_version) ??
+        coerceString(item.assetVersion) ??
+        null,
+      requestedAt:
+        coerceString(item.requested_at) ?? coerceString(item.requestedAt) ?? '',
+      startedAt:
+        coerceString(item.started_at) ?? coerceString(item.startedAt) ?? null,
+      finishedAt:
+        coerceString(item.finished_at) ?? coerceString(item.finishedAt) ?? null,
+      message: coerceString(item.message) ?? null,
+      geometryDetailLevel: normaliseGeometryDetailLevel(
+        item.geometry_detail_level ?? item.geometryDetailLevel,
+      ),
+      starterModelAssumptions: mapCaptureEngineeringAssumptions(
+        item.starter_model_assumptions ?? item.starterModelAssumptions,
+      ),
     })
-    .filter((entry): entry is DeveloperPreviewJob => entry !== null)
+  }
+
+  return jobs
 }
 
 function mapFinanceBlueprint(
