@@ -39,7 +39,7 @@ export function HistoryTimelineView({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
       {assessmentHistory.map((entry, index) => {
-        const key = `${entry.recordedAt ?? 'draft'}-${index}`
+        const key = `${entry.recordedAt ?? 'draft'}-${entry.scenario ?? 'all'}-${entry.overallScore}`
         const matchesScenario =
           activeScenario === 'all' ||
           !entry.scenario ||
@@ -47,108 +47,155 @@ export function HistoryTimelineView({
         const recommendedPreview = entry.recommendedActions.slice(0, 2)
         const remainingActions =
           entry.recommendedActions.length - recommendedPreview.length
+        const isMostRecent = index === 0
 
         return (
-          <div
+          <details
             key={key}
+            open={isMostRecent}
             style={{
-              border: '1px solid #e5e5e7',
-              borderLeft: `4px solid ${
-                index === 0
-                  ? '#0a84ff'
-                  : matchesScenario
-                    ? '#34c759'
-                    : '#d2d2d7'
-              }`,
-              borderRadius: '4px',
+              border: '1px solid var(--ob-color-border-primary)',
+              borderRadius: 'var(--ob-radius-sm)',
               padding: '1rem 1.25rem',
-              background: index === 0 ? '#f0f9ff' : '#ffffff',
+              background: isMostRecent
+                ? 'var(--ob-color-surface-brand-subtle)'
+                : 'var(--ob-color-bg-primary)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.5rem',
+              gap: '0.75rem',
             }}
           >
-            {/* Header with scenario and timestamp */}
-            <div
+            <summary
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
                 flexWrap: 'wrap',
-                gap: '0.5rem',
+                gap: '0.65rem',
+                cursor: 'pointer',
+                listStyle: 'none',
               }}
             >
               <div
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.25rem',
+                  gap: '0.3rem',
                 }}
               >
                 <span
                   style={{
-                    fontSize: '0.75rem',
+                    fontSize: 'var(--ob-font-size-xs)',
                     fontWeight: 600,
                     letterSpacing: '0.08em',
                     textTransform: 'uppercase',
-                    color: '#6e6e73',
+                    color: isMostRecent
+                      ? 'var(--ob-color-brand-500)'
+                      : 'var(--ob-color-text-secondary)',
                   }}
                 >
-                  {index === 0
+                  {isMostRecent
                     ? 'Most recent inspection'
                     : `Inspection ${index + 1}`}
                 </span>
-                <span style={{ fontSize: '0.9375rem', fontWeight: 600 }}>
+                <span
+                  style={{
+                    fontSize: 'var(--ob-font-size-base)',
+                    fontWeight: 600,
+                    color: 'var(--ob-color-text-primary)',
+                  }}
+                >
                   {formatScenarioLabel(entry.scenario)}
+                </span>
+                <span
+                  style={{
+                    fontSize: 'var(--ob-font-size-xs)',
+                    color: matchesScenario
+                      ? 'var(--ob-color-status-success)'
+                      : 'var(--ob-color-text-secondary)',
+                  }}
+                >
+                  {matchesScenario
+                    ? 'Included in current scenario filter'
+                    : 'Outside current scenario filter'}
                 </span>
               </div>
               <div
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.2rem',
+                  gap: '0.25rem',
                   alignItems: 'flex-end',
+                  minWidth: '180px',
                 }}
               >
-                <span style={{ fontSize: '0.85rem', color: '#6e6e73' }}>
+                <span
+                  style={{
+                    fontSize: 'var(--ob-font-size-sm)',
+                    color: 'var(--ob-color-text-secondary)',
+                  }}
+                >
                   {formatRecordedTimestamp(entry.recordedAt)}
                 </span>
-                <span style={{ fontSize: '0.78rem', color: '#6e6e73' }}>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    maxWidth: '100%',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    fontSize: 'var(--ob-font-size-xs)',
+                    color: 'var(--ob-color-text-secondary)',
+                  }}
+                  title={entry.inspectorName?.trim() || 'Not recorded'}
+                >
                   Inspector:{' '}
                   <strong>
                     {entry.inspectorName?.trim() || 'Not recorded'}
                   </strong>
                 </span>
               </div>
-            </div>
+            </summary>
 
-            {/* Summary */}
-            <p style={{ margin: 0, fontSize: '0.875rem', color: '#3a3a3c' }}>
-              {entry.summary || 'No notes recorded.'}
-            </p>
-
-            {/* Rating, Score, Risk metrics */}
             <div
               style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '0.4rem',
-                fontSize: '0.8rem',
-                color: '#6e6e73',
+                display: 'grid',
+                gap: '0.75rem',
               }}
             >
-              <span>
-                Rating: <strong>{entry.overallRating}</strong>
-              </span>
-              <span>
-                Score: <strong>{entry.overallScore}/100</strong>
-              </span>
-              <span>
-                Risk level:{' '}
-                <strong style={{ textTransform: 'capitalize' }}>
-                  {entry.riskLevel}
-                </strong>
-              </span>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 'var(--ob-font-size-sm)',
+                  color: 'var(--ob-color-text-primary)',
+                  lineHeight: 1.5,
+                }}
+              >
+                {entry.summary || 'No notes recorded.'}
+              </p>
+
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
+                  fontSize: 'var(--ob-font-size-sm)',
+                  color: 'var(--ob-color-text-secondary)',
+                }}
+              >
+                <span>
+                  Rating: <strong>{entry.overallRating}</strong>
+                </span>
+                <span>
+                  Score: <strong>{entry.overallScore}/100</strong>
+                </span>
+                <span>
+                  Risk level:{' '}
+                  <strong style={{ textTransform: 'capitalize' }}>
+                    {entry.riskLevel}
+                  </strong>
+                </span>
+              </div>
             </div>
 
             {/* Recommended actions preview */}
@@ -156,10 +203,10 @@ export function HistoryTimelineView({
               <div style={{ marginTop: '0.25rem' }}>
                 <span
                   style={{
-                    fontSize: '0.75rem',
+                    fontSize: 'var(--ob-font-size-xs)',
                     fontWeight: 600,
                     textTransform: 'uppercase',
-                    color: '#6e6e73',
+                    color: 'var(--ob-color-text-secondary)',
                     letterSpacing: '0.06em',
                   }}
                 >
@@ -169,7 +216,7 @@ export function HistoryTimelineView({
                   {recommendedPreview.map((action, actionIndex) => (
                     <li
                       key={`${key}-action-${actionIndex}`}
-                      style={{ fontSize: '0.85rem' }}
+                      style={{ fontSize: 'var(--ob-font-size-sm)' }}
                     >
                       {action}
                     </li>
@@ -179,8 +226,8 @@ export function HistoryTimelineView({
                   <p
                     style={{
                       margin: '0.35rem 0 0',
-                      fontSize: '0.75rem',
-                      color: '#6e6e73',
+                      fontSize: 'var(--ob-font-size-xs)',
+                      color: 'var(--ob-color-text-secondary)',
                     }}
                   >
                     +{remainingActions} more actions recorded in this
@@ -195,10 +242,10 @@ export function HistoryTimelineView({
               <div style={{ marginTop: '0.35rem' }}>
                 <span
                   style={{
-                    fontSize: '0.75rem',
+                    fontSize: 'var(--ob-font-size-xs)',
                     fontWeight: 600,
                     textTransform: 'uppercase',
-                    color: '#6e6e73',
+                    color: 'var(--ob-color-text-secondary)',
                     letterSpacing: '0.06em',
                   }}
                 >
@@ -208,14 +255,14 @@ export function HistoryTimelineView({
                   {entry.attachments.map((attachment, attachmentIndex) => (
                     <li
                       key={`${key}-attachment-${attachmentIndex}`}
-                      style={{ fontSize: '0.85rem' }}
+                      style={{ fontSize: 'var(--ob-font-size-sm)' }}
                     >
                       {attachment.url ? (
                         <a
                           href={attachment.url}
                           target="_blank"
                           rel="noreferrer"
-                          style={{ color: '#0a84ff' }}
+                          style={{ color: 'var(--ob-color-brand-500)' }}
                         >
                           {attachment.label}
                         </a>
@@ -227,7 +274,7 @@ export function HistoryTimelineView({
                 </ul>
               </div>
             )}
-          </div>
+          </details>
         )
       })}
     </div>

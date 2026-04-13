@@ -16,23 +16,18 @@ import type {
   ScenarioComparisonDatum,
   SystemComparisonEntry,
 } from '../../types'
+import type {
+  HistoryComparisonSummary as ComparisonSummary,
+  HistoryRecommendedActionDiff as RecommendedActionDiff,
+} from '../../utils/historyComparisons'
+export type {
+  HistoryComparisonSummary as ComparisonSummary,
+  HistoryRecommendedActionDiff as RecommendedActionDiff,
+} from '../../utils/historyComparisons'
 
 // ============================================================================
 // Types
 // ============================================================================
-
-export interface ComparisonSummary {
-  scoreDelta: number
-  ratingTrend: 'improved' | 'declined' | 'same' | 'changed'
-  riskTrend: 'improved' | 'declined' | 'same' | 'changed'
-  ratingChanged: boolean
-  riskChanged: boolean
-}
-
-export interface RecommendedActionDiff {
-  newActions: string[]
-  clearedActions: string[]
-}
 
 export interface HistoryCompareViewProps {
   // Assessment data
@@ -78,7 +73,9 @@ function InspectionCard({
   formatScenarioLabel,
   formatRecordedTimestamp,
 }: InspectionCardProps) {
-  const labelColor = isCurrent ? 'var(--ob-color-brand-500)' : '#6e6e73'
+  const labelColor = isCurrent
+    ? 'var(--ob-color-brand-500)'
+    : 'var(--ob-color-text-secondary)'
 
   return (
     <div
@@ -180,7 +177,7 @@ function InspectionCard({
             textTransform: 'uppercase',
             background: entry.recordedAt
               ? 'var(--ob-success-50)'
-              : 'rgba(37, 99, 235, 0.12)',
+              : 'var(--ob-color-surface-brand-subtle)',
             color: entry.recordedAt
               ? 'var(--ob-success-800)'
               : 'var(--ob-color-brand-600)',
@@ -250,6 +247,10 @@ export function HistoryCompareView({
   formatScenarioLabel,
   formatRecordedTimestamp,
 }: HistoryCompareViewProps) {
+  const highlightedDeltaRows = systemComparisons.filter(
+    (entry) => typeof entry.scoreDelta === 'number' && entry.scoreDelta !== 0,
+  )
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Scenario comparison table (when visible) */}
@@ -266,6 +267,10 @@ export function HistoryCompareView({
           >
             <summary
               style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.75rem',
                 padding: '0.85rem 1rem',
                 fontSize: 'var(--ob-font-size-sm)',
                 fontWeight: 600,
@@ -274,7 +279,18 @@ export function HistoryCompareView({
                 outline: 'none',
               }}
             >
-              Detailed comparison table
+              <span>Detailed comparison table</span>
+              <span
+                aria-hidden="true"
+                style={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'var(--ob-color-text-secondary)',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Collapse
+              </span>
             </summary>
             <div
               style={{
@@ -311,7 +327,8 @@ export function HistoryCompareView({
                           letterSpacing: '0.08em',
                           textTransform: 'uppercase',
                           color: 'var(--ob-color-text-secondary)',
-                          borderBottom: '1px solid #ebebf0',
+                          borderBottom:
+                            '1px solid var(--ob-color-border-primary)',
                         }}
                       >
                         {header}
@@ -325,7 +342,8 @@ export function HistoryCompareView({
                       <td
                         style={{
                           padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
+                          borderBottom:
+                            '1px solid var(--ob-color-border-primary)',
                           whiteSpace: 'nowrap',
                         }}
                       >
@@ -353,7 +371,8 @@ export function HistoryCompareView({
                       <td
                         style={{
                           padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
+                          borderBottom:
+                            '1px solid var(--ob-color-border-primary)',
                           color: 'var(--ob-color-text-primary)',
                           fontSize: 'var(--ob-font-size-sm)',
                           maxWidth: '220px',
@@ -364,7 +383,8 @@ export function HistoryCompareView({
                       <td
                         style={{
                           padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
+                          borderBottom:
+                            '1px solid var(--ob-color-border-primary)',
                           color: 'var(--ob-color-text-primary)',
                           fontSize: 'var(--ob-font-size-sm)',
                           maxWidth: '220px',
@@ -393,7 +413,8 @@ export function HistoryCompareView({
                       <td
                         style={{
                           padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
+                          borderBottom:
+                            '1px solid var(--ob-color-border-primary)',
                           color: 'var(--ob-color-text-primary)',
                           fontSize: 'var(--ob-font-size-sm)',
                           whiteSpace: 'nowrap',
@@ -422,7 +443,8 @@ export function HistoryCompareView({
                       <td
                         style={{
                           padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
+                          borderBottom:
+                            '1px solid var(--ob-color-border-primary)',
                           color: 'var(--ob-color-text-primary)',
                           fontSize: 'var(--ob-font-size-sm)',
                           whiteSpace: 'nowrap',
@@ -439,7 +461,8 @@ export function HistoryCompareView({
                       <td
                         style={{
                           padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
+                          borderBottom:
+                            '1px solid var(--ob-color-border-primary)',
                           color: 'var(--ob-color-text-primary)',
                           fontSize: 'var(--ob-font-size-sm)',
                           maxWidth: '240px',
@@ -459,7 +482,8 @@ export function HistoryCompareView({
                       <td
                         style={{
                           padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
+                          borderBottom:
+                            '1px solid var(--ob-color-border-primary)',
                           color: 'var(--ob-color-text-primary)',
                           fontSize: 'var(--ob-font-size-sm)',
                           maxWidth: '200px',
@@ -470,7 +494,8 @@ export function HistoryCompareView({
                       <td
                         style={{
                           padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
+                          borderBottom:
+                            '1px solid var(--ob-color-border-primary)',
                           color: 'var(--ob-color-text-primary)',
                           fontSize: 'var(--ob-font-size-sm)',
                           whiteSpace: 'nowrap',
@@ -481,7 +506,8 @@ export function HistoryCompareView({
                       <td
                         style={{
                           padding: '0.85rem 1rem',
-                          borderBottom: '1px solid #f4f4f8',
+                          borderBottom:
+                            '1px solid var(--ob-color-border-primary)',
                           color: 'var(--ob-color-text-primary)',
                           fontSize: 'var(--ob-font-size-sm)',
                           whiteSpace: 'nowrap',
@@ -572,7 +598,7 @@ export function HistoryCompareView({
                         ? 'var(--ob-success-700)'
                         : comparisonSummary.scoreDelta < 0
                           ? 'var(--ob-error-700)'
-                          : '#6e6e73',
+                          : 'var(--ob-color-text-secondary)',
                   }}
                 >
                   {comparisonSummary.scoreDelta > 0 ? '+' : ''}
@@ -697,6 +723,15 @@ export function HistoryCompareView({
               {systemComparisons.map((entry) => {
                 const scoreDeltaValue =
                   typeof entry.scoreDelta === 'number' ? entry.scoreDelta : null
+                const isImproved =
+                  scoreDeltaValue !== null && scoreDeltaValue > 0
+                const isDeclined =
+                  scoreDeltaValue !== null && scoreDeltaValue < 0
+                const rowBackground = isImproved
+                  ? 'var(--ob-success-50)'
+                  : isDeclined
+                    ? 'var(--ob-color-surface-error)'
+                    : 'transparent'
                 return (
                   <div
                     key={entry.name}
@@ -708,6 +743,9 @@ export function HistoryCompareView({
                       alignItems: 'center',
                       fontSize: 'var(--ob-font-size-sm)',
                       color: 'var(--ob-color-text-primary)',
+                      padding: '0.55rem 0.6rem',
+                      borderRadius: 'var(--ob-radius-xs)',
+                      background: rowBackground,
                     }}
                   >
                     <span style={{ fontWeight: 600 }}>{entry.name}</span>
@@ -726,12 +764,12 @@ export function HistoryCompareView({
                         fontWeight: 600,
                         color:
                           scoreDeltaValue === null
-                            ? '#6e6e73'
+                            ? 'var(--ob-color-text-secondary)'
                             : scoreDeltaValue > 0
                               ? 'var(--ob-success-700)'
                               : scoreDeltaValue < 0
                                 ? 'var(--ob-error-700)'
-                                : '#6e6e73',
+                                : 'var(--ob-color-text-secondary)',
                       }}
                     >
                       {scoreDeltaValue === null
@@ -744,6 +782,44 @@ export function HistoryCompareView({
                 )
               })}
             </div>
+            {highlightedDeltaRows.length > 0 ? (
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'var(--ob-color-text-secondary)',
+                }}
+              >
+                {highlightedDeltaRows.map((entry) => {
+                  const delta = entry.scoreDelta as number
+                  return (
+                    <span
+                      key={`delta-chip-${entry.name}`}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: 'var(--ob-radius-pill)',
+                        background:
+                          delta > 0
+                            ? 'var(--ob-success-50)'
+                            : 'var(--ob-color-surface-error)',
+                        color:
+                          delta > 0
+                            ? 'var(--ob-success-800)'
+                            : 'var(--ob-color-status-error)',
+                      }}
+                    >
+                      <strong>{entry.name}</strong>
+                      {delta > 0 ? `+${delta}` : delta}
+                    </span>
+                  )
+                })}
+              </div>
+            ) : null}
           </div>
 
           {/* Recommended action diff */}
@@ -803,7 +879,7 @@ export function HistoryCompareView({
                   <p
                     style={{
                       margin: '0.35rem 0 0',
-                      fontSize: '0.825rem',
+                      fontSize: 'var(--ob-font-size-sm)',
                       color: 'var(--ob-color-text-secondary)',
                     }}
                   >
@@ -819,7 +895,7 @@ export function HistoryCompareView({
                     fontSize: 'var(--ob-font-size-sm)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    color: '#0071e3',
+                    color: 'var(--ob-color-brand-500)',
                   }}
                 >
                   Completed / Cleared
@@ -842,7 +918,7 @@ export function HistoryCompareView({
                   <p
                     style={{
                       margin: '0.35rem 0 0',
-                      fontSize: '0.825rem',
+                      fontSize: 'var(--ob-font-size-sm)',
                       color: 'var(--ob-color-text-secondary)',
                     }}
                   >
@@ -900,7 +976,7 @@ export function HistoryCompareView({
                             borderBottom:
                               '1px solid var(--ob-color-border-primary)',
                             fontWeight: 600,
-                            fontSize: '0.8rem',
+                            fontSize: 'var(--ob-font-size-sm)',
                             letterSpacing: '0.04em',
                             textTransform: 'uppercase',
                           }}
@@ -918,7 +994,8 @@ export function HistoryCompareView({
                         <td
                           style={{
                             padding: '0.75rem 1rem',
-                            borderBottom: '1px solid #f4f4f8',
+                            borderBottom:
+                              '1px solid var(--ob-color-border-primary)',
                             fontWeight: 600,
                           }}
                         >
@@ -927,7 +1004,8 @@ export function HistoryCompareView({
                         <td
                           style={{
                             padding: '0.75rem 1rem',
-                            borderBottom: '1px solid #f4f4f8',
+                            borderBottom:
+                              '1px solid var(--ob-color-border-primary)',
                             color: 'var(--ob-color-text-secondary)',
                             fontSize: 'var(--ob-font-size-sm)',
                           }}
@@ -937,7 +1015,8 @@ export function HistoryCompareView({
                         <td
                           style={{
                             padding: '0.75rem 1rem',
-                            borderBottom: '1px solid #f4f4f8',
+                            borderBottom:
+                              '1px solid var(--ob-color-border-primary)',
                             fontWeight: 600,
                           }}
                         >
@@ -946,7 +1025,8 @@ export function HistoryCompareView({
                         <td
                           style={{
                             padding: '0.75rem 1rem',
-                            borderBottom: '1px solid #f4f4f8',
+                            borderBottom:
+                              '1px solid var(--ob-color-border-primary)',
                           }}
                         >
                           {assessment.overallScore}/100
@@ -954,7 +1034,8 @@ export function HistoryCompareView({
                         <td
                           style={{
                             padding: '0.75rem 1rem',
-                            borderBottom: '1px solid #f4f4f8',
+                            borderBottom:
+                              '1px solid var(--ob-color-border-primary)',
                             textTransform: 'capitalize',
                           }}
                         >
@@ -963,7 +1044,8 @@ export function HistoryCompareView({
                         <td
                           style={{
                             padding: '0.75rem 1rem',
-                            borderBottom: '1px solid #f4f4f8',
+                            borderBottom:
+                              '1px solid var(--ob-color-border-primary)',
                             color: 'var(--ob-color-text-secondary)',
                           }}
                         >

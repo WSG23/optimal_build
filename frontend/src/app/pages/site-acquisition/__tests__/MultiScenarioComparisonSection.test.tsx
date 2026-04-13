@@ -155,13 +155,13 @@ describe('MultiScenarioComparisonSection', () => {
       />,
     )
 
-    expect(screen.getAllByText('RECORDED').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('ANALYZED').length).toBeGreaterThan(0)
     expect(
       screen.getAllByText('FMT:2026-01-05T01:07:47Z').length,
     ).toBeGreaterThan(0)
-    expect(screen.getByRole('link', { name: /full feasibility/i })).toHaveClass(
-      'multi-scenario__full-feasibility-link',
-    )
+    expect(
+      screen.getByRole('link', { name: /continue to feasibility/i }),
+    ).toHaveClass('multi-scenario__full-feasibility-link')
     expect(screen.getByText('LAST UPDATED')).toBeInTheDocument()
   })
 })

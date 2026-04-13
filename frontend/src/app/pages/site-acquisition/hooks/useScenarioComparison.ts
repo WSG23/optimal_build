@@ -28,8 +28,6 @@ import type {
   SystemComparisonEntry,
 } from '../types'
 import {
-  CONDITION_RATINGS,
-  CONDITION_RISK_LEVELS,
   INSIGHT_SEVERITY_ORDER,
   QUICK_ANALYSIS_HISTORY_LIMIT,
   SCENARIO_METRIC_LABELS,
@@ -48,6 +46,11 @@ import {
   safeNumber,
   slugify,
 } from '../utils/formatters'
+import {
+  buildHistoryComparisonSummary,
+  buildHistoryRecommendedActionDiff,
+  buildHistorySystemComparisons,
+} from '../utils/historyComparisons'
 
 // ============================================================================
 // Types
@@ -399,35 +402,10 @@ export function useScenarioComparison({
   // ============================================================================
 
   const systemComparisons = useMemo(() => {
-    if (!latestAssessmentEntry && !previousAssessmentEntry) {
-      return []
-    }
-    const names = new Set<string>()
-    ;(latestAssessmentEntry?.systems ?? []).forEach((system) => {
-      names.add(system.name)
-    })
-    ;(previousAssessmentEntry?.systems ?? []).forEach((system) => {
-      names.add(system.name)
-    })
-    return Array.from(names).map((name) => {
-      const latestSystem =
-        latestAssessmentEntry?.systems.find((system) => system.name === name) ??
-        null
-      const previousSystem =
-        previousAssessmentEntry?.systems.find(
-          (system) => system.name === name,
-        ) ?? null
-      const scoreDelta =
-        latestSystem && previousSystem
-          ? latestSystem.score - previousSystem.score
-          : undefined
-      return {
-        name,
-        latest: latestSystem,
-        previous: previousSystem,
-        scoreDelta,
-      }
-    })
+    return buildHistorySystemComparisons(
+      latestAssessmentEntry,
+      previousAssessmentEntry,
+    )
   }, [latestAssessmentEntry, previousAssessmentEntry])
 
   const systemComparisonMap = useMemo(
@@ -899,77 +877,17 @@ export function useScenarioComparison({
   // ============================================================================
 
   const recommendedActionDiff = useMemo(() => {
-    if (!latestAssessmentEntry || !previousAssessmentEntry) {
-      return { newActions: [], clearedActions: [] }
-    }
-    const latestSet = new Set(latestAssessmentEntry.recommendedActions)
-    const previousSet = new Set(previousAssessmentEntry.recommendedActions)
-    const newActions = Array.from(latestSet).filter(
-      (action) => !previousSet.has(action),
+    return buildHistoryRecommendedActionDiff(
+      latestAssessmentEntry,
+      previousAssessmentEntry,
     )
-    const clearedActions = Array.from(previousSet).filter(
-      (action) => !latestSet.has(action),
-    )
-    return { newActions, clearedActions }
   }, [latestAssessmentEntry, previousAssessmentEntry])
 
   const comparisonSummary = useMemo(() => {
-    if (!latestAssessmentEntry || !previousAssessmentEntry) {
-      return null
-    }
-    const scoreDelta =
-      latestAssessmentEntry.overallScore - previousAssessmentEntry.overallScore
-    const latestRatingIndex = (CONDITION_RATINGS as readonly string[]).indexOf(
-      latestAssessmentEntry.overallRating,
+    return buildHistoryComparisonSummary(
+      latestAssessmentEntry,
+      previousAssessmentEntry,
     )
-    const previousRatingIndex = (
-      CONDITION_RATINGS as readonly string[]
-    ).indexOf(previousAssessmentEntry.overallRating)
-    let ratingTrend: 'improved' | 'declined' | 'same' | 'changed' = 'same'
-    if (latestRatingIndex !== -1 && previousRatingIndex !== -1) {
-      if (latestRatingIndex < previousRatingIndex) {
-        ratingTrend = 'improved'
-      } else if (latestRatingIndex > previousRatingIndex) {
-        ratingTrend = 'declined'
-      } else {
-        ratingTrend = 'same'
-      }
-    } else if (
-      latestAssessmentEntry.overallRating !==
-      previousAssessmentEntry.overallRating
-    ) {
-      ratingTrend = 'changed'
-    }
-    const latestRiskIndex = (
-      CONDITION_RISK_LEVELS as readonly string[]
-    ).indexOf(latestAssessmentEntry.riskLevel)
-    const previousRiskIndex = (
-      CONDITION_RISK_LEVELS as readonly string[]
-    ).indexOf(previousAssessmentEntry.riskLevel)
-    let riskTrend: 'improved' | 'declined' | 'same' | 'changed' = 'same'
-    if (latestRiskIndex !== -1 && previousRiskIndex !== -1) {
-      if (latestRiskIndex < previousRiskIndex) {
-        riskTrend = 'improved'
-      } else if (latestRiskIndex > previousRiskIndex) {
-        riskTrend = 'declined'
-      } else {
-        riskTrend = 'same'
-      }
-    } else if (
-      latestAssessmentEntry.riskLevel !== previousAssessmentEntry.riskLevel
-    ) {
-      riskTrend = 'changed'
-    }
-    return {
-      scoreDelta,
-      ratingTrend,
-      riskTrend,
-      ratingChanged:
-        latestAssessmentEntry.overallRating !==
-        previousAssessmentEntry.overallRating,
-      riskChanged:
-        latestAssessmentEntry.riskLevel !== previousAssessmentEntry.riskLevel,
-    }
   }, [latestAssessmentEntry, previousAssessmentEntry])
 
   // ============================================================================
