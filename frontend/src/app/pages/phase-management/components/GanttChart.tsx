@@ -15,21 +15,27 @@ interface GanttChartProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  not_started: '#94a3b8',
-  planning: '#3b82f6',
-  in_progress: '#f59e0b', // Changed to orange for gradient
-  on_hold: '#ef4444',
-  completed: '#10b981',
-  cancelled: '#64748b',
+  not_started: 'var(--ob-neutral-400)',
+  planning: 'var(--ob-brand-500)',
+  in_progress: 'var(--ob-warning-500)',
+  on_hold: 'var(--ob-error-500)',
+  completed: 'var(--ob-success-500)',
+  cancelled: 'var(--ob-neutral-500)',
 }
 
 const BAR_GRADIENTS: Record<string, string> = {
-  not_started: 'linear-gradient(90deg, #64748b 0%, #94a3b8 100%)',
-  planning: 'linear-gradient(90deg, #2563eb 0%, #60a5fa 100%)',
-  in_progress: 'linear-gradient(90deg, #ea580c 0%, #fbbf24 100%)',
-  on_hold: 'linear-gradient(90deg, #dc2626 0%, #ef4444 100%)',
-  completed: 'linear-gradient(90deg, #059669 0%, #34d399 100%)',
-  cancelled: 'linear-gradient(90deg, #475569 0%, #64748b 100%)',
+  not_started:
+    'linear-gradient(90deg, var(--ob-neutral-500) 0%, var(--ob-neutral-400) 100%)',
+  planning:
+    'linear-gradient(90deg, var(--ob-brand-600) 0%, var(--ob-brand-400) 100%)',
+  in_progress:
+    'linear-gradient(90deg, var(--ob-warning-600) 0%, var(--ob-warning-400) 100%)',
+  on_hold:
+    'linear-gradient(90deg, var(--ob-error-600) 0%, var(--ob-error-500) 100%)',
+  completed:
+    'linear-gradient(90deg, var(--ob-success-600) 0%, var(--ob-success-400) 100%)',
+  cancelled:
+    'linear-gradient(90deg, var(--ob-neutral-600) 0%, var(--ob-neutral-500) 100%)',
 }
 
 const DAY_WIDTH = 24 // pixels per day
@@ -102,8 +108,8 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
           backgroundImage: `
       repeating-linear-gradient(
         45deg,
-        rgba(255, 255, 255, 0.1),
-        rgba(255, 255, 255, 0.1) 10px,
+        var(--ob-overlay-white-subtle),
+        var(--ob-overlay-white-subtle) 10px,
         transparent 10px,
         transparent 20px
       ),
@@ -134,13 +140,13 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
           border: isSelected
             ? '2px solid #00f3ff'
             : task.isCritical
-              ? '1px solid rgba(255, 51, 102, 0.5)'
-              : '1px solid rgba(255, 255, 255, 0.1)',
+              ? '1px solid var(--ob-glow-error-color-30)'
+              : '1px solid var(--ob-overlay-white-subtle)',
           boxShadow: isSelected
-            ? '0 0 15px rgba(0, 243, 255, 0.3)'
+            ? '0 0 15px var(--ob-color-neon-cyan-muted)'
             : task.isCritical
-              ? '0 2px 8px rgba(255, 51, 102, 0.2)'
-              : '0 2px 4px rgba(0,0,0,0.2)',
+              ? '0 2px 8px var(--ob-glow-error-color-30)'
+              : '0 2px 4px var(--ob-overlay-medium)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -162,8 +168,8 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
             bottom: 0,
             width: `${task.progress * 100}%`,
             background:
-              'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 100%)',
-            borderRight: '1px solid rgba(255,255,255,0.4)',
+              'linear-gradient(90deg, rgba(255,255,255,0) 0%, var(--ob-overlay-white-medium) 100%)',
+            borderRight: '1px solid var(--ob-overlay-white-medium)',
           }}
         />
 
@@ -176,10 +182,10 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
           <Typography
             variant="caption"
             sx={{
-              color: '#fff',
+              color: 'var(--ob-color-text-on-dark)',
               fontWeight: 600,
               fontSize: '0.7rem',
-              textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+              textShadow: '0 1px 2px var(--ob-overlay-dark-heavy)',
             }}
           >
             {task.name}
@@ -188,8 +194,8 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
             <WarningAmberIcon
               sx={{
                 fontSize: 14,
-                color: '#fff',
-                filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
+                color: 'var(--ob-color-text-on-dark)',
+                filter: 'drop-shadow(0 0 2px var(--ob-overlay-dark-heavy))',
               }}
             />
           )}
@@ -197,8 +203,8 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
             <AccountBalanceIcon
               sx={{
                 fontSize: 14,
-                color: '#fff',
-                filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
+                color: 'var(--ob-color-text-on-dark)',
+                filter: 'drop-shadow(0 0 2px var(--ob-overlay-dark-heavy))',
               }}
             />
           )}
@@ -206,8 +212,8 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
             <PeopleIcon
               sx={{
                 fontSize: 14,
-                color: '#fff',
-                filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))',
+                color: 'var(--ob-color-text-on-dark)',
+                filter: 'drop-shadow(0 0 2px var(--ob-overlay-dark-heavy))',
               }}
             />
           )}
@@ -264,8 +270,8 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
       sx={{
         height: `${HEADER_HEIGHT}px`,
         display: 'flex',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        backgroundColor: 'rgba(30,30,30,0.9)',
+        borderBottom: '1px solid var(--ob-overlay-white-subtle)',
+        backgroundColor: 'var(--ob-color-surface-primary)',
         backdropFilter: 'blur(var(--ob-blur-md))',
         position: 'sticky',
         top: 0,
@@ -277,13 +283,16 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
         sx={{
           width: `${LEFT_PANEL_WIDTH}px`,
           minWidth: `${LEFT_PANEL_WIDTH}px`,
-          borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRight: '1px solid var(--ob-overlay-white-subtle)',
           display: 'flex',
           alignItems: 'center',
           px: 2,
         }}
       >
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#fff' }}>
+        <Typography
+          variant="subtitle2"
+          sx={{ fontWeight: 600, color: 'var(--ob-color-text-on-dark)' }}
+        >
           PHASE
         </Typography>
       </Box>
@@ -296,7 +305,7 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
               key={idx}
               sx={{
                 width: `${month.days * DAY_WIDTH}px`,
-                borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+                borderRight: '1px solid var(--ob-overlay-white-subtle)',
                 textAlign: 'center',
                 py: 1,
               }}
@@ -305,7 +314,7 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
                 variant="caption"
                 sx={{
                   fontWeight: 600,
-                  color: 'rgba(255,255,255,0.7)',
+                  color: 'var(--ob-color-text-secondary)',
                   textTransform: 'uppercase',
                 }}
               >
@@ -359,7 +368,7 @@ export function GanttChart({
       sx={{
         overflow: 'auto',
         maxHeight: 'calc(100vh - 300px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: '1px solid var(--ob-overlay-white-subtle)',
         background: 'transparent',
       }}
     >
@@ -429,10 +438,10 @@ export function GanttChart({
                   stroke={
                     selectedTaskId &&
                     (task.id === selectedTaskId || depId === selectedTaskId)
-                      ? '#00f3ff'
+                      ? 'var(--ob-color-neon-cyan)'
                       : isCriticalLink
-                        ? 'rgba(239, 68, 68, 0.4)'
-                        : 'rgba(255, 255, 255, 0.1)'
+                        ? 'var(--ob-glow-error-color-40)'
+                        : 'var(--ob-overlay-white-subtle)'
                   }
                   strokeWidth={isCriticalLink || isHighlighted ? 2 : 1}
                   style={{
@@ -452,15 +461,15 @@ export function GanttChart({
             sx={{
               display: 'flex',
               height: `${ROW_HEIGHT}px`,
-              borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+              borderBottom: '1px solid var(--ob-overlay-white-subtle)',
               backgroundColor:
                 selectedTaskId === task.id
-                  ? 'rgba(0, 243, 255, 0.05)'
+                  ? 'var(--ob-color-neon-cyan-muted)'
                   : 'transparent',
               '&:hover': {
                 backgroundColor:
                   selectedTaskId === task.id
-                    ? 'rgba(0, 243, 255, 0.05)'
+                    ? 'var(--ob-color-neon-cyan-muted)'
                     : 'rgba(255, 255, 255, 0.02)',
               },
             }}
@@ -470,7 +479,7 @@ export function GanttChart({
               sx={{
                 width: `${LEFT_PANEL_WIDTH}px`,
                 minWidth: `${LEFT_PANEL_WIDTH}px`,
-                borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRight: '1px solid var(--ob-overlay-white-subtle)',
                 display: 'flex',
                 alignItems: 'center',
                 px: 2,
@@ -484,8 +493,9 @@ export function GanttChart({
                   width: 8,
                   height: 8,
                   borderRadius: '50%',
-                  background: STATUS_COLORS[task.status] || '#94a3b8',
-                  boxShadow: `0 0 8px ${STATUS_COLORS[task.status] || '#94a3b8'}`,
+                  background:
+                    STATUS_COLORS[task.status] || 'var(--ob-neutral-400)',
+                  boxShadow: `0 0 8px ${STATUS_COLORS[task.status] || 'var(--ob-neutral-400)'}`,
                   flexShrink: 0,
                 }}
               />
@@ -496,7 +506,7 @@ export function GanttChart({
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  color: '#fff',
+                  color: 'var(--ob-color-text-on-dark)',
                 }}
               >
                 {task.name}
@@ -546,7 +556,7 @@ export function GanttChart({
                 top: HEADER_HEIGHT,
                 bottom: 60, // Leave room for legend
                 width: '2px',
-                background: '#00f3ff',
+                background: 'var(--ob-color-neon-cyan)',
                 boxShadow: '0 0 10px #00f3ff',
                 zIndex: 15,
                 pointerEvents: 'none',
@@ -558,7 +568,7 @@ export function GanttChart({
                   top: '-24px',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  background: '#00f3ff',
+                  background: 'var(--ob-color-neon-cyan)',
                   color: '#000',
                   fontSize: '0.65rem',
                   fontWeight: 'bold',
@@ -582,10 +592,10 @@ export function GanttChart({
           display: 'flex',
           gap: 3,
           p: 2,
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          borderTop: '1px solid var(--ob-overlay-white-subtle)',
           background: 'rgba(20, 20, 20, 0.95)',
           flexWrap: 'wrap',
-          color: '#fff',
+          color: 'var(--ob-color-text-on-dark)',
         }}
       >
         <Stack direction="row" spacing={0.5} alignItems="center">

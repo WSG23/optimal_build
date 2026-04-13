@@ -111,9 +111,9 @@ export function PhotoDocumentation({
   return (
     <section
       style={{
-        background: '#fff',
+        background: 'var(--ob-color-surface-primary)',
         border: '1px solid #e5e7eb',
-        borderRadius: '4px',
+        borderRadius: 'var(--ob-radius-sm)',
         padding: '1.5rem',
       }}
     >
@@ -132,7 +132,7 @@ export function PhotoDocumentation({
               margin: 0,
               fontSize: '1.125rem',
               fontWeight: 600,
-              color: '#1f2937',
+              color: 'var(--ob-color-text-primary)',
             }}
           >
             Photo Documentation
@@ -140,8 +140,8 @@ export function PhotoDocumentation({
           <p
             style={{
               margin: '0.25rem 0 0',
-              fontSize: '0.8125rem',
-              color: '#6b7280',
+              fontSize: 'var(--ob-font-size-xs)',
+              color: 'var(--ob-color-text-secondary)',
             }}
           >
             Capture and manage property photos with automatic watermarking
@@ -158,8 +158,8 @@ export function PhotoDocumentation({
         >
           <span
             style={{
-              fontSize: '0.8125rem',
-              color: '#6b7280',
+              fontSize: 'var(--ob-font-size-xs)',
+              color: 'var(--ob-color-text-secondary)',
             }}
           >
             Phase:
@@ -169,10 +169,10 @@ export function PhotoDocumentation({
             onChange={(e) => setPhase(e.target.value as PropertyPhase)}
             style={{
               padding: '0.375rem 0.75rem',
-              borderRadius: '6px',
+              borderRadius: 'var(--ob-radius-md)',
               border: '1px solid #d1d5db',
-              fontSize: '0.875rem',
-              background: '#fff',
+              fontSize: 'var(--ob-font-size-sm)',
+              background: 'var(--ob-color-surface-primary)',
               cursor: 'pointer',
             }}
           >
@@ -187,11 +187,11 @@ export function PhotoDocumentation({
         <div
           style={{
             padding: '0.75rem 1rem',
-            background: '#fef2f2',
+            background: 'var(--ob-color-surface-error)',
             border: '1px solid #fecaca',
-            borderRadius: '4px',
-            color: '#dc2626',
-            fontSize: '0.875rem',
+            borderRadius: 'var(--ob-radius-sm)',
+            color: 'var(--ob-color-status-error)',
+            fontSize: 'var(--ob-font-size-sm)',
             marginBottom: '1rem',
           }}
         >
@@ -204,11 +204,11 @@ export function PhotoDocumentation({
         <div
           style={{
             padding: '0.75rem 1rem',
-            background: '#fffbeb',
+            background: 'var(--ob-color-surface-warning)',
             border: '1px solid #fcd34d',
-            borderRadius: '4px',
-            color: '#92400e',
-            fontSize: '0.875rem',
+            borderRadius: 'var(--ob-radius-sm)',
+            color: 'var(--ob-color-status-warning)',
+            fontSize: 'var(--ob-font-size-sm)',
             marginBottom: '1rem',
           }}
         >
@@ -235,25 +235,25 @@ export function PhotoDocumentation({
         style={{
           marginTop: '1.5rem',
           padding: '1rem',
-          background: '#f9fafb',
-          borderRadius: '4px',
+          background: 'var(--ob-color-surface-secondary)',
+          borderRadius: 'var(--ob-radius-sm)',
           border: '1px solid #e5e7eb',
         }}
       >
         <h4
           style={{
             margin: '0 0 0.5rem',
-            fontSize: '0.875rem',
+            fontSize: 'var(--ob-font-size-sm)',
             fontWeight: 600,
-            color: '#374151',
+            color: 'var(--ob-color-text-primary)',
           }}
         >
           Watermark Information
         </h4>
         <div
           style={{
-            fontSize: '0.8125rem',
-            color: '#6b7280',
+            fontSize: 'var(--ob-font-size-xs)',
+            color: 'var(--ob-color-text-secondary)',
             lineHeight: 1.5,
           }}
         >
