@@ -9,18 +9,41 @@
  * Note: The FinanceWorkspace owns the page-level header and top tabs.
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 
 import { Box, Typography } from '@mui/material'
 
 import type { FinanceScenarioSummary } from '../../../api/finance'
 import { useTranslation } from '../../../i18n'
 import { Card } from '../../../components/canonical/Card'
-import { CapitalStackChart } from './CapitalStackChart'
 import { CapitalStackFacilityTable } from './CapitalStackFacilityTable'
 import { FinanceMetricsGrid } from './FinanceMetricsGrid'
 import { CapitalStackScenarioGrid } from './CapitalStackScenarioGrid'
 import { CapitalStackInsightBox } from './CapitalStackInsightBox'
+
+const CapitalStackChart = lazy(() =>
+  import('./CapitalStackChart').then((module) => ({
+    default: module.CapitalStackChart,
+  })),
+)
+
+function CapitalStackChartFallback() {
+  return (
+    <Box
+      sx={{
+        height: 'var(--ob-max-height-panel)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 'var(--ob-radius-sm)',
+        border: '1px solid var(--ob-color-border-subtle)',
+        bgcolor: 'rgba(255,255,255,0.02)',
+      }}
+    >
+      <Typography color="text.secondary">Loading comparison chart…</Typography>
+    </Box>
+  )
+}
 
 interface FinanceCapitalStackProps {
   scenarios: FinanceScenarioSummary[]
@@ -179,7 +202,9 @@ export function FinanceCapitalStack({
                   defaultValue: 'Scenario Comparison',
                 })}
               </Typography>
-              <CapitalStackChart scenarios={scenariosWithCapitalStack} />
+              <Suspense fallback={<CapitalStackChartFallback />}>
+                <CapitalStackChart scenarios={scenariosWithCapitalStack} />
+              </Suspense>
 
               <Box sx={{ mt: 'var(--ob-space-100)' }}>
                 <CapitalStackInsightBox

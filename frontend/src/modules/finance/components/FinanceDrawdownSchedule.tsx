@@ -11,7 +11,7 @@
  * Follows UI_STANDARDS.md for design tokens and canonical components.
  */
 
-import { useMemo, useState } from 'react'
+import { Suspense, lazy, useMemo, useState } from 'react'
 
 import { Box, Grid, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import {
@@ -21,13 +21,33 @@ import {
 
 import type { FinanceScenarioSummary } from '../../../api/finance'
 import { useTranslation } from '../../../i18n'
-import { DrawdownChart } from './DrawdownChart'
 import { DrawdownHeader } from './DrawdownHeader'
 import { DrawdownStatsCards } from './DrawdownStatsCards'
 import { DrawdownDetailsPanel } from './DrawdownDetailsPanel'
 import { DrawdownInsightBox } from './DrawdownInsightBox'
 import { ScenarioSelector } from './ScenarioSelector'
 import { Card } from '../../../components/canonical/Card'
+
+const DrawdownChart = lazy(() =>
+  import('./DrawdownChart').then((module) => ({
+    default: module.DrawdownChart,
+  })),
+)
+
+function DrawdownChartFallback() {
+  return (
+    <Card
+      sx={{
+        height: 'var(--ob-max-height-panel)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Box color="text.secondary">Loading funding chart…</Box>
+    </Card>
+  )
+}
 
 interface FinanceDrawdownScheduleProps {
   scenarios: FinanceScenarioSummary[]
@@ -175,7 +195,9 @@ export function FinanceDrawdownSchedule({
 
             {/* Chart View */}
             {chartViewMode === 'chart' && activeScenario && (
-              <DrawdownChart scenarios={[activeScenario]} />
+              <Suspense fallback={<DrawdownChartFallback />}>
+                <DrawdownChart scenarios={[activeScenario]} />
+              </Suspense>
             )}
 
             {/* Table View - legacy table for the selected scenario */}
