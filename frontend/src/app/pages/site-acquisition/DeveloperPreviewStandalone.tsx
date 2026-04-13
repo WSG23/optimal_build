@@ -13,6 +13,7 @@ import {
   normalisePreviewLayer,
   normaliseLegendEntry,
 } from './previewMetadata'
+import '../../../styles/developer-preview.css'
 
 const PATH_PATTERN = /^\/agents\/developers\/([^/]+)\/preview\/?$/
 const DETAIL_LABELS: Record<'simple' | 'medium', string> = {

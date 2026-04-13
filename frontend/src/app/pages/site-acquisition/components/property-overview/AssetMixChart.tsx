@@ -18,8 +18,6 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import { Box, Typography, SxProps, Theme } from '@mui/material'
-import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from 'recharts'
-import type { PieSectorDataItem } from 'recharts/types/polar/Pie'
 import { Card } from '../../../../../components/canonical/Card'
 
 export interface AssetMixItem {
@@ -74,31 +72,6 @@ const CHART_COLORS_RESOLVED = [
   '#ec4899', // Magenta
 ]
 
-/**
- * Active shape renderer for hover state on donut segments
- */
-function renderActiveShape(props: PieSectorDataItem) {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props
-
-  return (
-    <g>
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={(outerRadius ?? 0) + 6}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-        style={{
-          filter: `drop-shadow(0 0 8px ${fill})`,
-          transition: 'all 0.2s ease-out',
-        }}
-      />
-    </g>
-  )
-}
-
 export function AssetMixChart({
   data,
   title = 'Asset Allocation',
@@ -145,6 +118,31 @@ export function AssetMixChart({
       })),
     [data, totalPercentage],
   )
+
+  const ringSegments = useMemo(() => {
+    const size = 160
+    const strokeWidth = 22
+    const radius = (size - strokeWidth) / 2
+    const circumference = 2 * Math.PI * radius
+    let cumulativePercent = 0
+
+    return chartData.map((item) => {
+      const startPercent = cumulativePercent
+      const lengthPercent =
+        totalPercentage > 0 ? item.value / totalPercentage : 0
+      cumulativePercent += lengthPercent
+
+      return {
+        ...item,
+        center: size / 2,
+        radius,
+        strokeWidth,
+        circumference,
+        dashArray: `${Math.max(lengthPercent * circumference - 4, 0)} ${circumference}`,
+        rotate: startPercent * 360 - 90,
+      }
+    })
+  }, [chartData, totalPercentage])
 
   // Handlers for hover sync
   const handlePieEnter = useCallback((_: unknown, index: number) => {
@@ -241,39 +239,50 @@ export function AssetMixChart({
             minWidth: { md: 160 },
           }}
         >
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius="55%"
-                outerRadius="85%"
-                paddingAngle={2}
-                dataKey="value"
-                stroke="none"
-                activeIndex={activeIndex ?? undefined}
-                activeShape={renderActiveShape}
-                onMouseEnter={handlePieEnter}
+          <Box
+            component="svg"
+            viewBox="0 0 160 160"
+            sx={{ width: '100%', height: '100%', overflow: 'visible' }}
+          >
+            <circle
+              cx="80"
+              cy="80"
+              r="69"
+              fill="none"
+              stroke="var(--ob-color-border-subtle)"
+              strokeWidth="22"
+              opacity="0.24"
+            />
+            {ringSegments.map((entry, index) => (
+              <circle
+                key={entry.name}
+                cx={entry.center}
+                cy={entry.center}
+                r={entry.radius}
+                fill="none"
+                stroke={entry.colorResolved}
+                strokeWidth={
+                  activeIndex === index
+                    ? entry.strokeWidth + 4
+                    : entry.strokeWidth
+                }
+                strokeDasharray={entry.dashArray}
+                strokeLinecap="round"
+                transform={`rotate(${entry.rotate} ${entry.center} ${entry.center})`}
+                onMouseEnter={() => handlePieEnter(undefined, index)}
                 onMouseLeave={handlePieLeave}
-              >
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.color}
-                    style={{
-                      filter:
-                        activeIndex === index
-                          ? `drop-shadow(0 0 8px ${entry.colorResolved})`
-                          : `drop-shadow(0 0 3px ${entry.colorResolved}40)`,
-                      transition: 'filter 0.2s ease-out',
-                      cursor: 'pointer',
-                    }}
-                  />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
+                style={{
+                  cursor: 'pointer',
+                  filter:
+                    activeIndex === index
+                      ? `drop-shadow(0 0 8px ${entry.colorResolved})`
+                      : `drop-shadow(0 0 3px ${entry.colorResolved}40)`,
+                  transition:
+                    'filter 0.2s ease-out, stroke-width 0.2s ease-out',
+                }}
+              />
+            ))}
+          </Box>
 
           {/* Center Metric Overlay */}
           <Box

@@ -12,6 +12,7 @@ import CadUploader from '../modules/cad/CadUploader'
 import RulePackExplanationPanel from '../modules/cad/RulePackExplanationPanel'
 import useRules from '../hooks/useRules'
 import { Input } from '../components/canonical/Input'
+import '../styles/cad.css'
 
 const DEFAULT_PROJECT_ID = 1
 const DEFAULT_ZONE_CODE = 'SG:residential'

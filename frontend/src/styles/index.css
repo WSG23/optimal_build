@@ -12,9 +12,6 @@
    8. Asset paths (url(...)) are relative to each CSS file's location
 */
 
-/* External font (must be first @import) */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 /* Core styles and resets (must be first local import) */
 @import './core.css';
 
@@ -24,23 +21,11 @@
 /* Shared page layout patterns */
 @import './page-layout.css';
 
-/* Feature modules (order matches original index.css line numbers) */
-@import './developer-preview.css';
-@import './agents-capture.css';
-@import './cad.css';
-@import './feasibility.css';
-@import './finance.css';
-@import './agent-performance.css';
-@import './business-performance.css';
-@import './gps-capture.css';
-@import './advisory.css';
-@import './site-acquisition.css';
-@import './visualizations.css';
-@import './phase-management.css';
-
 /* Global CSS variables and base styles (after @imports) */
 :root {
-    --ob-font-family-sans: 'Inter', sans-serif;
+    --ob-font-family-sans:
+        ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, sans-serif;
 }
 
 body {

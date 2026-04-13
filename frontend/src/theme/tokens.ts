@@ -109,7 +109,7 @@ export function getColors(mode: 'dark' | 'light') {
 
 export const typography = {
   fontFamily: {
-    sans: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    sans: 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     mono: '"JetBrains Mono", "SF Mono", Consolas, "Liberation Mono", Courier, monospace',
   },
   weights: {

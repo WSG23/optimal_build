@@ -165,10 +165,6 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   )
 
   useEffect(() => {
-    void refreshProjects()
-  }, [refreshProjects])
-
-  useEffect(() => {
     if (
       !currentProject ||
       isProjectLoading ||

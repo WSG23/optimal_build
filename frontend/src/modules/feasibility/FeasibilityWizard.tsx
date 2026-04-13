@@ -1,5 +1,13 @@
 import type { ChangeEvent, FormEvent } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { Alert, Box, CircularProgress, Snackbar } from '@mui/material'
 
 import { AppLayout } from '../../App'
@@ -17,14 +25,10 @@ import { EmptyState } from '../../components/canonical'
 import {
   AssumptionsPanel,
   FinancialSettingsPanel,
-  PackGenerationPanel,
   FeasibilityLayout,
   SmartIntelligenceField,
   PackGrid,
-  ScenarioHistorySidebar,
   GenerativeDesignPanel,
-  AIAssistantSidebar,
-  FeasibilityOutputPanel,
   ScenarioSelector,
   type HistoryItem,
 } from './components'
@@ -58,6 +62,26 @@ import {
   createNumberFormatter,
 } from './utils/formatters'
 import '../../styles/feasibility.css'
+
+const PackGenerationPanel = lazy(async () => {
+  const module = await import('./components/PackGenerationPanel')
+  return { default: module.PackGenerationPanel }
+})
+
+const ScenarioHistorySidebar = lazy(async () => {
+  const module = await import('./components/ScenarioHistorySidebar')
+  return { default: module.ScenarioHistorySidebar }
+})
+
+const AIAssistantSidebar = lazy(async () => {
+  const module = await import('./components/AIAssistantSidebar')
+  return { default: module.AIAssistantSidebar }
+})
+
+const FeasibilityOutputPanel = lazy(async () => {
+  const module = await import('./components/FeasibilityOutputPanel')
+  return { default: module.FeasibilityOutputPanel }
+})
 
 interface FeasibilityWizardProps {
   generatePackFn?: typeof generateProfessionalPack
@@ -551,16 +575,35 @@ export function FeasibilityWizard({
 
   const renderOutput = (activeLayers: string[]) => (
     <div className="feasibility-output-stack">
-      <FeasibilityOutputPanel
-        status={status}
-        assessment={assessment}
-        result={result}
-        captureResult={captureResult}
-        activeSiteLabel={activeSiteLabel}
-        numberFormatter={numberFormatter}
-        oneDecimalFormatter={oneDecimalFormatter}
-        activeLayers={activeLayers}
-      />
+      <Suspense
+        fallback={
+          <Box
+            className="ob-seamless-panel ob-seamless-panel--glass"
+            sx={{
+              minHeight: 320,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              p: 'var(--ob-space-150)',
+            }}
+          >
+            <Typography color="text.secondary">
+              Loading feasibility output...
+            </Typography>
+          </Box>
+        }
+      >
+        <FeasibilityOutputPanel
+          status={status}
+          assessment={assessment}
+          result={result}
+          captureResult={captureResult}
+          activeSiteLabel={activeSiteLabel}
+          numberFormatter={numberFormatter}
+          oneDecimalFormatter={oneDecimalFormatter}
+          activeLayers={activeLayers}
+        />
+      </Suspense>
 
       {result && (
         <section className="feasibility-output-packs">
@@ -622,19 +665,21 @@ export function FeasibilityWizard({
             </Button>
           </div>
 
-          <PackGenerationPanel
-            packPropertyId={packPropertyId}
-            packType={packType}
-            packSummary={packSummary}
-            packLoading={packLoading}
-            packError={packError}
-            selectedPackOption={selectedPackOption}
-            locale={i18n.language || 'en'}
-            onPropertyIdChange={handlePackPropertyIdChange}
-            onPackTypeChange={handlePackTypeChange}
-            onSubmit={handlePackSubmit}
-            t={t}
-          />
+          <Suspense fallback={null}>
+            <PackGenerationPanel
+              packPropertyId={packPropertyId}
+              packType={packType}
+              packSummary={packSummary}
+              packLoading={packLoading}
+              packError={packError}
+              selectedPackOption={selectedPackOption}
+              locale={i18n.language || 'en'}
+              onPropertyIdChange={handlePackPropertyIdChange}
+              onPackTypeChange={handlePackTypeChange}
+              onSubmit={handlePackSubmit}
+              t={t}
+            />
+          </Suspense>
         </section>
       )}
     </div>
@@ -822,20 +867,28 @@ export function FeasibilityWizard({
       </div>
 
       {/* Scenario History Sidebar */}
-      <ScenarioHistorySidebar
-        open={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        history={history}
-        onRestore={handleRestore}
-      />
+      {historyOpen ? (
+        <Suspense fallback={null}>
+          <ScenarioHistorySidebar
+            open={historyOpen}
+            onClose={() => setHistoryOpen(false)}
+            history={history}
+            onRestore={handleRestore}
+          />
+        </Suspense>
+      ) : null}
 
-      <AIAssistantSidebar
-        open={aiSidebarOpen}
-        onClose={() => setAiSidebarOpen(false)}
-        messages={messages}
-        onSendMessage={sendMessage}
-        isTyping={isTyping}
-      />
+      {aiSidebarOpen ? (
+        <Suspense fallback={null}>
+          <AIAssistantSidebar
+            open={aiSidebarOpen}
+            onClose={() => setAiSidebarOpen(false)}
+            messages={messages}
+            onSendMessage={sendMessage}
+            isTyping={isTyping}
+          />
+        </Suspense>
+      ) : null}
 
       {/* Flipbook Dialog ... */}
       {/* Flipbook Preview Modal */}

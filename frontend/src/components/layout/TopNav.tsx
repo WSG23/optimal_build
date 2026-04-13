@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Box,
   Button,
@@ -24,10 +24,18 @@ import {
 } from '@mui/icons-material'
 import { Link, useRouterPath } from '../../router'
 import { useTranslation } from '../../i18n'
-import { TopUtilityMenu } from './TopUtilityMenu'
 import { useDeveloperMode } from '../../contexts/useDeveloperMode'
 import { useProject } from '../../contexts/useProject'
-import { ProjectSelector } from './ProjectSelector'
+
+const ProjectSelector = lazy(async () => {
+  const module = await import('./ProjectSelector')
+  return { default: module.ProjectSelector }
+})
+
+const TopUtilityMenu = lazy(async () => {
+  const module = await import('./TopUtilityMenu')
+  return { default: module.TopUtilityMenu }
+})
 
 type NavGroup = {
   title?: string
@@ -636,8 +644,10 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
                 gap: 'var(--ob-space-100)',
               }}
             >
-              <ProjectSelector />
-              <TopUtilityMenu />
+              <Suspense fallback={null}>
+                <ProjectSelector />
+                <TopUtilityMenu />
+              </Suspense>
             </Box>
           </Stack>
         </Box>

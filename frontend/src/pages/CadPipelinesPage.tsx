@@ -28,6 +28,7 @@ import SearchIcon from '@mui/icons-material/Search'
 // Use MUI icons or fallbacks
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import CloudOffIcon from '@mui/icons-material/CloudOff'
+import '../styles/cad.css'
 
 const DEFAULT_PROJECT_ID = 1
 const OVERLAY_RUN_POLL_INTERVAL_MS = 2500

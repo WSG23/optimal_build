@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import type { SyntheticEvent } from 'react'
 import { Box, Tab, Tabs, Typography } from '@mui/material'
 
@@ -12,12 +20,35 @@ import { loadCaptureForProject } from '../capture/utils/captureStorage'
 import { useChecklist } from '../site-acquisition/hooks/useChecklist'
 import { useConditionAssessment } from '../site-acquisition/hooks/useConditionAssessment'
 import { useDueDiligenceScenarioComparison } from '../site-acquisition/hooks/useDueDiligenceScenarioComparison'
-import { DueDiligenceChecklistSection } from '../site-acquisition/components/checklist/DueDiligenceChecklistSection'
-import { InspectionHistorySummary } from '../site-acquisition/components/InspectionHistorySummary'
-import { InspectionHistoryContent } from '../site-acquisition/components/inspection-history'
-import { ConditionAssessmentTab } from './components/ConditionAssessmentTab'
 import { buildImmediateActions } from './components/conditionAssessmentUtils'
-import { OverridesTab } from './components/OverridesTab'
+
+const DueDiligenceChecklistSection = lazy(async () => {
+  const module =
+    await import('../site-acquisition/components/checklist/DueDiligenceChecklistSection')
+  return { default: module.DueDiligenceChecklistSection }
+})
+
+const InspectionHistorySummary = lazy(async () => {
+  const module =
+    await import('../site-acquisition/components/InspectionHistorySummary')
+  return { default: module.InspectionHistorySummary }
+})
+
+const InspectionHistoryContent = lazy(async () => {
+  const module =
+    await import('../site-acquisition/components/inspection-history')
+  return { default: module.InspectionHistoryContent }
+})
+
+const ConditionAssessmentTab = lazy(async () => {
+  const module = await import('./components/ConditionAssessmentTab')
+  return { default: module.ConditionAssessmentTab }
+})
+
+const OverridesTab = lazy(async () => {
+  const module = await import('./components/OverridesTab')
+  return { default: module.OverridesTab }
+})
 
 const CAPTURED_PROPERTY_STORAGE_KEY = 'site-acquisition:captured-property'
 
@@ -180,6 +211,23 @@ export function DueDiligencePage() {
     [],
   )
 
+  const tabFallback = (
+    <Box
+      className="ob-seamless-panel ob-seamless-panel--glass"
+      sx={{
+        p: 'var(--ob-space-150)',
+        minHeight: 240,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Typography color="text.secondary">
+        Loading due diligence view...
+      </Typography>
+    </Box>
+  )
+
   if (!capturedProperty) {
     return (
       <Box
@@ -292,32 +340,36 @@ export function DueDiligencePage() {
       </Box>
 
       {activeTab === 'checklist' && (
-        <DueDiligenceChecklistSection
-          capturedProperty={capturedProperty}
-          checklistItems={checklistItems}
-          filteredChecklistItems={filteredChecklistItems}
-          displaySummary={displaySummary}
-          activeScenario={activeScenario}
-          activeScenarioDetails={activeScenarioDetails}
-          selectedCategory={selectedCategory}
-          isLoadingChecklist={isLoadingChecklist}
-          checklistError={checklistError}
-          setSelectedCategory={setSelectedCategory}
-          handleChecklistUpdate={handleChecklistUpdate}
-        />
+        <Suspense fallback={tabFallback}>
+          <DueDiligenceChecklistSection
+            capturedProperty={capturedProperty}
+            checklistItems={checklistItems}
+            filteredChecklistItems={filteredChecklistItems}
+            displaySummary={displaySummary}
+            activeScenario={activeScenario}
+            activeScenarioDetails={activeScenarioDetails}
+            selectedCategory={selectedCategory}
+            isLoadingChecklist={isLoadingChecklist}
+            checklistError={checklistError}
+            setSelectedCategory={setSelectedCategory}
+            handleChecklistUpdate={handleChecklistUpdate}
+          />
+        </Suspense>
       )}
 
       {activeTab === 'condition' && (
-        <ConditionAssessmentTab
-          conditionAssessment={conditionAssessment}
-          isLoadingCondition={isLoadingCondition}
-          assessmentSaveMessage={assessmentSaveMessage}
-          immediateActions={immediateActions}
-          combinedConditionInsights={combinedConditionInsights}
-          insightSubtitle={insightSubtitle}
-          systemComparisonMap={systemComparisonMap}
-          formatRecordedTimestamp={formatRecordedTimestamp}
-        />
+        <Suspense fallback={tabFallback}>
+          <ConditionAssessmentTab
+            conditionAssessment={conditionAssessment}
+            isLoadingCondition={isLoadingCondition}
+            assessmentSaveMessage={assessmentSaveMessage}
+            immediateActions={immediateActions}
+            combinedConditionInsights={combinedConditionInsights}
+            insightSubtitle={insightSubtitle}
+            systemComparisonMap={systemComparisonMap}
+            formatRecordedTimestamp={formatRecordedTimestamp}
+          />
+        </Suspense>
       )}
 
       {activeTab === 'history' && (
@@ -329,65 +381,80 @@ export function DueDiligencePage() {
             alignItems: 'start',
           }}
         >
-          <InspectionHistorySummary
-            hasProperty={!!capturedProperty}
-            isLoading={isLoadingAssessmentHistory}
-            error={assessmentHistoryError}
-            latestEntry={latestAssessmentEntry}
-            previousEntry={previousAssessmentEntry}
-            formatScenario={(scenario) =>
-              formatScenarioLabel(
-                (scenario as DevelopmentScenario | 'all' | null | undefined) ??
-                  null,
-              )
-            }
-            formatTimestamp={formatRecordedTimestamp}
-            onViewTimeline={() => setHistoryViewMode('timeline')}
-            onLogInspection={() => openAssessmentEditor('new')}
-          />
+          <Suspense fallback={tabFallback}>
+            <InspectionHistorySummary
+              hasProperty={!!capturedProperty}
+              isLoading={isLoadingAssessmentHistory}
+              error={assessmentHistoryError}
+              latestEntry={latestAssessmentEntry}
+              previousEntry={previousAssessmentEntry}
+              formatScenario={(scenario) =>
+                formatScenarioLabel(
+                  (scenario as
+                    | DevelopmentScenario
+                    | 'all'
+                    | null
+                    | undefined) ?? null,
+                )
+              }
+              formatTimestamp={formatRecordedTimestamp}
+              onViewTimeline={() => setHistoryViewMode('timeline')}
+              onLogInspection={() => openAssessmentEditor('new')}
+            />
+          </Suspense>
           <Box
             className="ob-seamless-panel ob-seamless-panel--glass"
             sx={{ p: 'var(--ob-space-150)' }}
           >
-            <InspectionHistoryContent
-              historyViewMode={historyViewMode}
-              setHistoryViewMode={setHistoryViewMode}
-              assessmentHistoryError={assessmentHistoryError}
-              isLoadingAssessmentHistory={isLoadingAssessmentHistory}
-              assessmentHistory={assessmentHistory}
-              activeScenario={activeScenario}
-              latestAssessmentEntry={latestAssessmentEntry}
-              previousAssessmentEntry={previousAssessmentEntry}
-              comparisonSummary={comparisonSummary}
-              systemComparisons={systemComparisons}
-              recommendedActionDiff={recommendedActionDiff}
-              scenarioComparisonVisible={scenarioComparisonVisible}
-              scenarioComparisonRef={scenarioComparisonRef}
-              scenarioComparisonTableRows={scenarioComparisonTableRows}
-              scenarioAssessments={scenarioAssessments}
-              formatScenarioLabel={formatScenarioLabel}
-              formatRecordedTimestamp={formatRecordedTimestamp}
-            />
+            <Suspense
+              fallback={
+                <Typography color="text.secondary">
+                  Loading inspection history...
+                </Typography>
+              }
+            >
+              <InspectionHistoryContent
+                historyViewMode={historyViewMode}
+                setHistoryViewMode={setHistoryViewMode}
+                assessmentHistoryError={assessmentHistoryError}
+                isLoadingAssessmentHistory={isLoadingAssessmentHistory}
+                assessmentHistory={assessmentHistory}
+                activeScenario={activeScenario}
+                latestAssessmentEntry={latestAssessmentEntry}
+                previousAssessmentEntry={previousAssessmentEntry}
+                comparisonSummary={comparisonSummary}
+                systemComparisons={systemComparisons}
+                recommendedActionDiff={recommendedActionDiff}
+                scenarioComparisonVisible={scenarioComparisonVisible}
+                scenarioComparisonRef={scenarioComparisonRef}
+                scenarioComparisonTableRows={scenarioComparisonTableRows}
+                scenarioAssessments={scenarioAssessments}
+                formatScenarioLabel={formatScenarioLabel}
+                formatRecordedTimestamp={formatRecordedTimestamp}
+              />
+            </Suspense>
           </Box>
         </Box>
       )}
 
       {activeTab === 'overrides' && (
-        <OverridesTab
-          capturedProperty={capturedProperty}
-          isExportingReport={isExportingReport}
-          reportExportMessage={reportExportMessage}
-          handleReportExport={handleReportExport}
-          scenarioOverrideEntries={scenarioOverrideEntries}
-          baseScenarioAssessment={baseScenarioAssessment}
-          scenarioComparisonEntries={scenarioComparisonEntries}
-          scenarioComparisonTableRows={scenarioComparisonTableRows}
-          isLoadingScenarioAssessments={isLoadingScenarioAssessments}
-          scenarioAssessmentsError={scenarioAssessmentsError}
-          setScenarioComparisonBase={setScenarioComparisonBase}
-          formatScenarioLabel={formatScenarioLabel}
-          formatRecordedTimestamp={formatRecordedTimestamp}
-        />
+        <Suspense fallback={tabFallback}>
+          <OverridesTab
+            capturedProperty={capturedProperty}
+            isExportingReport={isExportingReport}
+            reportExportMessage={reportExportMessage}
+            handleReportExport={handleReportExport}
+            scenarioOverrideEntries={scenarioOverrideEntries}
+            baseScenarioAssessment={baseScenarioAssessment}
+            scenarioComparisonEntries={scenarioComparisonEntries}
+            scenarioComparisonTableRows={scenarioComparisonTableRows}
+            isLoadingScenarioAssessments={isLoadingScenarioAssessments}
+            scenarioAssessmentsError={scenarioAssessmentsError}
+            setScenarioComparisonBase={setScenarioComparisonBase}
+            formatScenarioLabel={formatScenarioLabel}
+            formatRecordedTimestamp={formatRecordedTimestamp}
+          />
+        </Suspense>
       )}
     </Box>
   )

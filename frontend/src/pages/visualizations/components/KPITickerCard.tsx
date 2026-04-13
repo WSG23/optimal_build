@@ -1,5 +1,4 @@
 import { Box, Typography, Stack, useTheme, alpha } from '@mui/material'
-import { ResponsiveContainer, AreaChart, Area } from 'recharts'
 
 export interface KPITickerCardProps {
   label: string
@@ -18,13 +17,24 @@ export function KPITickerCard({
 }: KPITickerCardProps) {
   const theme = useTheme()
 
-  // Transform flat array to object array for Recharts
-  const chartData = data.map((val, i) => ({ i, val }))
-
   const isPositive = trend >= 0
   const trendColor = isPositive
     ? theme.palette.success.main
     : theme.palette.error.main
+  const safeData = data.length > 1 ? data : [0, ...(data.length ? data : [0])]
+  const min = Math.min(...safeData)
+  const max = Math.max(...safeData)
+  const range = max - min || 1
+  const width = 100
+  const height = 60
+  const points = safeData.map((point, index) => {
+    const x = (index / (safeData.length - 1)) * width
+    const y = height - ((point - min) / range) * (height - 8) - 4
+    return `${x},${y}`
+  })
+  const linePath = `M ${points.join(' L ')}`
+  const areaPath = `${linePath} L ${width},${height} L 0,${height} Z`
+  const gradientId = `gradient-${label.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`
 
   return (
     <Box
@@ -98,38 +108,37 @@ export function KPITickerCard({
       </Box>
 
       <Box sx={{ height: 60, width: '100%', opacity: 0.8 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData}>
-            <defs>
-              <linearGradient
-                id={`gradient-${label}`}
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-              >
-                <stop
-                  offset="5%"
-                  stopColor={theme.palette.primary.main}
-                  stopOpacity={0.3}
-                />
-                <stop
-                  offset="95%"
-                  stopColor={theme.palette.primary.main}
-                  stopOpacity={0}
-                />
-              </linearGradient>
-            </defs>
-            <Area
-              type="monotone"
-              dataKey="val"
-              stroke={theme.palette.primary.main}
-              strokeWidth={2}
-              fill={`url(#gradient-${label})`}
-              isAnimationActive={false} // Performance
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        <Box
+          component="svg"
+          viewBox={`0 0 ${width} ${height}`}
+          preserveAspectRatio="none"
+          sx={{ display: 'block', width: '100%', height: '100%' }}
+        >
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop
+                offset="5%"
+                stopColor={theme.palette.primary.main}
+                stopOpacity={0.3}
+              />
+              <stop
+                offset="95%"
+                stopColor={theme.palette.primary.main}
+                stopOpacity={0}
+              />
+            </linearGradient>
+          </defs>
+          <path d={areaPath} fill={`url(#${gradientId})`} />
+          <path
+            d={linePath}
+            fill="none"
+            stroke={theme.palette.primary.main}
+            strokeWidth="2"
+            vectorEffect="non-scaling-stroke"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Box>
       </Box>
     </Box>
   )

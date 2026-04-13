@@ -14,7 +14,15 @@
  * This component should be lazy-loaded to avoid bundle bloat for agent users.
  */
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import {
+  Suspense,
+  lazy,
+  useState,
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react'
 import {
   Box,
   Typography,
@@ -33,6 +41,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import ViewInArIcon from '@mui/icons-material/ViewInAr'
 
 import type { SiteAcquisitionResult } from '../../../../api/siteAcquisition'
+import type { CaptureOverrideIntent } from '../../../../api/siteAcquisition'
 import type { DevelopmentScenario } from '../../../../api/agents'
 import { Button } from '../../../../components/canonical/Button'
 import { Card } from '../../../../components/canonical/Card'
@@ -42,14 +51,14 @@ import {
   linkCaptureToProject,
   saveProjectFromCapture,
 } from '../../../../api/siteAcquisition'
-import { saveCaptureForProject } from '../utils/captureStorage'
+import {
+  clearCaptureScenarioOverrideForProject,
+  loadCaptureScenarioOverrideForProject,
+  saveCaptureForProject,
+  saveCaptureScenarioOverrideForProject,
+} from '../utils/captureStorage'
 
 // Import Site Acquisition components
-import { PropertyOverviewSection } from '../../site-acquisition/components/property-overview/PropertyOverviewSection'
-import { Preview3DViewer } from '../../../components/site-acquisition/Preview3DViewer'
-import { PreviewLayersTable } from '../../site-acquisition/components/property-overview/PreviewLayersTable'
-import { MultiScenarioComparisonSection } from '../../site-acquisition/components/multi-scenario-comparison/MultiScenarioComparisonSection'
-
 // Import Site Acquisition hooks
 import { usePreviewJob } from '../../site-acquisition/hooks/usePreviewJob'
 import { useCaptureScenarioComparison } from '../../site-acquisition/hooks/useCaptureScenarioComparison'
@@ -62,8 +71,35 @@ import { SCENARIO_OPTIONS } from '../../site-acquisition/constants'
 import { buildPropertyOverviewCards } from '../../site-acquisition/utils/cardBuilders'
 import { mapSiteAcquisitionResultToCaptureResultV2 } from '../utils/captureResultV2'
 
-// Import OptimalIntelligenceCard for AI insights
-import { OptimalIntelligenceCard } from '../../site-acquisition/components/OptimalIntelligenceCard'
+const Preview3DViewer = lazy(async () => {
+  const module =
+    await import('../../../components/site-acquisition/Preview3DViewer')
+  return { default: module.Preview3DViewer }
+})
+
+const PropertyOverviewSection = lazy(async () => {
+  const module =
+    await import('../../site-acquisition/components/property-overview/PropertyOverviewSection')
+  return { default: module.PropertyOverviewSection }
+})
+
+const PreviewLayersTable = lazy(async () => {
+  const module =
+    await import('../../site-acquisition/components/property-overview/PreviewLayersTable')
+  return { default: module.PreviewLayersTable }
+})
+
+const MultiScenarioComparisonSection = lazy(async () => {
+  const module =
+    await import('../../site-acquisition/components/multi-scenario-comparison/MultiScenarioComparisonSection')
+  return { default: module.MultiScenarioComparisonSection }
+})
+
+const OptimalIntelligenceCard = lazy(async () => {
+  const module =
+    await import('../../site-acquisition/components/OptimalIntelligenceCard')
+  return { default: module.OptimalIntelligenceCard }
+})
 
 export interface DeveloperResultsProps {
   result: SiteAcquisitionResult
@@ -74,11 +110,49 @@ export function DeveloperResults({
   result,
   selectedScenarios,
 }: DeveloperResultsProps) {
+  const sectionFallback = (
+    <Card
+      sx={{
+        minHeight: 160,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 'var(--ob-space-150)',
+      }}
+    >
+      <Typography
+        sx={{
+          fontSize: 'var(--ob-font-size-sm)',
+          color: 'text.secondary',
+        }}
+      >
+        Loading analysis section...
+      </Typography>
+    </Card>
+  )
+  const assumptionFieldLabels = useMemo(
+    () =>
+      new Map<string, string>([
+        ['floor_to_floor_m', 'floor-to-floor'],
+        ['clear_ceiling_m', 'clear ceiling'],
+        ['wall_thickness_mm', 'wall thickness'],
+        ['core_ratio_pct', 'core ratio'],
+        ['common_area_ratio_pct', 'common area'],
+        ['hvac_space_ratio_pct', 'HVAC'],
+        ['electrical_space_ratio_pct', 'electrical'],
+        ['retention_strategy', 'retention strategy'],
+        ['efficiency_factor', 'efficiency factor'],
+      ]),
+    [],
+  )
   const autoRequestedStarterModelRef = useRef<Set<string>>(new Set())
+  const hydratedSavedOverrideProjectIdRef = useRef<string | null>(null)
   // Active scenario for filtering
   const [activeScenario, setActiveScenario] = useState<
     DevelopmentScenario | 'all'
   >('all')
+  const [overrideIntent, setOverrideIntent] =
+    useState<CaptureOverrideIntent | null>(null)
   const { currentProject, projects, setCurrentProject, refreshProjects } =
     useProject()
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
@@ -102,8 +176,9 @@ export function DeveloperResults({
       mapSiteAcquisitionResultToCaptureResultV2(result, {
         selectedScenarios,
         overrideScenario: activeScenario !== 'all' ? activeScenario : undefined,
+        overrideIntent,
       }),
-    [activeScenario, result, selectedScenarios],
+    [activeScenario, overrideIntent, result, selectedScenarios],
   )
 
   // Preview job state - use hook with options object
@@ -258,6 +333,29 @@ export function DeveloperResults({
     setCurrentProject,
   ])
 
+  const handleSaveProjectOverride = useCallback(() => {
+    if (!currentProject?.id || activeScenario === 'all') {
+      return
+    }
+
+    saveCaptureScenarioOverrideForProject(currentProject.id, activeScenario)
+    setOverrideIntent('saved')
+  }, [activeScenario, currentProject?.id])
+
+  const handleClearProjectOverride = useCallback(() => {
+    if (!currentProject?.id) {
+      return
+    }
+
+    clearCaptureScenarioOverrideForProject(currentProject.id)
+    if (activeScenario === 'all') {
+      setOverrideIntent(null)
+      return
+    }
+
+    setOverrideIntent('exploratory')
+  }, [activeScenario, currentProject?.id])
+
   // Scenario comparison state - pass required options object and extract all values
   const {
     quickAnalysisScenarios,
@@ -392,8 +490,12 @@ export function DeveloperResults({
       ? 'This is a preliminary capture: scalar controls only, with no setback or floor-by-floor compliance modelling.'
       : 'Capture reflects the currently resolved scalar controls for this site, without setback or floor-by-floor compliance modelling.'
     const scenarioNote = recommendation.userOverride
-      ? `User override active: ${formatScenarioLabel(recommendation.recommended)} remains selected even though Capture would otherwise prefer ${recommendation.alternatives[0] ? formatScenarioLabel(recommendation.alternatives[0]) : 'another scenario'}.`
-      : `Capture currently recommends ${formatScenarioLabel(recommendation.recommended)} first.`
+      ? recommendation.overrideIntent === 'exploratory'
+        ? `Exploratory override active: ${formatScenarioLabel(recommendation.recommended)} is selected temporarily and does not change learned defaults.`
+        : recommendation.overrideIntent === 'saved'
+          ? `Saved project override active: ${formatScenarioLabel(recommendation.recommended)} is pinned for this project until you return to the Capture recommendation.`
+          : `User override active: ${formatScenarioLabel(recommendation.recommended)} remains selected even though Capture would otherwise prefer ${recommendation.alternatives[0] ? formatScenarioLabel(recommendation.alternatives[0]) : 'another scenario'}.`
+      : `Capture currently recommends ${formatScenarioLabel(recommendation.defaultRecommended)} first.`
     return `Instant capture analysis for ${result.address?.district ?? 'this location'} highlights ${analysisSummary}. Preview status: ${previewStatus}. ${scenarioNote} ${scopeNote}`
   }, [
     captureResultV2,
@@ -411,6 +513,35 @@ export function DeveloperResults({
         ? 'Refresh Starter Model'
         : 'Generate Starter Model'
 
+  const defaultRecommendationLabel = useMemo(
+    () =>
+      formatScenarioLabel(
+        captureResultV2.scenarioRecommendation.defaultRecommended,
+      ),
+    [
+      captureResultV2.scenarioRecommendation.defaultRecommended,
+      formatScenarioLabel,
+    ],
+  )
+
+  const fallbackPreviewScenarioLabel = useMemo(() => {
+    if (
+      captureResultV2.scenarioRecommendation.userOverride &&
+      !hasPreferredScenarioPreview
+    ) {
+      return defaultRecommendationLabel
+    }
+    return formatScenarioLabel(
+      captureResultV2.scenarioRecommendation.recommended,
+    )
+  }, [
+    captureResultV2.scenarioRecommendation.recommended,
+    captureResultV2.scenarioRecommendation.userOverride,
+    defaultRecommendationLabel,
+    formatScenarioLabel,
+    hasPreferredScenarioPreview,
+  ])
+
   const starterModelStatusSummary = useMemo(() => {
     const scenarioLabel = formatScenarioLabel(
       captureResultV2.scenarioRecommendation.recommended,
@@ -423,7 +554,7 @@ export function DeveloperResults({
       case 'ready':
         return hasPreferredScenarioPreview
           ? `The ${scenarioLabel.toLowerCase()} starter model is ready for review.`
-          : 'Capture is still showing the current fallback preview for this site.'
+          : `The ${scenarioLabel.toLowerCase()} starter model is not ready yet. Capture is still showing the ${fallbackPreviewScenarioLabel.toLowerCase()} preview until a scenario-specific model is available.`
       case 'failed':
         return `Capture could not generate the ${scenarioLabel.toLowerCase()} starter model yet. Retry generation from this panel.`
       case 'placeholder':
@@ -433,9 +564,20 @@ export function DeveloperResults({
   }, [
     captureResultV2.scenarioRecommendation.recommended,
     effectiveStarterModel.status,
+    fallbackPreviewScenarioLabel,
     formatScenarioLabel,
     hasPreferredScenarioPreview,
   ])
+
+  const effectiveEngineeringAssumptions = useMemo(
+    () =>
+      previewJob?.starterModelAssumptions ??
+      captureResultV2.engineeringAssumptions,
+    [
+      captureResultV2.engineeringAssumptions,
+      previewJob?.starterModelAssumptions,
+    ],
+  )
 
   const scenarioFitSummary = useMemo(() => {
     const codeConstraints = captureResultV2.codeConstraints
@@ -477,60 +619,147 @@ export function DeveloperResults({
   ])
 
   const starterModelAssumptionLines = useMemo(() => {
-    const assumptions = captureResultV2.engineeringAssumptions
+    const assumptions = effectiveEngineeringAssumptions
+    const provenanceFields = assumptions.provenance?.fields ?? {}
+
+    const formatSourceLabel = (source: string): string =>
+      source === 'property_specific'
+        ? 'property-specific'
+        : source === 'heuristic_fallback'
+          ? 'heuristic fallback'
+          : source.replace(/_/g, ' ')
+
+    const describeFieldSources = (fields: string[]): string | null => {
+      const mapped = fields
+        .map((field) => ({
+          field,
+          source: provenanceFields[field],
+        }))
+        .filter(
+          (
+            entry,
+          ): entry is {
+            field: string
+            source: string
+          } => Boolean(entry.source),
+        )
+
+      if (!mapped.length) {
+        return null
+      }
+
+      const uniqueSources = Array.from(
+        new Set(mapped.map((entry) => entry.source)),
+      )
+      if (uniqueSources.length === 1) {
+        return formatSourceLabel(uniqueSources[0]!)
+      }
+
+      const propertySpecificFields = mapped
+        .filter((entry) => entry.source === 'property_specific')
+        .map(
+          (entry) =>
+            assumptionFieldLabels.get(entry.field) ??
+            entry.field.replace(/_/g, ' '),
+        )
+
+      if (propertySpecificFields.length) {
+        return `${propertySpecificFields.join(', ')} property-specific`
+      }
+
+      return 'mixed sources'
+    }
+
     const lines = [
       assumptions.floorToFloorM != null && assumptions.clearCeilingM != null
-        ? `Floor-to-floor ${formatNumber(assumptions.floorToFloorM, {
-            maximumFractionDigits: 1,
-          })} m / clear ceiling ${formatNumber(assumptions.clearCeilingM, {
-            maximumFractionDigits: 1,
-          })} m`
+        ? {
+            text: `Floor-to-floor ${formatNumber(assumptions.floorToFloorM, {
+              maximumFractionDigits: 1,
+            })} m / clear ceiling ${formatNumber(assumptions.clearCeilingM, {
+              maximumFractionDigits: 1,
+            })} m`,
+            sourceDetail: describeFieldSources([
+              'floor_to_floor_m',
+              'clear_ceiling_m',
+            ]),
+          }
         : null,
       assumptions.wallThicknessMm != null && assumptions.coreRatioPct != null
-        ? `Wall thickness ${formatNumber(assumptions.wallThicknessMm, {
-            maximumFractionDigits: 0,
-          })} mm / core ratio ${formatNumber(assumptions.coreRatioPct, {
-            maximumFractionDigits: 0,
-          })}%`
+        ? {
+            text: `Wall thickness ${formatNumber(assumptions.wallThicknessMm, {
+              maximumFractionDigits: 0,
+            })} mm / core ratio ${formatNumber(assumptions.coreRatioPct, {
+              maximumFractionDigits: 0,
+            })}%`,
+            sourceDetail: describeFieldSources([
+              'wall_thickness_mm',
+              'core_ratio_pct',
+            ]),
+          }
         : null,
       assumptions.commonAreaRatioPct != null &&
       assumptions.hvacSpaceRatioPct != null &&
       assumptions.electricalSpaceRatioPct != null
-        ? `Common area ${formatNumber(assumptions.commonAreaRatioPct, {
-            maximumFractionDigits: 0,
-          })}% / HVAC ${formatNumber(assumptions.hvacSpaceRatioPct, {
-            maximumFractionDigits: 0,
-          })}% / electrical ${formatNumber(
-            assumptions.electricalSpaceRatioPct,
-            {
+        ? {
+            text: `Common area ${formatNumber(assumptions.commonAreaRatioPct, {
               maximumFractionDigits: 0,
-            },
-          )}%`
+            })}% / HVAC ${formatNumber(assumptions.hvacSpaceRatioPct, {
+              maximumFractionDigits: 0,
+            })}% / electrical ${formatNumber(
+              assumptions.electricalSpaceRatioPct,
+              {
+                maximumFractionDigits: 0,
+              },
+            )}%`,
+            sourceDetail: describeFieldSources([
+              'common_area_ratio_pct',
+              'hvac_space_ratio_pct',
+              'electrical_space_ratio_pct',
+            ]),
+          }
         : null,
       assumptions.retentionStrategy
-        ? `Retention strategy ${assumptions.retentionStrategy.replace(/_/g, ' ')}${
-            assumptions.efficiencyFactor != null
-              ? ` / efficiency factor ${formatNumber(
-                  assumptions.efficiencyFactor,
-                  {
-                    maximumFractionDigits: 2,
-                  },
-                )}`
-              : ''
-          }`
+        ? {
+            text: `Retention strategy ${assumptions.retentionStrategy.replace(/_/g, ' ')}${
+              assumptions.efficiencyFactor != null
+                ? ` / efficiency factor ${formatNumber(
+                    assumptions.efficiencyFactor,
+                    {
+                      maximumFractionDigits: 2,
+                    },
+                  )}`
+                : ''
+            }`,
+            sourceDetail: describeFieldSources([
+              'retention_strategy',
+              'efficiency_factor',
+            ]),
+          }
         : assumptions.efficiencyFactor != null
-          ? `Efficiency factor ${formatNumber(assumptions.efficiencyFactor, {
-              maximumFractionDigits: 2,
-            })}`
+          ? {
+              text: `Efficiency factor ${formatNumber(
+                assumptions.efficiencyFactor,
+                {
+                  maximumFractionDigits: 2,
+                },
+              )}`,
+              sourceDetail: describeFieldSources(['efficiency_factor']),
+            }
           : null,
-      assumptions.structuralGridNote ?? null,
-    ].filter((line): line is string => Boolean(line))
+    ].filter(
+      (
+        line,
+      ): line is {
+        text: string
+        sourceDetail: string | null
+      } => Boolean(line),
+    )
 
     return lines
-  }, [captureResultV2.engineeringAssumptions, formatNumber])
+  }, [assumptionFieldLabels, effectiveEngineeringAssumptions, formatNumber])
 
   const starterModelAssumptionSourceLine = useMemo(() => {
-    const assumptions = captureResultV2.engineeringAssumptions
+    const assumptions = effectiveEngineeringAssumptions
     const summary = assumptions.provenance?.summary ?? null
     const adjustments = assumptions.provenance?.adjustments ?? []
 
@@ -558,7 +787,171 @@ export function DeveloperResults({
       .join(', ')
 
     return `Assumption source: ${summaryLabel} (${adjustmentLabel}).`
-  }, [captureResultV2.engineeringAssumptions])
+  }, [effectiveEngineeringAssumptions])
+
+  const starterModelAssumptionFallbackReason = useMemo(() => {
+    const assumptions = effectiveEngineeringAssumptions
+    if (assumptions.provenance?.summary !== 'frontend_fallback_defaults') {
+      return null
+    }
+
+    const scenarioLabel = formatScenarioLabel(
+      captureResultV2.scenarioRecommendation.recommended,
+    )
+
+    if (!result.previewJobs?.length) {
+      return `Capture is using fallback assumptions because no scenario-specific preview jobs are attached to this property yet.`
+    }
+
+    if (!previewJob) {
+      return `Capture is using fallback assumptions because no ${scenarioLabel.toLowerCase()} preview job is available yet.`
+    }
+
+    if (!previewJob.starterModelAssumptions) {
+      return `Capture is using fallback assumptions because the current ${scenarioLabel.toLowerCase()} preview was generated without stored starter-model assumptions.`
+    }
+
+    return `Capture is using fallback assumptions because backend starter-model assumptions are not available for this scenario yet.`
+  }, [
+    effectiveEngineeringAssumptions,
+    captureResultV2.scenarioRecommendation.recommended,
+    formatScenarioLabel,
+    previewJob,
+    result.previewJobs,
+  ])
+
+  const starterModelOverridePreviewNotice = useMemo(() => {
+    if (
+      !captureResultV2.scenarioRecommendation.userOverride ||
+      hasPreferredScenarioPreview
+    ) {
+      return null
+    }
+
+    const requestedScenarioLabel = formatScenarioLabel(
+      captureResultV2.scenarioRecommendation.recommended,
+    )
+
+    return `Requested scenario: ${requestedScenarioLabel}. The preview above still reflects ${fallbackPreviewScenarioLabel} until a scenario-specific starter model is ready.`
+  }, [
+    captureResultV2.scenarioRecommendation.recommended,
+    captureResultV2.scenarioRecommendation.userOverride,
+    fallbackPreviewScenarioLabel,
+    formatScenarioLabel,
+    hasPreferredScenarioPreview,
+  ])
+
+  const starterModelAssumptionBuckets = useMemo(() => {
+    const provenanceFields =
+      effectiveEngineeringAssumptions.provenance?.fields ?? {}
+    const fieldPriority = [
+      'retention_strategy',
+      'efficiency_factor',
+      'floor_to_floor_m',
+      'clear_ceiling_m',
+      'wall_thickness_mm',
+      'core_ratio_pct',
+      'common_area_ratio_pct',
+      'hvac_space_ratio_pct',
+      'electrical_space_ratio_pct',
+    ]
+
+    const uniqueBySource = (source: string) =>
+      Array.from(
+        new Set(
+          fieldPriority
+            .filter((field) => provenanceFields[field] === source)
+            .map(
+              (field) =>
+                assumptionFieldLabels.get(field) ?? field.replace(/_/g, ' '),
+            ),
+        ),
+      )
+
+    return {
+      pinned: uniqueBySource('property_specific'),
+      tunable: Array.from(
+        new Set([
+          ...uniqueBySource('rules'),
+          ...uniqueBySource('heuristic_fallback'),
+          ...uniqueBySource('jurisdiction_default'),
+          ...uniqueBySource('learned'),
+        ]),
+      ),
+    }
+  }, [assumptionFieldLabels, effectiveEngineeringAssumptions.provenance])
+
+  const overrideModeLine = useMemo(() => {
+    const recommendation = captureResultV2.scenarioRecommendation
+    if (!recommendation.userOverride) {
+      return 'Rule-based default'
+    }
+    if (recommendation.overrideIntent === 'exploratory') {
+      return 'Exploratory override'
+    }
+    if (recommendation.overrideIntent === 'saved') {
+      return 'Saved project override'
+    }
+    if (recommendation.overrideIntent === 'learnable') {
+      return 'Learnable preference candidate'
+    }
+    return 'User override'
+  }, [captureResultV2.scenarioRecommendation])
+
+  const overrideIntentGuidance = useMemo(() => {
+    const recommendation = captureResultV2.scenarioRecommendation
+    if (recommendation.overrideIntent === 'exploratory') {
+      return 'This scenario selection is temporary for the current session and does not update learned defaults.'
+    }
+    if (recommendation.overrideIntent === 'saved') {
+      return 'This override is saved for the project and will continue to guide downstream work.'
+    }
+    if (recommendation.overrideIntent === 'learnable') {
+      return 'This override may be considered as a future learning signal, but stronger site and rule inputs still take precedence.'
+    }
+    return null
+  }, [captureResultV2.scenarioRecommendation])
+
+  const recommendationCardTitle = useMemo(() => {
+    const recommendation = captureResultV2.scenarioRecommendation
+    if (!recommendation.overrideIntent) {
+      return 'Capture Recommendation'
+    }
+    if (recommendation.overrideIntent === 'saved') {
+      return 'Saved Scenario Override'
+    }
+    if (recommendation.overrideIntent === 'exploratory') {
+      return 'Current Scenario Override'
+    }
+    return 'Current Scenario'
+  }, [captureResultV2.scenarioRecommendation])
+
+  useEffect(() => {
+    if (!currentProject?.id) {
+      hydratedSavedOverrideProjectIdRef.current = null
+      return
+    }
+
+    if (hydratedSavedOverrideProjectIdRef.current === currentProject.id) {
+      return
+    }
+
+    hydratedSavedOverrideProjectIdRef.current = currentProject.id
+
+    const savedOverride = loadCaptureScenarioOverrideForProject(
+      currentProject.id,
+    )
+    if (savedOverride && selectedScenarios.includes(savedOverride)) {
+      setActiveScenario(savedOverride)
+      setOverrideIntent('saved')
+      return
+    }
+
+    if (overrideIntent === 'saved') {
+      setActiveScenario('all')
+      setOverrideIntent(null)
+    }
+  }, [currentProject?.id, overrideIntent, selectedScenarios])
 
   useEffect(() => {
     const preferredScenario = captureResultV2.scenarioRecommendation.recommended
@@ -655,12 +1048,35 @@ export function DeveloperResults({
           }}
         >
           {/* 3D Viewer */}
-          <Preview3DViewer
-            previewUrl={effectiveStarterModel.modelUrl}
-            metadataUrl={effectiveStarterModel.metadataUrl}
-            status={effectiveStarterModel.status}
-            thumbnailUrl={effectiveStarterModel.thumbnailUrl}
-          />
+          <Suspense
+            fallback={
+              <Card
+                sx={{
+                  minHeight: 420,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  p: 'var(--ob-space-150)',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 'var(--ob-font-size-sm)',
+                    color: 'text.secondary',
+                  }}
+                >
+                  Loading 3D preview...
+                </Typography>
+              </Card>
+            }
+          >
+            <Preview3DViewer
+              previewUrl={effectiveStarterModel.modelUrl}
+              metadataUrl={effectiveStarterModel.metadataUrl}
+              status={effectiveStarterModel.status}
+              thumbnailUrl={effectiveStarterModel.thumbnailUrl}
+            />
+          </Suspense>
 
           <Card
             sx={{
@@ -804,7 +1220,7 @@ export function DeveloperResults({
                   color: 'text.secondary',
                 }}
               >
-                Capture Recommendation
+                {recommendationCardTitle}
               </Typography>
             </Box>
             <Typography
@@ -818,6 +1234,16 @@ export function DeveloperResults({
                 captureResultV2.scenarioRecommendation.recommended,
               )}
             </Typography>
+            {captureResultV2.scenarioRecommendation.userOverride ? (
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                }}
+              >
+                Capture recommended: {defaultRecommendationLabel}
+              </Typography>
+            ) : null}
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-sm)',
@@ -833,11 +1259,39 @@ export function DeveloperResults({
                 color: 'text.secondary',
               }}
             >
-              Mode:{' '}
-              {captureResultV2.scenarioRecommendation.userOverride
-                ? 'User override'
-                : 'Rule-based default'}
+              Mode: {overrideModeLine}
             </Typography>
+            {overrideIntentGuidance ? (
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                  lineHeight: 1.5,
+                }}
+              >
+                {overrideIntentGuidance}
+              </Typography>
+            ) : null}
+            {captureResultV2.scenarioRecommendation.overrideIntent ===
+              'exploratory' && currentProject ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleSaveProjectOverride}
+              >
+                Save as Project Override
+              </Button>
+            ) : null}
+            {captureResultV2.scenarioRecommendation.overrideIntent ===
+              'saved' && currentProject ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearProjectOverride}
+              >
+                Clear Saved Override
+              </Button>
+            ) : null}
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-xs)',
@@ -942,16 +1396,63 @@ export function DeveloperResults({
             >
               {starterModelAssumptionSourceLine}
             </Typography>
-            {starterModelAssumptionLines.map((line) => (
+            {starterModelAssumptionFallbackReason ? (
               <Typography
-                key={line}
                 sx={{
                   fontSize: 'var(--ob-font-size-xs)',
                   color: 'text.secondary',
                   lineHeight: 1.5,
                 }}
               >
-                {line}
+                {starterModelAssumptionFallbackReason}
+              </Typography>
+            ) : null}
+            {starterModelOverridePreviewNotice ? (
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                  lineHeight: 1.5,
+                }}
+              >
+                {starterModelOverridePreviewNotice}
+              </Typography>
+            ) : null}
+            {starterModelAssumptionBuckets.pinned.length > 0 ? (
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                  lineHeight: 1.5,
+                }}
+              >
+                Pinned by site facts:{' '}
+                {starterModelAssumptionBuckets.pinned.join(', ')}.
+              </Typography>
+            ) : null}
+            {starterModelAssumptionBuckets.tunable.length > 0 ? (
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                  lineHeight: 1.5,
+                }}
+              >
+                Starter defaults still tunable:{' '}
+                {starterModelAssumptionBuckets.tunable.join(', ')}.
+              </Typography>
+            ) : null}
+            {starterModelAssumptionLines.map((line) => (
+              <Typography
+                key={line.text}
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                  lineHeight: 1.5,
+                }}
+              >
+                {line.text}
+                {line.sourceDetail ? ` (${line.sourceDetail})` : ''}
               </Typography>
             ))}
           </Card>
@@ -991,16 +1492,19 @@ export function DeveloperResults({
                 color: 'text.secondary',
               }}
             >
-              Recommended:{' '}
-              {formatScenarioLabel(
-                captureResultV2.scenarioRecommendation.recommended,
-              )}
+              Recommended: {defaultRecommendationLabel}
             </Typography>
             <Button
               key="all"
               variant={activeScenario === 'all' ? 'primary' : 'ghost'}
               size="sm"
-              onClick={() => setActiveScenario('all')}
+              onClick={() => {
+                setActiveScenario('all')
+                setOverrideIntent(null)
+                if (currentProject?.id) {
+                  clearCaptureScenarioOverrideForProject(currentProject.id)
+                }
+              }}
             >
               All Scenarios
             </Button>
@@ -1009,7 +1513,10 @@ export function DeveloperResults({
                 key={scenario}
                 variant={activeScenario === scenario ? 'primary' : 'ghost'}
                 size="sm"
-                onClick={() => setActiveScenario(scenario)}
+                onClick={() => {
+                  setActiveScenario(scenario)
+                  setOverrideIntent('exploratory')
+                }}
               >
                 {formatScenarioLabel(scenario)}
               </Button>
@@ -1019,24 +1526,30 @@ export function DeveloperResults({
       </section>
 
       {/* Multi-Scenario Comparison */}
-      <MultiScenarioComparisonSection
-        capturedProperty={result}
-        quickAnalysisScenariosCount={quickAnalysisScenarios.length}
-        scenarioComparisonData={scenarioComparisonData}
-        feasibilitySignals={feasibilitySignals}
-        comparisonScenariosCount={comparisonScenarios.length}
-        activeScenario={activeScenario}
-        scenarioLookup={scenarioLookup}
-        propertyId={result.propertyId}
-        setActiveScenario={setActiveScenario}
-        formatRecordedTimestamp={formatRecordedTimestamp}
-      />
+      <Suspense fallback={sectionFallback}>
+        <MultiScenarioComparisonSection
+          capturedProperty={result}
+          quickAnalysisScenariosCount={quickAnalysisScenarios.length}
+          scenarioComparisonData={scenarioComparisonData}
+          feasibilitySignals={feasibilitySignals}
+          comparisonScenariosCount={comparisonScenarios.length}
+          activeScenario={activeScenario}
+          scenarioLookup={scenarioLookup}
+          propertyId={result.propertyId}
+          setActiveScenario={setActiveScenario}
+          formatRecordedTimestamp={formatRecordedTimestamp}
+        />
+      </Suspense>
 
       {/* Property Overview Section */}
-      <PropertyOverviewSection cards={overviewCards} />
+      <Suspense fallback={sectionFallback}>
+        <PropertyOverviewSection cards={overviewCards} />
+      </Suspense>
 
       {/* AI Insight Card - Key intelligence from Optimal AI */}
-      <OptimalIntelligenceCard insight={aiInsight} hasProperty={!!result} />
+      <Suspense fallback={sectionFallback}>
+        <OptimalIntelligenceCard insight={aiInsight} hasProperty={!!result} />
+      </Suspense>
 
       <section className="site-acquisition__preview-layers-inspection">
         <Box sx={{ mt: 'var(--ob-space-150)' }}>
@@ -1050,22 +1563,24 @@ export function DeveloperResults({
           >
             Preview Layer Inspection
           </Typography>
-          <PreviewLayersTable
-            layers={previewLayerMetadata}
-            visibility={previewLayerVisibility}
-            focusLayerId={previewFocusLayerId}
-            hiddenLayerCount={hiddenLayerCount}
-            isLoading={isPreviewMetadataLoading}
-            error={previewMetadataError}
-            onLayerAction={handleLayerAction}
-            onShowAll={handleShowAllLayers}
-            onResetFocus={handleResetLayerFocus}
-            formatNumber={formatNumber}
-            legendEntries={colorLegendEntries}
-            onLegendChange={handleLegendEntryChange}
-            legendHasPendingChanges={legendHasPendingChanges}
-            onLegendReset={handleLegendReset}
-          />
+          <Suspense fallback={sectionFallback}>
+            <PreviewLayersTable
+              layers={previewLayerMetadata}
+              visibility={previewLayerVisibility}
+              focusLayerId={previewFocusLayerId}
+              hiddenLayerCount={hiddenLayerCount}
+              isLoading={isPreviewMetadataLoading}
+              error={previewMetadataError}
+              onLayerAction={handleLayerAction}
+              onShowAll={handleShowAllLayers}
+              onResetFocus={handleResetLayerFocus}
+              formatNumber={formatNumber}
+              legendEntries={colorLegendEntries}
+              onLegendChange={handleLegendEntryChange}
+              legendHasPendingChanges={legendHasPendingChanges}
+              onLegendReset={handleLegendReset}
+            />
+          </Suspense>
         </Box>
       </section>
 

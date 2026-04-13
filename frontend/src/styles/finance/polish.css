@@ -53,7 +53,7 @@
     /* 2px - Square Cyber-Minimalism for inputs */
     border: 1px solid var(--ob-color-border-subtle);
     font-size: var(--ob-font-size-sm);
-    font-family: var(--ob-font-family-base, 'Inter', sans-serif);
+    font-family: var(--ob-font-family-base, ui-sans-serif, sans-serif);
     background: var(--ob-color-surface-default);
     color: var(--ob-color-text-primary);
     min-width: 15rem;
@@ -78,7 +78,7 @@
     padding: var(--ob-space-050) var(--ob-space-100);
     color: var(--ob-color-text-primary);
     outline: none;
-    font-family: var(--ob-font-family-base, 'Inter', sans-serif);
+    font-family: var(--ob-font-family-base, ui-sans-serif, sans-serif);
     font-size: var(--ob-font-size-sm);
     min-width: 15rem;
     transition: border-color 0.2s ease;
@@ -120,7 +120,7 @@
     color: var(--ob-color-text-primary);
     font-size: var(--ob-font-size-sm);
     font-weight: var(--ob-font-weight-medium);
-    font-family: var(--ob-font-family-base, 'Inter', sans-serif);
+    font-family: var(--ob-font-family-base, ui-sans-serif, sans-serif);
     outline: none;
     appearance: none;
     cursor: pointer;
@@ -202,7 +202,7 @@
     /* 2px - Square Cyber-Minimalism */
     border: 1px solid var(--ob-color-border-subtle);
     font-size: var(--ob-font-size-sm);
-    font-family: var(--ob-font-family-base, 'Inter', sans-serif);
+    font-family: var(--ob-font-family-base, ui-sans-serif, sans-serif);
     background: var(--ob-color-surface-default);
     color: var(--ob-color-text-primary);
     transition: border-color 0.2s ease;
@@ -223,7 +223,7 @@
     /* 2px - Square Cyber-Minimalism */
     font-size: var(--ob-font-size-sm);
     font-weight: var(--ob-font-weight-medium);
-    font-family: var(--ob-font-family-base, 'Inter', sans-serif);
+    font-family: var(--ob-font-family-base, ui-sans-serif, sans-serif);
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -336,7 +336,7 @@
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-xs);
     color: var(--ob-color-text-primary);
-    font-family: var(--ob-font-family-base, 'Inter', sans-serif);
+    font-family: var(--ob-font-family-base, ui-sans-serif, sans-serif);
     transition: all 0.2s ease;
     padding: var(--ob-space-050) var(--ob-space-100);
     width: 100%;
@@ -349,7 +349,7 @@
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
     color: var(--ob-color-text-primary);
-    font-family: var(--ob-font-family-base, 'Inter', sans-serif);
+    font-family: var(--ob-font-family-base, ui-sans-serif, sans-serif);
     padding: var(--ob-space-100) var(--ob-space-150);
     font-size: var(--ob-font-size-md);
     width: 100%;
@@ -656,7 +656,7 @@
 }
 
 .allocation-ring__value {
-    font-family: var(--ob-font-family-base, 'Inter', sans-serif);
+    font-family: var(--ob-font-family-base, ui-sans-serif, sans-serif);
     font-weight: var(--ob-font-weight-light, 300);
     font-size: var(--ob-font-size-3xl, 2.5rem);
     color: var(--ob-color-text-primary);

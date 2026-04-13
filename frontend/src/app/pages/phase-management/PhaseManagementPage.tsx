@@ -38,6 +38,7 @@ import {
 } from '../../../api/development'
 import { useProjectScope } from '../../../contexts/useProjectScope'
 import { Link, useRouterController } from '../../../router'
+import '../../../styles/phase-management.css'
 
 interface TabPanelProps {
   children?: React.ReactNode

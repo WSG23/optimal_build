@@ -20,6 +20,7 @@ import {
 import { forwardGeocodeAddress, reverseGeocodeCoords } from '../api/geocoding'
 import { useTranslation } from '../i18n'
 import { Link } from '../router'
+import '../styles/agents-capture.css'
 
 const GOOGLE_MAPS_ENV =
   typeof import.meta !== 'undefined' && import.meta
@@ -215,7 +216,11 @@ function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
 
     void loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
       .then(() => {
-        if (cancelled || !containerRef.current || typeof google === 'undefined') {
+        if (
+          cancelled ||
+          !containerRef.current ||
+          typeof google === 'undefined'
+        ) {
           return
         }
         const center = {
@@ -255,7 +260,11 @@ function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
       })
       .catch((error) => {
         if (!cancelled) {
-          setMapError(error instanceof Error ? error.message : 'Unable to load map preview.')
+          setMapError(
+            error instanceof Error
+              ? error.message
+              : 'Unable to load map preview.',
+          )
         }
       })
 

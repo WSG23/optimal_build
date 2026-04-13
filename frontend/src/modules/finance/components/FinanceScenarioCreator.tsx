@@ -8,7 +8,6 @@ import {
   alpha,
 } from '@mui/material'
 import { ArrowForward, Close } from '@mui/icons-material'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
 import { runFinanceFeasibility } from '../../../api/finance'
 import type {
@@ -19,6 +18,7 @@ import { Button } from '../../../components/canonical/Button'
 import { Card } from '../../../components/canonical/Card'
 import { Input } from '../../../components/canonical/Input'
 import { useTranslation } from '../../../i18n'
+import { AllocationRing } from './AllocationRing'
 
 type AssetFormRow = {
   id: string
@@ -943,32 +943,16 @@ export function FinanceScenarioCreator({
                   position: 'relative',
                   width: 'var(--ob-size-drop-zone)',
                   height: 'var(--ob-size-drop-zone)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chartData}
-                      innerRadius={44}
-                      outerRadius={58}
-                      paddingAngle={2}
-                      dataKey="value"
-                      stroke="none"
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: 'var(--ob-radius-sm)',
-                        border: 'none',
-                        boxShadow: 'var(--ob-shadow-md)',
-                        backgroundColor: theme.palette.background.paper,
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <AllocationRing
+                  data={chartData}
+                  totalAllocation={100 - unallocated}
+                  size={160}
+                />
                 {/* Center text for unallocated like screenshot */}
                 <Box
                   sx={{

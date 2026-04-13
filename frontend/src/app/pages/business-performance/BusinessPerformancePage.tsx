@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import {
   Alert,
   Box,
@@ -23,7 +30,6 @@ import {
 } from '../../../api/performance'
 import { PipelineBoard } from './components/PipelineBoard'
 import { DealInsightsPanel } from './components/DealInsightsPanel'
-import { AnalyticsPanel } from './components/AnalyticsPanel'
 import { RoiPanel } from './components/RoiPanel'
 import { KpiSummarySection } from './components/KpiSummarySection'
 import { Card } from '../../../components/canonical/Card'
@@ -50,6 +56,38 @@ import {
   totalPipeline,
   formatRelativeDate,
 } from './utils'
+import '../../../styles/business-performance.css'
+
+const AnalyticsPanel = lazy(() =>
+  import('./components/AnalyticsPanel').then((module) => ({
+    default: module.AnalyticsPanel,
+  })),
+)
+
+function AnalyticsPanelFallback() {
+  return (
+    <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
+      <Stack spacing="var(--ob-space-100)">
+        <Skeleton
+          variant="text"
+          width="40%"
+          height={32}
+          sx={{ transform: 'none' }}
+        />
+        <Skeleton
+          variant="rectangular"
+          height={300}
+          sx={{ borderRadius: 'var(--ob-radius-sm)' }}
+        />
+        <Skeleton
+          variant="rectangular"
+          height={120}
+          sx={{ borderRadius: 'var(--ob-radius-sm)' }}
+        />
+      </Stack>
+    </Card>
+  )
+}
 
 export function BusinessPerformancePage() {
   const [deals, setDeals] = useState<DealSummary[]>([])
@@ -478,11 +516,13 @@ export function BusinessPerformancePage() {
               timeline={timeline}
               commissions={commissions}
             />
-            <AnalyticsPanel
-              metrics={metrics}
-              trend={trend}
-              benchmarks={benchmarks}
-            />
+            <Suspense fallback={<AnalyticsPanelFallback />}>
+              <AnalyticsPanel
+                metrics={metrics}
+                trend={trend}
+                benchmarks={benchmarks}
+              />
+            </Suspense>
             <RoiPanel summary={roiSummary} />
             {(dealLoading || analyticsLoading) && (
               <Box

@@ -1,15 +1,5 @@
+import { Suspense, lazy } from 'react'
 import { Box, Divider, Grid, Stack, Typography } from '@mui/material'
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-  Area,
-  AreaChart,
-} from 'recharts'
 
 import { AppLayout } from '../../App'
 import { useTranslation } from '../../i18n'
@@ -17,16 +7,42 @@ import { useTranslation } from '../../i18n'
 import { TimelinePanel } from './components'
 import { useDeals, useTimeline, useAnalytics, useBenchmarks } from './hooks'
 import { STAGE_TRANSLATION_KEYS } from './types'
-import {
-  formatCurrency,
-  formatDays,
-  formatPercent,
-  formatShortCurrency,
-} from './utils/formatters'
+import { formatCurrency, formatDays, formatPercent } from './utils/formatters'
 import { AnimatedPageHeader } from '../../components/canonical/AnimatedPageHeader'
 import { MetricTile } from '../../components/canonical/MetricTile'
 import { Card } from '../../components/canonical/Card'
 import { AttachMoney, TrendingUp, Speed, Assignment } from '@mui/icons-material'
+import '../../styles/agent-performance.css'
+
+const PerformanceTrendsSection = lazy(() =>
+  import('./components/PerformanceTrendsSection').then((module) => ({
+    default: module.PerformanceTrendsSection,
+  })),
+)
+
+function PerformanceTrendsFallback() {
+  return (
+    <Grid container spacing={3}>
+      {[0, 1].map((index) => (
+        <Grid item xs={12} md={6} key={index}>
+          <Card variant="default" sx={{ p: 2, height: 320 }}>
+            <Typography variant="h6" gutterBottom>
+              Loading trend
+            </Typography>
+            <Box
+              sx={{
+                height: '90%',
+                borderRadius: 'var(--ob-radius-sm)',
+                bgcolor: 'rgba(255,255,255,0.03)',
+                border: '1px solid var(--ob-color-border-subtle)',
+              }}
+            />
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  )
+}
 
 export default function AgentPerformancePage() {
   const { t, i18n } = useTranslation()
@@ -276,101 +292,19 @@ export default function AgentPerformancePage() {
               </Grid>
 
               {trendData.length > 0 && (
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <Card variant="default" sx={{ p: 2, height: 320 }}>
-                      <Typography variant="h6" gutterBottom>
-                        {t('agentPerformance.analytics.trend.pipelineHeading')}
-                      </Typography>
-                      <ResponsiveContainer width="100%" height="90%">
-                        <AreaChart data={trendData}>
-                          <defs>
-                            <linearGradient
-                              id="colorGross"
-                              x1="0"
-                              y1="0"
-                              x2="0"
-                              y2="1"
-                            >
-                              <stop
-                                offset="5%"
-                                stopColor="#3B82F6"
-                                stopOpacity={0.3}
-                              />
-                              <stop
-                                offset="95%"
-                                stopColor="#3B82F6"
-                                stopOpacity={0}
-                              />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid
-                            strokeDasharray="3 3"
-                            vertical={false}
-                          />
-                          <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                          <YAxis
-                            tick={{ fontSize: 12 }}
-                            tickFormatter={(val) =>
-                              formatShortCurrency(val, primaryCurrency, locale)
-                            }
-                          />
-                          <Tooltip />
-                          <Area
-                            type="monotone"
-                            dataKey="gross"
-                            stroke="#3B82F6"
-                            fillOpacity={1}
-                            fill="url(#colorGross)"
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="weighted"
-                            stroke="#10B981"
-                            fillOpacity={0}
-                            strokeDasharray="4 4"
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </Card>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Card variant="default" sx={{ p: 2, height: 320 }}>
-                      <Typography variant="h6" gutterBottom>
-                        {t(
-                          'agentPerformance.analytics.trend.conversionHeading',
-                        )}
-                      </Typography>
-                      <ResponsiveContainer width="100%" height="90%">
-                        <LineChart data={trendData}>
-                          <CartesianGrid
-                            strokeDasharray="3 3"
-                            vertical={false}
-                          />
-                          <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                          <YAxis
-                            tick={{ fontSize: 12 }}
-                            tickFormatter={(val) => `${val}%`}
-                          />
-                          <Tooltip />
-                          <Line
-                            type="monotone"
-                            dataKey="conversion"
-                            stroke="#F59E0B"
-                            strokeWidth={2}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="cycle"
-                            stroke="#8B5CF6"
-                            strokeWidth={2}
-                            strokeDasharray="4 4"
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </Card>
-                  </Grid>
-                </Grid>
+                <Suspense fallback={<PerformanceTrendsFallback />}>
+                  <PerformanceTrendsSection
+                    trendData={trendData}
+                    pipelineHeading={t(
+                      'agentPerformance.analytics.trend.pipelineHeading',
+                    )}
+                    conversionHeading={t(
+                      'agentPerformance.analytics.trend.conversionHeading',
+                    )}
+                    locale={locale}
+                    primaryCurrency={primaryCurrency}
+                  />
+                </Suspense>
               )}
 
               {benchmarksHasContent && (

@@ -5,12 +5,20 @@ import react from '@vitejs/plugin-react'
 
 function resolveManualChunk(id: string): string | undefined {
   if (id.includes('/node_modules/')) {
+    if (id.includes('/@mui/icons-material/')) {
+      return 'vendor-mui-icons'
+    }
+    if (id.includes('/@emotion/')) {
+      return 'vendor-emotion'
+    }
     if (
-      id.includes('/@mui/') ||
-      id.includes('/@emotion/') ||
+      id.includes('/@mui/material/') ||
+      id.includes('/@mui/system/') ||
+      id.includes('/@mui/utils/') ||
+      id.includes('/@mui/lab/') ||
       id.includes('/@popperjs/')
     ) {
-      return 'vendor-mui'
+      return 'vendor-mui-core'
     }
     if (id.includes('/recharts/')) {
       return 'vendor-charts'
@@ -21,7 +29,11 @@ function resolveManualChunk(id: string): string | undefined {
     if (id.includes('/three/')) {
       return 'vendor-three'
     }
-    if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) {
+    if (
+      id.includes('/react/') ||
+      id.includes('/react-dom/') ||
+      id.includes('/scheduler/')
+    ) {
       return 'vendor-react'
     }
   }

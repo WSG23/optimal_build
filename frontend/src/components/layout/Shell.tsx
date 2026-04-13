@@ -1,9 +1,17 @@
-import { ReactNode } from 'react'
+import { ReactNode, Suspense, lazy } from 'react'
 import { Box, Typography, Stack } from '@mui/material'
-import { Sidebar } from './Sidebar'
 import { useBaseLayoutContext } from '../../app/layout/useBaseLayout'
-import { HeaderUtilityCluster } from './HeaderUtilityCluster'
 import { useRouterController } from '../../router'
+
+const Sidebar = lazy(async () => {
+  const module = await import('./Sidebar')
+  return { default: module.Sidebar }
+})
+
+const HeaderUtilityCluster = lazy(async () => {
+  const module = await import('./HeaderUtilityCluster')
+  return { default: module.HeaderUtilityCluster }
+})
 
 export interface AppShellProps {
   title?: string
@@ -55,7 +63,11 @@ export function AppShell({
       }}
     >
       {/* "The Wall" - Sidebar */}
-      {!shouldHideSidebar && <Sidebar workspace={workspace} />}
+      {!shouldHideSidebar && (
+        <Suspense fallback={null}>
+          <Sidebar workspace={workspace} />
+        </Suspense>
+      )}
 
       {/* Main Content Area */}
       <Box
@@ -132,7 +144,11 @@ export function AppShell({
                 alignItems="center"
                 sx={{ flexShrink: 0 }}
               >
-                {!inBaseLayout && <HeaderUtilityCluster />}
+                {!inBaseLayout && (
+                  <Suspense fallback={null}>
+                    <HeaderUtilityCluster />
+                  </Suspense>
+                )}
                 {actions}
               </Stack>
             </Box>

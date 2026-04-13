@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useMemo } from 'react'
+import { ReactNode, Suspense, lazy, useCallback, useMemo } from 'react'
 import { Box, Grid, Typography, useTheme } from '@mui/material'
 import {
   AccountTreeOutlined,
@@ -17,9 +17,22 @@ import {
   useInvestigationAnalytics,
 } from '../../hooks/useInvestigationAnalytics'
 import { KPITickerCard } from './components/KPITickerCard'
-import { RelationshipGraph } from './components/RelationshipGraph'
-import { ConfidenceGauge } from './components/ConfidenceGauge'
-import { CorrelationHeatmap } from './components/CorrelationHeatmap'
+import '../../styles/visualizations.css'
+
+const RelationshipGraph = lazy(async () => {
+  const module = await import('./components/RelationshipGraph')
+  return { default: module.RelationshipGraph }
+})
+
+const ConfidenceGauge = lazy(async () => {
+  const module = await import('./components/ConfidenceGauge')
+  return { default: module.ConfidenceGauge }
+})
+
+const CorrelationHeatmap = lazy(async () => {
+  const module = await import('./components/CorrelationHeatmap')
+  return { default: module.CorrelationHeatmap }
+})
 
 export interface AdvancedIntelligencePageProps {
   workspaceId?: string
@@ -135,6 +148,34 @@ function IntelligenceStatusPanel({
           : 'radial-gradient(circle at top, rgba(0, 214, 255, 0.08), transparent 65%), var(--ob-surface-glass-1)',
       }}
     />
+  )
+}
+
+function IntelligenceLoadingPanel({ minHeight = 280 }: { minHeight?: number }) {
+  return (
+    <Box
+      sx={{
+        minHeight,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        gap: 'var(--ob-space-150)',
+        px: 'var(--ob-space-150)',
+        py: 'var(--ob-space-200)',
+        borderRadius: 'var(--ob-radius-sm)',
+        border: '1px solid var(--ob-border-fine)',
+        background:
+          'radial-gradient(circle at top, rgba(0, 214, 255, 0.08), transparent 65%), var(--ob-surface-glass-1)',
+      }}
+    >
+      <Skeleton variant="rounded" width="38%" height={18} />
+      <Skeleton
+        variant="rounded"
+        width="100%"
+        height={minHeight > 400 ? 320 : 120}
+      />
+      <SkeletonText lines={2} lastLineWidth="72%" />
+    </Box>
   )
 }
 
@@ -369,20 +410,24 @@ export function AdvancedIntelligencePage({
                 Relationship Intelligence
               </Typography>
               {graphStatus === 'ok' ? (
-                <RelationshipGraph
-                  nodes={graphData!.graph.nodes.map((n) => ({
-                    id: n.id,
-                    label: n.label,
-                    category: n.category as 'Team' | 'Workflow',
-                    weight: n.score,
-                  }))}
-                  links={graphData!.graph.edges.map((e) => ({
-                    source: e.source,
-                    target: e.target,
-                    strength: e.weight ?? 1,
-                  }))}
-                  height={600}
-                />
+                <Suspense
+                  fallback={<IntelligenceLoadingPanel minHeight={600} />}
+                >
+                  <RelationshipGraph
+                    nodes={graphData!.graph.nodes.map((n) => ({
+                      id: n.id,
+                      label: n.label,
+                      category: n.category as 'Team' | 'Workflow',
+                      weight: n.score,
+                    }))}
+                    links={graphData!.graph.edges.map((e) => ({
+                      source: e.source,
+                      target: e.target,
+                      strength: e.weight ?? 1,
+                    }))}
+                    height={600}
+                  />
+                </Suspense>
               ) : (
                 <IntelligenceStatusPanel
                   status={graphStatus}
@@ -423,16 +468,18 @@ export function AdvancedIntelligencePage({
                 Predictive Forecast
               </Typography>
               {predictiveStatus === 'ok' ? (
-                predictiveData!.segments
-                  .slice(0, 5)
-                  .map((segment) => (
+                <Suspense
+                  fallback={<IntelligenceLoadingPanel minHeight={280} />}
+                >
+                  {predictiveData!.segments.slice(0, 5).map((segment) => (
                     <ConfidenceGauge
                       key={segment.segmentId}
                       label={segment.segmentName}
                       value={Math.round(segment.probability * 100)}
                       projection={`Projection: ${segment.projection}`}
                     />
-                  ))
+                  ))}
+                </Suspense>
               ) : (
                 <IntelligenceStatusPanel
                   status={predictiveStatus}
@@ -470,15 +517,19 @@ export function AdvancedIntelligencePage({
                 Cross-Correlation
               </Typography>
               {correlationStatus === 'ok' ? (
-                <CorrelationHeatmap
-                  data={correlationData!.relationships.map((r) => ({
-                    id: r.pairId,
-                    driver: r.driver,
-                    outcome: r.outcome,
-                    coefficient: r.coefficient,
-                    pValue: r.pValue,
-                  }))}
-                />
+                <Suspense
+                  fallback={<IntelligenceLoadingPanel minHeight={280} />}
+                >
+                  <CorrelationHeatmap
+                    data={correlationData!.relationships.map((r) => ({
+                      id: r.pairId,
+                      driver: r.driver,
+                      outcome: r.outcome,
+                      coefficient: r.coefficient,
+                      pValue: r.pValue,
+                    }))}
+                  />
+                </Suspense>
               ) : (
                 <IntelligenceStatusPanel
                   status={correlationStatus}

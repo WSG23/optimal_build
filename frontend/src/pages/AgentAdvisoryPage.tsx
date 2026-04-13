@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { FormEvent, Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { Box, Container, Stack, Typography, Grid } from '@mui/material'
 
 import { AppLayout } from '../App'
@@ -10,11 +10,26 @@ import {
   submitAdvisoryFeedback,
 } from '../api/advisory'
 import { useRouterLocation } from '../router'
-import { AssetMixPanel } from './advisory/components/AssetMixPanel'
 import { MarketPositioningPanel } from './advisory/components/MarketPositioningPanel'
-import { AbsorptionChart } from './advisory/components/AbsorptionChart'
 import { FeedbackForm } from './advisory/components/FeedbackForm'
 import { Skeleton } from '../components/canonical/Skeleton'
+import '../styles/advisory.css'
+
+const AssetMixPanel = lazy(() =>
+  import('./advisory/components/AssetMixPanel').then((module) => ({
+    default: module.AssetMixPanel,
+  })),
+)
+
+const AbsorptionChart = lazy(() =>
+  import('./advisory/components/AbsorptionChart').then((module) => ({
+    default: module.AbsorptionChart,
+  })),
+)
+
+function AdvisoryPanelFallback({ height }: { height: number }) {
+  return <Skeleton height={height} variant="rounded" />
+}
 
 function usePropertyIdFromQuery(): string {
   const { search } = useRouterLocation()
@@ -142,11 +157,13 @@ export function AgentAdvisoryPage() {
         {summary && (
           <Stack spacing={4}>
             {/* Top Row: Asset Mix Strategy */}
-            <AssetMixPanel
-              totalGfa={summary.asset_mix.total_programmable_gfa_sqm}
-              recommendations={summary.asset_mix.mix_recommendations}
-              notes={summary.asset_mix.notes}
-            />
+            <Suspense fallback={<AdvisoryPanelFallback height={300} />}>
+              <AssetMixPanel
+                totalGfa={summary.asset_mix.total_programmable_gfa_sqm}
+                recommendations={summary.asset_mix.mix_recommendations}
+                notes={summary.asset_mix.notes}
+              />
+            </Suspense>
 
             {/* Middle Row: Market Positioning & Absorption Grid */}
             <Grid container spacing={4}>
@@ -154,7 +171,9 @@ export function AgentAdvisoryPage() {
                 <MarketPositioningPanel data={summary.market_positioning} />
               </Grid>
               <Grid item xs={12} lg={6}>
-                <AbsorptionChart data={summary.absorption_forecast} />
+                <Suspense fallback={<AdvisoryPanelFallback height={400} />}>
+                  <AbsorptionChart data={summary.absorption_forecast} />
+                </Suspense>
               </Grid>
             </Grid>
 

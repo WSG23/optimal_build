@@ -348,7 +348,7 @@ export const glows = {
  */
 export const typography = {
   family: {
-    base: "'Inter', system-ui, -apple-system, sans-serif",
+    base: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
     mono: "'JetBrains Mono', 'Roboto Mono', monospace",
   },
   size: {

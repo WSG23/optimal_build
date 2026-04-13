@@ -1,4 +1,12 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import React, {
+  Suspense,
+  lazy,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react'
 import { Box, Alert, Snackbar, Tab, Tabs, useTheme } from '@mui/material'
 import {
   Add as AddIcon,
@@ -14,17 +22,37 @@ import {
   AssetType,
   type CorenetCapability,
 } from '../../../api/regulatory'
-import { SubmissionWizard } from './components/SubmissionWizard'
-import { CompliancePathTimeline } from './components/CompliancePathTimeline'
-import { ChangeOfUseWizard } from './components/ChangeOfUseWizard'
-import { HeritageSubmissionForm } from './components/HeritageSubmissionForm'
 import { QuickActionsSection } from './components/QuickActionsSection'
-import { SubmissionsTabContent } from './components/SubmissionsTabContent'
 import { getTableSx } from '../../../utils/themeStyles'
 import { useProjectScope } from '../../../contexts/useProjectScope'
 import { Button } from '../../../components/canonical/Button'
 import { EmptyState, SkeletonCard } from '../../../components/canonical'
 import { useRouterController } from '../../../router'
+
+const SubmissionWizard = lazy(async () => {
+  const module = await import('./components/SubmissionWizard')
+  return { default: module.SubmissionWizard }
+})
+
+const CompliancePathTimeline = lazy(async () => {
+  const module = await import('./components/CompliancePathTimeline')
+  return { default: module.CompliancePathTimeline }
+})
+
+const ChangeOfUseWizard = lazy(async () => {
+  const module = await import('./components/ChangeOfUseWizard')
+  return { default: module.ChangeOfUseWizard }
+})
+
+const HeritageSubmissionForm = lazy(async () => {
+  const module = await import('./components/HeritageSubmissionForm')
+  return { default: module.HeritageSubmissionForm }
+})
+
+const SubmissionsTabContent = lazy(async () => {
+  const module = await import('./components/SubmissionsTabContent')
+  return { default: module.SubmissionsTabContent }
+})
 
 const STORAGE_PREFIX = 'ob_regulatory'
 
@@ -73,6 +101,25 @@ function TabPanel({ children, value, index }: TabPanelProps) {
       sx={{ pt: 'var(--ob-space-300)' }}
     >
       {value === index && children}
+    </Box>
+  )
+}
+
+function RegulatoryPanelFallback({ label }: { label: string }) {
+  return (
+    <Box
+      className="ob-seamless-panel ob-seamless-panel--glass"
+      sx={{
+        p: 'var(--ob-space-150)',
+        minHeight: 220,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Alert severity="info" sx={{ mb: 0 }}>
+        {label}
+      </Alert>
     </Box>
   )
 }
@@ -457,68 +504,94 @@ export const RegulatoryDashboardPage: React.FC = () => {
 
       {/* Tab 0: Submissions */}
       <TabPanel value={tabValue} index={0}>
-        <SubmissionsTabContent
-          submissions={submissions}
-          changeOfUseApps={changeOfUseApps}
-          heritageSubmissions={heritageSubmissions}
-          loading={loading}
-          integrationModeLabel={integrationModeLabel}
-          integrationState={integrationState}
-          tableSx={tableSx}
-          onRefreshSubmission={handleRefreshSubmission}
-          onOpenChangeOfUseForm={openChangeOfUseForm}
-          onOpenHeritageForm={openHeritageForm}
-        />
+        <Suspense
+          fallback={
+            <RegulatoryPanelFallback label="Loading submissions workspace..." />
+          }
+        >
+          <SubmissionsTabContent
+            submissions={submissions}
+            changeOfUseApps={changeOfUseApps}
+            heritageSubmissions={heritageSubmissions}
+            loading={loading}
+            integrationModeLabel={integrationModeLabel}
+            integrationState={integrationState}
+            tableSx={tableSx}
+            onRefreshSubmission={handleRefreshSubmission}
+            onOpenChangeOfUseForm={openChangeOfUseForm}
+            onOpenHeritageForm={openHeritageForm}
+          />
+        </Suspense>
       </TabPanel>
 
       {/* Tab 1: Compliance Path */}
       <TabPanel value={tabValue} index={1}>
-        <CompliancePathTimeline
-          projectId={projectId}
-          projectName={currentProject?.name}
-          preferredAssetType={preferredAssetType}
-        />
+        <Suspense
+          fallback={
+            <RegulatoryPanelFallback label="Loading compliance path..." />
+          }
+        >
+          <CompliancePathTimeline
+            projectId={projectId}
+            projectName={currentProject?.name}
+            preferredAssetType={preferredAssetType}
+          />
+        </Suspense>
       </TabPanel>
 
       {/* Dialogs */}
-      <SubmissionWizard
-        open={wizardOpen}
-        onClose={() => setWizardOpen(false)}
-        projectId={projectId}
-        onSuccess={handleCreateSuccess}
-      />
+      {wizardOpen ? (
+        <Suspense fallback={null}>
+          <SubmissionWizard
+            open={wizardOpen}
+            onClose={() => setWizardOpen(false)}
+            projectId={projectId}
+            onSuccess={handleCreateSuccess}
+          />
+        </Suspense>
+      ) : null}
 
-      <ChangeOfUseWizard
-        open={changeOfUseOpen}
-        onClose={closeChangeOfUseForm}
-        projectId={projectId}
-        initialApplication={selectedChangeOfUse}
-        onSuccess={(application) => {
-          closeChangeOfUseForm()
-          setChangeOfUseApps((prev) => {
-            const existingIndex = prev.findIndex((s) => s.id === application.id)
-            if (existingIndex >= 0) {
-              const updated = [...prev]
-              updated[existingIndex] = application
-              persistList(projectId, 'change-of-use', updated)
-              setSuccessMessage('Change of use application updated')
-              return updated
-            }
-            const next = [application, ...prev]
-            persistList(projectId, 'change-of-use', next)
-            setSuccessMessage('Change of use application submitted')
-            return next
-          })
-        }}
-      />
+      {changeOfUseOpen ? (
+        <Suspense fallback={null}>
+          <ChangeOfUseWizard
+            open={changeOfUseOpen}
+            onClose={closeChangeOfUseForm}
+            projectId={projectId}
+            initialApplication={selectedChangeOfUse}
+            onSuccess={(application) => {
+              closeChangeOfUseForm()
+              setChangeOfUseApps((prev) => {
+                const existingIndex = prev.findIndex(
+                  (s) => s.id === application.id,
+                )
+                if (existingIndex >= 0) {
+                  const updated = [...prev]
+                  updated[existingIndex] = application
+                  persistList(projectId, 'change-of-use', updated)
+                  setSuccessMessage('Change of use application updated')
+                  return updated
+                }
+                const next = [application, ...prev]
+                persistList(projectId, 'change-of-use', next)
+                setSuccessMessage('Change of use application submitted')
+                return next
+              })
+            }}
+          />
+        </Suspense>
+      ) : null}
 
-      <HeritageSubmissionForm
-        open={heritageFormOpen}
-        onClose={closeHeritageForm}
-        projectId={projectId}
-        existingSubmission={selectedHeritageSubmission}
-        onSuccess={handleHeritageSuccess}
-      />
+      {heritageFormOpen ? (
+        <Suspense fallback={null}>
+          <HeritageSubmissionForm
+            open={heritageFormOpen}
+            onClose={closeHeritageForm}
+            projectId={projectId}
+            existingSubmission={selectedHeritageSubmission}
+            onSuccess={handleHeritageSuccess}
+          />
+        </Suspense>
+      ) : null}
 
       <Snackbar
         open={Boolean(successMessage)}
