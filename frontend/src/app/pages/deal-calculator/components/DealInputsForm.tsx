@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import {
   Box,
+  ButtonBase,
   Collapse,
   Grid,
   IconButton,
@@ -313,23 +314,20 @@ export function DealInputsForm({
               pt: 'var(--ob-space-100)',
             }}
           >
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                cursor: 'pointer',
-              }}
+            <ButtonBase
+              component="button"
               onClick={() => setFinanceOpen((prev) => !prev)}
-              role="button"
               aria-expanded={financeOpen}
               aria-controls="finance-assumptions"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  setFinanceOpen((prev) => !prev)
-                }
+              aria-label="Toggle finance assumptions"
+              sx={{
+                display: 'flex',
+                width: '100%',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                py: 'var(--ob-space-050)',
+                borderRadius: 'var(--ob-radius-sm)',
+                textAlign: 'left',
               }}
             >
               <Typography
@@ -338,10 +336,16 @@ export function DealInputsForm({
               >
                 Finance assumptions
               </Typography>
-              <IconButton size="small" tabIndex={-1} aria-hidden>
+              <IconButton
+                size="small"
+                tabIndex={-1}
+                aria-hidden
+                disableRipple
+                sx={{ pointerEvents: 'none' }}
+              >
                 {financeOpen ? <ExpandLess /> : <ExpandMore />}
               </IconButton>
-            </Box>
+            </ButtonBase>
             <Collapse in={financeOpen} id="finance-assumptions">
               <Grid
                 container

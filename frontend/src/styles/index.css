@@ -22,14 +22,8 @@
 @import './page-layout.css';
 
 /* Global CSS variables and base styles (after @imports) */
-:root {
-    --ob-font-family-sans:
-        ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-        'Helvetica Neue', Arial, sans-serif;
-}
-
 body {
-    font-family: var(--ob-font-family-sans);
+    font-family: var(--ob-font-family-base);
     margin: 0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

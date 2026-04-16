@@ -27,32 +27,25 @@ export const getGlassCardSx = (dark: boolean): SxProps<Theme> =>
   dark
     ? {
         bgcolor: 'var(--ob-surface-glass-1)',
-        backdropFilter: 'blur(var(--ob-blur-xl)) saturate(180%)',
         borderColor: 'var(--ob-border-glass)',
         color: 'var(--ob-color-text-primary)',
-        boxShadow: 'var(--ob-shadow-glass)',
+        boxShadow: 'var(--ob-shadow-sm)',
         p: 3,
       }
     : {
-        // Light mode: premium glass surface
         bgcolor: 'var(--ob-surface-glass-1)',
-        backdropFilter: 'blur(var(--ob-blur-xl))',
         borderColor: 'var(--ob-border-glass-strong)',
-        boxShadow: 'var(--ob-shadow-glass)',
+        boxShadow: 'var(--ob-shadow-sm)',
         p: 3,
       }
 
 /**
- * Section header styling - gradient text in dark mode
+ * Section header styling
  */
 export const getSectionHeaderSx = (dark: boolean): SxProps<Theme> =>
   dark
     ? {
-        background:
-          'linear-gradient(90deg, var(--ob-neutral-100), var(--ob-neutral-400))',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        backgroundClip: 'text',
+        color: 'var(--ob-color-text-primary)',
       }
     : {
         color: 'var(--ob-color-text-primary)',
@@ -118,10 +111,11 @@ export const getTableSx = (dark: boolean): SxProps<Theme> =>
  * Card hover effect styling
  */
 export const getCardHoverSx = (dark: boolean): SxProps<Theme> => ({
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  transition:
+    'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
   '&:hover': {
-    transform: 'translateY(-4px)',
-    boxShadow: dark ? 'var(--ob-shadow-glass-lg)' : 'var(--ob-shadow-lg)',
+    transform: 'translateY(-2px)',
+    boxShadow: dark ? 'var(--ob-shadow-md)' : 'var(--ob-shadow-sm)',
     borderColor: dark
       ? 'var(--ob-border-glass-strong)'
       : 'var(--ob-color-brand-primary)',
@@ -132,20 +126,18 @@ export const getCardHoverSx = (dark: boolean): SxProps<Theme> => ({
  * Primary action button styling (gradient)
  */
 export const getPrimaryButtonSx = (): SxProps<Theme> => ({
-  background:
-    'linear-gradient(135deg, var(--ob-brand-600), var(--ob-brand-500))',
+  background: 'var(--ob-brand-600)',
   color: 'var(--ob-neutral-50)',
   fontWeight: 'var(--ob-font-weight-semibold)',
   px: 3,
   py: 1.5,
   borderRadius: 'var(--ob-radius-xs)', // 2px - Square Cyber-Minimalism
-  boxShadow: '0 4px 15px var(--ob-brand-glow)',
-  transition: 'all 0.2s ease',
+  boxShadow: 'var(--ob-shadow-sm)',
+  transition: 'background-color 0.2s ease, transform 0.2s ease',
   '&:hover': {
-    background:
-      'linear-gradient(135deg, var(--ob-brand-700), var(--ob-brand-600))',
-    transform: 'translateY(-2px)',
-    boxShadow: '0 8px 25px var(--ob-brand-glow)',
+    background: 'var(--ob-brand-700)',
+    transform: 'translateY(-1px)',
+    boxShadow: 'var(--ob-shadow-md)',
   },
   '&:disabled': {
     background: 'var(--ob-neutral-700)',
@@ -160,20 +152,7 @@ export const getPrimaryButtonSx = (): SxProps<Theme> => ({
 export const getPulseButtonSx = (): SxProps<Theme> => ({
   position: 'relative',
   overflow: 'hidden',
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    inset: -4,
-    borderRadius: 'inherit',
-    border: '1px solid rgba(255,255,255,0.35)',
-    animation: 'cta-pulse 2s ease-in-out infinite',
-    pointerEvents: 'none',
-  },
-  '@keyframes cta-pulse': {
-    '0%': { opacity: 0.6, transform: 'scale(0.98)' },
-    '50%': { opacity: 0.2, transform: 'scale(1.04)' },
-    '100%': { opacity: 0.6, transform: 'scale(0.98)' },
-  },
+  '&::after': { content: 'none' },
 })
 
 /**
@@ -182,28 +161,14 @@ export const getPulseButtonSx = (): SxProps<Theme> => ({
 export const getShimmerSx = (): SxProps<Theme> => ({
   position: 'relative',
   overflow: 'hidden',
-  background:
-    'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)',
-  backgroundSize: '200% 100%',
-  animation: 'shimmer 1.6s ease-in-out infinite',
-  '@keyframes shimmer': {
-    '0%': { backgroundPosition: '-200% 0' },
-    '100%': { backgroundPosition: '200% 0' },
-  },
+  backgroundColor: 'rgba(var(--ob-color-text-primary-rgb), 0.06)',
 })
 
 /**
  * Bouncing CTA button animation (for primary actions)
  */
 export const getBouncingButtonSx = (): SxProps<Theme> => ({
-  '@keyframes subtle-bounce': {
-    '0%, 100%': { transform: 'translateY(0)' },
-    '50%': { transform: 'translateY(-4px)' },
-  },
-  animation: 'subtle-bounce 2s ease-in-out infinite',
-  '&:hover': {
-    animationPlayState: 'paused',
-  },
+  transform: 'none',
 })
 
 /**
@@ -216,7 +181,6 @@ export const getStickyHeaderSx = (dark: boolean): SxProps<Theme> => ({
   backgroundColor: dark
     ? 'var(--ob-color-bg-root)'
     : 'var(--ob-color-bg-surface)',
-  backdropFilter: 'blur(var(--ob-blur-xs))',
   borderBottom: `1px solid ${dark ? 'var(--ob-border-glass)' : 'var(--ob-color-border-subtle)'}`,
   py: 2,
   px: 3,
@@ -236,7 +200,7 @@ export const getPageBackgroundSx = (dark: boolean): SxProps<Theme> =>
           position: 'fixed',
           inset: 0,
           background:
-            'linear-gradient(to bottom, rgba(var(--ob-color-text-inverse-rgb), 0.3), rgba(var(--ob-color-text-inverse-rgb), 0.7))',
+            'linear-gradient(to bottom, rgba(var(--ob-color-text-inverse-rgb), 0.06), rgba(var(--ob-color-text-inverse-rgb), 0.14))',
           pointerEvents: 'none',
           zIndex: 0,
         },

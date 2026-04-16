@@ -6,6 +6,7 @@ import {
   Stack,
   useTheme,
   alpha,
+  useMediaQuery,
 } from '@mui/material'
 import { ArrowForward, Close } from '@mui/icons-material'
 
@@ -366,6 +367,7 @@ export function FinanceScenarioCreator({
 }: FinanceScenarioCreatorProps) {
   const { t } = useTranslation()
   const theme = useTheme()
+  const isCompactLayout = useMediaQuery(theme.breakpoints.down('md'))
   const [selectedTemplateId, setSelectedTemplateId] =
     useState<string>('sg_mixed_use')
   const [requestDefaults, setRequestDefaults] =
@@ -671,225 +673,354 @@ export function FinanceScenarioCreator({
               </Button>
             </Box>
 
-            <Box sx={{ overflowX: 'auto' }}>
-              <Box
-                component="table"
-                sx={{
-                  width: '100%',
-                  minWidth: '1100px',
-                  borderCollapse: 'separate',
-                  borderSpacing: 0,
-                  '& th': {
-                    px: 'var(--ob-space-100)',
-                    py: 'var(--ob-space-100)',
-                    textAlign: 'left',
-                    color: 'text.secondary',
-                    fontSize: 'var(--ob-font-size-xs)',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: 'var(--ob-letter-spacing-wider)',
-                    whiteSpace: 'nowrap',
-                    borderBottom: 1,
-                    borderColor: 'divider',
-                  },
-                  '& td': {
-                    px: 'var(--ob-space-100)',
-                    py: 'var(--ob-space-100)',
-                    borderBottom: 1,
-                    borderColor: 'divider', // or 'var(--ob-color-border-subtle)'
-                    verticalAlign: 'middle',
-                  },
-                  '& tr:last-child td': {
-                    borderBottom: 'none',
-                  },
-                  '& th:nth-of-type(1), & td:nth-of-type(1)': {
-                    minWidth: '180px',
-                  },
-                  '& th:nth-of-type(2), & td:nth-of-type(2)': {
-                    minWidth: '140px',
-                  },
-                  '& th:nth-of-type(3), & td:nth-of-type(3)': {
-                    minWidth: '120px',
-                  },
-                  '& th:nth-of-type(4), & td:nth-of-type(4)': {
-                    minWidth: '140px',
-                  },
-                  '& th:nth-of-type(5), & td:nth-of-type(5)': {
-                    minWidth: '140px',
-                  },
-                  '& th:nth-of-type(6), & td:nth-of-type(6)': {
-                    minWidth: '160px',
-                  },
-                  '& th:nth-of-type(7), & td:nth-of-type(7)': {
-                    minWidth: '160px',
-                  },
-                  '& th:nth-of-type(8), & td:nth-of-type(8)': {
-                    minWidth: '84px',
-                    width: '84px',
-                  },
-                }}
+            {isCompactLayout ? (
+              <Stack
+                spacing="var(--ob-space-100)"
+                sx={{ p: 'var(--ob-space-100)' }}
               >
-                <thead>
-                  <tr>
-                    <th>
-                      {t('finance.scenarioCreator.assets.headers.assetType')}
-                    </th>
-                    <th>{t('finance.scenarioCreator.fields.allocation')}</th>
-                    <th>{t('finance.scenarioCreator.assets.headers.nia')}</th>
-                    <th>{t('finance.scenarioCreator.assets.headers.rent')}</th>
-                    <th>
-                      {t('finance.scenarioCreator.assets.headers.vacancy')}
-                    </th>
-                    <th>
-                      {t('finance.scenarioCreator.assets.headers.revenue')}
-                    </th>
-                    <th>{t('finance.scenarioCreator.assets.headers.capex')}</th>
-                    <th>{t('finance.scenarioCreator.actions.remove')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {assets.map((asset) => (
-                    <tr key={asset.id}>
-                      <td>
-                        <Input
-                          value={asset.assetType}
-                          onChange={(e) =>
-                            handleAssetChange(
-                              asset.id,
-                              'assetType',
-                              e.target.value,
-                            )
-                          }
-                          placeholder="Type"
-                          size="small"
-                          startAdornment={
-                            <Box
-                              sx={{
-                                width: 'var(--ob-space-050)',
-                                height: 'var(--ob-space-050)',
-                                borderRadius: 'var(--ob-radius-pill)',
-                                bgcolor: 'var(--ob-color-neon-cyan)',
-                                boxShadow: 'var(--ob-glow-neon-cyan)',
-                              }}
-                            />
-                          }
-                          sx={{
-                            '& .MuiInputBase-root': {
-                              boxShadow: 'none',
-                              border: 'none',
-                              bgcolor: 'transparent',
-                            },
-                            '& fieldset': { border: 'none !important' },
-                          }}
-                          // Using simplified input for cleaner look in table as per screenshot
-                        />
-                      </td>
-                      <td>
-                        <Input
-                          value={asset.allocationPct}
-                          onChange={(e) =>
-                            handleAssetChange(
-                              asset.id,
-                              'allocationPct',
-                              e.target.value,
-                            )
-                          }
-                          type="number"
-                          size="small"
-                          endAdornment="%"
-                        />
-                      </td>
-                      <td>
-                        <Input
-                          value={asset.niaSqm}
-                          onChange={(e) =>
-                            handleAssetChange(
-                              asset.id,
-                              'niaSqm',
-                              e.target.value,
-                            )
-                          }
-                          type="number"
-                          size="small"
-                        />
-                      </td>
-                      <td>
-                        <Input
-                          value={asset.rentPsmMonth}
-                          onChange={(e) =>
-                            handleAssetChange(
-                              asset.id,
-                              'rentPsmMonth',
-                              e.target.value,
-                            )
-                          }
-                          type="number"
-                          size="small"
-                          startAdornment="$"
-                        />
-                      </td>
-                      <td>
-                        <Input
-                          value={asset.vacancyPct}
-                          onChange={(e) =>
-                            handleAssetChange(
-                              asset.id,
-                              'vacancyPct',
-                              e.target.value,
-                            )
-                          }
-                          type="number"
-                          size="small"
-                          endAdornment="%"
-                        />
-                      </td>
-                      <td>
+                {assets.map((asset, index) => (
+                  <Box
+                    key={asset.id}
+                    sx={{
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 'var(--ob-radius-sm)',
+                      p: 'var(--ob-space-100)',
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      spacing="var(--ob-space-100)"
+                      sx={{ mb: 'var(--ob-space-100)' }}
+                    >
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                        Asset {index + 1}
+                      </Typography>
+                      <IconButton
+                        aria-label={t('finance.scenarioCreator.actions.remove')}
+                        size="small"
+                        onClick={() => handleRemoveAsset(asset.id)}
+                        disabled={assets.length <= 1}
+                        sx={{
+                          borderRadius: 'var(--ob-radius-xs)',
+                          border: 'var(--ob-border-fine)',
+                        }}
+                      >
+                        <Close fontSize="small" />
+                      </IconButton>
+                    </Stack>
+
+                    <Stack spacing="var(--ob-space-100)">
+                      <Input
+                        label={t(
+                          'finance.scenarioCreator.assets.headers.assetType',
+                        )}
+                        value={asset.assetType}
+                        onChange={(e) =>
+                          handleAssetChange(
+                            asset.id,
+                            'assetType',
+                            e.target.value,
+                          )
+                        }
+                        placeholder="Type"
+                        size="small"
+                      />
+                      <Input
+                        label={t('finance.scenarioCreator.fields.allocation')}
+                        value={asset.allocationPct}
+                        onChange={(e) =>
+                          handleAssetChange(
+                            asset.id,
+                            'allocationPct',
+                            e.target.value,
+                          )
+                        }
+                        type="number"
+                        size="small"
+                        endAdornment="%"
+                      />
+                      <Input
+                        label={t('finance.scenarioCreator.assets.headers.nia')}
+                        value={asset.niaSqm}
+                        onChange={(e) =>
+                          handleAssetChange(asset.id, 'niaSqm', e.target.value)
+                        }
+                        type="number"
+                        size="small"
+                      />
+                      <Input
+                        label={t('finance.scenarioCreator.assets.headers.rent')}
+                        value={asset.rentPsmMonth}
+                        onChange={(e) =>
+                          handleAssetChange(
+                            asset.id,
+                            'rentPsmMonth',
+                            e.target.value,
+                          )
+                        }
+                        type="number"
+                        size="small"
+                        startAdornment="$"
+                      />
+                      <Input
+                        label={t(
+                          'finance.scenarioCreator.assets.headers.vacancy',
+                        )}
+                        value={asset.vacancyPct}
+                        onChange={(e) =>
+                          handleAssetChange(
+                            asset.id,
+                            'vacancyPct',
+                            e.target.value,
+                          )
+                        }
+                        type="number"
+                        size="small"
+                        endAdornment="%"
+                      />
+                      <Input
+                        label={t(
+                          'finance.scenarioCreator.assets.headers.capex',
+                        )}
+                        value={asset.estimatedCapex}
+                        onChange={(e) =>
+                          handleAssetChange(
+                            asset.id,
+                            'estimatedCapex',
+                            e.target.value,
+                          )
+                        }
+                        type="number"
+                        size="small"
+                        startAdornment="$"
+                      />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          {t('finance.scenarioCreator.assets.headers.revenue')}
+                        </Typography>
                         <Typography
                           variant="body2"
                           sx={{
+                            mt: 'var(--ob-space-025)',
                             fontFamily: 'var(--ob-font-family-mono)',
                             fontWeight: 600,
                           }}
                         >
                           ${Number(asset.estimatedRevenue).toLocaleString()}
                         </Typography>
-                      </td>
-                      <td>
-                        <Input
-                          value={asset.estimatedCapex}
-                          onChange={(e) =>
-                            handleAssetChange(
-                              asset.id,
-                              'estimatedCapex',
-                              e.target.value,
-                            )
-                          }
-                          type="number"
-                          size="small"
-                          startAdornment="$"
-                        />
-                      </td>
-                      <td>
-                        <IconButton
-                          aria-label={t(
-                            'finance.scenarioCreator.actions.remove',
-                          )}
-                          size="small"
-                          onClick={() => handleRemoveAsset(asset.id)}
-                          disabled={assets.length <= 1}
-                          sx={{
-                            borderRadius: 'var(--ob-radius-xs)',
-                            border: 'var(--ob-border-fine)',
-                          }}
-                        >
-                          <Close fontSize="small" />
-                        </IconButton>
-                      </td>
+                      </Box>
+                    </Stack>
+                  </Box>
+                ))}
+              </Stack>
+            ) : (
+              <Box sx={{ overflowX: 'auto' }}>
+                <Box
+                  component="table"
+                  sx={{
+                    width: '100%',
+                    minWidth: '960px',
+                    borderCollapse: 'separate',
+                    borderSpacing: 0,
+                    '& th': {
+                      px: 'var(--ob-space-100)',
+                      py: 'var(--ob-space-100)',
+                      textAlign: 'left',
+                      color: 'text.secondary',
+                      fontSize: 'var(--ob-font-size-xs)',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: 'var(--ob-letter-spacing-wider)',
+                      whiteSpace: 'nowrap',
+                      borderBottom: 1,
+                      borderColor: 'divider',
+                    },
+                    '& td': {
+                      px: 'var(--ob-space-100)',
+                      py: 'var(--ob-space-100)',
+                      borderBottom: 1,
+                      borderColor: 'divider',
+                      verticalAlign: 'middle',
+                    },
+                    '& tr:last-child td': {
+                      borderBottom: 'none',
+                    },
+                    '& th:nth-of-type(1), & td:nth-of-type(1)': {
+                      minWidth: '160px',
+                    },
+                    '& th:nth-of-type(2), & td:nth-of-type(2)': {
+                      minWidth: '120px',
+                    },
+                    '& th:nth-of-type(3), & td:nth-of-type(3)': {
+                      minWidth: '112px',
+                    },
+                    '& th:nth-of-type(4), & td:nth-of-type(4)': {
+                      minWidth: '128px',
+                    },
+                    '& th:nth-of-type(5), & td:nth-of-type(5)': {
+                      minWidth: '128px',
+                    },
+                    '& th:nth-of-type(6), & td:nth-of-type(6)': {
+                      minWidth: '140px',
+                    },
+                    '& th:nth-of-type(7), & td:nth-of-type(7)': {
+                      minWidth: '140px',
+                    },
+                    '& th:nth-of-type(8), & td:nth-of-type(8)': {
+                      minWidth: '72px',
+                      width: '72px',
+                    },
+                  }}
+                >
+                  <thead>
+                    <tr>
+                      <th>
+                        {t('finance.scenarioCreator.assets.headers.assetType')}
+                      </th>
+                      <th>{t('finance.scenarioCreator.fields.allocation')}</th>
+                      <th>{t('finance.scenarioCreator.assets.headers.nia')}</th>
+                      <th>
+                        {t('finance.scenarioCreator.assets.headers.rent')}
+                      </th>
+                      <th>
+                        {t('finance.scenarioCreator.assets.headers.vacancy')}
+                      </th>
+                      <th>
+                        {t('finance.scenarioCreator.assets.headers.revenue')}
+                      </th>
+                      <th>
+                        {t('finance.scenarioCreator.assets.headers.capex')}
+                      </th>
+                      <th>{t('finance.scenarioCreator.actions.remove')}</th>
                     </tr>
-                  ))}
-                </tbody>
+                  </thead>
+                  <tbody>
+                    {assets.map((asset) => (
+                      <tr key={asset.id}>
+                        <td>
+                          <Input
+                            value={asset.assetType}
+                            onChange={(e) =>
+                              handleAssetChange(
+                                asset.id,
+                                'assetType',
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Type"
+                            size="small"
+                          />
+                        </td>
+                        <td>
+                          <Input
+                            value={asset.allocationPct}
+                            onChange={(e) =>
+                              handleAssetChange(
+                                asset.id,
+                                'allocationPct',
+                                e.target.value,
+                              )
+                            }
+                            type="number"
+                            size="small"
+                            endAdornment="%"
+                          />
+                        </td>
+                        <td>
+                          <Input
+                            value={asset.niaSqm}
+                            onChange={(e) =>
+                              handleAssetChange(
+                                asset.id,
+                                'niaSqm',
+                                e.target.value,
+                              )
+                            }
+                            type="number"
+                            size="small"
+                          />
+                        </td>
+                        <td>
+                          <Input
+                            value={asset.rentPsmMonth}
+                            onChange={(e) =>
+                              handleAssetChange(
+                                asset.id,
+                                'rentPsmMonth',
+                                e.target.value,
+                              )
+                            }
+                            type="number"
+                            size="small"
+                            startAdornment="$"
+                          />
+                        </td>
+                        <td>
+                          <Input
+                            value={asset.vacancyPct}
+                            onChange={(e) =>
+                              handleAssetChange(
+                                asset.id,
+                                'vacancyPct',
+                                e.target.value,
+                              )
+                            }
+                            type="number"
+                            size="small"
+                            endAdornment="%"
+                          />
+                        </td>
+                        <td>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: 'var(--ob-font-family-mono)',
+                              fontWeight: 600,
+                            }}
+                          >
+                            ${Number(asset.estimatedRevenue).toLocaleString()}
+                          </Typography>
+                        </td>
+                        <td>
+                          <Input
+                            value={asset.estimatedCapex}
+                            onChange={(e) =>
+                              handleAssetChange(
+                                asset.id,
+                                'estimatedCapex',
+                                e.target.value,
+                              )
+                            }
+                            type="number"
+                            size="small"
+                            startAdornment="$"
+                          />
+                        </td>
+                        <td>
+                          <IconButton
+                            aria-label={t(
+                              'finance.scenarioCreator.actions.remove',
+                            )}
+                            size="small"
+                            onClick={() => handleRemoveAsset(asset.id)}
+                            disabled={assets.length <= 1}
+                            sx={{
+                              borderRadius: 'var(--ob-radius-xs)',
+                              border: 'var(--ob-border-fine)',
+                            }}
+                          >
+                            <Close fontSize="small" />
+                          </IconButton>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Box>
               </Box>
-            </Box>
+            )}
             <Box
               sx={{
                 p: 'var(--ob-space-100)',

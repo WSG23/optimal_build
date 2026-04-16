@@ -28,11 +28,11 @@ export function HeroMetric({
   const getBackground = () => {
     switch (variant) {
       case 'primary':
-        return 'linear-gradient(135deg, #1F2937 0%, #111827 100%)'
+        return theme.palette.primary.dark
       case 'secondary':
-        return 'white'
+        return theme.palette.background.paper
       case 'glass':
-        return alpha(theme.palette.background.paper, 0.6)
+        return alpha(theme.palette.background.paper, 0.88)
     }
   }
 
@@ -45,18 +45,13 @@ export function HeroMetric({
     <Box
       sx={{
         background: getBackground(),
-        backdropFilter:
-          variant === 'glass' ? 'blur(var(--ob-blur-md))' : 'none',
         border: `1px solid ${variant === 'primary' ? 'transparent' : theme.palette.divider}`,
         borderRadius: 'var(--ob-radius-sm)', // 4px - cards, panels, tiles
         padding: 'var(--ob-space-300)',
-        boxShadow:
-          variant === 'glass'
-            ? '0 8px 32px rgba(0,0,0,0.05)'
-            : theme.shadows[2],
+        boxShadow: variant === 'glass' ? theme.shadows[1] : theme.shadows[2],
         opacity: 0,
         animation: `slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards ${delay}ms`,
-        minWidth: 200,
+        minWidth: 0,
         position: 'relative',
         overflow: 'hidden',
         '@keyframes slideUpFade': {
@@ -65,22 +60,6 @@ export function HeroMetric({
         },
       }}
     >
-      {/* Background Decoration for Primary */}
-      {variant === 'primary' && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: -20,
-            right: -20,
-            width: 100,
-            height: 100,
-            background:
-              'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)',
-            borderRadius: '50%',
-          }}
-        />
-      )}
-
       <Box
         sx={{
           display: 'flex',

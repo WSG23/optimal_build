@@ -137,19 +137,21 @@ export default function Main() {
     <div className="bg-neutral-950 text-white">
       <ViewportFrame className="flex h-full flex-col gap-6">
         <header className="mb-4 grid grid-cols-12 items-center gap-6">
-          <div className="col-span-3 flex items-center gap-3">
+          <div className="col-span-12 flex items-center gap-3 md:col-span-3">
             <img
               src={logoSrc}
               alt="Optimal Build"
+              loading="eager"
+              decoding="async"
               className="h-7 select-none"
             />
           </div>
-          <div className="col-span-6">
-            <h1 className="text-center text-2xl font-semibold">
+          <div className="col-span-12 md:col-span-6">
+            <h1 className="text-left text-2xl font-semibold md:text-center">
               Logged in as {facilityLabel}
             </h1>
           </div>
-          <div className="col-span-3 flex items-center justify-end gap-4">
+          <div className="col-span-12 flex items-center justify-between gap-4 md:col-span-3 md:justify-end">
             <PageMiniNav
               items={[
                 { label: 'Export', to: '/export' },
@@ -164,8 +166,8 @@ export default function Main() {
           </div>
         </header>
 
-        <div className="grid flex-1 min-h-0 gap-6 grid-cols-[320px_minmax(0,1fr)_420px] grid-rows-[minmax(0,1fr)_320px]">
-          <div className="min-h-0 col-start-1 row-start-1 row-span-2">
+        <div className="grid flex-1 min-h-0 gap-6 xl:grid-cols-[minmax(280px,320px)_minmax(0,1fr)_minmax(320px,420px)] xl:grid-rows-[minmax(0,1fr)_320px]">
+          <div className="min-h-0 xl:col-start-1 xl:row-start-1 xl:row-span-2">
             <LeftSidebar
               facilityLabel={facilityLabel}
               threatScore={threatData.headline_score}
@@ -173,7 +175,7 @@ export default function Main() {
             />
           </div>
 
-          <section className="min-h-0 col-start-2 row-start-1">
+          <section className="min-h-0 xl:col-start-2 xl:row-start-1">
             <Panel title="Floorplan Activity" className="h-full">
               <PanelBody className="h-full p-0">
                 <IncidentMapView
@@ -186,7 +188,7 @@ export default function Main() {
             </Panel>
           </section>
 
-          <section className="min-h-0 col-start-3 row-start-1">
+          <section className="min-h-0 xl:col-start-3 xl:row-start-1">
             <Panel title="Weak-Signal Live Feed" className="h-full">
               <PanelBody className="h-full overflow-y-auto p-3">
                 <LiveFeedPanel />
@@ -194,8 +196,8 @@ export default function Main() {
             </Panel>
           </section>
 
-          <section className="min-h-0 col-start-2 col-span-2 row-start-2">
-            <div className="grid h-full gap-6 grid-cols-[minmax(0,2.2fr)_minmax(0,1.2fr)]">
+          <section className="min-h-0 xl:col-start-2 xl:col-span-2 xl:row-start-2">
+            <div className="grid h-full gap-6 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1.2fr)]">
               <Panel title="Incident Detection Breakdown" className="h-full">
                 <PanelBody className="h-full overflow-y-auto p-4">
                   <IncidentDetectionBreakdown

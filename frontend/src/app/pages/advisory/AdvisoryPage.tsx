@@ -169,10 +169,14 @@ export function AdvisoryPage() {
             <Typography variant="h6" gutterBottom>
               Load property analysis
             </Typography>
-            <Stack direction="row" spacing="var(--ob-space-100)">
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing="var(--ob-space-100)"
+            >
               <TextField
                 fullWidth
                 variant="outlined"
+                label="Property identifier"
                 placeholder="Enter property identifier"
                 value={propertyId}
                 onChange={(e) => setPropertyId(e.target.value)}

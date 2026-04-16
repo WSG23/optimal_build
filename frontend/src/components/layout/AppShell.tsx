@@ -129,6 +129,8 @@ export function AppShell({
                   component="img"
                   src={logoImage}
                   alt="Optimal Build"
+                  loading="eager"
+                  decoding="async"
                   sx={{
                     display: 'block',
                     height: 'var(--ob-size-icon-md)',

@@ -87,11 +87,11 @@ export function NeonText({
       {...typographyProps}
       sx={{
         color: config.color,
-        textShadow: glow,
+        textShadow: intensity === 'strong' ? glow : 'none',
         fontWeight: 'var(--ob-font-weight-bold)',
         ...(animate && {
           animation:
-            'ob-pulse var(--ob-motion-pulse-duration) ease-in-out infinite',
+            'ob-fade-in var(--ob-motion-duration-moderate) ease-out both',
         }),
         '@media (prefers-reduced-motion: reduce)': {
           animation: 'none',

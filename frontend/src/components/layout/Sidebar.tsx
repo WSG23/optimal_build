@@ -100,7 +100,10 @@ export function Sidebar({ workspace = 'developer' }: SidebarProps) {
         </Typography>
         <Typography
           variant="caption"
-          sx={{ color: 'text.secondary', fontFamily: 'monospace' }}
+          sx={{
+            color: 'text.secondary',
+            fontFamily: 'var(--ob-font-family-mono)',
+          }}
         >
           v2.0 Command Center
         </Typography>
@@ -158,10 +161,11 @@ export function Sidebar({ workspace = 'developer' }: SidebarProps) {
                         bgcolor: isActive
                           ? alpha(theme.palette.primary.main, 0.12)
                           : 'transparent',
-                        borderLeft: 3,
-                        borderColor: isActive ? 'primary.main' : 'transparent',
-                        borderRadius:
-                          '0 var(--ob-radius-sm) var(--ob-radius-sm) 0',
+                        border: '1px solid',
+                        borderColor: isActive
+                          ? alpha(theme.palette.primary.main, 0.36)
+                          : 'transparent',
+                        borderRadius: 'var(--ob-radius-sm)',
                         px: 2,
                         py: 1.25,
                         textAlign: 'left',

@@ -11,44 +11,40 @@
 
 .glass-panel {
     background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(var(--ob-blur-md));
-    -webkit-backdrop-filter: blur(var(--ob-blur-md));
     border: var(--ob-border-fine); /* Updated: fine line at low opacity */
     border-radius: var(--ob-radius-sm); /* 4px - ENFORCED */
-    box-shadow: var(--ob-shadow-glass);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 .glass-panel-heavy {
     background: var(--ob-surface-glass-2);
-    backdrop-filter: blur(var(--ob-blur-lg));
-    -webkit-backdrop-filter: blur(var(--ob-blur-lg));
     border: var(--ob-border-fine-strong); /* Updated: fine line strong */
     border-radius: var(--ob-radius-sm); /* 4px - ENFORCED */
-    box-shadow: var(--ob-shadow-glass-lg);
+    box-shadow: var(--ob-shadow-md);
 }
 
 /* Glass card variant - matches Card component */
 .glass-card {
     background: var(--ob-surface-glass-1);
-    backdrop-filter: blur(var(--ob-blur-md));
-    -webkit-backdrop-filter: blur(var(--ob-blur-md));
     border: var(--ob-border-fine);
     border-radius: var(--ob-radius-sm); /* 4px */
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+        border-color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .glass-card:hover {
     border: var(--ob-border-fine-hover);
+    box-shadow: var(--ob-shadow-sm);
 }
 
 /* Glass window variant - matches Window component (only lg radius) */
 .glass-window {
     background: var(--ob-surface-glass-2);
-    backdrop-filter: blur(var(--ob-blur-lg));
-    -webkit-backdrop-filter: blur(var(--ob-blur-lg));
     border: var(--ob-border-fine-strong);
     border-radius: var(--ob-radius-lg); /* 8px - Windows ONLY */
-    box-shadow: var(--ob-shadow-glass-lg);
+    box-shadow: var(--ob-shadow-md);
 }
 
 /* =============================================================================
@@ -111,7 +107,7 @@
 }
 
 .animate-pulse-glow {
-    animation: pulse-glow 2s infinite;
+    animation: none;
 }
 
 /* Entrance animation - used by Card, Panel, Window */

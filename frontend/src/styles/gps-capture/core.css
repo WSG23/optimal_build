@@ -13,7 +13,6 @@
     max-width: none;
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
-    overflow-x: hidden;
     background: var(--ob-color-bg-root);
 }
 
