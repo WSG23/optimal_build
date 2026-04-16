@@ -206,6 +206,12 @@ class AgentDeal(BaseModel):
     commissions: Mapped[list["AgentCommissionRecord"]] = relationship(
         "AgentCommissionRecord", back_populates="deal", cascade="all, delete-orphan"
     )
+    outcome: Mapped[Optional["DealOutcome"]] = relationship(  # noqa: F821
+        "DealOutcome",
+        back_populates="deal",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
 
     __table_args__ = (
         Index("ix_agent_deals_agent_status", "agent_id", "status"),

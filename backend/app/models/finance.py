@@ -133,6 +133,9 @@ class FinScenario(BaseModel):
     asset_breakdowns: Mapped[list["FinAssetBreakdown"]] = relationship(
         "FinAssetBreakdown", back_populates="scenario", cascade="all, delete-orphan"
     )
+    deal_outcomes: Mapped[list["DealOutcome"]] = relationship(  # noqa: F821
+        "DealOutcome", back_populates="scenario"
+    )
 
     __table_args__ = (Index("idx_fin_scenarios_project_name", "project_id", "name"),)
 

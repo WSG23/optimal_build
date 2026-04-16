@@ -125,6 +125,7 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "market_intelligence",  # Market intelligence analytics API
     "agents",  # Commercial property advisor agent endpoints
     "commercial_property_packs",  # PDF pack generation/download endpoints
+    "deal_outcomes",  # Deal outcome capture and benchmarking
     "deals",  # Business performance pipeline endpoints
     "performance",  # Agent performance analytics endpoints
     "advanced_intelligence",  # Investigation analytics stubs

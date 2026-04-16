@@ -37,6 +37,7 @@ _MODEL_MODULES: Final[tuple[str, ...]] = (
     "ai_config",
     "audit",
     "business_performance",
+    "deal_outcome",
     "developer_checklists",
     "developer_condition",
     "development_phase",
