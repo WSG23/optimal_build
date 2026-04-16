@@ -1,6 +1,7 @@
 ---
 name: optimize
 description: Diagnoses and fixes UI performance across loading speed, rendering, animations, images, and bundle size. Use when the user mentions slow, laggy, janky, performance, bundle size, load time, or wants a faster, smoother experience.
+version: 2.1.1
 user-invocable: true
 argument-hint: "[target]"
 ---
@@ -41,7 +42,7 @@ Create systematic improvement plan:
 - Use CDN for faster delivery
 
 ```html
-<img 
+<img
   src="hero.webp"
   srcset="hero-400.webp 400w, hero-800.webp 800w, hero-1200.webp 1200w"
   sizes="(max-width: 400px) 400px, (max-width: 800px) 800px, 1200px"
