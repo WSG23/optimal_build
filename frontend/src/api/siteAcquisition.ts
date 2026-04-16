@@ -131,6 +131,8 @@ export type CaptureStarterModelStatus =
   | 'failed'
   | 'placeholder'
 
+export type CaptureOverrideIntent = 'exploratory' | 'saved' | 'learnable'
+
 export type CaptureGeometryScope =
   | 'scalar_envelope'
   | 'setback_envelope'
@@ -211,10 +213,12 @@ export interface CaptureStarterModelV2 {
 
 export interface CaptureScenarioRecommendationV2 {
   recommended: DevelopmentScenario
+  defaultRecommended: DevelopmentScenario
   alternatives: DevelopmentScenario[]
   reasonCodes: string[]
   explanation: string
   userOverride: boolean
+  overrideIntent: CaptureOverrideIntent | null
   confidence: 'low' | 'medium' | 'high'
 }
 

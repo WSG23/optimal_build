@@ -38,11 +38,7 @@ import type {
 } from '../../types'
 import { formatCategoryName } from '../../utils/formatters'
 import { FeasibilityIntelTape } from './FeasibilityIntelTape'
-import {
-  calculateSignalStrength,
-  getScenarioMarker,
-  getSignalId,
-} from './telemetry'
+import { calculateSignalStrength, getSignalId } from './telemetry'
 
 // ============================================================================
 // Types
@@ -350,6 +346,9 @@ export function MultiScenarioComparisonSection({
                   capturedProperty,
                 )
                 const constraintDisplay = getConstraintDisplay(scenarioSignals)
+                const scenarioLabel =
+                  scenarioLookup.get(row.key as DevelopmentScenario)?.label ??
+                  formatCategoryName(row.key)
 
                 return (
                   <article
@@ -364,7 +363,7 @@ export function MultiScenarioComparisonSection({
                       {/* Header: System Marker */}
                       <div className="multi-scenario__path-header">
                         <SystemMarker active={isActive}>
-                          {getScenarioMarker(row.key)}
+                          {scenarioLabel.toUpperCase()}
                         </SystemMarker>
                         <div className="multi-scenario__path-timestamp">
                           <span className="multi-scenario__path-timestamp-label">
@@ -523,11 +522,11 @@ export function MultiScenarioComparisonSection({
           {/* Path Focus Notice */}
           {activeScenario !== 'all' && comparisonScenariosCount > 0 && (
             <div className="multi-scenario__focus-notice">
-              <strong>PATH FOCUS:</strong> Viewing{' '}
-              {getScenarioMarker(activeScenario)} (
+              <strong>SCENARIO FOCUS:</strong> Viewing{' '}
               {scenarioLookup.get(activeScenario)?.label ??
                 formatCategoryName(activeScenario)}
-              ). Switch back to "All scenarios" to compare paths side-by-side.
+              . Switch back to "All scenarios" to compare scenarios
+              side-by-side.
             </div>
           )}
         </>

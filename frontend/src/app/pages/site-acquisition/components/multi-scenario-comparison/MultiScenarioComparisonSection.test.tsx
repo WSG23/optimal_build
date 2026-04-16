@@ -87,7 +87,7 @@ describe('MultiScenarioComparisonSection', () => {
         ]}
         comparisonScenariosCount={1}
         activeScenario="raw_land"
-        scenarioLookup={new Map()}
+        scenarioLookup={new Map([['raw_land', { label: 'New Construction' }]])}
         propertyId="prop-1"
         setActiveScenario={() => undefined}
         formatRecordedTimestamp={() => 'Jan 6, 2026, 10:00 AM'}
@@ -97,6 +97,9 @@ describe('MultiScenarioComparisonSection', () => {
     expect(screen.getByText('CAPTURE COVERAGE')).toBeInTheDocument()
     expect(screen.getByText('CONSTRAINT FLAGS')).toBeInTheDocument()
     expect(screen.getByText('BUILDABLE GFA')).toBeInTheDocument()
+    expect(screen.getByText('NEW CONSTRUCTION')).toBeInTheDocument()
+    expect(screen.getByText(/SCENARIO FOCUS:/i)).toBeInTheDocument()
+    expect(screen.getByText(/Viewing New Construction\./i)).toBeInTheDocument()
     expect(screen.getByText('AVG_COVERAGE')).toBeInTheDocument()
     expect(screen.getByText('CONSTRAINTS_FLAGGED')).toBeInTheDocument()
     expect(screen.getByText('INSTANT_SIGNALS (1)')).toBeInTheDocument()

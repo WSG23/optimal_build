@@ -4,6 +4,7 @@ import type {
   CaptureCurrentVsCodeStatus,
   CaptureEngineeringAssumptionsV2,
   CaptureGrandfatheredLikelihood,
+  CaptureOverrideIntent,
   CaptureResultV2,
   CaptureScenarioRecommendationV2,
   CaptureStarterModelV2,
@@ -16,6 +17,24 @@ import { selectPreviewJobForScenario } from '../../site-acquisition/utils/previe
 export interface BuildCaptureResultV2Options {
   selectedScenarios?: DevelopmentScenario[]
   overrideScenario?: DevelopmentScenario | null
+  overrideIntent?: CaptureOverrideIntent | null
+}
+
+function formatScenarioProductLabel(scenario: DevelopmentScenario): string {
+  switch (scenario) {
+    case 'raw_land':
+      return 'new construction'
+    case 'existing_building':
+      return 'renovation'
+    case 'heritage_property':
+      return 'heritage integration'
+    case 'underused_asset':
+      return 'adaptive reuse'
+    case 'mixed_use_redevelopment':
+      return 'mixed-use redevelopment'
+    default:
+      return String(scenario).replace(/_/g, ' ')
+  }
 }
 
 function uniqueScenarios(
@@ -137,13 +156,33 @@ export function buildScenarioRecommendation(
   const recommended = explicitOverride ?? ruleChoice.scenario
   const userOverride =
     explicitOverride !== null && explicitOverride !== ruleChoice.scenario
+  const explicitScenarioOverride = options.overrideScenario != null
+  const overrideIntent =
+    userOverride && explicitScenarioOverride
+      ? (options.overrideIntent ?? 'exploratory')
+      : null
 
   const reasonCodes = userOverride
-    ? ['USER_OVERRIDE', ...ruleChoice.reasonCodes]
+    ? [
+        overrideIntent === 'exploratory'
+          ? 'EXPLORATORY_OVERRIDE'
+          : overrideIntent === 'saved'
+            ? 'SAVED_PROJECT_OVERRIDE'
+            : overrideIntent === 'learnable'
+              ? 'LEARNABLE_OVERRIDE'
+              : 'USER_OVERRIDE',
+        ...ruleChoice.reasonCodes,
+      ]
     : ruleChoice.reasonCodes
 
   const explanation = userOverride
-    ? `User-selected ${recommended.replace(/_/g, ' ')} overrides the default capture recommendation.`
+    ? overrideIntent === 'exploratory'
+      ? `Exploratory ${formatScenarioProductLabel(recommended)} override is active for this session.`
+      : overrideIntent === 'saved'
+        ? `${formatScenarioProductLabel(recommended)} is applied as the saved project override.`
+        : overrideIntent === 'learnable'
+          ? `${formatScenarioProductLabel(recommended)} is applied as a learnable preference candidate.`
+          : `User-selected ${formatScenarioProductLabel(recommended)} overrides the default capture recommendation.`
     : recommended === 'heritage_property'
       ? 'Heritage context is present, so Capture prioritises a conservation-compatible starting path.'
       : recommended === 'existing_building'
@@ -158,10 +197,12 @@ export function buildScenarioRecommendation(
 
   return {
     recommended,
+    defaultRecommended: ruleChoice.scenario,
     alternatives,
     reasonCodes,
     explanation,
     userOverride,
+    overrideIntent,
     confidence: userOverride ? 'medium' : ruleChoice.confidence,
   }
 }
@@ -172,13 +213,14 @@ function buildFallbackEngineeringAssumptions(
   const rulesOnlyProvenance = {
     summary: 'frontend_fallback_defaults',
     fields: {
-      wallThicknessMm: 'heuristic_fallback',
-      coreRatioPct: 'heuristic_fallback',
-      commonAreaRatioPct: 'heuristic_fallback',
-      floorToFloorM: 'heuristic_fallback',
-      clearCeilingM: 'heuristic_fallback',
-      hvacSpaceRatioPct: 'heuristic_fallback',
-      electricalSpaceRatioPct: 'heuristic_fallback',
+      wall_thickness_mm: 'heuristic_fallback',
+      core_ratio_pct: 'heuristic_fallback',
+      common_area_ratio_pct: 'heuristic_fallback',
+      floor_to_floor_m: 'heuristic_fallback',
+      clear_ceiling_m: 'heuristic_fallback',
+      hvac_space_ratio_pct: 'heuristic_fallback',
+      electrical_space_ratio_pct: 'heuristic_fallback',
+      retention_strategy: 'heuristic_fallback',
     },
     adjustments: [],
   }

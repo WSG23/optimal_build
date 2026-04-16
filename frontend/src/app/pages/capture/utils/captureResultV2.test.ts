@@ -103,6 +103,7 @@ describe('captureResultV2', () => {
 
     const recommendation = buildScenarioRecommendation(capturedProperty)
     expect(recommendation.recommended).toBe('existing_building')
+    expect(recommendation.defaultRecommended).toBe('existing_building')
     expect(recommendation.userOverride).toBe(false)
     expect(recommendation.reasonCodes).toEqual(
       expect.arrayContaining([
@@ -116,6 +117,7 @@ describe('captureResultV2', () => {
     const recommendation = buildScenarioRecommendation(buildCapturedProperty())
 
     expect(recommendation.recommended).toBe('underused_asset')
+    expect(recommendation.defaultRecommended).toBe('underused_asset')
     expect(recommendation.reasonCodes).toEqual(
       expect.arrayContaining([
         'CODE_HEADROOM_AVAILABLE',
@@ -142,6 +144,7 @@ describe('captureResultV2', () => {
     const recommendation = buildScenarioRecommendation(capturedProperty)
 
     expect(recommendation.recommended).toBe('heritage_property')
+    expect(recommendation.defaultRecommended).toBe('heritage_property')
     expect(recommendation.confidence).toBe('high')
     expect(recommendation.reasonCodes).toContain('HERITAGE_OVERLAY_DETECTED')
   })
@@ -157,8 +160,13 @@ describe('captureResultV2', () => {
     })
 
     expect(recommendation.recommended).toBe('raw_land')
+    expect(recommendation.defaultRecommended).toBe('existing_building')
     expect(recommendation.userOverride).toBe(true)
-    expect(recommendation.reasonCodes[0]).toBe('USER_OVERRIDE')
+    expect(recommendation.overrideIntent).toBe('exploratory')
+    expect(recommendation.reasonCodes[0]).toBe('EXPLORATORY_OVERRIDE')
+    expect(recommendation.explanation).toBe(
+      'Exploratory new construction override is active for this session.',
+    )
     expect(recommendation.alternatives).toContain('existing_building')
   })
 
@@ -313,6 +321,9 @@ describe('captureResultV2', () => {
     expect(defaultResult.scenarioRecommendation.recommended).toBe(
       'existing_building',
     )
+    expect(defaultResult.scenarioRecommendation.defaultRecommended).toBe(
+      'existing_building',
+    )
     expect(defaultResult.starterModel.modelUrl).toBe(
       '/static/dev-previews/example/renovation.gltf',
     )
@@ -325,6 +336,9 @@ describe('captureResultV2', () => {
       },
     )
     expect(overriddenResult.scenarioRecommendation.recommended).toBe('raw_land')
+    expect(overriddenResult.scenarioRecommendation.defaultRecommended).toBe(
+      'existing_building',
+    )
     expect(overriddenResult.starterModel.modelUrl).toBe(
       '/static/dev-previews/example/raw-land.gltf',
     )

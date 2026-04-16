@@ -44,7 +44,7 @@ function loadGoogleMapsScript(apiKey: string): Promise<void> {
 
   googleMapsPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async`
     script.async = true
     script.defer = true
     script.onload = () => resolve()
@@ -154,7 +154,9 @@ export function useUnifiedCapture({
   const [isMapLoaded, setIsMapLoaded] = useState(false)
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
-  const mapMarkerRef = useRef<google.maps.Marker | null>(null)
+  const mapMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
+    null,
+  )
   const hasHydratedRef = useRef(false)
 
   useEffect(() => {
@@ -195,10 +197,10 @@ export function useUnifiedCapture({
             lat: result.latitude,
             lng: result.longitude,
           })
-          mapMarkerRef.current.setPosition({
+          mapMarkerRef.current.position = {
             lat: result.latitude,
             lng: result.longitude,
-          })
+          }
         }
         return { latitude: result.latitude, longitude: result.longitude }
       } catch (error) {
@@ -378,6 +380,7 @@ export function useUnifiedCapture({
       center: { lat: initialLat, lng: initialLng },
       zoom: 16,
       styles: darkGreyMapStyle,
+      mapId: 'capture_map',
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
@@ -386,34 +389,35 @@ export function useUnifiedCapture({
     })
 
     // Create draggable marker — white on dark map
-    const marker = new google.maps.Marker({
+    const pinSvg = document.createElement('div')
+    pinSvg.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="10" fill="#ffffff" stroke="#3b82f6" stroke-width="3"/>
+    </svg>`
+    pinSvg.style.cursor = 'grab'
+    pinSvg.title = 'Drag to reposition or click the map'
+
+    const marker = new google.maps.marker.AdvancedMarkerElement({
       position: { lat: initialLat, lng: initialLng },
       map,
-      draggable: true,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 10,
-        fillColor: '#ffffff',
-        fillOpacity: 1,
-        strokeColor: '#3b82f6',
-        strokeWeight: 3,
-      },
-      title: 'Drag to reposition or click the map',
+      gmpDraggable: true,
+      content: pinSvg,
     })
 
     // Guard against setState after unmount
     let mounted = true
 
     // Handle marker drag — update coords and reverse-geocode
-    marker.addListener('dragend', () => {
+    marker.addEventListener('gmp-dragend', () => {
       if (!mounted) return
-      const position = marker.getPosition()
+      const position = marker.position
       if (position) {
-        const lat = position.lat()
-        const lng = position.lng()
-        setLatitude(lat.toFixed(6))
-        setLongitude(lng.toFixed(6))
-        reverseGeocodeCoords(lat, lng)
+        const lat =
+          typeof position.lat === 'function' ? position.lat() : position.lat
+        const lng =
+          typeof position.lng === 'function' ? position.lng() : position.lng
+        setLatitude(Number(lat).toFixed(6))
+        setLongitude(Number(lng).toFixed(6))
+        reverseGeocodeCoords(Number(lat), Number(lng))
           .then((result) => {
             if (mounted && result?.formattedAddress) {
               setAddress(result.formattedAddress)
@@ -432,7 +436,7 @@ export function useUnifiedCapture({
         const lng = event.latLng.lng()
         setLatitude(lat.toFixed(6))
         setLongitude(lng.toFixed(6))
-        marker.setPosition({ lat, lng })
+        marker.position = { lat, lng }
         reverseGeocodeCoords(lat, lng)
           .then((result) => {
             if (mounted && result?.formattedAddress) {
@@ -450,7 +454,7 @@ export function useUnifiedCapture({
     return () => {
       mounted = false
       if (mapMarkerRef.current) {
-        mapMarkerRef.current.setMap(null)
+        mapMarkerRef.current.map = null
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -649,7 +653,7 @@ export function useUnifiedCapture({
     // Reset map marker to default position
     if (mapInstanceRef.current && mapMarkerRef.current) {
       mapInstanceRef.current.setCenter({ lat: 1.3, lng: 103.85 })
-      mapMarkerRef.current.setPosition({ lat: 1.3, lng: 103.85 })
+      mapMarkerRef.current.position = { lat: 1.3, lng: 103.85 }
     }
   }, [])
 

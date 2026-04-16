@@ -102,6 +102,9 @@ export function usePreviewJob({
   capturedProperty,
   preferredScenario,
 }: UsePreviewJobOptions): UsePreviewJobResult {
+  const [availablePreviewJobs, setAvailablePreviewJobs] = useState<
+    DeveloperPreviewJob[]
+  >([])
   // Preview job state
   const [previewJob, setPreviewJob] = useState<DeveloperPreviewJob | null>(null)
   const [previewDetailLevel, setPreviewDetailLevel] =
@@ -249,19 +252,41 @@ export function usePreviewJob({
   // Effects
   // ============================================================================
 
-  // Set preview job from captured property
   useEffect(() => {
-    if (!capturedProperty?.previewJobs?.length) {
+    if (!capturedProperty?.propertyId) {
+      setAvailablePreviewJobs([])
       setPreviewJob(null)
       return
     }
+
+    setAvailablePreviewJobs(capturedProperty.previewJobs ?? [])
+  }, [capturedProperty?.propertyId, capturedProperty?.previewJobs])
+
+  // Merge snapshot preview jobs into the live cache when available
+  useEffect(() => {
+    if (!capturedProperty?.previewJobs?.length) {
+      return
+    }
+    setAvailablePreviewJobs((current) => {
+      const next = new Map(current.map((job) => [job.id, job]))
+      capturedProperty.previewJobs.forEach((job) => {
+        next.set(job.id, job)
+      })
+      return Array.from(next.values())
+    })
+  }, [capturedProperty?.previewJobs])
+
+  // Select the active preview job from the live cache
+  useEffect(() => {
+    if (!availablePreviewJobs.length) {
+      setPreviewJob(null)
+      return
+    }
+
     setPreviewJob(
-      selectPreviewJobForScenario(
-        capturedProperty.previewJobs,
-        preferredScenario,
-      ),
+      selectPreviewJobForScenario(availablePreviewJobs, preferredScenario),
     )
-  }, [capturedProperty?.previewJobs, preferredScenario])
+  }, [availablePreviewJobs, preferredScenario])
 
   // Fetch preview jobs if not included in captured property
   useEffect(() => {
@@ -271,17 +296,19 @@ export function usePreviewJob({
     let cancelled = false
     listPreviewJobs(capturedProperty.propertyId).then((jobs) => {
       if (!cancelled && jobs.length) {
-        setPreviewJob(selectPreviewJobForScenario(jobs, preferredScenario))
+        setAvailablePreviewJobs((current) => {
+          const next = new Map(current.map((job) => [job.id, job]))
+          jobs.forEach((job) => {
+            next.set(job.id, job)
+          })
+          return Array.from(next.values())
+        })
       }
     })
     return () => {
       cancelled = true
     }
-  }, [
-    capturedProperty?.propertyId,
-    capturedProperty?.previewJobs,
-    preferredScenario,
-  ])
+  }, [capturedProperty?.propertyId, capturedProperty?.previewJobs])
 
   // Poll for preview job status updates
   useEffect(() => {
@@ -299,7 +326,11 @@ export function usePreviewJob({
         if (!latest || cancelled) {
           return
         }
-        setPreviewJob(latest)
+        setAvailablePreviewJobs((current) => {
+          const next = new Map(current.map((job) => [job.id, job]))
+          next.set(latest.id, latest)
+          return Array.from(next.values())
+        })
         if (activeStatuses.has(latest.status.toLowerCase())) {
           timer = window.setTimeout(poll, 5000)
         }
@@ -456,7 +487,11 @@ export function usePreviewJob({
       legendPayloadForPreview,
     )
     if (refreshed) {
-      setPreviewJob(refreshed)
+      setAvailablePreviewJobs((current) => {
+        const next = new Map(current.map((job) => [job.id, job]))
+        next.set(refreshed.id, refreshed)
+        return Array.from(next.values())
+      })
     }
     setIsRefreshingPreview(false)
   }, [legendPayloadForPreview, previewDetailLevel, previewJob])
@@ -490,7 +525,11 @@ export function usePreviewJob({
       }
 
       if (result.job) {
-        setPreviewJob(result.job)
+        setAvailablePreviewJobs((current) => {
+          const next = new Map(current.map((job) => [job.id, job]))
+          next.set(result.job!.id, result.job!)
+          return Array.from(next.values())
+        })
         return
       }
 

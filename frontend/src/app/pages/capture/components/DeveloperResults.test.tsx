@@ -290,6 +290,7 @@ vi.mock(
 describe('DeveloperResults', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    window.localStorage.clear()
     currentProjectValue = null
     previewMetadataErrorValue = null
     previewGenerationErrorValue = null
@@ -339,9 +340,13 @@ describe('DeveloperResults', () => {
           ? 'Raw Land'
           : scenario === 'existing_building'
             ? 'Renovation'
-            : scenario === 'underused_asset'
-              ? 'Adaptive Reuse'
-              : scenario,
+            : scenario === 'heritage_property'
+              ? 'Heritage Integration'
+              : scenario === 'underused_asset'
+                ? 'Adaptive Reuse'
+                : scenario === 'mixed_use_redevelopment'
+                  ? 'Mixed-Use Redevelopment'
+                  : scenario,
     }))
   })
 
@@ -627,9 +632,10 @@ describe('DeveloperResults', () => {
     expect(
       screen.getByText('The renovation starter model is ready for review.'),
     ).toBeInTheDocument()
+    expect(screen.getByText('Capture Recommendation')).toBeInTheDocument()
     expect(
       screen.getByText(
-        'User-selected existing building overrides the default capture recommendation.',
+        'User-selected renovation overrides the default capture recommendation.',
       ),
     ).toBeInTheDocument()
     expect(screen.getByText('ready')).toBeInTheDocument()
@@ -637,7 +643,9 @@ describe('DeveloperResults', () => {
       screen.getByText(/Geometry scope: massing stack/i),
     ).toBeInTheDocument()
     expect(screen.getByText(/Estimated floors: 6/i)).toBeInTheDocument()
-    expect(screen.getByText(/Recommended: Renovation/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Capture recommended: Adaptive Reuse/i),
+    ).toBeInTheDocument()
     expect(screen.getByText(/Mode: User override/i)).toBeInTheDocument()
     expect(
       screen.getByText(
@@ -645,20 +653,30 @@ describe('DeveloperResults', () => {
       ),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/Floor-to-floor 3.7 m \/ clear ceiling 2.7 m/i),
+      screen.getByText(
+        /Floor-to-floor 3.7 m \/ clear ceiling 2.7 m \(property-specific\)/i,
+      ),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/Wall thickness 210 mm \/ core ratio 15%/i),
+      screen.getByText(/Wall thickness 210 mm \/ core ratio 15% \(rules\)/i),
     ).toBeInTheDocument()
     expect(
       screen.getByText(
-        /Retention strategy preserve existing bulk \/ efficiency factor 0.96/i,
+        /Retention strategy preserve existing bulk \/ efficiency factor 0.96 \(property-specific\)/i,
       ),
     ).toBeInTheDocument()
     expect(
       screen.getByText(
         /Assumption source: Rule defaults with property-specific adjustments \(older building age\)\./i,
       ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Pinned by site facts: efficiency factor, floor-to-floor\./i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/Starter defaults still tunable: wall thickness\./i),
     ).toBeInTheDocument()
 
     expect(lastPreviewViewerProps).toMatchObject({
@@ -762,6 +780,10 @@ describe('DeveloperResults', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /renovation/i }))
 
+    expect(screen.getByText('Current Scenario Override')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Capture recommended: Adaptive Reuse/i),
+    ).toBeInTheDocument()
     expect(lastPreviewViewerProps).toMatchObject({
       previewUrl: '/static/dev-previews/example/renovation.gltf',
       metadataUrl: '/static/dev-previews/example/renovation.json',
@@ -771,6 +793,17 @@ describe('DeveloperResults', () => {
     expect(lastUsePreviewJobOptions).toMatchObject({
       preferredScenario: 'existing_building',
     })
+    expect(screen.getByText(/Mode: Exploratory override/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /This scenario selection is temporary for the current session and does not update learned defaults\./i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Exploratory renovation override is active for this session\./i,
+      ),
+    ).toBeInTheDocument()
   })
 
   it('updates starter model assumptions when the user overrides to a ground-up scenario', () => {
@@ -787,19 +820,327 @@ describe('DeveloperResults', () => {
     )
 
     expect(
-      screen.getByText(/Floor-to-floor 3.9 m \/ clear ceiling 2.8 m/i),
+      screen.getByText(
+        /Floor-to-floor 3.9 m \/ clear ceiling 2.8 m \(heuristic fallback\)/i,
+      ),
     ).toBeInTheDocument()
     expect(
       screen.getByText(/Assumption source: Frontend fallback defaults\./i),
     ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Capture is using fallback assumptions because no scenario-specific preview jobs are attached to this property yet\./i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Starter defaults still tunable: retention strategy, floor-to-floor, clear ceiling, wall thickness, core ratio, common area, HVAC, electrical\./i,
+      ),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /raw land/i }))
+
+    expect(screen.getByText('Current Scenario Override')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Capture recommended: Adaptive Reuse/i),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Mode: Exploratory override/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Floor-to-floor 4.2 m \/ clear ceiling 3.2 m \(heuristic fallback\)/i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Wall thickness 250 mm \/ core ratio 18% \(heuristic fallback\)/i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Capture is using fallback assumptions because no scenario-specific preview jobs are attached to this property yet\./i,
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('explains when an override is using provisional assumptions while the recommended preview is still shown', () => {
+    const result = buildResult()
+    result.heritageContext = {
+      flag: true,
+      risk: 'medium',
+      notes: [],
+      constraints: ['Conservation review required'],
+      assumption: null,
+      overlay: {
+        name: 'Heritage overlay detected',
+        source: 'URA',
+        heritagePremiumPct: null,
+      },
+    }
+    result.visualization = {
+      ...result.visualization,
+      status: 'ready',
+      previewAvailable: true,
+      previewJobId: 'preview-heritage',
+      conceptMeshUrl: '/static/dev-previews/example/heritage-preview.gltf',
+      previewMetadataUrl: '/static/dev-previews/example/heritage-preview.json',
+      thumbnailUrl: '/static/dev-previews/example/heritage-preview.png',
+    }
+    result.previewJobs = [
+      {
+        id: 'preview-heritage',
+        propertyId: 'prop-123',
+        scenario: 'heritage_property',
+        status: 'ready',
+        previewUrl: '/static/dev-previews/example/heritage-preview.gltf',
+        metadataUrl: '/static/dev-previews/example/heritage-preview.json',
+        thumbnailUrl: '/static/dev-previews/example/heritage-preview.png',
+        assetVersion: '20260413125700',
+        requestedAt: '2026-04-13T12:57:00Z',
+        startedAt: '2026-04-13T12:57:02Z',
+        finishedAt: '2026-04-13T12:57:05Z',
+        message: null,
+        geometryDetailLevel: 'medium',
+        starterModelAssumptions: {
+          wallThicknessMm: 240,
+          coreRatioPct: 14,
+          commonAreaRatioPct: 14,
+          floorToFloorM: 3.6,
+          clearCeilingM: 2.7,
+          hvacSpaceRatioPct: 9,
+          electricalSpaceRatioPct: 5,
+          structuralGridNote: 'conservation retention',
+          source: 'rules',
+          retentionStrategy: 'conservation_retention',
+          efficiencyFactor: 0.92,
+          provenance: {
+            summary: 'rules_with_property_adjustments',
+            fields: {
+              retention_strategy: 'property_specific',
+              efficiency_factor: 'property_specific',
+            },
+            adjustments: ['heritage_context'],
+          },
+        },
+      },
+    ] as SiteAcquisitionResult['previewJobs']
+    previewJobsByScenarioValue = {
+      heritage_property: result.previewJobs[0]!,
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={
+          ['raw_land', 'heritage_property'] as DevelopmentScenario[]
+        }
+      />,
+    )
 
     fireEvent.click(screen.getByRole('button', { name: /raw land/i }))
 
     expect(
-      screen.getByText(/Floor-to-floor 4.2 m \/ clear ceiling 3.2 m/i),
+      screen.getByText(
+        /The raw land starter model is not ready yet\. Capture is still showing the heritage integration preview until a scenario-specific model is available\./i,
+      ),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/Wall thickness 250 mm \/ core ratio 18%/i),
+      screen.getByText(
+        /Requested scenario: Raw Land\. The preview above still reflects Heritage Integration until a scenario-specific starter model is ready\./i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Floor-to-floor 4.2 m \/ clear ceiling 3.2 m \(heuristic fallback\)/i,
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('can promote an exploratory scenario to a saved project override', () => {
+    currentProjectValue = { id: 'proj-9', name: 'Project Nine' }
+    const result = buildResult()
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={
+          ['raw_land', 'existing_building'] as DevelopmentScenario[]
+        }
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /renovation/i }))
+
+    expect(screen.getByText(/Mode: Exploratory override/i)).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /save as project override/i }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /save as project override/i }),
+    )
+
+    expect(screen.getByText('Saved Scenario Override')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Mode: Saved project override/i),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /This override is saved for the project and will continue to guide downstream work\./i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /clear saved override/i }),
+    ).toBeInTheDocument()
+    expect(window.localStorage.getItem('ob_capture_override:proj-9')).toContain(
+      'existing_building',
+    )
+  })
+
+  it('restores a saved project override when the project is reopened', () => {
+    currentProjectValue = { id: 'proj-9', name: 'Project Nine' }
+    window.localStorage.setItem(
+      'ob_capture_override:proj-9',
+      JSON.stringify({
+        projectId: 'proj-9',
+        scenario: 'existing_building',
+        savedAt: '2026-04-10T10:00:00Z',
+      }),
+    )
+
+    render(
+      <DeveloperResults
+        result={buildResult()}
+        selectedScenarios={
+          ['raw_land', 'existing_building'] as DevelopmentScenario[]
+        }
+      />,
+    )
+
+    expect(
+      screen.getByText(/Mode: Saved project override/i),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Saved Scenario Override')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /renovation is applied as the saved project override\./i,
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('prefers backend starter-model assumptions from the active preview job over the stale capture snapshot', () => {
+    const result = buildResult()
+    result.previewJobs = [
+      {
+        id: 'legacy-preview',
+        propertyId: 'prop-123',
+        scenario: 'heritage_property',
+        status: 'ready',
+        previewUrl: '/static/dev-previews/example/legacy-heritage.gltf',
+        metadataUrl: '/static/dev-previews/example/legacy-heritage.json',
+        thumbnailUrl: '/static/dev-previews/example/legacy-heritage.png',
+        assetVersion: '20260407093405',
+        requestedAt: '2026-01-06T10:00:00Z',
+        startedAt: '2026-01-06T10:00:02Z',
+        finishedAt: '2026-01-06T10:00:10Z',
+        message: null,
+        geometryDetailLevel: 'medium',
+      },
+    ] as SiteAcquisitionResult['previewJobs']
+    result.heritageContext = {
+      flag: true,
+      risk: 'medium',
+      notes: [],
+      constraints: ['Conservation dialogue required'],
+      assumption: null,
+      overlay: {
+        name: 'Heritage overlay detected',
+        source: 'URA',
+        heritagePremiumPct: null,
+      },
+    }
+    previewJobsByScenarioValue = {
+      heritage_property: {
+        id: 'fresh-preview',
+        propertyId: 'prop-123',
+        scenario: 'heritage_property',
+        status: 'ready',
+        previewUrl: '/static/dev-previews/example/fresh-heritage.gltf',
+        metadataUrl: '/static/dev-previews/example/fresh-heritage.json',
+        thumbnailUrl: '/static/dev-previews/example/fresh-heritage.png',
+        assetVersion: '20260407093406',
+        requestedAt: '2026-01-06T10:05:00Z',
+        startedAt: '2026-01-06T10:05:02Z',
+        finishedAt: '2026-01-06T10:05:10Z',
+        message: null,
+        geometryDetailLevel: 'medium',
+        starterModelAssumptions: {
+          wallThicknessMm: 240,
+          coreRatioPct: 14,
+          commonAreaRatioPct: 14,
+          floorToFloorM: 3.6,
+          clearCeilingM: 2.7,
+          hvacSpaceRatioPct: 9,
+          electricalSpaceRatioPct: 5,
+          structuralGridNote: 'conservation retention',
+          source: 'hybrid',
+          retentionStrategy: 'conservation_retention',
+          efficiencyFactor: 0.92,
+          provenance: {
+            summary: 'rules_with_property_adjustments',
+            fields: {
+              retention_strategy: 'property_specific',
+              efficiency_factor: 'property_specific',
+              floor_to_floor_m: 'rules',
+              clear_ceiling_m: 'rules',
+              wall_thickness_mm: 'rules',
+              core_ratio_pct: 'rules',
+              common_area_ratio_pct: 'rules',
+              hvac_space_ratio_pct: 'rules',
+              electrical_space_ratio_pct: 'rules',
+            },
+            adjustments: ['heritage_context'],
+          },
+        },
+      },
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={['heritage_property'] as DevelopmentScenario[]}
+      />,
+    )
+
+    expect(
+      screen.getByText(
+        /Assumption source: Rule defaults with property-specific adjustments \(heritage context\)\./i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Floor-to-floor 3.6 m \/ clear ceiling 2.7 m \(rules\)/i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Retention strategy conservation retention \/ efficiency factor 0.92 \(property-specific\)/i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/Frontend fallback defaults/i),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/Capture is using fallback assumptions/i),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Pinned by site facts: retention strategy, efficiency factor\./i,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Starter defaults still tunable: floor-to-floor, clear ceiling, wall thickness, core ratio, common area, HVAC, electrical\./i,
+      ),
     ).toBeInTheDocument()
   })
 

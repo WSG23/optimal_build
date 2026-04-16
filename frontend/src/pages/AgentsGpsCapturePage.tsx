@@ -201,7 +201,9 @@ function renderMarketReport(
 function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<google.maps.Map | null>(null)
-  const markerRef = useRef<google.maps.Marker | null>(null)
+  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
+    null,
+  )
   const [mapError, setMapError] = useState<string | null>(null)
   const { t } = useTranslation()
 
@@ -232,6 +234,7 @@ function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
           mapRef.current = new google.maps.Map(containerRef.current, {
             center,
             zoom: 15,
+            mapId: 'agents_gps_map',
             mapTypeControl: false,
             streetViewControl: false,
             fullscreenControl: false,
@@ -241,21 +244,18 @@ function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
         }
 
         if (!markerRef.current) {
-          markerRef.current = new google.maps.Marker({
+          const pinSvg = document.createElement('div')
+          pinSvg.innerHTML = `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10" cy="10" r="8" fill="${colors.brand[600]}" stroke="#ffffff" stroke-width="2"/>
+          </svg>`
+          markerRef.current = new google.maps.marker.AdvancedMarkerElement({
             position: center,
             map: mapRef.current,
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: colors.brand[600],
-              fillOpacity: 1,
-              strokeColor: '#ffffff',
-              strokeWeight: 2,
-            },
+            content: pinSvg,
           })
         } else {
-          markerRef.current.setPosition(center)
-          markerRef.current.setMap(mapRef.current)
+          markerRef.current.position = center
+          markerRef.current.map = mapRef.current
         }
       })
       .catch((error) => {
@@ -271,7 +271,7 @@ function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
     return () => {
       cancelled = true
       if (markerRef.current) {
-        markerRef.current.setMap(null)
+        markerRef.current.map = null
         markerRef.current = null
       }
       mapRef.current = null

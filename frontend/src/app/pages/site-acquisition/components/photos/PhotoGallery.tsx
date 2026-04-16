@@ -222,6 +222,8 @@ export function PhotoGallery({
                 <img
                   src={thumbnailUrl}
                   alt={photo.notes || 'Property photo'}
+                  loading="lazy"
+                  decoding="async"
                   style={{
                     width: '100%',
                     height: '100%',
@@ -443,6 +445,8 @@ export function PhotoGallery({
               <img
                 src={getDisplayUrl(selectedPhoto)!}
                 alt={selectedPhoto.notes || 'Property photo'}
+                loading="lazy"
+                decoding="async"
                 style={{
                   maxWidth: '100%',
                   maxHeight: '100%',

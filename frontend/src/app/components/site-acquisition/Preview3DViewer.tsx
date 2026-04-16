@@ -397,6 +397,8 @@ export function Preview3DViewer({
             <img
               src={thumbnailUrl}
               alt="Starter model thumbnail"
+              loading="lazy"
+              decoding="async"
               className="site-acquisition__preview-viewer-thumb-image"
             />
           </div>
@@ -435,6 +437,8 @@ export function Preview3DViewer({
           <img
             src={thumbnailUrl}
             alt="Preview thumbnail"
+            loading="lazy"
+            decoding="async"
             className="site-acquisition__preview-viewer-thumb-image"
           />
         </div>
