@@ -2011,3 +2011,30 @@ make stop
 **End of Claude AI Agent Guide**
 
 Remember: Quality over speed. Follow the rules. Test thoroughly. Document everything.
+
+---
+
+## Design Context
+
+### Users
+Commercial real estate professionals — agents sourcing and marketing properties, and developers running feasibility, acquisition, and finance workflows. Sophisticated, data-literate users who spend extended sessions making high-stakes decisions (site acquisition, financial modeling, compliance analysis). Used in office environments across Singapore, Hong Kong, New Zealand, Seattle, and Toronto. These users respect density and distrust tools that oversimplify.
+
+### Brand Personality
+**Sharp, assured, technical.** The interface should feel like infrastructure you'd trust billions on. Engineering-grade precision with institutional gravitas. No hand-holding, no softness — this is a command surface for experts.
+
+**Emotional target:** Command and confidence. Total visibility and control, like a Bloomberg terminal.
+
+### Aesthetic Direction
+- **Tone:** Mission-control precision. Dense, structured, deliberate. Authority through information mastery.
+- **Theme:** Dark and light, both first-class citizens.
+- **References:** Bloomberg Terminal (density, gravitas, keyboard-driven)
+- **Anti-references:** Government/legacy apps, generic SaaS dashboards, crypto/Web3 neon, soft rounded UIs
+- **Typography:** Custom display font for headings; system fonts for body text
+- **Design system:** "Square Cyber-Minimalism" — Obsidian & Sapphire palette, `--ob-*` tokens, sharp radii (2-4px)
+
+### Design Principles
+1. **Density over decoration.** Every pixel carries information or creates breathing room for it.
+2. **Earned complexity.** Show the full picture. Progressive disclosure is for onboarding, not hiding capability.
+3. **Structured authority.** Hierarchy through typography, spacing, and color restraint — not decorative elements.
+4. **Institutional trust.** Built by engineers for engineers. No trends, no flash. Timeless precision.
+5. **Dual-mode parity.** Dark and light themes are equal citizens. Neither is degraded.
