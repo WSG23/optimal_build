@@ -44,11 +44,7 @@
     padding: var(--ob-space-075) var(--ob-space-150);
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     border: none;
-    background: linear-gradient(
-        135deg,
-        #1d4ed8 0%,
-        var(--ob-color-brand-primary) 100%
-    );
+    background: var(--ob-color-brand-primary);
     color: var(--ob-color-text-primary);
     font-weight: 600;
     cursor: pointer;
@@ -57,11 +53,7 @@
 }
 
 .cad-uploader__browse:hover {
-    background: linear-gradient(
-        135deg,
-        var(--ob-color-brand-primary) 0%,
-        #1d4ed8 100%
-    );
+    background: color-mix(in srgb, var(--ob-color-brand-primary) 85%, white);
     box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
 }
@@ -142,6 +134,12 @@
     outline: none;
     border-color: var(--ob-color-brand-primary);
     box-shadow: var(--ob-shadow-sm);
+}
+
+.cad-upload__label select:focus-visible,
+.cad-upload__label input:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
 }
 
 .cad-upload__error,
@@ -804,11 +802,7 @@
     padding: var(--ob-space-050) var(--ob-space-100);
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     border: none;
-    background: linear-gradient(
-        135deg,
-        #1d4ed8 0%,
-        var(--ob-color-brand-primary) 100%
-    );
+    background: var(--ob-color-brand-primary);
     color: var(--ob-color-text-primary);
     font-weight: 600;
     cursor: pointer;
@@ -819,11 +813,7 @@
 .cad-bulk-controls button:hover,
 .cad-panel button:hover,
 .cad-export button:hover {
-    background: linear-gradient(
-        135deg,
-        var(--ob-color-brand-primary) 0%,
-        #1d4ed8 100%
-    );
+    background: color-mix(in srgb, var(--ob-color-brand-primary) 85%, white);
     box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
 }

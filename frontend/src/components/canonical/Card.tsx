@@ -126,6 +126,9 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     const animationStyles: SxProps<Theme> = animated
       ? {
           animation: 'cardEntrance 0.4s ease-out',
+          '@media (prefers-reduced-motion: reduce)': {
+            animation: 'none',
+          },
           '@keyframes cardEntrance': {
             '0%': {
               opacity: 0,

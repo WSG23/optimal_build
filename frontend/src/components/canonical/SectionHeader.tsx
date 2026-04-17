@@ -12,6 +12,10 @@ export interface SectionHeaderProps {
    * Size variant
    */
   size?: 'sm' | 'md'
+  /**
+   * Semantic heading level for accessibility. Visual styling remains h6.
+   */
+  headingLevel?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
   sx?: SxProps<Theme>
 }
 
@@ -28,6 +32,7 @@ export function SectionHeader({
   actionLabel,
   onAction,
   size = 'md',
+  headingLevel = 'h6',
   sx = {},
 }: SectionHeaderProps) {
   const titleSize =
@@ -48,6 +53,7 @@ export function SectionHeader({
       <Box>
         <Typography
           variant="h6"
+          component={headingLevel}
           sx={{
             color: 'var(--ob-color-text-primary)',
             fontWeight: 'var(--ob-font-weight-semibold)',

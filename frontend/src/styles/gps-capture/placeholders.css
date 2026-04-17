@@ -155,7 +155,7 @@
 .mkt-badge {
     display: inline-block;
     padding: var(--ob-space-025) var(--ob-space-075);
-    border-radius: 999px;
+    border-radius: var(--ob-radius-pill);
     background: rgb(var(--ob-color-brand-primary-rgb) / 0.18);
     color: var(--ob-color-brand-primary-emphasis);
     text-transform: uppercase;

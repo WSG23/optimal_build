@@ -23,22 +23,7 @@ import {
   useEffect,
   useRef,
 } from 'react'
-import {
-  Box,
-  Typography,
-  Select,
-  MenuItem,
-  FormControl,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  Stack,
-} from '@mui/material'
-import RefreshIcon from '@mui/icons-material/Refresh'
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
-import ViewInArIcon from '@mui/icons-material/ViewInAr'
+import { Box, Typography } from '@mui/material'
 
 import type { SiteAcquisitionResult } from '../../../../api/siteAcquisition'
 import type { CaptureOverrideIntent } from '../../../../api/siteAcquisition'
@@ -58,7 +43,6 @@ import {
   saveCaptureScenarioOverrideForProject,
 } from '../utils/captureStorage'
 
-// Import Site Acquisition components
 // Import Site Acquisition hooks
 import { usePreviewJob } from '../../site-acquisition/hooks/usePreviewJob'
 import { useCaptureScenarioComparison } from '../../site-acquisition/hooks/useCaptureScenarioComparison'
@@ -71,11 +55,12 @@ import { SCENARIO_OPTIONS } from '../../site-acquisition/constants'
 import { buildPropertyOverviewCards } from '../../site-acquisition/utils/cardBuilders'
 import { mapSiteAcquisitionResultToCaptureResultV2 } from '../utils/captureResultV2'
 
-const Preview3DViewer = lazy(async () => {
-  const module =
-    await import('../../../components/site-acquisition/Preview3DViewer')
-  return { default: module.Preview3DViewer }
-})
+// Import extracted sub-components
+import { ConceptPreviewSection } from './ConceptPreviewSection'
+import { CaptureRecommendationSection } from './CaptureRecommendationSection'
+import { ScenarioFocusSection } from './ScenarioFocusSection'
+import { SaveProjectDialog } from './SaveProjectDialog'
+import { useStarterModelMemos } from './useStarterModelMemos'
 
 const PropertyOverviewSection = lazy(async () => {
   const module =
@@ -130,23 +115,10 @@ export function DeveloperResults({
       </Typography>
     </Card>
   )
-  const assumptionFieldLabels = useMemo(
-    () =>
-      new Map<string, string>([
-        ['floor_to_floor_m', 'floor-to-floor'],
-        ['clear_ceiling_m', 'clear ceiling'],
-        ['wall_thickness_mm', 'wall thickness'],
-        ['core_ratio_pct', 'core ratio'],
-        ['common_area_ratio_pct', 'common area'],
-        ['hvac_space_ratio_pct', 'HVAC'],
-        ['electrical_space_ratio_pct', 'electrical'],
-        ['retention_strategy', 'retention strategy'],
-        ['efficiency_factor', 'efficiency factor'],
-      ]),
-    [],
-  )
+
   const autoRequestedStarterModelRef = useRef<Set<string>>(new Set())
   const hydratedSavedOverrideProjectIdRef = useRef<string | null>(null)
+
   // Active scenario for filtering
   const [activeScenario, setActiveScenario] = useState<
     DevelopmentScenario | 'all'
@@ -181,7 +153,57 @@ export function DeveloperResults({
     [activeScenario, overrideIntent, result, selectedScenarios],
   )
 
-  // Preview job state - use hook with options object
+  // Currency symbol for formatting
+  const currencySymbol = result.currencySymbol ?? 'S$'
+  const suggestedProjectName =
+    result.propertyInfo?.propertyName?.trim() ||
+    result.address?.fullAddress?.trim() ||
+    'Capture Project'
+
+  // Number formatter for card values
+  function formatNumber(
+    value: number,
+    options?: Intl.NumberFormatOptions,
+  ): string {
+    return new Intl.NumberFormat('en-SG', {
+      maximumFractionDigits: 1,
+      ...options,
+    }).format(value)
+  }
+
+  // Format timestamp helper
+  const formatRecordedTimestamp = useCallback(
+    (timestamp?: string | null): string => {
+      if (!timestamp) return '—'
+      try {
+        const date = new Date(timestamp)
+        return date.toLocaleDateString('en-SG', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      } catch {
+        return timestamp
+      }
+    },
+    [],
+  )
+
+  // Scenario comparison state
+  const {
+    quickAnalysisScenarios,
+    comparisonScenarios,
+    scenarioComparisonData,
+    formatScenarioLabel,
+  } = useCaptureScenarioComparison({
+    capturedProperty: result,
+    activeScenario,
+    currencySymbol,
+  })
+
+  // Preview job state
   const {
     previewJob,
     previewDetailLevel,
@@ -211,39 +233,31 @@ export function DeveloperResults({
     preferredScenario: captureResultV2.scenarioRecommendation.recommended,
   })
 
-  const effectiveStarterModel = useMemo(() => {
-    const baseModel = captureResultV2.starterModel
-    if (previewJob) {
-      const rawStatus = previewJob.status.toLowerCase()
-      const status =
-        rawStatus === 'ready' ||
-        rawStatus === 'failed' ||
-        rawStatus === 'queued' ||
-        rawStatus === 'processing' ||
-        rawStatus === 'placeholder'
-          ? rawStatus
-          : baseModel.status
-      return {
-        ...baseModel,
-        status,
-        modelUrl: previewJob.previewUrl ?? baseModel.modelUrl,
-        metadataUrl: previewJob.metadataUrl ?? baseModel.metadataUrl,
-        thumbnailUrl: previewJob.thumbnailUrl ?? baseModel.thumbnailUrl,
-        generatedFrom: Array.from(
-          new Set(['preview_job', ...baseModel.generatedFrom]),
-        ),
-      }
-    }
-
-    if (isGeneratingStarterModel) {
-      return {
-        ...baseModel,
-        status: 'processing' as const,
-      }
-    }
-
-    return baseModel
-  }, [captureResultV2.starterModel, isGeneratingStarterModel, previewJob])
+  // Extracted starter model computations
+  const {
+    effectiveStarterModel,
+    defaultRecommendationLabel,
+    starterModelStatusSummary,
+    scenarioFitSummary,
+    starterModelAssumptionLines,
+    starterModelAssumptionSourceLine,
+    starterModelAssumptionFallbackReason,
+    starterModelOverridePreviewNotice,
+    starterModelAssumptionBuckets,
+    overrideModeLine,
+    overrideIntentGuidance,
+    recommendationCardTitle,
+    starterModelActionLabel,
+  } = useStarterModelMemos({
+    captureResultV2,
+    previewJob,
+    isGeneratingStarterModel,
+    isRefreshingPreview,
+    hasPreferredScenarioPreview,
+    previewJobs: result.previewJobs,
+    formatScenarioLabel,
+    formatNumber,
+  })
 
   // Unified layer action handler for PreviewLayersTable
   const handleLayerAction = useCallback(
@@ -262,13 +276,6 @@ export function DeveloperResults({
     },
     [handleToggleLayerVisibility, handleSoloPreviewLayer, handleFocusLayer],
   )
-
-  // Currency symbol for formatting
-  const currencySymbol = result.currencySymbol ?? 'S$'
-  const suggestedProjectName =
-    result.propertyInfo?.propertyName?.trim() ||
-    result.address?.fullAddress?.trim() ||
-    'Capture Project'
 
   const handleOpenSaveDialog = useCallback(() => {
     setSaveError(null)
@@ -356,49 +363,6 @@ export function DeveloperResults({
     setOverrideIntent('exploratory')
   }, [activeScenario, currentProject?.id])
 
-  // Scenario comparison state - pass required options object and extract all values
-  const {
-    quickAnalysisScenarios,
-    comparisonScenarios,
-    scenarioComparisonData,
-    formatScenarioLabel,
-  } = useCaptureScenarioComparison({
-    capturedProperty: result,
-    activeScenario,
-    currencySymbol,
-  })
-
-  // Format timestamp helper
-  const formatRecordedTimestamp = useCallback(
-    (timestamp?: string | null): string => {
-      if (!timestamp) return '—'
-      try {
-        const date = new Date(timestamp)
-        return date.toLocaleDateString('en-SG', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
-      } catch {
-        return timestamp
-      }
-    },
-    [],
-  )
-
-  // Number formatter for card values
-  const formatNumber = useCallback(
-    (value: number, options?: Intl.NumberFormatOptions) => {
-      return new Intl.NumberFormat('en-SG', {
-        maximumFractionDigits: 1,
-        ...options,
-      }).format(value)
-    },
-    [],
-  )
-
   // Compute feasibility signals from quick analysis scenarios
   const feasibilitySignals = useMemo(() => {
     if (!quickAnalysisScenarios.length) {
@@ -424,13 +388,7 @@ export function DeveloperResults({
         risks: signals.risks,
       }
     })
-  }, [
-    quickAnalysisScenarios,
-    scenarioLookup,
-    formatNumber,
-    formatScenarioLabel,
-    result,
-  ])
+  }, [quickAnalysisScenarios, scenarioLookup, formatScenarioLabel, result])
 
   // Build overview cards from result using the official card builder
   const overviewCards = useMemo(() => {
@@ -444,13 +402,7 @@ export function DeveloperResults({
         formatTimestamp: formatRecordedTimestamp,
       },
     })
-  }, [
-    colorLegendEntries,
-    formatNumber,
-    formatRecordedTimestamp,
-    previewJob,
-    result,
-  ])
+  }, [colorLegendEntries, formatRecordedTimestamp, previewJob, result])
 
   // Instant capture insight based on captured property data
   const aiInsight = useMemo(() => {
@@ -497,435 +449,9 @@ export function DeveloperResults({
           : `User override active: ${formatScenarioLabel(recommendation.recommended)} remains selected even though Capture would otherwise prefer ${recommendation.alternatives[0] ? formatScenarioLabel(recommendation.alternatives[0]) : 'another scenario'}.`
       : `Capture currently recommends ${formatScenarioLabel(recommendation.defaultRecommended)} first.`
     return `Instant capture analysis for ${result.address?.district ?? 'this location'} highlights ${analysisSummary}. Preview status: ${previewStatus}. ${scenarioNote} ${scopeNote}`
-  }, [
-    captureResultV2,
-    effectiveStarterModel,
-    formatNumber,
-    formatScenarioLabel,
-    result,
-  ])
+  }, [captureResultV2, effectiveStarterModel, formatScenarioLabel, result])
 
-  const starterModelActionLabel = isGeneratingStarterModel
-    ? 'Generating Starter Model...'
-    : isRefreshingPreview
-      ? 'Refreshing Starter Model...'
-      : hasPreferredScenarioPreview
-        ? 'Refresh Starter Model'
-        : 'Generate Starter Model'
-
-  const defaultRecommendationLabel = useMemo(
-    () =>
-      formatScenarioLabel(
-        captureResultV2.scenarioRecommendation.defaultRecommended,
-      ),
-    [
-      captureResultV2.scenarioRecommendation.defaultRecommended,
-      formatScenarioLabel,
-    ],
-  )
-
-  const fallbackPreviewScenarioLabel = useMemo(() => {
-    if (
-      captureResultV2.scenarioRecommendation.userOverride &&
-      !hasPreferredScenarioPreview
-    ) {
-      return defaultRecommendationLabel
-    }
-    return formatScenarioLabel(
-      captureResultV2.scenarioRecommendation.recommended,
-    )
-  }, [
-    captureResultV2.scenarioRecommendation.recommended,
-    captureResultV2.scenarioRecommendation.userOverride,
-    defaultRecommendationLabel,
-    formatScenarioLabel,
-    hasPreferredScenarioPreview,
-  ])
-
-  const starterModelStatusSummary = useMemo(() => {
-    const scenarioLabel = formatScenarioLabel(
-      captureResultV2.scenarioRecommendation.recommended,
-    )
-    switch (effectiveStarterModel.status) {
-      case 'queued':
-        return `A ${scenarioLabel.toLowerCase()} starter model has been queued. Capture will replace the fallback preview when the render is ready.`
-      case 'processing':
-        return `Capture is generating the ${scenarioLabel.toLowerCase()} starter model now.`
-      case 'ready':
-        return hasPreferredScenarioPreview
-          ? `The ${scenarioLabel.toLowerCase()} starter model is ready for review.`
-          : `The ${scenarioLabel.toLowerCase()} starter model is not ready yet. Capture is still showing the ${fallbackPreviewScenarioLabel.toLowerCase()} preview until a scenario-specific model is available.`
-      case 'failed':
-        return `Capture could not generate the ${scenarioLabel.toLowerCase()} starter model yet. Retry generation from this panel.`
-      case 'placeholder':
-      default:
-        return 'No scenario-specific starter model is available yet. Capture is currently showing the best available fallback preview.'
-    }
-  }, [
-    captureResultV2.scenarioRecommendation.recommended,
-    effectiveStarterModel.status,
-    fallbackPreviewScenarioLabel,
-    formatScenarioLabel,
-    hasPreferredScenarioPreview,
-  ])
-
-  const effectiveEngineeringAssumptions = useMemo(
-    () =>
-      previewJob?.starterModelAssumptions ??
-      captureResultV2.engineeringAssumptions,
-    [
-      captureResultV2.engineeringAssumptions,
-      previewJob?.starterModelAssumptions,
-    ],
-  )
-
-  const scenarioFitSummary = useMemo(() => {
-    const codeConstraints = captureResultV2.codeConstraints
-    const comparisonSummary =
-      codeConstraints.currentVsCodeStatus === 'above'
-        ? 'Current GFA exceeds today’s code envelope and may reflect a grandfathered condition.'
-        : codeConstraints.currentVsCodeStatus === 'below'
-          ? 'Current GFA remains below today’s code envelope, leaving compliant headroom to study.'
-          : codeConstraints.currentVsCodeStatus === 'at_limit'
-            ? 'Current GFA appears to match today’s code envelope.'
-            : 'Current-versus-code envelope relationship is still unresolved.'
-
-    const headroomSummary =
-      codeConstraints.maxBuildableGfaSqm != null &&
-      codeConstraints.currentGfaSqm != null
-        ? `${formatNumber(codeConstraints.currentGfaSqm, {
-            maximumFractionDigits: 0,
-          })} sqm current vs ${formatNumber(
-            codeConstraints.maxBuildableGfaSqm,
-            {
-              maximumFractionDigits: 0,
-            },
-          )} sqm current-code max.`
-        : 'Current and maximum GFA comparison is still pending.'
-
-    const heritageSummary = captureResultV2.siteContext.heritageOverlay
-      ? `Context: ${captureResultV2.siteContext.heritageOverlay}.`
-      : 'No heritage overlay is currently driving the starter model.'
-
-    return {
-      comparisonSummary,
-      headroomSummary,
-      heritageSummary,
-    }
-  }, [
-    captureResultV2.codeConstraints,
-    captureResultV2.siteContext,
-    formatNumber,
-  ])
-
-  const starterModelAssumptionLines = useMemo(() => {
-    const assumptions = effectiveEngineeringAssumptions
-    const provenanceFields = assumptions.provenance?.fields ?? {}
-
-    const formatSourceLabel = (source: string): string =>
-      source === 'property_specific'
-        ? 'property-specific'
-        : source === 'heuristic_fallback'
-          ? 'heuristic fallback'
-          : source.replace(/_/g, ' ')
-
-    const describeFieldSources = (fields: string[]): string | null => {
-      const mapped = fields
-        .map((field) => ({
-          field,
-          source: provenanceFields[field],
-        }))
-        .filter(
-          (
-            entry,
-          ): entry is {
-            field: string
-            source: string
-          } => Boolean(entry.source),
-        )
-
-      if (!mapped.length) {
-        return null
-      }
-
-      const uniqueSources = Array.from(
-        new Set(mapped.map((entry) => entry.source)),
-      )
-      if (uniqueSources.length === 1) {
-        return formatSourceLabel(uniqueSources[0]!)
-      }
-
-      const propertySpecificFields = mapped
-        .filter((entry) => entry.source === 'property_specific')
-        .map(
-          (entry) =>
-            assumptionFieldLabels.get(entry.field) ??
-            entry.field.replace(/_/g, ' '),
-        )
-
-      if (propertySpecificFields.length) {
-        return `${propertySpecificFields.join(', ')} property-specific`
-      }
-
-      return 'mixed sources'
-    }
-
-    const lines = [
-      assumptions.floorToFloorM != null && assumptions.clearCeilingM != null
-        ? {
-            text: `Floor-to-floor ${formatNumber(assumptions.floorToFloorM, {
-              maximumFractionDigits: 1,
-            })} m / clear ceiling ${formatNumber(assumptions.clearCeilingM, {
-              maximumFractionDigits: 1,
-            })} m`,
-            sourceDetail: describeFieldSources([
-              'floor_to_floor_m',
-              'clear_ceiling_m',
-            ]),
-          }
-        : null,
-      assumptions.wallThicknessMm != null && assumptions.coreRatioPct != null
-        ? {
-            text: `Wall thickness ${formatNumber(assumptions.wallThicknessMm, {
-              maximumFractionDigits: 0,
-            })} mm / core ratio ${formatNumber(assumptions.coreRatioPct, {
-              maximumFractionDigits: 0,
-            })}%`,
-            sourceDetail: describeFieldSources([
-              'wall_thickness_mm',
-              'core_ratio_pct',
-            ]),
-          }
-        : null,
-      assumptions.commonAreaRatioPct != null &&
-      assumptions.hvacSpaceRatioPct != null &&
-      assumptions.electricalSpaceRatioPct != null
-        ? {
-            text: `Common area ${formatNumber(assumptions.commonAreaRatioPct, {
-              maximumFractionDigits: 0,
-            })}% / HVAC ${formatNumber(assumptions.hvacSpaceRatioPct, {
-              maximumFractionDigits: 0,
-            })}% / electrical ${formatNumber(
-              assumptions.electricalSpaceRatioPct,
-              {
-                maximumFractionDigits: 0,
-              },
-            )}%`,
-            sourceDetail: describeFieldSources([
-              'common_area_ratio_pct',
-              'hvac_space_ratio_pct',
-              'electrical_space_ratio_pct',
-            ]),
-          }
-        : null,
-      assumptions.retentionStrategy
-        ? {
-            text: `Retention strategy ${assumptions.retentionStrategy.replace(/_/g, ' ')}${
-              assumptions.efficiencyFactor != null
-                ? ` / efficiency factor ${formatNumber(
-                    assumptions.efficiencyFactor,
-                    {
-                      maximumFractionDigits: 2,
-                    },
-                  )}`
-                : ''
-            }`,
-            sourceDetail: describeFieldSources([
-              'retention_strategy',
-              'efficiency_factor',
-            ]),
-          }
-        : assumptions.efficiencyFactor != null
-          ? {
-              text: `Efficiency factor ${formatNumber(
-                assumptions.efficiencyFactor,
-                {
-                  maximumFractionDigits: 2,
-                },
-              )}`,
-              sourceDetail: describeFieldSources(['efficiency_factor']),
-            }
-          : null,
-    ].filter(
-      (
-        line,
-      ): line is {
-        text: string
-        sourceDetail: string | null
-      } => Boolean(line),
-    )
-
-    return lines
-  }, [assumptionFieldLabels, effectiveEngineeringAssumptions, formatNumber])
-
-  const starterModelAssumptionSourceLine = useMemo(() => {
-    const assumptions = effectiveEngineeringAssumptions
-    const summary = assumptions.provenance?.summary ?? null
-    const adjustments = assumptions.provenance?.adjustments ?? []
-
-    const summaryLabel =
-      summary === 'rules_with_property_adjustments'
-        ? 'Rule defaults with property-specific adjustments'
-        : summary === 'rules_only'
-          ? 'Rule defaults only'
-          : summary === 'frontend_fallback_defaults'
-            ? 'Frontend fallback defaults'
-            : assumptions.source === 'hybrid'
-              ? 'Mixed-source assumptions'
-              : assumptions.source === 'heuristic_fallback'
-                ? 'Heuristic fallback defaults'
-                : assumptions.source === 'rules'
-                  ? 'Rule defaults'
-                  : assumptions.source.replace(/_/g, ' ')
-
-    if (!adjustments.length) {
-      return `Assumption source: ${summaryLabel}.`
-    }
-
-    const adjustmentLabel = adjustments
-      .map((adjustment) => adjustment.replace(/_/g, ' '))
-      .join(', ')
-
-    return `Assumption source: ${summaryLabel} (${adjustmentLabel}).`
-  }, [effectiveEngineeringAssumptions])
-
-  const starterModelAssumptionFallbackReason = useMemo(() => {
-    const assumptions = effectiveEngineeringAssumptions
-    if (assumptions.provenance?.summary !== 'frontend_fallback_defaults') {
-      return null
-    }
-
-    const scenarioLabel = formatScenarioLabel(
-      captureResultV2.scenarioRecommendation.recommended,
-    )
-
-    if (!result.previewJobs?.length) {
-      return `Capture is using fallback assumptions because no scenario-specific preview jobs are attached to this property yet.`
-    }
-
-    if (!previewJob) {
-      return `Capture is using fallback assumptions because no ${scenarioLabel.toLowerCase()} preview job is available yet.`
-    }
-
-    if (!previewJob.starterModelAssumptions) {
-      return `Capture is using fallback assumptions because the current ${scenarioLabel.toLowerCase()} preview was generated without stored starter-model assumptions.`
-    }
-
-    return `Capture is using fallback assumptions because backend starter-model assumptions are not available for this scenario yet.`
-  }, [
-    effectiveEngineeringAssumptions,
-    captureResultV2.scenarioRecommendation.recommended,
-    formatScenarioLabel,
-    previewJob,
-    result.previewJobs,
-  ])
-
-  const starterModelOverridePreviewNotice = useMemo(() => {
-    if (
-      !captureResultV2.scenarioRecommendation.userOverride ||
-      hasPreferredScenarioPreview
-    ) {
-      return null
-    }
-
-    const requestedScenarioLabel = formatScenarioLabel(
-      captureResultV2.scenarioRecommendation.recommended,
-    )
-
-    return `Requested scenario: ${requestedScenarioLabel}. The preview above still reflects ${fallbackPreviewScenarioLabel} until a scenario-specific starter model is ready.`
-  }, [
-    captureResultV2.scenarioRecommendation.recommended,
-    captureResultV2.scenarioRecommendation.userOverride,
-    fallbackPreviewScenarioLabel,
-    formatScenarioLabel,
-    hasPreferredScenarioPreview,
-  ])
-
-  const starterModelAssumptionBuckets = useMemo(() => {
-    const provenanceFields =
-      effectiveEngineeringAssumptions.provenance?.fields ?? {}
-    const fieldPriority = [
-      'retention_strategy',
-      'efficiency_factor',
-      'floor_to_floor_m',
-      'clear_ceiling_m',
-      'wall_thickness_mm',
-      'core_ratio_pct',
-      'common_area_ratio_pct',
-      'hvac_space_ratio_pct',
-      'electrical_space_ratio_pct',
-    ]
-
-    const uniqueBySource = (source: string) =>
-      Array.from(
-        new Set(
-          fieldPriority
-            .filter((field) => provenanceFields[field] === source)
-            .map(
-              (field) =>
-                assumptionFieldLabels.get(field) ?? field.replace(/_/g, ' '),
-            ),
-        ),
-      )
-
-    return {
-      pinned: uniqueBySource('property_specific'),
-      tunable: Array.from(
-        new Set([
-          ...uniqueBySource('rules'),
-          ...uniqueBySource('heuristic_fallback'),
-          ...uniqueBySource('jurisdiction_default'),
-          ...uniqueBySource('learned'),
-        ]),
-      ),
-    }
-  }, [assumptionFieldLabels, effectiveEngineeringAssumptions.provenance])
-
-  const overrideModeLine = useMemo(() => {
-    const recommendation = captureResultV2.scenarioRecommendation
-    if (!recommendation.userOverride) {
-      return 'Rule-based default'
-    }
-    if (recommendation.overrideIntent === 'exploratory') {
-      return 'Exploratory override'
-    }
-    if (recommendation.overrideIntent === 'saved') {
-      return 'Saved project override'
-    }
-    if (recommendation.overrideIntent === 'learnable') {
-      return 'Learnable preference candidate'
-    }
-    return 'User override'
-  }, [captureResultV2.scenarioRecommendation])
-
-  const overrideIntentGuidance = useMemo(() => {
-    const recommendation = captureResultV2.scenarioRecommendation
-    if (recommendation.overrideIntent === 'exploratory') {
-      return 'This scenario selection is temporary for the current session and does not update learned defaults.'
-    }
-    if (recommendation.overrideIntent === 'saved') {
-      return 'This override is saved for the project and will continue to guide downstream work.'
-    }
-    if (recommendation.overrideIntent === 'learnable') {
-      return 'This override may be considered as a future learning signal, but stronger site and rule inputs still take precedence.'
-    }
-    return null
-  }, [captureResultV2.scenarioRecommendation])
-
-  const recommendationCardTitle = useMemo(() => {
-    const recommendation = captureResultV2.scenarioRecommendation
-    if (!recommendation.overrideIntent) {
-      return 'Capture Recommendation'
-    }
-    if (recommendation.overrideIntent === 'saved') {
-      return 'Saved Scenario Override'
-    }
-    if (recommendation.overrideIntent === 'exploratory') {
-      return 'Current Scenario Override'
-    }
-    return 'Current Scenario'
-  }, [captureResultV2.scenarioRecommendation])
-
+  // Hydrate saved override from project
   useEffect(() => {
     if (!currentProject?.id) {
       hydratedSavedOverrideProjectIdRef.current = null
@@ -953,6 +479,7 @@ export function DeveloperResults({
     }
   }, [currentProject?.id, overrideIntent, selectedScenarios])
 
+  // Auto-request starter model when preferred scenario changes
   useEffect(() => {
     const preferredScenario = captureResultV2.scenarioRecommendation.recommended
     const propertyId = result.propertyId
@@ -982,548 +509,77 @@ export function DeveloperResults({
     result.propertyId,
   ])
 
+  const handleSelectAllScenarios = useCallback(() => {
+    setActiveScenario('all')
+    setOverrideIntent(null)
+    if (currentProject?.id) {
+      clearCaptureScenarioOverrideForProject(currentProject.id)
+    }
+  }, [currentProject?.id])
+
+  const handleSelectScenario = useCallback((scenario: DevelopmentScenario) => {
+    setActiveScenario(scenario)
+    setOverrideIntent('exploratory')
+  }, [])
+
+  const handleCloseSaveDialog = useCallback(() => {
+    setSaveDialogOpen(false)
+    setSaveError(null)
+  }, [])
+
   return (
     <div className="site-acquisition__developer-results">
-      {/* Concept Preview Section */}
-      <section className="site-acquisition__preview">
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 'var(--ob-space-150)',
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 'var(--ob-font-weight-semibold)',
-              color: 'var(--ob-color-text-primary)',
-            }}
-          >
-            Concept Preview
-          </Typography>
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 'var(--ob-space-100)',
-              alignItems: 'center',
-            }}
-          >
-            <FormControl size="small">
-              <Select
-                value={previewDetailLevel}
-                onChange={(e) =>
-                  setPreviewDetailLevel(e.target.value as 'simple' | 'medium')
-                }
-                disabled={isGeneratingStarterModel || isRefreshingPreview}
-                sx={{ minWidth: 'var(--ob-size-600)' }}
-              >
-                <MenuItem value="simple">Simple</MenuItem>
-                <MenuItem value="medium">Medium</MenuItem>
-              </Select>
-            </FormControl>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => void handleEnsureStarterModel()}
-              disabled={isRefreshingPreview || isGeneratingStarterModel}
-            >
-              <RefreshIcon
-                sx={{
-                  fontSize: 'var(--ob-font-size-md)',
-                  mr: 'var(--ob-space-025)',
-                }}
-              />
-              {starterModelActionLabel}
-            </Button>
-          </Box>
-        </Box>
+      <ConceptPreviewSection
+        effectiveStarterModel={effectiveStarterModel}
+        previewDetailLevel={previewDetailLevel}
+        setPreviewDetailLevel={setPreviewDetailLevel}
+        isGeneratingStarterModel={isGeneratingStarterModel}
+        isRefreshingPreview={isRefreshingPreview}
+        starterModelActionLabel={starterModelActionLabel}
+        starterModelStatusSummary={starterModelStatusSummary}
+        handleEnsureStarterModel={handleEnsureStarterModel}
+        formatScenarioLabel={formatScenarioLabel}
+        recommendedScenario={captureResultV2.scenarioRecommendation.recommended}
+        supportsFullCompliance={
+          captureResultV2.analysisStatus.supportsFullCompliance
+        }
+        previewMetadataError={previewMetadataError}
+        previewGenerationError={previewGenerationError}
+      />
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' },
-            gap: 'var(--ob-space-150)',
-          }}
-        >
-          {/* 3D Viewer */}
-          <Suspense
-            fallback={
-              <Card
-                sx={{
-                  minHeight: 420,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  p: 'var(--ob-space-150)',
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: 'var(--ob-font-size-sm)',
-                    color: 'text.secondary',
-                  }}
-                >
-                  Loading 3D preview...
-                </Typography>
-              </Card>
-            }
-          >
-            <Preview3DViewer
-              previewUrl={effectiveStarterModel.modelUrl}
-              metadataUrl={effectiveStarterModel.metadataUrl}
-              status={effectiveStarterModel.status}
-              thumbnailUrl={effectiveStarterModel.thumbnailUrl}
-            />
-          </Suspense>
+      <CaptureRecommendationSection
+        recommendationCardTitle={recommendationCardTitle}
+        formatScenarioLabel={formatScenarioLabel}
+        recommendedScenario={captureResultV2.scenarioRecommendation.recommended}
+        userOverride={captureResultV2.scenarioRecommendation.userOverride}
+        defaultRecommendationLabel={defaultRecommendationLabel}
+        explanation={captureResultV2.scenarioRecommendation.explanation}
+        overrideModeLine={overrideModeLine}
+        overrideIntentGuidance={overrideIntentGuidance}
+        overrideIntent={captureResultV2.scenarioRecommendation.overrideIntent}
+        currentProject={currentProject}
+        confidence={captureResultV2.scenarioRecommendation.confidence}
+        scenarioFitSummary={scenarioFitSummary}
+        reasonCodes={captureResultV2.scenarioRecommendation.reasonCodes}
+        handleSaveProjectOverride={handleSaveProjectOverride}
+        handleClearProjectOverride={handleClearProjectOverride}
+        starterModelAssumptionSourceLine={starterModelAssumptionSourceLine}
+        starterModelAssumptionFallbackReason={
+          starterModelAssumptionFallbackReason
+        }
+        starterModelOverridePreviewNotice={starterModelOverridePreviewNotice}
+        starterModelAssumptionBuckets={starterModelAssumptionBuckets}
+        starterModelAssumptionLines={starterModelAssumptionLines}
+      />
 
-          <Card
-            sx={{
-              p: 'var(--ob-space-125)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 'var(--ob-space-075)',
-            }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--ob-space-050)',
-              }}
-            >
-              <ViewInArIcon
-                sx={{
-                  fontSize: 'var(--ob-size-icon-sm)',
-                  color: 'info.main',
-                }}
-              />
-              <Typography
-                sx={{
-                  fontSize: 'var(--ob-font-size-xs)',
-                  fontWeight: 'var(--ob-font-weight-semibold)',
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  color: 'text.secondary',
-                }}
-              >
-                Starter Model Status
-              </Typography>
-            </Box>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-lg)',
-                fontWeight: 'var(--ob-font-weight-bold)',
-                color: 'text.primary',
-                textTransform: 'capitalize',
-              }}
-            >
-              {effectiveStarterModel.status.replace(/_/g, ' ')}
-              {isGeneratingStarterModel ? ' (updating)' : ''}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-sm)',
-                color: 'text.secondary',
-                lineHeight: 1.5,
-              }}
-            >
-              {starterModelStatusSummary}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-sm)',
-                color: 'text.secondary',
-                lineHeight: 1.5,
-              }}
-            >
-              Geometry scope:{' '}
-              {effectiveStarterModel.geometryScope.replace(/_/g, ' ')}.
-              {effectiveStarterModel.floorsEstimate != null
-                ? ` Estimated floors: ${effectiveStarterModel.floorsEstimate}.`
-                : ' Floor count estimate pending.'}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-              }}
-            >
-              Starter model scenario:{' '}
-              {formatScenarioLabel(
-                captureResultV2.scenarioRecommendation.recommended,
-              )}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-              }}
-            >
-              Full compliance support:{' '}
-              {captureResultV2.analysisStatus.supportsFullCompliance
-                ? 'Yes'
-                : 'No'}
-            </Typography>
-          </Card>
-        </Box>
-
-        {previewMetadataError && (
-          <Typography color="error" sx={{ mt: 'var(--ob-space-050)' }}>
-            {previewMetadataError}
-          </Typography>
-        )}
-        {previewGenerationError && (
-          <Typography color="error" sx={{ mt: 'var(--ob-space-050)' }}>
-            {previewGenerationError}
-          </Typography>
-        )}
-      </section>
-
-      <section className="site-acquisition__capture-summary">
-        <Box
-          sx={{
-            mb: 'var(--ob-space-150)',
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', xl: '1fr 1fr' },
-            gap: 'var(--ob-space-150)',
-          }}
-        >
-          <Card
-            sx={{
-              p: 'var(--ob-space-125)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 'var(--ob-space-075)',
-            }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--ob-space-050)',
-              }}
-            >
-              <AutoAwesomeIcon
-                sx={{
-                  fontSize: 'var(--ob-size-icon-sm)',
-                  color: 'info.main',
-                }}
-              />
-              <Typography
-                sx={{
-                  fontSize: 'var(--ob-font-size-xs)',
-                  fontWeight: 'var(--ob-font-weight-semibold)',
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  color: 'text.secondary',
-                }}
-              >
-                {recommendationCardTitle}
-              </Typography>
-            </Box>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-lg)',
-                fontWeight: 'var(--ob-font-weight-bold)',
-                color: 'text.primary',
-              }}
-            >
-              {formatScenarioLabel(
-                captureResultV2.scenarioRecommendation.recommended,
-              )}
-            </Typography>
-            {captureResultV2.scenarioRecommendation.userOverride ? (
-              <Typography
-                sx={{
-                  fontSize: 'var(--ob-font-size-xs)',
-                  color: 'text.secondary',
-                }}
-              >
-                Capture recommended: {defaultRecommendationLabel}
-              </Typography>
-            ) : null}
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-sm)',
-                color: 'text.secondary',
-                lineHeight: 1.5,
-              }}
-            >
-              {captureResultV2.scenarioRecommendation.explanation}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-              }}
-            >
-              Mode: {overrideModeLine}
-            </Typography>
-            {overrideIntentGuidance ? (
-              <Typography
-                sx={{
-                  fontSize: 'var(--ob-font-size-xs)',
-                  color: 'text.secondary',
-                  lineHeight: 1.5,
-                }}
-              >
-                {overrideIntentGuidance}
-              </Typography>
-            ) : null}
-            {captureResultV2.scenarioRecommendation.overrideIntent ===
-              'exploratory' && currentProject ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleSaveProjectOverride}
-              >
-                Save as Project Override
-              </Button>
-            ) : null}
-            {captureResultV2.scenarioRecommendation.overrideIntent ===
-              'saved' && currentProject ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearProjectOverride}
-              >
-                Clear Saved Override
-              </Button>
-            ) : null}
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-              }}
-            >
-              Confidence:{' '}
-              {captureResultV2.scenarioRecommendation.confidence.replace(
-                /_/g,
-                ' ',
-              )}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-                lineHeight: 1.5,
-              }}
-            >
-              Code fit: {scenarioFitSummary.comparisonSummary}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-                lineHeight: 1.5,
-              }}
-            >
-              Envelope check: {scenarioFitSummary.headroomSummary}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-                lineHeight: 1.5,
-              }}
-            >
-              {scenarioFitSummary.heritageSummary}
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-              }}
-            >
-              Reasons:{' '}
-              {captureResultV2.scenarioRecommendation.reasonCodes
-                .map((code) => code.replace(/_/g, ' ').toLowerCase())
-                .join(', ')}
-            </Typography>
-          </Card>
-
-          <Card
-            sx={{
-              p: 'var(--ob-space-125)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 'var(--ob-space-075)',
-            }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--ob-space-050)',
-              }}
-            >
-              <ViewInArIcon
-                sx={{
-                  fontSize: 'var(--ob-size-icon-sm)',
-                  color: 'info.main',
-                }}
-              />
-              <Typography
-                sx={{
-                  fontSize: 'var(--ob-font-size-xs)',
-                  fontWeight: 'var(--ob-font-weight-semibold)',
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  color: 'text.secondary',
-                }}
-              >
-                Starter Model Assumptions
-              </Typography>
-            </Box>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-sm)',
-                color: 'text.secondary',
-                lineHeight: 1.5,
-              }}
-            >
-              These defaults shape the first scenario-specific model before
-              deeper engineering inputs are added.
-            </Typography>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-                lineHeight: 1.5,
-              }}
-            >
-              {starterModelAssumptionSourceLine}
-            </Typography>
-            {starterModelAssumptionFallbackReason ? (
-              <Typography
-                sx={{
-                  fontSize: 'var(--ob-font-size-xs)',
-                  color: 'text.secondary',
-                  lineHeight: 1.5,
-                }}
-              >
-                {starterModelAssumptionFallbackReason}
-              </Typography>
-            ) : null}
-            {starterModelOverridePreviewNotice ? (
-              <Typography
-                sx={{
-                  fontSize: 'var(--ob-font-size-xs)',
-                  color: 'text.secondary',
-                  lineHeight: 1.5,
-                }}
-              >
-                {starterModelOverridePreviewNotice}
-              </Typography>
-            ) : null}
-            {starterModelAssumptionBuckets.pinned.length > 0 ? (
-              <Typography
-                sx={{
-                  fontSize: 'var(--ob-font-size-xs)',
-                  color: 'text.secondary',
-                  lineHeight: 1.5,
-                }}
-              >
-                Pinned by site facts:{' '}
-                {starterModelAssumptionBuckets.pinned.join(', ')}.
-              </Typography>
-            ) : null}
-            {starterModelAssumptionBuckets.tunable.length > 0 ? (
-              <Typography
-                sx={{
-                  fontSize: 'var(--ob-font-size-xs)',
-                  color: 'text.secondary',
-                  lineHeight: 1.5,
-                }}
-              >
-                Starter defaults still tunable:{' '}
-                {starterModelAssumptionBuckets.tunable.join(', ')}.
-              </Typography>
-            ) : null}
-            {starterModelAssumptionLines.map((line) => (
-              <Typography
-                key={line.text}
-                sx={{
-                  fontSize: 'var(--ob-font-size-xs)',
-                  color: 'text.secondary',
-                  lineHeight: 1.5,
-                }}
-              >
-                {line.text}
-                {line.sourceDetail ? ` (${line.sourceDetail})` : ''}
-              </Typography>
-            ))}
-          </Card>
-        </Box>
-      </section>
-
-      {/* Scenario Focus Section */}
-      <section className="site-acquisition__scenario-focus">
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 'var(--ob-space-150)',
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              fontWeight: 'var(--ob-font-weight-semibold)',
-              color: 'var(--ob-color-text-primary)',
-            }}
-          >
-            Scenario Focus
-          </Typography>
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 'var(--ob-space-050)',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-              }}
-            >
-              Recommended: {defaultRecommendationLabel}
-            </Typography>
-            <Button
-              key="all"
-              variant={activeScenario === 'all' ? 'primary' : 'ghost'}
-              size="sm"
-              onClick={() => {
-                setActiveScenario('all')
-                setOverrideIntent(null)
-                if (currentProject?.id) {
-                  clearCaptureScenarioOverrideForProject(currentProject.id)
-                }
-              }}
-            >
-              All Scenarios
-            </Button>
-            {selectedScenarios.map((scenario) => (
-              <Button
-                key={scenario}
-                variant={activeScenario === scenario ? 'primary' : 'ghost'}
-                size="sm"
-                onClick={() => {
-                  setActiveScenario(scenario)
-                  setOverrideIntent('exploratory')
-                }}
-              >
-                {formatScenarioLabel(scenario)}
-              </Button>
-            ))}
-          </Box>
-        </Box>
-      </section>
+      <ScenarioFocusSection
+        activeScenario={activeScenario}
+        selectedScenarios={selectedScenarios}
+        defaultRecommendationLabel={defaultRecommendationLabel}
+        formatScenarioLabel={formatScenarioLabel}
+        onSelectAll={handleSelectAllScenarios}
+        onSelectScenario={handleSelectScenario}
+      />
 
       {/* Multi-Scenario Comparison */}
       <Suspense fallback={sectionFallback}>
@@ -1624,84 +680,21 @@ export function DeveloperResults({
         </Box>
       </section>
 
-      <Dialog
+      <SaveProjectDialog
         open={saveDialogOpen}
-        onClose={() => {
-          setSaveDialogOpen(false)
-          setSaveError(null)
-        }}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Save Capture as Project</DialogTitle>
-        <DialogContent>
-          <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-            <Button
-              variant={saveMode === 'new' ? 'primary' : 'secondary'}
-              onClick={() => {
-                setSaveMode('new')
-                setProjectNameInput(suggestedProjectName)
-              }}
-            >
-              Create New
-            </Button>
-            <Button
-              variant={saveMode === 'existing' ? 'primary' : 'secondary'}
-              onClick={() => setSaveMode('existing')}
-            >
-              Use Existing
-            </Button>
-          </Stack>
-          {saveMode === 'new' ? (
-            <TextField
-              label="Project name"
-              value={projectNameInput}
-              onChange={(event) => setProjectNameInput(event.target.value)}
-              fullWidth
-            />
-          ) : (
-            <FormControl fullWidth>
-              <Select
-                value={existingProjectId}
-                displayEmpty
-                onChange={(event) =>
-                  setExistingProjectId(String(event.target.value))
-                }
-              >
-                <MenuItem value="">
-                  <em>Select a project</em>
-                </MenuItem>
-                {projects.map((project) => (
-                  <MenuItem key={project.id} value={project.id}>
-                    {project.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          )}
-          {saveError && (
-            <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-              {saveError}
-            </Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant="ghost"
-            onClick={() => setSaveDialogOpen(false)}
-            disabled={savingProject}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSaveProject}
-            disabled={savingProject}
-          >
-            {savingProject ? 'Saving...' : 'Save Project'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        saveMode={saveMode}
+        projectNameInput={projectNameInput}
+        existingProjectId={existingProjectId}
+        saveError={saveError}
+        savingProject={savingProject}
+        projects={projects}
+        suggestedProjectName={suggestedProjectName}
+        onClose={handleCloseSaveDialog}
+        onSaveModeChange={setSaveMode}
+        onProjectNameChange={setProjectNameInput}
+        onExistingProjectIdChange={setExistingProjectId}
+        onSave={handleSaveProject}
+      />
     </div>
   )
 }

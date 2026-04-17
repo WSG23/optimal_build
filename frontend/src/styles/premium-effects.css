@@ -335,6 +335,10 @@ html[data-theme='light']
         animation: none;
     }
 
+    .ob-hover-lift {
+        transition: none;
+    }
+
     .ob-hover-lift:hover {
         transform: none;
     }

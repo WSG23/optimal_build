@@ -1,4 +1,10 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
 import { DeveloperContext } from './developerContextDef'
 
 export { DeveloperContext }
@@ -13,12 +19,17 @@ export function DeveloperProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('optimal_build_dev_mode', String(isDeveloperMode))
   }, [isDeveloperMode])
 
-  const toggleDeveloperMode = () => {
+  const toggleDeveloperMode = useCallback(() => {
     setIsDeveloperMode((prev) => !prev)
-  }
+  }, [])
+
+  const contextValue = useMemo(
+    () => ({ isDeveloperMode, toggleDeveloperMode }),
+    [isDeveloperMode, toggleDeveloperMode],
+  )
 
   return (
-    <DeveloperContext.Provider value={{ isDeveloperMode, toggleDeveloperMode }}>
+    <DeveloperContext.Provider value={contextValue}>
       {children}
     </DeveloperContext.Provider>
   )

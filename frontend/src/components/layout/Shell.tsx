@@ -91,6 +91,9 @@ export function AppShell({
             scrollbarGutter: 'stable',
             minHeight: 0,
             animation: 'ob-fade-in 300ms ease both',
+            '@media (prefers-reduced-motion: reduce)': {
+              animation: 'none',
+            },
           }}
         >
           {/* Page Header - Direct on Grid (Depth 0, no glass card)

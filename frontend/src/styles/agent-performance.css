@@ -46,7 +46,7 @@
 .agent-performance__count {
     background: var(--ob-success-muted);
     color: var(--ob-success-500);
-    border-radius: 9999px;
+    border-radius: var(--ob-radius-pill);
     font-size: var(--ob-font-size-sm);
     padding: var(--ob-spacing-050) var(--ob-spacing-200);
 }
@@ -212,7 +212,7 @@
     font-family: var(--ob-font-family-mono);
     background: var(--ob-color-bg-surface);
     padding: var(--ob-spacing-100) var(--ob-spacing-200);
-    border-radius: 9999px;
+    border-radius: var(--ob-radius-pill);
 }
 
 .agent-performance__analytics-loading {

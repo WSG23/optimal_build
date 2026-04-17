@@ -97,6 +97,12 @@
     box-shadow: var(--ob-shadow-sm);
 }
 
+.finance-project-selector__input-row input:focus-visible,
+.finance-project-selector__recent select:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
+}
+
 .finance-project-selector__input-row button,
 .finance-project-selector__refresh {
     border: none;
@@ -353,7 +359,7 @@
 .finance-table__badge {
     background: var(--ob-info-muted);
     color: var(--ob-info-400);
-    border-radius: 9999px;
+    border-radius: var(--ob-radius-pill);
     font-size: var(--ob-font-size-xs);
     font-weight: 600;
     padding: var(--ob-spacing-100) var(--ob-spacing-200);

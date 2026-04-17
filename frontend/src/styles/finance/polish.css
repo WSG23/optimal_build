@@ -70,6 +70,11 @@
     border-color: var(--ob-color-brand-primary);
 }
 
+.finance-project-selector__select:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
+}
+
 /* Manual input for expanded project selector */
 .finance-project-selector__manual-input {
     background: var(--ob-surface-glass-1);
@@ -86,6 +91,11 @@
 
 .finance-project-selector__manual-input:focus {
     border-color: var(--ob-color-brand-primary);
+}
+
+.finance-project-selector__manual-input:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
 }
 
 .finance-project-selector__manual-input::placeholder {
@@ -135,6 +145,11 @@
 
 .finance-project-selector__dropdown:focus {
     border-color: var(--ob-color-brand-primary);
+}
+
+.finance-project-selector__dropdown:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
 }
 
 .finance-project-selector__dropdown option {
@@ -211,6 +226,11 @@
 .finance-project-selector__input-row input:focus {
     outline: none;
     border-color: var(--ob-color-brand-primary);
+}
+
+.finance-project-selector__input-row input:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
 }
 
 .finance-project-selector__input-row input::placeholder {
@@ -363,12 +383,22 @@
     box-shadow: 0 0 0 2px var(--ob-color-brand-primary-alpha);
 }
 
+.finance-scenario-creator__main-input:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
+}
+
 .finance-scenario-creator__ghost-input:focus {
     outline: none;
     border-color: var(--ob-color-brand-primary);
     background: var(--ob-surface-glass-2);
     /* Slightly lighter on focus */
     box-shadow: 0 0 0 1px var(--ob-color-brand-primary-alpha);
+}
+
+.finance-scenario-creator__ghost-input:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
 }
 
 .finance-scenario-creator__ghost-input--numeric {
@@ -397,6 +427,11 @@
     /* Darker track */
     outline: none;
     cursor: pointer;
+}
+
+.finance-scenario-creator__mini-slider:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
 }
 
 .finance-scenario-creator__mini-slider::-webkit-slider-thumb {

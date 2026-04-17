@@ -7,6 +7,7 @@ interface AnimatedPageHeaderProps {
   subtitle?: string
   breadcrumbs?: Array<{ label: string; href?: string }>
   actions?: ReactNode
+  headingLevel?: 'h1' | 'h2' | 'h3' | 'h4'
 }
 
 export function AnimatedPageHeader({
@@ -14,6 +15,7 @@ export function AnimatedPageHeader({
   subtitle,
   breadcrumbs = [],
   actions,
+  headingLevel = 'h1',
 }: AnimatedPageHeaderProps) {
   return (
     <Box
@@ -64,6 +66,7 @@ export function AnimatedPageHeader({
         <Box>
           <Typography
             variant="h3"
+            component={headingLevel}
             sx={{
               fontWeight: 'var(--ob-font-weight-bold)',
               letterSpacing: 'var(--ob-letter-spacing-tighter)',

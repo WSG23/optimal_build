@@ -116,7 +116,7 @@
 
 .bp-pipeline__column-progress {
     height: 6px;
-    border-radius: 999px;
+    border-radius: var(--ob-radius-pill);
 }
 
 .bp-pipeline__deal-list {
@@ -188,7 +188,7 @@
 
 .bp-pipeline__progress {
     height: 6px;
-    border-radius: 999px;
+    border-radius: var(--ob-radius-pill);
 }
 
 .bp-pipeline__deal-moving {
@@ -321,7 +321,7 @@
 
 .bp-status {
     padding: var(--ob-spacing-100) var(--ob-spacing-150);
-    border-radius: 9999px;
+    border-radius: var(--ob-radius-pill);
     font-size: var(--ob-font-size-xs);
     text-transform: uppercase;
     letter-spacing: 0.08em;

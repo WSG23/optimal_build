@@ -121,6 +121,11 @@
     box-shadow: var(--ob-shadow-sm);
 }
 
+.page__input:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
+}
+
 .page__input:disabled {
     background: var(--ob-color-bg-muted);
     cursor: not-allowed;
@@ -151,6 +156,11 @@
     box-shadow: var(--ob-shadow-sm);
 }
 
+.page__select:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
+}
+
 .page__textarea {
     width: 100%;
     padding: var(--ob-spacing-200) var(--ob-spacing-300);
@@ -166,6 +176,11 @@
     font-family: inherit;
     resize: vertical;
     min-height: 100px;
+}
+
+.page__textarea:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
 }
 
 .page__textarea:focus {

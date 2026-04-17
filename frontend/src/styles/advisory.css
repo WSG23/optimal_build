@@ -223,7 +223,7 @@
 
 .advisory__risk-tag {
     padding: var(--ob-spacing-075) var(--ob-spacing-200);
-    border-radius: 999px;
+    border-radius: var(--ob-radius-pill);
     border: 1px solid var(--ob-color-border-subtle);
     font-size: var(--ob-font-size-sm);
     font-weight: 600;
@@ -460,7 +460,7 @@
 
 .sales-velocity__cta {
     padding: var(--ob-space-100) var(--ob-space-200);
-    border-radius: 999px;
+    border-radius: var(--ob-radius-pill);
     border: none;
     background: var(--ob-color-text-primary);
     color: var(--ob-surface-base);

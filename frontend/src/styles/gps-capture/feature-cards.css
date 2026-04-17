@@ -45,7 +45,7 @@
     background: var(--ob-color-brand-primary);
     color: var(--ob-color-text-inverse);
     padding: var(--ob-space-025) var(--ob-space-050);
-    border-radius: 999px;
+    border-radius: var(--ob-radius-pill);
 }
 
 .feature-toggle-panel__hint {

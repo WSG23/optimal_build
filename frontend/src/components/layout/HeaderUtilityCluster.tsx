@@ -195,32 +195,33 @@ export function HeaderUtilityCluster() {
 
       {/* Settings */}
       <Tooltip title="Settings">
-        <IconButton sx={iconButtonSx}>
+        <IconButton aria-label="Settings" sx={iconButtonSx}>
           <SettingsIcon fontSize="small" />
         </IconButton>
       </Tooltip>
 
       {/* User Avatar */}
       <Tooltip title="Profile">
-        <Avatar
-          alt="User"
-          src="" // Placeholder for now
-          sx={{
-            width: 'var(--ob-space-250)',
-            height: 'var(--ob-space-250)',
-            border: '1px solid var(--ob-color-neon-cyan)',
-            cursor: 'pointer',
-            bgcolor: 'var(--ob-color-neon-cyan-dim)',
-            color: 'var(--ob-color-neon-cyan)',
-            fontSize: 'var(--ob-font-size-sm)',
-            fontWeight: 700,
-            '&:hover': {
-              boxShadow: 'var(--ob-glow-neon-cyan)',
-            },
-          }}
-        >
-          US
-        </Avatar>
+        <IconButton aria-label="User profile" sx={{ p: 0 }}>
+          <Avatar
+            alt="User"
+            src="" // Placeholder for now
+            sx={{
+              width: 'var(--ob-space-250)',
+              height: 'var(--ob-space-250)',
+              border: '1px solid var(--ob-color-neon-cyan)',
+              bgcolor: 'var(--ob-color-neon-cyan-dim)',
+              color: 'var(--ob-color-neon-cyan)',
+              fontSize: 'var(--ob-font-size-sm)',
+              fontWeight: 700,
+              '&:hover': {
+                boxShadow: 'var(--ob-glow-neon-cyan)',
+              },
+            }}
+          >
+            US
+          </Avatar>
+        </IconButton>
       </Tooltip>
     </Stack>
   )

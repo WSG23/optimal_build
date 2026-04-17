@@ -292,11 +292,16 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
     <>
       {!isPinned && (
         <Box
-          tabIndex={0}
-          role="button"
+          component="button"
           aria-label="Reveal navigation"
           onMouseEnter={reveal}
           onFocus={reveal}
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              reveal()
+            }
+          }}
           sx={{
             position: 'fixed',
             top: 0,
@@ -305,6 +310,9 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
             height: 'var(--ob-space-075)',
             zIndex: 'var(--ob-z-fixed)',
             background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
             '&:focus-visible': {
               outline: '2px solid var(--ob-color-brand-primary)',
               outlineOffset: -2,

@@ -172,7 +172,7 @@ export function ResultsPanel({
                     animation: 'spin 1s linear infinite',
                   }}
                 />
-                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } @media (prefers-reduced-motion: reduce) { .radar-spinner { animation: none !important; } }`}</style>
                 <h3
                   style={{
                     marginTop: '24px',
@@ -210,6 +210,11 @@ export function ResultsPanel({
                                 0% { transform: translateY(0px); }
                                 50% { transform: translateY(-10px); }
                                 100% { transform: translateY(0px); }
+                            }
+                            @media (prefers-reduced-motion: reduce) {
+                                .glass-panel {
+                                    animation: none !important;
+                                }
                             }
                         `}</style>
                 <div
@@ -298,6 +303,13 @@ export function ResultsPanel({
                         @keyframes slideUpFade {
                             from { opacity: 0; transform: translateY(20px); }
                             to { opacity: 1; transform: translateY(0); }
+                        }
+                        @media (prefers-reduced-motion: reduce) {
+                            .feasibility-results__header {
+                                animation: none !important;
+                                opacity: 1 !important;
+                                transform: none !important;
+                            }
                         }
                     `}
               </style>

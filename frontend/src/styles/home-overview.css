@@ -1,0 +1,126 @@
+/* HomeOverview component styles — extracted from inline style objects */
+
+/* ── Grid ──────────────────────────────────────────────────────── */
+.home-overview__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* ── Card header row (icon + title) ────────────────────────────── */
+.home-overview__card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+/* ── Icon badge (pill circle in card header) ───────────────────── */
+.home-overview__icon-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--ob-radius-pill);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.home-overview__icon-badge--brand {
+    background: var(--ob-accent-brand-bg);
+}
+
+.home-overview__icon-badge--success {
+    background: var(--ob-accent-success-bg);
+}
+
+.home-overview__icon-badge--warning {
+    background: var(--ob-accent-warning-bg);
+}
+
+.home-overview__icon-badge--error {
+    background: var(--ob-accent-error-bg);
+}
+
+/* ── CTA (full-width variant) ──────────────────────────────────── */
+.home-overview__cta {
+    margin-top: 1rem;
+    width: 100%;
+}
+
+/* ── Pipeline hero card ────────────────────────────────────────── */
+.home-overview__pipeline-card {
+    background: linear-gradient(
+        135deg,
+        rgba(30, 41, 59, 0.9) 0%,
+        rgba(15, 23, 42, 1) 100%
+    );
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.home-overview__pipeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.home-overview__pipeline-title {
+    color: var(--ob-neutral-400);
+    font-size: var(--ob-font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.home-overview__pipeline-change {
+    color: var(--ob-success-500);
+    font-size: var(--ob-font-size-sm);
+    font-weight: 600;
+}
+
+.home-overview__pipeline-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--ob-neutral-50);
+    font-family:
+        JetBrains Mono,
+        monospace;
+    margin-bottom: 0.5rem;
+}
+
+.home-overview__pipeline-desc {
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-neutral-500);
+}
+
+/* ── Sparkline ─────────────────────────────────────────────────── */
+.home-overview__sparkline {
+    height: 30px;
+    margin-top: 1rem;
+    background: var(--ob-overlay-white-subtle);
+    border-radius: var(--ob-radius-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+.home-overview__sparkline-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(59, 130, 246, 0.2) 100%
+    );
+}
+
+/* ── Pipeline CTA (brand tint variant) ─────────────────────────── */
+.home-overview__pipeline-cta {
+    margin-top: 1rem;
+    width: 100%;
+    background: var(--ob-accent-brand-bg);
+    color: var(--ob-brand-400);
+}

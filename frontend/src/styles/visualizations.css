@@ -99,7 +99,7 @@
     bottom: 0;
     background-color: var(--ob-color-bg-muted);
     transition: background-color 0.2s ease;
-    border-radius: 9999px;
+    border-radius: var(--ob-radius-pill);
 }
 
 .toggle-switch__track--active {
@@ -318,7 +318,7 @@
 
 .clash-impact__badge {
     padding: var(--ob-spacing-50) var(--ob-spacing-150);
-    border-radius: 9999px;
+    border-radius: var(--ob-radius-pill);
     font-size: var(--ob-font-size-xs);
 }
 

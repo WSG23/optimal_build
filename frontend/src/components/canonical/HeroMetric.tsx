@@ -9,6 +9,7 @@ export interface HeroMetricProps {
     value: number
     direction: 'up' | 'down' | 'neutral'
   }
+  trendLabel?: string
   icon?: React.ReactNode
   variant?: 'primary' | 'secondary' | 'glass'
   delay?: number
@@ -19,6 +20,7 @@ export function HeroMetric({
   value,
   unit,
   trend,
+  trendLabel = 'vs last month',
   icon,
   variant = 'glass',
   delay = 0,
@@ -51,6 +53,10 @@ export function HeroMetric({
         boxShadow: variant === 'glass' ? theme.shadows[1] : theme.shadows[2],
         opacity: 0,
         animation: `slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards ${delay}ms`,
+        '@media (prefers-reduced-motion: reduce)': {
+          animation: 'none',
+          opacity: 1,
+        },
         minWidth: 0,
         position: 'relative',
         overflow: 'hidden',
@@ -160,7 +166,7 @@ export function HeroMetric({
                   : theme.palette.text.disabled,
             }}
           >
-            vs last month
+            {trendLabel}
           </Typography>
         </Box>
       )}

@@ -38,6 +38,7 @@ export function AIFloatingButton({
       <Zoom in={!chatOpen}>
         <Tooltip title="AI Assistant" placement="left">
           <Fab
+            aria-label="Open AI assistant"
             onClick={handleOpenChat}
             sx={{
               position: 'fixed',

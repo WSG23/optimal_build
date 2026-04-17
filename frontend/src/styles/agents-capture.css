@@ -57,6 +57,11 @@
     box-shadow: var(--ob-shadow-sm);
 }
 
+.agents-capture__field input:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
+}
+
 .agents-capture__scenarios {
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm); /* 4px - cards */
@@ -434,6 +439,11 @@
     outline: none;
     border-color: var(--ob-color-brand-primary);
     box-shadow: var(--ob-shadow-sm);
+}
+
+.agents-capture__pack-field select:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
 }
 
 .agents-capture__pack-description {

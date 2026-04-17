@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from './i18n'
 import { Link } from './router'
 import { AppShell } from './components/layout/Shell'
+import './styles/home-overview.css'
 
 export interface AppLayoutProps {
   title: string
@@ -36,165 +37,51 @@ export function HomeOverview() {
   return (
     <AppLayout title={t('nav.home')} subtitle={t('app.tagline')}>
       {/* Bento Grid Layout */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '1.5rem',
-          maxWidth: '1600px',
-          margin: '0 auto',
-        }}
-      >
-        {/* Ops: Upload & Process (2 cols wide on large screens if possible, here using span-2 logic if we had specific grid) */}
-        <article className="app-home__card" style={{ gridColumn: 'span 1' }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1rem',
-            }}
-          >
+      <div className="home-overview__grid">
+        {/* Ops: Upload & Process */}
+        <article className="app-home__card">
+          <div className="home-overview__card-header">
             <h3>{t('nav.upload')}</h3>
-            {/* Placeholder for Sparkline or Metric */}
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: 'var(--ob-radius-pill)',
-                background: 'var(--ob-accent-brand-bg)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+            <div className="home-overview__icon-badge home-overview__icon-badge--brand">
               📂
             </div>
           </div>
-          <p style={{ flex: 1 }}>{t('uploader.subtitle')}</p>
-          <Link
-            to="/cad/upload"
-            className="app-home__cta"
-            style={{ marginTop: '1rem', width: '100%' }}
-          >
+          <p>{t('uploader.subtitle')}</p>
+          <Link to="/cad/upload" className="app-home__cta home-overview__cta">
             {t('nav.upload')}
           </Link>
         </article>
 
         {/* Ops: Floor Detection */}
         <article className="app-home__card">
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1rem',
-            }}
-          >
+          <div className="home-overview__card-header">
             <h3>{t('nav.detection')}</h3>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: 'var(--ob-radius-pill)',
-                background: 'var(--ob-accent-success-bg)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+            <div className="home-overview__icon-badge home-overview__icon-badge--success">
               ✨
             </div>
           </div>
-          <p style={{ flex: 1 }}>{t('detection.subtitle')}</p>
+          <p>{t('detection.subtitle')}</p>
           <Link
             to="/cad/detection"
-            className="app-home__cta"
-            style={{ marginTop: '1rem', width: '100%' }}
+            className="app-home__cta home-overview__cta"
           >
             {t('nav.detection')}
           </Link>
         </article>
 
         {/* Business: Pipeline Worth */}
-        <article
-          className="app-home__card"
-          style={{
-            background:
-              'linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,1) 100%)' /* theme-mapped: dark surface gradient */,
-            border:
-              '1px solid rgba(59,130,246,0.3)' /* theme-mapped: brand border */,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '0.5rem',
-            }}
-          >
-            <h3
-              style={{
-                color: 'var(--ob-neutral-400)',
-                fontSize: 'var(--ob-font-size-sm)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-              }}
-            >
-              Total Pipeline
-            </h3>
-            <span
-              style={{
-                color: 'var(--ob-success-500)',
-                fontSize: 'var(--ob-font-size-sm)',
-                fontWeight: 600,
-              }}
-            >
-              +12.5% ↗
-            </span>
+        <article className="app-home__card home-overview__pipeline-card">
+          <div className="home-overview__pipeline-header">
+            <h3 className="home-overview__pipeline-title">Total Pipeline</h3>
+            <span className="home-overview__pipeline-change">+12.5% ↗</span>
           </div>
-          <div
-            style={{
-              fontSize: '2.5rem',
-              fontWeight: 700,
-              color: 'var(--ob-neutral-50)',
-              fontFamily: 'JetBrains Mono, monospace',
-              marginBottom: '0.5rem',
-            }}
-          >
-            $42.8M
-          </div>
-          <p
-            style={{
-              fontSize: 'var(--ob-font-size-sm)',
-              color: 'var(--ob-neutral-500)',
-            }}
-          >
+          <div className="home-overview__pipeline-value">$42.8M</div>
+          <p className="home-overview__pipeline-desc">
             Weighted probability across 12 active deals.
           </p>
           {/* Sparkline Placeholder */}
-          <div
-            style={{
-              height: '30px',
-              marginTop: '1rem',
-              background: 'var(--ob-overlay-white-subtle)',
-              borderRadius: 'var(--ob-radius-sm)',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                background:
-                  'linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.2) 100%)' /* theme-mapped: brand gradient */,
-              }}
-            ></div>
+          <div className="home-overview__sparkline">
+            <div className="home-overview__sparkline-fill"></div>
             <svg width="100%" height="100%" preserveAspectRatio="none">
               <path
                 d="M0,30 L50,20 L100,25 L150,10 L200,15 L250,5 L300,20"
@@ -206,13 +93,7 @@ export function HomeOverview() {
           </div>
           <Link
             to="/cad/pipelines"
-            className="app-home__cta"
-            style={{
-              marginTop: '1rem',
-              width: '100%',
-              background: 'var(--ob-accent-brand-bg)',
-              color: 'var(--ob-brand-400)',
-            }}
+            className="app-home__cta home-overview__pipeline-cta"
           >
             View Operations
           </Link>
@@ -220,70 +101,28 @@ export function HomeOverview() {
 
         {/* Business: ROI / Feasibility */}
         <article className="app-home__card">
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1rem',
-            }}
-          >
+          <div className="home-overview__card-header">
             <h3>{t('nav.feasibility')}</h3>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: 'var(--ob-radius-pill)',
-                background: 'var(--ob-accent-warning-bg)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+            <div className="home-overview__icon-badge home-overview__icon-badge--warning">
               🏗️
             </div>
           </div>
-          <p style={{ flex: 1 }}>{t('home.cards.feasibility.description')}</p>
-          <Link
-            to="/feasibility"
-            className="app-home__cta"
-            style={{ marginTop: '1rem', width: '100%' }}
-          >
+          <p>{t('home.cards.feasibility.description')}</p>
+          <Link to="/feasibility" className="app-home__cta home-overview__cta">
             {t('nav.feasibility')}
           </Link>
         </article>
 
         {/* Business: Finance */}
         <article className="app-home__card">
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1rem',
-            }}
-          >
+          <div className="home-overview__card-header">
             <h3>{t('nav.finance')}</h3>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: 'var(--ob-radius-pill)',
-                background: 'var(--ob-accent-error-bg)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+            <div className="home-overview__icon-badge home-overview__icon-badge--error">
               💰
             </div>
           </div>
-          <p style={{ flex: 1 }}>{t('home.cards.finance.description')}</p>
-          <Link
-            to="/finance"
-            className="app-home__cta"
-            style={{ marginTop: '1rem', width: '100%' }}
-          >
+          <p>{t('home.cards.finance.description')}</p>
+          <Link to="/finance" className="app-home__cta home-overview__cta">
             {t('nav.finance')}
           </Link>
         </article>

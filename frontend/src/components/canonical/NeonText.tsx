@@ -27,26 +27,26 @@ export interface NeonTextProps extends Omit<TypographyProps, 'sx'> {
 const colorConfig = {
   cyan: {
     color: 'var(--ob-color-neon-cyan)',
-    glowSubtle: '0 0 4px rgba(0, 243, 255, 0.3)',
+    glowSubtle: '0 0 4px var(--ob-glow-brand-color-30)',
     glowMedium: 'var(--ob-glow-neon-text)',
     glowStrong: 'var(--ob-glow-neon-cyan)',
   },
   success: {
     color: 'var(--ob-success-400)',
-    glowSubtle: '0 0 4px rgba(0, 255, 157, 0.3)',
-    glowMedium: '0 0 6px rgba(0, 255, 157, 0.4)',
+    glowSubtle: '0 0 4px var(--ob-glow-success-color-30)',
+    glowMedium: '0 0 6px var(--ob-glow-success-color-40)',
     glowStrong: 'var(--ob-glow-status-success)',
   },
   warning: {
     color: 'var(--ob-warning-400)',
-    glowSubtle: '0 0 4px rgba(245, 158, 11, 0.3)',
-    glowMedium: '0 0 6px rgba(245, 158, 11, 0.4)',
+    glowSubtle: '0 0 4px var(--ob-glow-warning-color-30)',
+    glowMedium: '0 0 6px var(--ob-glow-warning-color-40)',
     glowStrong: 'var(--ob-glow-status-warning)',
   },
   error: {
     color: 'var(--ob-error-400)',
-    glowSubtle: '0 0 4px rgba(255, 51, 102, 0.3)',
-    glowMedium: '0 0 6px rgba(255, 51, 102, 0.4)',
+    glowSubtle: '0 0 4px var(--ob-glow-error-color-30)',
+    glowMedium: '0 0 6px var(--ob-glow-error-color-40)',
     glowStrong: 'var(--ob-glow-status-error)',
   },
 }
