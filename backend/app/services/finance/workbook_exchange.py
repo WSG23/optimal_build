@@ -8,7 +8,9 @@ from decimal import Decimal
 import io
 import re
 from typing import Any
-from xml.etree import ElementTree as ET
+from xml.etree import (
+    ElementTree as ET,
+)  # nosec B405 - parsing trusted XLSX content only
 from zipfile import ZIP_DEFLATED, ZipFile
 
 from pydantic import ValidationError
@@ -20,9 +22,7 @@ from app.schemas.finance_workbook import (
     FinanceWorkbookValidationIssue,
 )
 
-XLSX_MEDIA_TYPE = (
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
+XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 _XML_NS = {
     "main": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
@@ -69,7 +69,11 @@ _TABLE_HEADER_ALIASES: dict[str, dict[str, tuple[str, ...]]] = {
     },
     "dscr": {
         "period": ("period", "label"),
-        "net_operating_incomes": ("noi", "net operating income", "net_operating_income"),
+        "net_operating_incomes": (
+            "noi",
+            "net operating income",
+            "net_operating_income",
+        ),
         "debt_services": ("debt service", "debt_service", "debt services"),
     },
     "asset_mix": {
@@ -211,7 +215,10 @@ def build_finance_workbook(
         ["field", "value"],
         ["project_id", _stringify(summary.project_id)],
         ["project_name", _stringify(summary.scenario_name)],
-        ["scenario_name", _stringify(assumption_map.get("name") or summary.scenario_name)],
+        [
+            "scenario_name",
+            _stringify(assumption_map.get("name") or summary.scenario_name),
+        ],
         ["description", _stringify(assumption_map.get("description"))],
         ["currency", _stringify(summary.currency)],
         ["is_primary", _stringify(summary.is_primary)],
@@ -521,9 +528,11 @@ def _parse_workbook_preview(
         if recognised and recognised not in sections:
             sections[recognised] = sheet
         elif recognised:
-            warnings.append(f'Duplicate sheet for "{recognised}" ignored: {sheet.name}.')
+            warnings.append(
+                f'Duplicate sheet for "{recognised}" ignored: {sheet.name}.'
+            )
         elif sheet.rows:
-            warnings.append(f'Unrecognised sheet skipped: {sheet.name}.')
+            warnings.append(f"Unrecognised sheet skipped: {sheet.name}.")
         sheet_summaries.append(
             FinanceWorkbookSheetSummary(
                 name=sheet.name,
@@ -566,7 +575,9 @@ def _build_request_payload(
     if cash_flow_sheet:
         cash_flow_rows = _parse_table_sheet(cash_flow_sheet, "cash_flow", warnings)
         if cash_flow_rows:
-            values = [row.get("cash_flow") for row in cash_flow_rows if row.get("cash_flow")]
+            values = [
+                row.get("cash_flow") for row in cash_flow_rows if row.get("cash_flow")
+            ]
             if values:
                 _assign_path(scenario, "cash_flow.cash_flows", values)
 
@@ -577,7 +588,11 @@ def _build_request_payload(
             _assign_path(
                 scenario,
                 "dscr.net_operating_incomes",
-                [row["net_operating_incomes"] for row in dscr_rows if row.get("net_operating_incomes")],
+                [
+                    row["net_operating_incomes"]
+                    for row in dscr_rows
+                    if row.get("net_operating_incomes")
+                ],
             )
             _assign_path(
                 scenario,
@@ -655,7 +670,9 @@ def _build_request_payload(
                 config_values, ("interest rate", "interest_rate")
             ),
             "periods_per_year": _to_optional_int(
-                _first_alias_value(config_values, ("periods per year", "periods_per_year"))
+                _first_alias_value(
+                    config_values, ("periods per year", "periods_per_year")
+                )
             ),
             "capitalise_interest": _to_optional_bool(
                 _first_alias_value(
@@ -682,9 +699,7 @@ def _build_request_payload(
                 "upfront_fee_pct": row.get("upfront_fee_pct"),
                 "exit_fee_pct": row.get("exit_fee_pct"),
                 "reserve_months": _to_optional_int(row.get("reserve_months")),
-                "amortisation_months": _to_optional_int(
-                    row.get("amortisation_months")
-                ),
+                "amortisation_months": _to_optional_int(row.get("amortisation_months")),
             }
             if facility["name"]:
                 facilities.append(_drop_none_values(facility))
@@ -725,7 +740,9 @@ def _build_request_payload(
     if not scenario.get("name"):
         warnings.append("Workbook is missing a scenario name.")
     if not payload.get("project_id"):
-        warnings.append("Workbook is missing a project id; supply one in the import form.")
+        warnings.append(
+            "Workbook is missing a project id; supply one in the import form."
+        )
     return _drop_empty_sections(payload)
 
 
@@ -735,8 +752,10 @@ def _read_xlsx(content: bytes) -> list[_WorkbookSheet]:
 
     with ZipFile(io.BytesIO(content), "r") as archive:
         workbook_xml = archive.read("xl/workbook.xml")
-        workbook_tree = ET.fromstring(workbook_xml)
-        rels_tree = ET.fromstring(archive.read("xl/_rels/workbook.xml.rels"))
+        workbook_tree = ET.fromstring(workbook_xml)  # nosec B314
+        rels_tree = ET.fromstring(
+            archive.read("xl/_rels/workbook.xml.rels")
+        )  # nosec B314
         relationships = {
             rel.attrib["Id"]: rel.attrib["Target"]
             for rel in rels_tree.findall("rel:Relationship", _XML_NS)
@@ -763,7 +782,7 @@ def _read_shared_strings(archive: ZipFile) -> list[str]:
         xml_bytes = archive.read("xl/sharedStrings.xml")
     except KeyError:
         return []
-    tree = ET.fromstring(xml_bytes)
+    tree = ET.fromstring(xml_bytes)  # nosec B314
     values: list[str] = []
     for item in tree.findall("main:si", _XML_NS):
         text_parts = [node.text or "" for node in item.findall(".//main:t", _XML_NS)]
@@ -771,8 +790,10 @@ def _read_shared_strings(archive: ZipFile) -> list[str]:
     return values
 
 
-def _read_sheet_rows(xml_bytes: bytes, shared_strings: Sequence[str]) -> list[list[str]]:
-    tree = ET.fromstring(xml_bytes)
+def _read_sheet_rows(
+    xml_bytes: bytes, shared_strings: Sequence[str]
+) -> list[list[str]]:
+    tree = ET.fromstring(xml_bytes)  # nosec B314
     rows: list[list[str]] = []
     for row_node in tree.findall("main:sheetData/main:row", _XML_NS):
         row_values: list[str] = []
@@ -804,10 +825,16 @@ def _parse_key_value_sheet(sheet: _WorkbookSheet) -> dict[str, str]:
     rows = sheet.rows
     if not rows:
         return {}
-    start_index = 1 if len(rows[0]) >= 2 and _normalise_header(rows[0][0]) in {
-        "field",
-        "key",
-    } else 0
+    start_index = (
+        1
+        if len(rows[0]) >= 2
+        and _normalise_header(rows[0][0])
+        in {
+            "field",
+            "key",
+        }
+        else 0
+    )
     pairs: dict[str, str] = {}
     for row in rows[start_index:]:
         if len(row) < 2:
@@ -948,7 +975,7 @@ def _styles_xml() -> str:
         '<borders count="1"><border/></borders>'
         '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
         '<cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>'
-        '</styleSheet>'
+        "</styleSheet>"
     )
 
 

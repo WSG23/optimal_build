@@ -36,8 +36,7 @@ def upgrade() -> None:
     connection = op.get_bind()
 
     # Ensure the canonical property_type enum exists
-    connection.exec_driver_sql(
-        """
+    connection.exec_driver_sql("""
         DO $$
         BEGIN
             IF NOT EXISTS (
@@ -56,12 +55,10 @@ def upgrade() -> None:
                 );
             END IF;
         END$$;
-        """
-    )
+        """)
 
     # Migrate any legacy columns that still reference propertytype -> property_type
-    connection.exec_driver_sql(
-        """
+    connection.exec_driver_sql("""
         DO $$
         DECLARE
             rec record;
@@ -91,16 +88,14 @@ def upgrade() -> None:
                 DROP TYPE propertytype;
             END IF;
         END$$;
-        """
-    )
+        """)
 
 
 def downgrade() -> None:
     connection = op.get_bind()
 
     # Recreate legacy enum if needed and revert columns back to propertytype
-    connection.exec_driver_sql(
-        """
+    connection.exec_driver_sql("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'propertytype') THEN
@@ -117,11 +112,9 @@ def downgrade() -> None:
                 );
             END IF;
         END$$;
-        """
-    )
+        """)
 
-    connection.exec_driver_sql(
-        """
+    connection.exec_driver_sql("""
         DO $$
         DECLARE
             rec record;
@@ -152,5 +145,4 @@ def downgrade() -> None:
                 DROP TYPE property_type;
             END IF;
         END$$;
-        """
-    )
+        """)

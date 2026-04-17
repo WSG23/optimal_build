@@ -48,8 +48,7 @@ def _percentile(values: Sequence[float], percentile: float) -> float:
 
 
 def _reset_schema(conn: sqlite3.Connection) -> None:
-    conn.executescript(
-        """
+    conn.executescript("""
         PRAGMA journal_mode = WAL;
         PRAGMA synchronous = NORMAL;
 
@@ -96,8 +95,7 @@ def _reset_schema(conn: sqlite3.Connection) -> None:
             ON ref_cost_indices (jurisdiction, category);
         CREATE INDEX idx_cost_indices_provider
             ON ref_cost_indices (provider);
-        """
-    )
+        """)
     conn.commit()
 
 

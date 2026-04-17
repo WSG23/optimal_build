@@ -15,9 +15,7 @@ depends_on = None
 
 def upgrade() -> None:
     # Create enums using raw SQL to avoid SQLAlchemy auto-creation issues
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (
@@ -27,12 +25,8 @@ def upgrade() -> None:
                 END IF;
             END
             $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (
@@ -42,12 +36,8 @@ def upgrade() -> None:
                 END IF;
             END
             $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (
@@ -59,14 +49,10 @@ def upgrade() -> None:
                 END IF;
             END
             $$;
-            """
-        )
-    )
+            """))
 
     # Create tables using raw SQL (separate statements for asyncpg)
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE listing_integration_accounts (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -80,9 +66,7 @@ def upgrade() -> None:
                 updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 CONSTRAINT uq_listing_account_user_provider UNIQUE (user_id, provider)
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text(
             "CREATE INDEX ix_listing_accounts_user_id ON listing_integration_accounts(user_id)"
@@ -94,9 +78,7 @@ def upgrade() -> None:
         )
     )
 
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE listing_publications (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
@@ -111,9 +93,7 @@ def upgrade() -> None:
                 updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 CONSTRAINT uq_listing_publication_provider_ref UNIQUE (account_id, provider_listing_id)
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text(
             "CREATE INDEX ix_listing_publications_property_id ON listing_publications(property_id)"

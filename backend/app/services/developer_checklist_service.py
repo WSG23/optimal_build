@@ -437,9 +437,7 @@ class DeveloperChecklistService:
         if dialect_name == "sqlite":
 
             def _create_sqlite(conn: Any) -> None:
-                conn.execute(
-                    text(
-                        """
+                conn.execute(text("""
                         CREATE TABLE IF NOT EXISTS developer_checklist_templates (
                             id TEXT PRIMARY KEY,
                             development_scenario TEXT NOT NULL,
@@ -454,12 +452,8 @@ class DeveloperChecklistService:
                             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                             updated_at TEXT DEFAULT CURRENT_TIMESTAMP
                         )
-                        """
-                    )
-                )
-                conn.execute(
-                    text(
-                        """
+                        """))
+                conn.execute(text("""
                         CREATE TABLE IF NOT EXISTS developer_property_checklists (
                             id TEXT PRIMARY KEY,
                             property_id TEXT NOT NULL,
@@ -481,9 +475,7 @@ class DeveloperChecklistService:
                             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                             updated_at TEXT DEFAULT CURRENT_TIMESTAMP
                         )
-                        """
-                    )
-                )
+                        """))
 
             try:
                 await connection.run_sync(_create_sqlite)

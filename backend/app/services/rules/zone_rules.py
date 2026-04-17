@@ -157,12 +157,16 @@ async def get_zoning_rules_for_zone(
         for rule in applicable_rules
         if rule.review_status == "approved" and bool(rule.is_published)
     ]
-    review_counts = Counter((rule.review_status or "unknown") for rule in applicable_rules)
+    review_counts = Counter(
+        (rule.review_status or "unknown") for rule in applicable_rules
+    )
     published_count = sum(1 for rule in applicable_rules if bool(rule.is_published))
     traceable_count = sum(
         1
         for rule in approved_rules
-        if any((rule.source_id, rule.document_id, isinstance(rule.source_provenance, dict)))
+        if any(
+            (rule.source_id, rule.document_id, isinstance(rule.source_provenance, dict))
+        )
     )
     if not applicable_rules:
         coverage_state = "missing"

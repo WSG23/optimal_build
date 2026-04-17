@@ -52,7 +52,7 @@ def _signed_area(coords: Sequence[tuple[float, float]]) -> float:
 
 
 def _group_polygon_rings(
-    rings: Sequence[Sequence[tuple[float, float]]]
+    rings: Sequence[Sequence[tuple[float, float]]],
 ) -> list[tuple[list[tuple[float, float]], list[list[tuple[float, float]]]]]:
     polygons: list[
         tuple[list[tuple[float, float]], list[list[tuple[float, float]]]]
@@ -155,7 +155,7 @@ def load_dbf(dbf_path: str | Path) -> list[dict[str, Any]]:
 
         # Skip header terminator
         terminator = handle.read(1)
-        if terminator not in {b"\x0D", b""}:
+        if terminator not in {b"\x0d", b""}:
             handle.seek(-1, 1)
 
         records: list[dict[str, Any]] = []

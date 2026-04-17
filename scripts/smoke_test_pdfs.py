@@ -62,8 +62,7 @@ def main():
     print("\n" + "=" * 70)
     print("Quick Test Commands:")
     print("=" * 70)
-    print(
-        """
+    print("""
 # 1. Start backend (if not running)
 make dev
 
@@ -80,8 +79,7 @@ cp .storage/uploads/reports/d47174ee-bb6f-4f3f-8baa-141d7c5d9051/*.pdf /tmp/test
 # 4. Open in browsers
 open -a Safari /tmp/test.pdf
 open -a "Google Chrome" /tmp/test.pdf
-    """
-    )
+    """)
 
     print("\n" + "=" * 70)
     print("Have you completed manual PDF testing?")

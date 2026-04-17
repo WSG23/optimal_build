@@ -20,8 +20,7 @@ def upgrade() -> None:
     """Apply the migration."""
 
     # Create ENUM types with raw SQL per CODING_RULES.md Rule 1.2
-    op.execute(
-        """
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ent_approval_category') THEN
@@ -49,8 +48,7 @@ def upgrade() -> None:
                 CREATE TYPE ent_legal_instrument_status AS ENUM ('draft','in_review','executed','expired');
             END IF;
         END$$;
-        """
-    )
+        """)
 
     op.create_table(
         "ent_authorities",

@@ -11,7 +11,6 @@ from app.models.rkp import RefAlert, RefIngestionRun, RefMaterialStandard
 from app.utils import metrics
 from sqlalchemy import select
 
-
 # ============================================================================
 # BASIC INGESTION FLOW TESTS
 # ============================================================================

@@ -11,7 +11,6 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision: str = "4c8849dec050"
 down_revision: Union[str, None] = "20251020_000016"
@@ -21,9 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Add asset_type ENUM type if it doesn't exist using raw SQL
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'deal_asset_type') THEN
@@ -33,19 +30,13 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
+            """))
 
     # Add asset_type column to agent_deals table using raw SQL
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             ALTER TABLE agent_deals
             ADD COLUMN IF NOT EXISTS asset_type deal_asset_type NOT NULL DEFAULT 'mixed_use'
-            """
-        )
-    )
+            """))
 
     # Create index on asset_type
     op.execute(

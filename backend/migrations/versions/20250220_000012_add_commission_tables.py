@@ -15,9 +15,7 @@ depends_on = None
 
 def upgrade() -> None:
     # Create ENUM types using raw SQL to avoid SQLAlchemy auto-creation issues
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'commission_type') THEN
@@ -26,12 +24,8 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'commission_status') THEN
@@ -40,12 +34,8 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'commission_adjustment_type') THEN
@@ -54,14 +44,10 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
+            """))
 
     # Create agent_commission_records table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE agent_commission_records (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 deal_id UUID NOT NULL REFERENCES agent_deals(id) ON DELETE CASCADE,
@@ -84,9 +70,7 @@ def upgrade() -> None:
                 updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 CONSTRAINT uq_agent_commission_unique_type UNIQUE (deal_id, agent_id, commission_type)
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text(
             "CREATE INDEX ix_agent_commission_records_deal_status ON agent_commission_records (deal_id, status)"
@@ -99,9 +83,7 @@ def upgrade() -> None:
     )
 
     # Create agent_commission_adjustments table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE agent_commission_adjustments (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 commission_id UUID NOT NULL REFERENCES agent_commission_records(id) ON DELETE CASCADE,
@@ -116,9 +98,7 @@ def upgrade() -> None:
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text(
             "CREATE INDEX ix_agent_commission_adjustments_type ON agent_commission_adjustments (adjustment_type)"

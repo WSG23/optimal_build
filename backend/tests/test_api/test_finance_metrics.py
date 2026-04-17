@@ -14,7 +14,6 @@ from app.models.rkp import RefCostIndex
 from app.utils import metrics
 from httpx import AsyncClient
 
-
 ADMIN_HEADERS = {"X-Role": "admin"}
 
 

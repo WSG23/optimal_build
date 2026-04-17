@@ -12,7 +12,6 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-
 # revision identifiers, used by Alembic.
 revision: str = "0773c87952ef"
 down_revision: Union[str, None] = "20241228_000006"
@@ -24,9 +23,7 @@ def upgrade() -> None:
     """Create singapore_properties table with MVP workflow fields."""
 
     # Create enum types using raw SQL with IF NOT EXISTS checks
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'propertyzoning') THEN
@@ -37,12 +34,8 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'propertytenure') THEN
@@ -52,12 +45,8 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'developmentstatus') THEN
@@ -67,12 +56,8 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'acquisitionstatus') THEN
@@ -81,12 +66,8 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'feasibilitystatus') THEN
@@ -95,12 +76,8 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'compliancestatus') THEN
@@ -109,14 +86,10 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
+            """))
 
     # Create singapore_properties table using raw SQL
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE singapore_properties (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 -- Basic Information
@@ -212,9 +185,7 @@ def upgrade() -> None:
                 project_id UUID REFERENCES projects(id),
                 owner_email VARCHAR(255)
             )
-            """
-        )
-    )
+            """))
 
     # Create indexes for frequently queried fields
     op.execute(

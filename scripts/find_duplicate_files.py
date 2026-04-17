@@ -6,6 +6,7 @@ and dependency folders, and groups files that share the same content hash.
 It is designed to help engineers quickly identify accidental duplicates
 checked into the code base.
 """
+
 from __future__ import annotations
 
 import argparse

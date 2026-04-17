@@ -14,7 +14,6 @@ import re
 import sys
 from pathlib import Path
 
-
 ENUM_PATTERN = re.compile(r"(?:SQLEnum|Enum)\s*\(\s*(\w+)", re.MULTILINE)
 
 VALUES_CALLABLE_PATTERN = re.compile(r"values_callable\s*=", re.MULTILINE)

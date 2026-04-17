@@ -26,7 +26,6 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-
 ADMIN_HEADERS = {"X-Role": "admin"}
 
 

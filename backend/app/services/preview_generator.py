@@ -518,7 +518,7 @@ def _serialise_layer(
 
 
 def _calculate_bounds(
-    vertices: Sequence[tuple[float, float, float]]
+    vertices: Sequence[tuple[float, float, float]],
 ) -> BoundingBoxDict:
     xs = [x for x, _y, _z in vertices]
     ys = [y for _x, y, _z in vertices]

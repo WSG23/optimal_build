@@ -15,9 +15,7 @@ depends_on = None
 
 def upgrade() -> None:
     # Create enums using raw SQL to avoid SQLAlchemy auto-creation issues
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (
@@ -30,12 +28,8 @@ def upgrade() -> None:
                 END IF;
             END
             $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (
@@ -47,12 +41,8 @@ def upgrade() -> None:
                 END IF;
             END
             $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (
@@ -66,12 +56,8 @@ def upgrade() -> None:
                 END IF;
             END
             $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (
@@ -83,12 +69,8 @@ def upgrade() -> None:
                 END IF;
             END
             $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (
@@ -100,12 +82,8 @@ def upgrade() -> None:
                 END IF;
             END
             $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (
@@ -117,14 +95,10 @@ def upgrade() -> None:
                 END IF;
             END
             $$;
-            """
-        )
-    )
+            """))
 
     # Create agent_deals table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE agent_deals (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 agent_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -146,9 +120,7 @@ def upgrade() -> None:
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text(
             "CREATE INDEX ix_agent_deals_agent_stage ON agent_deals(agent_id, pipeline_stage)"
@@ -167,9 +139,7 @@ def upgrade() -> None:
     )
 
     # Create agent_deal_stage_events table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE agent_deal_stage_events (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 deal_id UUID NOT NULL REFERENCES agent_deals(id) ON DELETE CASCADE,
@@ -180,9 +150,7 @@ def upgrade() -> None:
                 recorded_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 metadata JSONB NOT NULL DEFAULT '{}'::jsonb
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text(
             "CREATE INDEX ix_agent_deal_stage_events_deal_id ON agent_deal_stage_events(deal_id)"
@@ -200,9 +168,7 @@ def upgrade() -> None:
     )
 
     # Create agent_deal_contacts table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE agent_deal_contacts (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 deal_id UUID NOT NULL REFERENCES agent_deals(id) ON DELETE CASCADE,
@@ -216,9 +182,7 @@ def upgrade() -> None:
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text(
             "CREATE INDEX ix_agent_deal_contacts_deal_id ON agent_deal_contacts(deal_id)"
@@ -231,9 +195,7 @@ def upgrade() -> None:
     )
 
     # Create agent_deal_documents table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE agent_deal_documents (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 deal_id UUID NOT NULL REFERENCES agent_deals(id) ON DELETE CASCADE,
@@ -246,9 +208,7 @@ def upgrade() -> None:
                 metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
                 CONSTRAINT uq_agent_deal_document_title UNIQUE (deal_id, title)
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text(
             "CREATE INDEX ix_agent_deal_documents_deal_id ON agent_deal_documents(deal_id)"

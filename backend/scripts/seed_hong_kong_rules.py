@@ -23,7 +23,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from app.core.database import _resolve_database_url
 from app.models.rkp import RefRule, RefSource
 
-
 # Hong Kong TPB Zoning Rules (based on typical OZP restrictions)
 # Reference: https://www.pland.gov.hk/pland_en/info_serv/tp_plan/
 HK_TPB_ZONING_RULES = [

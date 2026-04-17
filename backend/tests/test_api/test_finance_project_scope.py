@@ -13,7 +13,6 @@ pytest.importorskip("sqlalchemy")
 from app.models.finance import FinProject
 from httpx import AsyncClient
 
-
 ADMIN_HEADERS = {"X-Role": "admin"}
 
 

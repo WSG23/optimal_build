@@ -200,7 +200,9 @@ def generate_feasibility_rules(
 
     rules = _build_rules()
     recommended = [rule.id for rule in rules if rule.default_selected]
-    notes = f"Auto-selected based on {_format_land_use(project.land_use)} land use profile"
+    notes = (
+        f"Auto-selected based on {_format_land_use(project.land_use)} land use profile"
+    )
     corpus_notes = _rule_corpus_advisories(project)
     if corpus_notes:
         notes = f"{notes}. {' '.join(corpus_notes)}"

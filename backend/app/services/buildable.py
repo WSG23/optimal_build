@@ -156,9 +156,8 @@ async def calculate_buildable(
     return BuildableCalculation(
         metrics=metrics,
         zone_source=zone_source,
-        rule_corpus_status=overrides.rule_corpus_status or _empty_rule_corpus_status(
-            resolved.zone_code
-        ),
+        rule_corpus_status=overrides.rule_corpus_status
+        or _empty_rule_corpus_status(resolved.zone_code),
         rules=rules,
     )
 
@@ -171,12 +170,9 @@ async def _load_rules_for_zone(
         overrides.rule_corpus_status = _empty_rule_corpus_status(None)
         return [], overrides
 
-    stmt = (
-        select(RefRule)
-        .where(
-            RefRule.topic.in_(["zoning", "building"])
-        )  # Include both zoning and building rules
-    )
+    stmt = select(RefRule).where(
+        RefRule.topic.in_(["zoning", "building"])
+    )  # Include both zoning and building rules
     result = await session.execute(stmt)
 
     overrides = _RuleOverrides()
@@ -187,9 +183,7 @@ async def _load_rules_for_zone(
         if not _zone_matches(record.applicability, zone_code):
             continue
         applicable_records.append(record)
-        if not (
-            record.review_status == "approved" and bool(record.is_published)
-        ):
+        if not (record.review_status == "approved" and bool(record.is_published)):
             continue
         approved_records.append(record)
         _apply_rule_override(overrides, record)
@@ -236,8 +230,12 @@ def _build_rule_corpus_status(
     applicable_records: Sequence[RefRule],
     approved_records: Sequence[RefRule],
 ) -> RuleCorpusStatus:
-    review_counts = Counter(record.review_status or "unknown" for record in applicable_records)
-    published_count = sum(1 for record in applicable_records if bool(record.is_published))
+    review_counts = Counter(
+        record.review_status or "unknown" for record in applicable_records
+    )
+    published_count = sum(
+        1 for record in applicable_records if bool(record.is_published)
+    )
     traceable_count = sum(
         1
         for record in approved_records

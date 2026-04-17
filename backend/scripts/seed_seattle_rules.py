@@ -22,7 +22,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from app.core.database import _resolve_database_url
 from app.models.rkp import RefRule, RefSource
 
-
 # Seattle Municipal Code Title 23 Zoning Rules
 # Reference: https://www.seattle.gov/sdci/codes/codes-we-enforce-(a-z)/zoning-code
 SEA_SMC_ZONING_RULES = [

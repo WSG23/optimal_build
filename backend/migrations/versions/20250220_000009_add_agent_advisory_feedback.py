@@ -4,7 +4,6 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-
 # revision identifiers, used by Alembic.
 revision = "20250220_000009"
 down_revision = "00c02bae771e"  # merge of singapore_properties + imports updates

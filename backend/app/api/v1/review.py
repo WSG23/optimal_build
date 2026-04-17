@@ -91,11 +91,23 @@ async def list_corpus_status(
 
     source_ids = [source.id for source in sources]
     documents = (
-        await session.execute(select(RefDocument).where(RefDocument.source_id.in_(source_ids)))
-    ).scalars().all()
+        (
+            await session.execute(
+                select(RefDocument).where(RefDocument.source_id.in_(source_ids))
+            )
+        )
+        .scalars()
+        .all()
+    )
     rules = (
-        await session.execute(select(RefRule).where(RefRule.source_id.in_(source_ids)))
-    ).scalars().all()
+        (
+            await session.execute(
+                select(RefRule).where(RefRule.source_id.in_(source_ids))
+            )
+        )
+        .scalars()
+        .all()
+    )
 
     docs_by_source: dict[int, list[RefDocument]] = {}
     for document in documents:
@@ -132,7 +144,13 @@ async def list_corpus_status(
             for rule in source_rules
             if rule.review_status == "approved"
             and bool(rule.is_published)
-            and any((rule.document_id, rule.source_id, isinstance(rule.source_provenance, dict)))
+            and any(
+                (
+                    rule.document_id,
+                    rule.source_id,
+                    isinstance(rule.source_provenance, dict),
+                )
+            )
         )
         suspected_updates = sum(
             1 for document in source_documents if bool(document.suspected_update)
@@ -190,7 +208,13 @@ async def list_corpus_status(
         }
         items.append(item)
 
-    items.sort(key=lambda item: (str(item["jurisdiction"]), str(item["authority"]), str(item["topic"])))
+    items.sort(
+        key=lambda item: (
+            str(item["jurisdiction"]),
+            str(item["authority"]),
+            str(item["topic"]),
+        )
+    )
     return {"items": items, "count": len(items)}
 
 

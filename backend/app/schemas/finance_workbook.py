@@ -38,4 +38,3 @@ class FinanceWorkbookPreviewResponse(BaseModel):
     scenario_name: str | None = None
     project_name: str | None = None
     asset_count: int = Field(default=0, ge=0)
-

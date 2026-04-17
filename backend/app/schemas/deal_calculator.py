@@ -58,13 +58,19 @@ class DealCalculatorRequest(BaseModel):
     target_gross_floor_area_sqm: float | None = Field(default=None, gt=0)
     building_height_meters: float | None = Field(default=None, gt=0)
     existing_use: str | None = Field(default=None, min_length=1)
-    financing: DealCalculatorFinancingAssumptions = Field(default_factory=DealCalculatorFinancingAssumptions)
+    financing: DealCalculatorFinancingAssumptions = Field(
+        default_factory=DealCalculatorFinancingAssumptions
+    )
 
     @model_validator(mode="after")
     def _ensure_address_or_manual_inputs(self) -> "DealCalculatorRequest":
         if self.address:
             return self
-        if self.site_area_sqm is None and self.zone_code is None and self.land_use is None:
+        if (
+            self.site_area_sqm is None
+            and self.zone_code is None
+            and self.land_use is None
+        ):
             raise ValueError(
                 "Provide an address or manual site assumptions (siteAreaSqm, zoneCode, or landUse)."
             )
@@ -129,4 +135,3 @@ class DealCalculatorResponse(BaseModel):
     asset_mix_summary: AssetFinancialSummarySchema | None = None
     asset_breakdowns: list[FinanceAssetBreakdownSchema] = Field(default_factory=list)
     finance_summary: DealCalculatorFinanceSummary
-

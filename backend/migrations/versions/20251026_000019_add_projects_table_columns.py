@@ -29,8 +29,7 @@ def upgrade() -> None:
     # Note: Using native PostgreSQL ENUMs (not sa.Enum with create_type=False)
     # to avoid the ENUM autocreation bug documented in CODING_RULES.md
     # IMPORTANT: ENUM values must match Python model enum values (uppercase)
-    op.execute(
-        """
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'projecttype') THEN
@@ -46,11 +45,9 @@ def upgrade() -> None:
                 );
             END IF;
         END$$;
-        """
-    )
+        """)
 
-    op.execute(
-        """
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'projectphase') THEN
@@ -67,11 +64,9 @@ def upgrade() -> None:
                 );
             END IF;
         END$$;
-        """
-    )
+        """)
 
-    op.execute(
-        """
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'approvalstatus') THEN
@@ -86,8 +81,7 @@ def upgrade() -> None:
                 );
             END IF;
         END$$;
-        """
-    )
+        """)
 
     # Basic Information
     op.add_column(

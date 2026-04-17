@@ -82,8 +82,7 @@ class ComplianceAuditLogger:
     def _initialise_database(self) -> None:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(self.db_path) as connection:
-            connection.execute(
-                """
+            connection.execute("""
                 CREATE TABLE IF NOT EXISTS enhanced_upload_audit (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     created_at TEXT NOT NULL,
@@ -92,8 +91,7 @@ class ComplianceAuditLogger:
                     status TEXT,
                     payload TEXT
                 )
-                """
-            )
+                """)
             connection.commit()
 
     def log_upload_event(

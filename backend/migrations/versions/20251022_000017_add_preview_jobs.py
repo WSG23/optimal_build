@@ -21,9 +21,7 @@ depends_on = None
 
 def upgrade() -> None:
     # Create ENUM using raw SQL to avoid SQLAlchemy auto-creation issues with asyncpg
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'preview_job_status') THEN
@@ -36,14 +34,10 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
+            """))
 
     # Create preview_jobs table using raw SQL
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE preview_jobs (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 property_id UUID NOT NULL REFERENCES properties(id) ON DELETE CASCADE,
@@ -59,9 +53,7 @@ def upgrade() -> None:
                 message VARCHAR(500),
                 metadata JSONB NOT NULL DEFAULT '{}'::jsonb
             )
-            """
-        )
-    )
+            """))
 
     # Create indexes
     op.execute(

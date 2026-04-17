@@ -18,8 +18,7 @@ depends_on = None
 
 def upgrade() -> None:
     # Create notification_type enum (using DO $$ for safety)
-    op.execute(
-        """
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'notificationtype') THEN
@@ -42,12 +41,10 @@ def upgrade() -> None:
                 );
             END IF;
         END$$;
-    """
-    )
+    """)
 
     # Create notification_priority enum
-    op.execute(
-        """
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'notificationpriority') THEN
@@ -59,8 +56,7 @@ def upgrade() -> None:
                 );
             END IF;
         END$$;
-    """
-    )
+    """)
 
     # Create notifications table
     op.create_table(

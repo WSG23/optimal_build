@@ -22,9 +22,7 @@ depends_on = None
 def upgrade() -> None:
     """Create due diligence checklist tables."""
     # Create ENUMs using raw SQL to avoid SQLAlchemy auto-creation issues with asyncpg
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'checklist_category') THEN
@@ -39,12 +37,8 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'checklist_status') THEN
@@ -56,12 +50,8 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'checklist_priority') THEN
@@ -73,14 +63,10 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
+            """))
 
     # Checklist Templates table using raw SQL
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE developer_checklist_templates (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 development_scenario VARCHAR(50) NOT NULL,
@@ -95,9 +81,7 @@ def upgrade() -> None:
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
             )
-            """
-        )
-    )
+            """))
 
     # Create indexes for templates
     op.execute(
@@ -107,9 +91,7 @@ def upgrade() -> None:
     )
 
     # Property Checklists table using raw SQL
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE developer_property_checklists (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 property_id UUID NOT NULL,
@@ -129,9 +111,7 @@ def upgrade() -> None:
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
             )
-            """
-        )
-    )
+            """))
 
     # Create indexes for property checklists
     op.execute(

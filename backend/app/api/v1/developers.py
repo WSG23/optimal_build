@@ -68,7 +68,6 @@ from app.api.v1.developers_conditions import (
     ScenarioComparisonEntryResponse,
 )
 
-
 # Create unified router
 router = APIRouter()
 

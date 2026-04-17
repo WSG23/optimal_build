@@ -209,7 +209,9 @@ async def test_export_preview_and_import_finance_workbook_round_trip(
     assert imported["construction_loan"] is not None
     assert imported["sensitivity_bands"]
     assert append_event_mock.await_count == 4
-    event_types = [call.kwargs["event_type"] for call in append_event_mock.await_args_list]
+    event_types = [
+        call.kwargs["event_type"] for call in append_event_mock.await_args_list
+    ]
     assert event_types == [
         "finance_scenario_created",
         "export_generated",
@@ -217,4 +219,6 @@ async def test_export_preview_and_import_finance_workbook_round_trip(
         "workbook_imported",
     ]
     assert append_event_mock.await_args_list[0].kwargs["context"]["origin"] == "manual"
-    assert append_event_mock.await_args_list[2].kwargs["context"]["origin"] == "workbook"
+    assert (
+        append_event_mock.await_args_list[2].kwargs["context"]["origin"] == "workbook"
+    )

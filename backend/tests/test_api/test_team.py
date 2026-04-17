@@ -20,7 +20,6 @@ from app.models.team import InvitationStatus, TeamInvitation, TeamMember
 from app.models.users import User, UserRole
 from httpx import AsyncClient
 
-
 pytestmark = pytest.mark.asyncio
 
 

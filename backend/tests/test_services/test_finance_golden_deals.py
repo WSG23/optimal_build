@@ -30,14 +30,26 @@ def test_golden_deal_cash_flow_dscr_and_analytics() -> None:
     )
     drawdown = calculator.drawdown_schedule(
         [
-            {"period": "Q1", "equity_draw": Decimal("200000"), "debt_draw": Decimal("0")},
+            {
+                "period": "Q1",
+                "equity_draw": Decimal("200000"),
+                "debt_draw": Decimal("0"),
+            },
             {
                 "period": "Q2",
                 "equity_draw": Decimal("150000"),
                 "debt_draw": Decimal("350000"),
             },
-            {"period": "Q3", "equity_draw": Decimal("0"), "debt_draw": Decimal("250000")},
-            {"period": "Q4", "equity_draw": Decimal("0"), "debt_draw": Decimal("-100000")},
+            {
+                "period": "Q3",
+                "equity_draw": Decimal("0"),
+                "debt_draw": Decimal("250000"),
+            },
+            {
+                "period": "Q4",
+                "equity_draw": Decimal("0"),
+                "debt_draw": Decimal("-100000"),
+            },
         ],
         currency="SGD",
     )
@@ -84,14 +96,26 @@ def test_golden_deal_cash_flow_dscr_and_analytics() -> None:
 def test_golden_deal_construction_interest_schedule() -> None:
     drawdown = calculator.drawdown_schedule(
         [
-            {"period": "Q1", "equity_draw": Decimal("200000"), "debt_draw": Decimal("0")},
+            {
+                "period": "Q1",
+                "equity_draw": Decimal("200000"),
+                "debt_draw": Decimal("0"),
+            },
             {
                 "period": "Q2",
                 "equity_draw": Decimal("150000"),
                 "debt_draw": Decimal("350000"),
             },
-            {"period": "Q3", "equity_draw": Decimal("0"), "debt_draw": Decimal("250000")},
-            {"period": "Q4", "equity_draw": Decimal("0"), "debt_draw": Decimal("-100000")},
+            {
+                "period": "Q3",
+                "equity_draw": Decimal("0"),
+                "debt_draw": Decimal("250000"),
+            },
+            {
+                "period": "Q4",
+                "equity_draw": Decimal("0"),
+                "debt_draw": Decimal("-100000"),
+            },
         ],
         currency="SGD",
     )
@@ -131,7 +155,9 @@ def test_golden_deal_construction_interest_schedule() -> None:
         Decimal("6234.38"),
         Decimal("7218.75"),
     ]
-    facility_totals = {facility.name: facility.total_interest for facility in schedule.facilities}
+    facility_totals = {
+        facility.name: facility.total_interest for facility in schedule.facilities
+    }
     assert facility_totals == {
         "Senior Loan": Decimal("22500.00"),
         "Mezz Loan": Decimal("17000.00"),
@@ -178,8 +204,7 @@ def test_golden_deal_sensitivity_pack() -> None:
     rate_high = next(
         result
         for result in results
-        if result.parameter == "Interest Rate (delta %)"
-        and result.scenario == "High"
+        if result.parameter == "Interest Rate (delta %)" and result.scenario == "High"
     )
     assert rate_high.delta_label == "-0.50%"
     assert rate_high.npv == Decimal("231894.10")

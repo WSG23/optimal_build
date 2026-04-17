@@ -9,8 +9,7 @@ depends_on = None
 
 
 def upgrade():
-    op.execute(
-        """
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (
@@ -22,13 +21,11 @@ def upgrade():
                 ADD COLUMN standard_body VARCHAR(100) DEFAULT 'UNKNOWN' NOT NULL;
             END IF;
         END$$;
-        """
-    )
+        """)
 
 
 def downgrade():
-    op.execute(
-        """
+    op.execute("""
         DO $$
         BEGIN
             IF EXISTS (
@@ -40,5 +37,4 @@ def downgrade():
                 DROP COLUMN standard_body;
             END IF;
         END$$;
-        """
-    )
+        """)

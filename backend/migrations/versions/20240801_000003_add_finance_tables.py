@@ -20,8 +20,7 @@ def upgrade() -> None:
     """Apply the migration."""
     # Ensure a minimal 'projects' table exists so our FKs don't fail in fresh dev DBs.
     # Updated to use UUID for long-term scalability
-    op.execute(
-        """
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (
@@ -33,8 +32,7 @@ def upgrade() -> None:
                 );
             END IF;
         END$$;
-        """
-    )
+        """)
 
     # fin_projects
     op.create_table(

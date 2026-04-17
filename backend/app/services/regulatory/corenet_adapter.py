@@ -35,8 +35,9 @@ class CorenetAdapter(Protocol):
         payload: dict[str, Any],
     ) -> dict[str, Any]: ...
 
-    async def check_status(self, agency_code: str, reference_no: str) -> dict[str, Any]:
-        ...
+    async def check_status(
+        self, agency_code: str, reference_no: str
+    ) -> dict[str, Any]: ...
 
 
 class SubmissionPrepCorenetAdapter:

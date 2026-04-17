@@ -33,13 +33,11 @@ def upgrade() -> None:
         "developer_property_checklists",
         sa.Column("professional_type", sa.String(length=100), nullable=True),
     )
-    op.execute(
-        """
+    op.execute("""
         UPDATE developer_property_checklists
         SET requires_professional = COALESCE((metadata ->> 'requires_professional')::boolean, false),
             professional_type = COALESCE(metadata ->> 'professional_type', professional_type)
-        """
-    )
+        """)
     op.alter_column(
         "developer_property_checklists",
         "requires_professional",

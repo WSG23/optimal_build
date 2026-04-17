@@ -314,7 +314,9 @@ async def test_update_property_compliance_sets_fields():
     assert updated.bca_compliance_status == "passed"
     assert updated.ura_compliance_status == "passed"
     assert updated.compliance_data["gfa_calculation"]["max_gfa_sqm"] > 0
-    assert updated.compliance_data["rule_corpus_status"]["bca"]["counts"]["approved"] == 1
+    assert (
+        updated.compliance_data["rule_corpus_status"]["bca"]["counts"]["approved"] == 1
+    )
     assert updated.max_developable_gfa_sqm is not None
     assert updated.compliance_last_checked is not None
 

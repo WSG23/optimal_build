@@ -209,8 +209,7 @@ def main() -> int:
         print("CODING_RULES.md Section 1.2: PostgreSQL ENUM Types in Migrations")
         print("=" * 70)
         print("\n✅ CORRECT PATTERN:")
-        print(
-            """
+        print("""
 def upgrade() -> None:
     # Optional: Create ENUM type if you want DB-level validation
     op.execute('''
@@ -231,8 +230,7 @@ def upgrade() -> None:
     op.execute(
         "ALTER TABLE deals ALTER COLUMN status TYPE deal_status USING status::deal_status"
     )
-"""
-        )
+""")
         print("\n" + "=" * 70)
         print(
             "\nTo bypass this check temporarily, add files to .coding-rules-exceptions.yml:"

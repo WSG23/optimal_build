@@ -11,7 +11,6 @@ import pytest
 
 from app.services.agents.advisory import AgentAdvisoryService, AdvisorySummary
 
-
 # ============================================================================
 # HELPER CLASSES FOR STUBBING
 # ============================================================================

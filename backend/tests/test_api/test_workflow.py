@@ -24,7 +24,6 @@ from app.models.workflow import (
 )
 from httpx import AsyncClient
 
-
 pytestmark = pytest.mark.asyncio
 
 

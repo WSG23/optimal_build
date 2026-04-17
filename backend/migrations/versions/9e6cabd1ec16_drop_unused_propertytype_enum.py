@@ -11,7 +11,6 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision: str = "9e6cabd1ec16"
 down_revision: Union[str, None] = "8706cd5fd7e5"
@@ -28,11 +27,9 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     # Recreate the propertytype enum if needed (matches property_type values)
-    op.execute(
-        """
+    op.execute("""
         CREATE TYPE propertytype AS ENUM (
             'office', 'retail', 'industrial', 'residential',
             'mixed_use', 'hotel', 'warehouse', 'land', 'special_purpose'
         )
-    """
-    )
+    """)

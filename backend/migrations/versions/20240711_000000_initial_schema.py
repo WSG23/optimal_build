@@ -20,9 +20,7 @@ def upgrade() -> None:
     """Apply the migration."""
 
     # Create users table first as many other tables reference it
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'userrole') THEN
@@ -32,12 +30,8 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             CREATE TABLE IF NOT EXISTS users (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 email VARCHAR(255) NOT NULL UNIQUE,
@@ -55,9 +49,7 @@ def upgrade() -> None:
                 uen_number VARCHAR(50),
                 acra_registered BOOLEAN DEFAULT false
             )
-            """
-        )
-    )
+            """))
     op.execute(sa.text("CREATE INDEX IF NOT EXISTS ix_users_email ON users(email)"))
     op.execute(
         sa.text("CREATE INDEX IF NOT EXISTS ix_users_username ON users(username)")

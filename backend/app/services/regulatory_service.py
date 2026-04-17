@@ -37,26 +37,20 @@ class RegulatoryService:
         *,
         agency: RegulatoryAgency | None = None,
     ) -> None:
-        resolved_agency = agency or await self._load_agency(getattr(submission, "agency_id", None))
+        resolved_agency = agency or await self._load_agency(
+            getattr(submission, "agency_id", None)
+        )
         capability = self.corenet.capability()
-        setattr(
-            submission,
-            "integration_status",
-            self.corenet.source_metadata().model_dump(mode="json"),
+        submission.integration_status = self.corenet.source_metadata().model_dump(
+            mode="json"
         )
-        setattr(submission, "agency_code", resolved_agency.code if resolved_agency else None)
-        setattr(submission, "agency_name", resolved_agency.name if resolved_agency else None)
-        setattr(submission, "submission_mode", capability.submission_mode_default)
-        setattr(submission, "package_status", capability.package_status)
-        setattr(
-            submission, "package_requirements", list(capability.package_requirements)
-        )
-        setattr(submission, "delivery_blockers", list(capability.delivery_blockers))
-        setattr(
-            submission,
-            "live_submission_available",
-            capability.live_submission_available,
-        )
+        submission.agency_code = resolved_agency.code if resolved_agency else None
+        submission.agency_name = resolved_agency.name if resolved_agency else None
+        submission.submission_mode = capability.submission_mode_default
+        submission.package_status = capability.package_status
+        submission.package_requirements = list(capability.package_requirements)
+        submission.delivery_blockers = list(capability.delivery_blockers)
+        submission.live_submission_available = capability.live_submission_available
 
     async def _append_submission_audit(
         self,
@@ -74,8 +68,12 @@ class RegulatoryService:
             project_id=audit_project_id,
             event_type=event_type,
             context={
-                "agency": agency.code if agency else getattr(submission, "agency_code", None),
-                "agency_name": agency.name if agency else getattr(submission, "agency_name", None),
+                "agency": (
+                    agency.code if agency else getattr(submission, "agency_code", None)
+                ),
+                "agency_name": (
+                    agency.name if agency else getattr(submission, "agency_name", None)
+                ),
                 "submission_id": str(submission.id),
                 "submission_no": submission.submission_no,
                 "submission_type": str(submission.submission_type),
@@ -184,43 +182,23 @@ class RegulatoryService:
                 )
                 await self._maybe_await(self.db.commit())
                 await self._maybe_await(self.db.refresh(db_submission))
-        setattr(
-            db_submission,
-            "integration_status",
-            external_response.get("integration_status"),
+        db_submission.integration_status = external_response.get("integration_status")
+        db_submission.agency_code = agency.code
+        db_submission.agency_name = agency.name
+        db_submission.submission_mode = external_response.get(
+            "submission_mode", capability.submission_mode_default
         )
-        setattr(db_submission, "agency_code", agency.code)
-        setattr(db_submission, "agency_name", agency.name)
-        setattr(
-            db_submission,
-            "submission_mode",
-            external_response.get("submission_mode", capability.submission_mode_default),
+        db_submission.package_status = external_response.get(
+            "package_status", capability.package_status
         )
-        setattr(
-            db_submission,
-            "package_status",
-            external_response.get("package_status", capability.package_status),
+        db_submission.package_requirements = external_response.get(
+            "package_requirements", list(capability.package_requirements)
         )
-        setattr(
-            db_submission,
-            "package_requirements",
-            external_response.get(
-                "package_requirements", list(capability.package_requirements)
-            ),
+        db_submission.delivery_blockers = external_response.get(
+            "delivery_blockers", list(capability.delivery_blockers)
         )
-        setattr(
-            db_submission,
-            "delivery_blockers",
-            external_response.get(
-                "delivery_blockers", list(capability.delivery_blockers)
-            ),
-        )
-        setattr(
-            db_submission,
-            "live_submission_available",
-            external_response.get(
-                "live_submission_available", capability.live_submission_available
-            ),
+        db_submission.live_submission_available = external_response.get(
+            "live_submission_available", capability.live_submission_available
         )
         await self._append_submission_audit(
             project_id=project_id,
@@ -294,42 +272,26 @@ class RegulatoryService:
             await self._maybe_await(self.db.commit())
             await self._maybe_await(self.db.refresh(submission))
 
-        setattr(
-            submission,
-            "integration_status",
-            status_update.get("integration_status"),
-        )
+        submission.integration_status = status_update.get("integration_status")
         agency = None
         if agency_code and getattr(submission, "agency_id", None) is not None:
             agency = await self._load_agency(submission.agency_id)
-        setattr(submission, "agency_code", agency.code if agency else agency_code)
-        setattr(submission, "agency_name", agency.name if agency else None)
-        setattr(
-            submission,
-            "submission_mode",
-            status_update.get("submission_mode", capability.submission_mode_default),
+        submission.agency_code = agency.code if agency else agency_code
+        submission.agency_name = agency.name if agency else None
+        submission.submission_mode = status_update.get(
+            "submission_mode", capability.submission_mode_default
         )
-        setattr(
-            submission,
-            "package_status",
-            status_update.get("package_status", capability.package_status),
+        submission.package_status = status_update.get(
+            "package_status", capability.package_status
         )
-        setattr(
-            submission,
-            "package_requirements",
-            status_update.get("package_requirements", list(capability.package_requirements)),
+        submission.package_requirements = status_update.get(
+            "package_requirements", list(capability.package_requirements)
         )
-        setattr(
-            submission,
-            "delivery_blockers",
-            status_update.get("delivery_blockers", list(capability.delivery_blockers)),
+        submission.delivery_blockers = status_update.get(
+            "delivery_blockers", list(capability.delivery_blockers)
         )
-        setattr(
-            submission,
-            "live_submission_available",
-            status_update.get(
-                "live_submission_available", capability.live_submission_available
-            ),
+        submission.live_submission_available = status_update.get(
+            "live_submission_available", capability.live_submission_available
         )
         await self._append_submission_audit(
             project_id=submission.project_id,

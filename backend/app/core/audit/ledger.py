@@ -277,10 +277,14 @@ def build_evidence_report(
         "report_generated_at": datetime.now(UTC).isoformat(),
         "timeframe": {
             "first_recorded_at": (
-                first_log.recorded_at.isoformat() if first_log and first_log.recorded_at else None
+                first_log.recorded_at.isoformat()
+                if first_log and first_log.recorded_at
+                else None
             ),
             "last_recorded_at": (
-                last_log.recorded_at.isoformat() if last_log and last_log.recorded_at else None
+                last_log.recorded_at.isoformat()
+                if last_log and last_log.recorded_at
+                else None
             ),
         },
         "chain": {

@@ -26,8 +26,7 @@ depends_on = None
 
 def upgrade():
     # Add new agency codes (STB, JTC) to the enum
-    op.execute(
-        """
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'STB' AND enumtypid = 'agencycode'::regtype) THEN
@@ -39,12 +38,10 @@ def upgrade():
         EXCEPTION
             WHEN undefined_object THEN NULL;
         END$$;
-        """
-    )
+        """)
 
     # Add new submission types
-    op.execute(
-        """
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'CHANGE_OF_USE' AND enumtypid = 'submissiontype'::regtype) THEN
@@ -59,12 +56,10 @@ def upgrade():
         EXCEPTION
             WHEN undefined_object THEN NULL;
         END$$;
-        """
-    )
+        """)
 
     # Create asset type enum
-    op.execute(
-        """
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'assettype') THEN
@@ -74,8 +69,7 @@ def upgrade():
                 );
             END IF;
         END$$;
-        """
-    )
+        """)
 
     # Create asset_compliance_paths table
     op.create_table(

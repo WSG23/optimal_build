@@ -71,9 +71,7 @@ async def _seed_property(
 ) -> UUID:
     property_id = uuid4()
     async with async_session_factory() as session:
-        await session.execute(
-            text(
-                """
+        await session.execute(text("""
                 CREATE TABLE IF NOT EXISTS properties (
                     id TEXT PRIMARY KEY,
                     name TEXT,
@@ -108,9 +106,7 @@ async def _seed_property(
                 external_references TEXT,
                     data_source TEXT
                 )
-                """
-            )
-        )
+                """))
         session.add(
             Property(
                 id=property_id,

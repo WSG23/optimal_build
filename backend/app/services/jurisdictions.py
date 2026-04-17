@@ -53,7 +53,7 @@ def _normalise_code(value: str | None) -> str:
 
 
 def _parse_engineering_defaults(
-    payload: Mapping[str, Any]
+    payload: Mapping[str, Any],
 ) -> Optional[EngineeringDefaults]:
     """Parse engineering defaults from jurisdiction payload."""
     eng = payload.get("engineering_defaults")

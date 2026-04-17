@@ -12,7 +12,6 @@ from typing import Sequence
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision = "20251028_000020"
 down_revision = "20251026_000019"
@@ -84,9 +83,7 @@ def upgrade() -> None:
     for table, index_name, columns in INDEXES:
         cols = ", ".join(columns)
         # Use IF NOT EXISTS and wrap in a DO block to handle missing tables gracefully
-        op.execute(
-            sa.text(
-                f"""
+        op.execute(sa.text(f"""
                 DO $$
                 BEGIN
                     IF EXISTS (
@@ -99,9 +96,7 @@ def upgrade() -> None:
                         EXECUTE 'CREATE INDEX IF NOT EXISTS {index_name} ON {table} ({cols})';
                     END IF;
                 END $$;
-                """
-            )
-        )
+                """))
 
 
 def downgrade() -> None:

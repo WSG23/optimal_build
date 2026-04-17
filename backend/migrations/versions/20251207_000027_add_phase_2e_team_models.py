@@ -20,46 +20,38 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Create Enums safely
-    op.execute(
-        """
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'userrole') THEN
                 CREATE TYPE userrole AS ENUM ('admin', 'developer', 'investor', 'contractor', 'consultant', 'regulatory_officer', 'viewer');
             END IF;
         END$$;
-        """
-    )
-    op.execute(
-        """
+        """)
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'invitationstatus') THEN
                 CREATE TYPE invitationstatus AS ENUM ('pending', 'accepted', 'expired', 'revoked');
             END IF;
         END$$;
-        """
-    )
-    op.execute(
-        """
+        """)
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'workflowstatus') THEN
                 CREATE TYPE workflowstatus AS ENUM ('draft', 'in_progress', 'approved', 'rejected', 'cancelled');
             END IF;
         END$$;
-        """
-    )
-    op.execute(
-        """
+        """)
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'stepstatus') THEN
                 CREATE TYPE stepstatus AS ENUM ('pending', 'in_review', 'approved', 'rejected', 'skipped');
             END IF;
         END$$;
-        """
-    )
+        """)
 
     # team_members
     op.create_table(

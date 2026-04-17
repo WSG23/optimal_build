@@ -19,36 +19,30 @@ depends_on = None
 
 def upgrade():
     # Create Enums manually first to be safe
-    op.execute(
-        """
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'agencycode') THEN
                 CREATE TYPE agencycode AS ENUM ('URA', 'BCA', 'SCDF', 'NEA', 'LTA', 'NPARKS', 'PUB', 'SLA');
             END IF;
         END$$;
-        """
-    )
-    op.execute(
-        """
+        """)
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'submissiontype') THEN
                 CREATE TYPE submissiontype AS ENUM ('DC', 'BP', 'TOP', 'CSC', 'WAIVER', 'CONSULTATION');
             END IF;
         END$$;
-        """
-    )
-    op.execute(
-        """
+        """)
+    op.execute("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'submissionstatus') THEN
                 CREATE TYPE submissionstatus AS ENUM ('DRAFT', 'SUBMITTED', 'IN_REVIEW', 'APPROVED', 'REJECTED', 'RFI');
             END IF;
         END$$;
-        """
-    )
+        """)
 
     # Create regulatory_agencies table
     op.create_table(

@@ -21,9 +21,7 @@ def upgrade() -> None:
     """Create Commercial Property Agent tables."""
 
     # Create ENUM types using raw SQL to avoid SQLAlchemy auto-creation issues
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'property_type') THEN
@@ -33,12 +31,8 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'property_status') THEN
@@ -47,12 +41,8 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
-    op.execute(
-        sa.text(
-            """
+            """))
+    op.execute(sa.text("""
             DO $$
             BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tenure_type') THEN
@@ -61,14 +51,10 @@ def upgrade() -> None:
                     );
                 END IF;
             END $$;
-            """
-        )
-    )
+            """))
 
     # Properties table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE properties (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 name VARCHAR(255) NOT NULL,
@@ -105,9 +91,7 @@ def upgrade() -> None:
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text(
             "CREATE INDEX idx_property_location ON properties USING gist (location)"
@@ -121,9 +105,7 @@ def upgrade() -> None:
     op.execute(sa.text("CREATE INDEX idx_property_district ON properties (district)"))
 
     # Market Transactions table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE market_transactions (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 property_id UUID NOT NULL REFERENCES properties(id),
@@ -145,9 +127,7 @@ def upgrade() -> None:
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text(
             "CREATE INDEX idx_transaction_date ON market_transactions (transaction_date)"
@@ -160,9 +140,7 @@ def upgrade() -> None:
     )
 
     # Rental Listings table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE rental_listings (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 property_id UUID NOT NULL REFERENCES properties(id),
@@ -187,9 +165,7 @@ def upgrade() -> None:
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
-            """
-        )
-    )
+            """))
     op.execute(sa.text("CREATE INDEX idx_rental_active ON rental_listings (is_active)"))
     op.execute(
         sa.text(
@@ -198,9 +174,7 @@ def upgrade() -> None:
     )
 
     # Development Pipeline table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE development_pipeline (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 project_name VARCHAR(255) NOT NULL,
@@ -229,9 +203,7 @@ def upgrade() -> None:
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text(
             "CREATE INDEX idx_pipeline_status ON development_pipeline (development_status)"
@@ -249,9 +221,7 @@ def upgrade() -> None:
     )
 
     # Property Photos table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE property_photos (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 property_id UUID NOT NULL REFERENCES properties(id),
@@ -272,9 +242,7 @@ def upgrade() -> None:
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text("CREATE INDEX idx_photo_property ON property_photos (property_id)")
     )
@@ -283,9 +251,7 @@ def upgrade() -> None:
     )
 
     # Development Analyses table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE development_analyses (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 property_id UUID NOT NULL REFERENCES properties(id),
@@ -308,9 +274,7 @@ def upgrade() -> None:
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text(
             "CREATE INDEX idx_analysis_property_date ON development_analyses (property_id, analysis_date)"
@@ -323,9 +287,7 @@ def upgrade() -> None:
     )
 
     # Yield Benchmarks table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE yield_benchmarks (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 benchmark_date DATE NOT NULL,
@@ -365,9 +327,7 @@ def upgrade() -> None:
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 CONSTRAINT uq_benchmark_date_type_location UNIQUE (benchmark_date, property_type, district)
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text("CREATE INDEX idx_benchmark_date ON yield_benchmarks (benchmark_date)")
     )
@@ -378,9 +338,7 @@ def upgrade() -> None:
     )
 
     # Absorption Tracking table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE absorption_tracking (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 project_id UUID,
@@ -413,9 +371,7 @@ def upgrade() -> None:
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text(
             "CREATE INDEX idx_absorption_project_date ON absorption_tracking (project_id, tracking_date)"
@@ -428,9 +384,7 @@ def upgrade() -> None:
     )
 
     # Market Cycles table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE market_cycles (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 cycle_date DATE NOT NULL,
@@ -453,15 +407,11 @@ def upgrade() -> None:
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 CONSTRAINT uq_cycle_date_type_segment UNIQUE (cycle_date, property_type, market_segment)
             )
-            """
-        )
-    )
+            """))
     op.execute(sa.text("CREATE INDEX idx_cycle_date ON market_cycles (cycle_date)"))
 
     # Market Indices table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE market_indices (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 index_date DATE NOT NULL,
@@ -478,16 +428,12 @@ def upgrade() -> None:
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 CONSTRAINT uq_index_date_name UNIQUE (index_date, index_name)
             )
-            """
-        )
-    )
+            """))
     op.execute(sa.text("CREATE INDEX idx_index_date ON market_indices (index_date)"))
     op.execute(sa.text("CREATE INDEX idx_index_name ON market_indices (index_name)"))
 
     # Competitive Sets table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE competitive_sets (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 set_name VARCHAR(255) NOT NULL,
@@ -508,9 +454,7 @@ def upgrade() -> None:
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
-            """
-        )
-    )
+            """))
     op.execute(
         sa.text(
             "CREATE INDEX idx_compset_primary ON competitive_sets (primary_property_id)"
@@ -521,9 +465,7 @@ def upgrade() -> None:
     )
 
     # Market Alerts table
-    op.execute(
-        sa.text(
-            """
+    op.execute(sa.text("""
             CREATE TABLE market_alerts (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 alert_type VARCHAR(50) NOT NULL,
@@ -544,9 +486,7 @@ def upgrade() -> None:
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
-            """
-        )
-    )
+            """))
     op.execute(sa.text("CREATE INDEX idx_alert_active ON market_alerts (is_active)"))
     op.execute(
         sa.text("CREATE INDEX idx_alert_triggered ON market_alerts (triggered_at)")

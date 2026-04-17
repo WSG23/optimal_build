@@ -20,7 +20,7 @@ def _normalise_key(key: str) -> str:
 
 
 def normalize_column_names(
-    records: Iterable[Mapping[str, object]]
+    records: Iterable[Mapping[str, object]],
 ) -> List[MutableMapping[str, object]]:
     """Return a list with normalised dictionary keys."""
 
