@@ -4,45 +4,26 @@ import {
   capturePropertyForDevelopment,
   type DevelopmentScenario,
   type SiteAcquisitionResult,
-  type GeometryDetailLevel,
 } from '../../../api/siteAcquisition'
 import { forwardGeocodeAddress } from '../../../api/geocoding'
-import { Preview3DViewer } from '../../components/site-acquisition/Preview3DViewer'
 import { useFeaturePreferences } from '../../../hooks/useFeaturePreferences'
 
 // Extracted types, constants, utils, and hooks
 import type { QuickAnalysisEntry } from './types'
-import {
-  SCENARIO_OPTIONS,
-  PREVIEW_DETAIL_OPTIONS,
-  PREVIEW_DETAIL_LABELS,
-} from './constants'
-import {
-  describeDetailLevel,
-  buildPropertyOverviewCards,
-  buildFeasibilitySignals,
-} from './utils'
-// formatCategoryName and getSeverityVisuals are used by child components
+import { SCENARIO_OPTIONS } from './constants'
+import { buildPropertyOverviewCards, buildFeasibilitySignals } from './utils'
 import { usePreviewJob } from './hooks/usePreviewJob'
 import { useCaptureScenarioComparison } from './hooks/useCaptureScenarioComparison'
-// InspectionHistoryContent is used by InspectionHistoryModal component
 import {
   PropertyOverviewSection,
-  PreviewLayersTable,
   type LayerAction,
 } from './components/property-overview'
 import { ScenarioFocusSection } from './components/scenario-focus'
 import { MultiScenarioComparisonSection } from './components/multi-scenario-comparison'
-// Removed redundant components (consolidated into PreviewLayersTable):
-// - LayerBreakdownCards (data shown in table)
-// - ColorLegendEditor (integrated as inline accordion in table)
-// - MassingLayersPanel (visibility controls integrated in table)
 import { VoiceObservationsPanel } from './components/VoiceObservationsPanel'
 import { OptimalIntelligenceCard } from './components/OptimalIntelligenceCard'
-// Modals not yet used but planned for future integration
-// import { QuickAnalysisHistoryModal, InspectionHistoryModal } from './components/modals'
-// PropertyCaptureForm replaced by CommandBar + inline components for map-dominant layout
 import { CommandBar } from './components/CommandBar'
+import { ConceptPreviewSection } from './components/ConceptPreviewSection'
 import {
   PropertyLocationMap,
   type HeritageFeature,
@@ -50,16 +31,7 @@ import {
 } from './components/map'
 
 // MUI & Canonical Components
-import {
-  Box,
-  Stack,
-  Typography,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-} from '@mui/material'
-import { Refresh } from '@mui/icons-material'
+import { Box, Stack, Typography } from '@mui/material'
 import { Button } from '../../../components/canonical/Button'
 import { useRouterController } from '../../../router'
 
@@ -750,156 +722,29 @@ export function SiteAcquisitionPage() {
                 <PropertyOverviewSection cards={propertyOverviewCards} />
 
                 {previewJob && (
-                  <Box
-                    sx={{
-                      mt: 'var(--ob-space-400)',
-                      bgcolor: 'background.default',
-                      borderRadius: 'var(--ob-radius-sm)',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {/* Header */}
-                    <Box
-                      sx={{
-                        p: 'var(--ob-space-200)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        borderBottom: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      <Typography variant="h6">Concept Preview</Typography>
-                      <Typography
-                        variant="overline"
-                        sx={{
-                          px: 'var(--ob-space-100)',
-                          border: '1px solid',
-                          borderColor: 'secondary.main',
-                          borderRadius: 'var(--ob-radius-xs)',
-                        }}
-                      >
-                        {previewJob.status.toUpperCase()}
-                      </Typography>
-                    </Box>
-
-                    {/* Preview surface */}
-                    <Box
-                      sx={{
-                        display: 'block',
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          minHeight: 'var(--ob-size-controls-min)',
-                          bgcolor: 'var(--ob-color-bg-root)',
-                          borderRadius: 'var(--ob-radius-sm)',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <Preview3DViewer
-                          previewUrl={previewJob.previewUrl}
-                          metadataUrl={previewViewerMetadataUrl}
-                          status={previewJob.status}
-                          thumbnailUrl={previewJob.thumbnailUrl}
-                          layerVisibility={previewLayerVisibility}
-                          focusLayerId={previewFocusLayerId}
-                        />
-                      </Box>
-                    </Box>
-
-                    {/* Controls bar - full width below */}
-                    <Box
-                      sx={{
-                        p: 'var(--ob-space-200)',
-                        borderTop: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      <Stack
-                        direction="row"
-                        spacing="var(--ob-space-300)"
-                        alignItems="center"
-                      >
-                        <FormControl
-                          size="small"
-                          sx={{ minWidth: 'var(--ob-size-input-sm)' }}
-                        >
-                          <InputLabel>Preview Detail</InputLabel>
-                          <Select
-                            value={previewDetailLevel}
-                            label="Preview Detail"
-                            onChange={(e) =>
-                              setPreviewDetailLevel(
-                                e.target.value as GeometryDetailLevel,
-                              )
-                            }
-                            disabled={isRefreshingPreview || !previewJob}
-                          >
-                            {PREVIEW_DETAIL_OPTIONS.map((option) => (
-                              <MenuItem key={option} value={option}>
-                                {PREVIEW_DETAIL_LABELS[option]}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={handleRefreshPreview}
-                          disabled={isRefreshingPreview || !previewJob}
-                        >
-                          <Refresh
-                            className={isRefreshingPreview ? 'fa-spin' : ''}
-                            sx={{
-                              fontSize: 'var(--ob-font-size-base)',
-                              mr: 'var(--ob-space-050)',
-                            }}
-                          />
-                          {isRefreshingPreview
-                            ? 'Refreshing...'
-                            : 'Refresh Preview Status'}
-                        </Button>
-
-                        <Typography variant="caption" color="text.secondary">
-                          Preview detail:{' '}
-                          <strong>
-                            {describeDetailLevel(
-                              previewJob.geometryDetailLevel,
-                            )}
-                          </strong>
-                        </Typography>
-                      </Stack>
-                    </Box>
-                  </Box>
-                )}
-
-                {/* Master Table - Single Source of Truth for all layer data and controls */}
-                {previewJob && (
-                  <PreviewLayersTable
-                    layers={previewLayerMetadata}
-                    visibility={previewLayerVisibility}
-                    focusLayerId={previewFocusLayerId}
+                  <ConceptPreviewSection
+                    previewJob={previewJob}
+                    previewViewerMetadataUrl={previewViewerMetadataUrl}
+                    previewDetailLevel={previewDetailLevel}
+                    setPreviewDetailLevel={setPreviewDetailLevel}
+                    isRefreshingPreview={isRefreshingPreview}
+                    handleRefreshPreview={handleRefreshPreview}
+                    previewLayerVisibility={previewLayerVisibility}
+                    previewFocusLayerId={previewFocusLayerId}
+                    previewLayerMetadata={previewLayerMetadata}
                     hiddenLayerCount={hiddenLayerCount}
-                    isLoading={isPreviewMetadataLoading}
-                    error={previewMetadataError}
+                    isPreviewMetadataLoading={isPreviewMetadataLoading}
+                    previewMetadataError={previewMetadataError}
                     onLayerAction={handleLayerAction}
-                    onShowAll={handleShowAllLayers}
-                    onResetFocus={handleResetLayerFocus}
-                    formatNumber={formatNumberMetric}
-                    // Integrated legend editor props (replaces standalone ColorLegendEditor)
-                    legendEntries={colorLegendEntries}
+                    onShowAllLayers={handleShowAllLayers}
+                    onResetLayerFocus={handleResetLayerFocus}
+                    formatNumberMetric={formatNumberMetric}
+                    colorLegendEntries={colorLegendEntries}
                     onLegendChange={handleLegendEntryChange}
                     legendHasPendingChanges={legendHasPendingChanges}
                     onLegendReset={handleLegendReset}
                   />
                 )}
-                {/* Removed redundant components:
-                    - ColorLegendEditor (now inline in table accordion)
-                    - MassingLayersPanel (visibility controls now in table)
-                    - LayerBreakdownCards (data shown in table columns)
-                */}
               </Box>
             </Box>
 

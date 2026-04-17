@@ -10,7 +10,6 @@ import {
   Button,
   Card,
   CardContent,
-  Checkbox,
   Chip,
   CircularProgress,
   Dialog,
@@ -18,33 +17,28 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
-  FormControlLabel,
   Grid,
   IconButton,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
-  Stack,
   Tab,
   Tabs,
   TextField,
   Typography,
 } from '@mui/material'
-import {
-  AccountBalance as HeritageIcon,
-  Add as AddIcon,
-  AttachFile as AttachIcon,
-  Check as CheckIcon,
-  Close as CloseIcon,
-  Delete as DeleteIcon,
-  Description as DocumentIcon,
-  History as HistoryIcon,
-  Info as InfoIcon,
-  Save as SaveIcon,
-  Send as SendIcon,
-  Upload as UploadIcon,
-} from '@mui/icons-material'
+import HeritageIcon from '@mui/icons-material/AccountBalance'
+import AttachIcon from '@mui/icons-material/AttachFile'
+import CheckIcon from '@mui/icons-material/Check'
+import CloseIcon from '@mui/icons-material/Close'
+import DocumentIcon from '@mui/icons-material/Description'
+import HistoryIcon from '@mui/icons-material/History'
+import InfoIcon from '@mui/icons-material/Info'
+import SaveIcon from '@mui/icons-material/Save'
+import SendIcon from '@mui/icons-material/Send'
+import { HeritageElementsTab } from './heritage/HeritageElementsTab'
+import { ProposedWorksTab } from './heritage/ProposedWorksTab'
+import { DocumentsTab } from './heritage/DocumentsTab'
 import {
   regulatoryApi,
   HeritageSubmission,
@@ -105,49 +99,6 @@ const CONSERVATION_STATUS_OPTIONS = [
     value: 'pre_war',
     label: 'Pre-War Building',
     description: 'Built before 1945',
-  },
-]
-
-const HERITAGE_ELEMENTS_OPTIONS = [
-  { id: 'facade', label: 'Original Facade', category: 'Exterior' },
-  { id: 'roof', label: 'Original Roof Form', category: 'Exterior' },
-  { id: 'windows', label: 'Original Windows/Doors', category: 'Exterior' },
-  { id: 'balcony', label: 'Balconies/Verandahs', category: 'Exterior' },
-  { id: 'ornaments', label: 'Decorative Ornaments', category: 'Exterior' },
-  { id: 'tiles', label: 'Original Floor Tiles', category: 'Interior' },
-  { id: 'staircase', label: 'Original Staircase', category: 'Interior' },
-  { id: 'columns', label: 'Columns/Pillars', category: 'Interior' },
-  { id: 'ceiling', label: 'Ornate Ceilings', category: 'Interior' },
-  { id: 'ironwork', label: 'Wrought Iron Work', category: 'Features' },
-  { id: 'signage', label: 'Historic Signage', category: 'Features' },
-  { id: 'garden', label: 'Heritage Garden/Landscape', category: 'Features' },
-]
-
-const INTERVENTION_TYPES = [
-  {
-    id: 'restoration',
-    label: 'Restoration',
-    description: 'Restore to original state',
-  },
-  {
-    id: 'rehabilitation',
-    label: 'Rehabilitation',
-    description: 'Adapt for new use while preserving character',
-  },
-  {
-    id: 'renovation',
-    label: 'Renovation',
-    description: 'Update with minimal heritage impact',
-  },
-  {
-    id: 'addition',
-    label: 'Addition',
-    description: 'New construction complementing heritage structure',
-  },
-  {
-    id: 'demolition',
-    label: 'Partial Demolition',
-    description: 'Remove non-heritage elements',
   },
 ]
 
@@ -600,381 +551,37 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
 
         {/* Tab 1: Heritage Elements */}
         <TabPanel value={tabValue} index={1}>
-          <Typography variant="subtitle1" gutterBottom>
-            Select all heritage elements present in the building:
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Identifying heritage elements helps STB understand the
-            building&apos;s significance and guide appropriate conservation
-            measures.
-          </Typography>
-
-          {['Exterior', 'Interior', 'Features'].map((category) => (
-            <Box key={category} sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" color="primary" sx={{ mb: 1.5 }}>
-                {category}
-              </Typography>
-              <Grid container spacing={1}>
-                {HERITAGE_ELEMENTS_OPTIONS.filter(
-                  (el) => el.category === category,
-                ).map((element) => (
-                  <Grid item xs={6} sm={4} md={3} key={element.id}>
-                    <Paper
-                      onClick={() =>
-                        !isSubmitted && handleElementToggle(element.id)
-                      }
-                      sx={{
-                        p: 1.5,
-                        cursor: isSubmitted ? 'default' : 'pointer',
-                        bgcolor: selectedElements.includes(element.id)
-                          ? 'rgba(46, 125, 50, 0.2)'
-                          : 'rgba(255, 255, 255, 0.03)',
-                        border: selectedElements.includes(element.id)
-                          ? '1px solid rgba(46, 125, 50, 0.5)'
-                          : '1px solid rgba(255, 255, 255, 0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        transition: 'all 0.2s',
-                        '&:hover': {
-                          bgcolor: isSubmitted
-                            ? undefined
-                            : selectedElements.includes(element.id)
-                              ? 'rgba(46, 125, 50, 0.3)'
-                              : 'rgba(255, 255, 255, 0.05)',
-                        },
-                      }}
-                    >
-                      <Checkbox
-                        checked={selectedElements.includes(element.id)}
-                        disabled={isSubmitted}
-                        size="small"
-                        sx={{ p: 0 }}
-                      />
-                      <Typography variant="body2">{element.label}</Typography>
-                    </Paper>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
-          ))}
-
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              Selected: {selectedElements.length} element(s)
-            </Typography>
-          </Box>
+          <HeritageElementsTab
+            selectedElements={selectedElements}
+            onElementToggle={handleElementToggle}
+            isSubmitted={isSubmitted}
+          />
         </TabPanel>
 
         {/* Tab 2: Proposed Works */}
         <TabPanel value={tabValue} index={2}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
-            <Box>
-              <Typography variant="subtitle1">
-                Proposed Interventions
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Describe the conservation works planned for this building.
-              </Typography>
-            </Box>
-            {!isSubmitted && (
-              <Button
-                startIcon={<AddIcon />}
-                onClick={handleAddIntervention}
-                variant="outlined"
-                size="small"
-              >
-                Add Intervention
-              </Button>
-            )}
-          </Box>
-
-          {interventions.length === 0 ? (
-            <Paper
-              sx={{
-                p: 4,
-                textAlign: 'center',
-                bgcolor: 'rgba(255, 255, 255, 0.03)',
-              }}
-            >
-              <DocumentIcon
-                sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }}
-              />
-              <Typography color="text.secondary">
-                No interventions defined yet. Click &quot;Add Intervention&quot;
-                to describe the proposed works.
-              </Typography>
-            </Paper>
-          ) : (
-            <Stack spacing={2}>
-              {interventions.map((intervention, index) => (
-                <Paper
-                  key={index}
-                  sx={{
-                    p: 2,
-                    bgcolor: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      gap: 2,
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <Chip
-                      label={index + 1}
-                      size="small"
-                      sx={{ minWidth: 32, mt: 1 }}
-                    />
-                    <Grid container spacing={2} sx={{ flex: 1 }}>
-                      <Grid item xs={12} sm={4}>
-                        <FormControl fullWidth size="small">
-                          <InputLabel>Type</InputLabel>
-                          <Select
-                            value={intervention.type}
-                            label="Type"
-                            onChange={(e) =>
-                              handleInterventionChange(
-                                index,
-                                'type',
-                                e.target.value,
-                              )
-                            }
-                            disabled={isSubmitted}
-                          >
-                            {INTERVENTION_TYPES.map((type) => (
-                              <MenuItem key={type.id} value={type.id}>
-                                <Box>
-                                  <Typography variant="body2">
-                                    {type.label}
-                                  </Typography>
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                  >
-                                    {type.description}
-                                  </Typography>
-                                </Box>
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={8}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          label="Description"
-                          multiline
-                          rows={2}
-                          value={intervention.description}
-                          onChange={(e) =>
-                            handleInterventionChange(
-                              index,
-                              'description',
-                              e.target.value,
-                            )
-                          }
-                          placeholder="Describe the specific works, materials, and conservation approach..."
-                          disabled={isSubmitted}
-                        />
-                      </Grid>
-                    </Grid>
-                    {!isSubmitted && (
-                      <IconButton
-                        onClick={() => handleRemoveIntervention(index)}
-                        size="small"
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    )}
-                  </Box>
-                </Paper>
-              ))}
-            </Stack>
-          )}
+          <ProposedWorksTab
+            interventions={interventions}
+            onAddIntervention={handleAddIntervention}
+            onRemoveIntervention={handleRemoveIntervention}
+            onInterventionChange={handleInterventionChange}
+            isSubmitted={isSubmitted}
+          />
         </TabPanel>
 
         {/* Tab 3: Documents */}
         <TabPanel value={tabValue} index={3}>
-          <Typography variant="subtitle1" gutterBottom>
-            Required Documents
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Upload supporting documents for your heritage submission.
-          </Typography>
-
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Paper
-                sx={{
-                  p: 2,
-                  bgcolor: 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                }}
-              >
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={conservationPlanAttached}
-                      onChange={(e) =>
-                        setConservationPlanAttached(e.target.checked)
-                      }
-                      disabled={isSubmitted}
-                    />
-                  }
-                  label={
-                    <Box>
-                      <Typography variant="body1">
-                        Conservation Management Plan
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Detailed plan for preserving heritage significance
-                        (Required for National Monuments)
-                      </Typography>
-                    </Box>
-                  }
-                />
-              </Paper>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <Paper
-                onClick={handlePhotoUpload}
-                sx={{
-                  p: 3,
-                  textAlign: 'center',
-                  border: '2px dashed',
-                  borderColor:
-                    uploadedPhotos.length > 0
-                      ? 'success.main'
-                      : 'rgba(255, 255, 255, 0.2)',
-                  cursor: isSubmitted ? 'default' : 'pointer',
-                  bgcolor:
-                    uploadedPhotos.length > 0
-                      ? 'rgba(46, 125, 50, 0.1)'
-                      : 'transparent',
-                  '&:hover': isSubmitted
-                    ? {}
-                    : {
-                        bgcolor: 'rgba(255, 255, 255, 0.05)',
-                        borderColor: 'primary.main',
-                      },
-                }}
-              >
-                <UploadIcon
-                  sx={{
-                    fontSize: 40,
-                    color:
-                      uploadedPhotos.length > 0
-                        ? 'success.main'
-                        : 'text.secondary',
-                    mb: 1,
-                  }}
-                />
-                <Typography variant="body2">
-                  Upload Historical Photos
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Original photographs, archival images
-                </Typography>
-                {uploadedPhotos.length > 0 && (
-                  <Box sx={{ mt: 2, textAlign: 'left' }}>
-                    {uploadedPhotos.map((file, idx) => (
-                      <Chip
-                        key={idx}
-                        label={file}
-                        size="small"
-                        onDelete={
-                          isSubmitted ? undefined : () => handleRemovePhoto(idx)
-                        }
-                        sx={{ m: 0.5 }}
-                      />
-                    ))}
-                  </Box>
-                )}
-              </Paper>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <Paper
-                onClick={handleDrawingUpload}
-                sx={{
-                  p: 3,
-                  textAlign: 'center',
-                  border: '2px dashed',
-                  borderColor:
-                    uploadedDrawings.length > 0
-                      ? 'success.main'
-                      : 'rgba(255, 255, 255, 0.2)',
-                  cursor: isSubmitted ? 'default' : 'pointer',
-                  bgcolor:
-                    uploadedDrawings.length > 0
-                      ? 'rgba(46, 125, 50, 0.1)'
-                      : 'transparent',
-                  '&:hover': isSubmitted
-                    ? {}
-                    : {
-                        bgcolor: 'rgba(255, 255, 255, 0.05)',
-                        borderColor: 'primary.main',
-                      },
-                }}
-              >
-                <UploadIcon
-                  sx={{
-                    fontSize: 40,
-                    color:
-                      uploadedDrawings.length > 0
-                        ? 'success.main'
-                        : 'text.secondary',
-                    mb: 1,
-                  }}
-                />
-                <Typography variant="body2">
-                  Upload Architectural Drawings
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Plans, elevations, sections
-                </Typography>
-                {uploadedDrawings.length > 0 && (
-                  <Box sx={{ mt: 2, textAlign: 'left' }}>
-                    {uploadedDrawings.map((file, idx) => (
-                      <Chip
-                        key={idx}
-                        label={file}
-                        size="small"
-                        onDelete={
-                          isSubmitted
-                            ? undefined
-                            : () => handleRemoveDrawing(idx)
-                        }
-                        sx={{ m: 0.5 }}
-                      />
-                    ))}
-                  </Box>
-                )}
-              </Paper>
-            </Grid>
-          </Grid>
-
-          <Alert severity="info" sx={{ mt: 3 }}>
-            <Typography variant="body2">
-              Document upload is simulated in this demo. Files are tracked
-              locally but not persisted to the server. In production, files
-              would be uploaded to secure storage and attached to the
-              submission.
-            </Typography>
-          </Alert>
+          <DocumentsTab
+            conservationPlanAttached={conservationPlanAttached}
+            onConservationPlanChange={setConservationPlanAttached}
+            uploadedPhotos={uploadedPhotos}
+            uploadedDrawings={uploadedDrawings}
+            onPhotoUpload={handlePhotoUpload}
+            onDrawingUpload={handleDrawingUpload}
+            onRemovePhoto={handleRemovePhoto}
+            onRemoveDrawing={handleRemoveDrawing}
+            isSubmitted={isSubmitted}
+          />
         </TabPanel>
       </DialogContent>
 

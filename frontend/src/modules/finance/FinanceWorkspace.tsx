@@ -1,27 +1,9 @@
-import {
-  type ChangeEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import {
   runFinanceFeasibility,
-  updateConstructionLoan,
-  updateFinanceScenario,
-  runScenarioSensitivity,
-  deleteFinanceScenario,
-  exportFinanceScenarioCsv,
-  exportFinanceScenarioWorkbook,
-  importFinanceWorkbook,
-  previewFinanceWorkbookImport,
   fetchFinanceAuditEvidence,
-  type ConstructionLoanInput,
   type FinanceAuditEvidence,
-  type FinanceWorkbookImportPreview,
-  type SensitivityBandInput,
   type FinanceAnalyticsMetadata,
 } from '../../api/finance'
 import { resolveDefaultRole } from '../../api/identity'
@@ -65,12 +47,11 @@ import { FinanceTabPanels } from './FinanceTabPanels'
 import {
   POLL_INTERVAL_MS,
   ALLOWED_FINANCE_ROLES,
-  DEFAULT_SENSITIVITY_HEADERS,
   shortenProjectId,
   isJobPending,
-  escapeCsvValue,
-  downloadFile,
 } from './financeUtils'
+// useFinanceWorkspaceActions available for future extraction of action handlers
+// import { useFinanceWorkspaceActions } from './hooks/useFinanceWorkspaceActions'
 
 interface FinanceWorkspaceProps {
   workspace?: 'agent' | 'developer'
