@@ -355,9 +355,9 @@ export function DealCalculatorPage() {
           role: 'status',
           'aria-live': 'polite' as const,
           sx: {
-            bgcolor: 'var(--ob-gold-bg)',
-            color: 'var(--ob-gold-text)',
-            border: '1px solid var(--ob-gold-400)',
+            bgcolor: 'var(--ob-success-bg)',
+            color: 'var(--ob-success-text)',
+            border: '1px solid var(--ob-success-400)',
             borderRadius: 'var(--ob-radius-sm)',
             fontWeight: 600,
           },

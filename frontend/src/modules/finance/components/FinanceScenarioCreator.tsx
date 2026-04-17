@@ -82,14 +82,14 @@ export function FinanceScenarioCreator({
   }, [assets])
 
   const chartData = useMemo(() => {
-    const cyanPalette = ['#00f3ff', '#0096cc', '#0077a3', '#005577']
+    const brandPalette = ['#3B7CB8', '#2d6697', '#1e4f7a', '#153d5e']
 
     const data = assets
       .filter((a) => Number(a.allocationPct) > 0)
       .map((asset, index) => ({
         name: asset.assetType || `Asset ${index + 1}`,
         value: Number(asset.allocationPct),
-        color: cyanPalette[index % cyanPalette.length],
+        color: brandPalette[index % brandPalette.length],
       }))
 
     const allocated = data.reduce((acc, item) => acc + item.value, 0)

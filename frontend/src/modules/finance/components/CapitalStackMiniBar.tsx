@@ -24,17 +24,17 @@ export function CapitalStackMiniBar({ stack }: CapitalStackMiniBarProps) {
       {
         type: 'equity',
         width: isNaN(equityPct) ? 0 : equityPct,
-        color: 'var(--ob-color-neon-cyan)', // Bright cyan (#00f3ff)
+        color: 'var(--ob-color-brand-primary)',
       },
       {
         type: 'debt',
         width: isNaN(debtPct) ? 0 : debtPct,
-        color: 'var(--ob-color-neon-cyan-dark, #0096cc)', // Medium cyan (from reference palette)
+        color: 'var(--ob-color-brand-primary-strong)', // Medium cyan (from reference palette)
       },
       {
         type: 'gap',
         width: isNaN(otherPct) ? 0 : otherPct,
-        color: 'var(--ob-color-bg-dark, #1e293b)', // Dark slate (from reference palette)
+        color: 'var(--ob-color-bg-dark, #1c1917)', // Dark slate (from reference palette)
       },
     ]
   }, [stack])

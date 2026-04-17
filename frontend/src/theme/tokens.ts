@@ -40,11 +40,11 @@ export const darkColors = {
     100: '#f5f5f5', // High-contrast text
   },
 
-  // Kin (Gold) - Primary Actions, Highlights
+  // Kin — Primary Actions, Highlights (Slate Blue)
   kin: {
-    500: '#E6B422', // Primary Gold
-    600: '#C49510', // Hover Gold
-    900: '#4D3B00', // Dark Gold Background
+    500: '#3B7CB8', // Primary Blue
+    600: '#2d6697', // Hover Blue
+    900: '#0f2a42', // Dark Blue Background
   },
 
   // Akarn (Signal Red) - Errors, Alerts
@@ -79,11 +79,11 @@ export const lightColors = {
     100: '#171717', // High-contrast text (near-black)
   },
 
-  // Kin (Gold) - Primary Actions, Highlights (slightly deeper for light bg)
+  // Kin — Primary Actions, Highlights (Slate Blue for light bg)
   kin: {
-    500: '#D4A41A', // Primary Gold (darkened for light bg)
-    600: '#B8890E', // Hover Gold
-    900: '#FDF6E3', // Light Gold Background
+    500: '#2d6697', // Primary Blue (darkened for light bg)
+    600: '#1e4f7a', // Hover Blue
+    900: '#e0eefa', // Light Blue Background
   },
 
   // Akarn (Signal Red) - Errors, Alerts

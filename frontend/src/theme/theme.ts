@@ -6,6 +6,7 @@ import type { ThemeMode } from './ThemeContext'
  * Theme Configuration
  * =============================================================================
  * Maps canonical design tokens from @ob/tokens to MUI's theme system.
+ * Palette: Warm Stone & Slate Blue.
  * CSS variables in tokens.css are the SINGLE SOURCE OF TRUTH.
  * This theme uses the static JS values for MUI compatibility.
  * =============================================================================
@@ -13,42 +14,40 @@ import type { ThemeMode } from './ThemeContext'
 
 /**
  * Get mode-specific color values
- * Dark mode uses the standard palette, light mode inverts where needed
+ * Dark mode uses warm stone palette, light mode uses inverted warm stone
  */
 function getModeColors(mode: ThemeMode) {
   if (mode === 'dark') {
     return {
       background: {
-        default: '#121212', // User specific request "Darkest"
-        paper: '#1E1E1E', // User specific request "Lighter"
+        default: colors.neutral[950], // #0c0a09 — Warm stone root
+        paper: colors.neutral[900], // #151311 — Warm charcoal surface
       },
       text: {
-        primary: colors.neutral[100],
-        secondary: colors.neutral[400],
-        disabled: colors.neutral[600],
+        primary: colors.neutral[100], // #f5f5f4 — Warm off-white
+        secondary: colors.neutral[400], // #a8a29e — Stone-400 labels
+        disabled: colors.neutral[600], // #44403c — Ghost UI
       },
-      divider: '#333333', // User specific request "Subtle 1px borders"
+      divider: 'rgba(245, 235, 220, 0.10)', // Cream-tinted border
       surface: {
-        elevated: colors.neutral[800],
+        elevated: colors.neutral[800], // #1c1917 — Stone-900
       },
     }
   }
-  // Light mode - Premium "slatedness" preserved
-  // Uses Slate-200 (#e2e8f0) as base to make glass panels pop
-  // Per AI Studio Protocol: backgrounds become Slate-50 (now Slate-200 for premium feel)
+  // Light mode — Clean whites with warm stone text hierarchy
   return {
     background: {
-      default: '#e2e8f0', // Slate-200: Blue-tinted gray for premium look
-      paper: '#f8fafc', // Slate-50: Slightly lighter for cards/panels
+      default: '#ffffff', // Clean white page
+      paper: colors.neutral[100], // #f5f5f4 — Stone-100 cards
     },
     text: {
-      primary: '#0f172a', // Slate-900
-      secondary: '#475569', // Slate-600
-      disabled: colors.neutral[400],
+      primary: '#1c1917', // Stone-900 — Near black
+      secondary: '#44403c', // Stone-700
+      disabled: colors.neutral[400], // #a8a29e — Stone-400
     },
-    divider: 'rgba(0, 0, 0, 0.08)', // Subtle divider for light mode
+    divider: 'rgba(28, 25, 23, 0.12)', // Warm black border
     surface: {
-      elevated: '#f1f5f9', // Slate-100
+      elevated: colors.neutral[200], // #e7e5e3 — Stone-200
     },
   }
 }
@@ -70,16 +69,16 @@ function createAppTheme(mode: ThemeMode): Theme {
       mode,
       background: modeColors.background,
       primary: {
-        main: colors.brand[600],
-        light: colors.brand[400],
-        dark: colors.brand[700],
-        contrastText: '#ffffff',
+        main: colors.brand[500], // #3B7CB8 — Institutional Slate Blue
+        light: colors.brand[400], // #5a9ad4
+        dark: colors.brand[700], // #1e4f7a
+        contrastText: '#fafaf9', // Light text on blue
       },
       secondary: {
         main: colors.accent[500],
         light: colors.accent[400],
         dark: colors.accent[600],
-        contrastText: colors.neutral[900],
+        contrastText: colors.neutral[950],
       },
       error: {
         main: colors.error[600],
@@ -107,23 +106,36 @@ function createAppTheme(mode: ThemeMode): Theme {
     typography: {
       fontFamily: typography.family.base,
       h1: {
+        fontFamily: typography.family.display,
         fontWeight: typography.weight.bold,
         fontSize: typography.size['2xl'],
         letterSpacing: '-0.02em',
         lineHeight: typography.lineHeight.tight,
+        '@media (max-width: 600px)': {
+          fontSize: typography.size.xl,
+        },
       },
       h2: {
+        fontFamily: typography.family.display,
         fontWeight: typography.weight.bold,
         fontSize: typography.size.xl,
         letterSpacing: '-0.01em',
         lineHeight: typography.lineHeight.tight,
+        '@media (max-width: 600px)': {
+          fontSize: typography.size.lg,
+        },
       },
       h3: {
+        fontFamily: typography.family.display,
         fontWeight: typography.weight.semibold,
         fontSize: typography.size.lg,
         lineHeight: typography.lineHeight.normal,
+        '@media (max-width: 600px)': {
+          fontSize: typography.size.base,
+        },
       },
       h4: {
+        fontFamily: typography.family.display,
         fontWeight: typography.weight.semibold,
         fontSize: typography.size.base,
         lineHeight: typography.lineHeight.normal,
@@ -164,7 +176,7 @@ function createAppTheme(mode: ThemeMode): Theme {
           },
           containedPrimary: {
             '&:hover': {
-              backgroundColor: colors.brand[700],
+              backgroundColor: colors.brand[600],
             },
           },
           containedSecondary: {
@@ -216,7 +228,7 @@ function createAppTheme(mode: ThemeMode): Theme {
       MuiCssBaseline: {
         styleOverrides: {
           body: {
-            scrollbarColor: `${colors.neutral[600]} ${colors.neutral[900]}`,
+            scrollbarColor: `${colors.neutral[600]} ${colors.neutral[950]}`,
             '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
               backgroundColor: modeColors.background.default,
               width: spacing['050'],

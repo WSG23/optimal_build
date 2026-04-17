@@ -116,11 +116,10 @@ function ScenarioCard({
         cursor: 'pointer',
         // Active state neon glow
         ...(active && {
-          borderColor: 'var(--ob-color-neon-cyan)',
-          boxShadow: 'var(--ob-glow-neon-cyan)',
+          borderColor: 'var(--ob-color-brand-primary)',
         }),
         '&:focus-visible': {
-          outline: '2px solid var(--ob-color-neon-cyan)',
+          outline: '2px solid var(--ob-color-brand-primary)',
           outlineOffset: 2,
         },
       }}
@@ -157,8 +156,7 @@ function ScenarioCard({
                 fontSize: 'var(--ob-font-size-xs)',
                 fontWeight: 800,
                 letterSpacing: 'var(--ob-letter-spacing-wider)',
-                color: 'var(--ob-color-neon-cyan)',
-                textShadow: 'var(--ob-glow-neon-text)',
+                color: 'var(--ob-color-brand-primary)',
                 textTransform: 'uppercase',
               }}
             >
@@ -240,9 +238,9 @@ function ScenarioCard({
                     border: 'var(--ob-border-fine)',
                     // Gold color for primary scenario star
                     ...(scenario.isPrimary && {
-                      color: 'var(--ob-color-accent-gold, #FFD700)',
+                      color: 'var(--ob-gold-500, #C8A951)',
                       '&.Mui-disabled': {
-                        color: 'var(--ob-color-accent-gold, #FFD700)',
+                        color: 'var(--ob-gold-500, #C8A951)',
                       },
                     }),
                   }}
@@ -252,7 +250,7 @@ function ScenarioCard({
                   ) : scenario.isPrimary ? (
                     <StarIcon
                       fontSize="small"
-                      sx={{ color: 'var(--ob-color-accent-gold, #FFD700)' }}
+                      sx={{ color: 'var(--ob-gold-500, #C8A951)' }}
                     />
                   ) : (
                     <StarBorderIcon fontSize="small" />

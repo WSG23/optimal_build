@@ -92,7 +92,13 @@ function StatusSummaryCard({
   const percentage = total > 0 ? (count / total) * 100 : 0
 
   return (
-    <Card variant="outlined">
+    <Card
+      variant="outlined"
+      sx={{
+        borderLeft: `3px solid`,
+        borderLeftColor: color,
+      }}
+    >
       <CardContent>
         <Typography variant="overline" color="text.secondary">
           {title}
@@ -106,11 +112,11 @@ function StatusSummaryCard({
           sx={{
             mt: 1,
             height: 6,
-            borderRadius: 3,
+            borderRadius: 'var(--ob-radius-xs)',
             backgroundColor: 'action.disabledBackground',
             '& .MuiLinearProgress-bar': {
               backgroundColor: color,
-              borderRadius: 3,
+              borderRadius: 'var(--ob-radius-xs)',
             },
           }}
         />
@@ -231,7 +237,7 @@ function TimelineEvent({
     ? 'var(--ob-color-status-success, #10b981)'
     : isPending
       ? 'var(--ob-color-status-warning, #f59e0b)'
-      : 'var(--ob-color-status-info, #3b82f6)'
+      : 'var(--ob-color-status-info, #8b5cf6)'
 
   return (
     <Box sx={{ display: 'flex', mb: isLast ? 0 : 2 }}>
@@ -258,7 +264,9 @@ function TimelineEvent({
             width: 28,
             height: 28,
             borderRadius: '50%',
-            backgroundColor: isCompleted ? dotColor : 'white',
+            backgroundColor: isCompleted
+              ? dotColor
+              : 'var(--ob-color-bg-surface)',
             border: `2px solid ${dotColor}`,
             display: 'flex',
             alignItems: 'center',
@@ -280,7 +288,8 @@ function TimelineEvent({
               width: 2,
               flex: 1,
               minHeight: 20,
-              backgroundColor: 'action.disabledBackground',
+              backgroundColor: dotColor,
+              opacity: 0.25,
               mt: 0.5,
             }}
           />

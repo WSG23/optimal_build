@@ -54,7 +54,7 @@ export interface AssetMixChartProps {
 
 // Cyber-minimalism color palette for pie chart segments
 const CHART_COLORS = [
-  'var(--ob-color-neon-cyan)', // Primary - Cyan
+  'var(--ob-color-brand-primary)', // Primary - Cyan
   'var(--ob-success-500)', // Secondary - Green
   'var(--ob-info-500)', // Tertiary - Indigo
   'var(--ob-warning-500)', // Quaternary - Amber
@@ -64,11 +64,11 @@ const CHART_COLORS = [
 
 // Resolved color values for Recharts (CSS variables don't work in SVG filters)
 const CHART_COLORS_RESOLVED = [
-  '#00f3ff', // Cyan
+  '#3B7CB8', // Slate blue (brand)
   '#22c55e', // Green
-  '#6366f1', // Indigo
+  '#8b5cf6', // Violet
   '#f59e0b', // Amber
-  '#64748b', // Gray
+  '#78716c', // Stone gray
   '#ec4899', // Magenta
 ]
 
@@ -209,7 +209,7 @@ export function AssetMixChart({
           sx={{
             fontSize: 'var(--ob-font-size-2xs)',
             fontWeight: 600,
-            color: 'var(--ob-text-secondary)',
+            color: 'var(--ob-color-text-secondary)',
             bgcolor: 'var(--ob-surface-glass-subtle)',
             px: 'var(--ob-space-075)',
             py: 'var(--ob-space-025)',
@@ -301,7 +301,7 @@ export function AssetMixChart({
                 fontWeight: 600,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color: 'var(--ob-text-secondary)',
+                color: 'var(--ob-color-text-secondary)',
                 lineHeight: 1,
               }}
             >
@@ -338,7 +338,7 @@ export function AssetMixChart({
               gridTemplateColumns: 'auto 1fr auto',
               gap: 'var(--ob-space-075)',
               alignItems: 'center',
-              pb: 'var(--ob-space-050)',
+              pb: 'var(--ob-space-075)',
               borderBottom: '1px solid var(--ob-color-border-subtle)',
             }}
           >
@@ -350,7 +350,7 @@ export function AssetMixChart({
                 fontWeight: 700,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                color: 'var(--ob-text-secondary)',
+                color: 'var(--ob-color-text-secondary)',
               }}
             >
               Asset Class
@@ -361,7 +361,7 @@ export function AssetMixChart({
                 fontWeight: 700,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                color: 'var(--ob-text-secondary)',
+                color: 'var(--ob-color-text-secondary)',
                 textAlign: 'right',
               }}
             >
@@ -389,10 +389,10 @@ export function AssetMixChart({
                   cursor: 'pointer',
                   transition: 'all 0.15s ease-out',
                   bgcolor: isActive
-                    ? 'color-mix(in srgb, var(--ob-color-neon-cyan) 10%, transparent)'
+                    ? 'color-mix(in srgb, var(--ob-color-brand-primary) 10%, transparent)'
                     : 'transparent',
                   boxShadow: isActive
-                    ? 'inset 0 0 0 1px color-mix(in srgb, var(--ob-color-neon-cyan) 30%, transparent)'
+                    ? 'inset 0 0 0 1px color-mix(in srgb, var(--ob-color-brand-primary) 30%, transparent)'
                     : 'none',
                 }}
               >
@@ -433,7 +433,7 @@ export function AssetMixChart({
                     fontSize: 'var(--ob-font-size-sm)',
                     fontWeight: 700,
                     color: isActive
-                      ? 'var(--ob-color-neon-cyan)'
+                      ? 'var(--ob-color-brand-primary)'
                       : 'var(--ob-color-text-primary)',
                     textAlign: 'right',
                     fontVariantNumeric: 'tabular-nums',
@@ -452,7 +452,6 @@ export function AssetMixChart({
       {aiInsight && (
         <Box
           sx={{
-            mt: 'var(--ob-space-050)',
             p: 'var(--ob-space-100)',
             bgcolor: 'var(--ob-color-status-info-bg)',
             borderLeft: '3px solid',
@@ -482,7 +481,7 @@ export function AssetMixChart({
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-xs)',
-                color: 'var(--ob-text-secondary)',
+                color: 'var(--ob-color-text-secondary)',
                 lineHeight: 1.4,
               }}
             >

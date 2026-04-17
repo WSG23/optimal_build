@@ -70,15 +70,34 @@ export function AnalyticsPanel({
         className="bp-analytics__metrics"
         sx={{ mb: 4 }}
       >
-        {metrics.map((metric) => (
-          <Grid item xs={12} sm={6} md={4} key={metric.key}>
-            <MetricTile
-              label={metric.label}
-              value={metric.value}
-              variant="default"
-            />
-          </Grid>
-        ))}
+        {metrics.map((metric, idx) => {
+          const accentColors = [
+            'var(--ob-brand-500)',
+            'var(--ob-accent-500)',
+            'var(--ob-warning-500)',
+            'var(--ob-info-500)',
+            'var(--ob-success-500)',
+            'var(--ob-error-500)',
+          ]
+          const accent = accentColors[idx % accentColors.length]
+          return (
+            <Grid item xs={12} sm={6} md={4} key={metric.key}>
+              <Box
+                sx={{
+                  borderLeft: `3px solid ${accent}`,
+                  borderRadius: 'var(--ob-radius-sm)',
+                  overflow: 'hidden',
+                }}
+              >
+                <MetricTile
+                  label={metric.label}
+                  value={metric.value}
+                  variant="default"
+                />
+              </Box>
+            </Grid>
+          )
+        })}
       </Grid>
 
       <Box className="bp-analytics__trend">
@@ -129,7 +148,7 @@ export function AnalyticsPanel({
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}
-                  stroke="rgba(255,255,255,0.1)"
+                  stroke="rgba(245, 235, 220, 0.1)"
                 />
                 <XAxis
                   dataKey="label"
@@ -171,28 +190,18 @@ export function AnalyticsPanel({
                   }}
                 />
                 <Legend iconType="circle" />
-                <Area
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="gross"
-                  name="Gross pipeline"
-                  fill="url(#colorGross)"
-                  stroke="#3B82F6"
-                  fillOpacity={1}
-                />
-                <Area
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="weighted"
-                  name="Weighted pipeline"
-                  fill="url(#colorWeighted)"
-                  stroke="#10B981"
-                  fillOpacity={1}
-                />
                 <defs>
                   <linearGradient id="colorGross" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                    <stop
+                      offset="5%"
+                      stopColor="var(--ob-brand-500)"
+                      stopOpacity={0.3}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor="var(--ob-brand-500)"
+                      stopOpacity={0}
+                    />
                   </linearGradient>
                   <linearGradient
                     id="colorWeighted"
@@ -201,16 +210,42 @@ export function AnalyticsPanel({
                     x2="0"
                     y2="1"
                   >
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                    <stop
+                      offset="5%"
+                      stopColor="var(--ob-accent-500)"
+                      stopOpacity={0.3}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor="var(--ob-accent-500)"
+                      stopOpacity={0}
+                    />
                   </linearGradient>
                 </defs>
+                <Area
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="gross"
+                  name="Gross pipeline"
+                  fill="url(#colorGross)"
+                  stroke="var(--ob-brand-500)"
+                  fillOpacity={1}
+                />
+                <Area
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="weighted"
+                  name="Weighted pipeline"
+                  fill="url(#colorWeighted)"
+                  stroke="var(--ob-accent-500)"
+                  fillOpacity={1}
+                />
                 <Line
                   yAxisId="right"
                   type="monotone"
                   dataKey="conversion"
                   name="Conversion rate"
-                  stroke="#F59E0B"
+                  stroke="var(--ob-warning-500)"
                   strokeWidth={2}
                   dot={false}
                 />
@@ -219,7 +254,7 @@ export function AnalyticsPanel({
                   type="monotone"
                   dataKey="cycle"
                   name="Cycle time (days)"
-                  stroke="#8B5CF6"
+                  stroke="var(--ob-info-500)"
                   strokeDasharray="4 2"
                   strokeWidth={2}
                   dot={false}
