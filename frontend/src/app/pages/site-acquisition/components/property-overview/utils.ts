@@ -3,17 +3,15 @@
  */
 
 import { SvgIconProps } from '@mui/material'
-import {
-  LocationOn as MapPinIcon,
-  GpsFixed as TargetIcon,
-  AccountBalance as HistoryIcon,
-  Schedule as ClockIcon,
-  PieChart as PieChartIcon,
-  TrendingUp as TrendingUpIcon,
-  Visibility as EyeIcon,
-  Apartment as BuildingIcon,
-  Map as MapIcon,
-} from '@mui/icons-material'
+import MapPinIcon from '@mui/icons-material/LocationOn'
+import TargetIcon from '@mui/icons-material/GpsFixed'
+import HistoryIcon from '@mui/icons-material/AccountBalance'
+import ClockIcon from '@mui/icons-material/Schedule'
+import PieChartIcon from '@mui/icons-material/PieChart'
+import TrendingUpIcon from '@mui/icons-material/TrendingUp'
+import EyeIcon from '@mui/icons-material/Visibility'
+import BuildingIcon from '@mui/icons-material/Apartment'
+import MapIcon from '@mui/icons-material/Map'
 import { ComponentType } from 'react'
 
 // ============================================================================

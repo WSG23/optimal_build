@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 
 import { Box, Typography } from '@mui/material'
-import { Refresh } from '@mui/icons-material'
+import Refresh from '@mui/icons-material/Refresh'
 
 import { Button } from '../../../components/canonical/Button'
 import { useTranslation } from '../../../i18n'

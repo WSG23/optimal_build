@@ -1,11 +1,9 @@
 import { ReactNode, Suspense, lazy, useCallback, useMemo } from 'react'
 import { Box, Grid, Typography, useTheme } from '@mui/material'
-import {
-  AccountTreeOutlined,
-  AutoGraph,
-  ErrorOutline,
-  HubOutlined,
-} from '@mui/icons-material'
+import AccountTreeOutlined from '@mui/icons-material/AccountTreeOutlined'
+import AutoGraph from '@mui/icons-material/AutoGraph'
+import ErrorOutline from '@mui/icons-material/ErrorOutline'
+import HubOutlined from '@mui/icons-material/HubOutlined'
 
 import { AppLayout } from '../../App'
 import { EmptyState, Skeleton, SkeletonText } from '../../components/canonical'

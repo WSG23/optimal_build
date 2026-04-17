@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Box, Grid, Stack, Typography } from '@mui/material'
-import { Check } from '@mui/icons-material'
+import Check from '@mui/icons-material/Check'
 
 import type { ProfessionalPackType } from '../../../api/agents'
 import { useMarketingPacks } from './hooks/useMarketingPacks'

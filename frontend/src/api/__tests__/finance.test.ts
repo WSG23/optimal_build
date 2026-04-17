@@ -244,7 +244,9 @@ describe('finance API mapping', () => {
     globalThis.fetch = (async (input) => {
       const url = typeof input === 'string' ? input : input.toString()
       expect(
-        url.includes('/api/v1/audit/by-ref/550e8400-e29b-41d4-a716-446655440000/evidence'),
+        url.includes(
+          '/api/v1/audit/by-ref/550e8400-e29b-41d4-a716-446655440000/evidence',
+        ),
       ).toBe(true)
       return {
         ok: true,

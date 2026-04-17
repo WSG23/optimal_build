@@ -13,18 +13,16 @@ import {
   Theme,
   Skeleton,
 } from '@mui/material'
-import {
-  TrendingUp,
-  AccountBalance,
-  Group,
-  Gavel,
-  ArrowForward,
-  MoreVert,
-  Construction,
-  Map,
-  PieChart,
-  Settings,
-} from '@mui/icons-material'
+import TrendingUp from '@mui/icons-material/TrendingUp'
+import AccountBalance from '@mui/icons-material/AccountBalance'
+import Group from '@mui/icons-material/Group'
+import Gavel from '@mui/icons-material/Gavel'
+import ArrowForward from '@mui/icons-material/ArrowForward'
+import MoreVert from '@mui/icons-material/MoreVert'
+import Construction from '@mui/icons-material/Construction'
+import Map from '@mui/icons-material/Map'
+import PieChart from '@mui/icons-material/PieChart'
+import Settings from '@mui/icons-material/Settings'
 
 import { useProjectScope } from '../../../contexts/useProjectScope'
 import { useRouterController } from '../../../router'

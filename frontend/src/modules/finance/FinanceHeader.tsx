@@ -1,8 +1,6 @@
 import { Box, Stack, Tabs, Tab, Typography } from '@mui/material'
-import {
-  PushPin as PushPinIcon,
-  PushPinOutlined as PushPinOutlinedIcon,
-} from '@mui/icons-material'
+import PushPinIcon from '@mui/icons-material/PushPin'
+import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined'
 
 import { Button } from '../../components/canonical/Button'
 import {

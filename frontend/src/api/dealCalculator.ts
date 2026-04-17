@@ -1,9 +1,5 @@
 import { applyIdentityHeaders } from './identity'
-import {
-  buildUrl,
-  coerceNumber as coerceNumeric,
-  coerceString,
-} from './shared'
+import { buildUrl, coerceNumber as coerceNumeric, coerceString } from './shared'
 import {
   mapExternalSourceMetadata,
   type ExternalSourceMetadata,
@@ -151,7 +147,9 @@ function mapRuleCorpusStatus(payload: unknown): RuleCorpusStatus | null {
       published: coerceNumeric(counts.published) ?? 0,
       traceable: coerceNumeric(counts.traceable) ?? 0,
       needsReview:
-        coerceNumeric(counts.needsReview) ?? coerceNumeric(counts.needs_review) ?? 0,
+        coerceNumeric(counts.needsReview) ??
+        coerceNumeric(counts.needs_review) ??
+        0,
       rejected: coerceNumeric(counts.rejected) ?? 0,
     },
     appliedRuleIds: Array.isArray(source.appliedRuleIds)
@@ -176,9 +174,10 @@ function mapStringList(value: unknown): string[] {
 }
 
 function mapFinanceSummary(payload: unknown): DealCalculatorFinanceSummary {
-  const source = payload && typeof payload === 'object'
-    ? (payload as Record<string, unknown>)
-    : {}
+  const source =
+    payload && typeof payload === 'object'
+      ? (payload as Record<string, unknown>)
+      : {}
 
   return {
     totalCapexSgd:
@@ -231,10 +230,9 @@ function mapResult(payload: unknown): DealCalculatorResult {
       coerceString(source.generated_at) ??
       new Date().toISOString(),
     site: {
-      inputMode:
-        (coerceString(site.inputMode) ?? coerceString(site.input_mode) ?? 'manual') as
-          | 'address'
-          | 'manual',
+      inputMode: (coerceString(site.inputMode) ??
+        coerceString(site.input_mode) ??
+        'manual') as 'address' | 'manual',
       formattedAddress:
         coerceString(site.formattedAddress) ??
         coerceString(site.formatted_address) ??
@@ -243,11 +241,13 @@ function mapResult(payload: unknown): DealCalculatorResult {
         site.coordinates && typeof site.coordinates === 'object'
           ? {
               latitude:
-                coerceNumeric((site.coordinates as Record<string, unknown>).latitude) ??
-                0,
+                coerceNumeric(
+                  (site.coordinates as Record<string, unknown>).latitude,
+                ) ?? 0,
               longitude:
-                coerceNumeric((site.coordinates as Record<string, unknown>).longitude) ??
-                0,
+                coerceNumeric(
+                  (site.coordinates as Record<string, unknown>).longitude,
+                ) ?? 0,
             }
           : null,
       jurisdictionCode:
@@ -256,8 +256,11 @@ function mapResult(payload: unknown): DealCalculatorResult {
         'SG',
       landUse: coerceString(site.landUse) ?? coerceString(site.land_use) ?? '',
       existingUse:
-        coerceString(site.existingUse) ?? coerceString(site.existing_use) ?? null,
-      zoneCode: coerceString(site.zoneCode) ?? coerceString(site.zone_code) ?? null,
+        coerceString(site.existingUse) ??
+        coerceString(site.existing_use) ??
+        null,
+      zoneCode:
+        coerceString(site.zoneCode) ?? coerceString(site.zone_code) ?? null,
       zoneDescription:
         coerceString(site.zoneDescription) ??
         coerceString(site.zone_description) ??

@@ -32,12 +32,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import {
-  ArrowBack as BackIcon,
-  ArrowForward as ForwardIcon,
-  Check as CheckIcon,
-  SwapHoriz as SwapIcon,
-} from '@mui/icons-material'
+import BackIcon from '@mui/icons-material/ArrowBack'
+import ForwardIcon from '@mui/icons-material/ArrowForward'
+import CheckIcon from '@mui/icons-material/Check'
+import SwapIcon from '@mui/icons-material/SwapHoriz'
 import {
   regulatoryApi,
   ChangeOfUseApplication,

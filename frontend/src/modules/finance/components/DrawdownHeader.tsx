@@ -9,10 +9,8 @@
  */
 
 import { Box, Button, Typography } from '@mui/material'
-import {
-  FileDownload as FileDownloadIcon,
-  Save as SaveIcon,
-} from '@mui/icons-material'
+import FileDownloadIcon from '@mui/icons-material/FileDownload'
+import SaveIcon from '@mui/icons-material/Save'
 
 import { useTranslation } from '../../../i18n'
 

@@ -24,8 +24,33 @@ if (hash.startsWith('#/')) {
   window.history.replaceState(null, '', targetPath)
 }
 
+const routeFallback = (
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
+      minHeight: '200px',
+      opacity: 0.5,
+    }}
+  >
+    <div
+      style={{
+        width: 24,
+        height: 24,
+        border: '2px solid currentColor',
+        borderTopColor: 'transparent',
+        borderRadius: '50%',
+        animation: 'ob-spin 0.8s linear infinite',
+      }}
+    />
+    <style>{`@keyframes ob-spin { to { transform: rotate(360deg) } }`}</style>
+  </div>
+)
+
 function suspense(element: React.ReactNode) {
-  return <React.Suspense fallback={null}>{element}</React.Suspense>
+  return <React.Suspense fallback={routeFallback}>{element}</React.Suspense>
 }
 
 const CadDetectionPage = React.lazy(async () => {

@@ -15,13 +15,11 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material'
-import {
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
-  Menu as MenuIcon,
-  PushPin as PushPinIcon,
-  PushPinOutlined as PushPinOutlinedIcon,
-} from '@mui/icons-material'
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import MenuIcon from '@mui/icons-material/Menu'
+import PushPinIcon from '@mui/icons-material/PushPin'
+import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined'
 import { Link, useRouterPath } from '../../router'
 import { useTranslation } from '../../i18n'
 import { useDeveloperMode } from '../../contexts/useDeveloperMode'

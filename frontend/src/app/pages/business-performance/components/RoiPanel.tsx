@@ -14,7 +14,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
-import { PlayArrow } from '@mui/icons-material'
+import PlayArrow from '@mui/icons-material/PlayArrow'
 import { ChartPlaceholder } from '../../../../components/common/ChartPlaceholder'
 import type { RoiSummary } from '../types'
 

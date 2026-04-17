@@ -9,12 +9,10 @@
 
 import { useMemo } from 'react'
 import { Box, Grid } from '@mui/material'
-import {
-  AttachMoney as MoneyIcon,
-  TrendingUp as TrendingIcon,
-  AccountBalance as BankIcon,
-  PieChart as PieIcon,
-} from '@mui/icons-material'
+import MoneyIcon from '@mui/icons-material/AttachMoney'
+import TrendingIcon from '@mui/icons-material/TrendingUp'
+import BankIcon from '@mui/icons-material/AccountBalance'
+import PieIcon from '@mui/icons-material/PieChart'
 
 import { useTranslation } from '../../../i18n'
 import { PremiumMetricCard } from '../../../components/canonical/PremiumMetricCard'

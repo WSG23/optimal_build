@@ -126,7 +126,11 @@ describe('quick screen finance draft', () => {
     )
 
     expect(description).toContain('[Quick screen context]')
-    expect(description).toContain('Rule corpus: partial (medium confidence, 3/5 approved).')
-    expect(description).toContain('Source note: URA: fallback assumptions applied')
+    expect(description).toContain(
+      'Rule corpus: partial (medium confidence, 3/5 approved).',
+    )
+    expect(description).toContain(
+      'Source note: URA: fallback assumptions applied',
+    )
   })
 })

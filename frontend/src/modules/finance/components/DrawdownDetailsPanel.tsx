@@ -12,7 +12,7 @@
  */
 
 import { Box, Button, Typography, useTheme, alpha } from '@mui/material'
-import { ArrowForward as ArrowForwardIcon } from '@mui/icons-material'
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 
 import { Card } from '../../../components/canonical/Card'
 import { StatusChip } from '../../../components/canonical/StatusChip'

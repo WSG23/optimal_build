@@ -1,4 +1,5 @@
-import { History, Restore } from '@mui/icons-material'
+import History from '@mui/icons-material/History'
+import Restore from '@mui/icons-material/Restore'
 import {
   Drawer,
   List,

@@ -1,5 +1,5 @@
 import { Box, Typography, Breadcrumbs, Link, Stack } from '@mui/material'
-import { NavigateNext } from '@mui/icons-material'
+import NavigateNext from '@mui/icons-material/NavigateNext'
 import type { ReactNode } from 'react'
 
 interface AnimatedPageHeaderProps {

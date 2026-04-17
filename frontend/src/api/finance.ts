@@ -1208,7 +1208,9 @@ function mapWorkbookPreview(
           message: issue.message,
         }))
       : [],
-    requestPayload: payload.request_payload ? { ...payload.request_payload } : {},
+    requestPayload: payload.request_payload
+      ? { ...payload.request_payload }
+      : {},
     scenarioName: payload.scenario_name ?? null,
     projectName: payload.project_name ?? null,
     assetCount: Number(payload.asset_count ?? 0),
@@ -1285,7 +1287,9 @@ function mapAuditEvidence(
       signedEntries: Number(payload.chain?.signed_entries ?? 0),
       latestHash: payload.chain?.latest_hash ?? null,
     },
-    recipients: Array.isArray(payload.recipients) ? [...payload.recipients] : [],
+    recipients: Array.isArray(payload.recipients)
+      ? [...payload.recipients]
+      : [],
     financeEvents: Array.isArray(payload.finance_events)
       ? payload.finance_events.map((event) =>
           mapAuditEvidenceEvent(event as Record<string, unknown>),
@@ -2106,7 +2110,11 @@ export async function previewFinanceWorkbookImport(
 ): Promise<FinanceWorkbookImportPreview> {
   const formData = new FormData()
   formData.set('file', file)
-  if (input.projectId !== undefined && input.projectId !== null && input.projectId !== '') {
+  if (
+    input.projectId !== undefined &&
+    input.projectId !== null &&
+    input.projectId !== ''
+  ) {
     formData.set('project_id', String(input.projectId))
   }
   if (input.projectName) {
@@ -2143,7 +2151,11 @@ export async function importFinanceWorkbook(
 ): Promise<FinanceScenarioSummary> {
   const formData = new FormData()
   formData.set('file', file)
-  if (input.projectId !== undefined && input.projectId !== null && input.projectId !== '') {
+  if (
+    input.projectId !== undefined &&
+    input.projectId !== null &&
+    input.projectId !== ''
+  ) {
     formData.set('project_id', String(input.projectId))
   }
   if (input.projectName) {

@@ -50,8 +50,9 @@ export function IntegrationsPage() {
             Singapore data partnerships
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            This page no longer simulates live portal logins or listing publication.
-            Every integration below is shown as live, partner-gated, or roadmap only.
+            This page no longer simulates live portal logins or listing
+            publication. Every integration below is shown as live,
+            partner-gated, or roadmap only.
           </Typography>
         </Box>
 
@@ -73,9 +74,9 @@ export function IntegrationsPage() {
               <Box>
                 <Typography variant="h6">Current product stance</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Prioritize one real {PRIMARY_MARKET} data source before adding any
-                  more scaffolding. User-facing integrations should never pretend a
-                  commercial partnership already exists.
+                  Prioritize one real {PRIMARY_MARKET} data source before adding
+                  any more scaffolding. User-facing integrations should never
+                  pretend a commercial partnership already exists.
                 </Typography>
               </Box>
               <Chip
@@ -85,9 +86,9 @@ export function IntegrationsPage() {
               />
             </Stack>
             <Typography variant="body2" color="text.secondary">
-              Internal adapters and mocked connectors can remain in the codebase for
-              development, but they are no longer presented as live actions in the
-              product UX.
+              Internal adapters and mocked connectors can remain in the codebase
+              for development, but they are no longer presented as live actions
+              in the product UX.
             </Typography>
           </Stack>
         </Box>
@@ -133,7 +134,9 @@ export function IntegrationsPage() {
                     <Typography variant="caption" color="text.secondary">
                       Next step
                     </Typography>
-                    <Typography variant="body2">{integration.nextStep}</Typography>
+                    <Typography variant="body2">
+                      {integration.nextStep}
+                    </Typography>
                   </Box>
                 </Stack>
               </Box>

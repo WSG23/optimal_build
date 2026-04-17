@@ -11,7 +11,7 @@ import {
   useMediaQuery,
   Stack,
 } from '@mui/material'
-import { Menu as MenuIcon } from '@mui/icons-material'
+import MenuIcon from '@mui/icons-material/Menu'
 import { AppNavigation } from '../../app/components/AppNavigation'
 import { HeaderUtilityCluster } from './HeaderUtilityCluster'
 import { DeveloperProvider } from '../../contexts/DeveloperContext'

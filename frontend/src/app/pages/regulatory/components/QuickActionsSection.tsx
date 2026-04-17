@@ -1,4 +1,6 @@
-import { AutoFixHigh, HistoryEdu, Timeline } from '@mui/icons-material'
+import AutoFixHigh from '@mui/icons-material/AutoFixHigh'
+import HistoryEdu from '@mui/icons-material/HistoryEdu'
+import Timeline from '@mui/icons-material/Timeline'
 import { Stack, Typography } from '@mui/material'
 
 import type { HeritageSubmission } from '../../../../api/regulatory'

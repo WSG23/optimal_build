@@ -11,7 +11,9 @@ describe('IntegrationsPage', () => {
 
     expect(screen.getByText('Singapore data partnerships')).toBeInTheDocument()
     expect(screen.getByText('URA Data Service')).toBeInTheDocument()
-    expect(screen.getAllByText('Partner access required').length).toBeGreaterThan(0)
+    expect(
+      screen.getAllByText('Partner access required').length,
+    ).toBeGreaterThan(0)
     expect(screen.getByText('Coming soon')).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: /connect/i }),

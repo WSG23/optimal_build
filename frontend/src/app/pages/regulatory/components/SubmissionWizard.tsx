@@ -20,11 +20,9 @@ import {
   MenuItem,
   CircularProgress,
 } from '@mui/material'
-import {
-  AccountBalance as AgencyIcon,
-  Description as DocIcon,
-  CheckCircle as CheckIcon,
-} from '@mui/icons-material'
+import AgencyIcon from '@mui/icons-material/AccountBalance'
+import DocIcon from '@mui/icons-material/Description'
+import CheckIcon from '@mui/icons-material/CheckCircle'
 import {
   regulatoryApi,
   AuthoritySubmission,
@@ -137,7 +135,8 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
         project_id: String(projectId),
         agency: selectedAgency,
         submission_type: submissionType,
-        submission_mode: capability?.submission_mode_default ?? 'submission_prep',
+        submission_mode:
+          capability?.submission_mode_default ?? 'submission_prep',
       })
       onSuccess(submission)
       handleReset()

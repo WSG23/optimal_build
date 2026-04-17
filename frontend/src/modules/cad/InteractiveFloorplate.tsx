@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Box, useTheme, Fade } from '@mui/material'
 import { keyframes } from '@emotion/react'
-import { AutoFixHigh, Autorenew } from '@mui/icons-material'
+import AutoFixHigh from '@mui/icons-material/AutoFixHigh'
+import Autorenew from '@mui/icons-material/Autorenew'
 import { DetectedUnit } from './types'
 
 // Vertical Radar Sweep Animation

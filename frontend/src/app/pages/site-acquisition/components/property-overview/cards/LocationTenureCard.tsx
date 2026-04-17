@@ -6,12 +6,18 @@
  */
 
 import { Box, Typography } from '@mui/material'
-import { LocationOn as MapPinIcon } from '@mui/icons-material'
+import MapPinIcon from '@mui/icons-material/LocationOn'
 import { CardHeader, ItemLabel, ItemValue } from '../helpers'
 import type { OverviewCard } from '../utils'
 import { Card } from '../../../../../../components/canonical/Card'
 
-export function LocationTenureCard({ card }: { card: OverviewCard }) {
+import { memo } from 'react'
+
+export const LocationTenureCard = memo(function LocationTenureCard({
+  card,
+}: {
+  card: OverviewCard
+}) {
   const address = card.items.find((i) =>
     i.label.toLowerCase().includes('address'),
   )
@@ -96,4 +102,4 @@ export function LocationTenureCard({ card }: { card: OverviewCard }) {
       </Box>
     </Card>
   )
-}
+})

@@ -2,6 +2,7 @@ import path from 'node:path'
 
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import { compression } from 'vite-plugin-compression2'
 
 function resolveManualChunk(id: string): string | undefined {
   if (id.includes('/node_modules/')) {
@@ -60,7 +61,11 @@ export default defineConfig(({ mode }) => {
   console.log('[vite.config] Proxy target:', proxyTarget)
 
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      compression({ algorithm: 'gzip', threshold: 1024 }),
+      compression({ algorithm: 'brotliCompress', threshold: 1024 }),
+    ],
     server: {
       port: Number.isFinite(serverPort) ? serverPort : 3000,
       host,

@@ -11,13 +11,11 @@ import {
   alpha,
   Avatar,
 } from '@mui/material'
-import {
-  Settings as SettingsIcon,
-  LightMode as LightModeIcon,
-  DarkMode as DarkModeIcon,
-  KeyboardArrowDown,
-  Code as CodeIcon,
-} from '@mui/icons-material'
+import SettingsIcon from '@mui/icons-material/Settings'
+import LightModeIcon from '@mui/icons-material/LightMode'
+import DarkModeIcon from '@mui/icons-material/DarkMode'
+import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown'
+import CodeIcon from '@mui/icons-material/Code'
 import { useTranslation } from '../../i18n'
 import { useThemeMode } from '../../theme/ThemeContext'
 import { useDeveloperMode } from '../../contexts/useDeveloperMode'

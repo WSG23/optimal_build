@@ -33,7 +33,8 @@ export const PARTNER_INTEGRATIONS: PartnerIntegrationDefinition[] = [
     description: 'Primary Singapore planning and land-data foundation.',
     detail:
       'Live Singapore workflows should anchor to official URA datasets and expose provenance in every result.',
-    nextStep: 'Use as the default land-data spine for Singapore deal screening.',
+    nextStep:
+      'Use as the default land-data spine for Singapore deal screening.',
   },
   {
     id: 'propertyguru',
@@ -53,14 +54,16 @@ export const PARTNER_INTEGRATIONS: PartnerIntegrationDefinition[] = [
     description: 'Singapore market comparables and transaction context.',
     detail:
       'Position as a gated market-data relationship, not as a self-serve connection flow.',
-    nextStep: 'Expose once data rights and usage limits are contractually confirmed.',
+    nextStep:
+      'Expose once data rights and usage limits are contractually confirmed.',
   },
   {
     id: 'zoho_crm',
     name: 'Zoho CRM',
     category: 'crm',
     status: 'coming_soon',
-    description: 'Lead and relationship handoff for teams that still run CRM outside Optimal Build.',
+    description:
+      'Lead and relationship handoff for teams that still run CRM outside Optimal Build.',
     detail:
       'Keep hidden behind a roadmap state until there is a non-mock account and sync model.',
     nextStep: 'Ship after the first live Singapore data partnership is stable.',

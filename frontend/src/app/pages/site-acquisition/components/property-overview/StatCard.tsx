@@ -10,7 +10,7 @@
  */
 
 import { Box, Typography, SxProps, Theme } from '@mui/material'
-import { ReactNode } from 'react'
+import { memo, ReactNode } from 'react'
 import { Card } from '../../../../../components/canonical/Card'
 import { PulsingStatusDot } from '../../../../../components/canonical/PulsingStatusDot'
 
@@ -35,7 +35,7 @@ export interface StatCardProps {
   sx?: SxProps<Theme>
 }
 
-export function StatCard({
+export const StatCard = memo(function StatCard({
   label,
   value,
   subtitle,
@@ -173,4 +173,4 @@ export function StatCard({
       )}
     </Card>
   )
-}
+})

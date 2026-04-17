@@ -6,12 +6,18 @@
  */
 
 import { Box, Typography } from '@mui/material'
-import { AccountBalance as HistoryIcon } from '@mui/icons-material'
+import HistoryIcon from '@mui/icons-material/AccountBalance'
 import { CardHeader, ItemLabel, CardNote } from '../helpers'
 import type { OverviewCard } from '../utils'
 import { Card } from '../../../../../../components/canonical/Card'
 
-export function HeritageCard({ card }: { card: OverviewCard }) {
+import { memo } from 'react'
+
+export const HeritageCard = memo(function HeritageCard({
+  card,
+}: {
+  card: OverviewCard
+}) {
   const riskItem = card.items.find((i) =>
     i.label.toLowerCase().includes('risk'),
   )
@@ -119,4 +125,4 @@ export function HeritageCard({ card }: { card: OverviewCard }) {
       </Box>
     </Card>
   )
-}
+})

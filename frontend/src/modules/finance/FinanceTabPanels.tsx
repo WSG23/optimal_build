@@ -1,7 +1,7 @@
 import { Suspense, lazy, type ReactNode } from 'react'
 
 import { Alert, Box, CircularProgress, Stack, Typography } from '@mui/material'
-import { Warning } from '@mui/icons-material'
+import Warning from '@mui/icons-material/Warning'
 
 import { Button } from '../../components/canonical/Button'
 import { Card } from '../../components/canonical/Card'

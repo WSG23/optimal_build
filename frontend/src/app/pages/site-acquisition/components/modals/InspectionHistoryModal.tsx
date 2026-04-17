@@ -9,7 +9,7 @@ import type React from 'react'
 import { createPortal } from 'react-dom'
 import type { RefObject } from 'react'
 import { IconButton } from '@mui/material'
-import { Close } from '@mui/icons-material'
+import Close from '@mui/icons-material/Close'
 import type {
   ConditionAssessment,
   DevelopmentScenario,

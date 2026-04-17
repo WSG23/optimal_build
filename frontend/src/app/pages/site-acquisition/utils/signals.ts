@@ -171,7 +171,9 @@ function buildHeritagePropertySignals(
     opportunities.push(`Heritage overlay identified: ${overlayName}.`)
   }
   if (!capturedProperty?.heritageContext?.constraints?.length) {
-    risks.push('Detailed conservation controls are not yet itemized in Capture.')
+    risks.push(
+      'Detailed conservation controls are not yet itemized in Capture.',
+    )
   }
 
   return { opportunities, risks }
@@ -205,12 +207,17 @@ function buildUnderusedAssetSignals(
   }
   if (buildingHeightLimit != null) {
     opportunities.push(
-      `Height control currently resolves to ${formatNumber(buildingHeightLimit, {
-        maximumFractionDigits: 0,
-      })} m.`,
+      `Height control currently resolves to ${formatNumber(
+        buildingHeightLimit,
+        {
+          maximumFractionDigits: 0,
+        },
+      )} m.`,
     )
   } else {
-    risks.push('Height control unresolved — adaptive reuse massing is preliminary.')
+    risks.push(
+      'Height control unresolved — adaptive reuse massing is preliminary.',
+    )
   }
   if (siteCoverage != null) {
     opportunities.push(
@@ -219,7 +226,9 @@ function buildUnderusedAssetSignals(
       })}% frames the reuse envelope.`,
     )
   } else {
-    risks.push('Site coverage unavailable — confirm scalar controls before reuse studies.')
+    risks.push(
+      'Site coverage unavailable — confirm scalar controls before reuse studies.',
+    )
   }
 
   return { opportunities, risks }

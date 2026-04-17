@@ -1,6 +1,8 @@
 import { type ReactNode } from 'react'
 import { Box, Grid, Typography } from '@mui/material'
-import { AccessTime, AttachMoney, Assessment } from '@mui/icons-material'
+import AccessTime from '@mui/icons-material/AccessTime'
+import AttachMoney from '@mui/icons-material/AttachMoney'
+import Assessment from '@mui/icons-material/Assessment'
 import { MetricTile } from '../../../../components/canonical/MetricTile'
 
 interface OpenPipelineMetric {

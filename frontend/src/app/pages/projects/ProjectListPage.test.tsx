@@ -54,7 +54,9 @@ describe('ProjectListPage', () => {
       expect(contextValue.refreshProjects).toHaveBeenCalled()
     })
 
-    expect(screen.getByText('Singapore developer workspace')).toBeInTheDocument()
+    expect(
+      screen.getByText('Singapore developer workspace'),
+    ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /open deal calculator/i }),
     ).toBeInTheDocument()

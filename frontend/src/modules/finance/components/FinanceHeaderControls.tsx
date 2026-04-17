@@ -10,12 +10,10 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material'
-import {
-  FileDownload as FileDownloadIcon,
-  UploadFile as UploadFileIcon,
-  KeyboardArrowDown,
-  Refresh,
-} from '@mui/icons-material'
+import FileDownloadIcon from '@mui/icons-material/FileDownload'
+import UploadFileIcon from '@mui/icons-material/UploadFile'
+import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown'
+import Refresh from '@mui/icons-material/Refresh'
 
 import { Button } from '../../../components/canonical/Button'
 import { useTranslation } from '../../../i18n'

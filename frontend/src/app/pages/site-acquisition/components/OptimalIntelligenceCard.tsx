@@ -10,7 +10,8 @@
  * - Progressive Disclosure: Summary with CTA for details
  */
 
-import { AutoAwesome, ArrowForward } from '@mui/icons-material'
+import AutoAwesome from '@mui/icons-material/AutoAwesome'
+import ArrowForward from '@mui/icons-material/ArrowForward'
 
 // ============================================================================
 // Types

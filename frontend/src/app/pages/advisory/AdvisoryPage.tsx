@@ -13,14 +13,12 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material'
-import {
-  Assignment,
-  Business,
-  Speed,
-  Timeline,
-  Feedback,
-  Send,
-} from '@mui/icons-material'
+import Assignment from '@mui/icons-material/Assignment'
+import Business from '@mui/icons-material/Business'
+import Speed from '@mui/icons-material/Speed'
+import Timeline from '@mui/icons-material/Timeline'
+import Feedback from '@mui/icons-material/Feedback'
+import Send from '@mui/icons-material/Send'
 
 import type {
   AdvisorySummary,

@@ -11,10 +11,8 @@
  */
 
 import { Box, IconButton, Typography, Stack } from '@mui/material'
-import {
-  Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon,
-} from '@mui/icons-material'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 
 import { Button } from '../../../../components/canonical/Button'
 import type { PreviewLayerMetadata } from '../previewMetadata'

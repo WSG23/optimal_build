@@ -6,12 +6,18 @@
  */
 
 import { Box, Divider, Typography } from '@mui/material'
-import { TrendingUp as TrendingUpIcon } from '@mui/icons-material'
+import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import { CardHeader, ItemLabel, ItemValue, CardNote } from '../helpers'
 import type { OverviewCard } from '../utils'
 import { Card } from '../../../../../../components/canonical/Card'
 
-export function FinancialCard({ card }: { card: OverviewCard }) {
+import { memo } from 'react'
+
+export const FinancialCard = memo(function FinancialCard({
+  card,
+}: {
+  card: OverviewCard
+}) {
   const revenue = card.items.find(
     (i) =>
       i.label.toLowerCase().includes('revenue') ||
@@ -114,4 +120,4 @@ export function FinancialCard({ card }: { card: OverviewCard }) {
       {card.note && <CardNote>{card.note}</CardNote>}
     </Card>
   )
-}
+})

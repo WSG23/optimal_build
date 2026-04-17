@@ -1,5 +1,5 @@
 import { Box, IconButton, Modal, Typography } from '@mui/material'
-import { Close } from '@mui/icons-material'
+import Close from '@mui/icons-material/Close'
 import { ReactNode } from 'react'
 import { GlassCard } from './GlassCard'
 

@@ -41,7 +41,9 @@ export function buildQuickScreenAssessmentSummary(
     lines.push(coverage)
   }
   if (assessment.recommendedRuleIds.length > 0) {
-    lines.push(`Recommended rules: ${assessment.recommendedRuleIds.join(', ')}.`)
+    lines.push(
+      `Recommended rules: ${assessment.recommendedRuleIds.join(', ')}.`,
+    )
   }
   if (assessment.sourceNotes.length > 0) {
     lines.push(...assessment.sourceNotes.map((note) => `Source note: ${note}`))

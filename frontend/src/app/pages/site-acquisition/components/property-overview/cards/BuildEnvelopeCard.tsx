@@ -7,12 +7,18 @@
  */
 
 import { Box, Divider, Typography } from '@mui/material'
-import { GpsFixed as TargetIcon } from '@mui/icons-material'
+import TargetIcon from '@mui/icons-material/GpsFixed'
 import { CardHeader, ItemLabel, ItemValue, CardNote } from '../helpers'
 import type { OverviewCard } from '../utils'
 import { Card } from '../../../../../../components/canonical/Card'
 
-export function BuildEnvelopeCard({ card }: { card: OverviewCard }) {
+import { memo } from 'react'
+
+export const BuildEnvelopeCard = memo(function BuildEnvelopeCard({
+  card,
+}: {
+  card: OverviewCard
+}) {
   const zoneCode = card.items.find((i) =>
     i.label.toLowerCase().includes('zone code'),
   )
@@ -115,4 +121,4 @@ export function BuildEnvelopeCard({ card }: { card: OverviewCard }) {
       {card.note && <CardNote>{card.note}</CardNote>}
     </Card>
   )
-}
+})

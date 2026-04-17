@@ -24,13 +24,11 @@ import {
   useState,
 } from 'react'
 
-import {
-  Visibility,
-  VisibilityOff,
-  Edit,
-  ExpandMore,
-  ExpandLess,
-} from '@mui/icons-material'
+import Visibility from '@mui/icons-material/Visibility'
+import VisibilityOff from '@mui/icons-material/VisibilityOff'
+import Edit from '@mui/icons-material/Edit'
+import ExpandMore from '@mui/icons-material/ExpandMore'
+import ExpandLess from '@mui/icons-material/ExpandLess'
 import { Box } from '@mui/material'
 import { List as VirtualList } from 'react-window'
 

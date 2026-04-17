@@ -14,17 +14,15 @@ import {
   alpha,
   useTheme,
 } from '@mui/material'
-import {
-  Close as CloseIcon,
-  Code as CodeIcon,
-  ContentCopy as ContentCopyIcon,
-  DarkMode as DarkModeIcon,
-  Language as LanguageIcon,
-  LightMode as LightModeIcon,
-  Menu as MenuIcon,
-  Share as ShareIcon,
-  UploadFile as UploadFileIcon,
-} from '@mui/icons-material'
+import CloseIcon from '@mui/icons-material/Close'
+import CodeIcon from '@mui/icons-material/Code'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import DarkModeIcon from '@mui/icons-material/DarkMode'
+import LanguageIcon from '@mui/icons-material/Language'
+import LightModeIcon from '@mui/icons-material/LightMode'
+import MenuIcon from '@mui/icons-material/Menu'
+import ShareIcon from '@mui/icons-material/Share'
+import UploadFileIcon from '@mui/icons-material/UploadFile'
 import { useTranslation } from '../../i18n'
 import { Link } from '../../router'
 import { useDeveloperMode } from '../../contexts/useDeveloperMode'

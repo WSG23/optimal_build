@@ -17,16 +17,14 @@ import {
   Avatar,
   Tooltip,
 } from '@mui/material'
-import {
-  TrendingUp as TrendingUpIcon,
-  CheckCircle as CheckCircleIcon,
-  HourglassEmpty as HourglassIcon,
-  Warning as WarningIcon,
-  People as PeopleIcon,
-  Assignment as AssignmentIcon,
-  Timeline as TimelineIcon,
-  Refresh as RefreshIcon,
-} from '@mui/icons-material'
+import TrendingUpIcon from '@mui/icons-material/TrendingUp'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import HourglassIcon from '@mui/icons-material/HourglassEmpty'
+import WarningIcon from '@mui/icons-material/Warning'
+import PeopleIcon from '@mui/icons-material/People'
+import AssignmentIcon from '@mui/icons-material/Assignment'
+import TimelineIcon from '@mui/icons-material/Timeline'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import { Card } from '../../../../components/canonical/Card'
 import {
   getMockPhases,

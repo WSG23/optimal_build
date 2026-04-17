@@ -8,11 +8,9 @@
  */
 
 import { Box, Grid, Typography } from '@mui/material'
-import {
-  AccountBalanceWallet as WalletIcon,
-  AccountBalance as BankIcon,
-  TrendingUp as TrendingUpIcon,
-} from '@mui/icons-material'
+import WalletIcon from '@mui/icons-material/AccountBalanceWallet'
+import BankIcon from '@mui/icons-material/AccountBalance'
+import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 
 import { Card } from '../../../components/canonical/Card'
 import { useTranslation } from '../../../i18n'

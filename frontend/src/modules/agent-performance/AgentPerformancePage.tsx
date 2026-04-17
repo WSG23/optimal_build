@@ -11,7 +11,10 @@ import { formatCurrency, formatDays, formatPercent } from './utils/formatters'
 import { AnimatedPageHeader } from '../../components/canonical/AnimatedPageHeader'
 import { MetricTile } from '../../components/canonical/MetricTile'
 import { Card } from '../../components/canonical/Card'
-import { AttachMoney, TrendingUp, Speed, Assignment } from '@mui/icons-material'
+import AttachMoney from '@mui/icons-material/AttachMoney'
+import TrendingUp from '@mui/icons-material/TrendingUp'
+import Speed from '@mui/icons-material/Speed'
+import Assignment from '@mui/icons-material/Assignment'
 import '../../styles/agent-performance.css'
 
 const PerformanceTrendsSection = lazy(() =>

@@ -6,7 +6,9 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { Mic, Stop, Delete } from '@mui/icons-material'
+import Mic from '@mui/icons-material/Mic'
+import Stop from '@mui/icons-material/Stop'
+import Delete from '@mui/icons-material/Delete'
 import {
   fetchPropertyVoiceNotes,
   type PropertyVoiceNote,

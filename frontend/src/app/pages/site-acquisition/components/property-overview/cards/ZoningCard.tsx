@@ -5,12 +5,18 @@
  */
 
 import { Box, Typography } from '@mui/material'
-import { Straighten as RulerIcon } from '@mui/icons-material'
+import RulerIcon from '@mui/icons-material/Straighten'
 import { CardHeader } from '../helpers'
 import type { OverviewCard } from '../utils'
 import { Card } from '../../../../../../components/canonical/Card'
 
-export function ZoningCard({ card }: { card: OverviewCard }) {
+import { memo } from 'react'
+
+export const ZoningCard = memo(function ZoningCard({
+  card,
+}: {
+  card: OverviewCard
+}) {
   return (
     <Card
       sx={{
@@ -98,4 +104,4 @@ export function ZoningCard({ card }: { card: OverviewCard }) {
       </Box>
     </Card>
   )
-}
+})

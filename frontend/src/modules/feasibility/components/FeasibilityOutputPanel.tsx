@@ -11,10 +11,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import {
-  AccountBalance as HeritageIcon,
-  Gavel as ZoningIcon,
-} from '@mui/icons-material'
+import HeritageIcon from '@mui/icons-material/AccountBalance'
+import ZoningIcon from '@mui/icons-material/Gavel'
 import { useMemo, useState } from 'react'
 
 import type { SiteAcquisitionResult } from '../../../api/siteAcquisition'

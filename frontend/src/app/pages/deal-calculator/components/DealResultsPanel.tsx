@@ -1,4 +1,7 @@
-import { Assessment, AttachMoney, Map, ShowChart } from '@mui/icons-material'
+import Assessment from '@mui/icons-material/Assessment'
+import AttachMoney from '@mui/icons-material/AttachMoney'
+import Map from '@mui/icons-material/Map'
+import ShowChart from '@mui/icons-material/ShowChart'
 import { Box, Grid, Stack, Typography } from '@mui/material'
 
 import type { DealCalculatorResult } from '../../../../api/dealCalculator'

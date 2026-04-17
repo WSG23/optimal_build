@@ -8,11 +8,9 @@ import {
   TextField,
   Divider,
 } from '@mui/material'
-import {
-  Science as ScienceIcon,
-  ViewInAr as ViewInArIcon,
-  BugReport as BugReportIcon,
-} from '@mui/icons-material'
+import ScienceIcon from '@mui/icons-material/Science'
+import ViewInArIcon from '@mui/icons-material/ViewInAr'
+import BugReportIcon from '@mui/icons-material/BugReport'
 import { FeatureTogglePanel } from '../../components/gps-capture/FeatureTogglePanel'
 import { useFeaturePreferences } from '../../../hooks/useFeaturePreferences'
 import { useRouterController } from '../../../router'

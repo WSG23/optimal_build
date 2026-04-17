@@ -1,4 +1,5 @@
-import { CheckCircle, Description } from '@mui/icons-material'
+import CheckCircle from '@mui/icons-material/CheckCircle'
+import Description from '@mui/icons-material/Description'
 import type { ProfessionalPackType } from '../../../api/agents'
 
 interface PackGridProps {

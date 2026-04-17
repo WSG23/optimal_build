@@ -7,7 +7,7 @@
 
 import { createPortal } from 'react-dom'
 import { IconButton } from '@mui/material'
-import { Close } from '@mui/icons-material'
+import Close from '@mui/icons-material/Close'
 import type { DevelopmentScenario } from '../../../../../api/siteAcquisition'
 import type {
   QuickAnalysisSnapshot,

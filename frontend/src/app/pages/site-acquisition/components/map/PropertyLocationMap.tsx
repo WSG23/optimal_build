@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import * as L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { Box, IconButton } from '@mui/material'
-import { MyLocation } from '@mui/icons-material'
+import MyLocation from '@mui/icons-material/MyLocation'
 
 // ============================================================================
 // Types

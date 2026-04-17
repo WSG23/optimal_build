@@ -21,7 +21,7 @@
 
 import { useMemo } from 'react'
 
-import { ArrowForward as ArrowRight } from '@mui/icons-material'
+import ArrowRight from '@mui/icons-material/ArrowForward'
 
 import type {
   DevelopmentScenario,

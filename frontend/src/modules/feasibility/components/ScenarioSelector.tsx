@@ -1,4 +1,7 @@
-import { Business, Foundation, HomeWork, Landscape } from '@mui/icons-material'
+import Business from '@mui/icons-material/Business'
+import Foundation from '@mui/icons-material/Foundation'
+import HomeWork from '@mui/icons-material/HomeWork'
+import Landscape from '@mui/icons-material/Landscape'
 import { Typography } from '@mui/material'
 
 interface ScenarioSelectorProps {

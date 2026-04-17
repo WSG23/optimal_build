@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material'
-import { BarChart } from '@mui/icons-material'
+import BarChart from '@mui/icons-material/BarChart'
 
 interface ChartPlaceholderProps {
   height?: number | string
