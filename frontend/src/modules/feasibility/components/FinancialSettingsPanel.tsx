@@ -1,4 +1,6 @@
-import { ExpandMore, FileDownload, CloudUpload } from '@mui/icons-material'
+import ExpandMore from '@mui/icons-material/ExpandMore'
+import FileDownload from '@mui/icons-material/FileDownload'
+import CloudUpload from '@mui/icons-material/CloudUpload'
 import {
   Accordion,
   AccordionDetails,
@@ -51,7 +53,6 @@ export function FinancialSettingsPanel({
 
   const handleExportArgus = () => {
     // Stub for ARGUS export
-    console.log('Exporting ARGUS XML...', financialInputs)
     const blob = new Blob(
       ['<ArgusExchange><Stub>Active</Stub></ArgusExchange>'],
       {

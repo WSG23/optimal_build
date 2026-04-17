@@ -1,4 +1,6 @@
-import { Layers, GridOn, Plumbing } from '@mui/icons-material'
+import Layers from '@mui/icons-material/Layers'
+import GridOn from '@mui/icons-material/GridOn'
+import Plumbing from '@mui/icons-material/Plumbing'
 import { ToggleButton, ToggleButtonGroup, Paper } from '@mui/material'
 import { useState } from 'react'
 
@@ -25,7 +27,6 @@ export function FeasibilityLayout({
     newLayers: string[],
   ) => {
     setLayers(newLayers)
-    console.log('Active Layers:', newLayers)
   }
 
   return (

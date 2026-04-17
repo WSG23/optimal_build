@@ -74,8 +74,6 @@ export function useFeasibilityCompute({
     if (!payload) {
       return () => {}
     }
-    console.log('useFeasibilityCompute: Payload changed:', payload)
-
     if (debounceRef.current !== null) {
       clearTimeout(debounceRef.current)
     }
@@ -90,7 +88,6 @@ export function useFeasibilityCompute({
       typeof performance !== 'undefined' ? performance.now() : Date.now()
 
     debounceRef.current = window.setTimeout(() => {
-      console.log('useFeasibilityCompute: Debounce fired. Submitting payload.')
       // Map PendingPayload to FeasibilityAssessmentRequest
       const requestPayload: FeasibilityAssessmentRequest = {
         project: {
@@ -106,10 +103,6 @@ export function useFeasibilityCompute({
 
       submitFeasibilityAssessment(requestPayload, controller.signal)
         .then((response) => {
-          console.log(
-            'useFeasibilityCompute: Success response received',
-            response,
-          )
           const duration =
             (typeof performance !== 'undefined'
               ? performance.now()

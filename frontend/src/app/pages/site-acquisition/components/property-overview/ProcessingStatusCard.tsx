@@ -9,6 +9,7 @@
  * @see frontend/UX_ARCHITECTURE.md - Problem 2: "Black Box" Processing
  */
 
+import { memo } from 'react'
 import { Box, LinearProgress, Typography, SxProps, Theme } from '@mui/material'
 import { Card } from '../../../../../components/canonical/Card'
 import { PulsingStatusDot } from '../../../../../components/canonical/PulsingStatusDot'
@@ -72,7 +73,7 @@ const statusConfig = {
   },
 }
 
-export function ProcessingStatusCard({
+export const ProcessingStatusCard = memo(function ProcessingStatusCard({
   title,
   status,
   progress,
@@ -265,4 +266,4 @@ export function ProcessingStatusCard({
       )}
     </Card>
   )
-}
+})

@@ -14,10 +14,8 @@
 import { Suspense, lazy, useMemo, useState } from 'react'
 
 import { Box, Grid, ToggleButton, ToggleButtonGroup } from '@mui/material'
-import {
-  BarChart as BarChartIcon,
-  TableChart as TableChartIcon,
-} from '@mui/icons-material'
+import BarChartIcon from '@mui/icons-material/BarChart'
+import TableChartIcon from '@mui/icons-material/TableChart'
 
 import type { FinanceScenarioSummary } from '../../../api/finance'
 import { useTranslation } from '../../../i18n'
@@ -103,17 +101,14 @@ export function FinanceDrawdownSchedule({
 
   const handleExportReport = () => {
     // TODO: Implement export report functionality
-    console.log('Export report for scenario:', activeScenarioId)
   }
 
   const handleSaveScenario = () => {
     // TODO: Implement save scenario functionality
-    console.log('Save scenario:', activeScenarioId)
   }
 
   const handleViewFullForecast = () => {
     // TODO: Navigate to full forecast view
-    console.log('View full forecast for scenario:', activeScenarioId)
   }
 
   return (

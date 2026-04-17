@@ -165,17 +165,6 @@ export function RouterProvider({
     return router.notFoundElement ?? null // 404 — no matching route
   }, [path, routes, router.notFoundElement])
 
-  // Debug log for routing
-  useEffect(() => {
-    console.log('[Router] Current path:', path)
-    const exactMatch = routes.find((route) => route.path === path)
-    if (exactMatch) {
-      console.log('[Router] Exact match found for:', path)
-    } else {
-      console.log('[Router] No exact match. Checking params or fallback.')
-    }
-  }, [path, routes])
-
   const contextValue = useMemo<RouterContextValue>(
     () => ({ path, search, navigate }),
     [navigate, path, search],

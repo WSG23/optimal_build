@@ -16,6 +16,7 @@
  * @see frontend/UX_ARCHITECTURE.md - "No More Uniform Label-Value Pairs"
  */
 
+import { memo } from 'react'
 import { LocationTenureCard } from './cards/LocationTenureCard'
 import { BuildEnvelopeCard } from './cards/BuildEnvelopeCard'
 import { HeritageCard } from './cards/HeritageCard'
@@ -26,7 +27,11 @@ import { GenericCard } from './cards/GenericCard'
 import { getCardType } from './utils'
 import type { OverviewCard } from './utils'
 
-export function SmartCard({ card }: { card: OverviewCard }) {
+export const SmartCard = memo(function SmartCard({
+  card,
+}: {
+  card: OverviewCard
+}) {
   if (card.layout === 'status') {
     return <StatusCard card={card} />
   }
@@ -48,4 +53,4 @@ export function SmartCard({ card }: { card: OverviewCard }) {
     default:
       return <GenericCard card={card} />
   }
-}
+})

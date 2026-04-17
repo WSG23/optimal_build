@@ -21,6 +21,7 @@
     border: var(--ob-border-fine-strong); /* Updated: fine line strong */
     border-radius: var(--ob-radius-sm); /* 4px - ENFORCED */
     box-shadow: var(--ob-shadow-md);
+    contain: layout style paint;
 }
 
 /* Glass card variant - matches Card component */
@@ -28,6 +29,7 @@
     background: var(--ob-surface-glass-1);
     border: var(--ob-border-fine);
     border-radius: var(--ob-radius-sm); /* 4px */
+    contain: layout style paint;
     transition:
         border-color 0.2s ease,
         transform 0.2s ease,
@@ -124,6 +126,7 @@
 
 .animate-entrance {
     animation: entrance 0.4s ease-out;
+    will-change: transform, opacity;
 }
 
 /* Shimmer animation - used by Button */

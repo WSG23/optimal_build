@@ -57,7 +57,7 @@ export function useFeasibilityLoop(
     wsRef.current = ws
 
     ws.onopen = () => {
-      console.log('Feasibility Loop: WS Connected')
+      // connection established
     }
 
     ws.onmessage = (event) => {
@@ -95,7 +95,7 @@ export function useFeasibilityLoop(
     }
 
     ws.onclose = () => {
-      console.log('Feasibility Loop: WS Disconnected')
+      // connection closed
     }
 
     return () => {
