@@ -259,11 +259,19 @@ export function NotificationBell() {
         <Divider />
 
         {loading && notifications.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Box
+            sx={{ p: 3, textAlign: 'center' }}
+            role="status"
+            aria-live="polite"
+          >
             <Typography color="text.secondary">Loading...</Typography>
           </Box>
         ) : notifications.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Box
+            sx={{ p: 3, textAlign: 'center' }}
+            role="status"
+            aria-live="polite"
+          >
             <NotificationsIcon
               sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }}
             />
@@ -275,6 +283,7 @@ export function NotificationBell() {
               dense
               disablePadding
               sx={{ maxHeight: 320, overflow: 'auto' }}
+              aria-live="polite"
             >
               {notifications.map((notification) => (
                 <NotificationItem

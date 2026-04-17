@@ -1,5 +1,9 @@
 import { Box, Typography, IconButton, SxProps, Theme } from '@mui/material'
-import { Close, CheckCircle, Warning, Error, Info } from '@mui/icons-material'
+import Close from '@mui/icons-material/Close'
+import CheckCircle from '@mui/icons-material/CheckCircle'
+import Warning from '@mui/icons-material/Warning'
+import Error from '@mui/icons-material/Error'
+import Info from '@mui/icons-material/Info'
 import { ReactNode } from 'react'
 
 export interface AlertBlockProps {
@@ -93,7 +97,8 @@ export function AlertBlock({
 
   return (
     <Box
-      role="alert"
+      role={type === 'error' ? 'alert' : 'status'}
+      aria-live={type === 'error' ? 'assertive' : 'polite'}
       sx={{
         display: 'flex',
         alignItems: 'flex-start',

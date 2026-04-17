@@ -17,11 +17,9 @@ import {
   alpha,
   useTheme,
 } from '@mui/material'
-import {
-  AddCircleOutline as AddCircleOutlineIcon,
-  FolderOpen as FolderOpenIcon,
-  SwapHoriz as SwapHorizIcon,
-} from '@mui/icons-material'
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
+import FolderOpenIcon from '@mui/icons-material/FolderOpen'
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz'
 
 import { useProject } from '../../contexts/useProject'
 import { useRouterController, useRouterParams } from '../../router'
@@ -186,6 +184,8 @@ export function ProjectSelector() {
           </Typography>
           {projectError && (
             <Typography
+              role="alert"
+              aria-live="assertive"
               sx={{
                 mt: 'var(--ob-space-050)',
                 fontSize: 'var(--ob-font-size-xs)',
@@ -202,6 +202,8 @@ export function ProjectSelector() {
         <Divider />
         {isProjectLoading && (
           <Box
+            role="status"
+            aria-live="polite"
             sx={{
               px: 'var(--ob-space-150)',
               py: 'var(--ob-space-150)',
@@ -265,7 +267,13 @@ export function ProjectSelector() {
             margin="dense"
           />
           {createError && (
-            <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+            <Typography
+              variant="body2"
+              color="error"
+              role="alert"
+              aria-live="assertive"
+              sx={{ mt: 1 }}
+            >
               {createError}
             </Typography>
           )}

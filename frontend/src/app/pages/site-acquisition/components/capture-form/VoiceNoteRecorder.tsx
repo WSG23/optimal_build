@@ -372,7 +372,7 @@ export function VoiceNoteRecorder({
               borderRadius: 'var(--ob-radius-sm)',
               border: 'none',
               background: canRecord
-                ? '#dc2626'
+                ? 'var(--ob-color-status-error, #dc2626)'
                 : 'var(--ob-color-border-default)',
               color: 'white',
               fontSize: 'var(--ob-font-size-sm)',
@@ -402,7 +402,7 @@ export function VoiceNoteRecorder({
                 gap: '0.5rem',
                 padding: '0.75rem 1rem',
                 borderRadius: 'var(--ob-radius-sm)',
-                border: '1px solid #d1d5db',
+                border: '1px solid var(--ob-color-border-default, #d1d5db)',
                 background: 'white',
                 color: 'var(--ob-color-text-primary)',
                 fontSize: 'var(--ob-font-size-sm)',
@@ -423,7 +423,7 @@ export function VoiceNoteRecorder({
                 padding: '0.75rem 1rem',
                 borderRadius: 'var(--ob-radius-sm)',
                 border: 'none',
-                background: '#1d1d1f',
+                background: 'var(--ob-color-text-primary, #1d1d1f)',
                 color: 'white',
                 fontSize: 'var(--ob-font-size-sm)',
                 fontWeight: 500,
@@ -446,7 +446,9 @@ export function VoiceNoteRecorder({
                   width: '10px',
                   height: '10px',
                   borderRadius: 'var(--ob-radius-pill)',
-                  background: isPaused ? '#f59e0b' : '#dc2626',
+                  background: isPaused
+                    ? 'var(--ob-color-status-warning, #f59e0b)'
+                    : 'var(--ob-color-status-error, #dc2626)',
                   animation: isPaused ? 'none' : 'pulse 1s infinite',
                 }}
               />
@@ -475,7 +477,10 @@ export function VoiceNoteRecorder({
                   style={{
                     width: `${audioLevel * 100}%`,
                     height: '100%',
-                    background: audioLevel > 0.7 ? '#dc2626' : '#22c55e',
+                    background:
+                      audioLevel > 0.7
+                        ? 'var(--ob-color-status-error, #dc2626)'
+                        : 'var(--ob-color-status-success, #22c55e)',
                     transition: 'width 0.1s',
                   }}
                 />
@@ -488,10 +493,12 @@ export function VoiceNoteRecorder({
       {/* Error messages */}
       {(recordingError || uploadError) && (
         <div
+          role="alert"
+          aria-live="assertive"
           style={{
             padding: '0.75rem',
             background: 'var(--ob-color-surface-error)',
-            border: '1px solid #fecaca',
+            border: '1px solid var(--ob-color-border-error, #fecaca)',
             borderRadius: 'var(--ob-radius-sm)',
             color: 'var(--ob-color-status-error)',
             fontSize: 'var(--ob-font-size-sm)',
@@ -528,7 +535,7 @@ export function VoiceNoteRecorder({
                   gap: '0.75rem',
                   padding: '0.75rem',
                   background: 'white',
-                  border: '1px solid #e5e7eb',
+                  border: '1px solid var(--ob-color-border-subtle, #e5e7eb)',
                   borderRadius: 'var(--ob-radius-sm)',
                 }}
               >
@@ -552,7 +559,8 @@ export function VoiceNoteRecorder({
                     style={{
                       flex: 1,
                       padding: '0.375rem 0.5rem',
-                      border: '1px solid #d1d5db',
+                      border:
+                        '1px solid var(--ob-color-border-default, #d1d5db)',
                       borderRadius: 'var(--ob-radius-sm)',
                       fontSize: 'var(--ob-font-size-sm)',
                     }}
@@ -605,7 +613,7 @@ export function VoiceNoteRecorder({
                       borderRadius: 'var(--ob-radius-md)',
                       border: 'none',
                       background: propertyId
-                        ? '#3b82f6'
+                        ? 'var(--ob-color-status-info, #3b82f6)'
                         : 'var(--ob-color-border-default)',
                       color: 'white',
                       fontSize: 'var(--ob-font-size-xs)',

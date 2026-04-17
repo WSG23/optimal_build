@@ -56,7 +56,12 @@ export function FinanceAlerts({
   return (
     <>
       {error && (
-        <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
+        <Alert
+          severity="error"
+          role="alert"
+          aria-live="assertive"
+          sx={{ mb: 'var(--ob-space-150)' }}
+        >
           <strong>{t('finance.errors.generic')}</strong>
           <Box component="span" sx={{ display: 'block' }}>
             {error}
@@ -66,19 +71,34 @@ export function FinanceAlerts({
       )}
 
       {scenarioError && (
-        <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
+        <Alert
+          severity="error"
+          role="alert"
+          aria-live="assertive"
+          sx={{ mb: 'var(--ob-space-150)' }}
+        >
           {scenarioError}
           {needsScenarioCreateIdentity && <FinanceIdentityHelper compact />}
         </Alert>
       )}
       {seedError && (
-        <Alert severity="error" sx={{ mb: 'var(--ob-space-150)' }}>
+        <Alert
+          severity="error"
+          role="alert"
+          aria-live="assertive"
+          sx={{ mb: 'var(--ob-space-150)' }}
+        >
           {seedError}
           {needsScenarioCreateIdentity && <FinanceIdentityHelper compact />}
         </Alert>
       )}
       {scenarioMessage && (
-        <Alert severity="success" sx={{ mb: 'var(--ob-space-150)' }}>
+        <Alert
+          severity="success"
+          role="status"
+          aria-live="polite"
+          sx={{ mb: 'var(--ob-space-150)' }}
+        >
           {scenarioMessage}
         </Alert>
       )}

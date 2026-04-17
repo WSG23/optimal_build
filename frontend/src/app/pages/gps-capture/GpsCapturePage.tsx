@@ -13,9 +13,6 @@ import DomainIcon from '@mui/icons-material/Domain'
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import MapsHomeWorkIcon from '@mui/icons-material/MapsHomeWork'
-import LockIcon from '@mui/icons-material/Lock'
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
-import DescriptionIcon from '@mui/icons-material/Description'
 import RadarIcon from '@mui/icons-material/Radar'
 
 import {
@@ -45,6 +42,9 @@ import {
   HeritageContextCard,
 } from '../../components/gps-capture'
 import '../../../styles/gps-capture.css'
+import { formatScenarioLabel, DARK_MAP_STYLE } from './gpsCaptureUtils'
+import { HudWidgets } from './HudWidgets'
+import { MissionLog } from './MissionLog'
 
 const GOOGLE_MAPS_API_KEY = import.meta.env?.VITE_GOOGLE_MAPS_API_KEY ?? ''
 
@@ -239,53 +239,6 @@ export function GpsCapturePage() {
       return
     }
 
-    // Dark mode map style
-    const darkMapStyle: google.maps.MapTypeStyle[] = [
-      { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-      { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
-      { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
-      {
-        featureType: 'administrative.locality',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#d59563' }],
-      },
-      {
-        featureType: 'poi',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#d59563' }],
-      },
-      {
-        featureType: 'poi.park',
-        elementType: 'geometry',
-        stylers: [{ color: '#263c3f' }],
-      },
-      {
-        featureType: 'road',
-        elementType: 'geometry',
-        stylers: [{ color: '#38414e' }],
-      },
-      {
-        featureType: 'road',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#9ca5b3' }],
-      },
-      {
-        featureType: 'road.highway',
-        elementType: 'geometry',
-        stylers: [{ color: '#746855' }],
-      },
-      {
-        featureType: 'water',
-        elementType: 'geometry',
-        stylers: [{ color: '#17263c' }],
-      },
-      {
-        featureType: 'water',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#515c6d' }],
-      },
-    ]
-
     const initialLat = Number(latitude) || 1.3
     const initialLng = Number(longitude) || 103.85
 
@@ -293,7 +246,7 @@ export function GpsCapturePage() {
       center: { lat: initialLat, lng: initialLng },
       zoom: 16,
       tilt: 45, // Add tilt for 3D feel
-      styles: darkMapStyle,
+      styles: DARK_MAP_STYLE as google.maps.MapTypeStyle[],
       mapTypeControl: false,
       streetViewControl: false,
     })
@@ -303,7 +256,7 @@ export function GpsCapturePage() {
     pinElement.style.width = '24px'
     pinElement.style.height = '24px'
     pinElement.style.borderRadius = '50%'
-    pinElement.style.backgroundColor = '#3b82f6'
+    pinElement.style.backgroundColor = 'var(--ob-color-status-info, #3b82f6)'
     pinElement.style.border = '3px solid white'
     pinElement.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)'
     pinElement.style.cursor = 'grab'
@@ -382,11 +335,6 @@ export function GpsCapturePage() {
             selectedScenarios.length > 0 ? selectedScenarios : undefined,
           jurisdictionCode: jurisdictionCode || undefined,
           enabledFeatures: featurePreferences,
-        })
-        console.log('[GPS Capture] Received summary:', {
-          jurisdictionCode: summary.jurisdictionCode,
-          currencySymbol: summary.currencySymbol,
-          hasDeveloperFeatures: summary.developerFeatures !== null,
         })
         setCaptureSummary(summary)
         setDeveloperFeatures(summary.developerFeatures)
@@ -579,8 +527,12 @@ export function GpsCapturePage() {
 
               {/* Gamified Scenarios Tiles */}
               <div className="gps-form__group gps-form__group--full-width">
-                <label>MISSION SCENARIO</label>
-                <div className="gps-scenarios-grid">
+                <label id="mission-scenario-label">MISSION SCENARIO</label>
+                <div
+                  className="gps-scenarios-grid"
+                  role="group"
+                  aria-labelledby="mission-scenario-label"
+                >
                   {DEFAULT_SCENARIO_ORDER.map((scenario) => {
                     const isSelected = selectedScenarios.includes(scenario)
                     return (
@@ -641,134 +593,14 @@ export function GpsCapturePage() {
           </div>
 
           {/* RIGHT PANEL: HUD Widgets */}
-          <div className="gps-hud-group">
-            {/* Widget 1: Quick Analysis */}
-            <div className={`gps-hud-card ${!quickAnalysis ? 'locked' : ''}`}>
-              <h3>
-                Quick Analysis
-                {!quickAnalysis && <LockIcon fontSize="small" />}
-              </h3>
-
-              {quickAnalysis ? (
-                <div className="gps-hud-content">
-                  <ul className="gps-panel__list">
-                    {quickAnalysis.scenarios.slice(0, 1).map((scenario) => {
-                      // Show only first scenario for compactness in HUD
-                      const displayMetrics = Object.entries(scenario.metrics)
-                        .filter(([key]) => key !== 'accuracy_bands')
-                        .slice(0, 3)
-                      return (
-                        <li key={scenario.scenario}>
-                          <div className="gps-panel__headline">
-                            <strong>
-                              {formatScenarioLabel(scenario.scenario)}
-                            </strong>
-                          </div>
-                          {displayMetrics.length > 0 && (
-                            <dl className="gps-panel__metrics">
-                              {displayMetrics.map(([k, v]) => (
-                                <div key={k}>
-                                  <dt>{humanizeMetricKey(k)}</dt>
-                                  <dd>
-                                    {formatMetricValue(
-                                      v,
-                                      k,
-                                      captureSummary?.currencySymbol,
-                                    )}
-                                  </dd>
-                                </div>
-                              ))}
-                            </dl>
-                          )}
-                        </li>
-                      )
-                    })}
-                    {quickAnalysis.scenarios.length > 1 && (
-                      <p className="gps-hud-more-scenarios">
-                        + {quickAnalysis.scenarios.length - 1} more scenarios
-                      </p>
-                    )}
-                  </ul>
-                </div>
-              ) : (
-                <div className="gps-hud-locked-overlay">
-                  <span>Awaiting Scan</span>
-                </div>
-              )}
-            </div>
-
-            {/* Widget 2: Market Intelligence */}
-            <div className={`gps-hud-card ${!marketSummary ? 'locked' : ''}`}>
-              <h3>
-                Market Intelligence
-                {!marketSummary && <LockIcon fontSize="small" />}
-              </h3>
-              {marketLoading ? (
-                <div className="gps-hud-loading">
-                  <div className="gps-spinner gps-spinner--sm"></div>
-                  Decrypting market data...
-                </div>
-              ) : marketSummary ? (
-                <div className="gps-hud-content">
-                  <dl className="gps-panel__metrics">
-                    <div>
-                      <dt>Type</dt>
-                      <dd>
-                        {extractReportValue(
-                          marketSummary.report,
-                          'property_type',
-                        )}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Zone</dt>
-                      <dd>
-                        {extractReportValue(marketSummary.report, 'location')}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Trans</dt>
-                      <dd>
-                        {extractTransactions(marketSummary.report)} recent
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-              ) : (
-                <div className="gps-hud-locked-overlay">
-                  <span>Downlink Offline</span>
-                </div>
-              )}
-            </div>
-
-            {/* Widget 3: Marketing Packs */}
-            <div className={`gps-hud-card ${!captureSummary ? 'locked' : ''}`}>
-              <h3>
-                Marketing Packs
-                {!captureSummary && <LockIcon fontSize="small" />}
-              </h3>
-              <div className="gps-pack-grid gps-hud-content">
-                {PACK_TYPES.map((packType) => (
-                  <button
-                    key={packType}
-                    type="button"
-                    className="gps-pack-btn"
-                    disabled={packLoadingType === packType || !captureSummary}
-                    onClick={() => handleGeneratePack(packType)}
-                  >
-                    {packLoadingType === packType ? (
-                      <div className="gps-spinner gps-spinner--xs"></div>
-                    ) : packType === 'investment' || packType === 'sales' ? (
-                      <PictureAsPdfIcon />
-                    ) : (
-                      <DescriptionIcon />
-                    )}
-                    <span>{formatPackLabel(packType).split(' ')[0]}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+          <HudWidgets
+            quickAnalysis={quickAnalysis}
+            captureSummary={captureSummary}
+            marketSummary={marketSummary}
+            marketLoading={marketLoading}
+            packLoadingType={packLoadingType}
+            onGeneratePack={handleGeneratePack}
+          />
         </section>
 
         {/* Developer features section */}
@@ -846,159 +678,10 @@ export function GpsCapturePage() {
         )}
 
         {/* Recent Captures */}
-        <section className="gps-page__captures">
-          <div className="gps-panel">
-            <h3>Mission Log</h3>
-            {capturedSites.length === 0 ? (
-              <p style={{ fontStyle: 'italic', color: '#94a3b8' }}>
-                No prior missions.
-              </p>
-            ) : (
-              <table style={{ color: '#ccc' }}>
-                <thead>
-                  <tr>
-                    <th>Target</th>
-                    <th>District</th>
-                    <th>Scenario</th>
-                    <th>Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {capturedSites.map((site) => (
-                    <tr key={`${site.propertyId}-${site.capturedAt}`}>
-                      <td>{site.address}</td>
-                      <td>{site.district ?? '-'}</td>
-                      <td>
-                        {site.scenario
-                          ? formatScenarioLabel(site.scenario)
-                          : '-'}
-                      </td>
-                      <td>{new Date(site.capturedAt).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </section>
+        <MissionLog capturedSites={capturedSites} />
       </div>
     </div>
   )
 }
 
-const PACK_TYPES: ProfessionalPackType[] = [
-  'universal',
-  'investment',
-  'sales',
-  'lease',
-]
-
-function formatScenarioLabel(value: DevelopmentScenario) {
-  switch (value) {
-    case 'raw_land':
-      return 'Raw land'
-    case 'existing_building':
-      return 'Existing building'
-    case 'heritage_property':
-      return 'Heritage property'
-    case 'underused_asset':
-      return 'Underused asset'
-    case 'mixed_use_redevelopment':
-      return 'Mixed-use redevelopment'
-    default:
-      return value
-  }
-}
-
-function formatPackLabel(value: ProfessionalPackType) {
-  switch (value) {
-    case 'universal':
-      return 'Universal pack'
-    case 'investment':
-      return 'Investment memo'
-    case 'sales':
-      return 'Sales brief'
-    case 'lease':
-      return 'Lease brochure'
-    default:
-      return value
-  }
-}
-
-function humanizeMetricKey(key: string) {
-  return key.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
-}
-
-function formatMetricValue(
-  value: unknown,
-  metricKey?: string,
-  currencySymbol?: string,
-) {
-  if (value === null || value === undefined) {
-    return '—'
-  }
-  if (typeof value === 'number') {
-    const formattedNumber = Number.isInteger(value)
-      ? value.toLocaleString()
-      : value.toLocaleString(undefined, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })
-
-    // Add currency symbol if metric key suggests it's a price/financial value
-    // Exclude count/number fields that happen to contain financial keywords
-    const isCountField =
-      metricKey &&
-      (metricKey.includes('count') ||
-        metricKey.includes('number') ||
-        metricKey.includes('quantity') ||
-        metricKey.includes('units'))
-
-    const hasFinancialKeyword =
-      metricKey &&
-      !isCountField &&
-      (metricKey.includes('price') ||
-        metricKey.includes('noi') ||
-        metricKey.includes('valuation') ||
-        metricKey.includes('capex') ||
-        metricKey.includes('rent') ||
-        metricKey.includes('cost') ||
-        metricKey.includes('value') ||
-        metricKey.includes('revenue') ||
-        metricKey.includes('income'))
-
-    console.log('[formatMetricValue]', {
-      metricKey,
-      currencySymbol,
-      isCountField,
-      hasFinancialKeyword,
-      willAddSymbol: !!(currencySymbol && hasFinancialKeyword),
-    })
-
-    if (currencySymbol && hasFinancialKeyword) {
-      return `${currencySymbol}${formattedNumber}`
-    }
-    return formattedNumber
-  }
-  return String(value)
-}
-
-function extractReportValue(report: Record<string, unknown>, key: string) {
-  const value = report[key]
-  return typeof value === 'string' && value.trim() !== '' ? value : '—'
-}
-
-function extractTransactions(report: Record<string, unknown>) {
-  const comparables = report.comparables_analysis
-  if (
-    comparables &&
-    typeof comparables === 'object' &&
-    'transaction_count' in comparables
-  ) {
-    const value = (comparables as Record<string, unknown>).transaction_count
-    if (typeof value === 'number') {
-      return value.toLocaleString()
-    }
-  }
-  return '—'
-}
+// Utility functions imported from gpsCaptureUtils

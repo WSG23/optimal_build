@@ -39,6 +39,8 @@ export class ErrorBoundary extends React.Component<
 
     return (
       <Box
+        role="alert"
+        aria-live="assertive"
         sx={{
           display: 'flex',
           flexDirection: 'column',

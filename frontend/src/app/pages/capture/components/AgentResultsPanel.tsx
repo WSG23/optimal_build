@@ -164,7 +164,7 @@ export function AgentResultsPanel({
           {!marketSummary && <LockIcon fontSize="small" />}
         </h3>
         {marketLoading ? (
-          <div className="gps-hud-loading">
+          <div className="gps-hud-loading" role="status" aria-live="polite">
             <div className="gps-spinner gps-spinner--sm"></div>
             Decrypting market data...
           </div>
@@ -211,7 +211,11 @@ export function AgentResultsPanel({
             />
           ))}
         </div>
-        {packError && <p className="gps-error-text">{packError}</p>}
+        {packError && (
+          <p className="gps-error-text" role="alert" aria-live="assertive">
+            {packError}
+          </p>
+        )}
       </div>
 
       {/* Upsell Card */}

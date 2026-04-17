@@ -8,11 +8,9 @@ import {
   StepLabel,
   Grid,
 } from '@mui/material'
-import {
-  CloudUpload,
-  Error as ErrorIcon,
-  InsertDriveFile,
-} from '@mui/icons-material'
+import CloudUpload from '@mui/icons-material/CloudUpload'
+import ErrorIcon from '@mui/icons-material/Error'
+import InsertDriveFile from '@mui/icons-material/InsertDriveFile'
 
 import type { CadImportSummary, ParseStatusUpdate } from '../../api/client'
 import { useTranslation } from '../../i18n'
@@ -202,6 +200,9 @@ export function CadUploader({
 
   const ActiveJobStrip = (isUploading || status || summary) && (
     <Box
+      role="status"
+      aria-live="polite"
+      aria-busy={isUploading}
       sx={{
         p: 'var(--ob-space-200)',
         border: isEmbedded ? '1px solid' : undefined,

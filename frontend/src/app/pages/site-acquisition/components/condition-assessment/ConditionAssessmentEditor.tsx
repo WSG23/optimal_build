@@ -5,9 +5,10 @@
  * Receives all data and handlers via props from the parent page.
  */
 
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { IconButton } from '@mui/material'
-import { Close } from '@mui/icons-material'
+import Close from '@mui/icons-material/Close'
 import { Button } from '@/components/canonical/Button'
 import type { DevelopmentScenario } from '../../../../../api/siteAcquisition'
 import type {
@@ -73,6 +74,69 @@ export function ConditionAssessmentEditor({
   onSystemChange,
   setActiveScenario,
 }: ConditionAssessmentEditorProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    previousFocusRef.current = document.activeElement as HTMLElement | null
+
+    // Focus the first focusable element inside the dialog
+    const timer = requestAnimationFrame(() => {
+      const dialog = dialogRef.current
+      if (!dialog) return
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      )
+      if (focusable.length > 0) focusable[0].focus()
+    })
+
+    return () => {
+      cancelAnimationFrame(timer)
+      // Restore focus to the element that was focused before the dialog opened
+      previousFocusRef.current?.focus()
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab') return
+
+      const dialog = dialogRef.current
+      if (!dialog) return
+
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      )
+      if (focusable.length === 0) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
   if (!isOpen) {
     return null
   }
@@ -97,6 +161,7 @@ export function ConditionAssessmentEditor({
       }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Manual inspection editor"

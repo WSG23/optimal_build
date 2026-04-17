@@ -9,7 +9,8 @@
  */
 
 import type React from 'react'
-import { MyLocation, Search } from '@mui/icons-material'
+import MyLocation from '@mui/icons-material/MyLocation'
+import Search from '@mui/icons-material/Search'
 import { IconButton, CircularProgress } from '@mui/material'
 
 import type { DevelopmentScenario } from '../../../../api/siteAcquisition'
@@ -72,6 +73,7 @@ export function CommandBar({
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           placeholder="Address or location"
+          aria-label="Address or location"
           className="command-bar__input"
           onBlur={() => onAddressBlur?.()}
         />
@@ -84,6 +86,7 @@ export function CommandBar({
           value={latitude}
           onChange={(e) => setLatitude(e.target.value)}
           placeholder={isGeocoding ? '...' : 'LAT'}
+          aria-label="Latitude"
           disabled={isGeocoding}
           className="command-bar__input command-bar__input--coord"
         />
@@ -93,6 +96,7 @@ export function CommandBar({
           value={longitude}
           onChange={(e) => setLongitude(e.target.value)}
           placeholder={isGeocoding ? '...' : 'LON'}
+          aria-label="Longitude"
           disabled={isGeocoding}
           className="command-bar__input command-bar__input--coord"
         />

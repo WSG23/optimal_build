@@ -17,13 +17,11 @@ import {
   TextField,
   Snackbar,
 } from '@mui/material'
-import {
-  Add as AddIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
-  CheckCircle as CheckIcon,
-  Cancel as RejectIcon,
-} from '@mui/icons-material'
+import AddIcon from '@mui/icons-material/Add'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import CheckIcon from '@mui/icons-material/CheckCircle'
+import RejectIcon from '@mui/icons-material/Cancel'
 import { Button } from '../../../../components/canonical/Button'
 import { Card } from '../../../../components/canonical/Card'
 import { ApprovalWorkflow, workflowApi } from '../../../../api/workflow'
@@ -234,6 +232,7 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
         onClose={() => setSnackbar(null)}
         message={snackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        ContentProps={{ role: 'status', 'aria-live': 'polite' as const }}
       />
     </Box>
   )
@@ -270,6 +269,7 @@ const WorkflowCard: React.FC<{
         role="button"
         tabIndex={0}
         aria-expanded={expanded}
+        aria-label={`Toggle ${workflow.name || workflow.title} workflow details`}
         sx={{
           p: 'var(--ob-space-200)',
           display: 'flex',

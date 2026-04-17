@@ -45,10 +45,10 @@ export function ColorLegendEditor({
     <section
       style={{
         marginTop: '1.25rem',
-        border: '1px solid #e5e7eb',
+        border: '1px solid var(--ob-color-border-subtle, #e5e7eb)',
         borderRadius: '4px',
         padding: '1.25rem',
-        background: '#ffffff',
+        background: 'var(--ob-color-bg-surface, #ffffff)',
         display: 'flex',
         flexDirection: 'column',
         gap: '1rem',
@@ -64,18 +64,24 @@ export function ColorLegendEditor({
         }}
       >
         <div>
-          <h4
+          <h2
             style={{
               margin: 0,
               fontSize: '1rem',
               fontWeight: 600,
               letterSpacing: '-0.01em',
-              color: '#111827',
+              color: 'var(--ob-color-text-primary, #111827)',
             }}
           >
             Colour legend editor
-          </h4>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#4b5563' }}>
+          </h2>
+          <p
+            style={{
+              margin: 0,
+              fontSize: '0.9rem',
+              color: 'var(--ob-color-text-secondary, #4b5563)',
+            }}
+          >
             Update the palette, labels, and descriptions before regenerating the
             preview so property captures and developer decks stay consistent.
           </p>
@@ -84,7 +90,9 @@ export function ColorLegendEditor({
           style={{
             fontSize: '0.85rem',
             fontWeight: 600,
-            color: hasPendingChanges ? '#b45309' : '#10b981',
+            color: hasPendingChanges
+              ? 'var(--ob-color-status-warning, #b45309)'
+              : 'var(--ob-color-status-success, #10b981)',
           }}
         >
           {hasPendingChanges
@@ -103,10 +111,10 @@ export function ColorLegendEditor({
           <div
             key={entry.assetType}
             style={{
-              border: '1px solid #e5e7eb',
+              border: '1px solid var(--ob-color-border-subtle, #e5e7eb)',
               borderRadius: '4px',
               padding: '0.9rem',
-              background: '#f9fafb',
+              background: 'var(--ob-color-bg-surface, #f9fafb)',
               display: 'flex',
               flexDirection: 'column',
               gap: '0.6rem',
@@ -115,7 +123,12 @@ export function ColorLegendEditor({
             <div
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
             >
-              <strong style={{ fontSize: '0.9rem', color: '#111827' }}>
+              <strong
+                style={{
+                  fontSize: '0.9rem',
+                  color: 'var(--ob-color-text-primary, #111827)',
+                }}
+              >
                 {toTitleCase(entry.label)}
               </strong>
               <input
@@ -126,12 +139,12 @@ export function ColorLegendEditor({
                   onChange(entry.assetType, 'color', event.target.value)
                 }
                 style={{
-                  width: '36px',
-                  height: '24px',
-                  border: '1px solid #d1d5db',
+                  width: '44px',
+                  height: '44px',
+                  border: '1px solid var(--ob-color-border-default, #d1d5db)',
                   borderRadius: '6px',
                   padding: 0,
-                  background: '#fff',
+                  background: 'var(--ob-color-bg-surface, #fff)',
                 }}
               />
             </div>
@@ -141,7 +154,7 @@ export function ColorLegendEditor({
                 flexDirection: 'column',
                 gap: '0.35rem',
                 fontSize: '0.8rem',
-                color: '#4b5563',
+                color: 'var(--ob-color-text-secondary, #4b5563)',
               }}
             >
               Label
@@ -154,7 +167,7 @@ export function ColorLegendEditor({
                 style={{
                   padding: '0.4rem 0.55rem',
                   borderRadius: '6px',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--ob-color-border-default, #d1d5db)',
                   fontSize: '0.9rem',
                 }}
               />
@@ -165,7 +178,7 @@ export function ColorLegendEditor({
                 flexDirection: 'column',
                 gap: '0.35rem',
                 fontSize: '0.8rem',
-                color: '#4b5563',
+                color: 'var(--ob-color-text-secondary, #4b5563)',
               }}
             >
               Description
@@ -180,7 +193,7 @@ export function ColorLegendEditor({
                   minHeight: '56px',
                   padding: '0.4rem 0.55rem',
                   borderRadius: '6px',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--ob-color-border-default, #d1d5db)',
                   fontSize: '0.9rem',
                 }}
               />
@@ -203,10 +216,10 @@ export function ColorLegendEditor({
           style={{
             padding: '0.45rem 0.85rem',
             borderRadius: '9999px',
-            border: '1px solid #d1d5db',
-            background: '#f9fafb',
+            border: '1px solid var(--ob-color-border-default, #d1d5db)',
+            background: 'var(--ob-color-bg-surface, #f9fafb)',
             fontWeight: 600,
-            color: '#111827',
+            color: 'var(--ob-color-text-primary, #111827)',
             fontSize: '0.85rem',
             cursor: entries.length === 0 ? 'not-allowed' : 'pointer',
             opacity: entries.length === 0 ? 0.5 : 1,
@@ -214,7 +227,13 @@ export function ColorLegendEditor({
         >
           Reset to preview defaults
         </button>
-        <p style={{ margin: 0, fontSize: '0.85rem', color: '#4b5563' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: '0.85rem',
+            color: 'var(--ob-color-text-secondary, #4b5563)',
+          }}
+        >
           Use "Refresh preview render" after editing the palette so GLTF colours
           match the updated legend.
         </p>

@@ -8,12 +8,10 @@ import React, {
   useRef,
 } from 'react'
 import { Box, Alert, Snackbar, Tab, Tabs, useTheme } from '@mui/material'
-import {
-  Add as AddIcon,
-  Refresh as RefreshIcon,
-  Timeline as TimelineIcon,
-  Assignment as SubmissionIcon,
-} from '@mui/icons-material'
+import AddIcon from '@mui/icons-material/Add'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import TimelineIcon from '@mui/icons-material/Timeline'
+import SubmissionIcon from '@mui/icons-material/Assignment'
 import {
   regulatoryApi,
   AuthoritySubmission,
@@ -600,6 +598,8 @@ export const RegulatoryDashboardPage: React.FC = () => {
         message={successMessage}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         ContentProps={{
+          role: 'status',
+          'aria-live': 'polite' as const,
           sx: {
             bgcolor: 'var(--ob-gold-bg)',
             color: 'var(--ob-gold-text)',

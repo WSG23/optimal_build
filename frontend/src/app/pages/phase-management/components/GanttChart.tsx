@@ -41,6 +41,7 @@ const BAR_GRADIENTS: Record<string, string> = {
 const DAY_WIDTH = 24 // pixels per day
 const ROW_HEIGHT = 40
 const HEADER_HEIGHT = 60
+const LEFT_PANEL_MIN_WIDTH = 200
 const LEFT_PANEL_WIDTH = 280
 
 function formatDate(dateStr: string): string {
@@ -138,7 +139,7 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
           cursor: 'pointer',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           border: isSelected
-            ? '2px solid #00f3ff'
+            ? '2px solid var(--ob-color-neon-cyan)'
             : task.isCritical
               ? '1px solid var(--ob-glow-error-color-30)'
               : '1px solid var(--ob-overlay-white-subtle)',
@@ -282,7 +283,8 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
       <Box
         sx={{
           width: `${LEFT_PANEL_WIDTH}px`,
-          minWidth: `${LEFT_PANEL_WIDTH}px`,
+          minWidth: `${LEFT_PANEL_MIN_WIDTH}px`,
+          flexShrink: 1,
           borderRight: '1px solid var(--ob-overlay-white-subtle)',
           display: 'flex',
           alignItems: 'center',
@@ -478,7 +480,8 @@ export function GanttChart({
             <Box
               sx={{
                 width: `${LEFT_PANEL_WIDTH}px`,
-                minWidth: `${LEFT_PANEL_WIDTH}px`,
+                minWidth: `${LEFT_PANEL_MIN_WIDTH}px`,
+                flexShrink: 1,
                 borderRight: '1px solid var(--ob-overlay-white-subtle)',
                 display: 'flex',
                 alignItems: 'center',
@@ -489,6 +492,7 @@ export function GanttChart({
               }}
             >
               <Box
+                aria-hidden="true"
                 sx={{
                   width: 8,
                   height: 8,
@@ -557,7 +561,7 @@ export function GanttChart({
                 bottom: 60, // Leave room for legend
                 width: '2px',
                 background: 'var(--ob-color-neon-cyan)',
-                boxShadow: '0 0 10px #00f3ff',
+                boxShadow: '0 0 10px var(--ob-color-neon-cyan)',
                 zIndex: 15,
                 pointerEvents: 'none',
               }}
@@ -569,12 +573,12 @@ export function GanttChart({
                   left: '50%',
                   transform: 'translateX(-50%)',
                   background: 'var(--ob-color-neon-cyan)',
-                  color: '#000',
+                  color: 'var(--ob-color-text-on-light, #000)',
                   fontSize: '0.65rem',
                   fontWeight: 'bold',
                   padding: '2px 6px',
                   borderRadius: '4px',
-                  boxShadow: '0 0 10px #00f3ff',
+                  boxShadow: '0 0 10px var(--ob-color-neon-cyan)',
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -599,15 +603,15 @@ export function GanttChart({
         }}
       >
         <Stack direction="row" spacing={0.5} alignItems="center">
-          <WarningAmberIcon sx={{ fontSize: 16, color: '#ef4444' }} />
+          <WarningAmberIcon sx={{ fontSize: 16, color: 'error.main' }} />
           <Typography variant="caption">Critical Path</Typography>
         </Stack>
         <Stack direction="row" spacing={0.5} alignItems="center">
-          <AccountBalanceIcon sx={{ fontSize: 16, color: '#666' }} />
+          <AccountBalanceIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
           <Typography variant="caption">Heritage Phase</Typography>
         </Stack>
         <Stack direction="row" spacing={0.5} alignItems="center">
-          <PeopleIcon sx={{ fontSize: 16, color: '#666' }} />
+          <PeopleIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
           <Typography variant="caption">Tenant Coordination</Typography>
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, ml: 'auto' }}>
@@ -619,6 +623,7 @@ export function GanttChart({
               alignItems="center"
             >
               <Box
+                aria-hidden="true"
                 sx={{
                   width: 10,
                   height: 10,

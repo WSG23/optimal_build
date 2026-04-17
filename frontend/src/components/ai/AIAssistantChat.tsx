@@ -188,6 +188,8 @@ export function AIAssistantChat({
 
           {/* Messages */}
           <Box
+            aria-live="polite"
+            aria-busy={isLoading}
             sx={{
               height: 400,
               overflowY: 'auto',

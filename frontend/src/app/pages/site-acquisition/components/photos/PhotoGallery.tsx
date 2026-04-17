@@ -5,7 +5,7 @@
  * Shows photo metadata including tags, notes, and capture information.
  */
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type {
   PropertyPhoto,
   PhotoVersion,
@@ -28,6 +28,68 @@ export function PhotoGallery({
   const [viewMode, setViewMode] = useState<ViewMode>('original')
   const [selectedPhoto, setSelectedPhoto] = useState<PropertyPhoto | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const lightboxRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+
+  const isLightboxOpen = selectedPhoto !== null
+
+  useEffect(() => {
+    if (!isLightboxOpen) return
+
+    previousFocusRef.current = document.activeElement as HTMLElement | null
+
+    const timer = requestAnimationFrame(() => {
+      const dialog = lightboxRef.current
+      if (!dialog) return
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      )
+      if (focusable.length > 0) focusable[0].focus()
+    })
+
+    return () => {
+      cancelAnimationFrame(timer)
+      previousFocusRef.current?.focus()
+    }
+  }, [isLightboxOpen])
+
+  useEffect(() => {
+    if (!isLightboxOpen) return
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setSelectedPhoto(null)
+        return
+      }
+      if (e.key !== 'Tab') return
+
+      const dialog = lightboxRef.current
+      if (!dialog) return
+
+      const focusable = dialog.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      )
+      if (focusable.length === 0) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isLightboxOpen])
 
   const handleDelete = useCallback(
     async (photo: PropertyPhoto) => {
@@ -83,7 +145,7 @@ export function PhotoGallery({
           color: 'var(--ob-color-text-secondary)',
           background: 'var(--ob-color-surface-secondary)',
           borderRadius: 'var(--ob-radius-sm)',
-          border: '1px dashed #d1d5db',
+          border: '1px dashed var(--ob-color-border-subtle)',
         }}
       >
         <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
@@ -139,7 +201,10 @@ export function PhotoGallery({
                 viewMode === 'original'
                   ? 'var(--ob-color-surface-primary)'
                   : 'transparent',
-              color: viewMode === 'original' ? '#1f2937' : '#6b7280',
+              color:
+                viewMode === 'original'
+                  ? 'var(--ob-color-text-primary)'
+                  : 'var(--ob-color-text-secondary)',
               fontSize: 'var(--ob-font-size-xs)',
               fontWeight: 500,
               cursor: 'pointer',
@@ -161,7 +226,10 @@ export function PhotoGallery({
                 viewMode === 'marketing'
                   ? 'var(--ob-color-surface-primary)'
                   : 'transparent',
-              color: viewMode === 'marketing' ? '#1f2937' : '#6b7280',
+              color:
+                viewMode === 'marketing'
+                  ? 'var(--ob-color-text-primary)'
+                  : 'var(--ob-color-text-secondary)',
               fontSize: 'var(--ob-font-size-xs)',
               fontWeight: 500,
               cursor: 'pointer',
@@ -217,6 +285,9 @@ export function PhotoGallery({
               onKeyDown={(e) => e.key === 'Enter' && setSelectedPhoto(photo)}
               role="button"
               tabIndex={0}
+              aria-label={
+                photo.notes || `Property photo ${photos.indexOf(photo) + 1}`
+              }
             >
               {thumbnailUrl ? (
                 <img
@@ -316,6 +387,7 @@ export function PhotoGallery({
       {/* Lightbox / Detail view */}
       {selectedPhoto && (
         <div
+          ref={lightboxRef}
           style={{
             position: 'fixed',
             inset: 0,
@@ -326,9 +398,9 @@ export function PhotoGallery({
             padding: '1rem',
           }}
           onClick={() => setSelectedPhoto(null)}
-          onKeyDown={(e) => e.key === 'Escape' && setSelectedPhoto(null)}
           role="dialog"
           aria-modal="true"
+          aria-label="Photo lightbox"
         >
           {/* Header */}
           <div

@@ -317,12 +317,14 @@ export function AIInsightsPanel({
 
   if (loading) {
     return (
-      <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
-        <Skeleton variant="text" width="60%" />
-        <Skeleton variant="rectangular" height={60} sx={{ mt: 1 }} />
-        <Skeleton variant="rectangular" height={60} sx={{ mt: 1 }} />
-        <Skeleton variant="text" width="40%" sx={{ mt: 2 }} />
-      </Card>
+      <div aria-busy="true" aria-live="polite" role="status">
+        <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
+          <Skeleton variant="text" width="60%" />
+          <Skeleton variant="rectangular" height={60} sx={{ mt: 1 }} />
+          <Skeleton variant="rectangular" height={60} sx={{ mt: 1 }} />
+          <Skeleton variant="text" width="40%" sx={{ mt: 2 }} />
+        </Card>
+      </div>
     )
   }
 

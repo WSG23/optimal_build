@@ -21,12 +21,10 @@ import {
   CircularProgress,
   Snackbar,
 } from '@mui/material'
-import {
-  Add as AddIcon,
-  Person as PersonIcon,
-  Task as TaskIcon,
-  Dashboard as DashboardIcon,
-} from '@mui/icons-material'
+import AddIcon from '@mui/icons-material/Add'
+import PersonIcon from '@mui/icons-material/Person'
+import TaskIcon from '@mui/icons-material/Task'
+import DashboardIcon from '@mui/icons-material/Dashboard'
 import { Button } from '../../../components/canonical/Button'
 import { Card } from '../../../components/canonical/Card'
 import { EmptyState } from '../../../components/canonical'
@@ -564,6 +562,7 @@ export const TeamManagementPage: React.FC = () => {
         onClose={() => setSnackbar(null)}
         message={snackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        ContentProps={{ role: 'status', 'aria-live': 'polite' as const }}
       />
     </Box>
   )

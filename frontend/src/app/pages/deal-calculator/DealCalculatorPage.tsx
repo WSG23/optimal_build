@@ -352,6 +352,8 @@ export function DealCalculatorPage() {
         message={successMessage}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         ContentProps={{
+          role: 'status',
+          'aria-live': 'polite' as const,
           sx: {
             bgcolor: 'var(--ob-gold-bg)',
             color: 'var(--ob-gold-text)',

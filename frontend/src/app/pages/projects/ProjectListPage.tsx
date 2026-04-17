@@ -18,12 +18,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import {
-  FolderOpenOutlined,
-  CalculateOutlined,
-  UploadFileOutlined,
-  AutoStoriesOutlined,
-} from '@mui/icons-material'
+import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined'
+import CalculateOutlined from '@mui/icons-material/CalculateOutlined'
+import UploadFileOutlined from '@mui/icons-material/UploadFileOutlined'
+import AutoStoriesOutlined from '@mui/icons-material/AutoStoriesOutlined'
 
 import { EmptyState } from '../../../components/canonical'
 import { useProject } from '../../../contexts/useProject'
@@ -385,6 +383,8 @@ export function ProjectListPage() {
         message={successMessage}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         ContentProps={{
+          role: 'status',
+          'aria-live': 'polite' as const,
           sx: {
             bgcolor: 'var(--ob-gold-bg)',
             color: 'var(--ob-gold-text)',
