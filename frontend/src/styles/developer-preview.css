@@ -432,7 +432,8 @@
 /* Responsive: Mobile                                                          */
 /* -------------------------------------------------------------------------- */
 
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .developer-preview__layers-table {
         min-width: 0;
         font-size: var(--ob-font-size-xs);

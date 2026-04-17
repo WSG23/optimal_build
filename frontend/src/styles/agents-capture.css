@@ -509,7 +509,8 @@
     box-shadow: var(--ob-glow-status-success);
 }
 
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .gps-capture__sidebar {
         width: 100%;
         max-width: none;

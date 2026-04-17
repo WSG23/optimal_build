@@ -314,14 +314,16 @@
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
-@media (max-width: 1024px) {
+/* @breakpoint: md (900px) */
+@media (max-width: 900px) {
     .page__grid--3,
     .page__grid--4 {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
-@media (max-width: 768px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .page__grid--2,
     .page__grid--3,
     .page__grid--4 {
@@ -421,6 +423,7 @@
     border-top-color: var(--ob-color-brand-primary);
     border-radius: 50%;
     animation: page-spin 0.8s linear infinite;
+    will-change: transform;
 }
 
 @keyframes page-spin {
@@ -484,7 +487,8 @@
     grid-template-columns: 1fr 2fr;
 }
 
-@media (max-width: 1024px) {
+/* @breakpoint: md (900px) */
+@media (max-width: 900px) {
     .page__two-col,
     .page__two-col--reverse {
         grid-template-columns: 1fr;

@@ -2,6 +2,25 @@
    Global resets, root variables, base typography, utility classes.
 */
 
+/* =============================================================================
+   BREAKPOINT SYSTEM (MUI-aligned)
+   =============================================================================
+   CSS custom properties cannot be used in media queries (CSS limitation).
+   These are documented here as the canonical reference for all breakpoints.
+
+   Breakpoint tokens:
+     --ob-breakpoint-sm:  600px   (small tablet)
+     --ob-breakpoint-md:  900px   (tablet)
+     --ob-breakpoint-lg:  1200px  (desktop)
+     --ob-breakpoint-xl:  1536px  (large desktop)
+
+   Usage: always use the raw pixel value with a tier comment, e.g.:
+     [at]breakpoint: sm (600px)
+     [at]breakpoint: md (900px)
+     [at]breakpoint: lg (1200px)
+     [at]breakpoint: xl (1536px)
+   ============================================================================= */
+
 *,
 *::before,
 *::after {
@@ -155,6 +174,7 @@ div[style*='border-radius'] {
 body {
     margin: 0;
     min-height: 100vh;
+    min-height: 100dvh;
     /* AI Studio protocol: Force deep slate background for premium contrast */
     background-color: var(--ob-color-bg-root) !important;
     color: var(--ob-color-text-primary) !important;
@@ -166,6 +186,7 @@ body {
 #root {
     width: 100%;
     min-height: 100vh;
+    min-height: 100dvh;
     margin: 0;
     padding: 0; /* Remove padding as app-shell handles it now */
     display: flex;
@@ -285,6 +306,7 @@ h6 {
     display: grid;
     grid-template-columns: 280px 1fr;
     min-height: 100vh;
+    min-height: 100dvh;
     background: var(--ob-color-bg-root);
 }
 

@@ -42,6 +42,7 @@
     display: flex;
     height: 100%;
     min-height: 100vh;
+    min-height: 100dvh;
     overflow: hidden;
     background: var(--ob-color-bg-root);
 }
@@ -59,7 +60,8 @@
     box-shadow: 10px 0 30px rgba(0, 0, 0, 0.02); /* Sidebar separation shadow */
 }
 
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .feasibility-split-layout {
         flex-direction: column;
     }
@@ -143,7 +145,8 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     gap: var(--ob-spacing-400);
 }
 
-@media (min-width: 960px) {
+/* @breakpoint: md (900px) */
+@media (min-width: 900px) {
     .feasibility-wizard__layout {
         grid-template-columns: 360px minmax(0, 1fr);
         align-items: start;
@@ -669,6 +672,7 @@ html[data-theme='light'] .smart-search {
     border-top-color: transparent;
     border-radius: var(--ob-radius-pill);
     animation: spin 1s linear infinite;
+    will-change: transform;
     margin-left: var(--ob-space-050);
 }
 
@@ -1074,6 +1078,7 @@ html[data-theme='light'] .smart-search {
     min-height: calc(100vh - var(--ob-space-400));
 }
 
+/* @breakpoint: lg (1200px) */
 @media (min-width: 1200px) {
     .feasibility-workspace__grid {
         grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
@@ -1108,6 +1113,7 @@ html[data-theme='light'] .smart-search {
     flex-shrink: 0;
 }
 
+/* @breakpoint: below lg (1199px) */
 @media (max-width: 1199px) {
     .feasibility-workspace__sidebar {
         position: static;
@@ -1249,6 +1255,7 @@ html[data-theme='light'] .smart-search {
     grid-column: span 12;
 }
 
+/* @breakpoint: lg (1200px) */
 @media (min-width: 1200px) {
     .feasibility-output__card--span-8 {
         grid-column: span 8;
@@ -1653,7 +1660,8 @@ html[data-theme='light'] .smart-search {
     color: var(--ob-color-brand-primary);
 }
 
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .scenario-selector__label {
         white-space: normal;
         overflow: visible;
@@ -1872,6 +1880,7 @@ html[data-theme='light'] .smart-search {
     padding: var(--ob-space-100);
     min-width: 200px;
     animation: slideInRight 0.4s ease-out;
+    will-change: transform, opacity;
     box-shadow: var(--ob-shadow-lg);
 }
 

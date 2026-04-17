@@ -13,7 +13,8 @@
     color: var(--ob-color-text-primary);
 }
 
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .phase-management-page {
         gap: var(--ob-spacing-300);
     }

@@ -42,13 +42,11 @@ import {
   Button,
   Typography,
 } from '@mui/material'
-import {
-  Description as PdfIcon,
-  Download as DownloadIcon,
-  History as HistoryIcon,
-  SmartToy,
-  Radar,
-} from '@mui/icons-material'
+import PdfIcon from '@mui/icons-material/Description'
+import DownloadIcon from '@mui/icons-material/Download'
+import HistoryIcon from '@mui/icons-material/History'
+import SmartToy from '@mui/icons-material/SmartToy'
+import Radar from '@mui/icons-material/Radar'
 import {
   useAssumptions,
   useFeasibilityCompute,
@@ -353,14 +351,6 @@ export function FeasibilityWizard({
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault()
-      console.log('FeasibilityWizard: handleSubmit called')
-      console.log('FeasibilityWizard: Inputs -', {
-        addressInput,
-        siteAreaInput,
-        landUseInput,
-        assumptions: appliedAssumptions,
-        financials: appliedFinancials,
-      })
       const trimmed = addressInput.trim()
       const siteArea = parseFloat(siteAreaInput)
       if (!trimmed) {
@@ -390,10 +380,6 @@ export function FeasibilityWizard({
         interestRatePercent: appliedFinancials.interestRatePercent,
         targetMarginPercent: appliedFinancials.targetMarginPercent,
       }
-      console.log(
-        'FeasibilityWizard: handleSubmit setting payload:',
-        newPayload,
-      )
       setPayload(newPayload)
     },
     [
@@ -857,7 +843,12 @@ export function FeasibilityWizard({
         autoHideDuration={6000}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert severity="error" variant="filled" sx={{ width: '100%' }}>
+        <Alert
+          severity="error"
+          variant="filled"
+          role="alert"
+          sx={{ width: '100%' }}
+        >
           {errorMessage || t('wizard.errors.generic')}
         </Alert>
       </Snackbar>
@@ -928,7 +919,8 @@ export function FeasibilityWizard({
         >
           <div
             style={{
-              width: '300px',
+              width: '100%',
+              maxWidth: '300px',
               height: '420px',
               background: 'white',
               boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
@@ -966,6 +958,7 @@ export function FeasibilityWizard({
                 style={{
                   marginTop: '1rem',
                   height: '4px',
+                  minWidth: '40px',
                   width: '40px',
                   background: 'var(--ob-color-brand-primary)',
                   marginInline: 'auto',

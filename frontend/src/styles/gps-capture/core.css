@@ -8,6 +8,7 @@
     flex-direction: column;
     width: 100%;
     min-height: 100vh;
+    min-height: 100dvh;
     padding: 0;
     margin: 0;
     max-width: none;
@@ -55,6 +56,7 @@
     flex-direction: column;
     gap: var(--ob-space-250);
     min-height: 100vh;
+    min-height: 100dvh;
     box-sizing: border-box;
 }
 
@@ -643,7 +645,8 @@ textarea.gps-input-ghost:focus {
 
 /* ── Responsive ── */
 
-@media (max-width: 1024px) {
+/* @breakpoint: md (900px) */
+@media (max-width: 900px) {
     .gps-page__summary {
         flex-direction: column;
     }
@@ -667,7 +670,8 @@ textarea.gps-input-ghost:focus {
     }
 }
 
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .gps-form__coord {
         min-width: 100%;
     }

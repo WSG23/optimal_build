@@ -595,7 +595,8 @@
     color: var(--ob-color-text-secondary);
 }
 
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .biz-perf__pipeline-columns {
         flex-direction: column;
     }

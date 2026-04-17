@@ -116,7 +116,8 @@
     margin-bottom: var(--ob-spacing-500);
 }
 
-@media (max-width: 768px) {
+/* @breakpoint: md (900px) */
+@media (max-width: 900px) {
     .advisory__metrics {
         grid-template-columns: 1fr;
     }
@@ -431,6 +432,7 @@
     border-radius: 50%;
     background: var(--ob-color-brand-primary);
     animation: pulse-dot 2s ease-in-out infinite;
+    will-change: opacity;
 }
 
 @keyframes pulse-dot {

@@ -221,7 +221,8 @@
     outline: none;
 }
 
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .cad-preview__summary-warning {
         order: 3;
         width: 100%;
@@ -929,7 +930,8 @@
     outline: none;
 }
 
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .cad-detection__toolbar {
         flex-direction: column;
         align-items: flex-start;

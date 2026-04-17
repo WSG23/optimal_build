@@ -75,7 +75,7 @@ export function Sidebar({ workspace = 'developer' }: SidebarProps) {
     <Box
       component="aside"
       sx={{
-        width: '280px',
+        width: { xs: '100%', sm: 280 },
         height: '100vh',
         flexShrink: 0,
         borderRight: 1,

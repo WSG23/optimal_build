@@ -309,6 +309,7 @@
     margin-bottom: var(--ob-space-200);
 }
 
+/* @breakpoint: sm (600px) */
 @media (max-width: 600px) {
     .property-capture-form__header {
         flex-direction: column;
@@ -340,6 +341,7 @@
     flex-shrink: 0;
 }
 
+/* @breakpoint: sm (600px) */
 @media (max-width: 600px) {
     .property-capture-form__header-actions {
         flex-direction: column;
@@ -1291,7 +1293,8 @@
 }
 
 /* Responsive: Compact header on small screens */
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .multi-scenario__title {
         font-size: var(--ob-font-size-md);
     }
@@ -1348,13 +1351,15 @@
 }
 
 /* Responsive Resilience: Fluid grid degradation */
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .multi-scenario__cards-grid {
         grid-template-columns: 1fr;
         gap: var(--ob-space-100);
     }
 }
 
+/* @breakpoint: lg (1200px) */
 @media (min-width: 1200px) {
     .multi-scenario__cards-grid {
         grid-template-columns: repeat(3, 1fr);
@@ -1731,7 +1736,8 @@
 }
 
 /* Responsive Resilience: Signals grid */
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .multi-scenario__signals-grid {
         grid-template-columns: 1fr;
         gap: var(--ob-space-100);
@@ -1867,7 +1873,8 @@
     background: var(--ob-color-surface-secondary, rgba(15, 23, 42, 0.85));
 }
 
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .multi-scenario__summary-footer {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -1918,7 +1925,8 @@
     margin-bottom: var(--ob-space-200);
 }
 
-@media (min-width: 768px) {
+/* @breakpoint: md (900px) */
+@media (min-width: 900px) {
     .multi-scenario__workspace-grid {
         grid-template-columns: repeat(3, 1fr);
     }
@@ -2106,7 +2114,8 @@
     /* margin removed - section's flex gap handles subsection spacing uniformly */
 }
 
-@media (min-width: 768px) {
+/* @breakpoint: md (900px) */
+@media (min-width: 900px) {
     .multi-scenario__path-grid {
         grid-template-columns: repeat(3, 1fr);
     }
@@ -2168,7 +2177,8 @@
     gap: var(--ob-space-100);
 }
 
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .multi-scenario__path-header {
         flex-direction: column;
         align-items: flex-start;
@@ -2184,7 +2194,8 @@
     text-align: right;
 }
 
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .multi-scenario__path-timestamp {
         margin-left: 0;
         align-items: flex-start;
@@ -2437,7 +2448,8 @@
     margin-bottom: var(--ob-space-100);
 }
 
-@media (min-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (min-width: 600px) {
     .multi-scenario__intel-tape-header {
         flex-direction: row;
         justify-content: space-between;
@@ -2496,7 +2508,8 @@
     gap: var(--ob-space-025);
 }
 
-@media (min-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (min-width: 600px) {
     .multi-scenario__intel-tape-updated {
         align-items: flex-end;
         text-align: right;
@@ -2599,7 +2612,8 @@
     gap: var(--ob-space-100);
 }
 
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .multi-scenario__matrix-stats {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -3204,7 +3218,8 @@
     text-overflow: ellipsis;
 }
 
-@media (max-width: 640px) {
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
     .voice-observations-panel__item-name {
         white-space: normal;
         overflow: visible;
@@ -3442,7 +3457,8 @@
     gap: var(--ob-space-200);
 }
 
-@media (min-width: 1024px) {
+/* @breakpoint: lg (1200px) */
+@media (min-width: 1200px) {
     .site-acquisition__sidebar-layout {
         grid-template-columns: 2fr 1fr;
     }
@@ -4224,8 +4240,9 @@
     );
 }
 
-/* Responsive: Stack on mobile */
-@media (max-width: 1024px) {
+/* Responsive: Stack on tablet */
+/* @breakpoint: md (900px) */
+@media (max-width: 900px) {
     .site-acquisition__map-content {
         grid-template-columns: 1fr;
     }
@@ -4567,7 +4584,8 @@
 }
 
 /* Responsive Command Bar */
-@media (max-width: 768px) {
+/* @breakpoint: md (900px) */
+@media (max-width: 900px) {
     .command-bar {
         flex-wrap: wrap;
     }
