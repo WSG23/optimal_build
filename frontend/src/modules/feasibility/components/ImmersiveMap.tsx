@@ -117,11 +117,11 @@ export function ImmersiveMap({
               backdropFilter: 'blur(var(--ob-blur-lg))',
               border: '1px solid rgba(6, 182, 212, 0.3)',
               borderRadius: '4px',
-              padding: '48px 64px',
+              padding: 'var(--ob-space-300) var(--ob-space-400)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '24px',
+              gap: 'var(--ob-space-150)',
               maxWidth: '500px',
               animation:
                 'floatUp 4s ease-in-out infinite, pulseGlow 3s ease-in-out infinite',
@@ -142,7 +142,12 @@ export function ImmersiveMap({
                 justifyContent: 'center',
               }}
             >
-              <ExploreIcon sx={{ fontSize: 40, color: '#06b6d4' }} />
+              <ExploreIcon
+                sx={{
+                  fontSize: 40,
+                  color: 'var(--ob-color-neon-cyan, #06b6d4)',
+                }}
+              />
             </Box>
 
             {/* Title */}
@@ -201,7 +206,7 @@ export function ImmersiveMap({
                     borderColor: 'rgba(6, 182, 212, 0.5)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#06b6d4',
+                    borderColor: 'var(--ob-color-neon-cyan, #06b6d4)',
                   },
                 },
                 '& .MuiInputBase-input::placeholder': {
@@ -215,7 +220,7 @@ export function ImmersiveMap({
             <Box
               sx={{
                 display: 'flex',
-                gap: '16px',
+                gap: 'var(--ob-space-100)',
                 flexWrap: 'wrap',
                 justifyContent: 'center',
               }}
@@ -265,7 +270,8 @@ export function ImmersiveMap({
           left: 0,
           right: 0,
           height: '300px',
-          background: 'linear-gradient(to top, #0f172a, transparent)',
+          background:
+            'linear-gradient(to top, var(--ob-color-bg-primary, #0f172a), transparent)',
           pointerEvents: 'none',
         }}
       />

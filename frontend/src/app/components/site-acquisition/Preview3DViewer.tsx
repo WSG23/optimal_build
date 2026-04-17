@@ -144,7 +144,11 @@ export function Preview3DViewer({
         layerObjectsRef.current = new Map()
 
         const scene = new THREE.Scene()
-        scene.background = new THREE.Color('#f5f5f7')
+        scene.background = new THREE.Color(
+          getComputedStyle(document.documentElement)
+            .getPropertyValue('--ob-color-bg-surface')
+            .trim() || '#f5f5f7',
+        )
         sceneRef.current = scene
 
         const camera = new THREE.PerspectiveCamera(
@@ -228,7 +232,7 @@ export function Preview3DViewer({
         const ground = new THREE.Mesh(
           new THREE.PlaneGeometry(footprintSpan * 1.6, footprintSpan * 1.6),
           new THREE.MeshStandardMaterial({
-            color: '#e5e7eb',
+            color: 'var(--ob-color-border-subtle, #e5e7eb)',
             roughness: 0.9,
             metalness: 0.05,
           }),

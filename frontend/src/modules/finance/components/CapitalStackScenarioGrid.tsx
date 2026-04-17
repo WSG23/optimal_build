@@ -6,11 +6,9 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import {
-  DeleteOutline as DeleteOutlineIcon,
-  Star as StarIcon,
-  StarBorder as StarBorderIcon,
-} from '@mui/icons-material'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import StarIcon from '@mui/icons-material/Star'
+import StarBorderIcon from '@mui/icons-material/StarBorder'
 
 import type { FinanceScenarioSummary } from '../../../api/finance'
 import { useTranslation } from '../../../i18n'
@@ -242,9 +240,9 @@ function ScenarioCard({
                     border: 'var(--ob-border-fine)',
                     // Gold color for primary scenario star
                     ...(scenario.isPrimary && {
-                      color: '#FFD700',
+                      color: 'var(--ob-color-accent-gold, #FFD700)',
                       '&.Mui-disabled': {
-                        color: '#FFD700',
+                        color: 'var(--ob-color-accent-gold, #FFD700)',
                       },
                     }),
                   }}
@@ -252,7 +250,10 @@ function ScenarioCard({
                   {makingPrimary ? (
                     <CircularProgress size={14} />
                   ) : scenario.isPrimary ? (
-                    <StarIcon fontSize="small" sx={{ color: '#FFD700' }} />
+                    <StarIcon
+                      fontSize="small"
+                      sx={{ color: 'var(--ob-color-accent-gold, #FFD700)' }}
+                    />
                   ) : (
                     <StarBorderIcon fontSize="small" />
                   )}

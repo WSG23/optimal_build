@@ -89,14 +89,14 @@ export function ResultsPanel({
               opacity: 0.5,
               pointerEvents: 'none',
               display: 'grid',
-              gap: '24px',
+              gap: 'var(--ob-space-150)',
             }}
           >
             {/* Fake Header */}
             <div
               style={{
                 height: '120px',
-                background: '#e5e7eb',
+                background: 'var(--ob-color-border-subtle, #e5e7eb)',
                 borderRadius: '4px',
               }}
             />
@@ -106,20 +106,20 @@ export function ResultsPanel({
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
-                gap: '24px',
+                gap: 'var(--ob-space-150)',
               }}
             >
               <div
                 style={{
                   height: '200px',
-                  background: '#e5e7eb',
+                  background: 'var(--ob-color-border-subtle, #e5e7eb)',
                   borderRadius: '4px',
                 }}
               />
               <div
                 style={{
                   height: '200px',
-                  background: '#e5e7eb',
+                  background: 'var(--ob-color-border-subtle, #e5e7eb)',
                   borderRadius: '4px',
                 }}
               />
@@ -128,7 +128,7 @@ export function ResultsPanel({
             <div
               style={{
                 height: '300px',
-                background: '#e5e7eb',
+                background: 'var(--ob-color-border-subtle, #e5e7eb)',
                 borderRadius: '4px',
               }}
             />
@@ -143,7 +143,7 @@ export function ResultsPanel({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'flex-end', // Align to bottom for floating CTA
-              paddingBottom: '48px',
+              paddingBottom: 'var(--ob-space-300)',
               // FIXED: Semi-transparent black with blur
               background: 'rgba(0,0,0,0.4)',
               backdropFilter: 'blur(var(--ob-blur-sm))',
@@ -166,7 +166,7 @@ export function ResultsPanel({
                   style={{
                     width: '80px',
                     height: '80px',
-                    border: '4px solid #3b82f6',
+                    border: '4px solid var(--ob-color-status-info, #3b82f6)',
                     borderTopColor: 'transparent',
                     borderRadius: '50%',
                     animation: 'spin 1s linear infinite',
@@ -175,7 +175,7 @@ export function ResultsPanel({
                 <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } @media (prefers-reduced-motion: reduce) { .radar-spinner { animation: none !important; } }`}</style>
                 <h3
                   style={{
-                    marginTop: '24px',
+                    marginTop: 'var(--ob-space-150)',
                     fontSize: '1.25rem',
                     fontWeight: 600,
                     color: 'white',
@@ -195,11 +195,11 @@ export function ResultsPanel({
                   background: 'rgba(30, 30, 30, 0.6)', // Glassmorphic dark
                   backdropFilter: 'blur(var(--ob-blur-md))',
                   border: '1px solid rgba(255,255,255,0.1)',
-                  padding: '24px 32px',
+                  padding: 'var(--ob-space-150) var(--ob-space-200)',
                   borderRadius: '4px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '16px',
+                  gap: 'var(--ob-space-100)',
                   boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
                   transform: 'translateY(0)',
                   animation: 'float 6s ease-in-out infinite',
@@ -333,7 +333,10 @@ export function ResultsPanel({
                 >
                   <span
                     className="text-eyebrow"
-                    style={{ display: 'block', marginBottom: '4px' }}
+                    style={{
+                      display: 'block',
+                      marginBottom: 'var(--ob-space-25)',
+                    }}
                   >
                     OPTIMIZED FOR
                   </span>
@@ -343,7 +346,8 @@ export function ResultsPanel({
                       fontWeight: 700,
                       margin: 0,
                       letterSpacing: '-0.02em',
-                      background: 'linear-gradient(45deg, #111827, #374151)',
+                      background:
+                        'linear-gradient(45deg, var(--ob-color-text-primary, #111827), var(--ob-color-text-secondary, #374151))',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                     }}
@@ -351,7 +355,11 @@ export function ResultsPanel({
                     {result.zoneCode ?? t('wizard.results.zoneUnknown')}
                   </h2>
                   <div
-                    style={{ marginTop: '8px', display: 'flex', gap: '8px' }}
+                    style={{
+                      marginTop: 'var(--ob-space-50)',
+                      display: 'flex',
+                      gap: 'var(--ob-space-50)',
+                    }}
                   >
                     {result.overlays.map((overlay) => (
                       <span
@@ -361,9 +369,10 @@ export function ResultsPanel({
                           fontWeight: 600,
                           padding: '2px 8px',
                           borderRadius: '4px',
-                          background: '#EFF6FF',
-                          color: '#2563EB',
-                          border: '1px solid #BFDBFE',
+                          background: 'var(--ob-color-surface-info, #EFF6FF)',
+                          color: 'var(--ob-color-status-info, #2563EB)',
+                          border:
+                            '1px solid var(--ob-color-border-info, #BFDBFE)',
                         }}
                       >
                         {overlay}
@@ -375,7 +384,7 @@ export function ResultsPanel({
                 {/* Summary Metric Card (e.g. Total GFA) */}
                 <div
                   style={{
-                    background: '#1F2937',
+                    background: 'var(--ob-color-text-primary, #1F2937)',
                     color: 'white',
                     padding: 'var(--ob-space-5)',
                     borderRadius: 'var(--ob-radius-lg)',
@@ -399,7 +408,7 @@ export function ResultsPanel({
                       fontSize: '2.25rem',
                       fontWeight: 700,
                       lineHeight: 1.1,
-                      marginTop: '4px',
+                      marginTop: 'var(--ob-space-25)',
                     }}
                   >
                     {numberFormatter.format(result.metrics.gfaCapM2)}
@@ -408,7 +417,7 @@ export function ResultsPanel({
                         fontSize: '1rem',
                         fontWeight: 400,
                         opacity: 0.6,
-                        marginLeft: '4px',
+                        marginLeft: 'var(--ob-space-25)',
                       }}
                     >
                       m²

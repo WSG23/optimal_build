@@ -1,4 +1,5 @@
-import { AutoAwesome, CheckCircle } from '@mui/icons-material'
+import AutoAwesome from '@mui/icons-material/AutoAwesome'
+import CheckCircle from '@mui/icons-material/CheckCircle'
 import {
   Card,
   CardActionArea,
@@ -24,8 +25,12 @@ const IsometricIcon = ({
   strategy: GenerativeStrategy
   selected: boolean
 }) => {
-  const baseColor = selected ? '#06b6d4' : 'var(--ob-neutral-500)'
-  const highlightColor = selected ? '#22d3ee' : 'var(--ob-neutral-400)'
+  const baseColor = selected
+    ? 'var(--ob-color-neon-cyan, #06b6d4)'
+    : 'var(--ob-neutral-500)'
+  const highlightColor = selected
+    ? 'var(--ob-color-neon-cyan-light, #22d3ee)'
+    : 'var(--ob-neutral-400)'
   const shadowColor = selected
     ? 'rgba(6, 182, 212, 0.3)'
     : 'rgba(100, 116, 139, 0.2)'

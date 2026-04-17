@@ -9,16 +9,14 @@ import {
   Chip,
   Typography,
 } from '@mui/material'
-import {
-  Visibility,
-  WarningAmber,
-  InfoOutlined,
-  CheckCircleOutline,
-  ErrorOutline,
-  RestartAlt,
-  Map as MapIcon,
-  Circle,
-} from '@mui/icons-material'
+import Visibility from '@mui/icons-material/Visibility'
+import WarningAmber from '@mui/icons-material/WarningAmber'
+import InfoOutlined from '@mui/icons-material/InfoOutlined'
+import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline'
+import ErrorOutline from '@mui/icons-material/ErrorOutline'
+import RestartAlt from '@mui/icons-material/RestartAlt'
+import MapIcon from '@mui/icons-material/Map'
+import Circle from '@mui/icons-material/Circle'
 
 import '../../styles/cad.css'
 
@@ -563,7 +561,7 @@ export function CadDetectionPreview({
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '8px',
+                            gap: 'var(--ob-space-50)',
                           }}
                         >
                           <span className="cad-unit-label">
@@ -651,7 +649,10 @@ export function CadDetectionPreview({
                               <button
                                 type="submit"
                                 disabled={provideMetricDisabled}
-                                style={{ marginLeft: '4px', cursor: 'pointer' }}
+                                style={{
+                                  marginLeft: 'var(--ob-space-25)',
+                                  cursor: 'pointer',
+                                }}
                               >
                                 ✓
                               </button>
@@ -659,7 +660,10 @@ export function CadDetectionPreview({
                                 type="button"
                                 disabled={provideMetricDisabled}
                                 onClick={cancelEditing}
-                                style={{ marginLeft: '4px', cursor: 'pointer' }}
+                                style={{
+                                  marginLeft: 'var(--ob-space-25)',
+                                  cursor: 'pointer',
+                                }}
                               >
                                 ✕
                               </button>
@@ -714,7 +718,7 @@ export function CadDetectionPreview({
                 <li
                   key={hint.key}
                   style={{
-                    marginBottom: '8px',
+                    marginBottom: 'var(--ob-space-50)',
                     fontSize: 'var(--ob-font-size-sm)',
                     color: 'var(--ob-neutral-600)',
                   }}

@@ -1,5 +1,7 @@
 import { Box, Grid, Typography } from '@mui/material'
-import { ShowChart, AccountBalanceWallet, Paid } from '@mui/icons-material'
+import ShowChart from '@mui/icons-material/ShowChart'
+import AccountBalanceWallet from '@mui/icons-material/AccountBalanceWallet'
+import Paid from '@mui/icons-material/Paid'
 
 import type {
   FinanceAnalyticsBucket,
@@ -49,7 +51,7 @@ function formatRatio(value: string | null | undefined): string {
  * Semantic colors (orange/green) reserved for status badges and alert banners only.
  */
 const BUCKET_COLORS: Record<string, string> = {
-  lt_1: '#0096cc', // Darker cyan for DSCR < 1 (still in cyan family)
+  lt_1: 'var(--ob-color-neon-cyan-dark, #0096cc)', // Darker cyan for DSCR < 1 (still in cyan family)
   '1_to_1_25': 'var(--ob-color-neon-cyan)', // Bright cyan
   gt_1_25: 'var(--ob-color-neon-cyan)', // Bright cyan
 }
@@ -76,7 +78,9 @@ function BucketBar({
     >
       <Typography
         sx={{
+          minWidth: '80px',
           width: '120px',
+          flexShrink: 1,
           fontWeight: 'var(--ob-font-weight-semibold)',
           fontSize: 'var(--ob-font-size-sm)',
           color: 'text.primary',
@@ -107,7 +111,12 @@ function BucketBar({
         variant="caption"
         intensity="subtle"
         color="cyan"
-        sx={{ width: '40px', textAlign: 'right' }}
+        sx={{
+          minWidth: '32px',
+          width: '40px',
+          flexShrink: 0,
+          textAlign: 'right',
+        }}
       >
         {bucket.count}
       </NeonText>

@@ -289,7 +289,13 @@ export function DueDiligencePage() {
             flexWrap: 'wrap',
           }}
         >
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-25)',
+            }}
+          >
             <Typography variant="h4" sx={{ m: 0, fontWeight: 600 }}>
               {propertyLabel ?? 'Captured property'}
             </Typography>

@@ -96,9 +96,9 @@ export function AssetMixPanel({
                   backgroundColor: 'rgba(0,0,0,0.8)',
                   borderColor: 'var(--ob-color-border-subtle)',
                   borderRadius: '4px',
-                  color: '#fff',
+                  color: 'var(--ob-color-text-on-dark, #fff)',
                 }}
-                itemStyle={{ color: '#fff' }}
+                itemStyle={{ color: 'var(--ob-color-text-on-dark, #fff)' }}
               />
               <Legend
                 verticalAlign="bottom"

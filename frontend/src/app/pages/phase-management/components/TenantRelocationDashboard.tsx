@@ -107,7 +107,7 @@ function StatusSummaryCard({
             mt: 1,
             height: 6,
             borderRadius: 3,
-            backgroundColor: '#e0e0e0',
+            backgroundColor: 'action.disabledBackground',
             '& .MuiLinearProgress-bar': {
               backgroundColor: color,
               borderRadius: 3,
@@ -147,7 +147,7 @@ function RelocationTable({
     <TableContainer component={Paper} variant="outlined">
       <Table size="small">
         <TableHead>
-          <TableRow sx={{ backgroundColor: '#fafafa' }}>
+          <TableRow sx={{ backgroundColor: 'background.default' }}>
             <TableCell colSpan={6}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 {title} ({relocations.length})
@@ -227,7 +227,11 @@ function TimelineEvent({
   const isCompleted = status === 'relocated' || status === 'returned'
   const isPending = status === 'pending_notification' || status === 'notified'
 
-  const dotColor = isCompleted ? '#10b981' : isPending ? '#f59e0b' : '#3b82f6'
+  const dotColor = isCompleted
+    ? 'var(--ob-color-status-success, #10b981)'
+    : isPending
+      ? 'var(--ob-color-status-warning, #f59e0b)'
+      : 'var(--ob-color-status-info, #3b82f6)'
 
   return (
     <Box sx={{ display: 'flex', mb: isLast ? 0 : 2 }}>
@@ -276,7 +280,7 @@ function TimelineEvent({
               width: 2,
               flex: 1,
               minHeight: 20,
-              backgroundColor: '#e0e0e0',
+              backgroundColor: 'action.disabledBackground',
               mt: 0.5,
             }}
           />
@@ -339,7 +343,7 @@ export function TenantRelocationDashboard({
             title="Total Tenants"
             count={totalTenants}
             total={totalTenants}
-            color="#3b82f6"
+            color="info.main"
           />
         </Grid>
         <Grid item xs={6} md={3}>
@@ -347,7 +351,7 @@ export function TenantRelocationDashboard({
             title="Pending"
             count={pending}
             total={totalTenants}
-            color="#f59e0b"
+            color="warning.main"
           />
         </Grid>
         <Grid item xs={6} md={3}>
@@ -355,7 +359,7 @@ export function TenantRelocationDashboard({
             title="In Progress"
             count={inProgress}
             total={totalTenants}
-            color="#8b5cf6"
+            color="secondary.main"
           />
         </Grid>
         <Grid item xs={6} md={3}>
@@ -363,7 +367,7 @@ export function TenantRelocationDashboard({
             title="Completed"
             count={relocated}
             total={totalTenants}
-            color="#10b981"
+            color="success.main"
           />
         </Grid>
       </Grid>

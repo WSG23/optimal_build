@@ -1,4 +1,4 @@
-import { CloudUpload } from '@mui/icons-material'
+import CloudUpload from '@mui/icons-material/CloudUpload'
 import { FormControlLabel, Switch, CircularProgress } from '@mui/material'
 import type { FormEvent } from 'react'
 import { useState } from 'react'
@@ -112,7 +112,11 @@ export function PackGenerationPanel({
             }
             label={
               <div
-                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--ob-space-50)',
+                }}
               >
                 <CloudUpload
                   fontSize="small"

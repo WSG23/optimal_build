@@ -29,12 +29,12 @@ export function CapitalStackMiniBar({ stack }: CapitalStackMiniBarProps) {
       {
         type: 'debt',
         width: isNaN(debtPct) ? 0 : debtPct,
-        color: '#0096cc', // Medium cyan (from reference palette)
+        color: 'var(--ob-color-neon-cyan-dark, #0096cc)', // Medium cyan (from reference palette)
       },
       {
         type: 'gap',
         width: isNaN(otherPct) ? 0 : otherPct,
-        color: '#1e293b', // Dark slate (from reference palette)
+        color: 'var(--ob-color-bg-dark, #1e293b)', // Dark slate (from reference palette)
       },
     ]
   }, [stack])

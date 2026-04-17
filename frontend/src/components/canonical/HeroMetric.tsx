@@ -1,5 +1,6 @@
 import { Box, Typography, useTheme, alpha } from '@mui/material'
-import { TrendingUp, TrendingDown } from '@mui/icons-material'
+import TrendingUp from '@mui/icons-material/TrendingUp'
+import TrendingDown from '@mui/icons-material/TrendingDown'
 
 export interface HeroMetricProps {
   label: string
@@ -39,7 +40,7 @@ export function HeroMetric({
   }
 
   const getTextColor = () => {
-    if (variant === 'primary') return 'white'
+    if (variant === 'primary') return theme.palette.primary.contrastText
     return theme.palette.text.primary
   }
 
@@ -82,7 +83,7 @@ export function HeroMetric({
             fontWeight: 'var(--ob-font-weight-semibold)',
             color:
               variant === 'primary'
-                ? alpha('#fff', 0.7)
+                ? alpha(theme.palette.primary.contrastText, 0.7)
                 : theme.palette.text.secondary,
           }}
         >
@@ -93,7 +94,7 @@ export function HeroMetric({
             sx={{
               color:
                 variant === 'primary'
-                  ? alpha('#fff', 0.9)
+                  ? alpha(theme.palette.primary.contrastText, 0.9)
                   : theme.palette.primary.main,
               opacity: 0.8,
             }}
@@ -123,7 +124,7 @@ export function HeroMetric({
               fontWeight: 'var(--ob-font-weight-regular)',
               color:
                 variant === 'primary'
-                  ? alpha('#fff', 0.6)
+                  ? alpha(theme.palette.primary.contrastText, 0.6)
                   : theme.palette.text.secondary,
             }}
           >
@@ -162,7 +163,7 @@ export function HeroMetric({
             sx={{
               color:
                 variant === 'primary'
-                  ? alpha('#fff', 0.5)
+                  ? alpha(theme.palette.primary.contrastText, 0.5)
                   : theme.palette.text.disabled,
             }}
           >

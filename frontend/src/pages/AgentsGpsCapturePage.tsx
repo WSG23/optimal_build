@@ -21,6 +21,16 @@ import { forwardGeocodeAddress, reverseGeocodeCoords } from '../api/geocoding'
 import { useTranslation } from '../i18n'
 import { Link } from '../router'
 import '../styles/agents-capture.css'
+import {
+  SCENARIO_OPTIONS,
+  DEFAULT_LATITUDE,
+  DEFAULT_LONGITUDE,
+  formatMetricLabel,
+  formatMetricValue,
+  scenarioTitle,
+  scenarioDescription,
+} from './agentsCaptureUtils'
+import { AgentsCaptureContextPanel } from './AgentsCaptureContextPanel'
 
 const GOOGLE_MAPS_ENV =
   typeof import.meta !== 'undefined' && import.meta
@@ -54,149 +64,7 @@ function loadGoogleMapsScript(apiKey: string): Promise<void> {
   return googleMapsPromise
 }
 
-const DEFAULT_LATITUDE = '1.3000'
-const DEFAULT_LONGITUDE = '103.8500'
-
-interface ScenarioOption {
-  value: DevelopmentScenario
-  labelKey: string
-  descriptionKey: string
-}
-
-const SCENARIO_OPTIONS: readonly ScenarioOption[] = [
-  {
-    value: 'raw_land',
-    labelKey: 'agentsCapture.scenarios.rawLand.title',
-    descriptionKey: 'agentsCapture.scenarios.rawLand.description',
-  },
-  {
-    value: 'existing_building',
-    labelKey: 'agentsCapture.scenarios.existingBuilding.title',
-    descriptionKey: 'agentsCapture.scenarios.existingBuilding.description',
-  },
-  {
-    value: 'heritage_property',
-    labelKey: 'agentsCapture.scenarios.heritageProperty.title',
-    descriptionKey: 'agentsCapture.scenarios.heritageProperty.description',
-  },
-  {
-    value: 'underused_asset',
-    labelKey: 'agentsCapture.scenarios.underusedAsset.title',
-    descriptionKey: 'agentsCapture.scenarios.underusedAsset.description',
-  },
-] as const
-
-interface PackOption {
-  value: ProfessionalPackType
-  labelKey: string
-  descriptionKey: string
-}
-
-const PACK_OPTIONS: readonly PackOption[] = [
-  {
-    value: 'universal',
-    labelKey: 'agentsCapture.pack.options.universal.title',
-    descriptionKey: 'agentsCapture.pack.options.universal.description',
-  },
-  {
-    value: 'investment',
-    labelKey: 'agentsCapture.pack.options.investment.title',
-    descriptionKey: 'agentsCapture.pack.options.investment.description',
-  },
-  {
-    value: 'sales',
-    labelKey: 'agentsCapture.pack.options.sales.title',
-    descriptionKey: 'agentsCapture.pack.options.sales.description',
-  },
-  {
-    value: 'lease',
-    labelKey: 'agentsCapture.pack.options.lease.title',
-    descriptionKey: 'agentsCapture.pack.options.lease.description',
-  },
-] as const
-
-function formatDateDisplay(value: unknown, locale: string): string | null {
-  if (typeof value !== 'string' || value.trim() === '') {
-    return null
-  }
-  const timestamp = Date.parse(value)
-  if (Number.isNaN(timestamp)) {
-    return value
-  }
-  return new Date(timestamp).toLocaleDateString(locale)
-}
-
-function renderMarketReport(
-  summary: MarketIntelligenceSummary,
-  translate: ReturnType<typeof useTranslation>['t'],
-  locale: string,
-) {
-  const report = summary.report ?? {}
-  const comparables =
-    (report.comparables_analysis as Record<string, unknown>) ?? {}
-  const transactions =
-    typeof comparables.transaction_count === 'number'
-      ? comparables.transaction_count
-      : null
-  const propertyType =
-    typeof report.property_type === 'string' ? report.property_type : null
-  const location = typeof report.location === 'string' ? report.location : null
-  const periodData = report.period as
-    | { start?: string | null; end?: string | null }
-    | undefined
-  const periodStart = formatDateDisplay(periodData?.start, locale)
-  const periodEnd = formatDateDisplay(periodData?.end, locale)
-  const generatedAt = formatDateDisplay(report.generated_at, locale)
-
-  const metrics = [
-    {
-      key: 'propertyType',
-      label: translate('agentsCapture.market.propertyType'),
-      value: propertyType ?? '—',
-    },
-    {
-      key: 'location',
-      label: translate('agentsCapture.market.location'),
-      value: location ?? '—',
-    },
-    {
-      key: 'period',
-      label: translate('agentsCapture.market.period'),
-      value:
-        periodStart && periodEnd
-          ? `${periodStart} – ${periodEnd}`
-          : (periodStart ?? periodEnd ?? '—'),
-    },
-    {
-      key: 'transactions',
-      label: translate('agentsCapture.market.transactions'),
-      value:
-        transactions !== null
-          ? new Intl.NumberFormat(locale).format(transactions)
-          : '—',
-    },
-  ]
-
-  return (
-    <>
-      <dl className="agents-capture__market-metrics">
-        {metrics.map(({ key, label, value }) => (
-          <div key={key} className="agents-capture__market-row">
-            <dt>{label}</dt>
-            <dd>{value}</dd>
-          </div>
-        ))}
-      </dl>
-      {generatedAt && (
-        <p className="agents-capture__status">
-          {translate('agentsCapture.market.generatedAt', {
-            timestamp: generatedAt,
-          })}
-        </p>
-      )}
-    </>
-  )
-}
+// Constants and utilities imported from agentsCaptureUtils
 
 function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -246,7 +114,7 @@ function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
         if (!markerRef.current) {
           const pinSvg = document.createElement('div')
           pinSvg.innerHTML = `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="10" cy="10" r="8" fill="${colors.brand[600]}" stroke="#ffffff" stroke-width="2"/>
+            <circle cx="10" cy="10" r="8" fill="${colors.brand[600]}" stroke="white" stroke-width="2"/>
           </svg>`
           markerRef.current = new google.maps.marker.AdvancedMarkerElement({
             position: center,
@@ -289,112 +157,7 @@ function QuickAnalysisMap({ coordinates }: { coordinates: CoordinatePair }) {
   return <div ref={containerRef} className="agents-capture__map-canvas" />
 }
 
-function formatMetricLabel(
-  key: string,
-  translate: ReturnType<typeof useTranslation>['t'],
-): string {
-  const lookup: Record<string, string> = {
-    site_area_sqm: translate('agentsCapture.metrics.siteArea'),
-    plot_ratio: translate('agentsCapture.metrics.plotRatio'),
-    potential_gfa_sqm: translate('agentsCapture.metrics.potentialGfa'),
-    approved_gfa_sqm: translate('agentsCapture.metrics.approvedGfa'),
-    scenario_gfa_sqm: translate('agentsCapture.metrics.scenarioGfa'),
-    gfa_uplift_sqm: translate('agentsCapture.metrics.gfaUplift'),
-    near_by_mrt_count: translate('agentsCapture.metrics.nearbyMrtCount'),
-    nearby_mrt_count: translate('agentsCapture.metrics.nearbyMrtCount'),
-    current_use: translate('agentsCapture.metrics.currentUse'),
-    building_height_m: translate('agentsCapture.metrics.buildingHeight'),
-    nearby_development_count: translate(
-      'agentsCapture.metrics.nearbyDevelopmentCount',
-    ),
-    nearest_completion: translate('agentsCapture.metrics.nearestCompletion'),
-    recent_transaction_count: translate(
-      'agentsCapture.metrics.recentTransactionCount',
-    ),
-    average_psf_price: translate('agentsCapture.metrics.averagePsfPrice'),
-    average_monthly_rent: translate('agentsCapture.metrics.averageMonthlyRent'),
-    rental_comparable_count: translate(
-      'agentsCapture.metrics.rentalComparableCount',
-    ),
-    property_type: translate('agentsCapture.metrics.propertyType'),
-    completion_year: translate('agentsCapture.metrics.completionYear'),
-    heritage_risk: translate('agentsCapture.metrics.heritageRisk'),
-  }
-
-  if (lookup[key]) {
-    return lookup[key]
-  }
-  const cleaned = key.replace(/_/g, ' ')
-  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1)
-}
-
-function formatMetricValue(
-  value: MetricValue | undefined,
-  locale: string,
-): string {
-  if (value === null || value === undefined) {
-    return '—'
-  }
-  if (typeof value === 'number') {
-    return new Intl.NumberFormat(locale, {
-      maximumFractionDigits: Number.isInteger(value) ? 0 : 2,
-    }).format(value)
-  }
-  return value
-}
-
-function formatFileSize(bytes: number | null, locale: string): string {
-  if (bytes == null || Number.isNaN(bytes)) {
-    return '—'
-  }
-  if (bytes < 1024) {
-    return `${new Intl.NumberFormat(locale).format(bytes)} B`
-  }
-  const units = ['KB', 'MB', 'GB'] as const
-  let value = bytes / 1024
-  let index = 0
-  while (value >= 1024 && index < units.length - 1) {
-    value /= 1024
-    index += 1
-  }
-  return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value)} ${units[index]}`
-}
-
-function scenarioTitle(
-  scenario: DevelopmentScenario,
-  translate: ReturnType<typeof useTranslation>['t'],
-): string {
-  switch (scenario) {
-    case 'raw_land':
-      return translate('agentsCapture.scenarios.rawLand.title')
-    case 'existing_building':
-      return translate('agentsCapture.scenarios.existingBuilding.title')
-    case 'heritage_property':
-      return translate('agentsCapture.scenarios.heritageProperty.title')
-    case 'underused_asset':
-      return translate('agentsCapture.scenarios.underusedAsset.title')
-    default:
-      return scenario
-  }
-}
-
-function scenarioDescription(
-  scenario: DevelopmentScenario,
-  translate: ReturnType<typeof useTranslation>['t'],
-): string {
-  switch (scenario) {
-    case 'raw_land':
-      return translate('agentsCapture.scenarios.rawLand.description')
-    case 'existing_building':
-      return translate('agentsCapture.scenarios.existingBuilding.description')
-    case 'heritage_property':
-      return translate('agentsCapture.scenarios.heritageProperty.description')
-    case 'underused_asset':
-      return translate('agentsCapture.scenarios.underusedAsset.description')
-    default:
-      return ''
-  }
-}
+// Formatting functions imported from agentsCaptureUtils
 
 function ScenarioCard({
   scenario,
@@ -543,13 +306,6 @@ export function AgentsGpsCapturePage({
     }
     return messages
   }, [scenarioKeys, t])
-
-  const selectedPackOption = useMemo(
-    () =>
-      PACK_OPTIONS.find((option) => option.value === packType) ??
-      PACK_OPTIONS[0],
-    [packType],
-  )
 
   useEffect(() => {
     setPackSummary(null)
@@ -866,157 +622,20 @@ export function AgentsGpsCapturePage({
         )}
 
         {result && (
-          <section className="agents-capture__context">
-            <div className="agents-capture__map">
-              <h4>{t('agentsCapture.context.mapTitle')}</h4>
-              <QuickAnalysisMap coordinates={result.coordinates} />
-            </div>
-            {result.nearbyAmenities && (
-              <aside className="agents-capture__amenities">
-                <h4>{t('agentsCapture.context.amenitiesTitle')}</h4>
-                <ul>
-                  {[
-                    {
-                      key: 'mrtStations' as const,
-                      label: t('agentsCapture.context.amenities.mrt'),
-                    },
-                    {
-                      key: 'busStops' as const,
-                      label: t('agentsCapture.context.amenities.bus'),
-                    },
-                    {
-                      key: 'schools' as const,
-                      label: t('agentsCapture.context.amenities.schools'),
-                    },
-                    {
-                      key: 'shoppingMalls' as const,
-                      label: t('agentsCapture.context.amenities.malls'),
-                    },
-                    {
-                      key: 'parks' as const,
-                      label: t('agentsCapture.context.amenities.parks'),
-                    },
-                  ].map(({ key, label }) => {
-                    const items = result.nearbyAmenities?.[key] ?? []
-                    if (!items.length) {
-                      return null
-                    }
-                    const nearest = items[0]
-                    return (
-                      <li key={key}>
-                        <strong>{label}</strong>
-                        {nearest.distanceM != null
-                          ? t(
-                              'agentsCapture.context.amenities.itemWithDistance',
-                              {
-                                name: nearest.name,
-                                distance: new Intl.NumberFormat(locale, {
-                                  maximumFractionDigits: 0,
-                                }).format(nearest.distanceM),
-                              },
-                            )
-                          : t('agentsCapture.context.amenities.item', {
-                              name: nearest.name,
-                            })}
-                      </li>
-                    )
-                  })}
-                </ul>
-              </aside>
-            )}
-            <aside className="agents-capture__market">
-              <h4>{t('agentsCapture.market.title')}</h4>
-              {marketLoading && (
-                <p className="agents-capture__status">
-                  {t('agentsCapture.market.loading')}
-                </p>
-              )}
-              {marketError && (
-                <p className="agents-capture__error agents-capture__error--inline">
-                  {t('agentsCapture.market.error', { message: marketError })}
-                </p>
-              )}
-              {marketReport && renderMarketReport(marketReport, t, locale)}
-            </aside>
-            <aside className="agents-capture__pack">
-              <h4>{t('agentsCapture.pack.title')}</h4>
-              <p className="agents-capture__status">
-                {t('agentsCapture.pack.subtitle')}
-              </p>
-              <form
-                className="agents-capture__pack-form"
-                onSubmit={handlePackSubmit}
-              >
-                <label className="agents-capture__pack-field">
-                  <span>{t('agentsCapture.pack.selectLabel')}</span>
-                  <select
-                    value={packType}
-                    onChange={(event) =>
-                      setPackType(event.target.value as ProfessionalPackType)
-                    }
-                  >
-                    {PACK_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {t(option.labelKey)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <p className="agents-capture__pack-description">
-                  {t(selectedPackOption.descriptionKey)}
-                </p>
-                <button
-                  type="submit"
-                  className="agents-capture__pack-button"
-                  disabled={packLoading}
-                >
-                  {packLoading
-                    ? t('agentsCapture.pack.generateLoading')
-                    : t('agentsCapture.pack.generate')}
-                </button>
-              </form>
-              {packError && (
-                <p className="agents-capture__error agents-capture__error--inline">
-                  {t('agentsCapture.pack.error', { message: packError })}
-                </p>
-              )}
-              {packSummary && (
-                <div className="agents-capture__pack-result">
-                  <p className="agents-capture__status">
-                    {t('agentsCapture.pack.generatedAt', {
-                      timestamp: new Date(
-                        packSummary.generatedAt,
-                      ).toLocaleString(locale),
-                    })}
-                  </p>
-                  <p className="agents-capture__status">
-                    {t('agentsCapture.pack.size', {
-                      size: formatFileSize(packSummary.sizeBytes, locale),
-                    })}
-                  </p>
-                  {packSummary.downloadUrl ? (
-                    <a
-                      href={packSummary.downloadUrl}
-                      className="agents-capture__pack-download"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {t('agentsCapture.pack.downloadCta', {
-                        filename: packSummary.filename,
-                      })}
-                    </a>
-                  ) : (
-                    <p className="agents-capture__status">
-                      {t('agentsCapture.pack.noDownload')}
-                    </p>
-                  )}
-                  {packNotice && (
-                    <p className="agents-capture__status">{packNotice}</p>
-                  )}
-                </div>
-              )}
-            </aside>
-          </section>
+          <AgentsCaptureContextPanel
+            result={result}
+            marketReport={marketReport}
+            marketLoading={marketLoading}
+            marketError={marketError}
+            packSummary={packSummary}
+            packLoading={packLoading}
+            packError={packError}
+            packNotice={packNotice}
+            packType={packType}
+            setPackType={setPackType}
+            onPackSubmit={handlePackSubmit}
+            mapElement={<QuickAnalysisMap coordinates={result.coordinates} />}
+          />
         )}
       </section>
     </AppLayout>

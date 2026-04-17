@@ -1,4 +1,4 @@
-import { AutoAwesome } from '@mui/icons-material'
+import AutoAwesome from '@mui/icons-material/AutoAwesome'
 import { Button, CircularProgress, keyframes, Box } from '@mui/material'
 
 interface ScenarioFABProps {
@@ -38,7 +38,8 @@ export function ScenarioFAB({
           )
         }
         sx={{
-          background: 'linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)', // Electric Blue
+          background:
+            'linear-gradient(135deg, var(--ob-color-neon-cyan) 0%, var(--ob-color-neon-blue) 100%)',
           color: 'white',
           fontWeight: 700,
           fontSize: '1rem',
@@ -50,7 +51,8 @@ export function ScenarioFAB({
           overflow: 'hidden',
           transition: 'all 0.3s ease',
           '&:hover': {
-            background: 'linear-gradient(135deg, #00D2FF 0%, #0084FF 100%)',
+            background:
+              'linear-gradient(135deg, var(--ob-color-neon-cyan) 0%, var(--ob-color-neon-blue) 100%)',
             boxShadow: '0 6px 20px rgba(0, 114, 255, 0.6)',
             transform: 'translateY(-2px)',
           },

@@ -50,8 +50,9 @@ export function AIFloatingButton({
               boxShadow: 'var(--ob-glow-neon-cyan)',
               '&:hover': {
                 background:
-                  'linear-gradient(135deg, var(--ob-color-neon-cyan), var(--ob-color-neon-purple))',
+                  'linear-gradient(135deg, var(--ob-color-neon-cyan), var(--ob-color-neon-blue))',
                 boxShadow: '0 0 24px var(--ob-color-neon-cyan)',
+                filter: 'brightness(1.15)',
               },
               zIndex: 1200,
             }}

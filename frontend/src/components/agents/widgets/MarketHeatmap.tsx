@@ -254,7 +254,7 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
             : 'N/A'
 
         infoWindowRef.current.setContent(`
-          <div style="color: #333; padding: 8px;">
+          <div style="color: var(--ob-color-text-primary, #333); padding: 8px;">
             <strong>${transaction.property_name}</strong><br/>
             Price: $${new Intl.NumberFormat('en-SG').format(transaction.sale_price)}<br/>
             PSF: $${formattedPsf}<br/>

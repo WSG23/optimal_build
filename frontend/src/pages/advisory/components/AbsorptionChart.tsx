@@ -94,7 +94,7 @@ export function AbsorptionChart({ data }: AbsorptionChartProps) {
               contentStyle={{
                 backgroundColor: 'rgba(0,0,0,0.85)',
                 borderColor: 'var(--ob-color-border-subtle)',
-                color: '#fff',
+                color: 'var(--ob-color-text-on-dark, #fff)',
               }}
             />
             <Legend wrapperStyle={{ paddingTop: 10 }} />

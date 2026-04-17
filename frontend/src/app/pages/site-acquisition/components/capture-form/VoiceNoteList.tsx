@@ -141,7 +141,7 @@ export function VoiceNoteList({
     return (
       <div
         style={{
-          background: '#f0f9ff',
+          background: 'var(--ob-color-surface-info, #f0f9ff)',
           borderRadius: '4px',
           padding: '1.25rem',
           marginTop: '1.5rem',
@@ -152,7 +152,7 @@ export function VoiceNoteList({
             margin: '0 0 1rem 0',
             fontSize: '1rem',
             fontWeight: 600,
-            color: '#1d1d1f',
+            color: 'var(--ob-color-text-primary, #1d1d1f)',
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
@@ -163,7 +163,13 @@ export function VoiceNoteList({
           </span>
           Saved Voice Notes
         </h4>
-        <p style={{ margin: 0, fontSize: '0.9rem', color: '#6b7280' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: '0.9rem',
+            color: 'var(--ob-color-text-muted, #6b7280)',
+          }}
+        >
           Loading voice notes...
         </p>
       </div>
@@ -177,7 +183,7 @@ export function VoiceNoteList({
   return (
     <div
       style={{
-        background: '#f0f9ff',
+        background: 'var(--ob-color-surface-info, #f0f9ff)',
         borderRadius: '4px',
         padding: '1.25rem',
         marginTop: '1.5rem',
@@ -188,7 +194,7 @@ export function VoiceNoteList({
           margin: '0 0 1rem 0',
           fontSize: '1rem',
           fontWeight: 600,
-          color: '#1d1d1f',
+          color: 'var(--ob-color-text-primary, #1d1d1f)',
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
@@ -204,10 +210,10 @@ export function VoiceNoteList({
         <div
           style={{
             padding: '0.75rem',
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
+            background: 'var(--ob-color-surface-error, #fef2f2)',
+            border: '1px solid var(--ob-color-border-error, #fecaca)',
             borderRadius: '4px',
-            color: '#dc2626',
+            color: 'var(--ob-color-status-error, #dc2626)',
             fontSize: '0.875rem',
             marginBottom: '1rem',
           }}
@@ -222,7 +228,7 @@ export function VoiceNoteList({
             key={note.voiceNoteId}
             style={{
               background: 'white',
-              border: '1px solid #e5e7eb',
+              border: '1px solid var(--ob-color-border-subtle, #e5e7eb)',
               borderRadius: '4px',
               overflow: 'hidden',
             }}
@@ -250,7 +256,7 @@ export function VoiceNoteList({
                   style={{
                     fontSize: '0.9rem',
                     fontWeight: 500,
-                    color: '#1d1d1f',
+                    color: 'var(--ob-color-text-primary, #1d1d1f)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -261,7 +267,7 @@ export function VoiceNoteList({
                 <div
                   style={{
                     fontSize: '0.75rem',
-                    color: '#6b7280',
+                    color: 'var(--ob-color-text-muted, #6b7280)',
                     marginTop: '2px',
                   }}
                 >
@@ -273,7 +279,7 @@ export function VoiceNoteList({
               <span
                 style={{
                   fontSize: '0.8rem',
-                  color: '#6b7280',
+                  color: 'var(--ob-color-text-muted, #6b7280)',
                   fontFamily: 'ui-monospace, monospace',
                   whiteSpace: 'nowrap',
                 }}
@@ -288,9 +294,9 @@ export function VoiceNoteList({
                 style={{
                   padding: '0.375rem 0.5rem',
                   borderRadius: '4px',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--ob-color-border-default, #d1d5db)',
                   background: 'white',
-                  color: '#374151',
+                  color: 'var(--ob-color-text-secondary, #374151)',
                   fontSize: '0.75rem',
                   cursor: 'pointer',
                 }}
@@ -314,7 +320,9 @@ export function VoiceNoteList({
                   border: 'none',
                   background: 'transparent',
                   color:
-                    deletingId === note.voiceNoteId ? '#d1d5db' : '#ef4444',
+                    deletingId === note.voiceNoteId
+                      ? 'var(--ob-color-border-default, #d1d5db)'
+                      : 'var(--ob-color-status-error, #ef4444)',
                   cursor:
                     deletingId === note.voiceNoteId ? 'not-allowed' : 'pointer',
                   fontSize: '1rem',
@@ -329,11 +337,11 @@ export function VoiceNoteList({
             {expandedNoteId === note.voiceNoteId && (
               <div
                 style={{
-                  borderTop: '1px solid #e5e7eb',
+                  borderTop: '1px solid var(--ob-color-border-subtle, #e5e7eb)',
                   padding: '0.75rem',
-                  background: '#f9fafb',
+                  background: 'var(--ob-color-bg-surface, #f9fafb)',
                   fontSize: '0.8rem',
-                  color: '#4b5563',
+                  color: 'var(--ob-color-text-secondary, #4b5563)',
                 }}
               >
                 <div
@@ -394,9 +402,9 @@ export function VoiceNoteList({
           marginTop: '1rem',
           padding: '0.5rem 1rem',
           borderRadius: '6px',
-          border: '1px solid #d1d5db',
+          border: '1px solid var(--ob-color-border-default, #d1d5db)',
           background: 'white',
-          color: '#374151',
+          color: 'var(--ob-color-text-secondary, #374151)',
           fontSize: '0.8rem',
           cursor: isLoading ? 'not-allowed' : 'pointer',
           display: 'flex',

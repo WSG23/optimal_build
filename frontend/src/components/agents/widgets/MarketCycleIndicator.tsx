@@ -27,10 +27,10 @@ const CyclePhases = [
 ] as const
 
 const PhaseColors: Record<string, string> = {
-  recovery: '#4caf50',
-  expansion: '#2196f3',
-  hyper_supply: '#ff9800',
-  recession: '#f44336',
+  recovery: 'var(--ob-color-status-success, #4caf50)',
+  expansion: 'var(--ob-color-status-info, #2196f3)',
+  hyper_supply: 'var(--ob-color-status-warning, #ff9800)',
+  recession: 'var(--ob-color-status-error, #f44336)',
 }
 
 const CycleContainer = styled(Box)(() => ({

@@ -5,7 +5,9 @@ import {
   Typography,
   Avatar,
 } from '@mui/material'
-import { Close, Send, SmartToy } from '@mui/icons-material'
+import Close from '@mui/icons-material/Close'
+import Send from '@mui/icons-material/Send'
+import SmartToy from '@mui/icons-material/SmartToy'
 import { useState, useRef, useEffect } from 'react'
 import type { ChatMessage } from '../hooks/useAIAssistant'
 
@@ -68,7 +70,7 @@ export function AIAssistantSidebar({
         {/* Header */}
         <div
           style={{
-            padding: '16px',
+            padding: 'var(--ob-space-100)',
             borderBottom: '1px solid var(--ob-color-border-light)',
             display: 'flex',
             alignItems: 'center',
@@ -77,7 +79,13 @@ export function AIAssistantSidebar({
             color: 'white',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-75)',
+            }}
+          >
             <Avatar
               sx={{ bgcolor: 'white', color: 'var(--ob-color-brand-primary)' }}
             >
@@ -103,11 +111,11 @@ export function AIAssistantSidebar({
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '16px',
-            background: '#f5f5f7',
+            padding: 'var(--ob-space-100)',
+            background: 'var(--ob-color-bg-surface, #f5f5f7)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
+            gap: 'var(--ob-space-100)',
           }}
         >
           {messages.map((msg) => {
@@ -118,13 +126,13 @@ export function AIAssistantSidebar({
                 style={{
                   display: 'flex',
                   justifyContent: isBot ? 'flex-start' : 'flex-end',
-                  marginBottom: '4px',
+                  marginBottom: 'var(--ob-space-25)',
                 }}
               >
                 <div
                   style={{
                     maxWidth: '85%',
-                    padding: '12px 16px',
+                    padding: 'var(--ob-space-75) var(--ob-space-100)',
                     borderRadius: isBot ? '4px 4px 4px 2px' : '4px 4px 2px 4px',
                     background: isBot
                       ? 'white'
@@ -145,7 +153,7 @@ export function AIAssistantSidebar({
             <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
               <div
                 style={{
-                  padding: '12px 16px',
+                  padding: 'var(--ob-space-75) var(--ob-space-100)',
                   borderRadius: '4px 4px 4px 2px',
                   background: 'white',
                   boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
@@ -154,7 +162,7 @@ export function AIAssistantSidebar({
                 <div
                   style={{
                     display: 'flex',
-                    gap: '4px',
+                    gap: 'var(--ob-space-25)',
                     alignItems: 'center',
                     height: '14px',
                   }}
@@ -164,7 +172,7 @@ export function AIAssistantSidebar({
                     style={{
                       width: 6,
                       height: 6,
-                      background: '#ccc',
+                      background: 'var(--ob-color-text-muted, #ccc)',
                       borderRadius: '50%',
                       animation: 'pulse 1s infinite',
                     }}
@@ -174,7 +182,7 @@ export function AIAssistantSidebar({
                     style={{
                       width: 6,
                       height: 6,
-                      background: '#ccc',
+                      background: 'var(--ob-color-text-muted, #ccc)',
                       borderRadius: '50%',
                       animation: 'pulse 1s infinite 0.2s',
                     }}
@@ -184,7 +192,7 @@ export function AIAssistantSidebar({
                     style={{
                       width: 6,
                       height: 6,
-                      background: '#ccc',
+                      background: 'var(--ob-color-text-muted, #ccc)',
                       borderRadius: '50%',
                       animation: 'pulse 1s infinite 0.4s',
                     }}
@@ -198,7 +206,7 @@ export function AIAssistantSidebar({
         {/* Input */}
         <div
           style={{
-            padding: '16px',
+            padding: 'var(--ob-space-100)',
             background: 'white',
             borderTop: '1px solid var(--ob-color-border-light)',
           }}

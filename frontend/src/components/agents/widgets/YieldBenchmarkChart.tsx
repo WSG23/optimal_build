@@ -229,7 +229,11 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
                     payload.payload.label,
                   ]}
                 />
-                <Bar dataKey="value" fill="#1976d2" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="value"
+                  fill="var(--ob-color-neon-cyan, #1976d2)"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </Box>

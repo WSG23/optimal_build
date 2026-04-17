@@ -112,7 +112,7 @@ export function PhotoDocumentation({
     <section
       style={{
         background: 'var(--ob-color-surface-primary)',
-        border: '1px solid #e5e7eb',
+        border: '1px solid var(--ob-color-border-subtle, #e5e7eb)',
         borderRadius: 'var(--ob-radius-sm)',
         padding: '1.5rem',
       }}
@@ -170,7 +170,7 @@ export function PhotoDocumentation({
             style={{
               padding: '0.375rem 0.75rem',
               borderRadius: 'var(--ob-radius-md)',
-              border: '1px solid #d1d5db',
+              border: '1px solid var(--ob-color-border-default, #d1d5db)',
               fontSize: 'var(--ob-font-size-sm)',
               background: 'var(--ob-color-surface-primary)',
               cursor: 'pointer',
@@ -188,7 +188,7 @@ export function PhotoDocumentation({
           style={{
             padding: '0.75rem 1rem',
             background: 'var(--ob-color-surface-error)',
-            border: '1px solid #fecaca',
+            border: '1px solid var(--ob-color-border-error, #fecaca)',
             borderRadius: 'var(--ob-radius-sm)',
             color: 'var(--ob-color-status-error)',
             fontSize: 'var(--ob-font-size-sm)',
@@ -205,7 +205,7 @@ export function PhotoDocumentation({
           style={{
             padding: '0.75rem 1rem',
             background: 'var(--ob-color-surface-warning)',
-            border: '1px solid #fcd34d',
+            border: '1px solid var(--ob-color-border-warning, #fcd34d)',
             borderRadius: 'var(--ob-radius-sm)',
             color: 'var(--ob-color-status-warning)',
             fontSize: 'var(--ob-font-size-sm)',
@@ -237,7 +237,7 @@ export function PhotoDocumentation({
           padding: '1rem',
           background: 'var(--ob-color-surface-secondary)',
           borderRadius: 'var(--ob-radius-sm)',
-          border: '1px solid #e5e7eb',
+          border: '1px solid var(--ob-color-border-subtle, #e5e7eb)',
         }}
       >
         <h4

@@ -9,8 +9,9 @@ import {
   ListItemText,
   Stack,
   Typography,
+  useTheme,
 } from '@mui/material'
-import { BarChart } from '@mui/icons-material'
+import BarChart from '@mui/icons-material/BarChart'
 import {
   Area,
   CartesianGrid,
@@ -45,6 +46,10 @@ export function AnalyticsPanel({
   trend,
   benchmarks,
 }: AnalyticsPanelProps) {
+  const theme = useTheme()
+  const axisColor = theme.palette.text.disabled
+  const tooltipLabelColor = theme.palette.text.primary
+
   const chartData = useMemo(
     () =>
       trend.map((point) => ({
@@ -128,18 +133,18 @@ export function AnalyticsPanel({
                 />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 12, fill: axisColor }}
                   minTickGap={32}
                 />
                 <YAxis
                   yAxisId="left"
                   tickFormatter={(value: number) => `${value.toFixed(1)}m`}
-                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 12, fill: axisColor }}
                   label={{
                     value: 'Pipeline (SGD millions)',
                     angle: -90,
                     position: 'insideLeft',
-                    fill: '#9CA3AF',
+                    fill: axisColor,
                     fontSize: 12,
                   }}
                 />
@@ -147,18 +152,18 @@ export function AnalyticsPanel({
                   yAxisId="right"
                   orientation="right"
                   tickFormatter={(value: number) => `${value.toFixed(0)}`}
-                  tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                  tick={{ fontSize: 12, fill: axisColor }}
                   label={{
                     value: 'Conversion % / Cycle days',
                     angle: 90,
                     position: 'insideRight',
-                    fill: '#9CA3AF',
+                    fill: axisColor,
                     fontSize: 12,
                   }}
                 />
                 <RechartsTooltip
                   formatter={formatTooltipValue}
-                  labelStyle={{ fontWeight: 600, color: '#111827' }}
+                  labelStyle={{ fontWeight: 600, color: tooltipLabelColor }}
                   contentStyle={{
                     borderRadius: 4, // Square Cyber-Minimalism: sm for tooltips
                     border: 'none',

@@ -1,5 +1,6 @@
 import type { ChangeEvent, FormEvent } from 'react'
-import { Search, AutoAwesome } from '@mui/icons-material'
+import Search from '@mui/icons-material/Search'
+import AutoAwesome from '@mui/icons-material/AutoAwesome'
 import { Fade } from '@mui/material'
 
 interface SmartIntelligenceFieldProps {
@@ -90,7 +91,7 @@ export function SmartIntelligenceField({
                 transform: 'translateY(-50%)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: 'var(--ob-space-25)',
                 pointerEvents: 'none', // Click through to input? Or make interactive?
               }}
             >
@@ -98,10 +99,10 @@ export function SmartIntelligenceField({
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
+                  gap: 'var(--ob-space-25)',
                   background: 'var(--ob-color-info-soft)',
                   color: 'var(--ob-info-600)',
-                  padding: '4px 8px',
+                  padding: 'var(--ob-space-25) var(--ob-space-50)',
                   borderRadius: 'var(--ob-radius-xs)',
                   fontSize: '0.75rem',
                   fontWeight: 700,
@@ -116,7 +117,7 @@ export function SmartIntelligenceField({
                 style={{
                   background: 'var(--ob-color-bg-surface-elevated)',
                   color: 'var(--ob-color-text-secondary)',
-                  padding: '4px 8px',
+                  padding: 'var(--ob-space-25) var(--ob-space-50)',
                   borderRadius: 'var(--ob-radius-xs)',
                   fontSize: '0.75rem',
                   fontWeight: 600,
