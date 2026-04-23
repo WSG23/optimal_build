@@ -61,6 +61,16 @@ Then implement working code that is:
 - Cohesive with a clear aesthetic point-of-view
 - Meticulously refined in every detail
 
+## Canonical UI System Rule
+
+Creative direction should be distinctive, but the implementation should stay canonical.
+
+- Prefer extending or refining the project's canonical UI/UX patterns, design tokens, component APIs, spacing scale, interaction states, and CSS architecture instead of inventing one-off patterns for a single screen.
+- Treat CSS, motion, theming, and component structure as shared system concerns. Default to reusable tokens, variants, utilities, and documented primitives rather than bespoke per-page values or ad hoc selectors.
+- If a screen needs genuinely new UI, UX, CSS, motion, theming, or component behavior, implement it at the system level first so it becomes reusable, then apply it consistently in the feature.
+- Do not hide special-case UI logic or styling inside one feature unless the brief explicitly requires that exception.
+- Distinctive design should come from strong system-level decisions and disciplined composition, not from each UI inventing its own local rules.
+
 ## Frontend Aesthetics Guidelines
 
 ### Typography
