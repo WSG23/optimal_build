@@ -169,12 +169,28 @@ def _build_rules() -> list[FeasibilityRule]:
 
 
 def get_engineering_defaults() -> EngineeringDefaultsResponse:
-    """Load engineering defaults for all jurisdictions."""
-    if not ENGINEERING_DEFAULTS_PATH.exists():
-        return EngineeringDefaultsResponse(defaults={})
-    with open(ENGINEERING_DEFAULTS_PATH, "r") as f:
-        data = json.load(f)
-    return EngineeringDefaultsResponse(defaults=data)
+    """Return flat design-assumption defaults for the feasibility wizard.
+
+    Derives efficiency from the SG jurisdiction's circulation_percent when
+    the engineering_defaults.json file is present; otherwise falls back to
+    sensible hard-coded values that match the frontend DEFAULT_ASSUMPTIONS.
+    """
+    typ_floor_to_floor_m = 3.4
+    efficiency_ratio = 0.80
+
+    if ENGINEERING_DEFAULTS_PATH.exists():
+        with open(ENGINEERING_DEFAULTS_PATH, "r") as f:
+            data = json.load(f)
+        # Use Singapore as the reference jurisdiction
+        sg = data.get("SG", {})
+        circulation = sg.get("circulation_percent")
+        if isinstance(circulation, (int, float)) and 0 < circulation < 100:
+            efficiency_ratio = round(1.0 - circulation / 100.0, 2)
+
+    return EngineeringDefaultsResponse(
+        typFloorToFloorM=typ_floor_to_floor_m,
+        efficiencyRatio=efficiency_ratio,
+    )
 
 
 def _calculate_gfa_nia_accuracy_range(land_use: str) -> str:

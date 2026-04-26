@@ -399,7 +399,7 @@ export function ProjectListPage() {
                       sx={{
                         textTransform: 'capitalize',
                         fontSize: 'var(--ob-font-size-2xs, 10px)',
-                        fontWeight: 600,
+                        fontWeight: 'var(--ob-font-weight-semibold)',
                         letterSpacing: '0.05em',
                         color: statusColor,
                         bgcolor: statusBg,
@@ -470,7 +470,7 @@ export function ProjectListPage() {
             color: 'var(--ob-success-text)',
             border: '1px solid var(--ob-success-400)',
             borderRadius: 'var(--ob-radius-sm)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
           },
         }}
       />

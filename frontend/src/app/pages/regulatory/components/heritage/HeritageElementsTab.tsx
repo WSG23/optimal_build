@@ -1,4 +1,3 @@
-import React from 'react'
 import { Box, Checkbox, Grid, Paper, Typography } from '@mui/material'
 
 const HERITAGE_ELEMENTS_OPTIONS = [
@@ -32,17 +31,25 @@ export function HeritageElementsTab({
       <Typography variant="subtitle1" gutterBottom>
         Select all heritage elements present in the building:
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ mb: 'var(--ob-space-200)' }}
+      >
         Identifying heritage elements helps STB understand the building&apos;s
         significance and guide appropriate conservation measures.
       </Typography>
 
       {['Exterior', 'Interior', 'Features'].map((category) => (
-        <Box key={category} sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" color="primary" sx={{ mb: 1.5 }}>
+        <Box key={category} sx={{ mb: 'var(--ob-space-200)' }}>
+          <Typography
+            variant="subtitle2"
+            color="primary"
+            sx={{ mb: 'var(--ob-space-150)' }}
+          >
             {category}
           </Typography>
-          <Grid container spacing={1}>
+          <Grid container spacing="var(--ob-space-100)">
             {HERITAGE_ELEMENTS_OPTIONS.filter(
               (el) => el.category === category,
             ).map((element) => (
@@ -52,24 +59,24 @@ export function HeritageElementsTab({
                     if (!isSubmitted) onElementToggle(element.id)
                   }}
                   sx={{
-                    p: 1.5,
+                    p: 'var(--ob-space-150)',
                     cursor: isSubmitted ? 'default' : 'pointer',
                     bgcolor: selectedElements.includes(element.id)
                       ? 'rgba(46, 125, 50, 0.2)'
-                      : 'rgba(255, 255, 255, 0.03)',
+                      : 'rgba(245, 235, 220, 0.03)',
                     border: selectedElements.includes(element.id)
                       ? '1px solid rgba(46, 125, 50, 0.5)'
-                      : '1px solid rgba(255, 255, 255, 0.1)',
+                      : '1px solid rgba(245, 235, 220, 0.1)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 1,
+                    gap: 'var(--ob-space-100)',
                     transition: 'all 0.2s',
                     '&:hover': {
                       bgcolor: isSubmitted
                         ? undefined
                         : selectedElements.includes(element.id)
                           ? 'rgba(46, 125, 50, 0.3)'
-                          : 'rgba(255, 255, 255, 0.05)',
+                          : 'rgba(245, 235, 220, 0.05)',
                     },
                   }}
                 >
@@ -87,7 +94,7 @@ export function HeritageElementsTab({
         </Box>
       ))}
 
-      <Box sx={{ mt: 2 }}>
+      <Box sx={{ mt: 'var(--ob-space-200)' }}>
         <Typography variant="body2" color="text.secondary">
           Selected: {selectedElements.length} element(s)
         </Typography>

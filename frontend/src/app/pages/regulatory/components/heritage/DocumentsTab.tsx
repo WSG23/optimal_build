@@ -1,4 +1,3 @@
-import React from 'react'
 import {
   Alert,
   Box,
@@ -39,17 +38,21 @@ export function DocumentsTab({
       <Typography variant="subtitle1" gutterBottom>
         Required Documents
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ mb: 'var(--ob-space-200)' }}
+      >
         Upload supporting documents for your heritage submission.
       </Typography>
 
-      <Grid container spacing={2}>
+      <Grid container spacing="var(--ob-space-200)">
         <Grid item xs={12}>
           <Paper
             sx={{
-              p: 2,
-              bgcolor: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              p: 'var(--ob-space-200)',
+              bgcolor: 'rgba(245, 235, 220, 0.03)',
+              border: '1px solid rgba(245, 235, 220, 0.1)',
             }}
           >
             <FormControlLabel
@@ -81,7 +84,7 @@ export function DocumentsTab({
           <Paper
             onClick={onPhotoUpload}
             sx={{
-              p: 3,
+              p: 'var(--ob-space-200)',
               textAlign: 'center',
               border: '2px dashed',
               borderColor:
@@ -96,7 +99,7 @@ export function DocumentsTab({
               '&:hover': isSubmitted
                 ? {}
                 : {
-                    bgcolor: 'rgba(255, 255, 255, 0.05)',
+                    bgcolor: 'rgba(245, 235, 220, 0.05)',
                     borderColor: 'primary.main',
                   },
             }}
@@ -106,7 +109,7 @@ export function DocumentsTab({
                 fontSize: 40,
                 color:
                   uploadedPhotos.length > 0 ? 'success.main' : 'text.secondary',
-                mb: 1,
+                mb: 'var(--ob-space-100)',
               }}
             />
             <Typography variant="body2">Upload Historical Photos</Typography>
@@ -114,7 +117,7 @@ export function DocumentsTab({
               Original photographs, archival images
             </Typography>
             {uploadedPhotos.length > 0 && (
-              <Box sx={{ mt: 2, textAlign: 'left' }}>
+              <Box sx={{ mt: 'var(--ob-space-200)', textAlign: 'left' }}>
                 {uploadedPhotos.map((file, idx) => (
                   <Chip
                     key={idx}
@@ -127,7 +130,7 @@ export function DocumentsTab({
                             onRemovePhoto(idx)
                           }
                     }
-                    sx={{ m: 0.5 }}
+                    sx={{ m: 'var(--ob-space-050)' }}
                   />
                 ))}
               </Box>
@@ -139,7 +142,7 @@ export function DocumentsTab({
           <Paper
             onClick={onDrawingUpload}
             sx={{
-              p: 3,
+              p: 'var(--ob-space-200)',
               textAlign: 'center',
               border: '2px dashed',
               borderColor:
@@ -154,7 +157,7 @@ export function DocumentsTab({
               '&:hover': isSubmitted
                 ? {}
                 : {
-                    bgcolor: 'rgba(255, 255, 255, 0.05)',
+                    bgcolor: 'rgba(245, 235, 220, 0.05)',
                     borderColor: 'primary.main',
                   },
             }}
@@ -166,7 +169,7 @@ export function DocumentsTab({
                   uploadedDrawings.length > 0
                     ? 'success.main'
                     : 'text.secondary',
-                mb: 1,
+                mb: 'var(--ob-space-100)',
               }}
             />
             <Typography variant="body2">
@@ -176,7 +179,7 @@ export function DocumentsTab({
               Plans, elevations, sections
             </Typography>
             {uploadedDrawings.length > 0 && (
-              <Box sx={{ mt: 2, textAlign: 'left' }}>
+              <Box sx={{ mt: 'var(--ob-space-200)', textAlign: 'left' }}>
                 {uploadedDrawings.map((file, idx) => (
                   <Chip
                     key={idx}
@@ -189,7 +192,7 @@ export function DocumentsTab({
                             onRemoveDrawing(idx)
                           }
                     }
-                    sx={{ m: 0.5 }}
+                    sx={{ m: 'var(--ob-space-050)' }}
                   />
                 ))}
               </Box>
@@ -198,7 +201,7 @@ export function DocumentsTab({
         </Grid>
       </Grid>
 
-      <Alert severity="info" sx={{ mt: 3 }}>
+      <Alert severity="info" sx={{ mt: 'var(--ob-space-200)' }}>
         <Typography variant="body2">
           Document upload is simulated in this demo. Files are tracked locally
           but not persisted to the server. In production, files would be

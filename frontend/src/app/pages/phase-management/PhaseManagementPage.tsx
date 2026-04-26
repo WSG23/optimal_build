@@ -58,7 +58,7 @@ function TabPanel({ children, value, index }: TabPanelProps) {
       hidden={value !== index}
       id={`phase-tabpanel-${index}`}
       aria-labelledby={`phase-tab-${index}`}
-      sx={{ pt: 3 }}
+      sx={{ pt: 'var(--ob-space-200)' }}
     >
       {value === index && children}
     </Box>
@@ -281,7 +281,10 @@ export function PhaseManagementPage() {
         }}
       >
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+          <Typography
+            variant="h5"
+            sx={{ fontWeight: 'var(--ob-font-weight-bold)', lineHeight: 1.2 }}
+          >
             Phase Management
           </Typography>
           <Typography
@@ -299,7 +302,7 @@ export function PhaseManagementPage() {
             </Typography>
           )}
         </Box>
-        <Stack direction="row" spacing={1} flexWrap="wrap">
+        <Stack direction="row" spacing="var(--ob-space-100)" flexWrap="wrap">
           {projectId && (
             <>
               <Button

@@ -62,7 +62,10 @@ export function ConditionAssessmentTab({
         className="ob-seamless-panel ob-seamless-panel--glass"
         sx={{ p: 'var(--ob-space-150)' }}
       >
-        <Typography variant="h6" sx={{ m: 0, fontWeight: 600 }}>
+        <Typography
+          variant="h6"
+          sx={{ m: 0, fontWeight: 'var(--ob-font-weight-semibold)' }}
+        >
           Condition assessment unavailable
         </Typography>
         <Typography color="text.secondary" sx={{ mt: 'var(--ob-space-050)' }}>
@@ -149,7 +152,10 @@ export function ConditionAssessmentTab({
           }}
         >
           <Box>
-            <Typography variant="h6" sx={{ m: 0, fontWeight: 600 }}>
+            <Typography
+              variant="h6"
+              sx={{ m: 0, fontWeight: 'var(--ob-font-weight-semibold)' }}
+            >
               Condition insights
             </Typography>
             <Typography

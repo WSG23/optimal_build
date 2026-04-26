@@ -191,7 +191,7 @@ export function ProjectHubPage() {
                   <Box
                     sx={{
                       p: 'var(--ob-space-075)',
-                      borderRadius: 'var(--ob-radius-lg)',
+                      borderRadius: 'var(--ob-radius-sm)',
                       bgcolor: alpha(color, 0.1),
                       color: color,
                     }}
@@ -229,7 +229,7 @@ export function ProjectHubPage() {
                 variant="rectangular"
                 width={48}
                 height={48}
-                sx={{ borderRadius: 'var(--ob-radius-lg)' }}
+                sx={{ borderRadius: 'var(--ob-radius-sm)' }}
               />
             </Stack>
             <Skeleton

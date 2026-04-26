@@ -28,9 +28,9 @@ export function WhyNotExcelPage() {
   const { navigate } = useRouterController()
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing="var(--ob-space-200)">
       <Card variant="default" sx={{ p: 'var(--ob-space-250)' }}>
-        <Stack spacing={1.5}>
+        <Stack spacing="var(--ob-space-150)">
           <Typography variant="h3">Why not Excel?</Typography>
           <Typography variant="body1" color="text.secondary">
             Excel is still the incumbent. The case for Optimal Build in{' '}
@@ -51,14 +51,14 @@ export function WhyNotExcelPage() {
         </Stack>
       </Card>
 
-      <Grid container spacing={2}>
+      <Grid container spacing="var(--ob-space-200)">
         {DIFFERENTIATORS.map((item) => (
           <Grid item xs={12} md={6} key={item.title}>
             <Card
               variant="default"
               sx={{ p: 'var(--ob-space-200)', height: '100%' }}
             >
-              <Stack spacing={1}>
+              <Stack spacing="var(--ob-space-100)">
                 <Typography variant="h6">{item.title}</Typography>
                 <Typography variant="body2" color="text.secondary">
                   {item.body}

@@ -237,7 +237,7 @@ export function PhaseEditor({
       </DialogTitle>
 
       <DialogContent dividers>
-        <Stack spacing={3} sx={{ pt: 1 }}>
+        <Stack spacing="var(--ob-space-200)" sx={{ pt: 'var(--ob-space-100)' }}>
           {error && (
             <Typography color="error" variant="body2">
               {error}
@@ -247,12 +247,18 @@ export function PhaseEditor({
           {/* Basic Info */}
           <Typography
             variant="subtitle2"
-            sx={{ fontWeight: 600, color: 'text.secondary' }}
+            sx={{
+              fontWeight: 'var(--ob-font-weight-semibold)',
+              color: 'text.secondary',
+            }}
           >
             Basic Information
           </Typography>
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing="var(--ob-space-200)"
+          >
             <TextField
               fullWidth
               label="Phase Name"
@@ -321,12 +327,19 @@ export function PhaseEditor({
           {/* Schedule */}
           <Typography
             variant="subtitle2"
-            sx={{ fontWeight: 600, color: 'text.secondary', mt: 2 }}
+            sx={{
+              fontWeight: 'var(--ob-font-weight-semibold)',
+              color: 'text.secondary',
+              mt: 'var(--ob-space-200)',
+            }}
           >
             Schedule
           </Typography>
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing="var(--ob-space-200)"
+          >
             <TextField
               fullWidth
               label="Planned Start Date"
@@ -347,7 +360,10 @@ export function PhaseEditor({
           </Stack>
 
           {!isNew && (
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing="var(--ob-space-200)"
+            >
               <TextField
                 fullWidth
                 label="Actual Start Date"
@@ -373,12 +389,19 @@ export function PhaseEditor({
           {/* Budget */}
           <Typography
             variant="subtitle2"
-            sx={{ fontWeight: 600, color: 'text.secondary', mt: 2 }}
+            sx={{
+              fontWeight: 'var(--ob-font-weight-semibold)',
+              color: 'text.secondary',
+              mt: 'var(--ob-space-200)',
+            }}
           >
             Budget
           </Typography>
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing="var(--ob-space-200)"
+          >
             <TextField
               fullWidth
               label="Budget Amount"
@@ -413,12 +436,19 @@ export function PhaseEditor({
           {/* Heritage */}
           <Typography
             variant="subtitle2"
-            sx={{ fontWeight: 600, color: 'text.secondary', mt: 2 }}
+            sx={{
+              fontWeight: 'var(--ob-font-weight-semibold)',
+              color: 'text.secondary',
+              mt: 'var(--ob-space-200)',
+            }}
           >
             Heritage & Conservation
           </Typography>
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing="var(--ob-space-200)"
+          >
             <FormControl fullWidth>
               <InputLabel>Heritage Classification</InputLabel>
               <Select
@@ -469,14 +499,18 @@ export function PhaseEditor({
           {/* Occupancy */}
           <Typography
             variant="subtitle2"
-            sx={{ fontWeight: 600, color: 'text.secondary', mt: 2 }}
+            sx={{
+              fontWeight: 'var(--ob-font-weight-semibold)',
+              color: 'text.secondary',
+              mt: 'var(--ob-space-200)',
+            }}
           >
             Occupancy & Tenants
           </Typography>
 
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
-            spacing={2}
+            spacing="var(--ob-space-200)"
             alignItems="center"
           >
             <FormControl fullWidth>

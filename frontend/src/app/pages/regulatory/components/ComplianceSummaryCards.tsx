@@ -54,7 +54,7 @@ export const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({
           component="span"
           sx={{
             fontSize: 'var(--ob-font-size-3xl)',
-            fontWeight: 700,
+            fontWeight: 'var(--ob-font-weight-bold)',
             color: 'var(--ob-neutral-50)',
             display: 'block',
           }}
@@ -99,7 +99,7 @@ export const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({
           component="span"
           sx={{
             fontSize: 'var(--ob-font-size-3xl)',
-            fontWeight: 700,
+            fontWeight: 'var(--ob-font-weight-bold)',
             color: 'var(--ob-neutral-50)',
             display: 'block',
           }}
@@ -130,7 +130,7 @@ export const ComplianceSummaryCards: React.FC<ComplianceSummaryCardsProps> = ({
           component="span"
           sx={{
             fontSize: 'var(--ob-font-size-3xl)',
-            fontWeight: 700,
+            fontWeight: 'var(--ob-font-weight-bold)',
             color: 'var(--ob-neutral-50)',
             display: 'block',
           }}

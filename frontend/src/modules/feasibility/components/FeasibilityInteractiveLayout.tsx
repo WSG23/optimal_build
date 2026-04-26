@@ -49,10 +49,10 @@ export function FeasibilityInteractiveLayout({
           minWidth: 400,
           maxWidth: 500,
           zIndex: 10,
-          m: 3,
+          m: 'var(--ob-space-200)',
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
+          borderRadius: 'var(--ob-radius-sm)', // Square Cyber-Minimalism: sm for panels
           border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
           bgcolor: alpha(theme.palette.background.paper, 0.65), // Semi-transparent
           backdropFilter: 'blur(var(--ob-blur-lg))',
@@ -63,8 +63,8 @@ export function FeasibilityInteractiveLayout({
         {/* Address Bar Area */}
         <Box
           sx={{
-            p: 3,
-            pb: 2,
+            p: 'var(--ob-space-200)',
+            pb: 'var(--ob-space-200)',
             borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
             bgcolor: alpha(theme.palette.background.paper, 0.4),
           }}
@@ -77,12 +77,12 @@ export function FeasibilityInteractiveLayout({
           sx={{
             flexGrow: 1,
             overflowY: 'auto',
-            p: 3,
+            p: 'var(--ob-space-200)',
             '&::-webkit-scrollbar': { width: '6px' },
             '&::-webkit-scrollbar-track': { background: 'transparent' },
             '&::-webkit-scrollbar-thumb': {
               background: alpha(theme.palette.text.secondary, 0.2),
-              borderRadius: '3px',
+              borderRadius: 'var(--ob-radius-xs)',
             },
           }}
         >
@@ -93,8 +93,8 @@ export function FeasibilityInteractiveLayout({
         {renderFooter && (
           <Box
             sx={{
-              p: 3,
-              pt: 2,
+              p: 'var(--ob-space-200)',
+              pt: 'var(--ob-space-200)',
               borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
               bgcolor: alpha(theme.palette.background.paper, 0.4),
             }}

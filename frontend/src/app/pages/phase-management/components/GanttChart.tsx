@@ -78,11 +78,14 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
   const left = startOffset * DAY_WIDTH
 
   const tooltipContent = (
-    <Box sx={{ p: 1 }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+    <Box sx={{ p: 'var(--ob-space-050)' }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
+      >
         {task.name}
       </Typography>
-      <Typography variant="body2" sx={{ mt: 0.5 }}>
+      <Typography variant="body2" sx={{ mt: 'var(--ob-space-025)' }}>
         {formatDate(task.startDate)} - {formatDate(task.endDate)}
       </Typography>
       <Typography variant="body2">Duration: {task.duration} days</Typography>
@@ -95,7 +98,12 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
         </Typography>
       )}
       {task.isCritical && (
-        <Chip size="small" label="Critical Path" color="error" sx={{ mt: 1 }} />
+        <Chip
+          size="small"
+          label="Critical Path"
+          color="error"
+          sx={{ mt: 'var(--ob-space-050)' }}
+        />
       )}
     </Box>
   )
@@ -135,16 +143,16 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
           top: '6px',
           width: `${width}px`,
           height: `${ROW_HEIGHT - 12}px`,
-          borderRadius: '4px',
+          borderRadius: 'var(--ob-radius-sm)',
           cursor: 'pointer',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           border: isSelected
-            ? '2px solid var(--ob-color-neon-cyan)'
+            ? '2px solid var(--ob-color-brand-primary)'
             : task.isCritical
               ? '1px solid var(--ob-glow-error-color-30)'
               : '1px solid var(--ob-overlay-white-subtle)',
           boxShadow: isSelected
-            ? '0 0 15px var(--ob-color-neon-cyan-muted)'
+            ? '0 0 15px var(--ob-color-brand-muted)'
             : task.isCritical
               ? '0 2px 8px var(--ob-glow-error-color-30)'
               : '0 2px 4px var(--ob-overlay-medium)',
@@ -177,15 +185,15 @@ function TaskBar({ task, startOffset, isSelected, onClick }: TaskBarProps) {
         {/* Icons */}
         <Stack
           direction="row"
-          spacing={0.5}
-          sx={{ position: 'relative', zIndex: 1, px: 1 }}
+          spacing="var(--ob-space-050)"
+          sx={{ position: 'relative', zIndex: 1, px: 'var(--ob-space-100)' }}
         >
           <Typography
             variant="caption"
             sx={{
               color: 'var(--ob-color-text-on-dark)',
-              fontWeight: 600,
-              fontSize: '0.7rem',
+              fontWeight: 'var(--ob-font-weight-semibold)',
+              fontSize: 'var(--ob-font-size-2xs)',
               textShadow: '0 1px 2px var(--ob-overlay-dark-heavy)',
             }}
           >
@@ -288,12 +296,15 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
           borderRight: '1px solid var(--ob-overlay-white-subtle)',
           display: 'flex',
           alignItems: 'center',
-          px: 2,
+          px: 'var(--ob-space-200)',
         }}
       >
         <Typography
           variant="subtitle2"
-          sx={{ fontWeight: 600, color: 'var(--ob-color-text-on-dark)' }}
+          sx={{
+            fontWeight: 'var(--ob-font-weight-semibold)',
+            color: 'var(--ob-color-text-on-dark)',
+          }}
         >
           PHASE
         </Typography>
@@ -309,13 +320,13 @@ function TimeHeader({ startDate, totalDays }: TimeHeaderProps) {
                 width: `${month.days * DAY_WIDTH}px`,
                 borderRight: '1px solid var(--ob-overlay-white-subtle)',
                 textAlign: 'center',
-                py: 1,
+                py: 'var(--ob-space-100)',
               }}
             >
               <Typography
                 variant="caption"
                 sx={{
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                   color: 'var(--ob-color-text-secondary)',
                   textTransform: 'uppercase',
                 }}
@@ -356,7 +367,7 @@ export function GanttChart({
 
   if (tasks.length === 0) {
     return (
-      <Paper sx={{ p: 4, textAlign: 'center' }}>
+      <Paper sx={{ p: 'var(--ob-space-300)', textAlign: 'center' }}>
         <Typography variant="body1" color="text.secondary">
           No phases defined for this project. Add phases to see the Gantt chart.
         </Typography>
@@ -440,7 +451,7 @@ export function GanttChart({
                   stroke={
                     selectedTaskId &&
                     (task.id === selectedTaskId || depId === selectedTaskId)
-                      ? 'var(--ob-color-neon-cyan)'
+                      ? 'var(--ob-color-brand-primary)'
                       : isCriticalLink
                         ? 'var(--ob-glow-error-color-40)'
                         : 'var(--ob-overlay-white-subtle)'
@@ -466,12 +477,12 @@ export function GanttChart({
               borderBottom: '1px solid var(--ob-overlay-white-subtle)',
               backgroundColor:
                 selectedTaskId === task.id
-                  ? 'var(--ob-color-neon-cyan-muted)'
+                  ? 'var(--ob-color-brand-muted)'
                   : 'transparent',
               '&:hover': {
                 backgroundColor:
                   selectedTaskId === task.id
-                    ? 'var(--ob-color-neon-cyan-muted)'
+                    ? 'var(--ob-color-brand-muted)'
                     : 'rgba(255, 255, 255, 0.02)',
               },
             }}
@@ -485,8 +496,8 @@ export function GanttChart({
                 borderRight: '1px solid var(--ob-overlay-white-subtle)',
                 display: 'flex',
                 alignItems: 'center',
-                px: 2,
-                gap: 1,
+                px: 'var(--ob-space-200)',
+                gap: 'var(--ob-space-100)',
                 bgcolor: 'rgba(30,30,30,0.3)',
                 backdropFilter: 'blur(var(--ob-blur-sm))',
               }}
@@ -560,8 +571,8 @@ export function GanttChart({
                 top: HEADER_HEIGHT,
                 bottom: 60, // Leave room for legend
                 width: '2px',
-                background: 'var(--ob-color-neon-cyan)',
-                boxShadow: '0 0 10px var(--ob-color-neon-cyan)',
+                background: 'var(--ob-color-brand-primary)',
+                boxShadow: '0 0 10px var(--ob-color-brand-primary)',
                 zIndex: 15,
                 pointerEvents: 'none',
               }}
@@ -572,13 +583,13 @@ export function GanttChart({
                   top: '-24px',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  background: 'var(--ob-color-neon-cyan)',
+                  background: 'var(--ob-color-brand-primary)',
                   color: 'var(--ob-color-text-on-light, #000)',
-                  fontSize: '0.65rem',
+                  fontSize: 'var(--ob-font-size-2xs)',
                   fontWeight: 'bold',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  boxShadow: '0 0 10px var(--ob-color-neon-cyan)',
+                  padding: 'var(--ob-space-025) var(--ob-space-075)',
+                  borderRadius: 'var(--ob-radius-sm)',
+                  boxShadow: '0 0 10px var(--ob-color-brand-primary)',
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -594,32 +605,44 @@ export function GanttChart({
       <Box
         sx={{
           display: 'flex',
-          gap: 3,
-          p: 2,
+          gap: 'var(--ob-space-150)',
+          p: 'var(--ob-space-100)',
           borderTop: '1px solid var(--ob-overlay-white-subtle)',
           background: 'rgba(20, 20, 20, 0.95)',
           flexWrap: 'wrap',
           color: 'var(--ob-color-text-on-dark)',
         }}
       >
-        <Stack direction="row" spacing={0.5} alignItems="center">
+        <Stack
+          direction="row"
+          spacing="var(--ob-space-050)"
+          alignItems="center"
+        >
           <WarningAmberIcon sx={{ fontSize: 16, color: 'error.main' }} />
           <Typography variant="caption">Critical Path</Typography>
         </Stack>
-        <Stack direction="row" spacing={0.5} alignItems="center">
+        <Stack
+          direction="row"
+          spacing="var(--ob-space-050)"
+          alignItems="center"
+        >
           <AccountBalanceIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
           <Typography variant="caption">Heritage Phase</Typography>
         </Stack>
-        <Stack direction="row" spacing={0.5} alignItems="center">
+        <Stack
+          direction="row"
+          spacing="var(--ob-space-050)"
+          alignItems="center"
+        >
           <PeopleIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
           <Typography variant="caption">Tenant Coordination</Typography>
         </Stack>
-        <Box sx={{ display: 'flex', gap: 1, ml: 'auto' }}>
+        <Box sx={{ display: 'flex', gap: 'var(--ob-space-050)', ml: 'auto' }}>
           {Object.entries(STATUS_COLORS).map(([status, color]) => (
             <Stack
               key={status}
               direction="row"
-              spacing={0.5}
+              spacing="var(--ob-space-050)"
               alignItems="center"
             >
               <Box

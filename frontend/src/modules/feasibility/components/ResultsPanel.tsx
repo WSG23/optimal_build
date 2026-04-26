@@ -79,7 +79,7 @@ export function ResultsPanel({
             height: '100%',
             minHeight: '600px',
             overflow: 'hidden',
-            borderRadius: '4px',
+            borderRadius: 'var(--ob-radius-sm)',
           }}
         >
           {/* The Blurred Content (Teaser) */}
@@ -97,7 +97,7 @@ export function ResultsPanel({
               style={{
                 height: '120px',
                 background: 'var(--ob-color-border-subtle, #e5e7eb)',
-                borderRadius: '4px',
+                borderRadius: 'var(--ob-radius-sm)',
               }}
             />
 
@@ -113,14 +113,14 @@ export function ResultsPanel({
                 style={{
                   height: '200px',
                   background: 'var(--ob-color-border-subtle, #e5e7eb)',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-sm)',
                 }}
               />
               <div
                 style={{
                   height: '200px',
                   background: 'var(--ob-color-border-subtle, #e5e7eb)',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-sm)',
                 }}
               />
             </div>
@@ -129,7 +129,7 @@ export function ResultsPanel({
               style={{
                 height: '300px',
                 background: 'var(--ob-color-border-subtle, #e5e7eb)',
-                borderRadius: '4px',
+                borderRadius: 'var(--ob-radius-sm)',
               }}
             />
           </div>
@@ -166,7 +166,7 @@ export function ResultsPanel({
                   style={{
                     width: '80px',
                     height: '80px',
-                    border: '4px solid var(--ob-color-status-info, #3b82f6)',
+                    border: '4px solid var(--ob-color-status-info, #8b5cf6)',
                     borderTopColor: 'transparent',
                     borderRadius: '50%',
                     animation: 'spin 1s linear infinite',
@@ -176,8 +176,8 @@ export function ResultsPanel({
                 <h3
                   style={{
                     marginTop: 'var(--ob-space-150)',
-                    fontSize: '1.25rem',
-                    fontWeight: 600,
+                    fontSize: 'var(--ob-font-size-xl)',
+                    fontWeight: 'var(--ob-font-weight-semibold)',
                     color: 'white',
                   }}
                 >
@@ -194,9 +194,9 @@ export function ResultsPanel({
                 style={{
                   background: 'rgba(30, 30, 30, 0.6)', // Glassmorphic dark
                   backdropFilter: 'blur(var(--ob-blur-md))',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(245, 235, 220, 0.1)',
                   padding: 'var(--ob-space-150) var(--ob-space-200)',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-sm)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 'var(--ob-space-100)',
@@ -247,8 +247,8 @@ export function ResultsPanel({
                 <div>
                   <h3
                     style={{
-                      fontSize: '1rem',
-                      fontWeight: 600,
+                      fontSize: 'var(--ob-font-size-base)',
+                      fontWeight: 'var(--ob-font-weight-semibold)',
                       margin: '0 0 4px 0',
                       color: 'white',
                     }}
@@ -259,7 +259,7 @@ export function ResultsPanel({
                     style={{
                       margin: '0',
                       color: 'rgba(255,255,255,0.7)',
-                      fontSize: '0.875rem',
+                      fontSize: 'var(--ob-font-size-sm)',
                     }}
                   >
                     Enter an address to visualize potential.
@@ -342,8 +342,8 @@ export function ResultsPanel({
                   </span>
                   <h2
                     style={{
-                      fontSize: '2rem',
-                      fontWeight: 700,
+                      fontSize: 'var(--ob-font-size-3xl)',
+                      fontWeight: 'var(--ob-font-weight-bold)',
                       margin: 0,
                       letterSpacing: '-0.02em',
                       background:
@@ -365,10 +365,10 @@ export function ResultsPanel({
                       <span
                         key={overlay}
                         style={{
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                          padding: '2px 8px',
-                          borderRadius: '4px',
+                          fontSize: 'var(--ob-font-size-2xs)',
+                          fontWeight: 'var(--ob-font-weight-semibold)',
+                          padding: 'var(--ob-space-025) var(--ob-space-050)',
+                          borderRadius: 'var(--ob-radius-sm)',
                           background: 'var(--ob-color-surface-info, #EFF6FF)',
                           color: 'var(--ob-color-status-info, #2563EB)',
                           border:
@@ -395,7 +395,7 @@ export function ResultsPanel({
                 >
                   <span
                     style={{
-                      fontSize: '0.75rem',
+                      fontSize: 'var(--ob-font-size-xs)',
                       opacity: 0.8,
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
@@ -405,17 +405,17 @@ export function ResultsPanel({
                   </span>
                   <div
                     style={{
-                      fontSize: '2.25rem',
-                      fontWeight: 700,
-                      lineHeight: 1.1,
+                      fontSize: 'var(--ob-font-size-4xl)',
+                      fontWeight: 'var(--ob-font-weight-bold)',
+                      lineHeight: 'var(--ob-line-height-tight)',
                       marginTop: 'var(--ob-space-25)',
                     }}
                   >
                     {numberFormatter.format(result.metrics.gfaCapM2)}
                     <span
                       style={{
-                        fontSize: '1rem',
-                        fontWeight: 400,
+                        fontSize: 'var(--ob-font-size-base)',
+                        fontWeight: 'var(--ob-font-weight-regular)',
                         opacity: 0.6,
                         marginLeft: 'var(--ob-space-25)',
                       }}
@@ -490,7 +490,10 @@ export function ResultsPanel({
                       >
                         <span
                           className="feasibility-citation__authority"
-                          style={{ fontWeight: 600, fontSize: '0.75rem' }}
+                          style={{
+                            fontWeight: 'var(--ob-font-weight-semibold)',
+                            fontSize: 'var(--ob-font-size-xs)',
+                          }}
                         >
                           {rule.authority}
                         </span>
@@ -498,7 +501,7 @@ export function ResultsPanel({
                           className="feasibility-citation__clause"
                           style={{
                             color: 'var(--ob-color-text-muted)',
-                            fontSize: '0.75rem',
+                            fontSize: 'var(--ob-font-size-xs)',
                           }}
                         >
                           {rule.provenance.clauseRef ??
@@ -508,8 +511,8 @@ export function ResultsPanel({
                       <p
                         className="feasibility-citation__parameter"
                         style={{
-                          fontFamily: 'monospace',
-                          fontSize: '0.8125rem',
+                          fontFamily: 'var(--ob-font-family-mono)',
+                          fontSize: 'var(--ob-font-size-sm-minus)',
                         }}
                       >
                         {`${rule.parameterKey} ${rule.operator} ${rule.value}${

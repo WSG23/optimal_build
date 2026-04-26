@@ -116,7 +116,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     border: none;
     background: var(--ob-color-brand-primary);
     color: var(--ob-color-text-inverse, #0a1628);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: var(--ob-shadow-sm);
@@ -171,7 +171,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
 }
 
 .feasibility-form__label {
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     font-size: var(--ob-font-size-sm);
     color: var(--ob-color-text-primary);
 }
@@ -227,7 +227,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     border: none;
     background: var(--ob-color-brand-primary);
     color: var(--ob-color-text-inverse, #0a1628);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: var(--ob-shadow-sm);
@@ -260,7 +260,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
 .feasibility-assumptions h2 {
     margin: 0;
     font-size: var(--ob-font-size-base);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-primary);
 }
 
@@ -272,7 +272,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
 }
 
 .feasibility-assumptions__grid label {
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     font-size: var(--ob-font-size-sm);
     display: block;
     margin-bottom: var(--ob-spacing-100);
@@ -319,7 +319,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     border: none;
     background: transparent;
     color: var(--ob-color-brand-primary);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     font-size: var(--ob-font-size-sm);
     cursor: pointer;
     transition: color 0.2s ease;
@@ -344,7 +344,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
 .feasibility-pack h2 {
     margin: 0;
     font-size: var(--ob-font-size-lg);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-primary);
 }
 
@@ -367,7 +367,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
 }
 
 .feasibility-pack__field span {
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     font-size: var(--ob-font-size-sm);
     color: var(--ob-color-text-primary);
 }
@@ -407,7 +407,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     border: none;
     background: var(--ob-color-brand-primary);
     color: var(--ob-color-text-inverse, #0a1628);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: var(--ob-shadow-sm);
@@ -449,7 +449,7 @@ html[data-theme='light'] .feasibility-split-layout__footer {
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     background: var(--ob-success-muted);
     color: var(--ob-success-500);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     text-decoration: none;
     transition: all 0.2s ease;
 }
@@ -515,26 +515,26 @@ html[data-theme='light'] .feasibility-split-layout__footer {
 
 /* --- Typography System --- */
 .text-display {
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-size: var(--ob-font-size-2xl);
+    font-weight: var(--ob-font-weight-bold);
     color: var(--ob-color-text-display);
     letter-spacing: -0.02em;
-    line-height: 1.2;
+    line-height: var(--ob-line-height-tight);
 }
 
 .text-heading {
-    font-size: 1.125rem;
-    font-weight: 600;
+    font-size: var(--ob-font-size-lg);
+    font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-display);
     letter-spacing: -0.01em;
 }
 
 .text-eyebrow {
-    font-size: 0.75rem;
+    font-size: var(--ob-font-size-xs);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--ob-color-text-muted);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     margin-bottom: var(--ob-space-3);
 }
 
@@ -608,13 +608,13 @@ html[data-theme='light'] .feasibility-section--card {
     width: 100%;
     color: var(--ob-color-text-primary);
     background: transparent;
-    font-weight: 500;
+    font-weight: var(--ob-font-weight-medium);
     padding: var(--ob-space-025) 0;
 }
 
 .smart-search__input::placeholder {
     color: var(--ob-color-text-muted);
-    font-weight: 400;
+    font-weight: var(--ob-font-weight-regular);
 }
 
 .smart-search__input:focus {
@@ -686,7 +686,7 @@ html[data-theme='light'] .smart-search {
     padding: var(--ob-space-025) var(--ob-space-075);
     border-radius: var(--ob-radius-sm);
     font-size: var(--ob-font-size-sm);
-    font-weight: 500;
+    font-weight: var(--ob-font-weight-medium);
 }
 
 .smart-search__suggestions {
@@ -781,13 +781,13 @@ html[data-theme='light'] .smart-search {
 .feasibility-metrics__item dt {
     font-size: var(--ob-font-size-xs);
     color: var(--ob-color-text-secondary);
-    font-weight: 500;
+    font-weight: var(--ob-font-weight-medium);
 }
 
 .feasibility-metrics__item dd {
     margin: 0;
     font-size: var(--ob-font-size-xl);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-primary);
     font-family: var(--ob-font-family-mono);
 }
@@ -825,16 +825,16 @@ html[data-theme='light'] .smart-search {
 
 .pack-card__title {
     display: block;
-    font-weight: 600;
-    font-size: 0.9375rem;
+    font-weight: var(--ob-font-weight-semibold);
+    font-size: var(--ob-font-size-md);
     color: var(--ob-color-text-display);
 }
 
 .pack-card__desc {
     display: block;
-    font-size: 0.8125rem;
+    font-size: var(--ob-font-size-sm-minus);
     color: var(--ob-color-text-muted);
-    line-height: 1.5;
+    line-height: var(--ob-line-height-normal);
 }
 
 .pack-card__check {
@@ -863,8 +863,8 @@ html[data-theme='light'] .smart-search {
     color: var(--ob-color-text-inverse, #0a1628);
     border: none;
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
-    font-weight: 600;
-    font-size: 0.9375rem;
+    font-weight: var(--ob-font-weight-semibold);
+    font-size: var(--ob-font-size-md);
     box-shadow: var(--ob-shadow-sm);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -889,7 +889,7 @@ html[data-theme='light'] .smart-search {
 }
 
 .feasibility-citation__authority {
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-primary);
 }
 
@@ -913,7 +913,7 @@ html[data-theme='light'] .smart-search {
     background: var(--ob-color-brand-primary);
     color: var(--ob-color-brand-primary);
     font-size: var(--ob-font-size-xs);
-    font-weight: 500;
+    font-weight: var(--ob-font-weight-medium);
 }
 
 .feasibility-results__skeleton {
@@ -1092,7 +1092,9 @@ html[data-theme='light'] .smart-search {
     padding: 0;
     position: sticky;
     top: var(--ob-space-200);
-    height: calc(100vh - var(--ob-space-400));
+    height: calc(
+        100dvh - var(--ob-space-300) - var(--ob-space-400) - var(--ob-space-200)
+    );
     overflow: hidden;
     align-self: start;
 }
@@ -1787,7 +1789,7 @@ html[data-theme='light'] .smart-search {
 .feasibility-pack__spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid white;
+    border: 2px solid var(--ob-color-text-on-brand, #ffffff);
     border-top-color: transparent;
     border-radius: var(--ob-radius-pill);
     animation: spin 1s linear infinite;

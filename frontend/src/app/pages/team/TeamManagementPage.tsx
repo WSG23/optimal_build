@@ -244,7 +244,10 @@ export const TeamManagementPage: React.FC = () => {
         }}
       >
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+          <Typography
+            variant="h5"
+            sx={{ fontWeight: 'var(--ob-font-weight-bold)', lineHeight: 1.2 }}
+          >
             Consultant Coordination
           </Typography>
           <Typography
@@ -269,7 +272,12 @@ export const TeamManagementPage: React.FC = () => {
             size="sm"
             onClick={() => setInviteOpen(true)}
           >
-            <AddIcon sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }} />
+            <AddIcon
+              sx={{
+                fontSize: 'var(--ob-font-size-base)',
+                mr: 'var(--ob-space-050)',
+              }}
+            />
             Invite Member
           </Button>
         )}
@@ -387,7 +395,9 @@ export const TeamManagementPage: React.FC = () => {
                         member.user_id.startsWith('invite-')
                       return (
                         <TableRow key={member.id} hover>
-                          <TableCell sx={{ fontWeight: 500 }}>
+                          <TableCell
+                            sx={{ fontWeight: 'var(--ob-font-weight-medium)' }}
+                          >
                             {member.user?.full_name || 'Unknown'}
                           </TableCell>
                           <TableCell>

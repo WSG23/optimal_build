@@ -83,7 +83,7 @@ export function EvidencePage() {
   if (!projectRef) {
     return (
       <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
-        <Stack spacing={1.5}>
+        <Stack spacing="var(--ob-space-150)">
           <Typography variant="h6">
             Select a project to review evidence
           </Typography>
@@ -105,12 +105,12 @@ export function EvidencePage() {
   }
 
   return (
-    <Stack spacing={2.5}>
+    <Stack spacing="var(--ob-space-250)">
       <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
-        <Stack spacing={1.5}>
+        <Stack spacing="var(--ob-space-150)">
           <Stack
             direction={{ xs: 'column', md: 'row' }}
-            spacing={1.5}
+            spacing="var(--ob-space-150)"
             justifyContent="space-between"
             alignItems={{ xs: 'flex-start', md: 'center' }}
           >
@@ -123,12 +123,12 @@ export function EvidencePage() {
               <Typography
                 variant="body2"
                 color="text.secondary"
-                sx={{ mt: 0.5 }}
+                sx={{ mt: 'var(--ob-space-050)' }}
               >
                 Project: {projectName}
               </Typography>
             </Box>
-            <Stack direction="row" spacing={1}>
+            <Stack direction="row" spacing="var(--ob-space-100)">
               <Button
                 variant="secondary"
                 size="sm"
@@ -170,13 +170,13 @@ export function EvidencePage() {
 
       {evidence ? (
         <>
-          <Grid container spacing={2}>
+          <Grid container spacing="var(--ob-space-200)">
             <Grid item xs={12} md={4}>
               <Card
                 variant="default"
                 sx={{ p: 'var(--ob-space-200)', height: '100%' }}
               >
-                <Stack spacing={1}>
+                <Stack spacing="var(--ob-space-100)">
                   <Typography variant="h6">Chain health</Typography>
                   <Chip
                     size="small"
@@ -199,7 +199,7 @@ export function EvidencePage() {
                 variant="default"
                 sx={{ p: 'var(--ob-space-200)', height: '100%' }}
               >
-                <Stack spacing={1}>
+                <Stack spacing="var(--ob-space-100)">
                   <Typography variant="h6">Finance origin</Typography>
                   <Typography variant="body2" color="text.secondary">
                     {latestFinanceEvent
@@ -219,7 +219,7 @@ export function EvidencePage() {
                 variant="default"
                 sx={{ p: 'var(--ob-space-200)', height: '100%' }}
               >
-                <Stack spacing={1}>
+                <Stack spacing="var(--ob-space-100)">
                   <Typography variant="h6">Recipients</Typography>
                   {evidence.recipients.length > 0 ? (
                     <Typography variant="body2" color="text.secondary">
@@ -235,13 +235,13 @@ export function EvidencePage() {
             </Grid>
           </Grid>
 
-          <Grid container spacing={2}>
+          <Grid container spacing="var(--ob-space-200)">
             <Grid item xs={12} md={6}>
               <Card
                 variant="default"
                 sx={{ p: 'var(--ob-space-200)', height: '100%' }}
               >
-                <Stack spacing={1}>
+                <Stack spacing="var(--ob-space-100)">
                   <Typography variant="h6">Workbook lineage</Typography>
                   {latestImport ? (
                     <>
@@ -272,7 +272,7 @@ export function EvidencePage() {
                 variant="default"
                 sx={{ p: 'var(--ob-space-200)', height: '100%' }}
               >
-                <Stack spacing={1}>
+                <Stack spacing="var(--ob-space-100)">
                   <Typography variant="h6">Submission history</Typography>
                   {latestSubmission ? (
                     <>

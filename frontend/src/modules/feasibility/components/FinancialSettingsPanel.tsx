@@ -101,7 +101,7 @@ export function FinancialSettingsPanel({
               style={{
                 margin: 0,
                 fontSize: 'var(--ob-font-size-base)',
-                fontWeight: 600,
+                fontWeight: 'var(--ob-font-weight-semibold)',
                 color: 'var(--ob-color-text-primary)',
                 letterSpacing: '0.02em',
               }}
@@ -203,10 +203,16 @@ export function FinancialSettingsPanel({
                 />
               }
               label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--ob-space-100)',
+                  }}
+                >
                   <CloudUpload
                     sx={{
-                      fontSize: '1rem',
+                      fontSize: 'var(--ob-font-size-base)',
                       color: 'var(--ob-color-text-muted)',
                     }}
                   />

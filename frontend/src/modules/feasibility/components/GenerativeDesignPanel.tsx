@@ -26,10 +26,10 @@ const IsometricIcon = ({
   selected: boolean
 }) => {
   const baseColor = selected
-    ? 'var(--ob-color-neon-cyan, #06b6d4)'
+    ? 'var(--ob-color-brand-primary)'
     : 'var(--ob-neutral-500)'
   const highlightColor = selected
-    ? 'var(--ob-color-neon-cyan-light, #22d3ee)'
+    ? 'var(--ob-color-brand-primary)'
     : 'var(--ob-neutral-400)'
   const shadowColor = selected
     ? 'rgba(6, 182, 212, 0.3)'
@@ -274,7 +274,7 @@ export function GenerativeDesignPanel({
             style={{
               margin: 0,
               fontSize: 'var(--ob-font-size-base)',
-              fontWeight: 600,
+              fontWeight: 'var(--ob-font-weight-semibold)',
               color: 'var(--ob-color-text-primary)',
             }}
           >
@@ -292,15 +292,18 @@ export function GenerativeDesignPanel({
         </div>
       </div>
 
-      <Grid container spacing={1}>
+      <Grid container spacing="var(--ob-space-100)">
         {GENERATIVE_OPTIONS.map((option) => {
           const isSelected = selectedStrategy === option.value
           return (
             <Grid item xs={6} sm={3} key={option.value}>
               <Tooltip
                 title={
-                  <Box sx={{ p: 1 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  <Box sx={{ p: 'var(--ob-space-100)' }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
+                    >
                       {option.label}
                     </Typography>
                     <Typography variant="caption" sx={{ display: 'block' }}>
@@ -310,7 +313,7 @@ export function GenerativeDesignPanel({
                       variant="caption"
                       sx={{
                         display: 'block',
-                        mt: 0.5,
+                        mt: 'var(--ob-space-050)',
                         color: 'var(--ob-color-brand-primary)',
                       }}
                     >
@@ -379,7 +382,7 @@ export function GenerativeDesignPanel({
                     <Typography
                       variant="subtitle2"
                       sx={{
-                        fontWeight: 600,
+                        fontWeight: 'var(--ob-font-weight-semibold)',
                         color: isSelected
                           ? 'var(--ob-color-brand-primary)'
                           : 'var(--ob-color-text-primary)',
@@ -394,7 +397,7 @@ export function GenerativeDesignPanel({
                       variant="caption"
                       sx={{
                         color: 'var(--ob-color-text-muted)',
-                        lineHeight: 1.3,
+                        lineHeight: 'var(--ob-line-height-snug)',
                         textAlign: 'center',
                         fontSize: 'var(--ob-font-size-2xs)',
                         overflow: 'hidden',
@@ -461,7 +464,7 @@ export function GenerativeDesignPanel({
           <Typography
             variant="body2"
             sx={{
-              fontWeight: 600,
+              fontWeight: 'var(--ob-font-weight-semibold)',
               color: 'var(--ob-color-brand-primary)',
             }}
           >

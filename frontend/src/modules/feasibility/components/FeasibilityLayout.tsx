@@ -76,7 +76,7 @@ export function FeasibilityLayout({
                     '&.Mui-selected': {
                       color: 'var(--ob-color-brand-primary)',
                       background: 'var(--ob-color-brand-soft)',
-                      boxShadow: 'inset 2px 0 0 var(--ob-color-neon-cyan)',
+                      boxShadow: 'inset 2px 0 0 var(--ob-color-brand-primary)',
                       '&:hover': {
                         background: 'var(--ob-color-brand-muted)',
                       },

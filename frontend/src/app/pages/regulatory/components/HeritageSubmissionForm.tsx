@@ -67,7 +67,7 @@ function TabPanel({ children, value, index }: TabPanelProps) {
       hidden={value !== index}
       id={`heritage-tabpanel-${index}`}
       aria-labelledby={`heritage-tab-${index}`}
-      sx={{ py: 3 }}
+      sx={{ py: 'var(--ob-space-200)' }}
     >
       {value === index && children}
     </Box>
@@ -359,10 +359,16 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          borderBottom: '1px solid rgba(245, 235, 220, 0.1)',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--ob-space-150)',
+          }}
+        >
           <HeritageIcon color="primary" />
           <Box>
             <Typography variant="h6">
@@ -373,13 +379,19 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
             </Typography>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--ob-space-100)',
+          }}
+        >
           {activeSubmission?.stb_reference && (
             <Chip
               label={activeSubmission.stb_reference}
               color="primary"
               size="small"
-              sx={{ fontFamily: 'monospace' }}
+              sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
             />
           )}
           {activeSubmission && (
@@ -404,7 +416,13 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
         </Box>
       </DialogTitle>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3 }}>
+      <Box
+        sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          px: 'var(--ob-space-200)',
+        }}
+      >
         <Tabs value={tabValue} onChange={handleTabChange}>
           <Tab
             label="Building Info"
@@ -425,16 +443,20 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
         </Tabs>
       </Box>
 
-      <DialogContent sx={{ px: 3 }}>
+      <DialogContent sx={{ px: 'var(--ob-space-200)' }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          <Alert
+            severity="error"
+            sx={{ mb: 'var(--ob-space-200)' }}
+            onClose={() => setError(null)}
+          >
             {error}
           </Alert>
         )}
         {successMessage && (
           <Alert
             severity="success"
-            sx={{ mb: 2 }}
+            sx={{ mb: 'var(--ob-space-200)' }}
             onClose={() => setSuccessMessage(null)}
           >
             {successMessage}
@@ -443,7 +465,7 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
 
         {/* Tab 0: Building Info */}
         <TabPanel value={tabValue} index={0}>
-          <Grid container spacing={3}>
+          <Grid container spacing="var(--ob-space-200)">
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
                 <InputLabel>Conservation Status</InputLabel>
@@ -493,12 +515,16 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
               >
                 <CardContent>
                   <Box
-                    sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 'var(--ob-space-100)',
+                    }}
                   >
                     <InfoIcon
                       color="primary"
                       fontSize="small"
-                      sx={{ mt: 0.5 }}
+                      sx={{ mt: 'var(--ob-space-050)' }}
                     />
                     <Box>
                       <Typography variant="subtitle2">
@@ -507,11 +533,18 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
                       <Typography
                         variant="body2"
                         color="text.secondary"
-                        sx={{ mt: 0.5 }}
+                        sx={{ mt: 'var(--ob-space-050)' }}
                       >
                         The STB reviews applications based on:
                       </Typography>
-                      <Box component="ul" sx={{ pl: 2, m: 0, mt: 1 }}>
+                      <Box
+                        component="ul"
+                        sx={{
+                          pl: 'var(--ob-space-200)',
+                          m: 0,
+                          mt: 'var(--ob-space-100)',
+                        }}
+                      >
                         <Typography
                           component="li"
                           variant="body2"
@@ -587,10 +620,10 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
 
       <DialogActions
         sx={{
-          px: 3,
-          py: 2,
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-          gap: 1,
+          px: 'var(--ob-space-200)',
+          py: 'var(--ob-space-200)',
+          borderTop: '1px solid rgba(245, 235, 220, 0.1)',
+          gap: 'var(--ob-space-100)',
         }}
       >
         <Button onClick={onClose} color="inherit">
@@ -656,7 +689,9 @@ export const HeritageSubmissionForm: React.FC<HeritageSubmissionFormProps> = ({
             Tourism Board? This action cannot be undone.
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ p: 2, gap: 1 }}>
+        <DialogActions
+          sx={{ p: 'var(--ob-space-200)', gap: 'var(--ob-space-100)' }}
+        >
           <Button variant="outlined" onClick={() => setConfirmSTBOpen(false)}>
             Cancel
           </Button>

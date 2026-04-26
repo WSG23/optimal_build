@@ -25,13 +25,13 @@ export function StructureSelectionCard({
       sx={{
         position: 'relative',
         cursor: 'pointer',
-        borderRadius: 2,
+        borderRadius: 'var(--ob-radius-sm)',
         padding: 2,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 1,
+        gap: 'var(--ob-space-100)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         background: selected
           ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`
@@ -50,7 +50,11 @@ export function StructureSelectionCard({
     >
       <Typography
         variant="h3"
-        sx={{ fontSize: '2rem', lineHeight: 1, mb: 0.5 }}
+        sx={{
+          fontSize: 'var(--ob-font-size-3xl)',
+          lineHeight: 'var(--ob-line-height-none)',
+          mb: 'var(--ob-space-050)',
+        }}
       >
         {icon}
       </Typography>
@@ -58,7 +62,7 @@ export function StructureSelectionCard({
       <Typography
         variant="body2"
         sx={{
-          fontWeight: 600,
+          fontWeight: 'var(--ob-font-weight-semibold)',
           textAlign: 'center',
           color: selected ? 'primary.main' : 'text.primary',
         }}
@@ -70,14 +74,14 @@ export function StructureSelectionCard({
       {costEstimate && (
         <Box
           sx={{
-            mt: 1,
-            px: 1,
-            py: 0.25,
-            borderRadius: 1,
+            mt: 'var(--ob-space-100)',
+            px: 'var(--ob-space-100)',
+            py: 'var(--ob-space-025)',
+            borderRadius: 'var(--ob-radius-sm)',
             bgcolor: alpha(theme.palette.success.main, 0.1),
             color: 'success.dark',
-            fontSize: '0.65rem',
-            fontWeight: 700,
+            fontSize: 'var(--ob-font-size-2xs)',
+            fontWeight: 'var(--ob-font-weight-bold)',
             letterSpacing: '0.02em',
           }}
         >
