@@ -18,6 +18,11 @@ import { render, RenderOptions, RenderResult } from '@testing-library/react'
 import { ThemeModeProvider } from '../theme/ThemeContext'
 import { TranslationProvider } from '../i18n'
 import { BaseLayoutProvider } from '../app/layout/BaseLayoutContext'
+import {
+  ProjectContext,
+  type ProjectContextValue,
+  type ProjectSummary,
+} from '../contexts/projectContextDef'
 
 export interface ProviderOptions {
   /**
@@ -29,6 +34,28 @@ export interface ProviderOptions {
    * Top offset for BaseLayout context (default: 0)
    */
   topOffset?: number | string
+  /**
+   * Current project context used by shell-level components.
+   */
+  currentProject?: ProjectSummary | null
+}
+
+function createProjectContextValue(
+  currentProject: ProjectSummary | null,
+): ProjectContextValue {
+  return {
+    currentProject,
+    projects: currentProject ? [currentProject] : [],
+    isProjectLoading: false,
+    projectError: null,
+    setCurrentProject: () => undefined,
+    clearProject: () => undefined,
+    refreshProjects: async () => undefined,
+    createProject: async (payload) => ({
+      id: 'test-project',
+      name: payload.name,
+    }),
+  }
 }
 
 /**
@@ -55,15 +82,23 @@ export function renderWithProviders(
     ...renderOptions
   }: RenderOptions & { providerOptions?: ProviderOptions } = {},
 ): RenderResult {
-  const { inBaseLayout = true, topOffset = 0 } = providerOptions ?? {}
+  const {
+    inBaseLayout = true,
+    topOffset = 0,
+    currentProject = { id: 'test-project', name: 'Test Project' },
+  } = providerOptions ?? {}
 
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <ThemeModeProvider>
         <TranslationProvider>
-          <BaseLayoutProvider value={{ inBaseLayout, topOffset }}>
-            {children}
-          </BaseLayoutProvider>
+          <ProjectContext.Provider
+            value={createProjectContextValue(currentProject)}
+          >
+            <BaseLayoutProvider value={{ inBaseLayout, topOffset }}>
+              {children}
+            </BaseLayoutProvider>
+          </ProjectContext.Provider>
         </TranslationProvider>
       </ThemeModeProvider>
     )

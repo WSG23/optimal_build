@@ -42,6 +42,16 @@ vi.mock('../../components/layout/TopUtilityMenu', () => ({
   TopUtilityMenu: () => <div data-testid="utility-menu-stub" />,
 }))
 
+// Stub breadcrumbs for the same vi.resetModules context-isolation reason:
+// this test verifies agent analytics data flow, not project navigation.
+vi.mock('../../components/layout/Breadcrumbs', () => ({
+  ProjectBreadcrumbs: () => <nav data-testid="breadcrumbs-stub" />,
+}))
+
+vi.mock('../../components/layout/Sidebar', () => ({
+  Sidebar: () => <aside data-testid="sidebar-stub" />,
+}))
+
 function makeMockResponse(body: unknown, status = 200): Response {
   return {
     ok: status >= 200 && status < 300,
