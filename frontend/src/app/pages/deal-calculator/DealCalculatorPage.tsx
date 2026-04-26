@@ -359,7 +359,7 @@ export function DealCalculatorPage() {
             color: 'var(--ob-success-text)',
             border: '1px solid var(--ob-success-400)',
             borderRadius: 'var(--ob-radius-sm)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
           },
         }}
       />

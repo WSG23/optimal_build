@@ -118,7 +118,7 @@ export function CapitalStackInsightBox({
       >
         <Typography
           sx={{
-            fontWeight: 700,
+            fontWeight: 'var(--ob-font-weight-bold)',
             fontSize: 'var(--ob-font-size-md)',
             color: 'text.primary',
           }}
@@ -134,7 +134,7 @@ export function CapitalStackInsightBox({
             justifyContent: 'space-between',
             gap: 'var(--ob-space-100)',
             color: 'text.primary',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
           }}
         >
           <span>

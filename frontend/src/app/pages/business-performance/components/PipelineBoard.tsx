@@ -63,7 +63,11 @@ const DealCard = React.memo(function DealCard({
           elevation={isSelected ? 6 : 1}
           className="bp-pipeline__deal-surface"
         >
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack
+            direction="row"
+            spacing="var(--ob-space-100)"
+            alignItems="center"
+          >
             <DragIndicatorIcon
               fontSize="small"
               className="bp-pipeline__deal-handle"
@@ -87,7 +91,11 @@ const DealCard = React.memo(function DealCard({
               })}
             </Typography>
           )}
-          <Stack direction="row" spacing={1} className="bp-pipeline__deal-tags">
+          <Stack
+            direction="row"
+            spacing="var(--ob-space-100)"
+            className="bp-pipeline__deal-tags"
+          >
             {deal.confidence !== null && (
               <Chip
                 size="small"

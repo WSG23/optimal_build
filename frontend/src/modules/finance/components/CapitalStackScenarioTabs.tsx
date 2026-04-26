@@ -58,27 +58,25 @@ export function CapitalStackScenarioTabs({
                 borderRadius: 'var(--ob-radius-none)',
                 borderBottom: 2,
                 borderColor: isActive
-                  ? 'var(--ob-color-neon-cyan)'
+                  ? 'var(--ob-color-brand-primary)'
                   : 'transparent',
                 color: isActive
-                  ? 'var(--ob-color-neon-cyan)'
+                  ? 'var(--ob-color-brand-primary)'
                   : 'text.secondary',
-                fontWeight: 500,
+                fontWeight: 'var(--ob-font-weight-medium)',
                 fontSize: 'var(--ob-font-size-sm)',
                 textTransform: 'none',
                 minWidth: 'auto',
                 whiteSpace: 'nowrap',
                 transition: 'color 0.2s ease, border-color 0.2s ease',
-                ...(isActive && {
-                  textShadow: 'var(--ob-glow-neon-text)',
-                }),
+                ...(isActive && {}),
                 '&:hover': {
                   color: isActive
-                    ? 'var(--ob-color-neon-cyan)'
+                    ? 'var(--ob-color-brand-primary)'
                     : 'text.primary',
                   bgcolor: 'transparent',
                   borderColor: isActive
-                    ? 'var(--ob-color-neon-cyan)'
+                    ? 'var(--ob-color-brand-primary)'
                     : 'divider',
                 },
               }}

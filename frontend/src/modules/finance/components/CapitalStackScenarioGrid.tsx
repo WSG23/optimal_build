@@ -1,12 +1,16 @@
+import { useMemo, useState } from 'react'
+
 import {
   Box,
   CircularProgress,
   Grid,
   IconButton,
+  InputBase,
   Tooltip,
   Typography,
 } from '@mui/material'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import SearchIcon from '@mui/icons-material/Search'
 import StarIcon from '@mui/icons-material/Star'
 import StarBorderIcon from '@mui/icons-material/StarBorder'
 
@@ -14,7 +18,6 @@ import type { FinanceScenarioSummary } from '../../../api/finance'
 import { useTranslation } from '../../../i18n'
 import { Card } from '../../../components/canonical/Card'
 import { NeonText } from '../../../components/canonical/NeonText'
-import { PulsingStatusDot } from '../../../components/canonical/PulsingStatusDot'
 import { formatCurrencyShort, formatPercent } from '../utils/chartTheme'
 import { CapitalStackMiniBar } from './CapitalStackMiniBar'
 
@@ -136,7 +139,7 @@ function ScenarioCard({
         <Box sx={{ minWidth: 0 }}>
           <Typography
             sx={{
-              fontWeight: 800,
+              fontWeight: 'var(--ob-font-weight-bold)',
               fontSize: 'var(--ob-font-size-lg)',
               color: 'text.primary',
               overflow: 'hidden',
@@ -154,7 +157,7 @@ function ScenarioCard({
                 alignItems: 'center',
                 gap: 'var(--ob-space-050)',
                 fontSize: 'var(--ob-font-size-xs)',
-                fontWeight: 800,
+                fontWeight: 'var(--ob-font-weight-bold)',
                 letterSpacing: 'var(--ob-letter-spacing-wider)',
                 color: 'var(--ob-color-brand-primary)',
                 textTransform: 'uppercase',
@@ -299,7 +302,17 @@ function ScenarioCard({
             </Tooltip>
           ) : null}
 
-          {active ? <PulsingStatusDot status="live" size="sm" /> : null}
+          {active && (
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: 'var(--ob-radius-xs)',
+                bgcolor: 'var(--ob-color-brand-primary)',
+                flexShrink: 0,
+              }}
+            />
+          )}
         </Box>
       </Box>
 
@@ -372,8 +385,6 @@ function ScenarioCard({
           </Typography>
           <NeonText
             variant="body2"
-            intensity="subtle"
-            color="cyan"
             sx={{ fontFamily: 'var(--ob-font-family-mono)' }}
           >
             {dscr !== null ? formatNumber(dscr) : t('common.fallback.dash')}
@@ -420,6 +431,18 @@ export function CapitalStackScenarioGrid({
   deletingScenarioId = null,
 }: CapitalStackScenarioGridProps) {
   const { t } = useTranslation()
+  const [searchQuery, setSearchQuery] = useState('')
+  const showSearch = scenarios.length > 4
+
+  const filtered = useMemo(() => {
+    if (!searchQuery.trim()) return scenarios
+    const query = searchQuery.toLowerCase()
+    return scenarios.filter(
+      (s) =>
+        s.scenarioName.toLowerCase().includes(query) ||
+        (s.description && s.description.toLowerCase().includes(query)),
+    )
+  }, [scenarios, searchQuery])
 
   if (scenarios.length === 0) {
     return null
@@ -427,26 +450,97 @@ export function CapitalStackScenarioGrid({
 
   return (
     <Box sx={{ mb: 'var(--ob-space-150)' }}>
-      <Typography
+      <Box
         sx={{
-          fontSize: 'var(--ob-font-size-sm)',
-          fontWeight: 700,
-          color: 'text.primary',
-          mb: 'var(--ob-space-075)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 'var(--ob-space-100)',
+          mb: 'var(--ob-space-100)',
         }}
       >
-        {t('finance.scenarios.sectionTitle', {
-          defaultValue: 'Scenarios',
-        })}
-      </Typography>
-      <Grid container spacing="var(--ob-space-150)">
-        {scenarios.map((scenario) => (
-          <Grid
-            item
-            xs={12}
-            md={4}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: 'var(--ob-space-075)',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: 'var(--ob-font-size-sm)',
+              fontWeight: 'var(--ob-font-weight-bold)',
+              color: 'text.primary',
+            }}
+          >
+            {t('finance.scenarios.sectionTitle', {
+              defaultValue: 'Scenarios',
+            })}
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: 'var(--ob-font-size-xs)',
+              color: 'text.secondary',
+            }}
+          >
+            {scenarios.length}
+          </Typography>
+        </Box>
+
+        {showSearch && (
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              border: 1,
+              borderColor: 'divider',
+              borderRadius: 'var(--ob-radius-xs)',
+              px: 'var(--ob-space-075)',
+              py: 'var(--ob-space-025)',
+              maxWidth: 220,
+            }}
+          >
+            <SearchIcon
+              fontSize="small"
+              sx={{ color: 'text.disabled', mr: 'var(--ob-space-050)' }}
+            />
+            <InputBase
+              placeholder="Filter scenarios..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{
+                fontSize: 'var(--ob-font-size-sm)',
+                '& input': { p: 0 },
+              }}
+            />
+          </Box>
+        )}
+      </Box>
+
+      {/* Horizontal scroll when 4+ scenarios to preserve vertical space */}
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 'var(--ob-space-150)',
+          overflowX: filtered.length >= 4 ? 'auto' : 'visible',
+          flexWrap: filtered.length >= 4 ? 'nowrap' : 'wrap',
+          pb: filtered.length >= 4 ? 'var(--ob-space-075)' : 0,
+        }}
+      >
+        {filtered.map((scenario) => (
+          <Box
             key={scenario.scenarioId}
-            sx={{ display: 'flex' }}
+            sx={{
+              flex:
+                filtered.length >= 4
+                  ? '0 0 280px'
+                  : {
+                      xs: '1 1 100%',
+                      md: '1 1 calc(33.333% - var(--ob-space-100))',
+                    },
+              minWidth: filtered.length >= 4 ? 280 : 0,
+              display: 'flex',
+            }}
           >
             <ScenarioCard
               scenario={scenario}
@@ -457,9 +551,19 @@ export function CapitalStackScenarioGrid({
               onRequestDelete={onRequestDelete}
               deletingScenarioId={deletingScenarioId}
             />
-          </Grid>
+          </Box>
         ))}
-      </Grid>
+      </Box>
+
+      {searchQuery && filtered.length === 0 && (
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mt: 'var(--ob-space-100)', fontSize: 'var(--ob-font-size-sm)' }}
+        >
+          No scenarios match &ldquo;{searchQuery}&rdquo;
+        </Typography>
+      )}
     </Box>
   )
 }

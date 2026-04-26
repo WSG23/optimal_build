@@ -49,7 +49,10 @@ export function AssetMixTable({
           alignItems: 'center',
         }}
       >
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
+        >
           {t('finance.scenarioCreator.title')}
         </Typography>
         <Button variant="ghost" size="sm" onClick={onReset}>
@@ -131,7 +134,10 @@ const CompactAssetCards = memo(function CompactAssetCards({
             spacing="var(--ob-space-100)"
             sx={{ mb: 'var(--ob-space-100)' }}
           >
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
+            >
               Asset {index + 1}
             </Typography>
             <IconButton
@@ -218,7 +224,7 @@ const CompactAssetCards = memo(function CompactAssetCards({
                 sx={{
                   mt: 'var(--ob-space-025)',
                   fontFamily: 'var(--ob-font-family-mono)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                 }}
               >
                 ${Number(asset.estimatedRevenue).toLocaleString()}
@@ -366,7 +372,7 @@ const AssetTableRow = memo(function AssetTableRow({
           variant="body2"
           sx={{
             fontFamily: 'var(--ob-font-family-mono)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
           }}
         >
           ${Number(asset.estimatedRevenue).toLocaleString()}
@@ -418,7 +424,7 @@ const tableSx = {
     textAlign: 'left',
     color: 'text.secondary',
     fontSize: 'var(--ob-font-size-xs)',
-    fontWeight: 600,
+    fontWeight: 'var(--ob-font-weight-semibold)',
     textTransform: 'uppercase',
     letterSpacing: 'var(--ob-letter-spacing-wider)',
     whiteSpace: 'nowrap',

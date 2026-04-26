@@ -82,7 +82,7 @@ export function DrawdownDetailsPanel({
         <Typography
           variant="h6"
           sx={{
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             fontSize: 'var(--ob-font-size-lg)',
             color: 'text.primary',
           }}
@@ -108,7 +108,7 @@ export function DrawdownDetailsPanel({
               fontSize: 'var(--ob-font-size-sm)',
             },
             '& th': {
-              fontWeight: 600,
+              fontWeight: 'var(--ob-font-weight-semibold)',
               color: 'text.secondary',
               textTransform: 'uppercase',
               fontSize: 'var(--ob-font-size-xs)',
@@ -161,7 +161,7 @@ export function DrawdownDetailsPanel({
                         justifyContent: 'center',
                         fontSize: 'var(--ob-font-size-xs)',
                         color: 'text.secondary',
-                        fontWeight: 500,
+                        fontWeight: 'var(--ob-font-weight-medium)',
                       }}
                     >
                       {index + 1}
@@ -169,7 +169,7 @@ export function DrawdownDetailsPanel({
                     <Typography
                       component="span"
                       sx={{
-                        fontWeight: 500,
+                        fontWeight: 'var(--ob-font-weight-medium)',
                         color: 'text.primary',
                       }}
                     >
@@ -204,7 +204,7 @@ export function DrawdownDetailsPanel({
                     component="span"
                     sx={{
                       fontFamily: 'var(--ob-font-family-mono)',
-                      fontWeight: 500,
+                      fontWeight: 'var(--ob-font-weight-medium)',
                       color: 'text.primary',
                       bgcolor: alpha(theme.palette.background.default, 0.3),
                       px: 'var(--ob-space-050)',
@@ -229,7 +229,10 @@ export function DrawdownDetailsPanel({
               <td>
                 <Typography
                   component="span"
-                  sx={{ fontWeight: 600, color: 'text.primary' }}
+                  sx={{
+                    fontWeight: 'var(--ob-font-weight-semibold)',
+                    color: 'text.primary',
+                  }}
                 >
                   {t('common.total')}
                 </Typography>
@@ -239,7 +242,7 @@ export function DrawdownDetailsPanel({
                   component="span"
                   sx={{
                     fontFamily: 'var(--ob-font-family-mono)',
-                    fontWeight: 600,
+                    fontWeight: 'var(--ob-font-weight-semibold)',
                     color: 'text.primary',
                   }}
                 >
@@ -253,7 +256,7 @@ export function DrawdownDetailsPanel({
                   component="span"
                   sx={{
                     fontFamily: 'var(--ob-font-family-mono)',
-                    fontWeight: 600,
+                    fontWeight: 'var(--ob-font-weight-semibold)',
                     color: 'text.primary',
                   }}
                 >
@@ -294,13 +297,12 @@ export function DrawdownDetailsPanel({
           endIcon={<ArrowForwardIcon />}
           onClick={onViewFullForecast}
           sx={{
-            color: 'var(--ob-color-neon-cyan)',
+            color: 'var(--ob-color-brand-primary)',
             fontSize: 'var(--ob-font-size-sm)',
-            fontWeight: 500,
+            fontWeight: 'var(--ob-font-weight-medium)',
             textTransform: 'none',
             '&:hover': {
-              bgcolor: 'rgba(0, 243, 255, 0.08)',
-              textShadow: 'var(--ob-glow-neon-text)',
+              bgcolor: 'var(--ob-color-brand-muted)',
             },
           }}
         >

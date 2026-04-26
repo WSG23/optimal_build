@@ -1,10 +1,29 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  type ChangeEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 
 import {
+  deleteFinanceScenario,
+  exportFinanceScenarioCsv,
+  exportFinanceScenarioWorkbook,
+  importFinanceWorkbook,
+  previewFinanceWorkbookImport,
   runFinanceFeasibility,
+  runScenarioSensitivity,
   fetchFinanceAuditEvidence,
+  type ConstructionLoanInput,
   type FinanceAuditEvidence,
   type FinanceAnalyticsMetadata,
+  type FinanceScenarioSummary,
+  type FinanceWorkbookImportPreview,
+  type SensitivityBandInput,
+  updateConstructionLoan,
+  updateFinanceScenario,
 } from '../../api/finance'
 import { resolveDefaultRole } from '../../api/identity'
 import { AppLayout } from '../../App'
@@ -43,10 +62,14 @@ import { FinanceHeader } from './FinanceHeader'
 import { FinanceAlerts } from './FinanceAlerts'
 import { FinanceAuditCard } from './FinanceAuditCard'
 import { FinanceOverviewCard } from './FinanceOverviewCard'
+import { FinanceScenarioStrip } from './FinanceScenarioStrip'
 import { FinanceTabPanels } from './FinanceTabPanels'
 import {
   POLL_INTERVAL_MS,
   ALLOWED_FINANCE_ROLES,
+  DEFAULT_SENSITIVITY_HEADERS,
+  downloadFile,
+  escapeCsvValue,
   shortenProjectId,
   isJobPending,
 } from './financeUtils'
@@ -82,6 +105,8 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
   )
   const [activeTab, setActiveTab] = useState(0)
   const [isHeaderPinned, setIsHeaderPinned] = useState(true)
+  const [viewedScenario, setViewedScenario] =
+    useState<FinanceScenarioSummary | null>(null)
 
   const effectiveProjectId = currentProject?.id ?? ''
   const effectiveProjectName = currentProject?.name ?? null
@@ -808,7 +833,7 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
             <>
               {showProjectGate && (
                 <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
-                  <Stack spacing={1}>
+                  <Stack spacing="var(--ob-space-100)">
                     <Typography variant="h6">
                       Select a project to continue
                     </Typography>
@@ -890,14 +915,16 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                     />
                   )}
 
-                  {showFinanceOverview && (
-                    <FinanceOverviewCard
-                      navigate={navigate}
-                      handleExportWorkbook={handleExportWorkbook}
-                      handleExportCsv={handleExportCsv}
-                      hasPrimaryScenario={!!primaryScenario}
-                      exportingWorkbook={exportingWorkbook}
-                      exportingScenario={exportingScenario}
+                  {showFinanceOverview && <FinanceOverviewCard />}
+
+                  {(viewedScenario ?? primaryScenario) && (
+                    <FinanceScenarioStrip
+                      scenario={(viewedScenario ?? primaryScenario)!}
+                      isPrimary={
+                        !viewedScenario ||
+                        viewedScenario.scenarioId ===
+                          primaryScenario?.scenarioId
+                      }
                     />
                   )}
 
@@ -939,6 +966,7 @@ export function FinanceWorkspace(_props: FinanceWorkspaceProps = {}) {
                     handleToggleParameter={handleToggleParameter}
                     handleDownloadCsv={handleDownloadCsv}
                     handleDownloadJson={handleDownloadJson}
+                    onActiveScenarioChange={setViewedScenario}
                   />
 
                   <FinanceScenarioDeleteDialog

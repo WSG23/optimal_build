@@ -41,14 +41,26 @@ export function AssetMixPanel({
   return (
     <GlassCard className="advisory-panel">
       <Box
-        sx={{ p: 2, borderBottom: '1px solid var(--ob-color-border-subtle)' }}
+        sx={{
+          p: 'var(--ob-space-200)',
+          borderBottom: '1px solid var(--ob-color-border-subtle)',
+        }}
       >
-        <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontSize: 'var(--ob-font-size-base)',
+            fontWeight: 'var(--ob-font-weight-semibold)',
+          }}
+        >
           Asset Mix Strategy
         </Typography>
         <Typography
           variant="body2"
-          sx={{ color: 'var(--ob-color-text-secondary)', mt: 0.5 }}
+          sx={{
+            color: 'var(--ob-color-text-secondary)',
+            mt: 'var(--ob-space-050)',
+          }}
         >
           Total Programmable GFA:{' '}
           <span style={{ color: 'var(--ob-color-text-primary)' }}>
@@ -61,8 +73,8 @@ export function AssetMixPanel({
         sx={{
           display: 'flex',
           flexDirection: { xs: 'column', md: 'row' },
-          gap: 3,
-          p: 3,
+          gap: 'var(--ob-space-200)',
+          p: 'var(--ob-space-200)',
         }}
       >
         {/* Left: Chart */}
@@ -95,7 +107,7 @@ export function AssetMixPanel({
                 contentStyle={{
                   backgroundColor: 'rgba(0,0,0,0.8)',
                   borderColor: 'var(--ob-color-border-subtle)',
-                  borderRadius: '4px',
+                  borderRadius: 'var(--ob-radius-sm)',
                   color: 'var(--ob-color-text-on-dark, #fff)',
                 }}
                 itemStyle={{ color: 'var(--ob-color-text-on-dark, #fff)' }}
@@ -127,7 +139,7 @@ export function AssetMixPanel({
               <TableRow key={row.use}>
                 <TableCell
                   sx={{
-                    fontWeight: 500,
+                    fontWeight: 'var(--ob-font-weight-medium)',
                     color: 'var(--ob-color-text-primary)',
                   }}
                 >
@@ -142,7 +154,7 @@ export function AssetMixPanel({
                 <TableCell
                   sx={{
                     color: 'var(--ob-color-text-secondary)',
-                    fontSize: '0.8rem',
+                    fontSize: 'var(--ob-font-size-sm-minus)',
                   }}
                 >
                   {row.rationale}
@@ -154,8 +166,8 @@ export function AssetMixPanel({
           {notes.length > 0 && (
             <Box
               sx={{
-                mt: 2,
-                p: 2,
+                mt: 'var(--ob-space-200)',
+                p: 'var(--ob-space-200)',
                 bgcolor: 'var(--ob-background-surface-0)',
                 borderRadius: 'var(--ob-radius-sm)',
                 border: '1px solid var(--ob-color-border-subtle)',
@@ -165,21 +177,21 @@ export function AssetMixPanel({
                 variant="subtitle2"
                 sx={{
                   color: 'var(--ob-color-text-secondary)',
-                  mb: 1,
-                  fontSize: '0.75rem',
+                  mb: 'var(--ob-space-100)',
+                  fontSize: 'var(--ob-font-size-xs)',
                   textTransform: 'uppercase',
                 }}
               >
                 Strategy Notes
               </Typography>
-              <ul style={{ margin: 0, paddingLeft: 20 }}>
+              <ul style={{ margin: 0, paddingLeft: 'var(--ob-space-125)' }}>
                 {notes.map((note, i) => (
                   <li
                     key={i}
                     style={{
                       color: 'var(--ob-color-text-secondary)',
-                      fontSize: '0.85rem',
-                      marginBottom: 4,
+                      fontSize: 'var(--ob-font-size-sm)',
+                      marginBottom: 'var(--ob-space-025)',
                     }}
                   >
                     {note}

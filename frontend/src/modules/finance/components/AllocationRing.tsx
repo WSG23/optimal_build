@@ -71,13 +71,8 @@ export function AllocationRing({
             strokeDasharray={segment.dashArray}
             strokeDashoffset={0}
             transform={`rotate(${segment.rotate} ${center} ${center})`}
-            className={`allocation-ring__segment ${segment.name === 'Unallocated' ? 'allocation-ring__segment--pulse' : ''}`}
+            className="allocation-ring__segment"
             style={{
-              // Add distinctive glow for colored segments
-              filter:
-                segment.name !== 'Unallocated'
-                  ? `drop-shadow(0 0 4px ${segment.color})`
-                  : 'none',
               transition: 'all 0.5s ease-out',
             }}
           />
@@ -95,8 +90,6 @@ export function AllocationRing({
           </span>
         )}
       </div>
-      {/* Decorative 3D Ring Effect (Pseudo-element handled in CSS usually, but adding a specialized glow container here) */}
-      <div className="allocation-ring__glow-effect" />
     </div>
   )
 }

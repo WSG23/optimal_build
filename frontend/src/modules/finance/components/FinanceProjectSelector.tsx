@@ -133,7 +133,10 @@ export function FinanceProjectSelector({
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ whiteSpace: 'nowrap', fontWeight: 500 }}
+          sx={{
+            whiteSpace: 'nowrap',
+            fontWeight: 'var(--ob-font-weight-medium)',
+          }}
         >
           {t('finance.projectSelector.current', { value: helperLabel })}
         </Typography>

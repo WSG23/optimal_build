@@ -43,9 +43,9 @@ export function DrawdownInsightBox({ scenario }: DrawdownInsightBoxProps) {
   return (
     <Box
       sx={{
-        bgcolor: 'rgba(0, 243, 255, 0.08)',
+        bgcolor: 'var(--ob-color-brand-muted)',
         border: 2,
-        borderColor: 'rgba(0, 243, 255, 0.3)',
+        borderColor: 'var(--ob-color-brand-soft)',
         borderRadius: 'var(--ob-radius-sm)',
         p: 'var(--ob-space-150)',
         mt: 'var(--ob-space-150)',
@@ -54,11 +54,10 @@ export function DrawdownInsightBox({ scenario }: DrawdownInsightBoxProps) {
       <Typography
         sx={{
           fontSize: 'var(--ob-font-size-sm)',
-          fontWeight: 600,
+          fontWeight: 'var(--ob-font-weight-semibold)',
           textTransform: 'uppercase',
           letterSpacing: 'var(--ob-letter-spacing-wider)',
-          color: 'var(--ob-color-neon-cyan)',
-          textShadow: 'var(--ob-glow-neon-text)',
+          color: 'var(--ob-color-brand-primary)',
           mb: 'var(--ob-space-050)',
         }}
       >
@@ -68,10 +67,10 @@ export function DrawdownInsightBox({ scenario }: DrawdownInsightBoxProps) {
         sx={{
           fontSize: 'var(--ob-font-size-sm)',
           color: 'text.primary',
-          lineHeight: 1.6,
+          lineHeight: 'var(--ob-line-height-relaxed)',
           '& strong': {
-            fontWeight: 600,
-            color: 'var(--ob-color-neon-cyan)',
+            fontWeight: 'var(--ob-font-weight-semibold)',
+            color: 'var(--ob-color-brand-primary)',
           },
         }}
       >

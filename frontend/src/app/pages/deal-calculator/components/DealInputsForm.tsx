@@ -143,7 +143,7 @@ export function DealInputsForm({
       <Typography
         variant="h5"
         sx={{
-          fontWeight: 700,
+          fontWeight: 'var(--ob-font-weight-bold)',
           mt: 'var(--ob-space-050)',
           mb: 'var(--ob-space-050)',
         }}

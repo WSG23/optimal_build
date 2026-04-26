@@ -481,35 +481,22 @@
 }
 
 .finance-scenario-creator__submit {
-    /* Full width gradient bar */
     width: 100%;
-    background: linear-gradient(
-        90deg,
-        var(--ob-brand-600) 0%,
-        var(--ob-brand-500) 100%
-    );
+    background: var(--ob-color-brand-primary);
     color: var(--ob-color-text-inverse);
     font-weight: var(--ob-font-weight-bold);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     padding: var(--ob-space-150);
     border-radius: var(--ob-radius-xs);
-    /* 2px - Square Cyber-Minimalism for buttons */
     border: none;
-    box-shadow: var(--ob-glow-brand-subtle);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: background-color 0.2s ease;
     margin-top: var(--ob-space-200);
 }
 
 .finance-scenario-creator__submit:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: var(--ob-glow-brand-medium);
-    background: linear-gradient(
-        90deg,
-        var(--ob-brand-500) 0%,
-        var(--ob-brand-400) 100%
-    );
+    background: var(--ob-color-brand-primary-strong);
 }
 
 /* --- Empty States --- */
@@ -556,18 +543,11 @@
 }
 
 .finance-ticker-card:hover {
-    transform: translateX(4px);
     border-color: var(--ob-color-brand-primary);
-    box-shadow: var(--ob-shadow-md);
 }
 
 .finance-ticker-card--primary {
-    border-left: 4px solid var(--ob-color-brand-primary);
-    background: linear-gradient(
-        90deg,
-        var(--ob-color-brand-soft) 0%,
-        transparent 100%
-    );
+    border-left: 3px solid var(--ob-color-brand-primary);
 }
 
 .finance-ticker-card__header {
@@ -628,7 +608,6 @@
 
 .finance-ticker-value__number--positive {
     color: var(--ob-color-success-400);
-    text-shadow: var(--ob-glow-success);
 }
 
 .finance-ticker-value__number--negative {
@@ -663,23 +642,6 @@
     stroke-linecap: round;
 }
 
-.allocation-ring__segment--pulse {
-    animation: ring-pulse 3s infinite ease-in-out;
-}
-
-@keyframes ring-pulse {
-    0%,
-    100% {
-        opacity: 0.6;
-        stroke-width: 8px;
-    }
-
-    50% {
-        opacity: 1;
-        stroke-width: 10px;
-    }
-}
-
 .allocation-ring__center {
     position: absolute;
     display: flex;
@@ -687,7 +649,6 @@
     align-items: center;
     justify-content: center;
     z-index: 3;
-    text-shadow: var(--ob-glow-brand-subtle);
 }
 
 .allocation-ring__value {
@@ -695,7 +656,7 @@
     font-weight: var(--ob-font-weight-light, 300);
     font-size: var(--ob-font-size-3xl, 2.5rem);
     color: var(--ob-color-text-primary);
-    line-height: 1;
+    line-height: var(--ob-line-height-none);
     letter-spacing: -0.02em;
 }
 
@@ -709,51 +670,4 @@
 
 .allocation-ring__sub--warning {
     color: var(--ob-color-warning-500);
-    animation: text-flicker 4s infinite alternate;
-}
-
-@keyframes text-flicker {
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    95% {
-        opacity: 1;
-    }
-
-    96% {
-        opacity: 0.5;
-    }
-
-    97% {
-        opacity: 1;
-    }
-
-    98% {
-        opacity: 0.3;
-    }
-
-    99% {
-        opacity: 1;
-    }
-}
-
-/* 3D / Holographic Glow Container */
-.allocation-ring__glow-effect {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 100%;
-    height: 100%;
-    transform: translate(-50%, -50%) scale(0.9);
-    border-radius: 50%;
-    background: radial-gradient(
-        circle,
-        var(--ob-color-brand-soft) 0%,
-        transparent 70%
-    );
-    pointer-events: none;
-    z-index: 1;
-    filter: blur(var(--ob-blur-md));
 }

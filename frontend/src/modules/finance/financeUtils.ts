@@ -40,15 +40,18 @@ export function isJobPending(status?: string | null): boolean {
   return key !== 'completed' && key !== 'success' && key !== 'failed'
 }
 
-export function escapeCsvValue(value: string | null | undefined): string {
+export function escapeCsvValue(
+  value: string | number | null | undefined,
+): string {
   if (value == null) {
     return ''
   }
-  const needsQuote = /[",\n]/.test(value)
+  const text = String(value)
+  const needsQuote = /[",\n]/.test(text)
   if (!needsQuote) {
-    return value
+    return text
   }
-  return `"${value.replace(/"/g, '""')}"`
+  return `"${text.replace(/"/g, '""')}"`
 }
 
 export function downloadFile(

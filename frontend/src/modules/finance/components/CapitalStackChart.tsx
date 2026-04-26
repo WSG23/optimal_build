@@ -124,7 +124,7 @@ export function CapitalStackChart({ scenarios }: CapitalStackChartProps) {
       >
         <Typography
           sx={{
-            fontWeight: 700,
+            fontWeight: 'var(--ob-font-weight-bold)',
             fontSize: 'var(--ob-font-size-sm)',
             mb: 'var(--ob-space-050)',
             color: 'text.primary',
@@ -172,7 +172,7 @@ export function CapitalStackChart({ scenarios }: CapitalStackChartProps) {
               <Typography
                 sx={{
                   fontSize: 'var(--ob-font-size-sm)',
-                  fontWeight: 500,
+                  fontWeight: 'var(--ob-font-weight-medium)',
                   fontFamily: 'var(--ob-font-family-mono)',
                   color: 'text.primary',
                 }}
@@ -195,7 +195,7 @@ export function CapitalStackChart({ scenarios }: CapitalStackChartProps) {
           <Typography
             sx={{
               fontSize: 'var(--ob-font-size-sm)',
-              fontWeight: 700,
+              fontWeight: 'var(--ob-font-weight-bold)',
               color: 'text.primary',
             }}
           >
@@ -204,7 +204,7 @@ export function CapitalStackChart({ scenarios }: CapitalStackChartProps) {
           <Typography
             sx={{
               fontSize: 'var(--ob-font-size-sm)',
-              fontWeight: 700,
+              fontWeight: 'var(--ob-font-weight-bold)',
               fontFamily: 'var(--ob-font-family-mono)',
               color: 'text.primary',
             }}
@@ -239,7 +239,7 @@ export function CapitalStackChart({ scenarios }: CapitalStackChartProps) {
       <Typography
         variant="h6"
         sx={{
-          fontWeight: 600,
+          fontWeight: 'var(--ob-font-weight-semibold)',
           fontSize: 'var(--ob-font-size-lg)',
           color: 'text.primary',
           mb: 'var(--ob-space-150)',

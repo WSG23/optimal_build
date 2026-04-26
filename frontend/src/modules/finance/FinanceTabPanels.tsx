@@ -1,7 +1,16 @@
-import { Suspense, lazy, type ReactNode } from 'react'
+import { Suspense, lazy, useState, type ReactNode } from 'react'
 
-import { Alert, Box, CircularProgress, Stack, Typography } from '@mui/material'
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  Collapse,
+  Stack,
+  Typography,
+} from '@mui/material'
 import Warning from '@mui/icons-material/Warning'
+import AddIcon from '@mui/icons-material/Add'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 
 import { Button } from '../../components/canonical/Button'
 import { Card } from '../../components/canonical/Card'
@@ -113,6 +122,7 @@ interface FinanceTabPanelsProps {
   handleToggleParameter: (parameter: string) => void
   handleDownloadCsv: () => void
   handleDownloadJson: () => void
+  onActiveScenarioChange?: (scenario: FinanceScenarioSummary | null) => void
 }
 
 export function FinanceTabPanels({
@@ -153,7 +163,11 @@ export function FinanceTabPanels({
   handleToggleParameter,
   handleDownloadCsv,
   handleDownloadJson,
+  onActiveScenarioChange,
 }: FinanceTabPanelsProps) {
+  const hasScenarios = scenarios.length > 0
+  const [creatorOpen, setCreatorOpen] = useState(!hasScenarios)
+
   const panelFallback: ReactNode = (
     <Card
       variant="default"
@@ -169,7 +183,7 @@ export function FinanceTabPanels({
 
   const renderEmptyPanel = (title: string) => (
     <Card variant="default" sx={{ p: 'var(--ob-space-300)' }}>
-      <Stack spacing={1} alignItems="flex-start">
+      <Stack spacing="var(--ob-space-100)" alignItems="flex-start">
         <Typography variant="h6">{title}</Typography>
         <Typography variant="body2" color="text.secondary">
           Create or import a finance scenario to populate this view.
@@ -183,35 +197,68 @@ export function FinanceTabPanels({
 
   return (
     <>
-      {/* Tab Panels - Depth 1 (Glass Cards with ob-card-module) */}
+      {/* Tab Panels */}
       <div role="tabpanel" hidden={activeTab !== 0}>
         {activeTab === 0 && (
           <Stack spacing="var(--ob-space-200)">
-            <Box className="ob-card-module">
-              <Suspense fallback={panelFallback}>
-                <FinanceScenarioCreator
-                  projectId={effectiveProjectId}
-                  projectName={projectDisplayName}
-                  initialTemplateId={financeTemplateId}
-                  onCreated={(summary) => {
-                    setScenarioMessage(
-                      t('finance.scenarioCreator.success', {
-                        name: summary.scenarioName,
-                      }),
-                    )
-                    setScenarioError(null)
-                    addScenario(summary)
-                  }}
-                  onError={(message) => {
-                    setScenarioError(message)
-                    setScenarioMessage(null)
-                  }}
-                  onRefresh={() => {
-                    refresh()
-                  }}
-                />
-              </Suspense>
-            </Box>
+            {/* Collapsible scenario builder — auto-collapsed when scenarios exist */}
+            {hasScenarios && !creatorOpen && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setCreatorOpen(true)}
+                sx={{ alignSelf: 'flex-start' }}
+              >
+                <AddIcon fontSize="small" sx={{ mr: 'var(--ob-space-050)' }} />
+                New scenario
+              </Button>
+            )}
+            <Collapse in={creatorOpen || !hasScenarios} unmountOnExit>
+              <Box className="ob-card-module">
+                {hasScenarios && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      mb: 'var(--ob-space-050)',
+                    }}
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCreatorOpen(false)}
+                      aria-label="Collapse scenario builder"
+                    >
+                      <ExpandLessIcon fontSize="small" />
+                    </Button>
+                  </Box>
+                )}
+                <Suspense fallback={panelFallback}>
+                  <FinanceScenarioCreator
+                    projectId={effectiveProjectId}
+                    projectName={projectDisplayName}
+                    initialTemplateId={financeTemplateId}
+                    onCreated={(summary) => {
+                      setScenarioMessage(
+                        t('finance.scenarioCreator.success', {
+                          name: summary.scenarioName,
+                        }),
+                      )
+                      setScenarioError(null)
+                      addScenario(summary)
+                      setCreatorOpen(false)
+                    }}
+                    onError={(message) => {
+                      setScenarioError(message)
+                      setScenarioMessage(null)
+                    }}
+                    onRefresh={() => {
+                      refresh()
+                    }}
+                  />
+                </Suspense>
+              </Box>
+            </Collapse>
 
             {primaryScenario?.isPrivate ? (
               <FinancePrivacyNotice projectName={projectDisplayName} />
@@ -225,7 +272,7 @@ export function FinanceTabPanels({
                   textAlign: 'center',
                 }}
               >
-                <Stack spacing={2} alignItems="center">
+                <Stack spacing="var(--ob-space-200)" alignItems="center">
                   <Typography variant="h5">Start a finance model</Typography>
                   <Typography variant="body2" color="text.secondary">
                     Enter assumptions in the scenario builder above or seed a
@@ -233,7 +280,7 @@ export function FinanceTabPanels({
                   </Typography>
                   <Stack
                     direction={{ xs: 'column', sm: 'row' }}
-                    spacing={1}
+                    spacing="var(--ob-space-100)"
                     justifyContent="center"
                     alignItems="center"
                   >
@@ -289,6 +336,7 @@ export function FinanceTabPanels({
                     updatingScenarioId={promotingScenarioId}
                     onRequestDelete={handleRequestDeleteScenario}
                     deletingScenarioId={deletingScenarioId}
+                    onActiveScenarioChange={onActiveScenarioChange}
                   />
                 </Suspense>
               </Box>

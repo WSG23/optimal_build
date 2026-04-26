@@ -142,7 +142,10 @@ export function FinanceHeader({
           }}
         >
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+            <Typography
+              variant="h4"
+              sx={{ fontWeight: 'var(--ob-font-weight-bold)' }}
+            >
               {t('finance.title')}
             </Typography>
             <Typography
@@ -171,8 +174,7 @@ export function FinanceHeader({
             sx={{
               minHeight: 'var(--ob-space-300)',
               '& .MuiTabs-indicator': {
-                backgroundColor: 'var(--ob-color-neon-cyan)',
-                boxShadow: 'var(--ob-glow-neon-cyan)',
+                backgroundColor: 'var(--ob-color-brand-primary)',
                 height: '2px',
               },
               '& .MuiTab-root': {
@@ -185,11 +187,10 @@ export function FinanceHeader({
                 color: 'text.secondary',
                 transition: 'all 0.2s ease',
                 '&.Mui-selected': {
-                  color: 'var(--ob-color-neon-cyan)',
-                  textShadow: 'var(--ob-glow-neon-text)',
+                  color: 'var(--ob-color-brand-primary)',
                 },
                 '&:hover': {
-                  color: 'var(--ob-color-neon-cyan)',
+                  color: 'var(--ob-color-brand-primary)',
                 },
               },
             }}

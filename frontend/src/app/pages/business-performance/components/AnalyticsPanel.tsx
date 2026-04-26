@@ -66,9 +66,9 @@ export function AnalyticsPanel({
     <Box className="bp-analytics">
       <Grid
         container
-        spacing={2}
+        spacing="var(--ob-space-200)"
         className="bp-analytics__metrics"
-        sx={{ mb: 4 }}
+        sx={{ mb: 'var(--ob-space-300)' }}
       >
         {metrics.map((metric, idx) => {
           const accentColors = [
@@ -105,7 +105,7 @@ export function AnalyticsPanel({
           direction="row"
           justifyContent="space-between"
           alignItems="center"
-          mb={1}
+          mb="var(--ob-space-100)"
         >
           <Typography variant="h6">30-day trend</Typography>
           <Typography variant="caption" color="text.secondary">
@@ -115,13 +115,13 @@ export function AnalyticsPanel({
         <Card
           variant="default"
           className="bp-analytics__chart"
-          sx={{ height: 300, position: 'relative', p: 2 }}
+          sx={{ height: 300, position: 'relative', p: 'var(--ob-space-200)' }}
         >
           {chartData.length === 0 ? (
             <Stack
               alignItems="center"
               justifyContent="center"
-              spacing={2}
+              spacing="var(--ob-space-200)"
               sx={{
                 height: '100%',
                 color: 'text.secondary',
@@ -182,7 +182,10 @@ export function AnalyticsPanel({
                 />
                 <RechartsTooltip
                   formatter={formatTooltipValue}
-                  labelStyle={{ fontWeight: 600, color: tooltipLabelColor }}
+                  labelStyle={{
+                    fontWeight: 'var(--ob-font-weight-semibold)',
+                    color: tooltipLabelColor,
+                  }}
                   contentStyle={{
                     borderRadius: 4, // Square Cyber-Minimalism: sm for tooltips
                     border: 'none',
@@ -265,7 +268,7 @@ export function AnalyticsPanel({
         </Card>
       </Box>
 
-      <Divider sx={{ my: 2 }} />
+      <Divider sx={{ my: 'var(--ob-space-200)' }} />
 
       <Box className="bp-analytics__benchmarks">
         <Typography variant="h6" gutterBottom>
@@ -276,7 +279,11 @@ export function AnalyticsPanel({
             <ListItem key={entry.key} className="bp-benchmark-list__item">
               <ListItemText
                 primary={
-                  <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack
+                    direction="row"
+                    spacing="var(--ob-space-100)"
+                    alignItems="center"
+                  >
                     <Typography variant="subtitle1">{entry.label}</Typography>
                     {entry.deltaText && (
                       <Chip
@@ -288,7 +295,11 @@ export function AnalyticsPanel({
                   </Stack>
                 }
                 secondary={
-                  <Stack direction="row" spacing={1} flexWrap="wrap">
+                  <Stack
+                    direction="row"
+                    spacing="var(--ob-space-100)"
+                    flexWrap="wrap"
+                  >
                     <Typography variant="body2" fontWeight={600}>
                       {entry.actual}
                     </Typography>

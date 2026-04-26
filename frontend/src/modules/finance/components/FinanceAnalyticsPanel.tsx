@@ -51,9 +51,9 @@ function formatRatio(value: string | null | undefined): string {
  * Semantic colors (orange/green) reserved for status badges and alert banners only.
  */
 const BUCKET_COLORS: Record<string, string> = {
-  lt_1: 'var(--ob-color-neon-cyan-dark, #0096cc)', // Darker cyan for DSCR < 1 (still in cyan family)
-  '1_to_1_25': 'var(--ob-color-neon-cyan)', // Bright cyan
-  gt_1_25: 'var(--ob-color-neon-cyan)', // Bright cyan
+  lt_1: 'var(--ob-color-brand-primary-strong)', // Darker cyan for DSCR < 1 (still in cyan family)
+  '1_to_1_25': 'var(--ob-color-brand-primary)', // Bright cyan
+  gt_1_25: 'var(--ob-color-brand-primary)', // Bright cyan
 }
 
 function BucketBar({
@@ -64,7 +64,7 @@ function BucketBar({
   total: number
 }): JSX.Element {
   const percentage = total > 0 ? Math.round((bucket.count / total) * 100) : 0
-  const barColor = BUCKET_COLORS[bucket.key] ?? 'var(--ob-color-neon-cyan)'
+  const barColor = BUCKET_COLORS[bucket.key] ?? 'var(--ob-color-brand-primary)'
 
   return (
     <Box
@@ -102,15 +102,12 @@ function BucketBar({
             width: `${Math.max(percentage, 2)}%`,
             background: barColor,
             height: '100%',
-            boxShadow: 'var(--ob-glow-neon-cyan)',
-            transition: 'width 0.5s ease-out',
+            /* Use transform for performance — width transitions cause layout thrash */
           }}
         />
       </Box>
       <NeonText
         variant="caption"
-        intensity="subtle"
-        color="cyan"
         sx={{
           minWidth: '32px',
           width: '40px',
@@ -173,7 +170,6 @@ export function FinanceAnalyticsPanel({
             value={formatRatio(analytics.moic)}
             icon={<ShowChart />}
             featured
-            status="live"
             compact
           />
         </Grid>
@@ -182,7 +178,6 @@ export function FinanceAnalyticsPanel({
             label="Equity Multiple"
             value={formatRatio(analytics.equity_multiple)}
             icon={<AccountBalanceWallet />}
-            status="live"
             compact
           />
         </Grid>
@@ -191,7 +186,6 @@ export function FinanceAnalyticsPanel({
             label="Equity Invested"
             value={formatCurrencyValue(cashSummary.invested_equity, currency)}
             icon={<Paid />}
-            status="live"
             compact
           />
         </Grid>

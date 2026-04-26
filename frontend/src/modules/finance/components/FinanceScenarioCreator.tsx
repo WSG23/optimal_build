@@ -82,7 +82,12 @@ export function FinanceScenarioCreator({
   }, [assets])
 
   const chartData = useMemo(() => {
-    const brandPalette = ['#3B7CB8', '#2d6697', '#1e4f7a', '#153d5e']
+    const brandPalette = [
+      theme.palette.primary.main,
+      theme.palette.primary.dark,
+      theme.palette.info.main,
+      theme.palette.info.dark,
+    ]
 
     const data = assets
       .filter((a) => Number(a.allocationPct) > 0)
@@ -103,7 +108,14 @@ export function FinanceScenarioCreator({
       })
     }
     return data
-  }, [assets, theme.palette.action.disabledBackground])
+  }, [
+    assets,
+    theme.palette.action.disabledBackground,
+    theme.palette.primary.main,
+    theme.palette.primary.dark,
+    theme.palette.info.main,
+    theme.palette.info.dark,
+  ])
 
   const unallocated = Math.max(0, 100 - totalAllocation)
 

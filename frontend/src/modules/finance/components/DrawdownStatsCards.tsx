@@ -46,7 +46,7 @@ function StatsCard({ label, value, subtext, icon: Icon }: StatsCardProps) {
         <Typography
           sx={{
             fontSize: 'var(--ob-font-size-sm)',
-            fontWeight: 500,
+            fontWeight: 'var(--ob-font-weight-medium)',
             color: 'text.secondary',
             mb: 'var(--ob-space-025)',
           }}
@@ -56,9 +56,8 @@ function StatsCard({ label, value, subtext, icon: Icon }: StatsCardProps) {
         <Typography
           sx={{
             fontSize: 'var(--ob-font-size-2xl)',
-            fontWeight: 700,
-            color: 'var(--ob-color-neon-cyan)',
-            textShadow: 'var(--ob-glow-neon-text)',
+            fontWeight: 'var(--ob-font-weight-bold)',
+            color: 'var(--ob-color-brand-primary)',
             letterSpacing: '-0.02em',
           }}
         >
@@ -78,8 +77,8 @@ function StatsCard({ label, value, subtext, icon: Icon }: StatsCardProps) {
         sx={{
           p: 'var(--ob-space-075)',
           borderRadius: 'var(--ob-radius-sm)',
-          bgcolor: 'rgba(0, 243, 255, 0.1)',
-          color: 'var(--ob-color-neon-cyan)',
+          bgcolor: 'var(--ob-color-brand-muted)',
+          color: 'var(--ob-color-brand-primary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
