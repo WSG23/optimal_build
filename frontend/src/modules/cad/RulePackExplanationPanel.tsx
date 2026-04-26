@@ -335,7 +335,7 @@ export function RulePackExplanationPanel({
                       width: 'var(--ob-size-indicator-dot)',
                       height: 'var(--ob-size-indicator-dot)',
                       borderRadius: '50%',
-                      bgcolor: 'var(--ob-color-neon-cyan)',
+                      bgcolor: 'var(--ob-color-brand-primary)',
                       flexShrink: 0,
                     }}
                   />

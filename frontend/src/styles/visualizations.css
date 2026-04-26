@@ -139,7 +139,7 @@
 
 .clash-impact__title {
     font-size: var(--ob-font-size-xl);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-primary);
     margin: 0;
 }
@@ -161,7 +161,7 @@
 
 .clash-impact__stat-value {
     font-size: var(--ob-font-size-2xl);
-    font-weight: 700;
+    font-weight: var(--ob-font-weight-bold);
     color: var(--ob-color-text-primary);
     font-family: var(--ob-font-family-mono);
 }
@@ -191,26 +191,18 @@
     gap: var(--ob-spacing-300);
 }
 
-.clash-impact__item {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--ob-spacing-300);
-    padding: var(--ob-spacing-300);
-    border: 1px solid var(--ob-color-border-subtle);
-    border-radius: var(--ob-radius-sm);
-    background: var(--ob-color-bg-surface);
-}
+/* Base item styles — see single definition below after dot modifiers */
 
 .clash-impact__item--critical {
-    border-left: 3px solid var(--ob-error-500);
+    background: var(--ob-color-error-soft);
 }
 
 .clash-impact__item--warning {
-    border-left: 3px solid var(--ob-warning-500);
+    background: var(--ob-color-warning-soft);
 }
 
 .clash-impact__item--resolved {
-    border-left: 3px solid var(--ob-success-500);
+    background: var(--ob-color-success-soft);
     opacity: 0.7;
 }
 
@@ -225,7 +217,7 @@
 }
 
 .clash-impact__item-title {
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-primary);
     margin: 0 0 var(--ob-spacing-100);
 }
@@ -297,6 +289,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    gap: var(--ob-spacing-300);
     padding: var(--ob-spacing-250);
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
@@ -343,7 +336,7 @@
 }
 
 .clash-impact__item-cost {
-    font-weight: 500;
+    font-weight: var(--ob-font-weight-medium);
     color: var(--ob-error-500);
 }
 

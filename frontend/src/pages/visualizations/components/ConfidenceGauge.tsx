@@ -1,78 +1,96 @@
-import { Box, Typography, Tooltip, Zoom, useTheme, alpha } from '@mui/material'
+import { Box, Typography, Tooltip } from '@mui/material'
 
 export interface ConfidenceGaugeProps {
   label: string
   value: number // 0-100
-  projection: string
+  projection: number
+  baseline?: number
+}
+
+/** Returns a design-token color based on confidence threshold */
+function getConfidenceColor(value: number): string {
+  if (value >= 70) return 'var(--ob-success-500)'
+  if (value >= 50) return 'var(--ob-warning-500)'
+  return 'var(--ob-error-500)'
 }
 
 export function ConfidenceGauge({
   label,
   value,
   projection,
+  baseline,
 }: ConfidenceGaugeProps) {
-  const theme = useTheme()
-
-  // Color logic
-  let color = theme.palette.error.main
-  if (value >= 70)
-    color = theme.palette.success.main // "Green/Teal"
-  else if (value >= 50) color = theme.palette.warning.main // "Yellow/Orange"
+  const color = getConfidenceColor(value)
+  const delta =
+    baseline && baseline > 0
+      ? `${(((projection - baseline) / baseline) * 100).toFixed(0)}% uplift`
+      : undefined
 
   return (
     <Tooltip
       title={
-        <Typography variant="caption">Projection: {projection}</Typography>
+        <Box>
+          <Typography variant="caption" sx={{ display: 'block' }}>
+            Projection: {projection}
+          </Typography>
+          {delta && (
+            <Typography variant="caption" sx={{ display: 'block' }}>
+              {delta} vs baseline ({baseline})
+            </Typography>
+          )}
+        </Box>
       }
-      TransitionComponent={Zoom}
       arrow
       placement="top"
     >
-      <Box sx={{ mb: 2, cursor: 'help' }}>
-        <Box display="flex" justifyContent="space-between" mb={0.5}>
-          <Typography variant="body2" fontWeight={600}>
+      <Box sx={{ py: 'var(--ob-space-075)', cursor: 'help' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            mb: 'var(--ob-space-050)',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: 'var(--ob-font-size-sm)',
+              fontWeight: 'var(--ob-font-weight-semibold)',
+              color: 'var(--ob-color-text-primary)',
+            }}
+          >
             {label}
           </Typography>
-          <Typography variant="body2" fontWeight={700} color={color}>
+          <Typography
+            sx={{
+              fontSize: 'var(--ob-font-size-sm)',
+              fontWeight: 'var(--ob-font-weight-bold)',
+              fontFamily: 'var(--ob-font-family-mono)',
+              color,
+            }}
+          >
             {value}%
           </Typography>
         </Box>
         <Box
           sx={{
-            height: 8,
+            height: 'var(--ob-space-050)',
             width: '100%',
-            bgcolor: alpha(theme.palette.text.disabled, 0.1),
-            borderRadius: '4px', // Square Cyber-Minimalism: sm for containers
+            background: 'var(--ob-color-border-subtle)',
+            borderRadius: 'var(--ob-radius-xs)',
             overflow: 'hidden',
             position: 'relative',
           }}
         >
-          {/* Background dashed segments for "ruler" effect */}
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundImage: `linear-gradient(90deg, transparent 95%, ${theme.palette.background.paper} 95%)`,
-              backgroundSize: '10% 100%',
-              opacity: 0.3,
-              zIndex: 1,
-            }}
-          />
-
-          {/* Fill */}
+          {/* Fill bar using transform for GPU-accelerated animation */}
           <Box
             sx={{
               height: '100%',
-              width: `${value}%`,
-              bgcolor: color,
-              borderRadius: '4px', // Square Cyber-Minimalism: sm for containers
-              transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
-              position: 'relative',
-              zIndex: 2,
-              boxShadow: `0 0 10px ${alpha(color, 0.5)}`, // Glow
+              width: '100%',
+              background: color,
+              borderRadius: 'var(--ob-radius-xs)',
+              transformOrigin: 'left',
+              transform: `scaleX(${String(value / 100)})`,
+              transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           />
         </Box>

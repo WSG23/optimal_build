@@ -55,6 +55,8 @@ export interface UseInvestigationAnalyticsResult {
   predictive: PredictiveIntelligenceState
   correlation: CrossCorrelationIntelligenceState
   isLoading: boolean
+  /** True when all API requests failed and sample fixture data is being shown */
+  isUsingFixtureData: boolean
   refetch: () => Promise<void>
 }
 
@@ -138,6 +140,7 @@ export function useInvestigationAnalytics(
   const [correlation, setCorrelation] =
     useState<CrossCorrelationIntelligenceState>(loadingCorrelationState)
   const [isLoading, setIsLoading] = useState(true)
+  const [isUsingFixtureData, setIsUsingFixtureData] = useState(false)
   const cacheRef = useRef<Map<string, CachedAnalyticsEntry>>(new Map())
 
   const loadAnalytics = useCallback(
@@ -167,6 +170,7 @@ export function useInvestigationAnalytics(
       }
 
       setIsLoading(true)
+      setIsUsingFixtureData(false)
       setGraph(loadingGraphState)
       setPredictive(loadingPredictiveState)
       setCorrelation(loadingCorrelationState)
@@ -197,6 +201,7 @@ export function useInvestigationAnalytics(
           nextGraph = buildSampleGraphIntelligence()
           nextPredictive = buildSamplePredictiveIntelligence()
           nextCorrelation = buildSampleCorrelationIntelligence()
+          setIsUsingFixtureData(true)
           debugError(
             '[useInvestigationAnalytics] All analytics requests failed; using fixture data.',
           )
@@ -261,6 +266,7 @@ export function useInvestigationAnalytics(
         const fallbackGraph = buildSampleGraphIntelligence()
         const fallbackPredictive = buildSamplePredictiveIntelligence()
         const fallbackCorrelation = buildSampleCorrelationIntelligence()
+        setIsUsingFixtureData(true)
         setGraph(fallbackGraph)
         setPredictive(fallbackPredictive)
         setCorrelation(fallbackCorrelation)
@@ -293,6 +299,7 @@ export function useInvestigationAnalytics(
     predictive,
     correlation,
     isLoading,
+    isUsingFixtureData,
     refetch,
   }
 }

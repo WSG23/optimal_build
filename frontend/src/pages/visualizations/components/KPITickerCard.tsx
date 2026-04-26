@@ -40,8 +40,8 @@ export function KPITickerCard({
     <Box
       sx={{
         position: 'relative',
-        p: 3,
-        borderRadius: '4px', // Square Cyber-Minimalism: sm for cards
+        p: 'var(--ob-space-200)',
+        borderRadius: 'var(--ob-radius-sm)', // Square Cyber-Minimalism: sm for cards
         overflow: 'hidden',
         bgcolor: alpha(theme.palette.background.paper, 0.6), // Glassmorphic base
         backdropFilter: 'blur(var(--ob-blur-lg))',
@@ -63,12 +63,12 @@ export function KPITickerCard({
         justifyContent: 'space-between',
       }}
     >
-      <Box mb={2}>
+      <Box mb="var(--ob-space-200)">
         <Typography
           variant="overline"
           sx={{
             color: 'text.secondary',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             letterSpacing: '0.1em',
           }}
         >
@@ -77,13 +77,13 @@ export function KPITickerCard({
         <Stack
           direction="row"
           alignItems="baseline"
-          spacing={1}
-          sx={{ mt: 0.5 }}
+          spacing="var(--ob-space-100)"
+          sx={{ mt: 'var(--ob-space-050)' }}
         >
           <Typography
             variant="h3"
             sx={{
-              fontWeight: 800,
+              fontWeight: 'var(--ob-font-weight-bold)',
               color: 'text.primary',
               letterSpacing: '-0.02em',
             }}
@@ -94,11 +94,11 @@ export function KPITickerCard({
             sx={{
               bgcolor: alpha(trendColor, 0.1),
               color: trendColor,
-              px: 1,
-              py: 0.25,
-              borderRadius: '2px', // Square Cyber-Minimalism: xs for badges
-              fontSize: '0.75rem',
-              fontWeight: 700,
+              px: 'var(--ob-space-100)',
+              py: 'var(--ob-space-025)',
+              borderRadius: 'var(--ob-radius-xs)', // Square Cyber-Minimalism: xs for badges
+              fontSize: 'var(--ob-font-size-xs)',
+              fontWeight: 'var(--ob-font-weight-bold)',
             }}
           >
             {isPositive ? '+' : ''}

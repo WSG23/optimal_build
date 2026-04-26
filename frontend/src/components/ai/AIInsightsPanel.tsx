@@ -42,7 +42,7 @@ function getSeverityColor(severity: string): string {
   const colors: Record<string, string> = {
     critical: 'var(--ob-color-semantic-error)',
     high: 'var(--ob-color-semantic-warning)',
-    medium: 'var(--ob-color-neon-cyan)',
+    medium: 'var(--ob-color-brand-primary)',
     low: 'var(--ob-color-text-secondary)',
   }
   return colors[severity] || 'var(--ob-color-text-secondary)'
@@ -72,11 +72,16 @@ function AnomalyAlertItem({ alert }: { alert: AnomalyAlert }) {
         onClick={() => setExpanded(!expanded)}
       >
         <Box sx={{ display: 'flex', gap: 'var(--ob-space-100)' }}>
-          <WarningAmberIcon sx={{ color, fontSize: 18, mt: 0.25 }} />
+          <WarningAmberIcon
+            sx={{ color, fontSize: 18, mt: 'var(--ob-space-025)' }}
+          />
           <Box>
             <Typography
               variant="body2"
-              sx={{ color: 'var(--ob-color-text-primary)', fontWeight: 500 }}
+              sx={{
+                color: 'var(--ob-color-text-primary)',
+                fontWeight: 'var(--ob-font-weight-medium)',
+              }}
             >
               {alert.title}
             </Typography>
@@ -84,9 +89,9 @@ function AnomalyAlertItem({ alert }: { alert: AnomalyAlert }) {
               label={alert.severity}
               size="small"
               sx={{
-                mt: 0.5,
-                height: 18,
-                fontSize: '0.65rem',
+                mt: 'var(--ob-space-025)',
+                height: 'var(--ob-space-125)',
+                fontSize: 'var(--ob-font-size-2xs)',
                 backgroundColor: `${color}20`,
                 color,
                 borderColor: color,
@@ -105,7 +110,7 @@ function AnomalyAlertItem({ alert }: { alert: AnomalyAlert }) {
       </Box>
 
       <Collapse in={expanded}>
-        <Box sx={{ mt: 'var(--ob-space-150)', pl: 'var(--ob-space-400)' }}>
+        <Box sx={{ mt: 'var(--ob-space-100)', pl: 'var(--ob-space-200)' }}>
           <Typography
             variant="caption"
             sx={{ color: 'var(--ob-color-text-secondary)', display: 'block' }}
@@ -122,7 +127,10 @@ function AnomalyAlertItem({ alert }: { alert: AnomalyAlert }) {
           >
             <Typography
               variant="caption"
-              sx={{ color: 'var(--ob-color-neon-cyan)', fontWeight: 500 }}
+              sx={{
+                color: 'var(--ob-color-brand-primary)',
+                fontWeight: 'var(--ob-font-weight-medium)',
+              }}
             >
               Recommendation:
             </Typography>
@@ -166,11 +174,14 @@ function MarketInsightItem({
           }}
         >
           <TrendingUpIcon
-            sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 18 }}
+            sx={{ color: 'var(--ob-color-brand-primary)', fontSize: 18 }}
           />
           <Typography
             variant="body2"
-            sx={{ color: 'var(--ob-color-text-primary)', fontWeight: 500 }}
+            sx={{
+              color: 'var(--ob-color-text-primary)',
+              fontWeight: 'var(--ob-font-weight-medium)',
+            }}
           >
             Market Outlook
           </Typography>
@@ -195,7 +206,7 @@ function MarketInsightItem({
               p: 'var(--ob-space-100)',
               borderRadius: 'var(--ob-radius-xs)',
               background: 'var(--ob-color-bg-elevated)',
-              mb: 'var(--ob-space-50)',
+              mb: 'var(--ob-space-050)',
             }}
           >
             <Typography
@@ -207,7 +218,13 @@ function MarketInsightItem({
             >
               {item.prediction_type.replace(/_/g, ' ')}
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-025)',
+              }}
+            >
               {item.change_percentage !== null && (
                 <Typography
                   variant="caption"
@@ -216,8 +233,8 @@ function MarketInsightItem({
                       item.change_percentage >= 0
                         ? 'var(--ob-color-semantic-success)'
                         : 'var(--ob-color-semantic-error)',
-                    fontWeight: 600,
-                    fontFamily: 'var(--ob-font-mono)',
+                    fontWeight: 'var(--ob-font-weight-semibold)',
+                    fontFamily: 'var(--ob-font-family-mono)',
                   }}
                 >
                   {item.change_percentage >= 0 ? '+' : ''}
@@ -228,9 +245,9 @@ function MarketInsightItem({
                 label={`${(item.confidence * 100).toFixed(0)}%`}
                 size="small"
                 sx={{
-                  height: 16,
-                  fontSize: '0.6rem',
-                  ml: 0.5,
+                  height: 'var(--ob-space-100)',
+                  fontSize: 'var(--ob-font-size-2xs)',
+                  ml: 'var(--ob-space-025)',
                 }}
               />
             </Box>
@@ -320,9 +337,21 @@ export function AIInsightsPanel({
       <div aria-busy="true" aria-live="polite" role="status">
         <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
           <Skeleton variant="text" width="60%" />
-          <Skeleton variant="rectangular" height={60} sx={{ mt: 1 }} />
-          <Skeleton variant="rectangular" height={60} sx={{ mt: 1 }} />
-          <Skeleton variant="text" width="40%" sx={{ mt: 2 }} />
+          <Skeleton
+            variant="rectangular"
+            height={60}
+            sx={{ mt: 'var(--ob-space-050)' }}
+          />
+          <Skeleton
+            variant="rectangular"
+            height={60}
+            sx={{ mt: 'var(--ob-space-050)' }}
+          />
+          <Skeleton
+            variant="text"
+            width="40%"
+            sx={{ mt: 'var(--ob-space-100)' }}
+          />
         </Card>
       </div>
     )
@@ -342,7 +371,9 @@ export function AIInsightsPanel({
             color: 'var(--ob-color-text-tertiary)',
           }}
         >
-          <LightbulbIcon sx={{ fontSize: 32, mb: 1, opacity: 0.5 }} />
+          <LightbulbIcon
+            sx={{ fontSize: 32, mb: 'var(--ob-space-050)', opacity: 0.5 }}
+          />
           <Typography variant="body2">No insights available</Typography>
         </Box>
       </Card>
@@ -368,11 +399,14 @@ export function AIInsightsPanel({
           }}
         >
           <LightbulbIcon
-            sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 20 }}
+            sx={{ color: 'var(--ob-color-brand-primary)', fontSize: 20 }}
           />
           <Typography
             variant="subtitle2"
-            sx={{ color: 'var(--ob-color-text-primary)', fontWeight: 600 }}
+            sx={{
+              color: 'var(--ob-color-text-primary)',
+              fontWeight: 'var(--ob-font-weight-semibold)',
+            }}
           >
             AI Insights
           </Typography>
@@ -404,7 +438,7 @@ export function AIInsightsPanel({
             sx={{
               color: 'var(--ob-color-text-tertiary)',
               textTransform: 'uppercase',
-              letterSpacing: 1,
+              letterSpacing: 'var(--ob-letter-spacing-wider)',
               display: 'block',
               mb: 'var(--ob-space-100)',
             }}

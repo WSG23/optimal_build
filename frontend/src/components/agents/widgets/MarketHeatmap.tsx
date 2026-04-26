@@ -14,23 +14,28 @@ interface MarketHeatmapProps {
 let googleMapsPromise: Promise<void> | null = null
 
 function loadGoogleMapsScript(): Promise<void> {
-  if (window.google?.maps) {
-    return Promise.resolve()
-  }
-
   if (googleMapsPromise) {
     return googleMapsPromise
   }
 
-  googleMapsPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=visualization&loading=async`
-    script.async = true
-    script.defer = true
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Failed to load Google Maps'))
-    document.head.appendChild(script)
-  })
+  googleMapsPromise = (async () => {
+    if (!window.google?.maps) {
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=visualization&loading=async`
+        script.async = true
+        script.defer = true
+        script.onload = () => resolve()
+        script.onerror = () => reject(new Error('Failed to load Google Maps'))
+        document.head.appendChild(script)
+      })
+    }
+
+    // With loading=async, we must importLibrary to get the actual classes
+    await google.maps.importLibrary('maps')
+    await google.maps.importLibrary('marker')
+    await google.maps.importLibrary('visualization')
+  })()
 
   return googleMapsPromise
 }
@@ -184,6 +189,7 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
       center: { lat: 1.3521, lng: 103.8198 },
       zoom: 11,
       styles: darkMapStyle,
+      mapId: 'market_heatmap',
       mapTypeControl: false,
       streetViewControl: false,
     })
@@ -270,7 +276,7 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
 
   if (loadError) {
     return (
-      <Paper sx={{ p: 3, height: 500 }}>
+      <Paper sx={{ p: 'var(--ob-space-200)', height: 500 }}>
         <Typography variant="body1" color="textSecondary" align="center">
           {loadError === 'Google Maps API key not configured'
             ? 'Map requires Google Maps API key. Set VITE_GOOGLE_MAPS_API_KEY in environment.'
@@ -282,7 +288,7 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
 
   if (!isLoaded) {
     return (
-      <Paper sx={{ p: 3, height: 500 }}>
+      <Paper sx={{ p: 'var(--ob-space-200)', height: 500 }}>
         <Typography variant="body1" color="textSecondary" align="center">
           Loading map...
         </Typography>
@@ -291,13 +297,17 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
   }
 
   return (
-    <Paper sx={{ p: 2, height: 500 }}>
+    <Paper sx={{ p: 'var(--ob-space-200)', height: 500 }}>
       <Typography variant="h6" gutterBottom>
         Transaction Heatmap
       </Typography>
       <Box
         ref={mapContainer}
-        sx={{ height: 450, borderRadius: 1, overflow: 'hidden' }}
+        sx={{
+          height: 450,
+          borderRadius: 'var(--ob-radius-sm)',
+          overflow: 'hidden',
+        }}
       />
     </Paper>
   )

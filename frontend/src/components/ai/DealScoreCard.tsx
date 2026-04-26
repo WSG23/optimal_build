@@ -30,9 +30,9 @@ function getGradeColor(grade: string): string {
     'A+': 'var(--ob-color-semantic-success)',
     A: 'var(--ob-color-semantic-success)',
     'A-': 'var(--ob-color-semantic-success)',
-    'B+': 'var(--ob-color-neon-cyan)',
-    B: 'var(--ob-color-neon-cyan)',
-    'B-': 'var(--ob-color-neon-cyan)',
+    'B+': 'var(--ob-color-brand-primary)',
+    B: 'var(--ob-color-brand-primary)',
+    'B-': 'var(--ob-color-brand-primary)',
     'C+': 'var(--ob-color-semantic-warning)',
     C: 'var(--ob-color-semantic-warning)',
     'C-': 'var(--ob-color-semantic-warning)',
@@ -44,7 +44,7 @@ function getGradeColor(grade: string): string {
 
 function getScoreColor(score: number): string {
   if (score >= 80) return 'var(--ob-color-semantic-success)'
-  if (score >= 60) return 'var(--ob-color-neon-cyan)'
+  if (score >= 60) return 'var(--ob-color-brand-primary)'
   if (score >= 40) return 'var(--ob-color-semantic-warning)'
   return 'var(--ob-color-semantic-error)'
 }
@@ -59,7 +59,7 @@ function FactorScoreBar({ factor }: { factor: FactorScore }) {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          mb: 'var(--ob-space-50)',
+          mb: 'var(--ob-space-050)',
         }}
       >
         <Typography
@@ -72,8 +72,17 @@ function FactorScoreBar({ factor }: { factor: FactorScore }) {
           {factor.factor.replace(/_/g, ' ')}
         </Typography>
         <Tooltip title={factor.rationale} placement="top">
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Typography variant="caption" sx={{ color, fontWeight: 600 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-025)',
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{ color, fontWeight: 'var(--ob-font-weight-semibold)' }}
+            >
               {factor.score.toFixed(0)}
             </Typography>
             <InfoOutlinedIcon
@@ -86,7 +95,7 @@ function FactorScoreBar({ factor }: { factor: FactorScore }) {
         variant="determinate"
         value={factor.score}
         sx={{
-          height: 4,
+          height: 'var(--ob-space-025)',
           borderRadius: 'var(--ob-radius-xs)',
           backgroundColor: 'var(--ob-color-bg-elevated)',
           '& .MuiLinearProgress-bar': {
@@ -142,14 +151,31 @@ export function DealScoreCard({
     return (
       <div aria-busy="true" aria-live="polite" role="status">
         <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
-          <Skeleton variant="circular" width={60} height={60} sx={{ mb: 2 }} />
+          <Skeleton
+            variant="circular"
+            width={60}
+            height={60}
+            sx={{ mb: 'var(--ob-space-100)' }}
+          />
           <Skeleton variant="text" width="60%" />
           <Skeleton variant="text" width="80%" />
           {!compact && (
             <>
-              <Skeleton variant="rectangular" height={8} sx={{ mt: 2 }} />
-              <Skeleton variant="rectangular" height={8} sx={{ mt: 1 }} />
-              <Skeleton variant="rectangular" height={8} sx={{ mt: 1 }} />
+              <Skeleton
+                variant="rectangular"
+                height={8}
+                sx={{ mt: 'var(--ob-space-100)' }}
+              />
+              <Skeleton
+                variant="rectangular"
+                height={8}
+                sx={{ mt: 'var(--ob-space-050)' }}
+              />
+              <Skeleton
+                variant="rectangular"
+                height={8}
+                sx={{ mt: 'var(--ob-space-050)' }}
+              />
             </>
           )}
         </Card>
@@ -192,17 +218,26 @@ export function DealScoreCard({
         <Box>
           <Typography
             variant="overline"
-            sx={{ color: 'var(--ob-color-text-tertiary)', letterSpacing: 1.5 }}
+            sx={{
+              color: 'var(--ob-color-text-tertiary)',
+              letterSpacing: 'var(--ob-letter-spacing-wider)',
+            }}
           >
             AI Deal Score
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: 'var(--ob-space-050)',
+            }}
+          >
             <Typography
               variant="h3"
               sx={{
                 color: scoreColor,
-                fontWeight: 700,
-                fontFamily: 'var(--ob-font-mono)',
+                fontWeight: 'var(--ob-font-weight-bold)',
+                fontFamily: 'var(--ob-font-family-mono)',
               }}
             >
               {score.overall_score.toFixed(0)}
@@ -233,21 +268,27 @@ export function DealScoreCard({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: `${gradeColor}15`,
+              background: `color-mix(in srgb, ${gradeColor} 10%, transparent)`,
             }}
           >
             <Typography
               variant="h5"
               sx={{
                 color: gradeColor,
-                fontWeight: 700,
-                fontFamily: 'var(--ob-font-mono)',
+                fontWeight: 'var(--ob-font-weight-bold)',
+                fontFamily: 'var(--ob-font-family-mono)',
               }}
             >
               {score.grade}
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              mt: 'var(--ob-space-025)',
+            }}
+          >
             {isPositive ? (
               <TrendingUpIcon
                 sx={{ fontSize: 14, color: 'var(--ob-color-semantic-success)' }}
@@ -281,11 +322,11 @@ export function DealScoreCard({
           value={score.confidence * 100}
           sx={{
             flex: 1,
-            height: 4,
+            height: 'var(--ob-space-025)',
             borderRadius: 'var(--ob-radius-xs)',
             backgroundColor: 'var(--ob-color-bg-elevated)',
             '& .MuiLinearProgress-bar': {
-              backgroundColor: 'var(--ob-color-neon-cyan)',
+              backgroundColor: 'var(--ob-color-brand-primary)',
             },
           }}
         />
@@ -293,7 +334,7 @@ export function DealScoreCard({
           variant="caption"
           sx={{
             color: 'var(--ob-color-text-secondary)',
-            fontFamily: 'var(--ob-font-mono)',
+            fontFamily: 'var(--ob-font-family-mono)',
           }}
         >
           {(score.confidence * 100).toFixed(0)}%
@@ -310,7 +351,7 @@ export function DealScoreCard({
               display: 'block',
               mb: 'var(--ob-space-150)',
               textTransform: 'uppercase',
-              letterSpacing: 1,
+              letterSpacing: 'var(--ob-letter-spacing-wider)',
             }}
           >
             Factor Breakdown
@@ -335,7 +376,7 @@ export function DealScoreCard({
           sx={{
             color: 'var(--ob-color-text-tertiary)',
             display: 'block',
-            mb: 'var(--ob-space-50)',
+            mb: 'var(--ob-space-050)',
           }}
         >
           AI Recommendation

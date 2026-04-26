@@ -14,13 +14,29 @@ vi.mock('../../../App', () => ({
   AppLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }))
 
-vi.mock('../components/KPITickerCard', () => ({
-  KPITickerCard: ({ label, value }: { label: string; value: string }) => (
-    <div>
-      {label}: {value}
-    </div>
-  ),
-}))
+vi.mock('../../../components/canonical', async () => {
+  const actual = await vi.importActual('../../../components/canonical')
+  return {
+    ...actual,
+    MetricCard: ({
+      label,
+      value,
+    }: {
+      label: string
+      value: string | number
+    }) => (
+      <div>
+        {label}: {value}
+      </div>
+    ),
+    Panel: ({ children, title }: { children: ReactNode; title?: string }) => (
+      <div>
+        {title && <div>{title}</div>}
+        {children}
+      </div>
+    ),
+  }
+})
 
 vi.mock('../components/RelationshipGraph', () => ({
   RelationshipGraph: () => <div>relationship-graph</div>,

@@ -142,16 +142,16 @@ export function CadUploader({
             width: 'var(--ob-size-icon-lg)',
             height: 'var(--ob-size-icon-lg)',
             borderRadius: '50%',
-            backgroundColor: 'rgba(0, 243, 255, 0.1)',
+            backgroundColor: 'var(--ob-color-brand-muted)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--ob-color-neon-cyan)',
+            color: 'var(--ob-color-brand-primary)',
             flexShrink: 0,
           }}
         >
           {isUploading ? (
-            <Box className="dot-flashing" sx={{ transform: 'scale(1.0)' }} />
+            <Box className="dot-flashing" />
           ) : (
             <CloudUpload sx={{ fontSize: 'var(--ob-font-size-xl)' }} />
           )}

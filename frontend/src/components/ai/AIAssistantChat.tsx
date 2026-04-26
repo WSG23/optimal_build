@@ -140,8 +140,8 @@ export function AIAssistantChat({
           position: 'fixed',
           bottom: 'var(--ob-space-400)',
           right: 'var(--ob-space-400)',
-          width: 400,
-          maxWidth: 'calc(100vw - var(--ob-space-800))',
+          width: '25rem',
+          maxWidth: 'calc(100vw - var(--ob-space-400))',
           zIndex: 1300,
         }}
       >
@@ -152,7 +152,8 @@ export function AIAssistantChat({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              p: 'var(--ob-space-200)',
+              px: 'var(--ob-space-150)',
+              py: 'var(--ob-space-100)',
               borderBottom: 'var(--ob-border-fine)',
               background: 'var(--ob-surface-glass-1)',
             }}
@@ -165,12 +166,12 @@ export function AIAssistantChat({
               }}
             >
               <SmartToyIcon
-                sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 24 }}
+                sx={{ color: 'var(--ob-color-brand-primary)', fontSize: 24 }}
               />
               <Typography
                 variant="subtitle1"
                 sx={{
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                   color: 'var(--ob-color-text-primary)',
                 }}
               >
@@ -191,12 +192,13 @@ export function AIAssistantChat({
             aria-live="polite"
             aria-busy={isLoading}
             sx={{
-              height: 400,
+              height: '25rem',
               overflowY: 'auto',
-              p: 'var(--ob-space-200)',
+              px: 'var(--ob-space-150)',
+              py: 'var(--ob-space-100)',
               display: 'flex',
               flexDirection: 'column',
-              gap: 'var(--ob-space-200)',
+              gap: 'var(--ob-space-100)',
               background: 'var(--ob-color-bg-base)',
             }}
           >
@@ -212,7 +214,13 @@ export function AIAssistantChat({
                   color: 'var(--ob-color-text-tertiary)',
                 }}
               >
-                <SmartToyIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
+                <SmartToyIcon
+                  sx={{
+                    fontSize: 48,
+                    mb: 'var(--ob-space-100)',
+                    opacity: 0.5,
+                  }}
+                />
                 <Typography variant="body2">
                   Ask me anything about your deals, properties, or market
                   insights.
@@ -241,19 +249,19 @@ export function AIAssistantChat({
                     {message.role === 'assistant' && (
                       <SmartToyIcon
                         sx={{
-                          color: 'var(--ob-color-neon-cyan)',
+                          color: 'var(--ob-color-brand-primary)',
                           fontSize: 20,
-                          mt: 0.5,
+                          mt: 'var(--ob-space-025)',
                         }}
                       />
                     )}
                     <Box
                       sx={{
-                        p: 'var(--ob-space-150)',
+                        p: 'var(--ob-space-100)',
                         borderRadius: 'var(--ob-radius-sm)',
                         background:
                           message.role === 'user'
-                            ? 'var(--ob-color-neon-cyan)'
+                            ? 'var(--ob-color-brand-primary)'
                             : 'var(--ob-surface-glass-1)',
                         color:
                           message.role === 'user'
@@ -273,7 +281,7 @@ export function AIAssistantChat({
                         sx={{
                           color: 'var(--ob-color-text-secondary)',
                           fontSize: 20,
-                          mt: 0.5,
+                          mt: 'var(--ob-space-025)',
                         }}
                       />
                     )}
@@ -285,9 +293,9 @@ export function AIAssistantChat({
                       sx={{
                         display: 'flex',
                         flexWrap: 'wrap',
-                        gap: 'var(--ob-space-50)',
-                        mt: 'var(--ob-space-100)',
-                        pl: 'var(--ob-space-400)',
+                        gap: 'var(--ob-space-050)',
+                        mt: 'var(--ob-space-075)',
+                        pl: 'var(--ob-space-200)',
                       }}
                     >
                       {message.suggestions.map((suggestion, idx) => (
@@ -300,11 +308,11 @@ export function AIAssistantChat({
                           sx={{
                             borderColor: 'var(--ob-color-border-subtle)',
                             color: 'var(--ob-color-text-secondary)',
-                            fontSize: '0.75rem',
+                            fontSize: 'var(--ob-font-size-xs)',
                             cursor: 'pointer',
                             '&:hover': {
-                              borderColor: 'var(--ob-color-neon-cyan)',
-                              color: 'var(--ob-color-neon-cyan)',
+                              borderColor: 'var(--ob-color-brand-primary)',
+                              color: 'var(--ob-color-brand-primary)',
                             },
                           }}
                         />
@@ -324,11 +332,11 @@ export function AIAssistantChat({
                 }}
               >
                 <SmartToyIcon
-                  sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 20 }}
+                  sx={{ color: 'var(--ob-color-brand-primary)', fontSize: 20 }}
                 />
                 <CircularProgress
                   size={16}
-                  sx={{ color: 'var(--ob-color-neon-cyan)' }}
+                  sx={{ color: 'var(--ob-color-brand-primary)' }}
                 />
               </Box>
             )}
@@ -339,7 +347,8 @@ export function AIAssistantChat({
           {/* Input */}
           <Box
             sx={{
-              p: 'var(--ob-space-200)',
+              px: 'var(--ob-space-150)',
+              py: 'var(--ob-space-100)',
               borderTop: 'var(--ob-border-fine)',
               background: 'var(--ob-surface-glass-1)',
               display: 'flex',
@@ -366,12 +375,12 @@ export function AIAssistantChat({
                     borderColor: 'var(--ob-color-border-default)',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: 'var(--ob-color-neon-cyan)',
+                    borderColor: 'var(--ob-color-brand-primary)',
                   },
                 },
                 '& .MuiInputBase-input': {
                   color: 'var(--ob-color-text-primary)',
-                  fontSize: '0.875rem',
+                  fontSize: 'var(--ob-font-size-sm)',
                 },
               }}
             />
@@ -379,7 +388,7 @@ export function AIAssistantChat({
               onClick={() => handleSendMessage()}
               disabled={!input.trim() || isLoading}
               sx={{
-                color: 'var(--ob-color-neon-cyan)',
+                color: 'var(--ob-color-brand-primary)',
                 '&:disabled': {
                   color: 'var(--ob-color-text-disabled)',
                 },

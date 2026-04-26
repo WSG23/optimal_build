@@ -153,16 +153,16 @@ export function CadPipelinesPage() {
     <AppLayout title={t('pipelines.title')} subtitle={t('pipelines.subtitle')}>
       <Box
         className="cad-pipelines-page"
-        sx={{ maxWidth: '1200px', margin: '0 auto', p: 2 }}
+        sx={{ maxWidth: '1200px', margin: '0 auto', p: 'var(--ob-space-200)' }}
       >
         {/* Header Toolbar */}
         <Paper
           elevation={0}
           sx={{
             p: 'var(--ob-space-150)',
-            mb: 4,
+            mb: 'var(--ob-space-300)',
             background: 'var(--ob-color-surface-toolbar)',
-            border: '1px solid rgba(255,255,255,0.10)',
+            border: '1px solid rgba(245, 235, 220, 0.10)',
             borderRadius: 'calc(var(--ob-radius-lg) + var(--ob-space-050))', // ~12px
             boxShadow: 'var(--ob-shadow-xl)',
             display: 'flex',
@@ -220,7 +220,7 @@ export function CadPipelinesPage() {
                 color: 'var(--ob-neutral-500)',
                 '&:hover': {
                   color: 'var(--ob-neutral-100)',
-                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  backgroundColor: 'rgba(245, 235, 220, 0.05)',
                 },
               }}
             >
@@ -250,14 +250,20 @@ export function CadPipelinesPage() {
                   color: 'var(--ob-neutral-500)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.16em',
-                  fontWeight: 900,
+                  fontWeight: 'var(--ob-font-weight-bold)',
                   fontSize: 'var(--ob-font-size-2xs)',
                   whiteSpace: 'nowrap',
                 }}
               >
                 {t('detection.overlays')}:
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--ob-space-100)',
+                }}
+              >
                 {overlayCodes.slice(0, 3).map((code) => (
                   <Box
                     key={code}
@@ -269,7 +275,7 @@ export function CadPipelinesPage() {
                       borderRadius: 'var(--ob-radius-md)',
                       color: 'var(--ob-brand-200)',
                       fontSize: 'var(--ob-font-size-2xs)',
-                      fontWeight: 900,
+                      fontWeight: 'var(--ob-font-weight-bold)',
                       letterSpacing: '0.08em',
                       textTransform: 'uppercase',
                       whiteSpace: 'nowrap',
@@ -283,10 +289,10 @@ export function CadPipelinesPage() {
                     variant="caption"
                     sx={{
                       color: 'var(--ob-brand-300)',
-                      fontWeight: 900,
+                      fontWeight: 'var(--ob-font-weight-bold)',
                       fontSize: 'var(--ob-font-size-2xs)',
                       letterSpacing: '0.08em',
-                      ml: 1,
+                      ml: 'var(--ob-space-100)',
                     }}
                   >
                     +{overlayCodes.length - 3}
@@ -303,7 +309,7 @@ export function CadPipelinesPage() {
             severity="error"
             variant="outlined"
             sx={{
-              mb: 4,
+              mb: 'var(--ob-space-300)',
               backgroundColor: 'rgba(var(--ob-color-error-muted-rgb) / 0.06)',
               color: 'var(--ob-color-error-muted)',
               border: '1px solid rgba(var(--ob-color-error-muted-rgb) / 0.3)',
@@ -325,10 +331,14 @@ export function CadPipelinesPage() {
         <RoiSummary metrics={roiMetrics} loading={loading} isLive={false} />
 
         {/* Pipeline Suggestions - Visualization for Empty State */}
-        <Box sx={{ mb: 6 }}>
+        <Box sx={{ mb: 'var(--ob-space-400)' }}>
           <Typography
             variant="h5"
-            sx={{ fontWeight: 700, color: 'text.primary', mb: 2 }}
+            sx={{
+              fontWeight: 'var(--ob-font-weight-bold)',
+              color: 'text.primary',
+              mb: 'var(--ob-space-200)',
+            }}
           >
             {t('pipelines.suggestionHeading')}
           </Typography>
@@ -341,7 +351,7 @@ export function CadPipelinesPage() {
             <Paper
               elevation={0}
               sx={{
-                p: 6,
+                p: 'var(--ob-space-400)',
                 borderRadius: 'var(--ob-radius-sm)',
                 backgroundColor: 'var(--ob-surface-glass-1)',
                 border: '1px dashed var(--ob-color-border-faint)',
@@ -380,7 +390,7 @@ export function CadPipelinesPage() {
                 sx={{
                   fontSize: 60,
                   color: 'text.secondary',
-                  mb: 2,
+                  mb: 'var(--ob-space-200)',
                   opacity: 0.5,
                 }}
               />
@@ -389,8 +399,8 @@ export function CadPipelinesPage() {
                 variant="h6"
                 sx={{
                   color: 'text.primary',
-                  fontWeight: 600,
-                  mb: 1,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                  mb: 'var(--ob-space-100)',
                   zIndex: 1,
                 }}
               >
@@ -402,7 +412,7 @@ export function CadPipelinesPage() {
                   color: 'text.secondary',
                   maxWidth: '400px',
                   textAlign: 'center',
-                  mb: 3,
+                  mb: 'var(--ob-space-200)',
                   zIndex: 1,
                 }}
               >
@@ -437,14 +447,14 @@ export function CadPipelinesPage() {
               sx={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                gap: 3,
+                gap: 'var(--ob-space-200)',
               }}
             >
               {suggestions.map((suggestion) => (
                 <Paper
                   key={suggestion.id}
                   sx={{
-                    p: 3,
+                    p: 'var(--ob-space-200)',
                     borderRadius: 'var(--ob-radius-sm)',
                     backgroundColor: 'background.paper',
                     border: '1px solid var(--ob-color-border-faint)',
@@ -460,7 +470,7 @@ export function CadPipelinesPage() {
                       display: 'flex',
                       alignItems: 'flex-start',
                       justifyContent: 'space-between',
-                      mb: 2,
+                      mb: 'var(--ob-space-200)',
                     }}
                   >
                     <Typography
@@ -475,8 +485,8 @@ export function CadPipelinesPage() {
                     </Typography>
                     <Box
                       sx={{
-                        px: 1,
-                        py: 0.5,
+                        px: 'var(--ob-space-100)',
+                        py: 'var(--ob-space-050)',
                         borderRadius: 'var(--ob-radius-sm)',
                         backgroundColor:
                           suggestion.automationScore > 0.8
@@ -498,7 +508,7 @@ export function CadPipelinesPage() {
                     variant="body2"
                     sx={{
                       color: 'text.secondary',
-                      mb: 3,
+                      mb: 'var(--ob-space-200)',
                       height: '40px',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -510,7 +520,7 @@ export function CadPipelinesPage() {
                   <Box
                     sx={{
                       borderTop: '1px solid var(--ob-color-border-faint)',
-                      pt: 2,
+                      pt: 'var(--ob-space-200)',
                       display: 'flex',
                       justifyContent: 'space-between',
                     }}

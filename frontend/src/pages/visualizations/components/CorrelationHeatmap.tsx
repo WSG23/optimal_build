@@ -1,13 +1,5 @@
-import {
-  Box,
-  Typography,
-  useTheme,
-  alpha,
-  Fade,
-  Paper,
-  IconButton,
-} from '@mui/material'
-import { useState } from 'react'
+import { Box, Typography, IconButton, Tooltip } from '@mui/material'
+import { useState, useMemo } from 'react'
 import CloseIcon from '@mui/icons-material/Close'
 
 export interface Correlation {
@@ -20,157 +12,273 @@ export interface Correlation {
 
 export interface CorrelationHeatmapProps {
   data: Correlation[]
+  /** Minimum absolute coefficient to show (filter) */
+  minStrength?: number
 }
 
-export function CorrelationHeatmap({ data }: CorrelationHeatmapProps) {
-  const theme = useTheme()
+/** Returns a design-token-based color for correlation strength */
+function getCellColor(coeff: number): string {
+  const abs = Math.abs(coeff)
+  if (coeff > 0) {
+    if (abs > 0.6) return 'var(--ob-info-500)'
+    if (abs > 0.3) return 'var(--ob-info-400)'
+    return 'var(--ob-info-300)'
+  }
+  if (abs > 0.6) return 'var(--ob-error-500)'
+  if (abs > 0.3) return 'var(--ob-error-400)'
+  return 'var(--ob-error-300)'
+}
+
+function getSignificanceLabel(pValue: number): string {
+  if (pValue < 0.01) return 'Highly significant'
+  if (pValue < 0.05) return 'Significant'
+  return 'Marginal'
+}
+
+export function CorrelationHeatmap({
+  data,
+  minStrength = 0,
+}: CorrelationHeatmapProps) {
   const [selectedCorrelation, setSelectedCorrelation] =
     useState<Correlation | null>(null)
 
-  // Unique factors for building full N x N matrix (future feature)
-  // const drivers = Array.from(new Set(data.map(d => d.driver)));
-  // const outcomes = Array.from(new Set(data.map(d => d.outcome)));
+  const filteredData = useMemo(
+    () => data.filter((d) => Math.abs(d.coefficient) >= minStrength),
+    [data, minStrength],
+  )
 
-  // Simple 1D list view transformation to "Heatmap" style grid if possible,
-  // but typically correlation matrices are symmetric N x N.
-  // Assuming 'data' contains the significant pairs.
-  // To allow for a nice "Grid", we'll just map the pairs into a flex-wrap layout
-  // because a full N x N matrix might be sparse if only significant ones are passed.
-  // The user request asked for a "Grid of colored squares".
-
-  const getColor = (coeff: number) => {
-    // -1 (Red) -> 0 ( Transparent/Grey) -> 1 (Blue)
-    if (coeff > 0) return alpha(theme.palette.info.main, Math.abs(coeff))
-    return alpha(theme.palette.error.main, Math.abs(coeff))
-  }
+  // Sort by absolute coefficient descending for most important first
+  const sortedData = useMemo(
+    () =>
+      [...filteredData].sort(
+        (a, b) => Math.abs(b.coefficient) - Math.abs(a.coefficient),
+      ),
+    [filteredData],
+  )
 
   return (
-    <Box display="flex" gap={2} sx={{ position: 'relative', minHeight: 400 }}>
-      {/* Heatmap Grid Area */}
-      <Box flex={1}>
-        <Typography
-          variant="subtitle2"
-          gutterBottom
-          sx={{
-            color: 'text.secondary',
-            textTransform: 'uppercase',
-            letterSpacing: '0.1em',
-          }}
-        >
-          Correlation Matrix (Significant Pairs)
-        </Typography>
+    <Box sx={{ position: 'relative', minHeight: 200 }}>
+      {/* Correlation pairs as a structured list (more useful than colored squares) */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--ob-space-050)',
+        }}
+      >
+        {sortedData.map((item) => {
+          const isSelected = selectedCorrelation?.id === item.id
+          const color = getCellColor(item.coefficient)
 
-        <Box display="flex" flexWrap="wrap" gap={1}>
-          {data.map((item) => (
+          return (
             <Box
               key={item.id}
-              onClick={() => setSelectedCorrelation(item)}
+              onClick={() => {
+                setSelectedCorrelation(isSelected ? null : item)
+              }}
               sx={{
-                width: 60,
-                height: 60,
-                bgcolor: getColor(item.coefficient),
-                borderRadius: '2px', // Square Cyber-Minimalism: xs for small elements
-                cursor: 'pointer',
-                transition: 'transform 0.2s',
-                border:
-                  selectedCorrelation?.id === item.id
-                    ? `2px solid ${theme.palette.primary.main}`
-                    : '1px solid transparent',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                gap: 'var(--ob-space-100)',
+                p: 'var(--ob-space-075)',
+                borderRadius: 'var(--ob-radius-xs)',
+                border: isSelected
+                  ? 'var(--ob-border-fine-hover)'
+                  : 'var(--ob-border-fine)',
+                background: isSelected
+                  ? 'var(--ob-color-surface-strong)'
+                  : 'transparent',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
                 '&:hover': {
-                  transform: 'scale(1.1)',
-                  zIndex: 10,
-                  boxShadow: theme.shadows[4],
+                  background: 'var(--ob-color-surface-strong)',
                 },
               }}
             >
-              <Typography
-                variant="caption"
-                fontWeight="bold"
+              {/* Coefficient badge */}
+              <Box
                 sx={{
-                  color: 'var(--ob-color-text-inverse)',
-                  textShadow: '0 1px 2px rgba(0 0 0 / 0.8)',
+                  minWidth: 48,
+                  textAlign: 'center',
+                  fontFamily: 'var(--ob-font-family-mono)',
+                  fontSize: 'var(--ob-font-size-sm)',
+                  fontWeight: 'var(--ob-font-weight-bold)',
+                  color,
                 }}
               >
-                {item.coefficient.toFixed(1)}
-              </Typography>
+                {item.coefficient > 0 ? '+' : ''}
+                {item.coefficient.toFixed(2)}
+              </Box>
+
+              {/* Driver → Outcome */}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  sx={{
+                    fontSize: 'var(--ob-font-size-sm)',
+                    fontWeight: 'var(--ob-font-weight-medium)',
+                    color: 'var(--ob-color-text-primary)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {item.driver}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 'var(--ob-font-size-xs)',
+                    color: 'var(--ob-color-text-muted)',
+                  }}
+                >
+                  → {item.outcome}
+                </Typography>
+              </Box>
+
+              {/* p-value */}
+              <Tooltip title={`p = ${item.pValue.toFixed(3)}`} arrow>
+                <Typography
+                  sx={{
+                    fontSize: 'var(--ob-font-size-2xs)',
+                    color: 'var(--ob-color-text-muted)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {getSignificanceLabel(item.pValue)}
+                </Typography>
+              </Tooltip>
             </Box>
-          ))}
-        </Box>
+          )
+        })}
       </Box>
 
-      {/* Interaction Side Panel */}
+      {/* Detail panel */}
       {selectedCorrelation && (
-        <Fade in={!!selectedCorrelation}>
-          <Paper
-            elevation={6}
+        <Box
+          sx={{
+            mt: 'var(--ob-space-150)',
+            p: 'var(--ob-space-150)',
+            borderRadius: 'var(--ob-radius-sm)',
+            background: 'var(--ob-color-bg-surface-elevated)',
+            border: 'var(--ob-border-fine-strong)',
+          }}
+        >
+          <Box
             sx={{
-              width: 300,
-              p: 3,
-              borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
-              bgcolor: alpha(theme.palette.background.paper, 0.8),
-              backdropFilter: 'blur(var(--ob-blur-lg))',
-              borderLeft: `4px solid ${getColor(selectedCorrelation.coefficient)}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              mb: 'var(--ob-space-100)',
             }}
           >
-            <Box display="flex" justifyContent="space-between" mb={2}>
-              <Typography variant="h6" fontSize="1rem" fontWeight={700}>
-                Correlation Detail
-              </Typography>
-              <IconButton
-                size="small"
-                onClick={() => setSelectedCorrelation(null)}
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-base)',
+                fontWeight: 'var(--ob-font-weight-semibold)',
+                color: 'var(--ob-color-text-primary)',
+              }}
+            >
+              Correlation Detail
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={() => {
+                setSelectedCorrelation(null)
+              }}
+              sx={{ color: 'var(--ob-color-text-muted)' }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-075)',
+            }}
+          >
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-2xs)',
+                  textTransform: 'uppercase',
+                  letterSpacing: 'var(--ob-letter-spacing-wider)',
+                  color: 'var(--ob-color-text-muted)',
+                }}
               >
-                <CloseIcon fontSize="small" />
-              </IconButton>
+                Driver
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-sm)',
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                  color: 'var(--ob-color-text-primary)',
+                }}
+              >
+                {selectedCorrelation.driver}
+              </Typography>
             </Box>
 
-            <Typography variant="caption" color="text.secondary">
-              DRIVER
-            </Typography>
-            <Typography variant="body1" fontWeight={600} gutterBottom>
-              {selectedCorrelation.driver}
-            </Typography>
-
-            <Box my={2} textAlign="center">
+            <Box sx={{ textAlign: 'center', py: 'var(--ob-space-075)' }}>
               <Typography
-                variant="h4"
-                fontWeight={800}
                 sx={{
-                  color: getColor(selectedCorrelation.coefficient),
-                  filter: 'brightness(1.2)',
+                  fontFamily: 'var(--ob-font-family-mono)',
+                  fontSize: 'var(--ob-font-size-2xl)',
+                  fontWeight: 'var(--ob-font-weight-bold)',
+                  color: getCellColor(selectedCorrelation.coefficient),
                 }}
               >
                 {selectedCorrelation.coefficient > 0 ? '+' : ''}
                 {selectedCorrelation.coefficient.toFixed(2)}
               </Typography>
-              <Typography variant="caption">Correlation Coefficient</Typography>
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'var(--ob-color-text-muted)',
+                }}
+              >
+                Correlation coefficient &middot; p ={' '}
+                {selectedCorrelation.pValue.toFixed(3)}
+              </Typography>
             </Box>
 
-            <Typography variant="caption" color="text.secondary">
-              AFFECTS
-            </Typography>
-            <Typography variant="body1" fontWeight={600} gutterBottom>
-              {selectedCorrelation.outcome}
-            </Typography>
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-2xs)',
+                  textTransform: 'uppercase',
+                  letterSpacing: 'var(--ob-letter-spacing-wider)',
+                  color: 'var(--ob-color-text-muted)',
+                }}
+              >
+                Affects
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-sm)',
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                  color: 'var(--ob-color-text-primary)',
+                }}
+              >
+                {selectedCorrelation.outcome}
+              </Typography>
+            </Box>
 
             <Typography
-              variant="body2"
               sx={{
-                mt: 2,
-                p: 1.5,
-                bgcolor: alpha(theme.palette.action.hover, 0.05),
-                borderRadius: '4px', // Square Cyber-Minimalism: sm for panels
+                mt: 'var(--ob-space-075)',
+                fontSize: 'var(--ob-font-size-sm)',
+                color: 'var(--ob-color-text-secondary)',
+                fontStyle: 'italic',
               }}
             >
               {selectedCorrelation.coefficient > 0
-                ? 'Strong positive correlation. Increasing the driver likely increases the outcome.'
-                : 'Negative correlation. Increasing the driver likely decreases the outcome.'}
+                ? 'Positive correlation — increasing the driver metric tends to increase the outcome.'
+                : 'Negative correlation — increasing the driver metric tends to decrease the outcome.'}{' '}
+              {getSignificanceLabel(selectedCorrelation.pValue)} at p ={' '}
+              {selectedCorrelation.pValue.toFixed(3)}.
             </Typography>
-          </Paper>
-        </Fade>
+          </Box>
+        </Box>
       )}
     </Box>
   )

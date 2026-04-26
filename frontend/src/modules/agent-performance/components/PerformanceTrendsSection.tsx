@@ -31,9 +31,9 @@ export function PerformanceTrendsSection({
   primaryCurrency,
 }: PerformanceTrendsSectionProps) {
   return (
-    <Grid container spacing={3}>
+    <Grid container spacing="var(--ob-space-200)">
       <Grid item xs={12} md={6}>
-        <Card variant="default" sx={{ p: 2, height: 320 }}>
+        <Card variant="default" sx={{ p: 'var(--ob-space-200)', height: 320 }}>
           <Typography variant="h6" gutterBottom>
             {pipelineHeading}
           </Typography>
@@ -73,7 +73,7 @@ export function PerformanceTrendsSection({
         </Card>
       </Grid>
       <Grid item xs={12} md={6}>
-        <Card variant="default" sx={{ p: 2, height: 320 }}>
+        <Card variant="default" sx={{ p: 'var(--ob-space-200)', height: 320 }}>
           <Typography variant="h6" gutterBottom>
             {conversionHeading}
           </Typography>

@@ -212,7 +212,7 @@ export function InteractiveFloorplate({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            p: 4,
+            p: 'var(--ob-space-300)',
             zIndex: 5,
           }}
         >
@@ -226,8 +226,8 @@ export function InteractiveFloorplate({
               backdropFilter: 'blur(var(--ob-blur-md))',
               boxShadow: '0 0 36px rgba(0, 214, 255, 0.08)',
               textAlign: 'center',
-              px: 4,
-              py: 5,
+              px: 'var(--ob-space-300)',
+              py: 'var(--ob-space-300)',
             }}
           >
             <Box
@@ -235,7 +235,7 @@ export function InteractiveFloorplate({
                 width: 72,
                 height: 72,
                 mx: 'auto',
-                mb: 2,
+                mb: 'var(--ob-space-200)',
                 borderRadius: '50%',
                 border: '1px solid rgba(0, 214, 255, 0.28)',
                 background: 'rgba(0, 214, 255, 0.08)',
@@ -266,10 +266,10 @@ export function InteractiveFloorplate({
               sx={{
                 color: 'var(--ob-brand-400)',
                 fontSize: 'var(--ob-font-size-xs)',
-                fontWeight: 700,
+                fontWeight: 'var(--ob-font-weight-bold)',
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                mb: 1.5,
+                mb: 'var(--ob-space-150)',
               }}
             >
               {displayState === 'loading'
@@ -280,9 +280,9 @@ export function InteractiveFloorplate({
               sx={{
                 color: 'var(--ob-color-text-primary)',
                 fontSize: 'var(--ob-font-size-xl)',
-                fontWeight: 700,
-                lineHeight: 1.2,
-                mb: 1,
+                fontWeight: 'var(--ob-font-weight-bold)',
+                lineHeight: 'var(--ob-line-height-tight)',
+                mb: 'var(--ob-space-100)',
               }}
             >
               {displayState === 'loading'
