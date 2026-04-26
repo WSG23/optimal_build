@@ -72,7 +72,7 @@ export function HeroMetric({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          mb: 1,
+          mb: 'var(--ob-space-100)',
         }}
       >
         <Typography
@@ -104,12 +104,18 @@ export function HeroMetric({
         )}
       </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'baseline', mt: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'baseline',
+          mt: 'var(--ob-space-100)',
+        }}
+      >
         <Typography
           variant="h3"
           sx={{
             fontWeight: 'var(--ob-font-weight-bold)',
-            lineHeight: 1,
+            lineHeight: 'var(--ob-line-height-none)',
             color: getTextColor(),
             letterSpacing: 'var(--ob-letter-spacing-tighter)',
           }}
@@ -120,7 +126,7 @@ export function HeroMetric({
           <Typography
             variant="h6"
             sx={{
-              ml: 0.5,
+              ml: 'var(--ob-space-050)',
               fontWeight: 'var(--ob-font-weight-regular)',
               color:
                 variant === 'primary'
@@ -135,7 +141,14 @@ export function HeroMetric({
 
       {/* Trend Indicator */}
       {trend && (
-        <Box sx={{ display: 'flex', alignItems: 'center', mt: 2, gap: 0.5 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            mt: 'var(--ob-space-200)',
+            gap: 'var(--ob-space-050)',
+          }}
+        >
           {trend.direction === 'up' ? (
             <TrendingUp fontSize="small" color="success" />
           ) : (

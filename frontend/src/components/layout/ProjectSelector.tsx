@@ -139,7 +139,7 @@ export function ProjectSelector() {
           borderRadius: 'var(--ob-radius-pill)',
           px: 'var(--ob-space-150)',
           textTransform: 'none',
-          fontWeight: 600,
+          fontWeight: 'var(--ob-font-weight-semibold)',
           color: currentProject ? 'text.primary' : 'text.secondary',
           bgcolor: alpha(theme.palette.background.paper, 0.5),
           border: 1,
@@ -177,7 +177,7 @@ export function ProjectSelector() {
               letterSpacing: 'var(--ob-letter-spacing-wider)',
               textTransform: 'uppercase',
               color: 'text.secondary',
-              fontWeight: 700,
+              fontWeight: 'var(--ob-font-weight-bold)',
             }}
           >
             Project Context
@@ -209,7 +209,11 @@ export function ProjectSelector() {
               py: 'var(--ob-space-150)',
             }}
           >
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack
+              direction="row"
+              spacing="var(--ob-space-100)"
+              alignItems="center"
+            >
               <CircularProgress size={16} />
               <Typography variant="body2">Loading projects...</Typography>
             </Stack>
@@ -222,7 +226,11 @@ export function ProjectSelector() {
               selected={project.id === currentProject?.id}
               onClick={() => handleSelectProject(project.id)}
             >
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack
+                direction="row"
+                spacing="var(--ob-space-100)"
+                alignItems="center"
+              >
                 <SwapHorizIcon fontSize="small" />
                 <Typography variant="body2">{project.name}</Typography>
               </Stack>
@@ -242,7 +250,11 @@ export function ProjectSelector() {
             handleCloseMenu()
           }}
         >
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack
+            direction="row"
+            spacing="var(--ob-space-100)"
+            alignItems="center"
+          >
             <AddCircleOutlineIcon fontSize="small" />
             <Typography variant="body2">Create project</Typography>
           </Stack>
@@ -272,7 +284,7 @@ export function ProjectSelector() {
               color="error"
               role="alert"
               aria-live="assertive"
-              sx={{ mt: 1 }}
+              sx={{ mt: 'var(--ob-space-100)' }}
             >
               {createError}
             </Typography>

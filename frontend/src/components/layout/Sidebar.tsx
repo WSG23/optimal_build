@@ -87,7 +87,7 @@ export function Sidebar({ workspace = 'developer' }: SidebarProps) {
       }}
     >
       {/* Brand */}
-      <Box sx={{ p: 4, mb: 1 }}>
+      <Box sx={{ p: 'var(--ob-space-300)', mb: 'var(--ob-space-100)' }}>
         <Typography
           variant="h6"
           sx={{
@@ -110,8 +110,15 @@ export function Sidebar({ workspace = 'developer' }: SidebarProps) {
       </Box>
 
       {/* Nav */}
-      <Box component="nav" sx={{ flexGrow: 1, px: 2, pb: 4 }}>
-        <Box sx={{ mb: 2 }}>
+      <Box
+        component="nav"
+        sx={{
+          flexGrow: 1,
+          px: 'var(--ob-space-200)',
+          pb: 'var(--ob-space-300)',
+        }}
+      >
+        <Box sx={{ mb: 'var(--ob-space-200)' }}>
           <Button
             component={Link}
             to={homePath}
@@ -119,33 +126,33 @@ export function Sidebar({ workspace = 'developer' }: SidebarProps) {
             sx={{
               justifyContent: 'flex-start',
               color: path === homePath ? 'primary.main' : 'text.secondary',
-              px: 2,
-              mb: 2,
+              px: 'var(--ob-space-200)',
+              mb: 'var(--ob-space-200)',
             }}
           >
             {homeLabel}
           </Button>
         </Box>
 
-        <Stack spacing={3}>
+        <Stack spacing="var(--ob-space-200)">
           {navGroups.map((group) => (
             <Box key={group.title}>
               <Typography
                 variant="caption"
                 sx={{
-                  px: 2,
-                  mb: 1,
+                  px: 'var(--ob-space-200)',
+                  mb: 'var(--ob-space-100)',
                   display: 'block',
-                  fontWeight: 700,
+                  fontWeight: 'var(--ob-font-weight-bold)',
                   color: 'text.disabled',
                   textTransform: 'uppercase',
-                  fontSize: '0.7rem',
+                  fontSize: 'var(--ob-font-size-2xs)',
                   letterSpacing: '0.1em',
                 }}
               >
                 {group.title}
               </Typography>
-              <Stack spacing={0.5}>
+              <Stack spacing="var(--ob-space-050)">
                 {group.items.map((item) => {
                   const isActive = path.startsWith(item.path)
                   return (
@@ -166,12 +173,12 @@ export function Sidebar({ workspace = 'developer' }: SidebarProps) {
                           ? alpha(theme.palette.primary.main, 0.36)
                           : 'transparent',
                         borderRadius: 'var(--ob-radius-sm)',
-                        px: 2,
-                        py: 1.25,
+                        px: 'var(--ob-space-200)',
+                        py: 'var(--ob-space-125)',
                         textAlign: 'left',
                         textTransform: 'none',
                         fontWeight: isActive ? 600 : 400,
-                        fontSize: '0.85rem',
+                        fontSize: 'var(--ob-font-size-sm)',
                         transition: 'background 0.2s ease, color 0.2s ease',
                         '&:hover': {
                           bgcolor: isActive

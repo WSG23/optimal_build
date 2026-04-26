@@ -54,7 +54,10 @@ export class ErrorBoundary extends React.Component<
       >
         <Typography
           variant="h4"
-          sx={{ fontSize: 'var(--ob-font-size-xl)', fontWeight: 600 }}
+          sx={{
+            fontSize: 'var(--ob-font-size-xl)',
+            fontWeight: 'var(--ob-font-weight-semibold)',
+          }}
         >
           Something went wrong
         </Typography>

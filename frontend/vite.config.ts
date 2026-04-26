@@ -68,6 +68,7 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       port: Number.isFinite(serverPort) ? serverPort : 3000,
+      strictPort: false, // Auto-pick next available port if taken
       host,
       fs: {
         allow: [path.resolve(__dirname, '..')],

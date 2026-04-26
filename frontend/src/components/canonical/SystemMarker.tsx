@@ -27,7 +27,9 @@ export function SystemMarker({
         fontSize: 'var(--ob-font-size-xs)',
         fontWeight: 'var(--ob-font-weight-bold)',
         letterSpacing: 'var(--ob-letter-spacing-widest)',
-        color: active ? 'var(--ob-color-neon-cyan)' : 'var(--ob-text-tertiary)',
+        color: active
+          ? 'var(--ob-color-brand-primary)'
+          : 'var(--ob-text-tertiary)',
         ...sx,
       }}
     >

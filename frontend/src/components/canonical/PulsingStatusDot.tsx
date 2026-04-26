@@ -21,7 +21,7 @@ export interface PulsingStatusDotProps {
 
 const statusColors = {
   live: {
-    bg: 'var(--ob-color-neon-cyan)',
+    bg: 'var(--ob-color-brand-primary)',
     glow: 'var(--ob-glow-status-live)',
   },
   success: {
@@ -43,10 +43,10 @@ const statusColors = {
 }
 
 const sizes = {
-  sm: 6,
-  md: 8,
-  lg: 10,
-}
+  sm: '6px',
+  md: 'var(--ob-space-050)',
+  lg: '10px',
+} as const
 
 /**
  * PulsingStatusDot - Animated Status Indicator

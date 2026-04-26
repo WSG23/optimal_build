@@ -1,13 +1,11 @@
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
+import { ErrorBoundary } from '../ErrorBoundary'
+import { NavErrorFallback } from './NavErrorFallback'
+import { MobileNavDrawer } from './MobileNavDrawer'
 import {
   Box,
   Button,
-  Divider,
-  Drawer,
   IconButton,
-  List,
-  ListItemButton,
-  ListItemText,
   Stack,
   Tooltip,
   Typography,
@@ -20,10 +18,13 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import MenuIcon from '@mui/icons-material/Menu'
 import PushPinIcon from '@mui/icons-material/PushPin'
 import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined'
+import SearchIcon from '@mui/icons-material/Search'
 import { Link, useRouterPath } from '../../router'
-import { useTranslation } from '../../i18n'
 import { useDeveloperMode } from '../../contexts/useDeveloperMode'
 import { useProject } from '../../contexts/useProject'
+import { useNavGroups } from '../../hooks/useNavGroups'
+import { useNavReveal } from '../../hooks/useNavReveal'
+import { useScrollAffordance } from '../../hooks/useScrollAffordance'
 
 const ProjectSelector = lazy(async () => {
   const module = await import('./ProjectSelector')
@@ -35,12 +36,6 @@ const TopUtilityMenu = lazy(async () => {
   return { default: module.TopUtilityMenu }
 })
 
-type NavGroup = {
-  title?: string
-  items: Array<{ path: string; label: string; description?: string }>
-}
-
-const UTILITY_BAR_HEIGHT = 'var(--ob-space-250)'
 const NAV_BAR_HEIGHT = 'var(--ob-space-300)'
 
 interface TopNavProps {
@@ -49,158 +44,69 @@ interface TopNavProps {
 }
 
 export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
-  const { t } = useTranslation()
   const path = useRouterPath()
   const theme = useTheme()
   const { isDeveloperMode } = useDeveloperMode()
   const { currentProject } = useProject()
+  const navGroups = useNavGroups()
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+
+  const { isRevealed, reveal, scheduleHide } = useNavReveal({
+    isPinned,
+  })
+  const { navRef, canScrollLeft, canScrollRight, scroll, checkScroll } =
+    useScrollAffordance()
+
+  const [isOnline, setIsOnline] = useState(
+    () => typeof navigator === 'undefined' || navigator.onLine,
+  )
+
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true)
+    const goOffline = () => setIsOnline(false)
+    window.addEventListener('online', goOnline)
+    window.addEventListener('offline', goOffline)
+    return () => {
+      window.removeEventListener('online', goOnline)
+      window.removeEventListener('offline', goOffline)
+    }
+  }, [])
 
   const projectBase = currentProject?.id
     ? `/projects/${currentProject.id}`
     : null
 
-  const hostLabel = useMemo(() => {
-    if (typeof window === 'undefined') return 'localhost'
-    return window.location.host || 'localhost'
-  }, [])
+  // First-use tooltip for command palette
+  const [cmdkTooltipOpen, setCmdkTooltipOpen] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return !window.localStorage.getItem('ob_cmdk_seen')
+  })
 
-  const navGroups: NavGroup[] = useMemo(() => {
-    const groups: NavGroup[] = [
-      {
-        title: 'Analysis',
-        items: [
-          {
-            path: '/visualizations/intelligence',
-            label: t('nav.intelligence'),
-            description: 'Market intelligence and insights',
-          },
-          {
-            path: projectBase ? `${projectBase}/feasibility` : '/projects',
-            label: t('nav.feasibility'),
-            description: 'Development feasibility analysis',
-          },
-          {
-            path: projectBase ? `${projectBase}/finance` : '/projects',
-            label: t('nav.finance'),
-            description: 'Financial modeling and scenarios',
-          },
-        ],
-      },
-      {
-        title: 'Field',
-        items: [
-          {
-            path: '/app/capture',
-            label: t('nav.capture'),
-            description: 'GPS site capture and observations',
-          },
-        ],
-      },
-    ]
+  useEffect(() => {
+    if (!cmdkTooltipOpen) return
+    const timer = window.setTimeout(() => {
+      window.localStorage.setItem('ob_cmdk_seen', 'true')
+      setCmdkTooltipOpen(false)
+    }, 5000)
+    return () => window.clearTimeout(timer)
+  }, [cmdkTooltipOpen])
 
-    if (isDeveloperMode) {
-      groups.push({
-        title: 'Execution',
-        items: [
-          {
-            path: projectBase
-              ? `${projectBase}/due-diligence`
-              : '/app/due-diligence',
-            label: t('nav.dueDiligence'),
-            description: 'Property condition and inspection history',
-          },
-          {
-            path: projectBase ? `${projectBase}/feasibility` : '/projects',
-            label: t('nav.assetFeasibility'),
-            description: 'Multi-use optimizer and asset modeling',
-          },
-          {
-            path: projectBase ? `${projectBase}/finance` : '/projects',
-            label: t('nav.financialControl'),
-            description: 'Development economics and financing',
-          },
-          {
-            path: projectBase ? `${projectBase}/phases` : '/projects',
-            label: t('nav.phaseManagement'),
-            description: 'Multi-phase development sequencing',
-          },
-          {
-            path: projectBase ? `${projectBase}/team` : '/projects',
-            label: t('nav.teamCoordination'),
-            description: 'Consultant coordination and approvals',
-          },
-          {
-            path: projectBase ? `${projectBase}/regulatory` : '/projects',
-            label: t('nav.regulatoryNavigation'),
-            description: 'Authority submissions and compliance',
-          },
-        ],
-      })
+  // Dismiss first-use tooltip when command palette is opened
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        if (cmdkTooltipOpen) {
+          window.localStorage.setItem('ob_cmdk_seen', 'true')
+          setCmdkTooltipOpen(false)
+        }
+      }
     }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [cmdkTooltipOpen])
 
-    groups.push({
-      title: 'CAD',
-      items: [
-        {
-          path: '/cad/upload',
-          label: t('nav.upload'),
-          description: 'Upload CAD files for analysis',
-        },
-        {
-          path: '/cad/detection',
-          label: t('nav.detection'),
-          description: 'AI-powered feature detection',
-        },
-        {
-          path: '/cad/pipelines',
-          label: t('nav.pipelines'),
-          description: 'Processing pipeline status',
-        },
-      ],
-    })
-
-    return groups
-  }, [isDeveloperMode, t, projectBase])
-
-  const navRef = useRef<HTMLDivElement | null>(null)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(false)
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-  const [isRevealed, setIsRevealed] = useState(false)
-  const hideTimerRef = useRef<number | null>(null)
-
-  const checkScroll = () => {
-    const node = navRef.current
-    if (!node) return
-
-    const { scrollLeft, scrollWidth, clientWidth } = node
-    setCanScrollLeft(scrollLeft > 0)
-    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1)
-  }
-
-  useEffect(() => {
-    checkScroll()
-    if (typeof window === 'undefined') return
-    window.addEventListener('resize', checkScroll)
-    return () => window.removeEventListener('resize', checkScroll)
-  }, [])
-
-  useEffect(() => {
-    // Reveal on any pin state change so the user sees the transition.
-    setIsRevealed(true)
-  }, [isPinned])
-
-  const scroll = (direction: 'left' | 'right') => {
-    const node = navRef.current
-    if (!node) return
-
-    const scrollAmount = 240
-    node.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth',
-    })
-  }
 
   const renderItem = (item: {
     path: string
@@ -208,40 +114,52 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
     description?: string
   }) => {
     const isActive = path === item.path || path.startsWith(`${item.path}/`)
+    const needsProject = !projectBase && item.path === '/projects'
+    const tooltipTitle = needsProject
+      ? 'Select a project first'
+      : (item.description ?? '')
     const button = (
       <Button
         key={`${item.path}-${item.label}`}
         component={Link}
         to={item.path}
         variant="text"
+        disabled={needsProject}
         sx={{
           justifyContent: 'center',
           color: isActive ? 'var(--ob-color-brand-primary)' : 'text.secondary',
           bgcolor: 'transparent',
           borderRadius: 0,
           px: 'var(--ob-space-150)',
-          py: 'var(--ob-space-100)',
+          py: 'var(--ob-space-050)',
           textTransform: 'uppercase',
           fontWeight: isActive ? 800 : 600,
           fontSize: 'var(--ob-font-size-xs)',
           letterSpacing: 'var(--ob-letter-spacing-wider)',
           whiteSpace: 'nowrap',
           position: 'relative',
-          textShadow: isActive ? 'none' : 'none',
+          '&:focus-visible': {
+            outline: '2px solid var(--ob-color-brand-primary)',
+            outlineOffset: 2,
+          },
           '&:hover': {
             bgcolor: 'transparent',
             color: isActive ? 'var(--ob-color-brand-primary)' : 'text.primary',
+          },
+          '&.Mui-disabled': {
+            color: 'text.disabled',
+            pointerEvents: 'auto',
+            cursor: 'not-allowed',
           },
           '&::after': isActive
             ? {
                 content: '""',
                 position: 'absolute',
-                bottom: '-4px',
+                bottom: 'calc(-1 * var(--ob-space-025))',
                 left: 0,
                 right: 0,
                 height: '2px',
                 bgcolor: 'var(--ob-color-brand-primary)',
-                boxShadow: 'none',
               }
             : {},
         }}
@@ -249,11 +167,11 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
         {item.label}
       </Button>
     )
-    if (item.description) {
+    if (tooltipTitle) {
       return (
         <Tooltip
           key={`${item.path}-${item.label}`}
-          title={item.description}
+          title={tooltipTitle}
           placement="bottom"
           enterDelay={400}
           arrow
@@ -265,26 +183,11 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
     return button
   }
 
-  const cancelHide = () => {
-    if (typeof window === 'undefined') return
-    if (hideTimerRef.current === null) return
-    window.clearTimeout(hideTimerRef.current)
-    hideTimerRef.current = null
-  }
-
-  const scheduleHide = () => {
-    if (typeof window === 'undefined') return
-    cancelHide()
-    hideTimerRef.current = window.setTimeout(() => {
-      setIsRevealed(false)
-      hideTimerRef.current = null
-    }, 350)
-  }
-
-  const reveal = () => {
-    cancelHide()
-    setIsRevealed(true)
-  }
+  const headerTransition = prefersReducedMotion
+    ? 'none'
+    : isPinned
+      ? 'none'
+      : 'transform 240ms ease'
 
   return (
     <>
@@ -292,7 +195,9 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
         <Box
           component="button"
           aria-label="Reveal navigation"
+          aria-expanded={isRevealed}
           onMouseEnter={reveal}
+          onTouchStart={reveal}
           onFocus={reveal}
           onKeyDown={(e: React.KeyboardEvent) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -311,6 +216,9 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
             border: 'none',
             cursor: 'pointer',
             padding: 0,
+            '@media (pointer: coarse)': {
+              height: 44,
+            },
             '&:focus-visible': {
               outline: '2px solid var(--ob-color-brand-primary)',
               outlineOffset: -2,
@@ -321,7 +229,6 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
 
       <Box
         component="header"
-        aria-expanded={isPinned || isRevealed}
         onMouseEnter={() => {
           if (!isPinned) reveal()
         }}
@@ -344,83 +251,17 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
           zIndex: 'var(--ob-z-fixed)',
           transform:
             isPinned || isRevealed ? 'translateY(0)' : 'translateY(-100%)',
-          transition: isPinned ? 'none' : 'transform 240ms ease',
+          transition: headerTransition,
           pointerEvents: isPinned || isRevealed ? 'auto' : 'none',
         }}
       >
         <Box
-          className="ob-glass"
-          sx={{
-            height: UTILITY_BAR_HEIGHT,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            px: 'var(--ob-space-200)',
-            borderBottom: 'var(--ob-border-fine)',
-          }}
-        >
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing="var(--ob-space-100)"
-            sx={{ display: { xs: 'none', sm: 'flex' } }}
-          >
-            <Box
-              sx={{
-                width: 'var(--ob-space-025)',
-                height: 'var(--ob-space-025)',
-                borderRadius: 'var(--ob-radius-pill)',
-                bgcolor: 'success.main',
-              }}
-            />
-            <Typography
-              sx={{
-                color: 'text.secondary',
-                fontFamily: 'var(--ob-font-family-mono)',
-                fontSize: 'var(--ob-font-size-xs)',
-                letterSpacing: 'var(--ob-letter-spacing-wider)',
-              }}
-            >
-              {hostLabel}
-            </Typography>
-          </Stack>
-
-          <Tooltip title={isPinned ? 'Unpin header (auto-hide)' : 'Pin header'}>
-            <IconButton
-              aria-label={isPinned ? 'Unpin header' : 'Pin header'}
-              onClick={onTogglePinned}
-              sx={{
-                borderRadius: 'var(--ob-radius-pill)',
-                border: 1,
-                borderColor: alpha(theme.palette.divider, 0.2),
-                width: 'var(--ob-space-250)',
-                height: 'var(--ob-space-250)',
-                color: isPinned ? 'text.secondary' : 'primary.main',
-                background: alpha(theme.palette.background.paper, 0.05),
-                backdropFilter: 'blur(var(--ob-blur-sm))',
-                '&:hover': {
-                  color: isPinned ? 'text.primary' : 'primary.main',
-                  background: alpha(theme.palette.text.primary, 0.05),
-                  borderColor: alpha(theme.palette.text.primary, 0.2),
-                },
-              }}
-            >
-              {isPinned ? (
-                <PushPinIcon fontSize="small" />
-              ) : (
-                <PushPinOutlinedIcon fontSize="small" />
-              )}
-            </IconButton>
-          </Tooltip>
-        </Box>
-
-        <Box
           component="nav"
           aria-label="Primary"
-          className="ob-glass"
           sx={{
             height: NAV_BAR_HEIGHT,
             borderBottom: 'var(--ob-border-fine)',
+            bgcolor: 'background.default',
           }}
         >
           <Stack
@@ -430,6 +271,11 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
               height: '100%',
               px: 'var(--ob-space-200)',
               gap: 'var(--ob-space-150)',
+              // Mobile: reduce horizontal padding
+              '@media (max-width: 600px)': {
+                px: 'var(--ob-space-100)',
+                gap: 'var(--ob-space-075)',
+              },
             }}
           >
             <Button
@@ -460,37 +306,67 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    borderRadius: 'var(--ob-radius-sm)',
+                    borderRadius: 'var(--ob-radius-xs)',
                     border: '1px solid var(--ob-color-brand-primary)',
-                    boxShadow: 'none',
                     bgcolor: 'var(--ob-color-brand-muted)',
                   }}
                 >
-                  <Box
+                  <Typography
                     component="span"
                     sx={{
                       color: 'var(--ob-color-brand-primary)',
-                      fontSize: 'var(--ob-font-size-md)',
-                      lineHeight: 1,
+                      fontFamily: 'var(--ob-font-family-mono)',
+                      fontSize: 'var(--ob-font-size-xs)',
+                      fontWeight: 'var(--ob-font-weight-bold)',
+                      lineHeight: 'var(--ob-line-height-none)',
+                      letterSpacing: '-0.02em',
                     }}
                   >
-                    ⬡
-                  </Box>
+                    OB
+                  </Typography>
                 </Box>
                 <Typography
                   component="span"
                   sx={{
                     display: { xs: 'none', sm: 'inline' },
                     color: 'var(--ob-color-brand-primary)',
-                    textShadow: 'none',
-                    fontWeight: 700,
+                    fontWeight: 'var(--ob-font-weight-bold)',
                     letterSpacing: 'var(--ob-letter-spacing-wider)',
                     fontSize: 'var(--ob-font-size-md)',
-                    lineHeight: 1,
+                    lineHeight: 'var(--ob-line-height-none)',
                   }}
                 >
                   OPTIMAL BUILD
                 </Typography>
+                {isDeveloperMode && (
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: 'var(--ob-font-size-2xs)',
+                      fontFamily: 'var(--ob-font-family-mono)',
+                      fontWeight: 'var(--ob-font-weight-bold)',
+                      lineHeight: 'var(--ob-line-height-none)',
+                      px: 'var(--ob-space-050)',
+                      py: '1px',
+                      borderRadius: 'var(--ob-radius-xs)',
+                      border: 'var(--ob-border-fine)',
+                      color: 'text.secondary',
+                      letterSpacing: 'var(--ob-letter-spacing-wider)',
+                    }}
+                  >
+                    ADV
+                  </Box>
+                )}
+                <Box
+                  aria-label={isOnline ? 'Connected' : 'Offline'}
+                  sx={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: 'var(--ob-radius-pill)',
+                    bgcolor: isOnline ? 'success.main' : 'warning.main',
+                    flexShrink: 0,
+                  }}
+                />
               </Stack>
             </Button>
 
@@ -527,7 +403,7 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
                     onClick={() => scroll('left')}
                     size="small"
                     sx={{
-                      borderRadius: 'var(--ob-radius-pill)',
+                      borderRadius: 'var(--ob-radius-xs)',
                       border: 1,
                       borderColor: alpha(theme.palette.divider, 0.4),
                       bgcolor: alpha(theme.palette.background.paper, 0.45),
@@ -570,7 +446,7 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
                           sx={{
                             fontSize: 'var(--ob-font-size-2xs)',
                             fontFamily: 'var(--ob-font-family-mono)',
-                            fontWeight: 700,
+                            fontWeight: 'var(--ob-font-weight-bold)',
                             color: 'text.disabled',
                             textTransform: 'uppercase',
                             letterSpacing: 'var(--ob-letter-spacing-widest)',
@@ -612,7 +488,7 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
                     onClick={() => scroll('right')}
                     size="small"
                     sx={{
-                      borderRadius: 'var(--ob-radius-pill)',
+                      borderRadius: 'var(--ob-radius-xs)',
                       border: 1,
                       borderColor: alpha(theme.palette.divider, 0.4),
                       bgcolor: alpha(theme.palette.background.paper, 0.45),
@@ -648,109 +524,125 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
                 borderLeft: 1,
                 borderColor: alpha(theme.palette.divider, 0.25),
                 gap: 'var(--ob-space-100)',
+                // Mobile: tighten utility cluster
+                '@media (max-width: 600px)': {
+                  pl: 'var(--ob-space-075)',
+                  gap: 'var(--ob-space-050)',
+                  ml: 'auto',
+                },
               }}
             >
-              <Suspense fallback={null}>
-                <ProjectSelector />
-                <TopUtilityMenu />
-              </Suspense>
+              <Tooltip
+                title={
+                  cmdkTooltipOpen
+                    ? 'Search anything with \u2318K'
+                    : 'Search commands (\u2318K)'
+                }
+                open={cmdkTooltipOpen || undefined}
+                placement="bottom"
+                arrow={cmdkTooltipOpen}
+              >
+                <Button
+                  aria-label="Open command palette"
+                  onClick={() => {
+                    if (cmdkTooltipOpen) {
+                      window.localStorage.setItem('ob_cmdk_seen', 'true')
+                      setCmdkTooltipOpen(false)
+                    }
+                    window.dispatchEvent(
+                      new KeyboardEvent('keydown', {
+                        key: 'k',
+                        metaKey: true,
+                        bubbles: true,
+                      }),
+                    )
+                  }}
+                  variant="text"
+                  size="small"
+                  sx={{
+                    minWidth: 0,
+                    px: 'var(--ob-space-075)',
+                    py: 'var(--ob-space-025)',
+                    borderRadius: 'var(--ob-radius-xs)',
+                    border: 'var(--ob-border-fine)',
+                    color: 'text.secondary',
+                    fontSize: 'var(--ob-font-size-xs)',
+                    gap: 'var(--ob-space-050)',
+                    textTransform: 'none',
+                    '&:hover': {
+                      color: 'text.primary',
+                      borderColor: alpha(theme.palette.text.primary, 0.2),
+                    },
+                  }}
+                >
+                  <SearchIcon sx={{ fontSize: 14 }} />
+                  <Box
+                    component="kbd"
+                    sx={{
+                      fontSize: 'var(--ob-font-size-2xs)',
+                      fontFamily: 'var(--ob-font-family-mono)',
+                      opacity: 0.7,
+                      // Hide keyboard hint on mobile
+                      display: { xs: 'none', sm: 'inline' },
+                    }}
+                  >
+                    ⌘K
+                  </Box>
+                </Button>
+              </Tooltip>
+              <ErrorBoundary fallback={<NavErrorFallback />}>
+                <Suspense
+                  fallback={
+                    <Box
+                      sx={{
+                        width: 'var(--ob-space-250)',
+                        height: 'var(--ob-space-250)',
+                        borderRadius: 'var(--ob-radius-xs)',
+                        bgcolor: 'action.hover',
+                        animation: 'ob-fade-in 1s ease infinite alternate',
+                      }}
+                    />
+                  }
+                >
+                  <ProjectSelector />
+                  <TopUtilityMenu />
+                </Suspense>
+              </ErrorBoundary>
+              <Tooltip
+                title={isPinned ? 'Unpin header (auto-hide)' : 'Pin header'}
+              >
+                <IconButton
+                  aria-label={isPinned ? 'Unpin header' : 'Pin header'}
+                  onClick={onTogglePinned}
+                  size="small"
+                  sx={{
+                    borderRadius: 'var(--ob-radius-xs)',
+                    color: isPinned ? 'text.secondary' : 'primary.main',
+                    '&:hover': {
+                      color: isPinned ? 'text.primary' : 'primary.main',
+                    },
+                    // Pin/unpin is a desktop power-user feature
+                    display: { xs: 'none', sm: 'inline-flex' },
+                  }}
+                >
+                  {isPinned ? (
+                    <PushPinIcon sx={{ fontSize: 16 }} />
+                  ) : (
+                    <PushPinOutlinedIcon sx={{ fontSize: 16 }} />
+                  )}
+                </IconButton>
+              </Tooltip>
             </Box>
           </Stack>
         </Box>
       </Box>
 
-      <Drawer
-        anchor="left"
+      <MobileNavDrawer
         open={mobileDrawerOpen}
         onClose={() => setMobileDrawerOpen(false)}
-        PaperProps={{
-          sx: {
-            width: 280,
-            bgcolor: 'background.default',
-            borderRight: 'var(--ob-border-fine)',
-          },
-        }}
-      >
-        <Box
-          sx={{
-            p: 'var(--ob-space-150)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Typography
-            sx={{
-              fontWeight: 700,
-              fontSize: 'var(--ob-font-size-sm)',
-              color: 'var(--ob-color-brand-primary)',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-            }}
-          >
-            {isMobile ? 'OB' : 'OPTIMAL BUILD'}
-          </Typography>
-          <IconButton
-            aria-label="Close navigation"
-            onClick={() => setMobileDrawerOpen(false)}
-            size="small"
-            sx={{ color: 'text.secondary' }}
-          >
-            <ChevronLeftIcon fontSize="small" />
-          </IconButton>
-        </Box>
-        <Divider />
-        <List sx={{ pt: 'var(--ob-space-050)' }}>
-          {navGroups.map((group) => (
-            <Box key={group.title ?? 'default'}>
-              {group.title && (
-                <Typography
-                  sx={{
-                    px: 'var(--ob-space-100)',
-                    pt: 'var(--ob-space-100)',
-                    pb: 'var(--ob-space-025)',
-                    fontSize: 'var(--ob-font-size-2xs)',
-                    fontWeight: 700,
-                    color: 'text.disabled',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                  }}
-                >
-                  {group.title}
-                </Typography>
-              )}
-              {group.items.map((item) => (
-                <ListItemButton
-                  key={item.path}
-                  component={Link}
-                  to={item.path}
-                  selected={path === item.path}
-                  onClick={() => setMobileDrawerOpen(false)}
-                  sx={{
-                    borderRadius: 'var(--ob-radius-sm)',
-                    mx: 'var(--ob-space-050)',
-                    '&.Mui-selected': {
-                      bgcolor: 'var(--ob-color-action-hover)',
-                    },
-                  }}
-                >
-                  <ListItemText
-                    primary={item.label}
-                    primaryTypographyProps={{
-                      fontSize: 'var(--ob-font-size-sm)',
-                      fontWeight: 600,
-                    }}
-                    secondary={item.description}
-                    secondaryTypographyProps={{
-                      fontSize: 'var(--ob-font-size-xs)',
-                    }}
-                  />
-                </ListItemButton>
-              ))}
-            </Box>
-          ))}
-        </List>
-      </Drawer>
+        navGroups={navGroups}
+        currentPath={path}
+      />
     </>
   )
 }

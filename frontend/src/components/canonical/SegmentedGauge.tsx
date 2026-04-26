@@ -15,7 +15,7 @@ export function SegmentedGauge({
   value,
   valueLabel,
   segments = 8,
-  activeColor = 'var(--ob-color-neon-cyan)',
+  activeColor = 'var(--ob-color-brand-primary)',
   trackColor = 'var(--ob-color-border-subtle)',
   sx,
 }: SegmentedGaugeProps) {
@@ -51,7 +51,7 @@ export function SegmentedGauge({
             fontSize: 'var(--ob-font-size-2xs)',
             fontWeight: 'var(--ob-font-weight-bold)',
             textTransform: 'uppercase',
-            letterSpacing: '0.1em',
+            letterSpacing: 'var(--ob-letter-spacing-wider)',
             color: 'var(--ob-text-tertiary)',
           }}
         >

@@ -65,7 +65,7 @@ const StyledTextField = styled(TextField, {
     fontSize: 'var(--ob-font-size-sm)',
     padding: 'var(--ob-space-075) var(--ob-space-100)',
     height: 'auto',
-    lineHeight: 1.5,
+    lineHeight: 'var(--ob-line-height-normal)',
 
     '&::placeholder': {
       color: 'var(--ob-color-text-muted)',

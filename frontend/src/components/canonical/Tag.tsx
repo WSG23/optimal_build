@@ -128,7 +128,7 @@ export function Tag({
           color: colors.text,
           fontSize,
           fontWeight: 'var(--ob-font-weight-medium)',
-          lineHeight: 1,
+          lineHeight: 'var(--ob-line-height-none)',
           whiteSpace: 'nowrap',
         }}
       >
@@ -158,7 +158,7 @@ export function Tag({
             transition: 'opacity 0.2s',
             '&:hover': {
               opacity: 1,
-              background: 'rgba(255, 255, 255, 0.1)',
+              background: 'rgba(245, 235, 220, 0.1)',
             },
             '&::before': {
               content: '"×"',

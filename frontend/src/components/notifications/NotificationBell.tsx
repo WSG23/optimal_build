@@ -84,7 +84,7 @@ function NotificationItem({
         bgcolor: notification.isRead ? 'transparent' : 'action.hover',
       }}
       secondaryAction={
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
+        <Box sx={{ display: 'flex', gap: 'var(--ob-space-050)' }}>
           {!notification.isRead && (
             <IconButton
               size="small"
@@ -111,7 +111,13 @@ function NotificationItem({
       }
     >
       <ListItemButton onClick={() => onClick(notification)}>
-        <Box sx={{ mr: 1.5, display: 'flex', alignItems: 'center' }}>
+        <Box
+          sx={{
+            mr: 'var(--ob-space-150)',
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
           {getNotificationIcon(notification.notificationType)}
         </Box>
         <ListItemText
@@ -242,8 +248,8 @@ export function NotificationBell() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            px: 2,
-            py: 1,
+            px: 'var(--ob-space-200)',
+            py: 'var(--ob-space-100)',
           }}
         >
           <Typography variant="subtitle1" fontWeight="bold">
@@ -260,7 +266,7 @@ export function NotificationBell() {
 
         {loading && notifications.length === 0 ? (
           <Box
-            sx={{ p: 3, textAlign: 'center' }}
+            sx={{ p: 'var(--ob-space-200)', textAlign: 'center' }}
             role="status"
             aria-live="polite"
           >
@@ -268,12 +274,16 @@ export function NotificationBell() {
           </Box>
         ) : notifications.length === 0 ? (
           <Box
-            sx={{ p: 3, textAlign: 'center' }}
+            sx={{ p: 'var(--ob-space-200)', textAlign: 'center' }}
             role="status"
             aria-live="polite"
           >
             <NotificationsIcon
-              sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }}
+              sx={{
+                fontSize: 48,
+                color: 'text.disabled',
+                mb: 'var(--ob-space-100)',
+              }}
             />
             <Typography color="text.secondary">No notifications</Typography>
           </Box>
@@ -298,7 +308,13 @@ export function NotificationBell() {
 
             <Divider />
 
-            <Box sx={{ p: 1, display: 'flex', justifyContent: 'center' }}>
+            <Box
+              sx={{
+                p: 'var(--ob-space-100)',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
               <Button size="small" color="inherit" onClick={handleDismissAll}>
                 Clear all
               </Button>

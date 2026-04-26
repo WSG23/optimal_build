@@ -137,7 +137,7 @@ export function MetricTile({
             color: 'var(--ob-color-text-secondary)',
             fontWeight: 'var(--ob-font-weight-medium)',
             fontSize: 'var(--ob-font-size-xs)',
-            lineHeight: 1.2,
+            lineHeight: 'var(--ob-line-height-tight)',
             letterSpacing: '0.05em',
             textTransform: 'uppercase',
           }}
@@ -176,7 +176,7 @@ export function MetricTile({
               color: 'var(--ob-color-text-primary)',
               fontWeight: 'var(--ob-font-weight-bold)',
               fontSize: valueSizeMap[variant],
-              lineHeight: 1.1,
+              lineHeight: 'var(--ob-line-height-tight)',
               letterSpacing: '-0.02em',
             }}
           >

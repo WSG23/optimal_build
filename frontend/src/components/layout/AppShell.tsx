@@ -13,7 +13,7 @@ import {
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import { AppNavigation } from '../../app/components/AppNavigation'
-import { HeaderUtilityCluster } from './HeaderUtilityCluster'
+import { TopUtilityMenu as HeaderUtilityCluster } from './TopUtilityMenu'
 import { DeveloperProvider } from '../../contexts/DeveloperContext'
 import { useBaseLayoutContext } from '../../app/layout/useBaseLayout'
 import { useRouterController } from '../../router'
@@ -174,7 +174,7 @@ export function AppShell({
               }}
             >
               {showLegacyAppBar && <Toolbar sx={{ height: TOOLBAR_HEIGHT }} />}
-              <Box sx={{ overflow: 'auto', p: 'var(--ob-space-150)' }}>
+              <Box sx={{ overflow: 'auto', p: 'var(--ob-space-100)' }}>
                 <AppNavigation
                   activeItem={activeItem}
                   onNavigate={handleNavigate}
@@ -204,7 +204,7 @@ export function AppShell({
               <Box
                 sx={{
                   overflow: 'auto',
-                  p: 'var(--ob-space-150)',
+                  p: 'var(--ob-space-100)',
                   height: showLegacyAppBar
                     ? `calc(100vh - ${TOOLBAR_HEIGHT})`
                     : '100vh',
@@ -283,7 +283,7 @@ export function AppShell({
                     variant="body1"
                     sx={{
                       color: 'text.secondary',
-                      mt: 'var(--ob-space-025)',
+                      mt: 'var(--ob-space-050)',
                       maxWidth: 'var(--ob-max-width-content)',
                     }}
                   >
@@ -303,7 +303,15 @@ export function AppShell({
             </Box>
           )}
 
-          <Box sx={{ p: 'var(--ob-space-200)', flexGrow: 1 }}>{children}</Box>
+          <Box
+            sx={{
+              px: 'var(--ob-space-200)',
+              py: 'var(--ob-space-150)',
+              flexGrow: 1,
+            }}
+          >
+            {children}
+          </Box>
         </Box>
       </Box>
     </DeveloperProvider>

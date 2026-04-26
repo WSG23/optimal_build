@@ -107,7 +107,7 @@ export const Panel = forwardRef<HTMLDivElement, PanelProps>(
                     color: 'var(--ob-color-text-primary)',
                     fontWeight: 'var(--ob-font-weight-semibold)',
                     fontSize: 'var(--ob-font-size-lg)',
-                    lineHeight: 1.2,
+                    lineHeight: 'var(--ob-line-height-tight)',
                   }}
                 >
                   {title}
@@ -118,14 +118,16 @@ export const Panel = forwardRef<HTMLDivElement, PanelProps>(
                   variant="body2"
                   sx={{
                     color: 'var(--ob-color-text-secondary)',
-                    mt: 0.25,
+                    mt: 'var(--ob-space-025)',
                   }}
                 >
                   {subtitle}
                 </Typography>
               )}
             </Box>
-            {headerAction && <Box sx={{ ml: 2 }}>{headerAction}</Box>}
+            {headerAction && (
+              <Box sx={{ ml: 'var(--ob-space-200)' }}>{headerAction}</Box>
+            )}
           </Box>
         )}
 

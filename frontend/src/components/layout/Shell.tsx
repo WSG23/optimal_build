@@ -1,16 +1,19 @@
 import { ReactNode, Suspense, lazy } from 'react'
 import { Box, Typography, Stack } from '@mui/material'
+import { ErrorBoundary } from '../ErrorBoundary'
+import { NavErrorFallback } from './NavErrorFallback'
 import { useBaseLayoutContext } from '../../app/layout/useBaseLayout'
 import { useRouterController } from '../../router'
+import { ProjectBreadcrumbs } from './Breadcrumbs'
 
 const Sidebar = lazy(async () => {
   const module = await import('./Sidebar')
   return { default: module.Sidebar }
 })
 
-const HeaderUtilityCluster = lazy(async () => {
-  const module = await import('./HeaderUtilityCluster')
-  return { default: module.HeaderUtilityCluster }
+const TopUtilityMenu = lazy(async () => {
+  const module = await import('./TopUtilityMenu')
+  return { default: module.TopUtilityMenu }
 })
 
 export interface AppShellProps {
@@ -22,11 +25,6 @@ export interface AppShellProps {
   hideHeader?: boolean
   workspace?: 'agent' | 'developer'
 }
-
-/**
- * @deprecated Use AppShell from './AppShell' instead
- */
-export type YosaiShellProps = AppShellProps
 
 /**
  * AppShell
@@ -59,14 +57,16 @@ export function AppShell({
         flexGrow: 1,
         bgcolor: 'background.default',
         color: 'text.primary',
-        gap: shouldHideSidebar ? 0 : 'var(--ob-space-200)', // Consistent gap between sidebar and content
+        gap: shouldHideSidebar ? 0 : 'var(--ob-space-100)', // Tight gap between sidebar and content
       }}
     >
       {/* "The Wall" - Sidebar */}
       {!shouldHideSidebar && (
-        <Suspense fallback={null}>
-          <Sidebar workspace={workspace} />
-        </Suspense>
+        <ErrorBoundary fallback={<NavErrorFallback />}>
+          <Suspense fallback={null}>
+            <Sidebar workspace={workspace} />
+          </Suspense>
+        </ErrorBoundary>
       )}
 
       {/* Main Content Area */}
@@ -81,12 +81,13 @@ export function AppShell({
       >
         {/* Content (scroll container) - TIGHT layout for command-center density */}
         <Box
+          id="main-content"
           component="main"
           sx={{
             flexGrow: 1,
-            px: 'var(--ob-space-200)', // 16px horizontal - tighter than before
-            pt: 'var(--ob-space-100)', // 8px top - minimal breathing room
-            pb: 'var(--ob-space-400)', // 32px bottom - reduced from 48px
+            px: 'var(--ob-space-150)', // 24px horizontal - dense terminal spacing
+            pt: 'var(--ob-space-075)', // 12px top - minimal breathing room
+            pb: 'var(--ob-space-250)', // 40px bottom - comfortable scroll end
             overflow: 'auto',
             scrollbarGutter: 'stable',
             minHeight: 0,
@@ -94,8 +95,17 @@ export function AppShell({
             '@media (prefers-reduced-motion: reduce)': {
               animation: 'none',
             },
+            // Mobile: tighten padding for small screens
+            '@media (max-width: 600px)': {
+              px: 'var(--ob-space-075)', // 12px horizontal on mobile
+              pt: 'var(--ob-space-050)', // 8px top
+              pb: 'var(--ob-space-150)', // 24px bottom
+            },
           }}
         >
+          {/* Project Breadcrumbs - shown only on /projects/:id/* routes */}
+          <ProjectBreadcrumbs />
+
           {/* Page Header - Direct on Grid (Depth 0, no glass card)
               AI Studio Protocol: Headers sit directly on the background grid
               TIGHT LAYOUT: Reduced padding for information density */}
@@ -112,12 +122,21 @@ export function AppShell({
                 justifyContent: 'space-between',
                 gap: 'var(--ob-space-150)',
                 // When top ribbon is unpinned, minimal breathing room
-                mt: inBaseLayout && topOffset === 0 ? 'var(--ob-space-050)' : 0,
-                mb: 'var(--ob-space-150)', // 12px - tighter spacing to content
+                mt:
+                  inBaseLayout && topOffset === 0
+                    ? 'var(--ob-space-050)'
+                    : '0px',
+                mb: 'var(--ob-space-100)', // 16px - tight spacing to content
                 animation:
                   'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',
                 '@media (prefers-reduced-motion: reduce)': {
                   animation: 'none',
+                },
+                // Mobile: stack title and actions vertically
+                '@media (max-width: 600px)': {
+                  flexDirection: 'column',
+                  alignItems: 'stretch',
+                  gap: 'var(--ob-space-075)',
                 },
               }}
             >
@@ -143,14 +162,16 @@ export function AppShell({
               </Box>
               <Stack
                 direction="row"
-                spacing="var(--ob-space-200)"
+                spacing="var(--ob-space-100)"
                 alignItems="center"
                 sx={{ flexShrink: 0 }}
               >
                 {!inBaseLayout && (
-                  <Suspense fallback={null}>
-                    <HeaderUtilityCluster />
-                  </Suspense>
+                  <ErrorBoundary fallback={<NavErrorFallback />}>
+                    <Suspense fallback={null}>
+                      <TopUtilityMenu />
+                    </Suspense>
+                  </ErrorBoundary>
                 )}
                 {actions}
               </Stack>
@@ -163,8 +184,3 @@ export function AppShell({
     </Box>
   )
 }
-
-/**
- * @deprecated Use AppShell instead
- */
-export const Shell = AppShell

@@ -72,7 +72,7 @@ export function GlassWindow({
               variant="body2"
               sx={{
                 color: 'var(--ob-color-text-secondary)',
-                mt: 0.5,
+                mt: 'var(--ob-space-050)',
               }}
             >
               {subtitle}
@@ -119,7 +119,7 @@ export function GlassWindow({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        p: 2,
+        p: 'var(--ob-space-200)',
         backdropFilter: 'blur(var(--ob-blur-sm))', // Extra blurred backdrop for focus
       }}
     >

@@ -109,7 +109,7 @@
 .app-shell__header h1 {
     margin: 0;
     font-size: var(--ob-font-size-3xl);
-    font-weight: 700;
+    font-weight: var(--ob-font-weight-bold);
     color: var(--ob-color-text-primary);
     letter-spacing: -0.02em;
 }
@@ -119,7 +119,7 @@
     color: var(--ob-color-text-secondary);
     font-size: var(--ob-font-size-base);
     max-width: 640px;
-    line-height: 1.6;
+    line-height: var(--ob-line-height-relaxed);
 }
 
 .app-shell__actions {
@@ -157,12 +157,12 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--ob-color-brand-primary);
-    font-weight: 700;
+    font-weight: var(--ob-font-weight-bold);
 }
 
 .app-nav__subheading {
     font-size: var(--ob-font-size-lg);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-primary);
 }
 
@@ -215,7 +215,7 @@
 }
 
 .app-nav__label {
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     font-size: var(--ob-font-size-sm);
 }
 
@@ -233,7 +233,7 @@
     border-radius: var(--ob-radius-pill);
     background: var(--ob-color-brand-soft);
     color: var(--ob-brand-600); /* Use specific tone for contrast on dark */
-    font-weight: 700;
+    font-weight: var(--ob-font-weight-bold);
 }
 
 /* Workspace switcher (sidebar nav) */
@@ -248,7 +248,7 @@
     flex: 1;
     padding: var(--ob-space-050);
     font-size: var(--ob-font-size-sm);
-    font-weight: 500;
+    font-weight: var(--ob-font-weight-medium);
     color: var(--ob-color-text-muted);
     background: transparent;
     border: var(--ob-border-fine);

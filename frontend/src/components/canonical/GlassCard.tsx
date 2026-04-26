@@ -48,7 +48,7 @@ export function GlassCard({
     cursor: onClick ? 'pointer' : 'default',
     ...(hoverEffect && {
       '&:hover': {
-        borderColor: 'var(--ob-color-neon-cyan)',
+        borderColor: 'var(--ob-color-brand-primary)',
       },
     }),
   }

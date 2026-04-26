@@ -124,7 +124,7 @@ export function Window({
               color: 'var(--ob-color-text-primary)',
               fontWeight: 'var(--ob-font-weight-bold)',
               fontSize: 'var(--ob-font-size-xl)',
-              lineHeight: 1.2,
+              lineHeight: 'var(--ob-line-height-tight)',
               letterSpacing: '-0.01em',
             }}
           >

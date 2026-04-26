@@ -73,10 +73,10 @@ const statusColors = {
     dot: 'var(--ob-brand-400)',
   },
   live: {
-    bg: 'rgba(0, 243, 255, 0.1)',
-    text: 'var(--ob-color-neon-cyan)',
-    border: 'rgba(0, 243, 255, 0.3)',
-    dot: 'var(--ob-color-neon-cyan)',
+    bg: 'var(--ob-color-brand-muted)',
+    text: 'var(--ob-color-brand-primary)',
+    border: 'var(--ob-color-brand-soft)',
+    dot: 'var(--ob-color-brand-primary)',
   },
 }
 
@@ -98,10 +98,10 @@ export function StatusChip({
   sx = {},
 }: StatusChipProps) {
   const colors = statusColors[status]
-  const height = size === 'sm' ? '20px' : '24px'
+  const height = size === 'sm' ? 'var(--ob-space-125)' : 'var(--ob-space-150)'
   const fontSize =
     size === 'sm' ? 'var(--ob-font-size-xs)' : 'var(--ob-font-size-sm)'
-  const dotSize = size === 'sm' ? 6 : 8
+  const dotSize = size === 'sm' ? '6px' : 'var(--ob-space-050)'
 
   return (
     <Box
@@ -141,7 +141,7 @@ export function StatusChip({
               sx={{
                 width: dotSize,
                 height: dotSize,
-                borderRadius: '50%',
+                borderRadius: 'var(--ob-radius-xs)',
                 background: colors.dot,
                 ...(pulse && {
                   animation: 'statusPulse 2s ease-in-out infinite',
@@ -161,7 +161,7 @@ export function StatusChip({
           color: colors.text,
           fontSize,
           fontWeight: 'var(--ob-font-weight-medium)',
-          lineHeight: 1,
+          lineHeight: 'var(--ob-line-height-none)',
           whiteSpace: 'nowrap',
         }}
       >
