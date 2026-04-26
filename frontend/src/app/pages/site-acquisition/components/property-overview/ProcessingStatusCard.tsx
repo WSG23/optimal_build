@@ -50,8 +50,8 @@ const statusConfig = {
   processing: {
     dotStatus: 'live' as const,
     label: 'PROCESSING',
-    color: 'var(--ob-color-neon-cyan)',
-    progressColor: 'var(--ob-color-neon-cyan)',
+    color: 'var(--ob-color-brand-primary)',
+    progressColor: 'var(--ob-color-brand-primary)',
   },
   ready: {
     dotStatus: 'success' as const,
@@ -123,7 +123,7 @@ export const ProcessingStatusCard = memo(function ProcessingStatusCard({
           <Typography
             sx={{
               fontSize: 'var(--ob-font-size-base)',
-              fontWeight: 700,
+              fontWeight: 'var(--ob-font-weight-bold)',
               color: 'text.primary',
               letterSpacing: '-0.01em',
             }}
@@ -134,7 +134,7 @@ export const ProcessingStatusCard = memo(function ProcessingStatusCard({
         <Typography
           sx={{
             fontSize: 'var(--ob-font-size-2xs)',
-            fontWeight: 700,
+            fontWeight: 'var(--ob-font-weight-bold)',
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             color: config.color,
@@ -149,7 +149,7 @@ export const ProcessingStatusCard = memo(function ProcessingStatusCard({
       </Box>
 
       {/* Progress bar */}
-      <Box sx={{ mt: 'var(--ob-space-050)' }}>
+      <Box>
         <LinearProgress
           variant={
             displayProgress !== undefined ? 'determinate' : 'indeterminate'
@@ -169,7 +169,7 @@ export const ProcessingStatusCard = memo(function ProcessingStatusCard({
           <Typography
             sx={{
               fontSize: 'var(--ob-font-size-xs)',
-              fontWeight: 600,
+              fontWeight: 'var(--ob-font-weight-semibold)',
               color: config.color,
               textAlign: 'right',
               mt: 'var(--ob-space-025)',
@@ -186,7 +186,7 @@ export const ProcessingStatusCard = memo(function ProcessingStatusCard({
           sx={{
             fontSize: 'var(--ob-font-size-sm)',
             color: 'text.secondary',
-            lineHeight: 1.4,
+            lineHeight: 'var(--ob-line-height-snug)',
           }}
         >
           {statusMessage}
@@ -216,7 +216,7 @@ export const ProcessingStatusCard = memo(function ProcessingStatusCard({
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-xs)',
-                color: 'var(--ob-color-neon-cyan)',
+                color: 'var(--ob-color-brand-primary)',
               }}
             >
               ~{estimatedTimeRemaining} remaining
@@ -229,7 +229,6 @@ export const ProcessingStatusCard = memo(function ProcessingStatusCard({
       {details.length > 0 && (
         <Box
           sx={{
-            mt: 'var(--ob-space-075)',
             pt: 'var(--ob-space-075)',
             borderTop: '1px solid var(--ob-color-border-subtle)',
             display: 'grid',
@@ -242,7 +241,7 @@ export const ProcessingStatusCard = memo(function ProcessingStatusCard({
               <Typography
                 sx={{
                   fontSize: 'var(--ob-font-size-2xs)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                   letterSpacing: '0.05em',
                   textTransform: 'uppercase',
                   color: 'text.secondary',
@@ -253,7 +252,7 @@ export const ProcessingStatusCard = memo(function ProcessingStatusCard({
               <Typography
                 sx={{
                   fontSize: 'var(--ob-font-size-sm)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                   color: 'text.primary',
                   wordBreak: 'break-word',
                 }}

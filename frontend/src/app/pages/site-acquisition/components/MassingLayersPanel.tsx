@@ -75,8 +75,8 @@ export function MassingLayersPanel({
         <Typography
           variant="overline"
           sx={{
-            fontWeight: 700,
-            letterSpacing: '0.1em',
+            fontWeight: 'var(--ob-font-weight-bold)',
+            letterSpacing: 'var(--ob-letter-spacing-wider)',
             color: 'text.secondary',
           }}
         >
@@ -90,7 +90,7 @@ export function MassingLayersPanel({
       </Box>
 
       {/* Layer List */}
-      <Stack spacing={0} sx={{ maxHeight: 300, overflowY: 'auto' }}>
+      <Stack spacing={0} sx={{ maxHeight: '18.75rem', overflowY: 'auto' }}>
         {layers.map((layer) => {
           const layerId = layer.id
           const isVisible = visibility[layerId] !== false
@@ -107,7 +107,7 @@ export function MassingLayersPanel({
                 p: 'var(--ob-space-075) var(--ob-space-100)',
                 borderBottom: '1px solid var(--ob-color-border-subtle)',
                 bgcolor: isFocused
-                  ? 'color-mix(in srgb, var(--ob-color-neon-cyan) 10%, transparent)'
+                  ? 'color-mix(in srgb, var(--ob-color-brand-primary) 10%, transparent)'
                   : 'transparent',
                 transition: 'background 0.15s ease',
                 '&:last-child': {
@@ -115,7 +115,7 @@ export function MassingLayersPanel({
                 },
                 '&:hover': {
                   bgcolor: isFocused
-                    ? 'color-mix(in srgb, var(--ob-color-neon-cyan) 15%, transparent)'
+                    ? 'color-mix(in srgb, var(--ob-color-brand-primary) 15%, transparent)'
                     : 'var(--ob-color-surface-hover)',
                 },
               }}
@@ -126,13 +126,17 @@ export function MassingLayersPanel({
                 onClick={() => onToggleVisibility(layerId)}
                 sx={{
                   color: isVisible ? 'text.primary' : 'text.disabled',
-                  p: 'var(--ob-space-025)',
+                  p: 'var(--ob-space-050)',
                 }}
               >
                 {isVisible ? (
-                  <VisibilityIcon sx={{ fontSize: 18 }} />
+                  <VisibilityIcon
+                    sx={{ fontSize: 'var(--ob-font-size-base)' }}
+                  />
                 ) : (
-                  <VisibilityOffIcon sx={{ fontSize: 18 }} />
+                  <VisibilityOffIcon
+                    sx={{ fontSize: 'var(--ob-font-size-base)' }}
+                  />
                 )}
               </IconButton>
 
@@ -141,7 +145,7 @@ export function MassingLayersPanel({
                 <Typography
                   variant="body2"
                   sx={{
-                    fontWeight: 600,
+                    fontWeight: 'var(--ob-font-weight-semibold)',
                     color: isVisible ? 'text.primary' : 'text.disabled',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',

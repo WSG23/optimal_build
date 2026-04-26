@@ -320,14 +320,20 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--ob-space-100)',
+      }}
+    >
       {/* Header with toggle */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          gap: '1rem',
+          gap: 'var(--ob-space-100)',
           flexWrap: 'wrap',
         }}
       >
@@ -335,15 +341,15 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
           <h3
             style={{
               margin: 0,
-              fontSize: '1.0625rem',
-              fontWeight: 600,
+              fontSize: 'var(--ob-font-size-base)',
+              fontWeight: 'var(--ob-font-weight-semibold)',
             }}
           >
             Inspection History
           </h3>
           <p
             style={{
-              margin: '0.3rem 0 0',
+              margin: 'var(--ob-space-035) 0 0',
               fontSize: 'var(--ob-font-size-sm)',
               color: 'var(--ob-color-text-secondary)',
               maxWidth: '480px',
@@ -360,8 +366,8 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
           style={{
             display: 'inline-grid',
             gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-            gap: '0.35rem',
-            padding: '0.25rem',
+            gap: 'var(--ob-space-035)',
+            padding: 'var(--ob-space-025)',
             border: '1px solid var(--ob-color-border-primary)',
             borderRadius: 'var(--ob-radius-sm)',
             background: 'var(--ob-color-surface-secondary)',
@@ -385,9 +391,9 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
                   ? 'var(--ob-color-text-primary)'
                   : 'var(--ob-color-text-secondary)',
               borderRadius: 'var(--ob-radius-xs)',
-              padding: '0.4rem 0.9rem',
+              padding: 'var(--ob-space-025) var(--ob-space-085)',
               fontSize: 'var(--ob-font-size-sm)',
-              fontWeight: 600,
+              fontWeight: 'var(--ob-font-weight-semibold)',
               cursor: 'pointer',
               boxShadow:
                 historyViewMode === 'timeline'
@@ -414,9 +420,9 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
                   ? 'var(--ob-color-text-primary)'
                   : 'var(--ob-color-text-secondary)',
               borderRadius: 'var(--ob-radius-xs)',
-              padding: '0.4rem 0.9rem',
+              padding: 'var(--ob-space-025) var(--ob-space-085)',
               fontSize: 'var(--ob-font-size-sm)',
-              fontWeight: 600,
+              fontWeight: 'var(--ob-font-weight-semibold)',
               cursor: 'pointer',
               boxShadow:
                 historyViewMode === 'compare'
@@ -434,7 +440,7 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
         <p
           style={{
             margin: 0,
-            padding: '0.9rem 1rem',
+            padding: 'var(--ob-space-085) var(--ob-space-100)',
             fontSize: 'var(--ob-font-size-sm)',
             color: 'var(--ob-color-status-error)',
             border: '1px solid var(--ob-color-border-primary)',
@@ -448,7 +454,7 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
       ) : isLoadingAssessmentHistory ? (
         <div
           style={{
-            padding: '1.5rem',
+            padding: 'var(--ob-space-150)',
             background: 'var(--ob-color-surface-secondary)',
             borderRadius: 'var(--ob-radius-sm)',
             border: '1px solid var(--ob-color-border-primary)',
@@ -456,7 +462,7 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
         >
           <div
             aria-label="Loading inspection history"
-            style={{ display: 'grid', gap: '0.75rem' }}
+            style={{ display: 'grid', gap: 'var(--ob-space-075)' }}
           >
             <Skeleton
               variant="text"
@@ -479,7 +485,7 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
       ) : assessmentHistory.length === 0 ? (
         <div
           style={{
-            padding: '1.5rem',
+            padding: 'var(--ob-space-150)',
             textAlign: 'center',
             color: 'var(--ob-color-text-secondary)',
             background: 'var(--ob-color-surface-secondary)',
@@ -492,7 +498,7 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
           </p>
           <p
             style={{
-              margin: '0.35rem 0 0',
+              margin: 'var(--ob-space-035) 0 0',
               fontSize: 'var(--ob-font-size-sm)',
             }}
           >
@@ -500,15 +506,15 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
           </p>
         </div>
       ) : historyViewMode === 'timeline' ? (
-        <div style={{ display: 'grid', gap: '0.85rem' }}>
+        <div style={{ display: 'grid', gap: 'var(--ob-space-085)' }}>
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              gap: '0.75rem',
+              gap: 'var(--ob-space-075)',
               flexWrap: 'wrap',
-              padding: '0.9rem 1rem',
+              padding: 'var(--ob-space-085) var(--ob-space-100)',
               border: '1px solid var(--ob-color-border-primary)',
               borderRadius: 'var(--ob-radius-sm)',
               background: 'var(--ob-color-surface-secondary)',
@@ -527,9 +533,9 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
             <label
               style={{
                 display: 'inline-grid',
-                gap: '0.35rem',
+                gap: 'var(--ob-space-035)',
                 fontSize: 'var(--ob-font-size-xs)',
-                fontWeight: 600,
+                fontWeight: 'var(--ob-font-weight-semibold)',
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
                 color: 'var(--ob-color-text-secondary)',
@@ -579,7 +585,7 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
         !previousAssessmentEntry ? (
           <div
             style={{
-              padding: '1.5rem',
+              padding: 'var(--ob-space-150)',
               textAlign: 'center',
               color: 'var(--ob-color-text-secondary)',
               background: 'var(--ob-color-surface-secondary)',
@@ -592,14 +598,14 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
             </p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gap: '1rem' }}>
+          <div style={{ display: 'grid', gap: 'var(--ob-space-100)' }}>
             <div
               onKeyDown={handleCompareControlsKeyDown}
               style={{
                 display: 'grid',
-                gap: '0.85rem',
+                gap: 'var(--ob-space-085)',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                padding: '1rem',
+                padding: 'var(--ob-space-100)',
                 border: '1px solid var(--ob-color-border-primary)',
                 borderRadius: 'var(--ob-radius-sm)',
                 background: 'var(--ob-color-surface-secondary)',
@@ -608,9 +614,9 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
               <label
                 style={{
                   display: 'grid',
-                  gap: '0.35rem',
+                  gap: 'var(--ob-space-035)',
                   fontSize: 'var(--ob-font-size-xs)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
                   color: 'var(--ob-color-text-secondary)',
@@ -646,9 +652,9 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
               <label
                 style={{
                   display: 'grid',
-                  gap: '0.35rem',
+                  gap: 'var(--ob-space-035)',
                   fontSize: 'var(--ob-font-size-xs)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
                   color: 'var(--ob-color-text-secondary)',
@@ -699,7 +705,7 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
                 style={{
                   display: 'flex',
                   flexWrap: 'wrap',
-                  gap: '0.5rem',
+                  gap: 'var(--ob-space-050)',
                   alignItems: 'end',
                 }}
               >
@@ -715,7 +721,7 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
                     background: 'var(--ob-color-bg-primary)',
                     color: 'var(--ob-color-text-primary)',
                     fontSize: 'var(--ob-font-size-sm)',
-                    fontWeight: 600,
+                    fontWeight: 'var(--ob-font-weight-semibold)',
                     cursor: comparisonSelectionInvalid
                       ? 'not-allowed'
                       : 'pointer',
@@ -738,7 +744,7 @@ export function InspectionHistoryContent(props: InspectionHistoryContentProps) {
                     background: 'var(--ob-color-bg-primary)',
                     color: 'var(--ob-color-text-primary)',
                     fontSize: 'var(--ob-font-size-sm)',
-                    fontWeight: 600,
+                    fontWeight: 'var(--ob-font-weight-semibold)',
                     cursor: comparisonSelectionInvalid
                       ? 'not-allowed'
                       : 'pointer',

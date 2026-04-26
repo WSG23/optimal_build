@@ -49,7 +49,7 @@ function getRatingColor(rating: string): string {
     case 'A':
       return 'var(--ob-success-500)'
     case 'B':
-      return 'var(--ob-color-neon-cyan)'
+      return 'var(--ob-color-brand-primary)'
     case 'C':
       return 'var(--ob-warning-500)'
     case 'D':

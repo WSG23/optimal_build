@@ -2,7 +2,7 @@
  * Immediate Actions Grid Component
  *
  * Displays a 2x2 grid of action cards with:
- * - Title (--ob-font-size-sm, fontWeight: 700)
+ * - Title (--ob-font-size-sm, fontWeight: 'var(--ob-font-weight-bold)')
  * - Description (--ob-font-size-2xs, text.secondary)
  * - Priority badge (StatusChip with semantic status)
  *
@@ -74,10 +74,8 @@ export function ImmediateActionsGrid({
         variant="h4"
         sx={{
           m: 0,
-          // Additional bottom margin for visual separation from cards
-          mb: 'var(--ob-space-050)',
           fontSize: 'var(--ob-font-size-sm)',
-          fontWeight: 700,
+          fontWeight: 'var(--ob-font-weight-bold)',
           color: 'text.primary',
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
@@ -86,7 +84,7 @@ export function ImmediateActionsGrid({
         Immediate System Actions
       </Typography>
 
-      <Grid container spacing={1}>
+      <Grid container spacing="var(--ob-space-150)">
         {actions.slice(0, 4).map((action) => (
           <Grid item xs={12} sm={6} key={action.id}>
             <Box
@@ -107,11 +105,11 @@ export function ImmediateActionsGrid({
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 'var(--ob-space-050)',
-                minHeight: '72px',
+                minHeight: 'var(--ob-space-300)',
                 // Cyan hover state per Card Interaction States
                 '&:hover': {
-                  borderColor: 'var(--ob-color-neon-cyan)',
-                  boxShadow: '0 0 8px var(--ob-color-neon-cyan-muted)',
+                  borderColor: 'var(--ob-color-brand-primary)',
+                  boxShadow: '0 0 8px var(--ob-color-brand-muted)',
                 },
               }}
             >
@@ -126,9 +124,9 @@ export function ImmediateActionsGrid({
                 <Typography
                   sx={{
                     fontSize: 'var(--ob-font-size-sm)',
-                    fontWeight: 700,
+                    fontWeight: 'var(--ob-font-weight-bold)',
                     color: 'text.primary',
-                    lineHeight: 1.3,
+                    lineHeight: 'var(--ob-line-height-snug)',
                     flex: 1,
                   }}
                 >
@@ -147,7 +145,7 @@ export function ImmediateActionsGrid({
                   sx={{
                     fontSize: 'var(--ob-font-size-2xs)',
                     color: 'text.secondary',
-                    lineHeight: 1.4,
+                    lineHeight: 'var(--ob-line-height-snug)',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',

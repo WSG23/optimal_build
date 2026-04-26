@@ -68,7 +68,7 @@ export function AIInsightPanel({
         <Typography
           sx={{
             fontSize: 'var(--ob-font-size-2xs)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             color: 'var(--ob-info-600)',
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
@@ -80,7 +80,7 @@ export function AIInsightPanel({
           sx={{
             fontSize: 'var(--ob-font-size-sm)',
             color: 'text.secondary',
-            lineHeight: 1.5,
+            lineHeight: 'var(--ob-line-height-normal)',
           }}
         >
           {insight}

@@ -115,7 +115,7 @@ export function QuickAnalysisHistoryModal({
               style={{
                 margin: 0,
                 fontSize: 'var(--ob-font-size-xl)',
-                fontWeight: 600,
+                fontWeight: 'var(--ob-font-weight-semibold)',
                 letterSpacing: 'var(--ob-letter-spacing-tight)',
               }}
             >
@@ -169,7 +169,7 @@ export function QuickAnalysisHistoryModal({
                     style={{
                       margin: 0,
                       fontSize: 'var(--ob-font-size-lg)',
-                      fontWeight: 600,
+                      fontWeight: 'var(--ob-font-weight-semibold)',
                       letterSpacing: 'var(--ob-letter-spacing-tight)',
                     }}
                   >
@@ -234,7 +234,7 @@ export function QuickAnalysisHistoryModal({
                           <span
                             style={{
                               fontSize: 'var(--ob-font-size-base)',
-                              fontWeight: 600,
+                              fontWeight: 'var(--ob-font-weight-semibold)',
                               color: 'var(--ob-color-text-primary)',
                             }}
                           >
@@ -280,7 +280,8 @@ export function QuickAnalysisHistoryModal({
                                 <span
                                   style={{
                                     fontSize: 'var(--ob-font-size-sm)',
-                                    fontWeight: 600,
+                                    fontWeight:
+                                      'var(--ob-font-weight-semibold)',
                                     color: 'var(--ob-color-text-primary)',
                                   }}
                                 >

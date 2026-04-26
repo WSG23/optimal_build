@@ -79,7 +79,7 @@ export function ManualInspectionControls({
             style={{
               margin: 0,
               fontSize: 'var(--ob-font-size-lg)',
-              fontWeight: 600,
+              fontWeight: 'var(--ob-font-weight-semibold)',
             }}
           >
             Manual inspection capture

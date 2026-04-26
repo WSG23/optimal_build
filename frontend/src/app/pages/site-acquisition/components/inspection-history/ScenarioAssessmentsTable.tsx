@@ -50,7 +50,7 @@ function renderAssessmentRowContent(
         style={{
           padding: '0.75rem 1rem',
           borderBottom: '1px solid var(--ob-color-border-primary)',
-          fontWeight: 600,
+          fontWeight: 'var(--ob-font-weight-semibold)',
         }}
       >
         {formatScenarioLabel(assessment.scenario)}
@@ -69,7 +69,7 @@ function renderAssessmentRowContent(
         style={{
           padding: '0.75rem 1rem',
           borderBottom: '1px solid var(--ob-color-border-primary)',
-          fontWeight: 600,
+          fontWeight: 'var(--ob-font-weight-semibold)',
         }}
       >
         {assessment.overallRating}
@@ -185,7 +185,7 @@ export function ScenarioAssessmentsTable({
           margin: 0,
           padding: '1rem 1.25rem',
           fontSize: 'var(--ob-font-size-sm)',
-          fontWeight: 600,
+          fontWeight: 'var(--ob-font-weight-semibold)',
           background: 'var(--ob-color-surface-secondary)',
           borderBottom: '1px solid var(--ob-color-border-primary)',
         }}
@@ -216,7 +216,7 @@ export function ScenarioAssessmentsTable({
                     textAlign: 'left',
                     padding: '0.75rem 1rem',
                     borderBottom: '1px solid var(--ob-color-border-primary)',
-                    fontWeight: 600,
+                    fontWeight: 'var(--ob-font-weight-semibold)',
                     fontSize: 'var(--ob-font-size-sm)',
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',

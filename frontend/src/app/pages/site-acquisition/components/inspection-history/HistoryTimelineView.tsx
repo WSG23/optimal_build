@@ -86,7 +86,7 @@ export function HistoryTimelineView({
                 <span
                   style={{
                     fontSize: 'var(--ob-font-size-xs)',
-                    fontWeight: 600,
+                    fontWeight: 'var(--ob-font-weight-semibold)',
                     letterSpacing: '0.08em',
                     textTransform: 'uppercase',
                     color: isMostRecent
@@ -101,7 +101,7 @@ export function HistoryTimelineView({
                 <span
                   style={{
                     fontSize: 'var(--ob-font-size-base)',
-                    fontWeight: 600,
+                    fontWeight: 'var(--ob-font-weight-semibold)',
                     color: 'var(--ob-color-text-primary)',
                   }}
                 >
@@ -168,7 +168,7 @@ export function HistoryTimelineView({
                   margin: 0,
                   fontSize: 'var(--ob-font-size-sm)',
                   color: 'var(--ob-color-text-primary)',
-                  lineHeight: 1.5,
+                  lineHeight: 'var(--ob-line-height-normal)',
                 }}
               >
                 {entry.summary || 'No notes recorded.'}
@@ -200,11 +200,11 @@ export function HistoryTimelineView({
 
             {/* Recommended actions preview */}
             {recommendedPreview.length > 0 && (
-              <div style={{ marginTop: '0.25rem' }}>
+              <div style={{ marginTop: 'var(--ob-space-025)' }}>
                 <span
                   style={{
                     fontSize: 'var(--ob-font-size-xs)',
-                    fontWeight: 600,
+                    fontWeight: 'var(--ob-font-weight-semibold)',
                     textTransform: 'uppercase',
                     color: 'var(--ob-color-text-secondary)',
                     letterSpacing: '0.06em',
@@ -212,7 +212,12 @@ export function HistoryTimelineView({
                 >
                   Recommended actions
                 </span>
-                <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1rem' }}>
+                <ul
+                  style={{
+                    margin: 'var(--ob-space-035) 0 0',
+                    paddingLeft: 'var(--ob-space-100)',
+                  }}
+                >
                   {recommendedPreview.map((action, actionIndex) => (
                     <li
                       key={`${key}-action-${actionIndex}`}
@@ -225,7 +230,7 @@ export function HistoryTimelineView({
                 {remainingActions > 0 && (
                   <p
                     style={{
-                      margin: '0.35rem 0 0',
+                      margin: 'var(--ob-space-035) 0 0',
                       fontSize: 'var(--ob-font-size-xs)',
                       color: 'var(--ob-color-text-secondary)',
                     }}
@@ -239,11 +244,11 @@ export function HistoryTimelineView({
 
             {/* Attachments */}
             {entry.attachments.length > 0 && (
-              <div style={{ marginTop: '0.35rem' }}>
+              <div style={{ marginTop: 'var(--ob-space-035)' }}>
                 <span
                   style={{
                     fontSize: 'var(--ob-font-size-xs)',
-                    fontWeight: 600,
+                    fontWeight: 'var(--ob-font-weight-semibold)',
                     textTransform: 'uppercase',
                     color: 'var(--ob-color-text-secondary)',
                     letterSpacing: '0.06em',
@@ -251,7 +256,12 @@ export function HistoryTimelineView({
                 >
                   Attachments
                 </span>
-                <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1rem' }}>
+                <ul
+                  style={{
+                    margin: 'var(--ob-space-035) 0 0',
+                    paddingLeft: 'var(--ob-space-100)',
+                  }}
+                >
                   {entry.attachments.map((attachment, attachmentIndex) => (
                     <li
                       key={`${key}-attachment-${attachmentIndex}`}

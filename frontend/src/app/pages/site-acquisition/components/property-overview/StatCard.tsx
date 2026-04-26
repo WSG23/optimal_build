@@ -63,7 +63,7 @@ export const StatCard = memo(function StatCard({
         p: compact ? 'var(--ob-space-100)' : 'var(--ob-space-150)',
         display: 'flex',
         flexDirection: 'column',
-        gap: 'var(--ob-space-050)',
+        gap: compact ? 'var(--ob-space-050)' : 'var(--ob-space-075)',
         height: '100%',
         ...sx,
       }}
@@ -88,7 +88,7 @@ export const StatCard = memo(function StatCard({
           <Typography
             sx={{
               fontSize: 'var(--ob-font-size-2xs)',
-              fontWeight: 600,
+              fontWeight: 'var(--ob-font-weight-semibold)',
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
               color: 'var(--ob-text-secondary)',
@@ -110,9 +110,9 @@ export const StatCard = memo(function StatCard({
           fontSize: compact
             ? 'var(--ob-font-size-2xl)'
             : 'var(--ob-font-size-3xl)',
-          fontWeight: 700,
+          fontWeight: 'var(--ob-font-weight-bold)',
           color: 'var(--ob-color-text-primary)',
-          lineHeight: 1.1,
+          lineHeight: 'var(--ob-line-height-tight)',
         }}
       >
         {value}
@@ -135,7 +135,7 @@ export const StatCard = memo(function StatCard({
         <Typography
           sx={{
             fontSize: 'var(--ob-font-size-xs)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             color: getTrendColor(trend),
           }}
         >
@@ -148,7 +148,7 @@ export const StatCard = memo(function StatCard({
         <Box
           sx={{
             mt: 'var(--ob-space-050)',
-            height: 4,
+            height: 'var(--ob-space-025)',
             bgcolor: 'var(--ob-surface-glass-subtle)',
             borderRadius: 'var(--ob-radius-xs)',
             overflow: 'hidden',
@@ -165,7 +165,7 @@ export const StatCard = memo(function StatCard({
                     ? 'var(--ob-warning-500)'
                     : status === 'error'
                       ? 'var(--ob-error-500)'
-                      : 'var(--ob-color-neon-cyan)',
+                      : 'var(--ob-color-brand-primary)',
               transition: 'width 0.3s ease',
             }}
           />

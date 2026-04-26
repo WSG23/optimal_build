@@ -125,7 +125,7 @@ export function CardNote({ children }: { children: ReactNode }) {
           fontSize: 'var(--ob-font-size-xs)',
           color: 'text.secondary',
           fontStyle: 'italic',
-          lineHeight: 1.4,
+          lineHeight: 'var(--ob-line-height-snug)',
         }}
       >
         {children}

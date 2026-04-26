@@ -52,23 +52,27 @@ const GOOGLE_MAPS_API_KEY = import.meta.env?.VITE_GOOGLE_MAPS_API_KEY ?? ''
 let googleMapsPromise: Promise<void> | null = null
 
 function loadGoogleMapsScript(): Promise<void> {
-  if (window.google?.maps) {
-    return Promise.resolve()
-  }
-
   if (googleMapsPromise) {
     return googleMapsPromise
   }
 
-  googleMapsPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&loading=async`
-    script.async = true
-    script.defer = true
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Failed to load Google Maps'))
-    document.head.appendChild(script)
-  })
+  googleMapsPromise = (async () => {
+    if (!window.google?.maps) {
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&loading=async`
+        script.async = true
+        script.defer = true
+        script.onload = () => resolve()
+        script.onerror = () => reject(new Error('Failed to load Google Maps'))
+        document.head.appendChild(script)
+      })
+    }
+
+    // With loading=async, we must importLibrary to get the actual classes
+    await google.maps.importLibrary('maps')
+    await google.maps.importLibrary('marker')
+  })()
 
   return googleMapsPromise
 }
@@ -247,6 +251,7 @@ export function GpsCapturePage() {
       zoom: 16,
       tilt: 45, // Add tilt for 3D feel
       styles: DARK_MAP_STYLE as google.maps.MapTypeStyle[],
+      mapId: 'gps_capture_map',
       mapTypeControl: false,
       streetViewControl: false,
     })
@@ -256,7 +261,7 @@ export function GpsCapturePage() {
     pinElement.style.width = '24px'
     pinElement.style.height = '24px'
     pinElement.style.borderRadius = '50%'
-    pinElement.style.backgroundColor = 'var(--ob-color-status-info, #3b82f6)'
+    pinElement.style.backgroundColor = 'var(--ob-color-status-info, #8b5cf6)'
     pinElement.style.border = '3px solid white'
     pinElement.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)'
     pinElement.style.cursor = 'grab'

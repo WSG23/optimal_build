@@ -16,19 +16,21 @@ import {
 } from '@mui/material'
 import Refresh from '@mui/icons-material/Refresh'
 import { Button } from '../../../../components/canonical/Button'
+import type {
+  DeveloperPreviewJob,
+  GeometryDetailLevel,
+} from '../../../../api/siteAcquisition'
 import { Preview3DViewer } from '../../../components/site-acquisition/Preview3DViewer'
-import type { GeometryDetailLevel } from '../../../../api/siteAcquisition'
 import { PREVIEW_DETAIL_OPTIONS, PREVIEW_DETAIL_LABELS } from '../constants'
+import type {
+  PreviewLayerMetadata,
+  PreviewLegendEntry,
+} from '../previewMetadata'
 import { describeDetailLevel } from '../utils'
 import { PreviewLayersTable, type LayerAction } from './property-overview'
 
 interface ConceptPreviewSectionProps {
-  previewJob: {
-    previewUrl: string
-    status: string
-    thumbnailUrl?: string
-    geometryDetailLevel: GeometryDetailLevel
-  }
+  previewJob: DeveloperPreviewJob
   previewViewerMetadataUrl: string | null
   previewDetailLevel: GeometryDetailLevel
   setPreviewDetailLevel: (level: GeometryDetailLevel) => void
@@ -36,11 +38,7 @@ interface ConceptPreviewSectionProps {
   handleRefreshPreview: () => void
   previewLayerVisibility: Record<string, boolean>
   previewFocusLayerId: string | null
-  previewLayerMetadata: Array<{
-    layerId: string
-    name: string
-    [key: string]: unknown
-  }>
+  previewLayerMetadata: PreviewLayerMetadata[]
   hiddenLayerCount: number
   isPreviewMetadataLoading: boolean
   previewMetadataError: string | null
@@ -51,12 +49,12 @@ interface ConceptPreviewSectionProps {
     value: number,
     options?: Intl.NumberFormatOptions,
   ) => string
-  colorLegendEntries: Array<{
-    id: string
-    label: string
-    color: string
-  }>
-  onLegendChange: (id: string, color: string) => void
+  colorLegendEntries: PreviewLegendEntry[]
+  onLegendChange: (
+    assetType: string,
+    field: 'label' | 'color' | 'description',
+    value: string,
+  ) => void
   legendHasPendingChanges: boolean
   onLegendReset: () => void
 }

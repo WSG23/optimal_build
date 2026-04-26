@@ -197,7 +197,7 @@ export function AssetMixChart({
         <Typography
           sx={{
             fontSize: 'var(--ob-font-size-base)',
-            fontWeight: 700,
+            fontWeight: 'var(--ob-font-weight-bold)',
             color: 'var(--ob-color-text-primary)',
             letterSpacing: '-0.01em',
           }}
@@ -208,7 +208,7 @@ export function AssetMixChart({
         <Typography
           sx={{
             fontSize: 'var(--ob-font-size-2xs)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             color: 'var(--ob-color-text-secondary)',
             bgcolor: 'var(--ob-surface-glass-subtle)',
             px: 'var(--ob-space-075)',
@@ -298,11 +298,11 @@ export function AssetMixChart({
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-2xs)',
-                fontWeight: 600,
+                fontWeight: 'var(--ob-font-weight-semibold)',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
                 color: 'var(--ob-color-text-secondary)',
-                lineHeight: 1,
+                lineHeight: 'var(--ob-line-height-none)',
               }}
             >
               {centerMetric.label}
@@ -310,9 +310,9 @@ export function AssetMixChart({
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-base)',
-                fontWeight: 700,
+                fontWeight: 'var(--ob-font-weight-bold)',
                 color: 'var(--ob-color-text-primary)',
-                lineHeight: 1.2,
+                lineHeight: 'var(--ob-line-height-tight)',
                 mt: 'var(--ob-space-025)',
               }}
             >
@@ -347,7 +347,7 @@ export function AssetMixChart({
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-2xs)',
-                fontWeight: 700,
+                fontWeight: 'var(--ob-font-weight-bold)',
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
                 color: 'var(--ob-color-text-secondary)',
@@ -358,7 +358,7 @@ export function AssetMixChart({
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-2xs)',
-                fontWeight: 700,
+                fontWeight: 'var(--ob-font-weight-bold)',
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
                 color: 'var(--ob-color-text-secondary)',
@@ -431,7 +431,7 @@ export function AssetMixChart({
                 <Typography
                   sx={{
                     fontSize: 'var(--ob-font-size-sm)',
-                    fontWeight: 700,
+                    fontWeight: 'var(--ob-font-weight-bold)',
                     color: isActive
                       ? 'var(--ob-color-brand-primary)'
                       : 'var(--ob-color-text-primary)',
@@ -469,7 +469,7 @@ export function AssetMixChart({
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-2xs)',
-                fontWeight: 700,
+                fontWeight: 'var(--ob-font-weight-bold)',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
                 color: 'info.main',
@@ -482,7 +482,7 @@ export function AssetMixChart({
               sx={{
                 fontSize: 'var(--ob-font-size-xs)',
                 color: 'var(--ob-color-text-secondary)',
-                lineHeight: 1.4,
+                lineHeight: 'var(--ob-line-height-snug)',
               }}
             >
               {aiInsight}

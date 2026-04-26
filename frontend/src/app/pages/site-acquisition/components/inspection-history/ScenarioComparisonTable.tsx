@@ -47,7 +47,7 @@ function renderComparisonRowContent(
     <>
       <td
         style={{
-          padding: '0.85rem 1rem',
+          padding: 'var(--ob-space-085) var(--ob-space-100)',
           borderBottom: '1px solid var(--ob-color-border-primary)',
           whiteSpace: 'nowrap',
         }}
@@ -56,11 +56,13 @@ function renderComparisonRowContent(
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.2rem',
+            gap: 'var(--ob-space-025)',
             alignItems: 'flex-start',
           }}
         >
-          <span style={{ fontWeight: 600 }}>{row.label}</span>
+          <span style={{ fontWeight: 'var(--ob-font-weight-semibold)' }}>
+            {row.label}
+          </span>
           {row.recordedAt && (
             <span
               style={{
@@ -75,7 +77,7 @@ function renderComparisonRowContent(
       </td>
       <td
         style={{
-          padding: '0.85rem 1rem',
+          padding: 'var(--ob-space-085) var(--ob-space-100)',
           borderBottom: '1px solid var(--ob-color-border-primary)',
           color: 'var(--ob-color-text-primary)',
           fontSize: 'var(--ob-font-size-sm)',
@@ -86,7 +88,7 @@ function renderComparisonRowContent(
       </td>
       <td
         style={{
-          padding: '0.85rem 1rem',
+          padding: 'var(--ob-space-085) var(--ob-space-100)',
           borderBottom: '1px solid var(--ob-color-border-primary)',
           color: 'var(--ob-color-text-primary)',
           fontSize: 'var(--ob-font-size-sm)',
@@ -99,10 +101,10 @@ function renderComparisonRowContent(
           <ul
             style={{
               margin: 0,
-              paddingLeft: '1.1rem',
+              paddingLeft: 'var(--ob-space-120)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.2rem',
+              gap: 'var(--ob-space-025)',
             }}
           >
             {row.quickMetrics.map((metric) => (
@@ -115,7 +117,7 @@ function renderComparisonRowContent(
       </td>
       <td
         style={{
-          padding: '0.85rem 1rem',
+          padding: 'var(--ob-space-085) var(--ob-space-100)',
           borderBottom: '1px solid var(--ob-color-border-primary)',
           color: 'var(--ob-color-text-primary)',
           fontSize: 'var(--ob-font-size-sm)',
@@ -127,7 +129,7 @@ function renderComparisonRowContent(
             style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.2rem',
+              gap: 'var(--ob-space-025)',
             }}
           >
             <strong>{row.conditionRating}</strong>
@@ -144,7 +146,7 @@ function renderComparisonRowContent(
       </td>
       <td
         style={{
-          padding: '0.85rem 1rem',
+          padding: 'var(--ob-space-085) var(--ob-space-100)',
           borderBottom: '1px solid var(--ob-color-border-primary)',
           color: 'var(--ob-color-text-primary)',
           fontSize: 'var(--ob-font-size-sm)',
@@ -158,7 +160,7 @@ function renderComparisonRowContent(
       </td>
       <td
         style={{
-          padding: '0.85rem 1rem',
+          padding: 'var(--ob-space-085) var(--ob-space-100)',
           borderBottom: '1px solid var(--ob-color-border-primary)',
           color: 'var(--ob-color-text-primary)',
           fontSize: 'var(--ob-font-size-sm)',
@@ -178,7 +180,7 @@ function renderComparisonRowContent(
       </td>
       <td
         style={{
-          padding: '0.85rem 1rem',
+          padding: 'var(--ob-space-085) var(--ob-space-100)',
           borderBottom: '1px solid var(--ob-color-border-primary)',
           color: 'var(--ob-color-text-primary)',
           fontSize: 'var(--ob-font-size-sm)',
@@ -189,7 +191,7 @@ function renderComparisonRowContent(
       </td>
       <td
         style={{
-          padding: '0.85rem 1rem',
+          padding: 'var(--ob-space-085) var(--ob-space-100)',
           borderBottom: '1px solid var(--ob-color-border-primary)',
           color: 'var(--ob-color-text-primary)',
           fontSize: 'var(--ob-font-size-sm)',
@@ -200,7 +202,7 @@ function renderComparisonRowContent(
       </td>
       <td
         style={{
-          padding: '0.85rem 1rem',
+          padding: 'var(--ob-space-085) var(--ob-space-100)',
           borderBottom: '1px solid var(--ob-color-border-primary)',
           color: 'var(--ob-color-text-primary)',
           fontSize: 'var(--ob-font-size-sm)',
@@ -272,10 +274,10 @@ export function ScenarioComparisonTable({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '0.75rem',
-            padding: '0.85rem 1rem',
+            gap: 'var(--ob-space-075)',
+            padding: 'var(--ob-space-085) var(--ob-space-100)',
             fontSize: 'var(--ob-font-size-sm)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             cursor: 'pointer',
             listStyle: 'none',
           }}
@@ -323,7 +325,7 @@ export function ScenarioComparisonTable({
                     key={header}
                     style={{
                       textAlign: 'left',
-                      padding: '0.85rem 1rem',
+                      padding: 'var(--ob-space-085) var(--ob-space-100)',
                       fontSize: 'var(--ob-font-size-xs)',
                       letterSpacing: '0.08em',
                       textTransform: 'uppercase',

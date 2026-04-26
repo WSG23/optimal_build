@@ -64,22 +64,27 @@ export function ScenarioComparisonCard({
       style={{
         border: '1px solid var(--ob-color-border-subtle)',
         borderRadius: 'var(--ob-radius-sm)',
-        padding: '1.25rem',
+        padding: 'var(--ob-space-125)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.6rem',
+        gap: 'var(--ob-space-065)',
         background: 'var(--ob-color-bg-surface)',
       }}
     >
-      <strong style={{ fontSize: '1rem', fontWeight: 600 }}>
+      <strong
+        style={{
+          fontSize: 'var(--ob-font-size-base)',
+          fontWeight: 'var(--ob-font-weight-semibold)',
+        }}
+      >
         {scenarioLabel}
       </strong>
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: '0.4rem',
-          fontSize: '0.9rem',
+          gap: 'var(--ob-space-035)',
+          fontSize: 'var(--ob-font-size-sm)',
           color: 'var(--ob-color-text-primary)',
         }}
       >
@@ -88,7 +93,7 @@ export function ScenarioComparisonCard({
           <span
             style={{
               color: scoreDeltaColor,
-              fontWeight: 600,
+              fontWeight: 'var(--ob-font-weight-semibold)',
             }}
           >
             {formattedDelta}
@@ -97,7 +102,7 @@ export function ScenarioComparisonCard({
         <span
           style={{
             color: toneColorMap[ratingChange.tone],
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
           }}
         >
           {ratingChange.text}
@@ -105,7 +110,7 @@ export function ScenarioComparisonCard({
         <span
           style={{
             color: toneColorMap[riskChange.tone],
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
           }}
         >
           {riskChange.text}
@@ -114,9 +119,9 @@ export function ScenarioComparisonCard({
       <p
         style={{
           margin: 0,
-          fontSize: '0.9rem',
+          fontSize: 'var(--ob-font-size-sm)',
           color: 'var(--ob-color-text-primary)',
-          lineHeight: 1.5,
+          lineHeight: 'var(--ob-line-height-normal)',
         }}
       >
         {summary}
@@ -125,7 +130,7 @@ export function ScenarioComparisonCard({
         <p
           style={{
             margin: 0,
-            fontSize: '0.85rem',
+            fontSize: 'var(--ob-font-size-sm)',
             color: 'var(--ob-color-brand-primary)',
           }}
         >
@@ -133,15 +138,17 @@ export function ScenarioComparisonCard({
         </p>
       )}
       {recommendedActions.length > 0 && (
-        <div style={{ display: 'grid', gap: '0.4rem' }}>
-          <strong style={{ fontSize: '0.85rem' }}>Actions</strong>
+        <div style={{ display: 'grid', gap: 'var(--ob-space-035)' }}>
+          <strong style={{ fontSize: 'var(--ob-font-size-sm)' }}>
+            Actions
+          </strong>
           <ul
             style={{
               margin: 0,
-              paddingLeft: '1.1rem',
-              fontSize: '0.85rem',
+              paddingLeft: 'var(--ob-space-120)',
+              fontSize: 'var(--ob-font-size-sm)',
               color: 'var(--ob-color-text-primary)',
-              lineHeight: 1.4,
+              lineHeight: 'var(--ob-line-height-snug)',
             }}
           >
             {recommendedActions.map((action) => (
