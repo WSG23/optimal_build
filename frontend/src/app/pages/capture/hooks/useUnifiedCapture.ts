@@ -12,7 +12,6 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import type { FormEvent } from 'react'
 
 import {
-  DEFAULT_SCENARIO_ORDER,
   fetchPropertyMarketIntelligence,
   logPropertyByGpsWithFeatures,
   type DevelopmentScenario,
@@ -34,25 +33,53 @@ const GOOGLE_MAPS_API_KEY = import.meta.env?.VITE_GOOGLE_MAPS_API_KEY ?? ''
 let googleMapsPromise: Promise<void> | null = null
 
 function loadGoogleMapsScript(apiKey: string): Promise<void> {
-  if (window.google?.maps) {
-    return Promise.resolve()
-  }
-
   if (googleMapsPromise) {
     return googleMapsPromise
   }
 
-  googleMapsPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async`
-    script.async = true
-    script.defer = true
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Failed to load Google Maps'))
-    document.head.appendChild(script)
-  })
+  googleMapsPromise = (async () => {
+    // Load Maps JS API with marker library via URL params (not loading=async
+    // which requires importLibrary and fails in some environments)
+    if (!window.google?.maps?.Map) {
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=marker,places`
+        script.async = true
+        script.defer = true
+        script.onload = () => resolve()
+        script.onerror = () =>
+          reject(
+            new Error(
+              'Failed to load Google Maps. Check your API key and network connection.',
+            ),
+          )
+        document.head.appendChild(script)
+      })
+    }
+  })()
 
   return googleMapsPromise
+}
+
+/** Attempt browser geolocation with a timeout. Returns null on failure. */
+function getUserPosition(
+  timeoutMs = 8000,
+): Promise<{ latitude: number; longitude: number } | null> {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve(null)
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) =>
+        resolve({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        }),
+      () => resolve(null),
+      { enableHighAccuracy: false, timeout: timeoutMs, maximumAge: 300_000 },
+    )
+  })
 }
 
 export interface CapturedSite {
@@ -100,14 +127,21 @@ export interface UseUnifiedCaptureReturn {
 
   // Geocoding
   geocodeError: string | null
+  isGeocoding: boolean
 
   // Map
   mapContainerRef: React.RefObject<HTMLDivElement>
+  addressInputRef: React.RefObject<HTMLInputElement>
   mapError: string | null
+  isMapLoading: boolean
+
+  // Post-capture confirmation
+  targetAcquired: string | null
 
   // Handlers
   handleCapture: (event: FormEvent<HTMLFormElement>) => Promise<void>
   handleNewCapture: () => void
+  handleCancelCapture: () => void
 }
 
 export function useUnifiedCapture({
@@ -115,19 +149,21 @@ export function useUnifiedCapture({
   projectId,
   googleMapsApiKey,
 }: UseUnifiedCaptureOptions): UseUnifiedCaptureReturn {
-  // Form state
-  const [latitude, setLatitude] = useState<string>('1.3000')
-  const [longitude, setLongitude] = useState<string>('103.8500')
+  // Form state — start empty; geolocation fills in the user's position
+  const [latitude, setLatitude] = useState<string>('')
+  const [longitude, setLongitude] = useState<string>('')
   const [address, setAddress] = useState<string>('')
-  const [jurisdictionCode, setJurisdictionCode] = useState<string>('SG')
+  const [jurisdictionCode, setJurisdictionCode] = useState<string>('')
   const [selectedScenarios, setSelectedScenarios] = useState<
     DevelopmentScenario[]
-  >([...DEFAULT_SCENARIO_ORDER])
+  >([])
 
   // Capture state
   const [isCapturing, setIsCapturing] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
   const [captureError, setCaptureError] = useState<string | null>(null)
+  const [targetAcquired, setTargetAcquired] = useState<string | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   // Agent results
   const [captureSummary, setCaptureSummary] =
@@ -137,7 +173,14 @@ export function useUnifiedCapture({
   const [marketSummary, setMarketSummary] =
     useState<MarketIntelligenceSummary | null>(null)
   const [marketLoading, setMarketLoading] = useState(false)
-  const [capturedSites, setCapturedSites] = useState<CapturedSite[]>([])
+  const [capturedSites, setCapturedSites] = useState<CapturedSite[]>(() => {
+    try {
+      const stored = sessionStorage.getItem('capture:mission-log')
+      return stored ? (JSON.parse(stored) as CapturedSite[]) : []
+    } catch {
+      return []
+    }
+  })
 
   // Developer results
   const [siteAcquisitionResult, setSiteAcquisitionResult] =
@@ -145,23 +188,70 @@ export function useUnifiedCapture({
 
   // Geocoding
   const [geocodeError, setGeocodeError] = useState<string | null>(null)
-  const [_isGeocoding, setIsGeocoding] = useState(false)
+  const [isGeocoding, setIsGeocoding] = useState(false)
   // Track the address that was last geocoded to avoid redundant calls
   const lastGeocodedAddressRef = useRef<string>('')
 
   // Map
   const [mapError, setMapError] = useState<string | null>(null)
   const [isMapLoaded, setIsMapLoaded] = useState(false)
+  const [isMapLoading, setIsMapLoading] = useState(true)
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
-  const mapMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
-    null,
-  )
+  const mapMarkerRef = useRef<
+    google.maps.marker.AdvancedMarkerElement | google.maps.Marker | null
+  >(null)
   const hasHydratedRef = useRef(false)
+  const geolocatedRef = useRef(false)
+  const addressInputRef = useRef<HTMLInputElement | null>(null)
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
+
+  /** Update marker position — handles both AdvancedMarkerElement and classic Marker */
+  const updateMarkerPosition = useCallback((lat: number, lng: number) => {
+    const m = mapMarkerRef.current
+    if (!m) return
+    if (m instanceof google.maps.Marker) {
+      m.setPosition({ lat, lng })
+    } else {
+      m.position = { lat, lng }
+    }
+  }, [])
 
   useEffect(() => {
     hasHydratedRef.current = false
   }, [projectId])
+
+  // Persist Mission Log to sessionStorage
+  useEffect(() => {
+    if (capturedSites.length > 0) {
+      sessionStorage.setItem(
+        'capture:mission-log',
+        JSON.stringify(capturedSites),
+      )
+    }
+  }, [capturedSites])
+
+  // Browser geolocation — run once on mount to center map on user's position
+  useEffect(() => {
+    if (geolocatedRef.current) return
+    geolocatedRef.current = true
+
+    getUserPosition().then((pos) => {
+      if (!pos) return
+      // Only set if user hasn't already typed something
+      setLatitude((prev) => (prev === '' ? pos.latitude.toFixed(6) : prev))
+      setLongitude((prev) => (prev === '' ? pos.longitude.toFixed(6) : prev))
+
+      // Center map if already initialized
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.setCenter({
+          lat: pos.latitude,
+          lng: pos.longitude,
+        })
+        updateMarkerPosition(pos.latitude, pos.longitude)
+      }
+    })
+  }, [updateMarkerPosition])
 
   // Scenario toggle handler
   const handleScenarioToggle = useCallback((scenario: DevelopmentScenario) => {
@@ -192,15 +282,12 @@ export function useUnifiedCapture({
         setLongitude(result.longitude.toString())
         lastGeocodedAddressRef.current = targetAddress.trim()
 
-        if (mapInstanceRef.current && mapMarkerRef.current) {
+        if (mapInstanceRef.current) {
           mapInstanceRef.current.setCenter({
             lat: result.latitude,
             lng: result.longitude,
           })
-          mapMarkerRef.current.position = {
-            lat: result.latitude,
-            lng: result.longitude,
-          }
+          updateMarkerPosition(result.latitude, result.longitude)
         }
         return { latitude: result.latitude, longitude: result.longitude }
       } catch (error) {
@@ -213,7 +300,7 @@ export function useUnifiedCapture({
         setIsGeocoding(false)
       }
     },
-    [address],
+    [address, updateMarkerPosition],
   )
 
   // Auto-geocode when address changes (debounced)
@@ -242,13 +329,25 @@ export function useUnifiedCapture({
   useEffect(() => {
     const apiKey = googleMapsApiKey ?? GOOGLE_MAPS_API_KEY
     if (!apiKey) {
-      setMapError('Google Maps API key not set; map preview disabled.')
+      setMapError(
+        'Google Maps API key not configured. Set VITE_GOOGLE_MAPS_API_KEY in your .env file.',
+      )
+      setIsMapLoading(false)
       return
     }
 
+    setIsMapLoading(true)
     loadGoogleMapsScript(apiKey)
-      .then(() => setIsMapLoaded(true))
-      .catch((err) => setMapError(err.message))
+      .then(() => {
+        setIsMapLoaded(true)
+        setIsMapLoading(false)
+      })
+      .catch((err) => {
+        setMapError(
+          `Map failed to load: ${err.message}. Check your API key and network connection.`,
+        )
+        setIsMapLoading(false)
+      })
   }, [googleMapsApiKey])
 
   useEffect(() => {
@@ -388,28 +487,65 @@ export function useUnifiedCapture({
       clickableIcons: true,
     })
 
-    // Create draggable marker — white on dark map
-    const pinSvg = document.createElement('div')
-    pinSvg.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="12" cy="12" r="10" fill="#ffffff" stroke="#3b82f6" stroke-width="3"/>
-    </svg>`
-    pinSvg.style.cursor = 'grab'
-    pinSvg.title = 'Drag to reposition or click the map'
+    // Resolve brand color from CSS custom property
+    const brandColor =
+      getComputedStyle(document.documentElement)
+        .getPropertyValue('--ob-color-brand-primary')
+        .trim() || '#00f3ff'
 
-    const marker = new google.maps.marker.AdvancedMarkerElement({
-      position: { lat: initialLat, lng: initialLng },
-      map,
-      gmpDraggable: true,
-      content: pinSvg,
-    })
+    // Create draggable marker — try AdvancedMarkerElement, fall back to classic Marker
+    let marker: google.maps.marker.AdvancedMarkerElement | google.maps.Marker
+
+    if (google.maps.marker?.AdvancedMarkerElement) {
+      const pinSvg = document.createElement('div')
+      pinSvg.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" fill="#ffffff" stroke="${brandColor}" stroke-width="3"/>
+      </svg>`
+      pinSvg.style.cursor = 'grab'
+      pinSvg.title = 'Drag to reposition or click the map'
+
+      marker = new google.maps.marker.AdvancedMarkerElement({
+        position: { lat: initialLat, lng: initialLng },
+        map,
+        gmpDraggable: true,
+        content: pinSvg,
+      })
+    } else {
+      // Fallback to classic Marker when AdvancedMarkerElement is unavailable
+      marker = new google.maps.Marker({
+        position: { lat: initialLat, lng: initialLng },
+        map,
+        draggable: true,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor: '#ffffff',
+          fillOpacity: 1,
+          strokeColor: brandColor,
+          strokeWeight: 3,
+        },
+      })
+    }
 
     // Guard against setState after unmount
     let mounted = true
 
-    // Handle marker drag — update coords and reverse-geocode
-    marker.addEventListener('gmp-dragend', () => {
+    // Helper to update marker position (works for both marker types)
+    const setMarkerPosition = (lat: number, lng: number) => {
+      if (marker instanceof google.maps.Marker) {
+        marker.setPosition({ lat, lng })
+      } else {
+        marker.position = { lat, lng }
+      }
+    }
+
+    // Helper to handle drag end for both marker types
+    const handleDragEnd = () => {
       if (!mounted) return
-      const position = marker.position
+      const position =
+        marker instanceof google.maps.Marker
+          ? marker.getPosition()
+          : marker.position
       if (position) {
         const lat =
           typeof position.lat === 'function' ? position.lat() : position.lat
@@ -426,7 +562,14 @@ export function useUnifiedCapture({
           })
           .catch(() => {})
       }
-    })
+    }
+
+    // Bind drag event — different API for each marker type
+    if (marker instanceof google.maps.Marker) {
+      marker.addListener('dragend', handleDragEnd)
+    } else {
+      marker.addEventListener('gmp-dragend', handleDragEnd)
+    }
 
     // Handle map click — set pin and reverse-geocode for address
     map.addListener('click', (event: google.maps.MapMouseEvent) => {
@@ -436,7 +579,7 @@ export function useUnifiedCapture({
         const lng = event.latLng.lng()
         setLatitude(lat.toFixed(6))
         setLongitude(lng.toFixed(6))
-        marker.position = { lat, lng }
+        setMarkerPosition(lat, lng)
         reverseGeocodeCoords(lat, lng)
           .then((result) => {
             if (mounted && result?.formattedAddress) {
@@ -454,11 +597,56 @@ export function useUnifiedCapture({
     return () => {
       mounted = false
       if (mapMarkerRef.current) {
-        mapMarkerRef.current.map = null
+        if (mapMarkerRef.current instanceof google.maps.Marker) {
+          mapMarkerRef.current.setMap(null)
+        } else {
+          mapMarkerRef.current.map = null
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMapLoaded]) // Only run once when map is loaded
+
+  // Initialize Google Places Autocomplete on address input
+  useEffect(() => {
+    if (
+      !isMapLoaded ||
+      !addressInputRef.current ||
+      autocompleteRef.current ||
+      !google.maps.places
+    ) {
+      return
+    }
+
+    const autocomplete = new google.maps.places.Autocomplete(
+      addressInputRef.current,
+      {
+        types: ['address'],
+        fields: ['formatted_address', 'geometry'],
+      },
+    )
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace()
+      if (place.formatted_address) {
+        setAddress(place.formatted_address)
+        lastGeocodedAddressRef.current = place.formatted_address
+      }
+      if (place.geometry?.location) {
+        const lat = place.geometry.location.lat()
+        const lng = place.geometry.location.lng()
+        setLatitude(lat.toFixed(6))
+        setLongitude(lng.toFixed(6))
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setCenter({ lat, lng })
+          updateMarkerPosition(lat, lng)
+        }
+      }
+    })
+
+    autocompleteRef.current = autocomplete
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMapLoaded]) // Only run once when map + places are loaded
 
   // Capture handler - routes to appropriate API based on mode
   const handleCapture = useCallback(
@@ -469,9 +657,14 @@ export function useUnifiedCapture({
         setIsCapturing(true)
         setIsScanning(true)
         setCaptureError(null)
+        setTargetAcquired(null)
         setMarketSummary(null)
         setDeveloperFeatures(null)
         setSiteAcquisitionResult(null)
+
+        // Create a shared abort controller for cancellation
+        const sharedController = new AbortController()
+        abortControllerRef.current = sharedController
 
         // If address is provided and hasn't been geocoded yet, geocode it first
         // This ensures the coordinates match the entered address
@@ -505,14 +698,23 @@ export function useUnifiedCapture({
           return
         }
 
-        // Artificial delay for radar scanning effect
-        await new Promise((resolve) => setTimeout(resolve, 1500))
+        // Artificial delay for radar scanning effect (cancellable)
+        await new Promise<void>((resolve, reject) => {
+          const timer = setTimeout(resolve, 1500)
+          sharedController.signal.addEventListener('abort', () => {
+            clearTimeout(timer)
+            reject(new DOMException('Cancelled', 'AbortError'))
+          })
+        })
 
         if (isDeveloperMode) {
           // Developer flow - use site acquisition API
           // Add timeout to prevent infinite loading if backend is unresponsive
-          const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
+          let timedOut = false
+          const timeoutId = setTimeout(() => {
+            timedOut = true
+            sharedController.abort()
+          }, 30000)
 
           let result: SiteAcquisitionResult
           try {
@@ -525,15 +727,18 @@ export function useUnifiedCapture({
                 jurisdictionCode: jurisdictionCode || undefined,
                 previewDetailLevel: 'medium',
               },
-              controller.signal,
+              sharedController.signal,
             )
           } catch (err) {
             clearTimeout(timeoutId)
-            // Re-throw with more descriptive message for timeout
             if (err instanceof Error && err.name === 'AbortError') {
-              throw new Error(
-                'Request timed out. Please check if the backend server is running.',
-              )
+              if (timedOut) {
+                throw new Error(
+                  'Request timed out. Please check if the backend server is running.',
+                )
+              }
+              // User-initiated cancel — re-throw as AbortError for outer catch
+              throw err
             }
             throw err
           }
@@ -547,20 +752,25 @@ export function useUnifiedCapture({
             JSON.stringify(result),
           )
 
+          const resolvedAddress =
+            result.address?.fullAddress ||
+            address ||
+            `${finalLat.toFixed(5)}, ${finalLon.toFixed(5)}`
+
           // Also add to mission log for consistency
           setCapturedSites((prev) => [
             {
               propertyId: result.propertyId,
-              address:
-                result.address?.fullAddress ||
-                address ||
-                `Captured site (${finalLat.toFixed(5)}, ${finalLon.toFixed(5)})`,
+              address: resolvedAddress,
               district: result.address?.district,
               scenario: selectedScenarios[0] ?? null,
               capturedAt: new Date().toISOString(),
             },
             ...prev,
           ])
+
+          // Show "Target Acquired" confirmation briefly
+          setTargetAcquired(resolvedAddress)
         } else {
           // Agent flow - use GPS capture API
           const summary = await logPropertyByGpsWithFeatures({
@@ -580,19 +790,25 @@ export function useUnifiedCapture({
           setCaptureSummary(summary)
           setDeveloperFeatures(summary.developerFeatures)
 
+          const agentAddress = summary.address.fullAddress.startsWith(
+            'Mocked Address',
+          )
+            ? address || `${finalLat.toFixed(5)}, ${finalLon.toFixed(5)}`
+            : summary.address.fullAddress
+
           setCapturedSites((prev) => [
             {
               propertyId: summary.propertyId,
-              address: summary.address.fullAddress.startsWith('Mocked Address')
-                ? address ||
-                  `Captured site (${finalLat.toFixed(5)}, ${finalLon.toFixed(5)})`
-                : summary.address.fullAddress,
+              address: agentAddress,
               district: summary.address.district,
               scenario: summary.quickAnalysis.scenarios[0]?.scenario ?? null,
               capturedAt: summary.timestamp,
             },
             ...prev,
           ])
+
+          // Show "Target Acquired" confirmation briefly
+          setTargetAcquired(agentAddress)
 
           // Fetch market intelligence
           setMarketLoading(true)
@@ -606,6 +822,10 @@ export function useUnifiedCapture({
           }
         }
       } catch (error) {
+        // User-initiated cancel — not an error
+        if (error instanceof Error && error.name === 'AbortError') {
+          return
+        }
         console.error('Capture failed', error)
         setCaptureError(
           error instanceof Error
@@ -615,6 +835,7 @@ export function useUnifiedCapture({
       } finally {
         setIsCapturing(false)
         setIsScanning(false)
+        abortControllerRef.current = null
       }
     },
     [
@@ -628,6 +849,21 @@ export function useUnifiedCapture({
     ],
   )
 
+  // Cancel in-flight capture
+  const handleCancelCapture = useCallback(() => {
+    abortControllerRef.current?.abort()
+    abortControllerRef.current = null
+    setIsCapturing(false)
+    setIsScanning(false)
+  }, [])
+
+  // Auto-dismiss "Target Acquired" after 3 seconds
+  useEffect(() => {
+    if (!targetAcquired) return
+    const timer = setTimeout(() => setTargetAcquired(null), 3000)
+    return () => clearTimeout(timer)
+  }, [targetAcquired])
+
   // Reset for new capture
   const handleNewCapture = useCallback(() => {
     // Clear results
@@ -637,12 +873,12 @@ export function useUnifiedCapture({
     setSiteAcquisitionResult(null)
     setCaptureError(null)
     setGeocodeError(null)
+    setTargetAcquired(null)
 
-    // Reset form to defaults
-    setLatitude('1.3000')
-    setLongitude('103.8500')
+    // Reset form — clear fields, re-geolocate
     setAddress('')
-    setSelectedScenarios([...DEFAULT_SCENARIO_ORDER])
+    setSelectedScenarios([])
+    setJurisdictionCode('')
 
     // Reset geocoding tracking
     lastGeocodedAddressRef.current = ''
@@ -650,12 +886,24 @@ export function useUnifiedCapture({
     // Clear sessionStorage
     sessionStorage.removeItem('site-acquisition:captured-property')
 
-    // Reset map marker to default position
-    if (mapInstanceRef.current && mapMarkerRef.current) {
-      mapInstanceRef.current.setCenter({ lat: 1.3, lng: 103.85 })
-      mapMarkerRef.current.position = { lat: 1.3, lng: 103.85 }
-    }
-  }, [])
+    // Re-geolocate to user's position
+    getUserPosition().then((pos) => {
+      if (pos) {
+        setLatitude(pos.latitude.toFixed(6))
+        setLongitude(pos.longitude.toFixed(6))
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setCenter({
+            lat: pos.latitude,
+            lng: pos.longitude,
+          })
+          updateMarkerPosition(pos.latitude, pos.longitude)
+        }
+      } else {
+        setLatitude('')
+        setLongitude('')
+      }
+    })
+  }, [updateMarkerPosition])
 
   // Compute hasResults
   const hasResults = isDeveloperMode
@@ -693,13 +941,20 @@ export function useUnifiedCapture({
 
     // Geocoding
     geocodeError,
+    isGeocoding,
 
     // Map
     mapContainerRef,
+    addressInputRef,
     mapError,
+    isMapLoading,
+
+    // Post-capture confirmation
+    targetAcquired,
 
     // Handlers
     handleCapture,
     handleNewCapture,
+    handleCancelCapture,
   }
 }

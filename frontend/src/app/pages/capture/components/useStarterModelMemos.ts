@@ -18,13 +18,26 @@ export type CaptureResultV2StarterModel = CaptureStarterModelV2 & {
 }
 
 export interface StarterModelAssumptionLine {
-  text: string
+  label: string
+  value: string
+  sourceDetail: string | null
+}
+
+export interface StarterModelAssetProfileLine {
+  label: string
+  value: string
   sourceDetail: string | null
 }
 
 export interface StarterModelAssumptionBuckets {
   pinned: string[]
   tunable: string[]
+}
+
+export interface CaptureDataBasisItem {
+  label: string
+  value: string
+  tone: 'success' | 'warning' | 'default'
 }
 
 interface PreviewJobLike {
@@ -207,6 +220,68 @@ export function useStarterModelMemos({
     formatNumber,
   ])
 
+  const captureDataBasis = useMemo((): CaptureDataBasisItem[] => {
+    const items: CaptureDataBasisItem[] = [
+      {
+        label: 'Site input',
+        value: 'Address and coordinates are site-specific.',
+        tone: 'success',
+      },
+    ]
+
+    const sourceReference = captureResultV2.codeConstraints.sourceReference
+    if (!sourceReference) {
+      items.push({
+        label: 'Envelope source',
+        value: 'Zoning envelope source is unresolved.',
+        tone: 'warning',
+      })
+    } else if (/mock data|fallback|no refrule/i.test(sourceReference)) {
+      items.push({
+        label: 'Envelope source',
+        value: sourceReference,
+        tone: 'warning',
+      })
+    } else {
+      items.push({
+        label: 'Envelope source',
+        value: sourceReference,
+        tone: 'success',
+      })
+    }
+
+    const unresolvedCount = captureResultV2.analysisStatus.missingInputs.length
+    items.push({
+      label: 'Rule coverage',
+      value:
+        unresolvedCount > 0
+          ? `${unresolvedCount} control areas still unresolved (${captureResultV2.analysisStatus.missingInputs.slice(0, 3).join(', ')}${unresolvedCount > 3 ? ', …' : ''}).`
+          : 'Core rule controls resolved for this capture.',
+      tone: unresolvedCount > 0 ? 'warning' : 'success',
+    })
+
+    items.push({
+      label: 'Geometry',
+      value:
+        effectiveStarterModel.status === 'ready' &&
+        effectiveStarterModel.generatedFrom.includes('preview_job')
+          ? 'Scenario-specific starter model is generated from the preview pipeline.'
+          : 'Geometry is still preliminary and may rely on fallback or placeholder massing.',
+      tone:
+        effectiveStarterModel.status === 'ready' &&
+        effectiveStarterModel.generatedFrom.includes('preview_job')
+          ? 'success'
+          : 'warning',
+    })
+
+    return items
+  }, [
+    captureResultV2.analysisStatus.missingInputs,
+    captureResultV2.codeConstraints.sourceReference,
+    effectiveStarterModel.generatedFrom,
+    effectiveStarterModel.status,
+  ])
+
   const starterModelAssumptionLines = useMemo(() => {
     const assumptions = effectiveEngineeringAssumptions
     const provenanceFields = assumptions.provenance?.fields ?? {}
@@ -262,11 +337,12 @@ export function useStarterModelMemos({
     const lines = [
       assumptions.floorToFloorM != null && assumptions.clearCeilingM != null
         ? {
-            text: `Floor-to-floor ${formatNumber(assumptions.floorToFloorM, {
+            label: 'Vertical profile',
+            value: `${formatNumber(assumptions.floorToFloorM, {
               maximumFractionDigits: 1,
-            })} m / clear ceiling ${formatNumber(assumptions.clearCeilingM, {
+            })} m floor-to-floor / ${formatNumber(assumptions.clearCeilingM, {
               maximumFractionDigits: 1,
-            })} m`,
+            })} m clear`,
             sourceDetail: describeFieldSources([
               'floor_to_floor_m',
               'clear_ceiling_m',
@@ -275,11 +351,12 @@ export function useStarterModelMemos({
         : null,
       assumptions.wallThicknessMm != null && assumptions.coreRatioPct != null
         ? {
-            text: `Wall thickness ${formatNumber(assumptions.wallThicknessMm, {
+            label: 'Structure + core',
+            value: `${formatNumber(assumptions.wallThicknessMm, {
               maximumFractionDigits: 0,
-            })} mm / core ratio ${formatNumber(assumptions.coreRatioPct, {
+            })} mm walls / ${formatNumber(assumptions.coreRatioPct, {
               maximumFractionDigits: 0,
-            })}%`,
+            })}% core`,
             sourceDetail: describeFieldSources([
               'wall_thickness_mm',
               'core_ratio_pct',
@@ -290,16 +367,14 @@ export function useStarterModelMemos({
       assumptions.hvacSpaceRatioPct != null &&
       assumptions.electricalSpaceRatioPct != null
         ? {
-            text: `Common area ${formatNumber(assumptions.commonAreaRatioPct, {
+            label: 'Shared systems',
+            value: `${formatNumber(assumptions.commonAreaRatioPct, {
               maximumFractionDigits: 0,
-            })}% / HVAC ${formatNumber(assumptions.hvacSpaceRatioPct, {
+            })}% common / ${formatNumber(assumptions.hvacSpaceRatioPct, {
               maximumFractionDigits: 0,
-            })}% / electrical ${formatNumber(
-              assumptions.electricalSpaceRatioPct,
-              {
-                maximumFractionDigits: 0,
-              },
-            )}%`,
+            })}% HVAC / ${formatNumber(assumptions.electricalSpaceRatioPct, {
+              maximumFractionDigits: 0,
+            })}% electrical`,
             sourceDetail: describeFieldSources([
               'common_area_ratio_pct',
               'hvac_space_ratio_pct',
@@ -309,14 +384,12 @@ export function useStarterModelMemos({
         : null,
       assumptions.retentionStrategy
         ? {
-            text: `Retention strategy ${assumptions.retentionStrategy.replace(/_/g, ' ')}${
+            label: 'Retention + yield',
+            value: `${assumptions.retentionStrategy.replace(/_/g, ' ')}${
               assumptions.efficiencyFactor != null
-                ? ` / efficiency factor ${formatNumber(
-                    assumptions.efficiencyFactor,
-                    {
-                      maximumFractionDigits: 2,
-                    },
-                  )}`
+                ? ` / ${formatNumber(assumptions.efficiencyFactor, {
+                    maximumFractionDigits: 2,
+                  })} efficiency`
                 : ''
             }`,
             sourceDetail: describeFieldSources([
@@ -326,12 +399,10 @@ export function useStarterModelMemos({
           }
         : assumptions.efficiencyFactor != null
           ? {
-              text: `Efficiency factor ${formatNumber(
-                assumptions.efficiencyFactor,
-                {
-                  maximumFractionDigits: 2,
-                },
-              )}`,
+              label: 'Yield factor',
+              value: `${formatNumber(assumptions.efficiencyFactor, {
+                maximumFractionDigits: 2,
+              })} efficiency`,
               sourceDetail: describeFieldSources(['efficiency_factor']),
             }
           : null,
@@ -339,13 +410,60 @@ export function useStarterModelMemos({
       (
         line,
       ): line is {
-        text: string
+        label: string
+        value: string
         sourceDetail: string | null
       } => Boolean(line),
     )
 
     return lines
   }, [effectiveEngineeringAssumptions, formatNumber])
+
+  const starterModelAssetProfileLines = useMemo(() => {
+    const profiles = effectiveEngineeringAssumptions.assetProfiles ?? []
+    const formatAssetLabel = (assetType: string) =>
+      assetType
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase())
+
+    const formatSourceLabel = (source: string): string =>
+      source === 'property_specific'
+        ? 'property-specific'
+        : source === 'heuristic_fallback'
+          ? 'heuristic fallback'
+          : source.replace(/_/g, ' ')
+
+    return profiles.map((profile) => {
+      const parts: string[] = []
+      if (profile.floorToFloorM != null) {
+        parts.push(
+          `${formatNumber(profile.floorToFloorM, {
+            maximumFractionDigits: 1,
+          })} m floor-to-floor`,
+        )
+      }
+      if (profile.clearCeilingM != null) {
+        parts.push(
+          `${formatNumber(profile.clearCeilingM, {
+            maximumFractionDigits: 1,
+          })} m clear`,
+        )
+      }
+      if (profile.niaEfficiency != null) {
+        parts.push(
+          `${formatNumber(profile.niaEfficiency, {
+            maximumFractionDigits: 2,
+          })} efficiency`,
+        )
+      }
+
+      return {
+        label: formatAssetLabel(profile.assetType),
+        value: parts.join(' / '),
+        sourceDetail: formatSourceLabel(profile.source),
+      }
+    })
+  }, [effectiveEngineeringAssumptions.assetProfiles, formatNumber])
 
   const starterModelAssumptionSourceLine = useMemo(() => {
     const assumptions = effectiveEngineeringAssumptions
@@ -530,7 +648,9 @@ export function useStarterModelMemos({
     starterModelStatusSummary,
     effectiveEngineeringAssumptions,
     scenarioFitSummary,
+    captureDataBasis,
     starterModelAssumptionLines,
+    starterModelAssetProfileLines,
     starterModelAssumptionSourceLine,
     starterModelAssumptionFallbackReason,
     starterModelOverridePreviewNotice,

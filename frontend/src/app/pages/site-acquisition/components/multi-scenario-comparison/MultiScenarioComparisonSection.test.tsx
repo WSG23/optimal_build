@@ -98,6 +98,7 @@ describe('MultiScenarioComparisonSection', () => {
     expect(screen.getByText('CONSTRAINT FLAGS')).toBeInTheDocument()
     expect(screen.getByText('BUILDABLE GFA')).toBeInTheDocument()
     expect(screen.getByText('NEW CONSTRUCTION')).toBeInTheDocument()
+    expect(screen.queryByText('PATH_GROUND_UP')).not.toBeInTheDocument()
     expect(screen.getByText(/SCENARIO FOCUS:/i)).toBeInTheDocument()
     expect(screen.getByText(/Viewing New Construction\./i)).toBeInTheDocument()
     expect(screen.getByText('AVG_COVERAGE')).toBeInTheDocument()

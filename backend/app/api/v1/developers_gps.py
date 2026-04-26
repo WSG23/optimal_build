@@ -374,29 +374,87 @@ async def _derive_build_envelope(
         jurisdiction=jurisdiction,
     )
 
+    development_constraints = property_info.get("development_constraints")
+    if not isinstance(development_constraints, dict):
+        development_constraints = property_info.get("developmentConstraints")
+    if not isinstance(development_constraints, dict):
+        development_constraints = {}
+
+    fallback_plot_ratio = _coerce_float(
+        ura_data.get("plot_ratio") or ura_data.get("plotRatio")
+    )
+    fallback_zone_code = str(raw_zone_code) if raw_zone_code else None
+    fallback_zone_description = ura_data.get("zone_description") or ura_data.get(
+        "zoneDescription"
+    )
+    fallback_building_height_limit = _coerce_float(
+        ura_data.get("building_height_limit") or ura_data.get("buildingHeightLimit")
+    )
+    fallback_site_coverage = _coerce_float(
+        ura_data.get("site_coverage") or ura_data.get("siteCoverage")
+    )
+    fallback_setback_front = _coerce_float(
+        development_constraints.get("setback_front_m")
+        or development_constraints.get("front_setback_m")
+        or ura_data.get("setback_front_m")
+        or ura_data.get("setbackFrontM")
+    )
+    fallback_setback_rear = _coerce_float(
+        development_constraints.get("setback_rear_m")
+        or development_constraints.get("rear_setback_m")
+        or ura_data.get("setback_rear_m")
+        or ura_data.get("setbackRearM")
+    )
+    fallback_setback_side = _coerce_float(
+        development_constraints.get("setback_side_m")
+        or development_constraints.get("side_setback_m")
+        or ura_data.get("setback_side_m")
+        or ura_data.get("setbackSideM")
+    )
+    raw_step_backs = (
+        development_constraints.get("step_backs")
+        or development_constraints.get("stepBacks")
+        or ura_data.get("step_backs")
+        or ura_data.get("stepBacks")
+    )
+    fallback_step_backs = raw_step_backs if isinstance(raw_step_backs, list) else []
+    fallback_air_rights_note = (
+        development_constraints.get("air_rights_note")
+        or development_constraints.get("airRightsNote")
+        or ura_data.get("air_rights_note")
+        or ura_data.get("airRightsNote")
+    )
+    fallback_air_rights_note = (
+        str(fallback_air_rights_note) if fallback_air_rights_note else None
+    )
+
     # Use rules data if available, otherwise fall back to URA service data
     if rules_result.has_data:
-        plot_ratio = rules_result.plot_ratio
-        zone_code = rules_result.zone_code
-        zone_description = rules_result.zone_description
-        building_height_limit = rules_result.building_height_limit_m
-        site_coverage = rules_result.site_coverage_pct
+        plot_ratio = rules_result.plot_ratio or fallback_plot_ratio
+        zone_code = fallback_zone_code or rules_result.zone_code
+        zone_description = fallback_zone_description or rules_result.zone_description
+        building_height_limit = (
+            rules_result.building_height_limit_m or fallback_building_height_limit
+        )
+        site_coverage = rules_result.site_coverage_pct or fallback_site_coverage
+        setback_front = rules_result.setback_front_m or fallback_setback_front
+        setback_rear = rules_result.setback_rear_m or fallback_setback_rear
+        setback_side = rules_result.setback_side_m or fallback_setback_side
+        step_backs = rules_result.step_backs or fallback_step_backs
+        air_rights_note = rules_result.air_rights_note or fallback_air_rights_note
         source_reference = rules_result.source_reference
     else:
         # Fallback to URA service data (mocked)
-        plot_ratio = _coerce_float(
-            ura_data.get("plot_ratio") or ura_data.get("plotRatio")
-        )
-        zone_code = str(raw_zone_code) if raw_zone_code else None
-        zone_description = ura_data.get("zone_description") or ura_data.get(
-            "zoneDescription"
-        )
-        building_height_limit = _coerce_float(
-            ura_data.get("building_height_limit") or ura_data.get("buildingHeightLimit")
-        )
-        site_coverage = _coerce_float(
-            ura_data.get("site_coverage") or ura_data.get("siteCoverage")
-        )
+        plot_ratio = fallback_plot_ratio
+        zone_code = fallback_zone_code
+        zone_description = fallback_zone_description
+        building_height_limit = fallback_building_height_limit
+        site_coverage = fallback_site_coverage
+        setback_front = fallback_setback_front
+        setback_rear = fallback_setback_rear
+        setback_side = fallback_setback_side
+        step_backs = fallback_step_backs
+        air_rights_note = fallback_air_rights_note
         source_reference = "URA Service (Mock Data - RefRule not found)"
 
     site_area = _coerce_float(
@@ -430,6 +488,17 @@ async def _derive_build_envelope(
         )
     if rules_result.rules_found > 0:
         assumptions.append(f"Data from {rules_result.rules_found} RefRule entries.")
+    resolved_deeper_controls = []
+    if any(value is not None for value in (setback_front, setback_rear, setback_side)):
+        resolved_deeper_controls.append("setbacks")
+    if step_backs:
+        resolved_deeper_controls.append("step-backs")
+    if air_rights_note:
+        resolved_deeper_controls.append("air-rights note")
+    if resolved_deeper_controls:
+        assumptions.append(
+            "Resolved deeper controls: " + ", ".join(resolved_deeper_controls) + "."
+        )
     corpus_status = rules_result.rule_corpus_status or {}
     if corpus_status:
         coverage_state = corpus_status.get("coverage_state")
@@ -472,6 +541,20 @@ async def _derive_build_envelope(
         additional_potential_gfa_sqm=_round_optional(additional),
         building_height_limit_m=_round_optional(building_height_limit),
         site_coverage_pct=_round_optional(site_coverage),
+        setback_front_m=_round_optional(setback_front),
+        setback_rear_m=_round_optional(setback_rear),
+        setback_side_m=_round_optional(setback_side),
+        step_backs=[
+            {
+                "level": _round_optional(_coerce_float(entry.get("level"))) or 0,
+                "depth_m": _round_optional(_coerce_float(entry.get("depth_m")))
+                or _round_optional(_coerce_float(entry.get("depthM")))
+                or 0,
+            }
+            for entry in step_backs
+            if isinstance(entry, dict)
+        ],
+        air_rights_note=air_rights_note,
         assumptions=assumptions,
         source_reference=source_reference,
         rule_corpus_status=rules_result.rule_corpus_status,
@@ -684,6 +767,10 @@ async def _build_property_preview_inputs(
         optimizations,
         engineering_assumptions=engineering_assumptions,
         site_area_sqm=scenario_envelope.site_area_sqm,
+    )
+    engineering_assumptions["asset_profiles"] = _build_preview_asset_profiles(
+        optimizations,
+        engineering_assumptions=engineering_assumptions,
     )
     visualization = _build_visualization_summary(
         None,
@@ -1026,6 +1113,48 @@ def _target_floor_height_for_asset(
     if asset_key == "amenities":
         return max(default_floor_to_floor_m - 0.2, 3.6)
     return default_floor_to_floor_m
+
+
+def _target_clear_ceiling_for_asset(
+    asset_type: str,
+    *,
+    default_floor_to_floor_m: float,
+    default_clear_ceiling_m: float,
+) -> float:
+    service_gap = max(default_floor_to_floor_m - default_clear_ceiling_m, 0.6)
+    floor_to_floor = _target_floor_height_for_asset(
+        asset_type,
+        default_floor_to_floor_m=default_floor_to_floor_m,
+    )
+    return round(max(floor_to_floor - service_gap, 2.7), 1)
+
+
+def _build_preview_asset_profiles(
+    optimizations: list[DeveloperAssetOptimization],
+    *,
+    engineering_assumptions: dict[str, Any],
+) -> list[dict[str, Any]]:
+    default_floor_to_floor = float(engineering_assumptions["floor_to_floor_m"])
+    default_clear_ceiling = float(engineering_assumptions["clear_ceiling_m"])
+    source = str(engineering_assumptions.get("source") or "rules")
+    profiles: list[dict[str, Any]] = []
+
+    for optimization in optimizations:
+        profiles.append(
+            {
+                "asset_type": optimization.asset_type,
+                "floor_to_floor_m": optimization.target_floor_height_m,
+                "clear_ceiling_m": _target_clear_ceiling_for_asset(
+                    optimization.asset_type,
+                    default_floor_to_floor_m=default_floor_to_floor,
+                    default_clear_ceiling_m=default_clear_ceiling,
+                ),
+                "nia_efficiency": optimization.nia_efficiency,
+                "source": source,
+            }
+        )
+
+    return profiles
 
 
 def _apply_preview_engineering_defaults(

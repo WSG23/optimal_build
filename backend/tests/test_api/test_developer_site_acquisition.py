@@ -12,6 +12,7 @@ from app.models.finance import FinCapitalStack, FinProject, FinScenario
 from app.models.preview import PreviewJob
 from app.models.projects import Project
 from app.models.property import Property, PropertyStatus, PropertyType
+from app.models.rkp import RefRule
 from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 from app.services.agents.gps_property_logger import PropertyLogResult
 from app.services.geocoding import Address
@@ -145,6 +146,60 @@ async def test_developer_log_property_returns_envelope(
         "developer_gps_logger",
         stub_logger,
     )
+    async with async_session_factory() as session:
+        rule_defaults = {
+            "jurisdiction": "SG",
+            "authority": "URA",
+            "topic": "zoning",
+            "operator": "<=",
+            "applicability": {"zone_code": "SG:commercial"},
+            "review_status": "approved",
+            "is_published": True,
+        }
+        session.add_all(
+            [
+                RefRule(
+                    parameter_key="zoning.setback.front_min_m",
+                    value="6",
+                    unit="m",
+                    **rule_defaults,
+                ),
+                RefRule(
+                    parameter_key="zoning.setback.rear_min_m",
+                    value="4",
+                    unit="m",
+                    **rule_defaults,
+                ),
+                RefRule(
+                    parameter_key="zoning.setback.side_min_m",
+                    value="3",
+                    unit="m",
+                    **rule_defaults,
+                ),
+                RefRule(
+                    parameter_key="zoning.stepback.level_8_depth_m",
+                    value="5",
+                    unit="m",
+                    applicability={"zone_code": "SG:commercial", "level": 8},
+                    **{
+                        key: value
+                        for key, value in rule_defaults.items()
+                        if key != "applicability"
+                    },
+                ),
+                RefRule(
+                    parameter_key="zoning.air_rights.note",
+                    value="Subject to aviation height review.",
+                    operator="=",
+                    **{
+                        key: value
+                        for key, value in rule_defaults.items()
+                        if key != "operator"
+                    },
+                ),
+            ]
+        )
+        await session.commit()
 
     response = await app_client.post(
         "/api/v1/developers/properties/log-gps",
@@ -172,6 +227,11 @@ async def test_developer_log_property_returns_envelope(
     assert envelope["max_buildable_gfa_sqm"] == 18000.0
     assert envelope["current_gfa_sqm"] == 12500.0
     assert envelope["additional_potential_gfa_sqm"] == pytest.approx(5500.0)
+    assert envelope["setback_front_m"] == 6.0
+    assert envelope["setback_rear_m"] == 4.0
+    assert envelope["setback_side_m"] == 3.0
+    assert envelope["step_backs"] == [{"level": 8.0, "depth_m": 5.0}]
+    assert envelope["air_rights_note"] == "Subject to aviation height review."
     assert envelope["assumptions"], "Assumptions should not be empty"
     assert envelope["rule_corpus_status"]["zone_code"] == "SG:commercial"
     assert envelope["rule_corpus_status"]["coverage_state"] in {
@@ -323,6 +383,11 @@ async def test_create_preview_job_for_scenario(
         payload["starter_model_assumptions"]["provenance"]["fields"]["floor_to_floor_m"]
         == "rules"
     )
+    assert payload["starter_model_assumptions"]["asset_profiles"]
+    assert any(
+        profile["asset_type"] == "office"
+        for profile in payload["starter_model_assumptions"]["asset_profiles"]
+    )
 
     async with async_session_factory() as session:
         jobs = (
@@ -391,6 +456,10 @@ async def test_create_preview_job_exposes_property_specific_assumption_provenanc
     assert provenance["fields"]["floor_to_floor_m"] == "property_specific"
     assert provenance["fields"]["efficiency_factor"] == "property_specific"
     assert provenance["fields"]["wall_thickness_mm"] == "rules"
+    assert assumptions["asset_profiles"]
+    assert any(
+        profile["asset_type"] == "office" for profile in assumptions["asset_profiles"]
+    )
 
 
 @pytest.mark.asyncio
@@ -541,6 +610,22 @@ async def test_create_preview_jobs_differentiate_massing_by_scenario(
             heritage_assumptions["efficiency_factor"]
             < raw_land_assumptions["efficiency_factor"]
         )
+        raw_land_profiles = raw_land_assumptions["asset_profiles"]
+        renovation_profiles = renovation_assumptions["asset_profiles"]
+        assert any(profile["asset_type"] == "retail" for profile in raw_land_profiles)
+        assert any(profile["asset_type"] == "office" for profile in renovation_profiles)
+        raw_land_retail = next(
+            profile
+            for profile in raw_land_profiles
+            if profile["asset_type"] == "retail"
+        )
+        renovation_office = next(
+            profile
+            for profile in renovation_profiles
+            if profile["asset_type"] == "office"
+        )
+        assert raw_land_retail["floor_to_floor_m"] >= 4.8
+        assert renovation_office["floor_to_floor_m"] == pytest.approx(3.7)
         assert any(
             "Engineering defaults:" in note
             for note in ((heritage_job.metadata or {}).get("visualization_notes") or [])

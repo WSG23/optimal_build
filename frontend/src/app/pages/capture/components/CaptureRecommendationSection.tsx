@@ -11,8 +11,11 @@ import ViewInArIcon from '@mui/icons-material/ViewInAr'
 import type { DevelopmentScenario } from '../../../../api/agents'
 import { Card } from '../../../../components/canonical/Card'
 import { Button } from '../../../../components/canonical/Button'
+import { Tag } from '../../../../components/canonical/Tag'
 
 import type {
+  CaptureDataBasisItem,
+  StarterModelAssetProfileLine,
   StarterModelAssumptionLine,
   StarterModelAssumptionBuckets,
 } from './useStarterModelMemos'
@@ -26,6 +29,9 @@ export interface CaptureRecommendationSectionProps {
   userOverride: boolean
   defaultRecommendationLabel: string
   explanation: string
+  programDirectionLabel: string
+  programDirectionSummary: string
+  programDrivers: string[]
   overrideModeLine: string
   overrideIntentGuidance: string | null
   overrideIntent: string | null | undefined
@@ -36,6 +42,7 @@ export interface CaptureRecommendationSectionProps {
     headroomSummary: string
     heritageSummary: string
   }
+  captureDataBasis: CaptureDataBasisItem[]
   reasonCodes: string[]
   handleSaveProjectOverride: () => void
   handleClearProjectOverride: () => void
@@ -44,6 +51,56 @@ export interface CaptureRecommendationSectionProps {
   starterModelOverridePreviewNotice: string | null
   starterModelAssumptionBuckets: StarterModelAssumptionBuckets
   starterModelAssumptionLines: StarterModelAssumptionLine[]
+  starterModelAssetProfileLines: StarterModelAssetProfileLine[]
+}
+
+function formatReasonLabel(code: string): string {
+  return code
+    .replace(/^EXPLORATORY_OVERRIDE$/i, 'Exploratory override')
+    .replace(/^SAVED_OVERRIDE$/i, 'Saved override')
+    .replace(/^USER_OVERRIDE$/i, 'User override')
+    .replace(/^HERITAGE_OVERLAY$/i, 'Heritage overlay')
+    .replace(/^CONSERVATION_REVIEW_REQUIRED$/i, 'Conservation review')
+    .replace(/^CURRENT_GFA_ABOVE_MAX$/i, 'Current bulk above code max')
+    .replace(/^CURRENT_GFA_BELOW_MAX$/i, 'Current bulk below code max')
+    .replace(/^CURRENT_GFA_AT_MAX$/i, 'Current bulk at code max')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+}
+
+function labelValueRow(label: string, value: string) {
+  return (
+    <Box
+      key={label}
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', sm: '140px 1fr' },
+        gap: 'var(--ob-space-050)',
+        alignItems: 'start',
+      }}
+    >
+      <Typography
+        sx={{
+          fontSize: 'var(--ob-font-size-xs)',
+          fontWeight: 'var(--ob-font-weight-semibold)',
+          color: 'text.secondary',
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+        }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: 'var(--ob-font-size-sm)',
+          color: 'text.primary',
+          lineHeight: 'var(--ob-line-height-normal)',
+        }}
+      >
+        {value}
+      </Typography>
+    </Box>
+  )
 }
 
 export function CaptureRecommendationSection({
@@ -53,12 +110,16 @@ export function CaptureRecommendationSection({
   userOverride,
   defaultRecommendationLabel,
   explanation,
+  programDirectionLabel,
+  programDirectionSummary,
+  programDrivers,
   overrideModeLine,
   overrideIntentGuidance,
   overrideIntent,
   currentProject,
   confidence,
   scenarioFitSummary,
+  captureDataBasis,
   reasonCodes,
   handleSaveProjectOverride,
   handleClearProjectOverride,
@@ -67,7 +128,20 @@ export function CaptureRecommendationSection({
   starterModelOverridePreviewNotice,
   starterModelAssumptionBuckets,
   starterModelAssumptionLines,
+  starterModelAssetProfileLines,
 }: CaptureRecommendationSectionProps) {
+  const metadataRows = [
+    ['Mode', overrideModeLine],
+    ['Confidence', confidence.replace(/_/g, ' ')],
+    ['Program direction', programDirectionLabel],
+    ['Code fit', scenarioFitSummary.comparisonSummary],
+    ['Envelope', scenarioFitSummary.headroomSummary],
+    [
+      'Context',
+      scenarioFitSummary.heritageSummary.replace(/^Context:\s*/i, ''),
+    ],
+  ]
+
   return (
     <section className="site-acquisition__capture-summary">
       <Box
@@ -83,145 +157,295 @@ export function CaptureRecommendationSection({
             p: 'var(--ob-space-125)',
             display: 'flex',
             flexDirection: 'column',
-            gap: 'var(--ob-space-075)',
+            gap: 'var(--ob-space-100)',
           }}
         >
           <Box
             sx={{
               display: 'flex',
-              alignItems: 'center',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-075)',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 'var(--ob-space-075)',
+                flexWrap: 'wrap',
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--ob-space-050)',
+                }}
+              >
+                <AutoAwesomeIcon
+                  sx={{
+                    fontSize: 'var(--ob-size-icon-sm)',
+                    color: 'info.main',
+                  }}
+                />
+                <Typography
+                  sx={{
+                    fontSize: 'var(--ob-font-size-xs)',
+                    fontWeight: 'var(--ob-font-weight-semibold)',
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                    color: 'text.secondary',
+                  }}
+                >
+                  {recommendationCardTitle}
+                </Typography>
+              </Box>
+              <Tag color={userOverride ? 'warning' : 'info'} size="sm">
+                {overrideModeLine}
+              </Tag>
+            </Box>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-lg)',
+                fontWeight: 'var(--ob-font-weight-bold)',
+                color: 'text.primary',
+              }}
+            >
+              {formatScenarioLabel(recommendedScenario)}
+            </Typography>
+            {userOverride ? (
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                }}
+              >
+                Capture recommended: {defaultRecommendationLabel}
+              </Typography>
+            ) : null}
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-sm)',
+                color: 'text.secondary',
+                lineHeight: 'var(--ob-line-height-normal)',
+              }}
+            >
+              {explanation}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-sm)',
+                color: 'text.secondary',
+                lineHeight: 'var(--ob-line-height-normal)',
+              }}
+            >
+              {programDirectionSummary}
+            </Typography>
+            {overrideIntentGuidance ? (
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  color: 'text.secondary',
+                  lineHeight: 'var(--ob-line-height-normal)',
+                }}
+              >
+                {overrideIntentGuidance}
+              </Typography>
+            ) : null}
+          </Box>
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+              gap: 'var(--ob-space-075) var(--ob-space-125)',
+              pt: 'var(--ob-space-050)',
+              borderTop: 'var(--ob-border-fine)',
+            }}
+          >
+            {metadataRows.map(([label, value]) => labelValueRow(label, value))}
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
               gap: 'var(--ob-space-050)',
             }}
           >
-            <AutoAwesomeIcon
-              sx={{
-                fontSize: 'var(--ob-size-icon-sm)',
-                color: 'info.main',
-              }}
-            />
+            {captureDataBasis.length > 0 ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 'var(--ob-space-050)',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 'var(--ob-font-size-xs)',
+                    fontWeight: 'var(--ob-font-weight-semibold)',
+                    color: 'text.secondary',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  Data Basis
+                </Typography>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                    gap: 'var(--ob-space-050) var(--ob-space-100)',
+                  }}
+                >
+                  {captureDataBasis.map((item) => (
+                    <Box
+                      key={item.label}
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 'var(--ob-space-025)',
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: 'var(--ob-font-size-xs)',
+                          fontWeight: 'var(--ob-font-weight-semibold)',
+                          color: 'text.secondary',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                        }}
+                      >
+                        {item.label}
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 'var(--ob-space-050)',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <Tag color={item.tone} size="sm">
+                          {item.tone === 'success'
+                            ? 'Site / rule-backed'
+                            : item.tone === 'warning'
+                              ? 'Fallback / incomplete'
+                              : 'Informational'}
+                        </Tag>
+                        <Typography
+                          sx={{
+                            fontSize: 'var(--ob-font-size-xs)',
+                            color: 'text.secondary',
+                            lineHeight: 'var(--ob-line-height-normal)',
+                          }}
+                        >
+                          {item.value}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            ) : null}
+            {programDrivers.length > 0 ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 'var(--ob-space-050)',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 'var(--ob-font-size-xs)',
+                    fontWeight: 'var(--ob-font-weight-semibold)',
+                    color: 'text.secondary',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  Use Signals
+                </Typography>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 'var(--ob-space-050)',
+                  }}
+                >
+                  {programDrivers.map((driver) => (
+                    <Tag key={driver} color="default" size="sm">
+                      {driver}
+                    </Tag>
+                  ))}
+                </Box>
+              </Box>
+            ) : null}
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-xs)',
                 fontWeight: 'var(--ob-font-weight-semibold)',
-                letterSpacing: '0.05em',
+                color: 'text.secondary',
                 textTransform: 'uppercase',
-                color: 'text.secondary',
+                letterSpacing: '0.04em',
               }}
             >
-              {recommendationCardTitle}
+              Decision Drivers
             </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 'var(--ob-space-050)',
+              }}
+            >
+              {reasonCodes.map((code) => (
+                <Tag
+                  key={code}
+                  color={
+                    code.includes('HERITAGE') || code.includes('CONSERVATION')
+                      ? 'warning'
+                      : code.includes('OVERRIDE')
+                        ? 'info'
+                        : 'default'
+                  }
+                  size="sm"
+                >
+                  {formatReasonLabel(code)}
+                </Tag>
+              ))}
+            </Box>
           </Box>
-          <Typography
+
+          <Box
             sx={{
-              fontSize: 'var(--ob-font-size-lg)',
-              fontWeight: 'var(--ob-font-weight-bold)',
-              color: 'text.primary',
+              display: 'flex',
+              gap: 'var(--ob-space-050)',
+              flexWrap: 'wrap',
             }}
           >
-            {formatScenarioLabel(recommendedScenario)}
-          </Typography>
-          {userOverride ? (
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-              }}
-            >
-              Capture recommended: {defaultRecommendationLabel}
-            </Typography>
-          ) : null}
-          <Typography
-            sx={{
-              fontSize: 'var(--ob-font-size-sm)',
-              color: 'text.secondary',
-              lineHeight: 1.5,
-            }}
-          >
-            {explanation}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: 'var(--ob-font-size-xs)',
-              color: 'text.secondary',
-            }}
-          >
-            Mode: {overrideModeLine}
-          </Typography>
-          {overrideIntentGuidance ? (
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-                lineHeight: 1.5,
-              }}
-            >
-              {overrideIntentGuidance}
-            </Typography>
-          ) : null}
-          {overrideIntent === 'exploratory' && currentProject ? (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleSaveProjectOverride}
-            >
-              Save as Project Override
-            </Button>
-          ) : null}
-          {overrideIntent === 'saved' && currentProject ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearProjectOverride}
-            >
-              Clear Saved Override
-            </Button>
-          ) : null}
-          <Typography
-            sx={{
-              fontSize: 'var(--ob-font-size-xs)',
-              color: 'text.secondary',
-            }}
-          >
-            Confidence: {confidence.replace(/_/g, ' ')}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: 'var(--ob-font-size-xs)',
-              color: 'text.secondary',
-              lineHeight: 1.5,
-            }}
-          >
-            Code fit: {scenarioFitSummary.comparisonSummary}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: 'var(--ob-font-size-xs)',
-              color: 'text.secondary',
-              lineHeight: 1.5,
-            }}
-          >
-            Envelope check: {scenarioFitSummary.headroomSummary}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: 'var(--ob-font-size-xs)',
-              color: 'text.secondary',
-              lineHeight: 1.5,
-            }}
-          >
-            {scenarioFitSummary.heritageSummary}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: 'var(--ob-font-size-xs)',
-              color: 'text.secondary',
-            }}
-          >
-            Reasons:{' '}
-            {reasonCodes
-              .map((code) => code.replace(/_/g, ' ').toLowerCase())
-              .join(', ')}
-          </Typography>
+            {overrideIntent === 'exploratory' && currentProject ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleSaveProjectOverride}
+              >
+                Save as Project Override
+              </Button>
+            ) : null}
+            {overrideIntent === 'saved' && currentProject ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearProjectOverride}
+              >
+                Clear Saved Override
+              </Button>
+            ) : null}
+          </Box>
         </Card>
 
         <Card
@@ -229,7 +453,7 @@ export function CaptureRecommendationSection({
             p: 'var(--ob-space-125)',
             display: 'flex',
             flexDirection: 'column',
-            gap: 'var(--ob-space-075)',
+            gap: 'var(--ob-space-100)',
           }}
         >
           <Box
@@ -261,7 +485,7 @@ export function CaptureRecommendationSection({
             sx={{
               fontSize: 'var(--ob-font-size-sm)',
               color: 'text.secondary',
-              lineHeight: 1.5,
+              lineHeight: 'var(--ob-line-height-normal)',
             }}
           >
             These defaults shape the first scenario-specific model before deeper
@@ -271,7 +495,7 @@ export function CaptureRecommendationSection({
             sx={{
               fontSize: 'var(--ob-font-size-xs)',
               color: 'text.secondary',
-              lineHeight: 1.5,
+              lineHeight: 'var(--ob-line-height-normal)',
             }}
           >
             {starterModelAssumptionSourceLine}
@@ -281,7 +505,7 @@ export function CaptureRecommendationSection({
               sx={{
                 fontSize: 'var(--ob-font-size-xs)',
                 color: 'text.secondary',
-                lineHeight: 1.5,
+                lineHeight: 'var(--ob-line-height-normal)',
               }}
             >
               {starterModelAssumptionFallbackReason}
@@ -292,49 +516,205 @@ export function CaptureRecommendationSection({
               sx={{
                 fontSize: 'var(--ob-font-size-xs)',
                 color: 'text.secondary',
-                lineHeight: 1.5,
+                lineHeight: 'var(--ob-line-height-normal)',
               }}
             >
               {starterModelOverridePreviewNotice}
             </Typography>
           ) : null}
-          {starterModelAssumptionBuckets.pinned.length > 0 ? (
-            <Typography
+
+          {starterModelAssumptionBuckets.pinned.length > 0 ||
+          starterModelAssumptionBuckets.tunable.length > 0 ? (
+            <Box
               sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-                lineHeight: 1.5,
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+                gap: 'var(--ob-space-075)',
               }}
             >
-              Pinned by site facts:{' '}
-              {starterModelAssumptionBuckets.pinned.join(', ')}.
-            </Typography>
+              {starterModelAssumptionBuckets.pinned.length > 0 ? (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 'var(--ob-space-050)',
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: 'var(--ob-font-size-xs)',
+                      fontWeight: 'var(--ob-font-weight-semibold)',
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    Pinned by site facts
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 'var(--ob-space-050)',
+                    }}
+                  >
+                    {starterModelAssumptionBuckets.pinned.map((item) => (
+                      <Tag key={item} color="warning" size="sm">
+                        {item}
+                      </Tag>
+                    ))}
+                  </Box>
+                </Box>
+              ) : null}
+              {starterModelAssumptionBuckets.tunable.length > 0 ? (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 'var(--ob-space-050)',
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: 'var(--ob-font-size-xs)',
+                      fontWeight: 'var(--ob-font-weight-semibold)',
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    Starter defaults still tunable
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 'var(--ob-space-050)',
+                    }}
+                  >
+                    {starterModelAssumptionBuckets.tunable.map((item) => (
+                      <Tag key={item} color="default" size="sm">
+                        {item}
+                      </Tag>
+                    ))}
+                  </Box>
+                </Box>
+              ) : null}
+            </Box>
           ) : null}
-          {starterModelAssumptionBuckets.tunable.length > 0 ? (
-            <Typography
+
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-075)',
+              pt: 'var(--ob-space-050)',
+              borderTop: 'var(--ob-border-fine)',
+            }}
+          >
+            {starterModelAssumptionLines.map((line) => (
+              <Box
+                key={line.label}
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: '160px 1fr auto' },
+                  gap: 'var(--ob-space-050)',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 'var(--ob-font-size-xs)',
+                    fontWeight: 'var(--ob-font-weight-semibold)',
+                    color: 'text.secondary',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  {line.label}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 'var(--ob-font-size-sm)',
+                    color: 'text.primary',
+                    lineHeight: 'var(--ob-line-height-normal)',
+                  }}
+                >
+                  {line.value}
+                </Typography>
+                {line.sourceDetail ? (
+                  <Box sx={{ justifySelf: 'start' }}>
+                    <Tag color="info" size="sm">
+                      {line.sourceDetail}
+                    </Tag>
+                  </Box>
+                ) : null}
+              </Box>
+            ))}
+          </Box>
+
+          {starterModelAssetProfileLines.length > 0 ? (
+            <Box
               sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-                lineHeight: 1.5,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--ob-space-075)',
+                pt: 'var(--ob-space-050)',
+                borderTop: 'var(--ob-border-fine)',
               }}
             >
-              Starter defaults still tunable:{' '}
-              {starterModelAssumptionBuckets.tunable.join(', ')}.
-            </Typography>
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                  color: 'text.secondary',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                Use-Type Profiles
+              </Typography>
+              {starterModelAssetProfileLines.map((line) => (
+                <Box
+                  key={line.label}
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: '160px 1fr auto' },
+                    gap: 'var(--ob-space-050)',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: 'var(--ob-font-size-xs)',
+                      fontWeight: 'var(--ob-font-weight-semibold)',
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    {line.label}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 'var(--ob-font-size-sm)',
+                      color: 'text.primary',
+                      lineHeight: 'var(--ob-line-height-normal)',
+                    }}
+                  >
+                    {line.value}
+                  </Typography>
+                  {line.sourceDetail ? (
+                    <Box sx={{ justifySelf: 'start' }}>
+                      <Tag color="info" size="sm">
+                        {line.sourceDetail}
+                      </Tag>
+                    </Box>
+                  ) : null}
+                </Box>
+              ))}
+            </Box>
           ) : null}
-          {starterModelAssumptionLines.map((line) => (
-            <Typography
-              key={line.text}
-              sx={{
-                fontSize: 'var(--ob-font-size-xs)',
-                color: 'text.secondary',
-                lineHeight: 1.5,
-              }}
-            >
-              {line.text}
-              {line.sourceDetail ? ` (${line.sourceDetail})` : ''}
-            </Typography>
-          ))}
         </Card>
       </Box>
     </section>

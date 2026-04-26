@@ -46,6 +46,11 @@ function buildCapturedProperty(): SiteAcquisitionResult {
       additionalPotentialGfaSqm: 3000,
       buildingHeightLimitM: 36,
       siteCoveragePct: 50,
+      setbackFrontM: null,
+      setbackRearM: null,
+      setbackSideM: null,
+      stepBacks: [],
+      airRightsNote: null,
       assumptions: [],
       sourceReference: 'URA Mock',
     },
@@ -128,6 +133,44 @@ describe('captureResultV2', () => {
 
   it('biases heritage path before other scenario rules', () => {
     const capturedProperty = buildCapturedProperty()
+    capturedProperty.optimizations = [
+      {
+        assetType: 'retail',
+        allocationPct: 55,
+        allocatedGfaSqm: 7700,
+        niaEfficiency: 0.74,
+        targetFloorHeightM: 4.8,
+        parkingRatioPer1000Sqm: null,
+        rentPsmMonth: null,
+        stabilisedVacancyPct: null,
+        opexPctOfRent: null,
+        estimatedRevenueSgd: null,
+        estimatedCapexSgd: null,
+        fitoutCostPsm: null,
+        absorptionMonths: null,
+        riskLevel: null,
+        heritagePremiumPct: null,
+        notes: [],
+      },
+      {
+        assetType: 'amenities',
+        allocationPct: 20,
+        allocatedGfaSqm: 2800,
+        niaEfficiency: 0.78,
+        targetFloorHeightM: 3.6,
+        parkingRatioPer1000Sqm: null,
+        rentPsmMonth: null,
+        stabilisedVacancyPct: null,
+        opexPctOfRent: null,
+        estimatedRevenueSgd: null,
+        estimatedCapexSgd: null,
+        fitoutCostPsm: null,
+        absorptionMonths: null,
+        riskLevel: null,
+        heritagePremiumPct: null,
+        notes: [],
+      },
+    ]
     capturedProperty.heritageContext = {
       flag: true,
       risk: 'medium',
@@ -147,6 +190,8 @@ describe('captureResultV2', () => {
     expect(recommendation.defaultRecommended).toBe('heritage_property')
     expect(recommendation.confidence).toBe('high')
     expect(recommendation.reasonCodes).toContain('HERITAGE_OVERLAY_DETECTED')
+    expect(recommendation.programDirectionLabel).toBe('Retail-led heritage mix')
+    expect(recommendation.programDrivers).toEqual(['Retail', 'Amenities'])
   })
 
   it('honours an explicit override even when code logic would prefer renovation', () => {
@@ -172,6 +217,44 @@ describe('captureResultV2', () => {
 
   it('maps starter-model and analysis fields into CaptureResultV2', () => {
     const capturedProperty = buildCapturedProperty()
+    capturedProperty.optimizations = [
+      {
+        assetType: 'office',
+        allocationPct: 60,
+        allocatedGfaSqm: 12600,
+        niaEfficiency: 0.81,
+        targetFloorHeightM: 4,
+        parkingRatioPer1000Sqm: null,
+        rentPsmMonth: null,
+        stabilisedVacancyPct: null,
+        opexPctOfRent: null,
+        estimatedRevenueSgd: null,
+        estimatedCapexSgd: null,
+        fitoutCostPsm: null,
+        absorptionMonths: null,
+        riskLevel: null,
+        heritagePremiumPct: null,
+        notes: [],
+      },
+      {
+        assetType: 'retail',
+        allocationPct: 25,
+        allocatedGfaSqm: 5250,
+        niaEfficiency: 0.79,
+        targetFloorHeightM: 4.8,
+        parkingRatioPer1000Sqm: null,
+        rentPsmMonth: null,
+        stabilisedVacancyPct: null,
+        opexPctOfRent: null,
+        estimatedRevenueSgd: null,
+        estimatedCapexSgd: null,
+        fitoutCostPsm: null,
+        absorptionMonths: null,
+        riskLevel: null,
+        heritagePremiumPct: null,
+        notes: [],
+      },
+    ]
     const previewJob: PreviewJob = {
       id: 'preview-job-1',
       propertyId: capturedProperty.propertyId,
@@ -206,10 +289,34 @@ describe('captureResultV2', () => {
           },
           adjustments: ['older_building_age'],
         },
+        assetProfiles: [
+          {
+            assetType: 'office',
+            floorToFloorM: 4,
+            clearCeilingM: 2.9,
+            niaEfficiency: 0.81,
+            source: 'hybrid',
+          },
+          {
+            assetType: 'retail',
+            floorToFloorM: 4.8,
+            clearCeilingM: 3.7,
+            niaEfficiency: 0.81,
+            source: 'hybrid',
+          },
+        ],
       },
     }
 
     capturedProperty.previewJobs = [previewJob]
+    capturedProperty.buildEnvelope = {
+      ...capturedProperty.buildEnvelope,
+      setbackFrontM: 7.5,
+      setbackRearM: null,
+      setbackSideM: 3,
+      stepBacks: [{ level: 6, depthM: 4 }],
+      airRightsNote: 'Subject to aviation height review.',
+    }
     capturedProperty.visualization = {
       ...capturedProperty.visualization,
       status: 'ready',
@@ -234,6 +341,23 @@ describe('captureResultV2', () => {
 
     expect(resultV2.address.jurisdictionCode).toBe('SG')
     expect(resultV2.codeConstraints.currentVsCodeStatus).toBe('below')
+    expect(resultV2.codeConstraints.sourceReference).toBe('URA Mock')
+    expect(resultV2.codeConstraints.setbacks).toEqual({
+      frontM: 7.5,
+      rearM: null,
+      sideM: 3,
+    })
+    expect(resultV2.codeConstraints.stepBacks).toEqual([
+      { level: 6, depthM: 4 },
+    ])
+    expect(resultV2.codeConstraints.airRightsNote).toBe(
+      'Subject to aviation height review.',
+    )
+    expect(resultV2.analysisStatus.missingInputs).not.toContain('setbacks')
+    expect(resultV2.analysisStatus.missingInputs).not.toContain('step-backs')
+    expect(resultV2.analysisStatus.missingInputs).not.toContain(
+      'air-rights review',
+    )
     expect(resultV2.analysisStatus.supportsFullCompliance).toBe(false)
     expect(resultV2.starterModel.status).toBe('ready')
     expect(resultV2.starterModel.modelUrl).toBe(
@@ -258,6 +382,25 @@ describe('captureResultV2', () => {
         adjustments: ['older_building_age'],
       }),
     )
+    expect(resultV2.engineeringAssumptions.assetProfiles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          assetType: 'office',
+          floorToFloorM: 4,
+        }),
+        expect.objectContaining({
+          assetType: 'retail',
+          floorToFloorM: 4.8,
+        }),
+      ]),
+    )
+    expect(resultV2.scenarioRecommendation.programDirectionLabel).toBe(
+      'Office-led adaptive reuse mix',
+    )
+    expect(resultV2.scenarioRecommendation.programDrivers).toEqual([
+      'Office',
+      'Retail',
+    ])
   })
 
   it('binds the starter model to the recommended or overridden scenario instead of the first preview job', () => {

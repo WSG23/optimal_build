@@ -93,6 +93,11 @@ function buildResult(): SiteAcquisitionResult {
       additionalPotentialGfaSqm: 3000,
       buildingHeightLimitM: 120,
       siteCoveragePct: 80,
+      setbackFrontM: null,
+      setbackRearM: null,
+      setbackSideM: null,
+      stepBacks: [],
+      airRightsNote: null,
       assumptions: [],
       sourceReference: null,
     },
@@ -109,7 +114,44 @@ function buildResult(): SiteAcquisitionResult {
       massingLayers: [],
       colorLegend: [],
     },
-    optimizations: [],
+    optimizations: [
+      {
+        assetType: 'office',
+        allocationPct: 60,
+        allocatedGfaSqm: 10800,
+        niaEfficiency: 0.81,
+        targetFloorHeightM: 3.9,
+        parkingRatioPer1000Sqm: null,
+        rentPsmMonth: null,
+        stabilisedVacancyPct: null,
+        opexPctOfRent: null,
+        estimatedRevenueSgd: null,
+        estimatedCapexSgd: null,
+        fitoutCostPsm: null,
+        absorptionMonths: null,
+        riskLevel: null,
+        heritagePremiumPct: null,
+        notes: [],
+      },
+      {
+        assetType: 'retail',
+        allocationPct: 25,
+        allocatedGfaSqm: 4500,
+        niaEfficiency: 0.78,
+        targetFloorHeightM: 4.8,
+        parkingRatioPer1000Sqm: null,
+        rentPsmMonth: null,
+        stabilisedVacancyPct: null,
+        opexPctOfRent: null,
+        estimatedRevenueSgd: null,
+        estimatedCapexSgd: null,
+        fitoutCostPsm: null,
+        absorptionMonths: null,
+        riskLevel: null,
+        heritagePremiumPct: null,
+        notes: [],
+      },
+    ],
     financialSummary: {
       totalEstimatedRevenueSgd: null,
       totalEstimatedCapexSgd: null,
@@ -350,7 +392,7 @@ describe('DeveloperResults', () => {
     }))
   })
 
-  it('wires preview handlers and shows the due diligence handoff', () => {
+  it('wires preview handlers and shows the due diligence handoff', async () => {
     render(
       <DeveloperResults
         result={buildResult()}
@@ -370,13 +412,15 @@ describe('DeveloperResults', () => {
     })
     expect(mockSetPreviewDetailLevel).toHaveBeenCalledWith('simple')
 
-    fireEvent.click(screen.getByRole('button', { name: /layer-toggle/i }))
+    fireEvent.click(
+      await screen.findByRole('button', { name: /layer-toggle/i }),
+    )
     expect(mockHandleToggleLayerVisibility).toHaveBeenCalledWith('layer-1')
 
-    fireEvent.click(screen.getByRole('button', { name: /layer-solo/i }))
+    fireEvent.click(await screen.findByRole('button', { name: /layer-solo/i }))
     expect(mockHandleSoloPreviewLayer).toHaveBeenCalledWith('layer-2')
 
-    fireEvent.click(screen.getByRole('button', { name: /layer-focus/i }))
+    fireEvent.click(await screen.findByRole('button', { name: /layer-focus/i }))
     expect(mockHandleFocusLayer).toHaveBeenCalledWith('layer-3')
 
     const dueDiligenceLink = screen.getByRole('link', {
@@ -404,7 +448,7 @@ describe('DeveloperResults', () => {
     )
   })
 
-  it('derives capture feasibility signals from instant envelope metrics and passes them to MultiScenarioComparisonSection', () => {
+  it('derives capture feasibility signals from instant envelope metrics and passes them to MultiScenarioComparisonSection', async () => {
     render(
       <DeveloperResults
         result={buildResult()}
@@ -413,6 +457,8 @@ describe('DeveloperResults', () => {
         }
       />,
     )
+
+    await screen.findByTestId('multi-scenario')
 
     const props = lastMultiScenarioProps as {
       activeScenario: string
@@ -435,7 +481,7 @@ describe('DeveloperResults', () => {
     )
   })
 
-  it('passes no feasibility signals when quick analysis scenarios are missing', () => {
+  it('passes no feasibility signals when quick analysis scenarios are missing', async () => {
     mockUseCaptureScenarioComparison.mockImplementationOnce(() => ({
       quickAnalysisScenarios: [],
       comparisonScenarios: [],
@@ -458,11 +504,13 @@ describe('DeveloperResults', () => {
     )
 
     expect(
-      screen.getByTestId('multi-scenario').getAttribute('data-signals'),
+      (await screen.findByTestId('multi-scenario')).getAttribute(
+        'data-signals',
+      ),
     ).toBe('0')
   })
 
-  it('renders instant capture insight text without a report CTA', () => {
+  it('renders instant capture insight text without a report CTA', async () => {
     render(
       <DeveloperResults
         result={buildResult()}
@@ -472,9 +520,9 @@ describe('DeveloperResults', () => {
       />,
     )
 
-    expect(screen.getByTestId('ai-insight-text').textContent).toContain(
-      'Instant capture analysis for Downtown highlights',
-    )
+    expect(
+      (await screen.findByTestId('ai-insight-text')).textContent,
+    ).toContain('Instant capture analysis for Downtown highlights')
     expect(screen.getByTestId('ai-insight-text').textContent).toContain(
       'Capture currently recommends Adaptive Reuse first.',
     )
@@ -576,6 +624,22 @@ describe('DeveloperResults', () => {
             },
             adjustments: ['older_building_age'],
           },
+          assetProfiles: [
+            {
+              assetType: 'office',
+              floorToFloorM: 3.7,
+              clearCeilingM: 2.7,
+              niaEfficiency: 0.82,
+              source: 'hybrid',
+            },
+            {
+              assetType: 'retail',
+              floorToFloorM: 4.8,
+              clearCeilingM: 3.8,
+              niaEfficiency: 0.82,
+              source: 'hybrid',
+            },
+          ],
         },
       },
     ] as SiteAcquisitionResult['previewJobs']
@@ -615,6 +679,22 @@ describe('DeveloperResults', () => {
             },
             adjustments: ['older_building_age'],
           },
+          assetProfiles: [
+            {
+              assetType: 'office',
+              floorToFloorM: 3.7,
+              clearCeilingM: 2.7,
+              niaEfficiency: 0.82,
+              source: 'hybrid',
+            },
+            {
+              assetType: 'retail',
+              floorToFloorM: 4.8,
+              clearCeilingM: 3.8,
+              niaEfficiency: 0.82,
+              source: 'hybrid',
+            },
+          ],
         },
       },
     }
@@ -629,6 +709,33 @@ describe('DeveloperResults', () => {
     expect(screen.getByText('Capture Recommendation')).toBeInTheDocument()
     expect(screen.getByText('Starter Model Status')).toBeInTheDocument()
     expect(screen.getByText('Starter Model Assumptions')).toBeInTheDocument()
+    expect(screen.getByText('Program direction')).toBeInTheDocument()
+    expect(screen.getByText('Office-led renovation mix')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Capture is shaping the starter model around office-led program with retail support for renovation within the current-code envelope.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Use Signals')).toBeInTheDocument()
+    expect(screen.getByText('Data Basis')).toBeInTheDocument()
+    expect(screen.getByText('Site input')).toBeInTheDocument()
+    expect(
+      screen.getByText('Address and coordinates are site-specific.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Envelope source')).toBeInTheDocument()
+    expect(
+      screen.getByText('Zoning envelope source is unresolved.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Rule coverage')).toBeInTheDocument()
+    expect(
+      screen.getByText(/6 control areas still unresolved/i),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Geometry')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Scenario-specific starter model is generated from the preview pipeline.',
+      ),
+    ).toBeInTheDocument()
     expect(
       screen.getByText('The renovation starter model is ready for review.'),
     ).toBeInTheDocument()
@@ -646,37 +753,38 @@ describe('DeveloperResults', () => {
     expect(
       screen.getByText(/Capture recommended: Adaptive Reuse/i),
     ).toBeInTheDocument()
-    expect(screen.getByText(/Mode: User override/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/User override/i).length).toBeGreaterThan(0)
     expect(
-      screen.getByText(
-        /Code fit: Current GFA remains below today’s code envelope/i,
-      ),
+      screen.getByText(/Current GFA remains below today’s code envelope/i),
     ).toBeInTheDocument()
+    expect(screen.getByText('Vertical profile')).toBeInTheDocument()
     expect(
-      screen.getByText(
-        /Floor-to-floor 3.7 m \/ clear ceiling 2.7 m \(property-specific\)/i,
-      ),
+      screen.getByText('3.7 m floor-to-floor / 2.7 m clear'),
     ).toBeInTheDocument()
+    expect(screen.getByText('Structure + core')).toBeInTheDocument()
+    expect(screen.getByText('210 mm walls / 15% core')).toBeInTheDocument()
+    expect(screen.getByText('Retention + yield')).toBeInTheDocument()
     expect(
-      screen.getByText(/Wall thickness 210 mm \/ core ratio 15% \(rules\)/i),
+      screen.getByText('preserve existing bulk / 0.96 efficiency'),
     ).toBeInTheDocument()
+    expect(screen.getByText('Use-Type Profiles')).toBeInTheDocument()
+    expect(screen.getAllByText('Office').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Retail').length).toBeGreaterThan(0)
     expect(
-      screen.getByText(
-        /Retention strategy preserve existing bulk \/ efficiency factor 0.96 \(property-specific\)/i,
-      ),
+      screen.getByText('3.7 m floor-to-floor / 2.7 m clear / 0.82 efficiency'),
+    ).toBeInTheDocument()
+    expect(screen.getAllByText('Retail').length).toBeGreaterThan(0)
+    expect(
+      screen.getByText('4.8 m floor-to-floor / 3.8 m clear / 0.82 efficiency'),
     ).toBeInTheDocument()
     expect(
       screen.getByText(
         /Assumption source: Rule defaults with property-specific adjustments \(older building age\)\./i,
       ),
     ).toBeInTheDocument()
+    expect(screen.getByText('Pinned by site facts')).toBeInTheDocument()
     expect(
-      screen.getByText(
-        /Pinned by site facts: efficiency factor, floor-to-floor\./i,
-      ),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText(/Starter defaults still tunable: wall thickness\./i),
+      screen.getByText('Starter defaults still tunable'),
     ).toBeInTheDocument()
 
     expect(lastPreviewViewerProps).toMatchObject({
@@ -793,7 +901,9 @@ describe('DeveloperResults', () => {
     expect(lastUsePreviewJobOptions).toMatchObject({
       preferredScenario: 'existing_building',
     })
-    expect(screen.getByText(/Mode: Exploratory override/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Exploratory override/i).length).toBeGreaterThan(
+      0,
+    )
     expect(
       screen.getByText(
         /This scenario selection is temporary for the current session and does not update learned defaults\./i,
@@ -820,9 +930,7 @@ describe('DeveloperResults', () => {
     )
 
     expect(
-      screen.getByText(
-        /Floor-to-floor 3.9 m \/ clear ceiling 2.8 m \(heuristic fallback\)/i,
-      ),
+      screen.getByText('3.9 m floor-to-floor / 2.8 m clear'),
     ).toBeInTheDocument()
     expect(
       screen.getByText(/Assumption source: Frontend fallback defaults\./i),
@@ -834,8 +942,11 @@ describe('DeveloperResults', () => {
     ).toBeInTheDocument()
     expect(
       screen.getByText(
-        /Starter defaults still tunable: retention strategy, floor-to-floor, clear ceiling, wall thickness, core ratio, common area, HVAC, electrical\./i,
+        'Geometry is still preliminary and may rely on fallback or placeholder massing.',
       ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Starter defaults still tunable'),
     ).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /raw land/i }))
@@ -844,17 +955,13 @@ describe('DeveloperResults', () => {
     expect(
       screen.getByText(/Capture recommended: Adaptive Reuse/i),
     ).toBeInTheDocument()
-    expect(screen.getByText(/Mode: Exploratory override/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Exploratory override/i).length).toBeGreaterThan(
+      0,
+    )
     expect(
-      screen.getByText(
-        /Floor-to-floor 4.2 m \/ clear ceiling 3.2 m \(heuristic fallback\)/i,
-      ),
+      screen.getByText('4.2 m floor-to-floor / 3.2 m clear'),
     ).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        /Wall thickness 250 mm \/ core ratio 18% \(heuristic fallback\)/i,
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByText('250 mm walls / 18% core')).toBeInTheDocument()
     expect(
       screen.getByText(
         /Capture is using fallback assumptions because no scenario-specific preview jobs are attached to this property yet\./i,
@@ -920,6 +1027,22 @@ describe('DeveloperResults', () => {
             },
             adjustments: ['heritage_context'],
           },
+          assetProfiles: [
+            {
+              assetType: 'retail',
+              floorToFloorM: 4.8,
+              clearCeilingM: 3.9,
+              niaEfficiency: 0.75,
+              source: 'hybrid',
+            },
+            {
+              assetType: 'amenities',
+              floorToFloorM: 3.6,
+              clearCeilingM: 2.7,
+              niaEfficiency: 0.75,
+              source: 'hybrid',
+            },
+          ],
         },
       },
     ] as SiteAcquisitionResult['previewJobs']
@@ -949,9 +1072,7 @@ describe('DeveloperResults', () => {
       ),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(
-        /Floor-to-floor 4.2 m \/ clear ceiling 3.2 m \(heuristic fallback\)/i,
-      ),
+      screen.getByText('4.2 m floor-to-floor / 3.2 m clear'),
     ).toBeInTheDocument()
   })
 
@@ -970,7 +1091,9 @@ describe('DeveloperResults', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /renovation/i }))
 
-    expect(screen.getByText(/Mode: Exploratory override/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Exploratory override/i).length).toBeGreaterThan(
+      0,
+    )
     expect(
       screen.getByRole('button', { name: /save as project override/i }),
     ).toBeInTheDocument()
@@ -981,8 +1104,8 @@ describe('DeveloperResults', () => {
 
     expect(screen.getByText('Saved Scenario Override')).toBeInTheDocument()
     expect(
-      screen.getByText(/Mode: Saved project override/i),
-    ).toBeInTheDocument()
+      screen.getAllByText(/Saved project override/i).length,
+    ).toBeGreaterThan(0)
     expect(
       screen.getByText(
         /This override is saved for the project and will continue to guide downstream work\./i,
@@ -1017,8 +1140,8 @@ describe('DeveloperResults', () => {
     )
 
     expect(
-      screen.getByText(/Mode: Saved project override/i),
-    ).toBeInTheDocument()
+      screen.getAllByText(/Saved project override/i).length,
+    ).toBeGreaterThan(0)
     expect(screen.getByText('Saved Scenario Override')).toBeInTheDocument()
     expect(
       screen.getByText(
@@ -1117,14 +1240,10 @@ describe('DeveloperResults', () => {
       ),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(
-        /Floor-to-floor 3.6 m \/ clear ceiling 2.7 m \(rules\)/i,
-      ),
+      screen.getByText('3.6 m floor-to-floor / 2.7 m clear'),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(
-        /Retention strategy conservation retention \/ efficiency factor 0.92 \(property-specific\)/i,
-      ),
+      screen.getByText('conservation retention / 0.92 efficiency'),
     ).toBeInTheDocument()
     expect(
       screen.queryByText(/Frontend fallback defaults/i),
@@ -1132,16 +1251,11 @@ describe('DeveloperResults', () => {
     expect(
       screen.queryByText(/Capture is using fallback assumptions/i),
     ).not.toBeInTheDocument()
+    expect(screen.getByText('Pinned by site facts')).toBeInTheDocument()
     expect(
-      screen.getByText(
-        /Pinned by site facts: retention strategy, efficiency factor\./i,
-      ),
+      screen.getByText('Starter defaults still tunable'),
     ).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        /Starter defaults still tunable: floor-to-floor, clear ceiling, wall thickness, core ratio, common area, HVAC, electrical\./i,
-      ),
-    ).toBeInTheDocument()
+    expect(screen.queryByText('Use-Type Profiles')).not.toBeInTheDocument()
   })
 
   it('renders preview metadata errors when present', () => {
@@ -1227,7 +1341,7 @@ describe('DeveloperResults', () => {
     ).toBeInTheDocument()
   })
 
-  it('updates active scenario and propagates it to MultiScenarioComparisonSection', () => {
+  it('updates active scenario and propagates it to MultiScenarioComparisonSection', async () => {
     render(
       <DeveloperResults
         result={buildResult()}
@@ -1237,7 +1351,7 @@ describe('DeveloperResults', () => {
       />,
     )
 
-    const module = screen.getByTestId('multi-scenario')
+    const module = await screen.findByTestId('multi-scenario')
     expect(module.getAttribute('data-active')).toBe('all')
 
     fireEvent.click(screen.getByRole('button', { name: /all scenarios/i }))
@@ -1247,7 +1361,7 @@ describe('DeveloperResults', () => {
     expect(module.getAttribute('data-active')).toBe('existing_building')
   })
 
-  it('keeps the post-scan workspace model-first with layer inspection below supporting facts', () => {
+  it('keeps the post-scan workspace model-first with layer inspection below supporting facts', async () => {
     render(
       <DeveloperResults
         result={buildResult()}
@@ -1257,11 +1371,11 @@ describe('DeveloperResults', () => {
       />,
     )
 
-    const preview = screen.getByTestId('preview-3d')
+    const preview = screen.getByText('Concept Preview')
     const recommendation = screen.getByText('Capture Recommendation')
-    const comparison = screen.getByTestId('multi-scenario')
-    const overview = screen.getByTestId('property-overview')
-    const layers = screen.getByTestId('preview-layers')
+    const comparison = await screen.findByTestId('multi-scenario')
+    const overview = await screen.findByTestId('property-overview')
+    const layers = await screen.findByTestId('preview-layers')
 
     expect(
       preview.compareDocumentPosition(recommendation) &

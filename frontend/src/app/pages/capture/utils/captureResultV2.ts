@@ -37,6 +37,30 @@ function formatScenarioProductLabel(scenario: DevelopmentScenario): string {
   }
 }
 
+function formatAssetTypeLabel(assetType: string): string {
+  switch (assetType.toLowerCase()) {
+    case 'retail':
+      return 'Retail'
+    case 'office':
+      return 'Office'
+    case 'residential':
+      return 'Residential'
+    case 'hospitality':
+      return 'Hospitality'
+    case 'amenities':
+      return 'Amenities'
+    case 'industrial':
+      return 'Industrial'
+    case 'mixed_use':
+    case 'mixed_use_redevelopment':
+      return 'Mixed-use'
+    default:
+      return assetType
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase())
+  }
+}
+
 function uniqueScenarios(
   scenarios: readonly DevelopmentScenario[],
 ): DevelopmentScenario[] {
@@ -138,6 +162,91 @@ function chooseRecommendedScenario(capturedProperty: SiteAcquisitionResult): {
   }
 }
 
+function buildProgramDirection(
+  capturedProperty: SiteAcquisitionResult,
+  recommendedScenario: DevelopmentScenario,
+): Pick<
+  CaptureScenarioRecommendationV2,
+  'programDirectionLabel' | 'programDirectionSummary' | 'programDrivers'
+> {
+  const optimizationCandidates = capturedProperty.optimizations
+    .map((entry) => ({
+      assetType: entry.assetType,
+      label: formatAssetTypeLabel(entry.assetType),
+      weight:
+        entry.allocationPct ??
+        entry.allocatedGfaSqm ??
+        entry.niaEfficiency ??
+        0,
+    }))
+    .filter((entry) => entry.assetType && entry.weight > 0)
+    .sort((left, right) => right.weight - left.weight)
+
+  const fallbackAssetType =
+    capturedProperty.existingUse?.trim() ||
+    capturedProperty.uraZoning?.useGroups?.[0]?.trim() ||
+    'mixed_use'
+
+  const primary =
+    optimizationCandidates[0]?.label ?? formatAssetTypeLabel(fallbackAssetType)
+  const secondaryCandidate = optimizationCandidates[1]
+  const secondary =
+    secondaryCandidate &&
+    secondaryCandidate.weight >= 15 &&
+    secondaryCandidate.label !== primary
+      ? secondaryCandidate.label
+      : null
+
+  const programSummaryLabel = secondary
+    ? `${primary.toLowerCase()}-led program with ${secondary.toLowerCase()} support`
+    : `${primary.toLowerCase()}-focused program`
+  const programDrivers = secondary ? [primary, secondary] : [primary]
+
+  switch (recommendedScenario) {
+    case 'heritage_property':
+      return {
+        programDirectionLabel: secondary
+          ? `${primary}-led heritage mix`
+          : `${primary}-led heritage program`,
+        programDirectionSummary: `Capture is favouring a conservation-compatible ${programSummaryLabel} under the current heritage controls.`,
+        programDrivers,
+      }
+    case 'existing_building':
+      return {
+        programDirectionLabel: secondary
+          ? `${primary}-led renovation mix`
+          : `${primary}-led renovation`,
+        programDirectionSummary: `Capture is shaping the starter model around ${programSummaryLabel} for renovation within the current-code envelope.`,
+        programDrivers,
+      }
+    case 'underused_asset':
+      return {
+        programDirectionLabel: secondary
+          ? `${primary}-led adaptive reuse mix`
+          : `${primary}-led adaptive reuse`,
+        programDirectionSummary: `Capture is steering the starter model toward ${programSummaryLabel} while preserving reusable existing bulk.`,
+        programDrivers,
+      }
+    case 'mixed_use_redevelopment':
+      return {
+        programDirectionLabel: secondary
+          ? `${primary}-led mixed-use redevelopment`
+          : `${primary}-led redevelopment`,
+        programDirectionSummary: `Capture is treating the site as a redevelopment play with ${programSummaryLabel}.`,
+        programDrivers,
+      }
+    case 'raw_land':
+    default:
+      return {
+        programDirectionLabel: secondary
+          ? `${primary}-led mixed-use development`
+          : `${primary}-led ground-up development`,
+        programDirectionSummary: `Capture is shaping the first massing around ${programSummaryLabel} under the current zoning envelope.`,
+        programDrivers,
+      }
+  }
+}
+
 export function buildScenarioRecommendation(
   capturedProperty: SiteAcquisitionResult,
   options: BuildCaptureResultV2Options = {},
@@ -194,6 +303,7 @@ export function buildScenarioRecommendation(
   const alternatives = availableScenarios.filter(
     (scenario) => scenario !== recommended,
   )
+  const programDirection = buildProgramDirection(capturedProperty, recommended)
 
   return {
     recommended,
@@ -201,6 +311,9 @@ export function buildScenarioRecommendation(
     alternatives,
     reasonCodes,
     explanation,
+    programDirectionLabel: programDirection.programDirectionLabel,
+    programDirectionSummary: programDirection.programDirectionSummary,
+    programDrivers: programDirection.programDrivers,
     userOverride,
     overrideIntent,
     confidence: userOverride ? 'medium' : ruleChoice.confidence,
@@ -238,6 +351,7 @@ function buildFallbackEngineeringAssumptions(
         structuralGridNote: 'Preliminary new-build defaults',
         source: 'heuristic_fallback',
         provenance: rulesOnlyProvenance,
+        assetProfiles: [],
       }
     case 'heritage_property':
       return {
@@ -251,6 +365,7 @@ function buildFallbackEngineeringAssumptions(
         structuralGridNote: 'Preliminary conservation retrofit defaults',
         source: 'heuristic_fallback',
         provenance: rulesOnlyProvenance,
+        assetProfiles: [],
       }
     case 'existing_building':
     case 'underused_asset':
@@ -266,6 +381,7 @@ function buildFallbackEngineeringAssumptions(
         structuralGridNote: 'Preliminary renovation defaults',
         source: 'heuristic_fallback',
         provenance: rulesOnlyProvenance,
+        assetProfiles: [],
       }
   }
 }
@@ -367,21 +483,22 @@ function buildCodeConstraints(
       envelope.allowablePlotRatio ?? zoning?.plotRatio ?? null,
     maxBuildableGfaSqm: envelope.maxBuildableGfaSqm,
     currentGfaSqm: envelope.currentGfaSqm,
+    sourceReference: envelope.sourceReference ?? null,
     currentVsCodeStatus,
     grandfatheredLikelihood: deriveGrandfatheredLikelihood(
       currentVsCodeStatus,
       capturedProperty,
     ),
     setbacks: {
-      frontM: null,
-      rearM: null,
-      sideM: null,
+      frontM: envelope.setbackFrontM,
+      rearM: envelope.setbackRearM,
+      sideM: envelope.setbackSideM,
     },
-    stepBacks: [],
+    stepBacks: envelope.stepBacks,
     buildingHeightLimitM:
       envelope.buildingHeightLimitM ?? zoning?.buildingHeightLimit ?? null,
     siteCoveragePct: envelope.siteCoveragePct ?? zoning?.siteCoverage ?? null,
-    airRightsNote: null,
+    airRightsNote: envelope.airRightsNote,
     constraintFlags,
   }
 }
@@ -396,22 +513,33 @@ function buildAnalysisStatus(
     codeConstraints.maxBuildableGfaSqm,
     codeConstraints.buildingHeightLimitM,
     codeConstraints.siteCoveragePct,
+    codeConstraints.setbacks.frontM,
+    codeConstraints.setbacks.rearM,
+    codeConstraints.setbacks.sideM,
+    codeConstraints.stepBacks.length ? codeConstraints.stepBacks.length : null,
+    codeConstraints.airRightsNote,
   ].filter((value) => value !== null && value !== undefined).length
 
   const missingInputs: string[] = []
-  if (codeConstraints.setbacks.frontM == null) {
+  if (
+    codeConstraints.setbacks.frontM == null &&
+    codeConstraints.setbacks.rearM == null &&
+    codeConstraints.setbacks.sideM == null
+  ) {
     missingInputs.push('setbacks')
   }
   if (codeConstraints.stepBacks.length === 0) {
     missingInputs.push('step-backs')
   }
   missingInputs.push('floor-by-floor compliance')
-  missingInputs.push('air-rights review')
+  if (!codeConstraints.airRightsNote) {
+    missingInputs.push('air-rights review')
+  }
   missingInputs.push('solar orientation')
   missingInputs.push('terrain profile')
 
   return {
-    completenessPct: Math.round((resolvedSignals / 5) * 100),
+    completenessPct: Math.round((resolvedSignals / 10) * 100),
     missingInputs: Array.from(new Set(missingInputs)),
     supportsFullCompliance: false,
   }

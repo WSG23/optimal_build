@@ -54,6 +54,11 @@ class ZoningRulesResult:
     plot_ratio: Optional[float] = None
     building_height_limit_m: Optional[float] = None
     site_coverage_pct: Optional[float] = None
+    setback_front_m: Optional[float] = None
+    setback_rear_m: Optional[float] = None
+    setback_side_m: Optional[float] = None
+    step_backs: list[dict[str, float]] | None = None
+    air_rights_note: Optional[str] = None
     zone_code: Optional[str] = None
     zone_description: Optional[str] = None
     source_reference: str = "RefRule Database"
@@ -63,7 +68,18 @@ class ZoningRulesResult:
     @property
     def has_data(self) -> bool:
         """Check if any zoning data was found."""
-        return self.plot_ratio is not None or self.building_height_limit_m is not None
+        return any(
+            value is not None
+            for value in (
+                self.plot_ratio,
+                self.building_height_limit_m,
+                self.site_coverage_pct,
+                self.setback_front_m,
+                self.setback_rear_m,
+                self.setback_side_m,
+                self.air_rights_note,
+            )
+        ) or bool(self.step_backs)
 
 
 def normalize_zone_code(
@@ -217,15 +233,39 @@ async def get_zoning_rules_for_zone(
     plot_ratio: Optional[float] = None
     building_height_limit_m: Optional[float] = None
     site_coverage_pct: Optional[float] = None
+    setback_front_m: Optional[float] = None
+    setback_rear_m: Optional[float] = None
+    setback_side_m: Optional[float] = None
+    step_backs: list[dict[str, float]] = []
+    air_rights_note: Optional[str] = None
 
     for rule in approved_rules:
+        parameter_key = (rule.parameter_key or "").lower()
         try:
-            if rule.parameter_key == "zoning.max_far":
+            if parameter_key == "zoning.max_far":
                 plot_ratio = float(rule.value)
-            elif rule.parameter_key == "zoning.max_building_height_m":
+            elif parameter_key == "zoning.max_building_height_m":
                 building_height_limit_m = float(rule.value)
-            elif rule.parameter_key == "zoning.site_coverage.max_percent":
+            elif parameter_key == "zoning.site_coverage.max_percent":
                 site_coverage_pct = float(rule.value)
+            elif parameter_key == "zoning.setback.front_min_m":
+                setback_front_m = float(rule.value)
+            elif parameter_key == "zoning.setback.rear_min_m":
+                setback_rear_m = float(rule.value)
+            elif parameter_key == "zoning.setback.side_min_m":
+                setback_side_m = float(rule.value)
+            elif parameter_key.startswith("zoning.stepback."):
+                applicability = (
+                    rule.applicability if isinstance(rule.applicability, dict) else {}
+                )
+                level_value = applicability.get("level") or applicability.get("storey")
+                if level_value is None:
+                    level = len(step_backs) + 1
+                else:
+                    level = int(level_value)
+                step_backs.append({"level": float(level), "depth_m": float(rule.value)})
+            elif parameter_key.startswith("zoning.air_rights."):
+                air_rights_note = str(rule.value)
         except (ValueError, TypeError) as e:
             logger.warning(
                 "Failed to parse rule value",
@@ -247,6 +287,11 @@ async def get_zoning_rules_for_zone(
         plot_ratio=plot_ratio,
         building_height_limit_m=building_height_limit_m,
         site_coverage_pct=site_coverage_pct,
+        setback_front_m=setback_front_m,
+        setback_rear_m=setback_rear_m,
+        setback_side_m=setback_side_m,
+        step_backs=step_backs,
+        air_rights_note=air_rights_note,
         zone_code=normalized_zone,
         zone_description=_extract_zone_description(normalized_zone),
         source_reference=f"URA Zoning Rules ({jurisdiction} RefRule Database)",

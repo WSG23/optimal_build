@@ -196,7 +196,7 @@ export function ConceptPreviewSection({
             sx={{
               fontSize: 'var(--ob-font-size-sm)',
               color: 'text.secondary',
-              lineHeight: 1.5,
+              lineHeight: 'var(--ob-line-height-normal)',
             }}
           >
             {starterModelStatusSummary}
@@ -205,7 +205,7 @@ export function ConceptPreviewSection({
             sx={{
               fontSize: 'var(--ob-font-size-sm)',
               color: 'text.secondary',
-              lineHeight: 1.5,
+              lineHeight: 'var(--ob-line-height-normal)',
             }}
           >
             Geometry scope:{' '}

@@ -8,15 +8,8 @@
  * - Capture timestamp
  */
 
-import type { DevelopmentScenario } from '../../../../api/agents'
-
-export interface CapturedSite {
-  propertyId: string
-  address: string
-  district?: string
-  scenario: DevelopmentScenario | null
-  capturedAt: string
-}
+import { formatScenarioLabel } from '../utils/formatScenario'
+import type { CapturedSite } from '../hooks/useUnifiedCapture'
 
 export interface MissionLogProps {
   capturedSites: CapturedSite[]
@@ -28,16 +21,9 @@ export function MissionLog({ capturedSites }: MissionLogProps) {
       <div className="gps-panel">
         <h3>Mission Log</h3>
         {capturedSites.length === 0 ? (
-          <p
-            style={{
-              fontStyle: 'italic',
-              color: 'var(--ob-color-text-tertiary)',
-            }}
-          >
-            No prior missions.
-          </p>
+          <p className="gps-panel__empty">No prior missions.</p>
         ) : (
-          <table style={{ color: 'var(--ob-color-text-secondary)' }}>
+          <table aria-label="Captured properties log">
             <thead>
               <tr>
                 <th>Target</th>
@@ -50,11 +36,18 @@ export function MissionLog({ capturedSites }: MissionLogProps) {
               {capturedSites.map((site) => (
                 <tr key={`${site.propertyId}-${site.capturedAt}`}>
                   <td>{site.address}</td>
-                  <td>{site.district ?? '-'}</td>
+                  <td>{site.district ?? '\u2014'}</td>
                   <td>
-                    {site.scenario ? formatScenarioLabel(site.scenario) : '-'}
+                    {site.scenario
+                      ? formatScenarioLabel(site.scenario)
+                      : '\u2014'}
                   </td>
-                  <td>{new Date(site.capturedAt).toLocaleDateString()}</td>
+                  <td>
+                    {new Date(site.capturedAt).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -63,21 +56,4 @@ export function MissionLog({ capturedSites }: MissionLogProps) {
       </div>
     </section>
   )
-}
-
-function formatScenarioLabel(value: DevelopmentScenario) {
-  switch (value) {
-    case 'raw_land':
-      return 'Raw land'
-    case 'existing_building':
-      return 'Existing building'
-    case 'heritage_property':
-      return 'Heritage property'
-    case 'underused_asset':
-      return 'Underused asset'
-    case 'mixed_use_redevelopment':
-      return 'Mixed-use redevelopment'
-    default:
-      return value
-  }
 }

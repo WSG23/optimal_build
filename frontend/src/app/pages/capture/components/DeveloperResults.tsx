@@ -239,7 +239,9 @@ export function DeveloperResults({
     defaultRecommendationLabel,
     starterModelStatusSummary,
     scenarioFitSummary,
+    captureDataBasis,
     starterModelAssumptionLines,
+    starterModelAssetProfileLines,
     starterModelAssumptionSourceLine,
     starterModelAssumptionFallbackReason,
     starterModelOverridePreviewNotice,
@@ -554,12 +556,20 @@ export function DeveloperResults({
         userOverride={captureResultV2.scenarioRecommendation.userOverride}
         defaultRecommendationLabel={defaultRecommendationLabel}
         explanation={captureResultV2.scenarioRecommendation.explanation}
+        programDirectionLabel={
+          captureResultV2.scenarioRecommendation.programDirectionLabel
+        }
+        programDirectionSummary={
+          captureResultV2.scenarioRecommendation.programDirectionSummary
+        }
+        programDrivers={captureResultV2.scenarioRecommendation.programDrivers}
         overrideModeLine={overrideModeLine}
         overrideIntentGuidance={overrideIntentGuidance}
         overrideIntent={captureResultV2.scenarioRecommendation.overrideIntent}
         currentProject={currentProject}
         confidence={captureResultV2.scenarioRecommendation.confidence}
         scenarioFitSummary={scenarioFitSummary}
+        captureDataBasis={captureDataBasis}
         reasonCodes={captureResultV2.scenarioRecommendation.reasonCodes}
         handleSaveProjectOverride={handleSaveProjectOverride}
         handleClearProjectOverride={handleClearProjectOverride}
@@ -570,6 +580,7 @@ export function DeveloperResults({
         starterModelOverridePreviewNotice={starterModelOverridePreviewNotice}
         starterModelAssumptionBuckets={starterModelAssumptionBuckets}
         starterModelAssumptionLines={starterModelAssumptionLines}
+        starterModelAssetProfileLines={starterModelAssetProfileLines}
       />
 
       <ScenarioFocusSection
