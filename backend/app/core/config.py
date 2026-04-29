@@ -225,6 +225,7 @@ class Settings:
     SLOW_QUERY_THRESHOLD_SECONDS: float
     PREVIEW_MAX_VERSIONS: int
     PREVIEW_GEOMETRY_DETAIL_LEVEL: str
+    CAPTURE_LIVE_SOURCE_SCAN_ENABLED: bool
 
     def __init__(self) -> None:
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "Building Compliance Platform")
@@ -344,6 +345,10 @@ class Settings:
         self.OFFLINE_MODE = _load_bool("OFFLINE_MODE", False)
         self.PREVIEW_MAX_VERSIONS = _load_positive_int("PREVIEW_MAX_VERSIONS", 3)
         self.PREVIEW_GEOMETRY_DETAIL_LEVEL = _load_geometry_detail_level()
+        self.CAPTURE_LIVE_SOURCE_SCAN_ENABLED = _load_bool(
+            "CAPTURE_LIVE_SOURCE_SCAN_ENABLED",
+            False,
+        )
 
     def _load_listing_token_secret(self) -> str:
         raw = os.getenv("LISTING_TOKEN_SECRET")

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.models.rkp import RefRule
+from app.models.rkp import RefRule, RefZoningLayer
 from app.services.rules.zone_rules import get_zoning_rules_for_zone
 
 
@@ -83,3 +83,70 @@ async def test_get_zoning_rules_for_zone_extracts_deeper_controls(
     assert result.setback_rear_m is None
     assert result.step_backs == [{"level": 6.0, "depth_m": 4.0}]
     assert result.air_rights_note == "Subject to aviation height review."
+    assert result.rule_corpus_status is not None
+    assert result.rule_corpus_status["resolved_by"]["setbacks"] == "ref_rule"
+
+
+@pytest.mark.asyncio
+async def test_get_zoning_rules_for_zone_uses_singapore_zoning_layer_gpr(
+    async_session_factory,
+) -> None:
+    async with async_session_factory() as session:
+        layer = RefZoningLayer(
+            jurisdiction="SG",
+            layer_name="MasterPlan2019",
+            zone_code="SG:mixed_use",
+            attributes={
+                "LU_DESC": "Mixed Use",
+                "GPR": "3.2",
+                "height_m": "80",
+            },
+        )
+        session.add(layer)
+        await session.flush()
+
+        result = await get_zoning_rules_for_zone(session, "mixed_use")
+
+    assert result.has_data is True
+    assert result.plot_ratio == 3.2
+    assert result.building_height_limit_m == 80
+    assert result.zone_description == "Mixed Use"
+    assert result.source_reference == "SG Rule Registry (RefRule + zoning layers)"
+    assert result.rule_corpus_status is not None
+    assert result.rule_corpus_status["coverage_state"] == "partial"
+    assert result.rule_corpus_status["counts"]["zoning_layers"] == 1
+    assert result.rule_corpus_status["resolved_by"] == {
+        "land_use": "ref_zoning_layer",
+        "plot_ratio": "ref_zoning_layer",
+        "building_height_limit_m": "ref_zoning_layer",
+    }
+    source_gaps = result.rule_corpus_status["official_source_gaps"]
+    assert any(gap["field"] == "setbacks" for gap in source_gaps)
+
+
+@pytest.mark.asyncio
+async def test_get_zoning_rules_for_zone_reads_building_topic_site_coverage(
+    async_session_factory,
+) -> None:
+    async with async_session_factory() as session:
+        session.add(
+            RefRule(
+                jurisdiction="SG",
+                authority="URA",
+                topic="building",
+                parameter_key="zoning.site_coverage.max_percent",
+                operator="<=",
+                value="45",
+                unit="%",
+                applicability={"zone_code": "SG:mixed_use"},
+                review_status="approved",
+                is_published=True,
+            )
+        )
+        await session.flush()
+
+        result = await get_zoning_rules_for_zone(session, "mixed_use")
+
+    assert result.site_coverage_pct == 45
+    assert result.rule_corpus_status is not None
+    assert result.rule_corpus_status["resolved_by"]["site_coverage_pct"] == "ref_rule"

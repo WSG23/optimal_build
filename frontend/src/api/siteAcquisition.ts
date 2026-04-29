@@ -65,6 +65,7 @@ export interface DeveloperBuildEnvelope {
   airRightsNote: string | null
   assumptions: string[]
   sourceReference: string | null
+  ruleCorpusStatus: Record<string, unknown> | null
 }
 
 export interface DeveloperVisualizationSummary {
@@ -645,6 +646,8 @@ interface RawDeveloperEnvelope {
   assumptions?: unknown
   source_reference?: unknown
   sourceReference?: unknown
+  rule_corpus_status?: unknown
+  ruleCorpusStatus?: unknown
 }
 
 interface RawDeveloperVisualization {
@@ -768,6 +771,12 @@ function mapDeveloperEnvelope(
   const sourceReference =
     coerceString(payload?.source_reference) ??
     coerceString(payload?.sourceReference)
+  const rawRuleCorpusStatus =
+    payload?.rule_corpus_status ?? payload?.ruleCorpusStatus ?? null
+  const ruleCorpusStatus =
+    rawRuleCorpusStatus && typeof rawRuleCorpusStatus === 'object'
+      ? (rawRuleCorpusStatus as Record<string, unknown>)
+      : null
 
   const assumptions = Array.isArray(payload?.assumptions)
     ? payload!.assumptions
@@ -792,6 +801,7 @@ function mapDeveloperEnvelope(
     airRightsNote: airRightsNote ?? null,
     assumptions,
     sourceReference: sourceReference ?? null,
+    ruleCorpusStatus,
   }
 }
 
@@ -1556,6 +1566,7 @@ function deriveEnvelopeFromSummary(
     airRightsNote: null,
     assumptions,
     sourceReference: null,
+    ruleCorpusStatus: null,
   }
 }
 

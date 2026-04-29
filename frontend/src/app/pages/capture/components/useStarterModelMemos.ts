@@ -38,6 +38,7 @@ export interface CaptureDataBasisItem {
   label: string
   value: string
   tone: 'success' | 'warning' | 'default'
+  statusLabel: string
 }
 
 interface PreviewJobLike {
@@ -70,6 +71,196 @@ const ASSUMPTION_FIELD_LABELS = new Map<string, string>([
   ['retention_strategy', 'retention strategy'],
   ['efficiency_factor', 'efficiency factor'],
 ])
+
+const RULE_FIELD_LABELS = new Map<string, string>([
+  ['land_use', 'land use'],
+  ['plot_ratio', 'plot ratio'],
+  ['building_height_limit_m', 'height limit'],
+  ['site_coverage_pct', 'site coverage'],
+  ['setbacks', 'setbacks'],
+  ['step_backs', 'step-backs'],
+  ['air_rights_note', 'air-rights note'],
+])
+
+function getObjectRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object'
+    ? (value as Record<string, unknown>)
+    : null
+}
+
+function formatRuleFieldLabel(field: string): string {
+  return RULE_FIELD_LABELS.get(field) ?? field.replace(/_/g, ' ')
+}
+
+function getRuleFieldIds(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value
+        .map((entry) =>
+          typeof entry === 'string' && entry.trim() ? entry.trim() : null,
+        )
+        .filter((entry): entry is string => Boolean(entry))
+    : []
+}
+
+function getRuleFieldList(value: unknown): string[] {
+  return getRuleFieldIds(value).map((entry) => formatRuleFieldLabel(entry))
+}
+
+function getRuleFieldSources(
+  value: Record<string, unknown> | null,
+): Record<string, string> {
+  if (!value) {
+    return {}
+  }
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([field, source]) => [
+        formatRuleFieldLabel(field),
+        typeof source === 'string' ? source : '',
+      ])
+      .filter((entry): entry is [string, string] => entry[1].length > 0),
+  )
+}
+
+function isGfaEnvelopeAvailable(
+  codeConstraints: CaptureResultV2['codeConstraints'],
+): boolean {
+  return Boolean(
+    codeConstraints.maxBuildableGfaSqm != null &&
+    codeConstraints.currentGfaSqm != null,
+  )
+}
+
+function formatUnresolvedRuleFieldLabel(
+  field: string,
+  codeConstraints: CaptureResultV2['codeConstraints'],
+): string {
+  if (
+    field === 'building_height_limit_m' &&
+    isGfaEnvelopeAvailable(codeConstraints)
+  ) {
+    return 'height limit - separate official control'
+  }
+  return formatRuleFieldLabel(field)
+}
+
+function getUnresolvedRuleFieldSummary(
+  value: unknown,
+  codeConstraints: CaptureResultV2['codeConstraints'],
+): string[] {
+  return getRuleFieldIds(value).map((entry) =>
+    formatUnresolvedRuleFieldLabel(entry, codeConstraints),
+  )
+}
+
+function getOfficialSourceGapSummary(
+  value: unknown,
+  codeConstraints: CaptureResultV2['codeConstraints'],
+): string[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .map((entry) => {
+      const record = getObjectRecord(entry)
+      const rawField = typeof record?.field === 'string' ? record.field : null
+      if (!rawField) {
+        return null
+      }
+
+      const sources = Array.isArray(record?.candidate_sources)
+        ? record.candidate_sources
+        : []
+      const authorities = Array.from(
+        new Set(
+          sources
+            .map((source) => {
+              const sourceRecord = getObjectRecord(source)
+              return typeof sourceRecord?.authority === 'string'
+                ? sourceRecord.authority
+                : null
+            })
+            .filter((authority): authority is string => Boolean(authority)),
+        ),
+      )
+
+      const label = formatUnresolvedRuleFieldLabel(rawField, codeConstraints)
+      return authorities.length ? `${label} (${authorities.join(', ')})` : label
+    })
+    .filter((entry): entry is string => Boolean(entry))
+}
+
+interface LiveSourceScanSummary {
+  value: string
+  tone: CaptureDataBasisItem['tone']
+  statusLabel: string
+}
+
+function getLiveSourceScanSummary(
+  value: unknown,
+): LiveSourceScanSummary | null {
+  const record = getObjectRecord(value)
+  if (!record) {
+    return null
+  }
+  const resolved =
+    typeof record.resolved_count === 'number' ? record.resolved_count : 0
+  const staged =
+    typeof record.staged_count === 'number' ? record.staged_count : 0
+  const existing =
+    typeof record.existing_count === 'number' ? record.existing_count : 0
+  const failed =
+    typeof record.failed_count === 'number' ? record.failed_count : 0
+  if (!resolved && !staged && !existing && !failed) {
+    return null
+  }
+  const parts = []
+  if (resolved) {
+    parts.push(`${resolved} normalized into approved rules`)
+  }
+  if (staged) {
+    parts.push(`${staged} staged for review`)
+  }
+  if (existing) {
+    parts.push(`${existing} already staged`)
+  }
+  if (failed) {
+    parts.push(`${failed} fetch failed`)
+  }
+  const hasPendingWork = Boolean(staged || existing || failed)
+  return {
+    value: `${parts.join(' / ')}. ${
+      hasPendingWork
+        ? 'Pending source candidates still require review before Capture treats those controls as resolved.'
+        : 'Normalized source values are now available to the rule resolver.'
+    }`,
+    tone: hasPendingWork || failed ? 'warning' : 'success',
+    statusLabel: hasPendingWork || failed ? 'Review required' : 'Resolved',
+  }
+}
+
+function formatRuleFieldSummary(fields: string[]): string {
+  const uniqueFields = Array.from(new Set(fields))
+  return `${uniqueFields.slice(0, 5).join(', ')}${uniqueFields.length > 5 ? ', ...' : ''}.`
+}
+
+function getResolvedRuleStatusLabel(sourcesByField: Record<string, string>) {
+  const sources = Object.values(sourcesByField)
+  if (!sources.length) {
+    return 'Resolved'
+  }
+  const capturedCount = sources.filter((source) =>
+    source.startsWith('captured_'),
+  ).length
+  if (capturedCount === sources.length) {
+    return 'Site / captured'
+  }
+  if (capturedCount > 0) {
+    return 'Mixed source'
+  }
+  return 'Rule-backed'
+}
 
 export function useStarterModelMemos({
   captureResultV2,
@@ -221,11 +412,30 @@ export function useStarterModelMemos({
   ])
 
   const captureDataBasis = useMemo((): CaptureDataBasisItem[] => {
+    const ruleCorpusStatus = getObjectRecord(
+      captureResultV2.sourceCapture.buildEnvelope.ruleCorpusStatus,
+    )
+    const resolvedBy = getObjectRecord(ruleCorpusStatus?.resolved_by)
+    const resolvedSourcesByField = getRuleFieldSources(resolvedBy)
+    const resolvedRuleFields = Object.keys(resolvedSourcesByField)
+    const unresolvedRuleFields = getUnresolvedRuleFieldSummary(
+      ruleCorpusStatus?.unresolved_fields,
+      captureResultV2.codeConstraints,
+    )
+    const officialSourceGaps = getOfficialSourceGapSummary(
+      ruleCorpusStatus?.official_source_gaps,
+      captureResultV2.codeConstraints,
+    )
+    const liveSourceScanSummary = getLiveSourceScanSummary(
+      ruleCorpusStatus?.official_source_ingestion,
+    )
+
     const items: CaptureDataBasisItem[] = [
       {
         label: 'Site input',
         value: 'Address and coordinates are site-specific.',
         tone: 'success',
+        statusLabel: 'Site-specific',
       },
     ]
 
@@ -235,30 +445,71 @@ export function useStarterModelMemos({
         label: 'Envelope source',
         value: 'Zoning envelope source is unresolved.',
         tone: 'warning',
+        statusLabel: 'Source unresolved',
       })
     } else if (/mock data|fallback|no refrule/i.test(sourceReference)) {
       items.push({
         label: 'Envelope source',
         value: sourceReference,
         tone: 'warning',
+        statusLabel: 'Partial source',
       })
     } else {
       items.push({
         label: 'Envelope source',
         value: sourceReference,
         tone: 'success',
+        statusLabel: 'Partially rule-backed',
       })
     }
 
     const unresolvedCount = captureResultV2.analysisStatus.missingInputs.length
     items.push({
-      label: 'Rule coverage',
+      label: 'Capture completeness',
       value:
         unresolvedCount > 0
-          ? `${unresolvedCount} control areas still unresolved (${captureResultV2.analysisStatus.missingInputs.slice(0, 3).join(', ')}${unresolvedCount > 3 ? ', …' : ''}).`
-          : 'Core rule controls resolved for this capture.',
+          ? `${unresolvedCount} capture inputs still unresolved (${captureResultV2.analysisStatus.missingInputs.slice(0, 3).join(', ')}${unresolvedCount > 3 ? ', …' : ''}).`
+          : 'Core capture inputs resolved for this capture.',
       tone: unresolvedCount > 0 ? 'warning' : 'success',
+      statusLabel:
+        unresolvedCount > 0 ? 'Partial capture' : 'Core controls resolved',
     })
+
+    if (resolvedRuleFields.length > 0) {
+      items.push({
+        label: 'Resolved controls',
+        value: formatRuleFieldSummary(resolvedRuleFields),
+        tone: 'success',
+        statusLabel: getResolvedRuleStatusLabel(resolvedSourcesByField),
+      })
+    }
+
+    if (unresolvedRuleFields.length > 0) {
+      items.push({
+        label: 'Unresolved controls',
+        value: formatRuleFieldSummary(unresolvedRuleFields),
+        tone: 'warning',
+        statusLabel: 'Source review needed',
+      })
+    }
+
+    if (officialSourceGaps.length > 0) {
+      items.push({
+        label: 'Source ingestion status',
+        value: `${officialSourceGaps.slice(0, 4).join(', ')}${officialSourceGaps.length > 4 ? ', ...' : ''} have official source categories identified. Ingestion and review are still pending.`,
+        tone: 'warning',
+        statusLabel: 'Source identified, not ingested',
+      })
+    }
+
+    if (liveSourceScanSummary) {
+      items.push({
+        label: 'Live source scan',
+        value: liveSourceScanSummary.value,
+        tone: liveSourceScanSummary.tone,
+        statusLabel: liveSourceScanSummary.statusLabel,
+      })
+    }
 
     items.push({
       label: 'Geometry',
@@ -272,12 +523,18 @@ export function useStarterModelMemos({
         effectiveStarterModel.generatedFrom.includes('preview_job')
           ? 'success'
           : 'warning',
+      statusLabel:
+        effectiveStarterModel.status === 'ready' &&
+        effectiveStarterModel.generatedFrom.includes('preview_job')
+          ? 'Starter model pipeline'
+          : 'Preliminary geometry',
     })
 
     return items
   }, [
     captureResultV2.analysisStatus.missingInputs,
     captureResultV2.codeConstraints.sourceReference,
+    captureResultV2.sourceCapture.buildEnvelope.ruleCorpusStatus,
     effectiveStarterModel.generatedFrom,
     effectiveStarterModel.status,
   ])

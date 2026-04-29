@@ -159,12 +159,17 @@ class URAIntegrationService(AsyncClientService):
             ),
         }
 
+        normalized_address = address.lower()
+
         # Simple mock logic - in reality would use actual API
-        if "orchard" in address.lower() or "raffles" in address.lower():
+        if "orchard" in normalized_address or "raffles" in normalized_address:
             return mock_zones["Commercial"]
-        elif "industrial" in address.lower() or "jurong" in address.lower():
+        elif any(
+            token in normalized_address
+            for token in ("fusionopolis", "one-north", "industrial", "jurong")
+        ):
             return mock_zones["Business"]
-        elif "marina" in address.lower():
+        elif "marina" in normalized_address:
             return mock_zones["Mixed"]
         else:
             return mock_zones["Residential"]
@@ -181,9 +186,13 @@ class URAIntegrationService(AsyncClientService):
             "mixed": "Mixed Development",
         }
 
+        normalized_address = address.lower()
+        if "fusionopolis" in normalized_address or "one-north" in normalized_address:
+            return "Office / Research and Development"
+
         # Simple keyword matching
         for keyword, use in existing_uses.items():
-            if keyword in address.lower():
+            if keyword in normalized_address:
                 return use
 
         return "Commercial Building"
@@ -191,6 +200,19 @@ class URAIntegrationService(AsyncClientService):
     async def get_property_info(self, address: str) -> Optional[URAPropertyInfo]:
         """Get detailed property information from URA."""
         # Mock implementation - in production would call URA REALIS API
+
+        normalized_address = address.lower()
+        if "fusionopolis" in normalized_address or "one-north" in normalized_address:
+            return URAPropertyInfo(
+                property_name="Fusionopolis",
+                tenure="99-year leasehold",
+                site_area_sqm=12000.0,
+                gfa_approved=30000.0,
+                building_height=80.0,
+                completion_year=2008,
+                last_transaction_date=date(2023, 6, 15),
+                last_transaction_price=320000000.0,
+            )
 
         return URAPropertyInfo(
             property_name="Mock Property",

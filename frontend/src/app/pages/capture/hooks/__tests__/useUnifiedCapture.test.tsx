@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import React from 'react'
-import { act, render } from '@testing-library/react'
+import { act, cleanup, render } from '@testing-library/react'
 
 import {
   useUnifiedCapture,
@@ -99,9 +99,11 @@ function renderHookHarness(
 
 describe('useUnifiedCapture', () => {
   afterEach(() => {
+    cleanup()
     vi.useRealTimers()
-    vi.clearAllMocks()
+    vi.resetAllMocks()
     sessionStorage.clear()
+    document.body.classList.remove('capture-results-active')
     delete (window as { google?: unknown }).google
   })
 
@@ -113,7 +115,7 @@ describe('useUnifiedCapture', () => {
     })
 
     expect(hookRef.current!.mapError).toBe(
-      'Google Maps API key not set; map preview disabled.',
+      'Google Maps API key not configured. Set VITE_GOOGLE_MAPS_API_KEY in your .env file.',
     )
   })
 
@@ -129,24 +131,8 @@ describe('useUnifiedCapture', () => {
     expect(mockMarkerConstructor).toHaveBeenCalled()
   })
 
-  it('validates forward geocoding requires an address', async () => {
-    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
-
-    await act(async () => {
-      hookRef.current!.setAddress('')
-    })
-
-    await act(async () => {
-      await hookRef.current!.handleForwardGeocode()
-    })
-
-    expect(hookRef.current!.geocodeError).toBe(
-      'Please enter an address to geocode.',
-    )
-    expect(mockForwardGeocodeAddress).not.toHaveBeenCalled()
-  })
-
-  it('updates coordinates when forward geocoding succeeds', async () => {
+  it('auto-geocodes address changes and updates coordinates', async () => {
+    vi.useFakeTimers()
     mockForwardGeocodeAddress.mockResolvedValue({
       latitude: 1.2345,
       longitude: 103.9876,
@@ -159,14 +145,16 @@ describe('useUnifiedCapture', () => {
     })
 
     await act(async () => {
-      await hookRef.current!.handleForwardGeocode()
+      vi.advanceTimersByTime(800)
     })
 
+    expect(mockForwardGeocodeAddress).toHaveBeenCalledWith('123 Main St')
     expect(hookRef.current!.latitude).toBe('1.2345')
     expect(hookRef.current!.longitude).toBe('103.9876')
   })
 
-  it('surfaces an error when forward geocoding fails', async () => {
+  it('surfaces an error when address auto-geocoding fails', async () => {
+    vi.useFakeTimers()
     mockForwardGeocodeAddress.mockRejectedValue(new Error('Geocode down'))
     const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
@@ -175,64 +163,10 @@ describe('useUnifiedCapture', () => {
     })
 
     await act(async () => {
-      await hookRef.current!.handleForwardGeocode()
+      vi.advanceTimersByTime(800)
     })
 
     expect(hookRef.current!.geocodeError).toBe('Geocode down')
-  })
-
-  it('validates reverse geocoding requires valid coordinates', async () => {
-    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
-
-    await act(async () => {
-      hookRef.current!.setLatitude('not-a-number')
-      hookRef.current!.setLongitude('103.8500')
-    })
-
-    await act(async () => {
-      await hookRef.current!.handleReverseGeocode()
-    })
-
-    expect(hookRef.current!.geocodeError).toBe(
-      'Please provide valid coordinates before reverse geocoding.',
-    )
-    expect(mockReverseGeocodeCoords).not.toHaveBeenCalled()
-  })
-
-  it('updates address when reverse geocoding succeeds', async () => {
-    mockReverseGeocodeCoords.mockResolvedValue({
-      formattedAddress: 'Resolved Address',
-    })
-
-    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
-
-    await act(async () => {
-      hookRef.current!.setLatitude('1.1111')
-      hookRef.current!.setLongitude('103.2222')
-    })
-
-    await act(async () => {
-      await hookRef.current!.handleReverseGeocode()
-    })
-
-    expect(hookRef.current!.address).toBe('Resolved Address')
-  })
-
-  it('surfaces an error when reverse geocoding fails', async () => {
-    mockReverseGeocodeCoords.mockRejectedValue(new Error('Reverse down'))
-
-    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
-
-    await act(async () => {
-      hookRef.current!.setLatitude('1.1111')
-      hookRef.current!.setLongitude('103.2222')
-    })
-
-    await act(async () => {
-      await hookRef.current!.handleReverseGeocode()
-    })
-
-    expect(hookRef.current!.geocodeError).toBe('Reverse down')
   })
 
   it('runs the developer capture flow and persists the capture', async () => {
@@ -259,7 +193,8 @@ describe('useUnifiedCapture', () => {
         preventDefault: vi.fn(),
       } as unknown as React.FormEvent<HTMLFormElement>
       const promise = hookRef.current!.handleCapture(event)
-      vi.advanceTimersByTime(1500)
+      await Promise.resolve()
+      await vi.runAllTimersAsync()
       await promise
     })
 
@@ -267,7 +202,7 @@ describe('useUnifiedCapture', () => {
       expect.objectContaining({
         latitude: 1.2345,
         longitude: 103.9876,
-        jurisdictionCode: 'SG',
+        jurisdictionCode: undefined,
         previewDetailLevel: 'medium',
       }),
       expect.any(AbortSignal),
@@ -284,6 +219,7 @@ describe('useUnifiedCapture', () => {
     expect(hookRef.current!.capturedSites[0]?.capturedAt).toBe(
       '2026-01-06T10:00:01.500Z',
     )
+    expect(document.body).toHaveClass('capture-results-active')
   })
 
   it('omits developmentScenarios when no scenarios are selected (developer flow)', async () => {
@@ -300,10 +236,6 @@ describe('useUnifiedCapture', () => {
 
     const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
-    await act(async () => {
-      hookRef.current!.handleScenarioToggle('raw_land')
-      hookRef.current!.handleScenarioToggle('en_bloc')
-    })
     expect(hookRef.current!.selectedScenarios.length).toBe(0)
 
     await act(async () => {
@@ -311,7 +243,8 @@ describe('useUnifiedCapture', () => {
         preventDefault: vi.fn(),
       } as unknown as React.FormEvent<HTMLFormElement>
       const promise = hookRef.current!.handleCapture(event)
-      vi.advanceTimersByTime(1500)
+      await Promise.resolve()
+      await vi.runAllTimersAsync()
       await promise
     })
 
@@ -324,7 +257,7 @@ describe('useUnifiedCapture', () => {
   })
 
   it('resets state and clears persisted capture when starting a new capture', async () => {
-    const hookRef = renderHookHarness(true)
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
     sessionStorage.setItem(
       'site-acquisition:captured-property',
@@ -341,12 +274,13 @@ describe('useUnifiedCapture', () => {
       hookRef.current!.handleNewCapture()
     })
 
-    expect(hookRef.current!.latitude).toBe('1.3000')
-    expect(hookRef.current!.longitude).toBe('103.8500')
+    expect(hookRef.current!.latitude).toBe('')
+    expect(hookRef.current!.longitude).toBe('')
     expect(hookRef.current!.address).toBe('')
     expect(
       sessionStorage.getItem('site-acquisition:captured-property'),
     ).toBeNull()
+    expect(document.body).not.toHaveClass('capture-results-active')
   })
 
   it('runs the agent capture flow and fetches market intelligence', async () => {
@@ -359,6 +293,10 @@ describe('useUnifiedCapture', () => {
       quickAnalysis: { scenarios: [{ scenario: 'raw_land' }] },
       developerFeatures: { preview3D: false },
       timestamp: '2026-01-06T10:00:00.000Z',
+    })
+    mockForwardGeocodeAddress.mockResolvedValue({
+      latitude: 1.1111,
+      longitude: 103.2222,
     })
     mockFetchPropertyMarketIntelligence.mockResolvedValue({ summary: 'ok' })
 
@@ -375,7 +313,8 @@ describe('useUnifiedCapture', () => {
         preventDefault: vi.fn(),
       } as unknown as React.FormEvent<HTMLFormElement>
       const promise = hookRef.current!.handleCapture(event)
-      vi.advanceTimersByTime(1500)
+      await Promise.resolve()
+      await vi.runAllTimersAsync()
       await promise
     })
 
@@ -383,7 +322,7 @@ describe('useUnifiedCapture', () => {
       expect.objectContaining({
         latitude: 1.1111,
         longitude: 103.2222,
-        jurisdictionCode: 'SG',
+        jurisdictionCode: undefined,
         enabledFeatures: expect.any(Object),
       }),
     )

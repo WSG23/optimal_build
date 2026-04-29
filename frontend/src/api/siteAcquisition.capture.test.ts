@@ -57,7 +57,15 @@ describe('capturePropertyForDevelopment', () => {
             step_backs: [{ level: 6, depth_m: 4 }],
             air_rights_note: 'Subject to aviation height review.',
             assumptions: ['Resolved deeper controls: setbacks, step-backs.'],
-            source_reference: 'URA Zoning Rules (SG RefRule Database)',
+            source_reference: 'SG Rule Registry (RefRule + zoning layers)',
+            rule_corpus_status: {
+              coverage_state: 'partial',
+              resolved_by: {
+                plot_ratio: 'ref_rule',
+                setbacks: 'ref_rule',
+              },
+              unresolved_fields: ['air_rights_note'],
+            },
           },
           visualization: {
             status: 'placeholder',
@@ -105,7 +113,15 @@ describe('capturePropertyForDevelopment', () => {
       setbackSideM: 3,
       stepBacks: [{ level: 6, depthM: 4 }],
       airRightsNote: 'Subject to aviation height review.',
-      sourceReference: 'URA Zoning Rules (SG RefRule Database)',
+      sourceReference: 'SG Rule Registry (RefRule + zoning layers)',
+      ruleCorpusStatus: {
+        coverage_state: 'partial',
+        resolved_by: {
+          plot_ratio: 'ref_rule',
+          setbacks: 'ref_rule',
+        },
+        unresolved_fields: ['air_rights_note'],
+      },
     })
   })
 })

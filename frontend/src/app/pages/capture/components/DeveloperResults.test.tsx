@@ -100,6 +100,7 @@ function buildResult(): SiteAcquisitionResult {
       airRightsNote: null,
       assumptions: [],
       sourceReference: null,
+      ruleCorpusStatus: null,
     },
     visualization: {
       status: 'queued',
@@ -709,33 +710,56 @@ describe('DeveloperResults', () => {
     expect(screen.getByText('Capture Recommendation')).toBeInTheDocument()
     expect(screen.getByText('Starter Model Status')).toBeInTheDocument()
     expect(screen.getByText('Starter Model Assumptions')).toBeInTheDocument()
-    expect(screen.getByText('Program direction')).toBeInTheDocument()
+    expect(screen.getByText('Decision Brief')).toBeInTheDocument()
+    expect(screen.getByText('Program')).toBeInTheDocument()
     expect(screen.getByText('Office-led renovation mix')).toBeInTheDocument()
+    expect(screen.getByText('Use basis')).toBeInTheDocument()
+    expect(
+      screen.getByText('Office primary / Retail support'),
+    ).toBeInTheDocument()
     expect(
       screen.getByText(
         'Capture is shaping the starter model around office-led program with retail support for renovation within the current-code envelope.',
       ),
     ).toBeInTheDocument()
-    expect(screen.getByText('Use Signals')).toBeInTheDocument()
-    expect(screen.getByText('Data Basis')).toBeInTheDocument()
+    expect(screen.getByText('Audit Trail')).toBeInTheDocument()
+    expect(screen.queryByText('Program direction')).not.toBeInTheDocument()
+    expect(screen.queryByText('Program basis')).not.toBeInTheDocument()
+    expect(screen.queryByText('Capture completeness')).not.toBeInTheDocument()
+    expect(screen.getByText('Partial capture')).toBeInTheDocument()
+    expect(screen.queryByText('Site input')).not.toBeInTheDocument()
+    expect(screen.queryByText('Envelope source')).not.toBeInTheDocument()
+    expect(screen.queryByText('Use Signals')).not.toBeInTheDocument()
+    const detailsToggle = screen.getByRole('button', {
+      name: /show data details/i,
+    })
+    expect(detailsToggle).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(detailsToggle)
+    expect(detailsToggle).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByText('Program direction')).toBeInTheDocument()
+    expect(screen.getByText('Program basis')).toBeInTheDocument()
+    expect(screen.getByText('Capture completeness')).toBeInTheDocument()
+    expect(
+      screen.getByText(/6 capture inputs still unresolved/i),
+    ).toBeInTheDocument()
     expect(screen.getByText('Site input')).toBeInTheDocument()
+    expect(screen.getByText('Site-specific')).toBeInTheDocument()
     expect(
       screen.getByText('Address and coordinates are site-specific.'),
     ).toBeInTheDocument()
     expect(screen.getByText('Envelope source')).toBeInTheDocument()
+    expect(screen.getByText('Source unresolved')).toBeInTheDocument()
     expect(
       screen.getByText('Zoning envelope source is unresolved.'),
     ).toBeInTheDocument()
-    expect(screen.getByText('Rule coverage')).toBeInTheDocument()
-    expect(
-      screen.getByText(/6 control areas still unresolved/i),
-    ).toBeInTheDocument()
     expect(screen.getByText('Geometry')).toBeInTheDocument()
+    expect(screen.getByText('Starter model pipeline')).toBeInTheDocument()
     expect(
       screen.getByText(
         'Scenario-specific starter model is generated from the preview pipeline.',
       ),
     ).toBeInTheDocument()
+    expect(screen.getByText('Use Signals')).toBeInTheDocument()
     expect(
       screen.getByText('The renovation starter model is ready for review.'),
     ).toBeInTheDocument()
@@ -755,8 +779,9 @@ describe('DeveloperResults', () => {
     ).toBeInTheDocument()
     expect(screen.getAllByText(/User override/i).length).toBeGreaterThan(0)
     expect(
-      screen.getByText(/Current GFA remains below today’s code envelope/i),
-    ).toBeInTheDocument()
+      screen.getAllByText(/Current GFA remains below today’s code envelope/i)
+        .length,
+    ).toBeGreaterThan(0)
     expect(screen.getByText('Vertical profile')).toBeInTheDocument()
     expect(
       screen.getByText('3.7 m floor-to-floor / 2.7 m clear'),
@@ -916,6 +941,166 @@ describe('DeveloperResults', () => {
     ).toBeInTheDocument()
   })
 
+  it('surfaces resolved official source ingestion in the capture data basis', () => {
+    const result = buildResult()
+    result.buildEnvelope.sourceReference = 'SG Rule Registry (RefRule)'
+    result.buildEnvelope.ruleCorpusStatus = {
+      coverage_state: 'partial',
+      resolved_by: {
+        plot_ratio: 'captured_zoning_metadata',
+        building_height_limit_m: 'ref_rule',
+      },
+      unresolved_fields: ['setbacks'],
+      official_source_gaps: [
+        {
+          field: 'setbacks',
+          reason: 'not_resolved_from_current_registry',
+          candidate_sources: [
+            {
+              authority: 'URA',
+              title: 'Development Control Guidelines',
+            },
+          ],
+        },
+      ],
+      official_source_ingestion: {
+        resolved_count: 1,
+        staged_count: 0,
+        existing_count: 0,
+        failed_count: 0,
+        candidates: [
+          {
+            field: 'building_height_limit_m',
+            status: 'resolved',
+            rule_id: 202,
+          },
+        ],
+      },
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={['existing_building'] as DevelopmentScenario[]}
+      />,
+    )
+
+    expect(screen.getByText('Resolved')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        '1 normalized into approved rules. Normalized source values are now available to the rule resolver.',
+      ),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /show data details/i }))
+    expect(screen.getByText('Live source scan')).toBeInTheDocument()
+  })
+
+  it('surfaces resolved and unresolved rule fields in the capture data basis', () => {
+    const result = buildResult()
+    result.buildEnvelope.sourceReference = 'SG Rule Registry (RefRule)'
+    result.buildEnvelope.ruleCorpusStatus = {
+      coverage_state: 'partial',
+      resolved_by: {
+        plot_ratio: 'captured_zoning_metadata',
+        setbacks: 'ref_rule',
+      },
+      unresolved_fields: [
+        'building_height_limit_m',
+        'air_rights_note',
+        'step_backs',
+      ],
+      official_source_gaps: [
+        {
+          field: 'building_height_limit_m',
+          reason: 'not_resolved_from_current_registry',
+          candidate_sources: [
+            {
+              authority: 'URA',
+              title: 'Development Control Guidelines',
+            },
+          ],
+        },
+        {
+          field: 'air_rights_note',
+          reason: 'not_resolved_from_current_registry',
+          candidate_sources: [
+            {
+              authority: 'URA/CAAS',
+              title: 'Height control and aviation-related clearance sources',
+            },
+          ],
+        },
+        {
+          field: 'step_backs',
+          reason: 'not_resolved_from_current_registry',
+          candidate_sources: [
+            {
+              authority: 'URA',
+              title: 'Development Control Guidelines',
+            },
+          ],
+        },
+      ],
+      official_source_ingestion: {
+        resolved_count: 0,
+        staged_count: 1,
+        existing_count: 1,
+        failed_count: 0,
+        candidates: [],
+      },
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={['existing_building'] as DevelopmentScenario[]}
+      />,
+    )
+
+    expect(screen.getByText('Official Controls Pending')).toBeInTheDocument()
+    expect(screen.queryByText('Resolved controls')).not.toBeInTheDocument()
+    expect(screen.queryByText('Unresolved controls')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Source ingestion status'),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText('Mixed source')).toBeInTheDocument()
+    expect(screen.getByText('plot ratio, setbacks.')).toBeInTheDocument()
+    expect(screen.getByText('Source review needed')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'height limit - separate official control, air-rights note, step-backs.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText('Source identified, not ingested'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(
+        'height limit - separate official control (URA), air-rights note (URA/CAAS), step-backs (URA) have official source categories identified. Ingestion and review are still pending.',
+      ),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText('Live source scan')).not.toBeInTheDocument()
+    expect(screen.getByText('Review required')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        '1 staged for review / 1 already staged. Pending source candidates still require review before Capture treats those controls as resolved.',
+      ),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /show data details/i }))
+    expect(screen.getByText('Resolved controls')).toBeInTheDocument()
+    expect(screen.getByText('Unresolved controls')).toBeInTheDocument()
+    expect(screen.getByText('Source ingestion status')).toBeInTheDocument()
+    expect(
+      screen.getByText('Source identified, not ingested'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'height limit - separate official control (URA), air-rights note (URA/CAAS), step-backs (URA) have official source categories identified. Ingestion and review are still pending.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Live source scan')).toBeInTheDocument()
+  })
+
   it('updates starter model assumptions when the user overrides to a ground-up scenario', () => {
     const result = buildResult()
     previewJobsByScenarioValue = {}
@@ -940,6 +1125,7 @@ describe('DeveloperResults', () => {
         /Capture is using fallback assumptions because no scenario-specific preview jobs are attached to this property yet\./i,
       ),
     ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /show data details/i }))
     expect(
       screen.getByText(
         'Geometry is still preliminary and may rely on fallback or placeholder massing.',

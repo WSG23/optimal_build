@@ -16,7 +16,7 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.rkp import RefRule
+from app.models.rkp import RefRule, RefZoningLayer
 
 logger = structlog.get_logger(__name__)
 
@@ -45,6 +45,75 @@ ZONE_CODE_MAPPING = {
 
 # Default fallback zone for unknown codes
 DEFAULT_ZONE = "SG:residential"
+
+
+SINGAPORE_RULE_SOURCE_REGISTRY: dict[str, list[dict[str, str]]] = {
+    "land_use": [
+        {
+            "authority": "URA",
+            "title": "Master Plan land use layer",
+            "url": "https://data.gov.sg/dataset/master-plan-2019-land-use-layer",
+        },
+        {
+            "authority": "URA",
+            "title": "Master Plan Written Statement",
+            "url": "https://www.ura.gov.sg/Corporate/Planning/Master-Plan",
+        },
+    ],
+    "plot_ratio": [
+        {
+            "authority": "URA",
+            "title": "Master Plan GPR / intensity controls",
+            "url": "https://data.gov.sg/dataset/master-plan-2019-land-use-layer",
+        }
+    ],
+    "building_height_limit_m": [
+        {
+            "authority": "URA",
+            "title": "Development Control Guidelines and control plans",
+            "url": "https://www.ura.gov.sg/Corporate/Guidelines/Development-Control",
+        }
+    ],
+    "site_coverage_pct": [
+        {
+            "authority": "URA",
+            "title": "Development Control Guidelines",
+            "url": "https://www.ura.gov.sg/Corporate/Guidelines/Development-Control",
+        }
+    ],
+    "setbacks": [
+        {
+            "authority": "URA",
+            "title": "Development Control Guidelines - building setback controls",
+            "url": "https://www.ura.gov.sg/Corporate/Guidelines/Development-Control",
+        }
+    ],
+    "step_backs": [
+        {
+            "authority": "URA",
+            "title": "Development Control Guidelines - building edge / storey controls",
+            "url": "https://www.ura.gov.sg/Corporate/Guidelines/Development-Control",
+        }
+    ],
+    "air_rights_note": [
+        {
+            "authority": "URA/CAAS",
+            "title": "Height control and aviation-related clearance sources",
+            "url": "https://www.ura.gov.sg/Corporate/Guidelines/Development-Control",
+        }
+    ],
+}
+
+
+RESOLVABLE_FIELDS = (
+    "land_use",
+    "plot_ratio",
+    "building_height_limit_m",
+    "site_coverage_pct",
+    "setbacks",
+    "step_backs",
+    "air_rights_note",
+)
 
 
 @dataclass
@@ -128,6 +197,89 @@ def _extract_zone_description(zone_code: Optional[str]) -> Optional[str]:
     return zone_type.replace("_", " ").title()
 
 
+def _zone_aliases(zone_code: str, raw_zone_code: Optional[str]) -> set[str]:
+    aliases = {zone_code.lower()}
+    if ":" in zone_code:
+        aliases.add(zone_code.split(":", 1)[1].lower())
+    if raw_zone_code:
+        raw = raw_zone_code.strip().lower()
+        if raw:
+            aliases.add(raw)
+            normalized_raw = normalize_zone_code(raw_zone_code)
+            if normalized_raw:
+                aliases.add(normalized_raw.lower())
+                if ":" in normalized_raw:
+                    aliases.add(normalized_raw.split(":", 1)[1].lower())
+    return aliases
+
+
+def _coerce_attr_float(
+    attributes: dict[str, object], keys: tuple[str, ...]
+) -> Optional[float]:
+    lowered = {str(key).lower(): value for key, value in attributes.items()}
+    for key in keys:
+        value = lowered.get(key.lower())
+        if value in (None, ""):
+            continue
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def _coerce_attr_string(
+    attributes: dict[str, object], keys: tuple[str, ...]
+) -> Optional[str]:
+    lowered = {str(key).lower(): value for key, value in attributes.items()}
+    for key in keys:
+        value = lowered.get(key.lower())
+        if value in (None, ""):
+            continue
+        return str(value)
+    return None
+
+
+async def _get_zoning_layer_for_zone(
+    session: AsyncSession,
+    *,
+    normalized_zone: str,
+    raw_zone_code: Optional[str],
+    jurisdiction: str,
+) -> RefZoningLayer | None:
+    aliases = _zone_aliases(normalized_zone, raw_zone_code)
+    stmt = select(RefZoningLayer).where(RefZoningLayer.jurisdiction == jurisdiction)
+    result = await session.execute(stmt)
+    for layer in result.scalars().all():
+        layer_zone = (layer.zone_code or "").strip().lower()
+        if layer_zone and layer_zone in aliases:
+            return layer
+        attributes = layer.attributes if isinstance(layer.attributes, dict) else {}
+        attr_zone = _coerce_attr_string(
+            attributes,
+            ("zone_code", "zoneCode", "LU_DESC", "land_use", "landUse"),
+        )
+        if attr_zone and attr_zone.strip().lower() in aliases:
+            return layer
+    return None
+
+
+def _official_source_gaps(
+    jurisdiction: str,
+    unresolved_fields: list[str],
+) -> list[dict[str, object]]:
+    if jurisdiction != "SG":
+        return []
+    return [
+        {
+            "field": field,
+            "reason": "not_resolved_from_current_registry",
+            "candidate_sources": SINGAPORE_RULE_SOURCE_REGISTRY.get(field, []),
+        }
+        for field in unresolved_fields
+    ]
+
+
 async def get_zoning_rules_for_zone(
     session: AsyncSession,
     zone_code: Optional[str],
@@ -151,11 +303,45 @@ async def get_zoning_rules_for_zone(
             source_reference="No zone code provided",
         )
 
-    # Query RefRule for zoning rules
+    zoning_layer = await _get_zoning_layer_for_zone(
+        session,
+        normalized_zone=normalized_zone,
+        raw_zone_code=zone_code,
+        jurisdiction=jurisdiction,
+    )
+    zoning_layer_attributes = (
+        zoning_layer.attributes
+        if zoning_layer and isinstance(zoning_layer.attributes, dict)
+        else {}
+    )
+
+    zoning_layer_plot_ratio = _coerce_attr_float(
+        zoning_layer_attributes,
+        ("gpr", "GPR", "plot_ratio", "plotRatio", "gross_plot_ratio", "max_far"),
+    )
+    zoning_layer_height_limit = _coerce_attr_float(
+        zoning_layer_attributes,
+        (
+            "height_m",
+            "heightLimitM",
+            "building_height_limit_m",
+            "max_building_height_m",
+        ),
+    )
+    zoning_layer_site_coverage = _coerce_attr_float(
+        zoning_layer_attributes,
+        ("site_coverage_pct", "siteCoveragePct", "max_site_coverage_pct"),
+    )
+    zoning_layer_zone_description = _coerce_attr_string(
+        zoning_layer_attributes,
+        ("LU_DESC", "land_use", "landUse", "zone_description", "zoneDescription"),
+    )
+
+    # Query RefRule for zoning/building rules.
     stmt = (
         select(RefRule)
         .where(RefRule.jurisdiction == jurisdiction)
-        .where(RefRule.topic == "zoning")
+        .where(RefRule.topic.in_(("zoning", "building")))
     )
 
     result = await session.execute(stmt)
@@ -184,13 +370,98 @@ async def get_zoning_rules_for_zone(
             (rule.source_id, rule.document_id, isinstance(rule.source_provenance, dict))
         )
     )
-    if not applicable_rules:
+    # Extract parameter values
+    plot_ratio: Optional[float] = zoning_layer_plot_ratio
+    building_height_limit_m: Optional[float] = zoning_layer_height_limit
+    site_coverage_pct: Optional[float] = zoning_layer_site_coverage
+    setback_front_m: Optional[float] = None
+    setback_rear_m: Optional[float] = None
+    setback_side_m: Optional[float] = None
+    step_backs: list[dict[str, float]] = []
+    air_rights_note: Optional[str] = None
+    resolved_by: dict[str, str] = {}
+
+    if zoning_layer_zone_description:
+        resolved_by["land_use"] = "ref_zoning_layer"
+    if zoning_layer_plot_ratio is not None:
+        resolved_by["plot_ratio"] = "ref_zoning_layer"
+    if zoning_layer_height_limit is not None:
+        resolved_by["building_height_limit_m"] = "ref_zoning_layer"
+    if zoning_layer_site_coverage is not None:
+        resolved_by["site_coverage_pct"] = "ref_zoning_layer"
+
+    for rule in approved_rules:
+        parameter_key = (rule.parameter_key or "").lower()
+        try:
+            if parameter_key == "zoning.max_far":
+                plot_ratio = float(rule.value)
+                resolved_by["plot_ratio"] = "ref_rule"
+            elif parameter_key == "zoning.max_building_height_m":
+                building_height_limit_m = float(rule.value)
+                resolved_by["building_height_limit_m"] = "ref_rule"
+            elif parameter_key == "zoning.site_coverage.max_percent":
+                site_coverage_pct = float(rule.value)
+                resolved_by["site_coverage_pct"] = "ref_rule"
+            elif parameter_key == "zoning.setback.front_min_m":
+                setback_front_m = float(rule.value)
+                resolved_by["setbacks"] = "ref_rule"
+            elif parameter_key == "zoning.setback.rear_min_m":
+                setback_rear_m = float(rule.value)
+                resolved_by["setbacks"] = "ref_rule"
+            elif parameter_key == "zoning.setback.side_min_m":
+                setback_side_m = float(rule.value)
+                resolved_by["setbacks"] = "ref_rule"
+            elif parameter_key.startswith("zoning.stepback."):
+                applicability = (
+                    rule.applicability if isinstance(rule.applicability, dict) else {}
+                )
+                level_value = applicability.get("level") or applicability.get("storey")
+                if level_value is None:
+                    level = len(step_backs) + 1
+                else:
+                    level = int(level_value)
+                step_backs.append({"level": float(level), "depth_m": float(rule.value)})
+                resolved_by["step_backs"] = "ref_rule"
+            elif parameter_key.startswith("zoning.air_rights."):
+                air_rights_note = str(rule.value)
+                resolved_by["air_rights_note"] = "ref_rule"
+        except (ValueError, TypeError) as e:
+            logger.warning(
+                "Failed to parse rule value",
+                parameter_key=rule.parameter_key,
+                value=rule.value,
+                error=str(e),
+            )
+
+    if not applicable_rules and zoning_layer is None:
+        logger.info(
+            "No configured rule data resolved for zone",
+            zone_code=normalized_zone,
+            jurisdiction=jurisdiction,
+            total_rules_checked=len(all_rules),
+        )
+
+    if (
+        not any(
+            value is not None
+            for value in (
+                plot_ratio,
+                building_height_limit_m,
+                site_coverage_pct,
+                setback_front_m,
+                setback_rear_m,
+                setback_side_m,
+                air_rights_note,
+            )
+        )
+        and not step_backs
+    ):
         coverage_state = "missing"
         confidence = "low"
-    elif not approved_rules:
+    elif not approved_rules and applicable_rules:
         coverage_state = "review_pending"
         confidence = "low"
-    elif len(approved_rules) < len(applicable_rules):
+    elif set(RESOLVABLE_FIELDS).difference(resolved_by):
         coverage_state = "partial"
         confidence = "medium"
     elif traceable_count < len(approved_rules):
@@ -199,6 +470,10 @@ async def get_zoning_rules_for_zone(
     else:
         coverage_state = "approved"
         confidence = "high"
+
+    unresolved_fields = [
+        field for field in RESOLVABLE_FIELDS if field not in resolved_by
+    ]
     rule_corpus_status = {
         "zone_code": normalized_zone,
         "coverage_state": coverage_state,
@@ -210,77 +485,23 @@ async def get_zoning_rules_for_zone(
             "traceable": traceable_count,
             "needs_review": review_counts.get("needs_review", 0),
             "rejected": review_counts.get("rejected", 0),
+            "zoning_layers": 1 if zoning_layer else 0,
         },
         "applied_rule_ids": [rule.id for rule in approved_rules if rule.id is not None],
+        "applied_zoning_layer_id": zoning_layer.id if zoning_layer else None,
+        "resolved_by": resolved_by,
+        "unresolved_fields": unresolved_fields,
+        "official_source_gaps": _official_source_gaps(jurisdiction, unresolved_fields),
     }
 
-    if not applicable_rules:
-        logger.info(
-            "No zoning rules found for zone",
-            zone_code=normalized_zone,
-            jurisdiction=jurisdiction,
-            total_rules_checked=len(all_rules),
-        )
-        return ZoningRulesResult(
-            zone_code=normalized_zone,
-            zone_description=_extract_zone_description(normalized_zone),
-            source_reference=f"No RefRule data for {normalized_zone}",
-            rules_found=0,
-            rule_corpus_status=rule_corpus_status,
-        )
-
-    # Extract parameter values
-    plot_ratio: Optional[float] = None
-    building_height_limit_m: Optional[float] = None
-    site_coverage_pct: Optional[float] = None
-    setback_front_m: Optional[float] = None
-    setback_rear_m: Optional[float] = None
-    setback_side_m: Optional[float] = None
-    step_backs: list[dict[str, float]] = []
-    air_rights_note: Optional[str] = None
-
-    for rule in approved_rules:
-        parameter_key = (rule.parameter_key or "").lower()
-        try:
-            if parameter_key == "zoning.max_far":
-                plot_ratio = float(rule.value)
-            elif parameter_key == "zoning.max_building_height_m":
-                building_height_limit_m = float(rule.value)
-            elif parameter_key == "zoning.site_coverage.max_percent":
-                site_coverage_pct = float(rule.value)
-            elif parameter_key == "zoning.setback.front_min_m":
-                setback_front_m = float(rule.value)
-            elif parameter_key == "zoning.setback.rear_min_m":
-                setback_rear_m = float(rule.value)
-            elif parameter_key == "zoning.setback.side_min_m":
-                setback_side_m = float(rule.value)
-            elif parameter_key.startswith("zoning.stepback."):
-                applicability = (
-                    rule.applicability if isinstance(rule.applicability, dict) else {}
-                )
-                level_value = applicability.get("level") or applicability.get("storey")
-                if level_value is None:
-                    level = len(step_backs) + 1
-                else:
-                    level = int(level_value)
-                step_backs.append({"level": float(level), "depth_m": float(rule.value)})
-            elif parameter_key.startswith("zoning.air_rights."):
-                air_rights_note = str(rule.value)
-        except (ValueError, TypeError) as e:
-            logger.warning(
-                "Failed to parse rule value",
-                parameter_key=rule.parameter_key,
-                value=rule.value,
-                error=str(e),
-            )
-
     logger.info(
-        "Zoning rules retrieved from RefRule database",
+        "Zoning rules retrieved from configured registry",
         zone_code=normalized_zone,
         plot_ratio=plot_ratio,
         height_limit=building_height_limit_m,
         site_coverage=site_coverage_pct,
         rules_count=len(applicable_rules),
+        zoning_layer_id=zoning_layer.id if zoning_layer else None,
     )
 
     return ZoningRulesResult(
@@ -293,8 +514,14 @@ async def get_zoning_rules_for_zone(
         step_backs=step_backs,
         air_rights_note=air_rights_note,
         zone_code=normalized_zone,
-        zone_description=_extract_zone_description(normalized_zone),
-        source_reference=f"URA Zoning Rules ({jurisdiction} RefRule Database)",
+        zone_description=(
+            zoning_layer_zone_description or _extract_zone_description(normalized_zone)
+        ),
+        source_reference=(
+            f"{jurisdiction} Rule Registry (RefRule"
+            + (" + zoning layers" if zoning_layer else "")
+            + ")"
+        ),
         rules_found=len(approved_rules),
         rule_corpus_status=rule_corpus_status,
     )

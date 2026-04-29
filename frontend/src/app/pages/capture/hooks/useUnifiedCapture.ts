@@ -28,6 +28,7 @@ import {
 import { loadCaptureForProject } from '../utils/captureStorage'
 
 const GOOGLE_MAPS_API_KEY = import.meta.env?.VITE_GOOGLE_MAPS_API_KEY ?? ''
+const CAPTURE_RESULTS_ACTIVE_CLASS = 'capture-results-active'
 
 // Track if Google Maps script is loading/loaded
 let googleMapsPromise: Promise<void> | null = null
@@ -59,6 +60,18 @@ function loadGoogleMapsScript(apiKey: string): Promise<void> {
   })()
 
   return googleMapsPromise
+}
+
+function dismissPlacesAutocompleteDropdown() {
+  addressInputBlur()
+  document.body.classList.add(CAPTURE_RESULTS_ACTIVE_CLASS)
+}
+
+function addressInputBlur() {
+  const activeElement = document.activeElement
+  if (activeElement instanceof HTMLInputElement) {
+    activeElement.blur()
+  }
 }
 
 /** Attempt browser geolocation with a timeout. Returns null on failure. */
@@ -652,6 +665,7 @@ export function useUnifiedCapture({
   const handleCapture = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault()
+      dismissPlacesAutocompleteDropdown()
 
       try {
         setIsCapturing(true)
@@ -866,6 +880,8 @@ export function useUnifiedCapture({
 
   // Reset for new capture
   const handleNewCapture = useCallback(() => {
+    document.body.classList.remove(CAPTURE_RESULTS_ACTIVE_CLASS)
+
     // Clear results
     setCaptureSummary(null)
     setDeveloperFeatures(null)
@@ -909,6 +925,14 @@ export function useUnifiedCapture({
   const hasResults = isDeveloperMode
     ? siteAcquisitionResult !== null
     : captureSummary !== null
+
+  useEffect(() => {
+    if (isCapturing || hasResults) {
+      document.body.classList.add(CAPTURE_RESULTS_ACTIVE_CLASS)
+      return
+    }
+    document.body.classList.remove(CAPTURE_RESULTS_ACTIVE_CLASS)
+  }, [hasResults, isCapturing])
 
   return {
     // Form state

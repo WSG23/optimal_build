@@ -53,6 +53,7 @@ function buildCapturedProperty(): SiteAcquisitionResult {
       airRightsNote: null,
       assumptions: [],
       sourceReference: 'URA Mock',
+      ruleCorpusStatus: null,
     },
     visualization: {
       status: 'placeholder',

@@ -655,6 +655,7 @@ def test_quick_heritage_analysis_old_building():
 
     assert result["scenario"] == "heritage_property"
     assert "HIGH" in result["headline"]
+    assert result["metrics"]["heritage_signal"] is True
     assert any("1970" in note for note in result["notes"])
 
 
@@ -672,6 +673,7 @@ def test_quick_heritage_analysis_with_overlay():
     )
 
     assert "HIGH" in result["headline"]
+    assert result["metrics"]["heritage_signal"] is True
     assert "Building within conservation area" in result["notes"]
 
 
@@ -685,6 +687,7 @@ def test_quick_heritage_analysis_conservation_use():
     )
 
     assert "HIGH" in result["headline"]
+    assert result["metrics"]["heritage_signal"] is True
     assert any("conservation" in note.lower() for note in result["notes"])
 
 
@@ -1006,6 +1009,8 @@ def test_quick_heritage_analysis_with_development_plans():
         property_info, "Office", None, development_plans, None
     )
 
+    assert "LOW" in result["headline"]
+    assert result["metrics"]["heritage_signal"] is False
     assert any("2 planned projects" in note for note in result["notes"])
 
 
@@ -1020,6 +1025,8 @@ def test_quick_heritage_analysis_with_ura_special_conditions():
     )
 
     assert "Subject to heritage review" in result["notes"]
+    assert "MEDIUM" in result["headline"]
+    assert result["metrics"]["heritage_signal"] is True
 
 
 def test_quick_heritage_analysis_low_risk_overlay():
@@ -1036,6 +1043,7 @@ def test_quick_heritage_analysis_low_risk_overlay():
     )
 
     assert "LOW" in result["headline"]
+    assert result["metrics"]["heritage_signal"] is True
 
 
 def test_quick_underused_analysis_with_building_height():

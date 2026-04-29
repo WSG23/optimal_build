@@ -4,6 +4,7 @@
  * Extracted from DeveloperResults to reduce file size.
  */
 
+import { useState } from 'react'
 import { Box, Typography } from '@mui/material'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import ViewInArIcon from '@mui/icons-material/ViewInAr'
@@ -103,6 +104,105 @@ function labelValueRow(label: string, value: string) {
   )
 }
 
+function buildProgramBasis(
+  programDrivers: string[],
+  recommendedScenario: DevelopmentScenario,
+): string | null {
+  const primary = programDrivers[0]
+  if (!primary) {
+    return null
+  }
+
+  const parts = [`${primary} primary`]
+  const secondary = programDrivers.find((driver) => driver !== primary)
+  if (secondary) {
+    parts.push(`${secondary} support`)
+  }
+
+  if (recommendedScenario === 'heritage_property') {
+    parts.push('Heritage constrained')
+  }
+
+  return parts.join(' / ')
+}
+
+function dataBasisItem(item: CaptureDataBasisItem) {
+  return (
+    <Box
+      key={item.label}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--ob-space-025)',
+      }}
+    >
+      <Typography
+        sx={{
+          fontSize: 'var(--ob-font-size-xs)',
+          fontWeight: 'var(--ob-font-weight-semibold)',
+          color: 'text.secondary',
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+        }}
+      >
+        {item.label}
+      </Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--ob-space-050)',
+          flexWrap: 'wrap',
+        }}
+      >
+        <Tag color={item.tone} size="sm">
+          {item.statusLabel}
+        </Tag>
+        <Typography
+          sx={{
+            fontSize: 'var(--ob-font-size-xs)',
+            color: 'text.secondary',
+            lineHeight: 'var(--ob-line-height-normal)',
+          }}
+        >
+          {item.value}
+        </Typography>
+      </Box>
+    </Box>
+  )
+}
+
+function compactStatusItem(item: CaptureDataBasisItem | undefined) {
+  if (!item) {
+    return null
+  }
+
+  return (
+    <Box
+      key={item.label}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 'var(--ob-space-050)',
+        flexWrap: 'wrap',
+      }}
+    >
+      <Tag color={item.tone} size="sm">
+        {item.statusLabel}
+      </Tag>
+      <Typography
+        sx={{
+          fontSize: 'var(--ob-font-size-xs)',
+          color: 'text.secondary',
+          lineHeight: 'var(--ob-line-height-normal)',
+        }}
+      >
+        {item.value}
+      </Typography>
+    </Box>
+  )
+}
+
 export function CaptureRecommendationSection({
   recommendationCardTitle,
   formatScenarioLabel,
@@ -130,17 +230,41 @@ export function CaptureRecommendationSection({
   starterModelAssumptionLines,
   starterModelAssetProfileLines,
 }: CaptureRecommendationSectionProps) {
+  const [showDataDetails, setShowDataDetails] = useState(false)
+  const programBasis = buildProgramBasis(programDrivers, recommendedScenario)
   const metadataRows = [
     ['Mode', overrideModeLine],
     ['Confidence', confidence.replace(/_/g, ' ')],
     ['Program direction', programDirectionLabel],
+    ...(programBasis ? [['Program basis', programBasis]] : []),
     ['Code fit', scenarioFitSummary.comparisonSummary],
-    ['Envelope', scenarioFitSummary.headroomSummary],
+    ['GFA envelope', scenarioFitSummary.headroomSummary],
     [
       'Context',
       scenarioFitSummary.heritageSummary.replace(/^Context:\s*/i, ''),
     ],
   ]
+  const captureCompleteness = captureDataBasis.find(
+    (item) => item.label === 'Capture completeness',
+  )
+  const resolvedControls = captureDataBasis.find(
+    (item) => item.label === 'Resolved controls',
+  )
+  const unresolvedControls = captureDataBasis.find(
+    (item) => item.label === 'Unresolved controls',
+  )
+  const sourceIngestion = captureDataBasis.find(
+    (item) => item.label === 'Source ingestion status',
+  )
+  const liveSourceScan = captureDataBasis.find(
+    (item) => item.label === 'Live source scan',
+  )
+  const hasSourceReview = Boolean(unresolvedControls) || Boolean(liveSourceScan)
+  const hasDataDetails =
+    captureDataBasis.length > 0 || programDrivers.length > 0
+  const detailToggleLabel = showDataDetails
+    ? 'Hide data details'
+    : 'Show data details'
 
   return (
     <section className="site-acquisition__capture-summary">
@@ -165,6 +289,7 @@ export function CaptureRecommendationSection({
               display: 'flex',
               flexDirection: 'column',
               gap: 'var(--ob-space-075)',
+              pb: 'var(--ob-space-050)',
             }}
           >
             <Box
@@ -257,14 +382,90 @@ export function CaptureRecommendationSection({
 
           <Box
             sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-              gap: 'var(--ob-space-075) var(--ob-space-125)',
-              pt: 'var(--ob-space-050)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--ob-space-075)',
+              mt: 'var(--ob-space-025)',
+              pt: 'var(--ob-space-100)',
               borderTop: 'var(--ob-border-fine)',
             }}
           >
-            {metadataRows.map(([label, value]) => labelValueRow(label, value))}
+            <Typography
+              sx={{
+                fontSize: 'var(--ob-font-size-xs)',
+                fontWeight: 'var(--ob-font-weight-semibold)',
+                color: 'text.secondary',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+              }}
+            >
+              Decision Brief
+            </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-050)',
+                flexWrap: 'wrap',
+              }}
+            >
+              <Tag color={userOverride ? 'warning' : 'info'} size="sm">
+                {overrideModeLine}
+              </Tag>
+              <Tag color="success" size="sm">
+                {confidence.replace(/_/g, ' ')} confidence
+              </Tag>
+              {captureCompleteness ? (
+                <Tag color={captureCompleteness.tone} size="sm">
+                  {captureCompleteness.statusLabel}
+                </Tag>
+              ) : null}
+            </Box>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+                gap: 'var(--ob-space-075) var(--ob-space-125)',
+              }}
+            >
+              {labelValueRow('Program', programDirectionLabel)}
+              {programBasis ? labelValueRow('Use basis', programBasis) : null}
+              {labelValueRow('Code fit', scenarioFitSummary.comparisonSummary)}
+              {labelValueRow(
+                'GFA envelope',
+                scenarioFitSummary.headroomSummary,
+              )}
+            </Box>
+            {resolvedControls ? compactStatusItem(resolvedControls) : null}
+            {hasSourceReview ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 'var(--ob-space-050)',
+                  p: 'var(--ob-space-075)',
+                  border: '1px solid rgba(234, 179, 8, 0.2)',
+                  borderRadius: 'var(--ob-radius-xs)',
+                  background: 'rgba(234, 179, 8, 0.04)',
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 'var(--ob-font-size-xs)',
+                    fontWeight: 'var(--ob-font-weight-semibold)',
+                    color: 'warning.main',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  Official Controls Pending
+                </Typography>
+                {unresolvedControls
+                  ? compactStatusItem(unresolvedControls)
+                  : null}
+                {liveSourceScan ? compactStatusItem(liveSourceScan) : null}
+              </Box>
+            ) : null}
           </Box>
 
           <Box
@@ -274,114 +475,113 @@ export function CaptureRecommendationSection({
               gap: 'var(--ob-space-050)',
             }}
           >
-            {captureDataBasis.length > 0 ? (
+            {hasDataDetails ? (
               <Box
                 sx={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 'var(--ob-space-050)',
+                  gap: 'var(--ob-space-075)',
                 }}
               >
-                <Typography
-                  sx={{
-                    fontSize: 'var(--ob-font-size-xs)',
-                    fontWeight: 'var(--ob-font-weight-semibold)',
-                    color: 'text.secondary',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                  }}
-                >
-                  Data Basis
-                </Typography>
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-                    gap: 'var(--ob-space-050) var(--ob-space-100)',
-                  }}
-                >
-                  {captureDataBasis.map((item) => (
-                    <Box
-                      key={item.label}
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 'var(--ob-space-025)',
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          fontSize: 'var(--ob-font-size-xs)',
-                          fontWeight: 'var(--ob-font-weight-semibold)',
-                          color: 'text.secondary',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.04em',
-                        }}
-                      >
-                        {item.label}
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 'var(--ob-space-050)',
-                          flexWrap: 'wrap',
-                        }}
-                      >
-                        <Tag color={item.tone} size="sm">
-                          {item.tone === 'success'
-                            ? 'Site / rule-backed'
-                            : item.tone === 'warning'
-                              ? 'Fallback / incomplete'
-                              : 'Informational'}
-                        </Tag>
-                        <Typography
-                          sx={{
-                            fontSize: 'var(--ob-font-size-xs)',
-                            color: 'text.secondary',
-                            lineHeight: 'var(--ob-line-height-normal)',
-                          }}
-                        >
-                          {item.value}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
-            ) : null}
-            {programDrivers.length > 0 ? (
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 'var(--ob-space-050)',
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: 'var(--ob-font-size-xs)',
-                    fontWeight: 'var(--ob-font-weight-semibold)',
-                    color: 'text.secondary',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                  }}
-                >
-                  Use Signals
-                </Typography>
                 <Box
                   sx={{
                     display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 'var(--ob-space-075)',
                     flexWrap: 'wrap',
-                    gap: 'var(--ob-space-050)',
                   }}
                 >
-                  {programDrivers.map((driver) => (
-                    <Tag key={driver} color="default" size="sm">
-                      {driver}
-                    </Tag>
-                  ))}
+                  <Typography
+                    sx={{
+                      fontSize: 'var(--ob-font-size-xs)',
+                      fontWeight: 'var(--ob-font-weight-semibold)',
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    Audit Trail
+                  </Typography>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-expanded={showDataDetails}
+                    aria-controls="capture-data-basis-details"
+                    onClick={() => setShowDataDetails((current) => !current)}
+                  >
+                    {detailToggleLabel}
+                  </Button>
                 </Box>
+                {showDataDetails && hasDataDetails ? (
+                  <Box
+                    id="capture-data-basis-details"
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 'var(--ob-space-075)',
+                      pt: 'var(--ob-space-075)',
+                      borderTop: 'var(--ob-border-fine)',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                        gap: 'var(--ob-space-075) var(--ob-space-125)',
+                      }}
+                    >
+                      {metadataRows.map(([label, value]) =>
+                        labelValueRow(label, value),
+                      )}
+                    </Box>
+                    {captureDataBasis.length > 0 ? (
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                          gap: 'var(--ob-space-050) var(--ob-space-100)',
+                        }}
+                      >
+                        {captureDataBasis.map((item) => dataBasisItem(item))}
+                      </Box>
+                    ) : null}
+                    {programDrivers.length > 0 ? (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 'var(--ob-space-050)',
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: 'var(--ob-font-size-xs)',
+                            fontWeight: 'var(--ob-font-weight-semibold)',
+                            color: 'text.secondary',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em',
+                          }}
+                        >
+                          Use Signals
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 'var(--ob-space-050)',
+                          }}
+                        >
+                          {programDrivers.map((driver) => (
+                            <Tag key={driver} color="default" size="sm">
+                              {driver}
+                            </Tag>
+                          ))}
+                        </Box>
+                      </Box>
+                    ) : null}
+                  </Box>
+                ) : null}
               </Box>
             ) : null}
             <Typography

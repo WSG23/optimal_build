@@ -469,6 +469,12 @@ textarea.gps-input-ghost:focus {
     z-index: 9999;
 }
 
+body.capture-results-active .pac-container {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
 .pac-item {
     padding: var(--ob-space-075) var(--ob-space-100);
     color: var(--ob-color-text-secondary);

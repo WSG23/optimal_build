@@ -39,6 +39,7 @@ from app.api.v1.developers_common import (
     _serialise_preview_job,
     _to_mapping,
 )
+from app.core.config import settings
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.api.deps import RequestIdentity, require_reviewer
@@ -221,13 +222,18 @@ def _extract_heritage_context(
                     and "conservation" not in scenario_name
                 ):
                     continue
-                flag = True
                 metrics = _to_mapping(scenario.get("metrics"))
                 qa_risk = None
+                qa_signal = False
                 if metrics:
                     qa_risk = metrics.get("heritage_risk") or metrics.get("risk_level")
+                    qa_signal = bool(metrics.get("heritage_signal"))
                 if qa_risk:
                     risk = str(qa_risk).lower()
+                    qa_signal = qa_signal or risk in {"medium", "high"}
+                if not qa_signal:
+                    continue
+                flag = True
                 scenario_notes = scenario.get("notes")
                 if isinstance(scenario_notes, Sequence):
                     for note in scenario_notes:
@@ -251,7 +257,7 @@ def _extract_heritage_context(
         risk = risk.lower()
     else:
         risk = "low"
-    flag = flag or bool(risk) or bool(deduped_constraints)
+    flag = flag or bool(deduped_constraints)
 
     assumption_note = None
     if flag:
@@ -347,6 +353,119 @@ def _collect_quick_metrics(
 # =============================================================================
 # Build Envelope and Asset Optimization
 # =============================================================================
+
+
+def _mark_envelope_field_source(
+    *,
+    resolved_by: dict[str, str],
+    unresolved_fields: list[str],
+    field: str,
+    source: str,
+) -> None:
+    if field not in resolved_by:
+        resolved_by[field] = source
+    while field in unresolved_fields:
+        unresolved_fields.remove(field)
+
+
+def _augment_rule_corpus_status_for_envelope(
+    raw_status: dict[str, Any] | None,
+    *,
+    zone_description: object | None,
+    plot_ratio: float | None,
+    building_height_limit: float | None,
+    site_coverage: float | None,
+    setback_front: float | None,
+    setback_rear: float | None,
+    setback_side: float | None,
+    step_backs: list[object],
+    air_rights_note: str | None,
+) -> dict[str, Any] | None:
+    if not raw_status:
+        return None
+
+    status = dict(raw_status)
+    resolved_by = dict(status.get("resolved_by") or {})
+    unresolved_fields = [
+        str(field)
+        for field in status.get("unresolved_fields") or []
+        if field is not None
+    ]
+
+    # The rule resolver reports RefRule/zoning-layer sources only. The final
+    # envelope can still use captured zoning metadata, so record those fields as
+    # resolved-by-capture instead of leaving them listed as unresolved.
+    if zone_description:
+        _mark_envelope_field_source(
+            resolved_by=resolved_by,
+            unresolved_fields=unresolved_fields,
+            field="land_use",
+            source="captured_zoning_metadata",
+        )
+    if plot_ratio is not None:
+        _mark_envelope_field_source(
+            resolved_by=resolved_by,
+            unresolved_fields=unresolved_fields,
+            field="plot_ratio",
+            source="captured_zoning_metadata",
+        )
+    if building_height_limit is not None:
+        _mark_envelope_field_source(
+            resolved_by=resolved_by,
+            unresolved_fields=unresolved_fields,
+            field="building_height_limit_m",
+            source="captured_zoning_metadata",
+        )
+    if site_coverage is not None:
+        _mark_envelope_field_source(
+            resolved_by=resolved_by,
+            unresolved_fields=unresolved_fields,
+            field="site_coverage_pct",
+            source="captured_zoning_metadata",
+        )
+    if any(value is not None for value in (setback_front, setback_rear, setback_side)):
+        _mark_envelope_field_source(
+            resolved_by=resolved_by,
+            unresolved_fields=unresolved_fields,
+            field="setbacks",
+            source="captured_development_constraints",
+        )
+    if step_backs:
+        _mark_envelope_field_source(
+            resolved_by=resolved_by,
+            unresolved_fields=unresolved_fields,
+            field="step_backs",
+            source="captured_development_constraints",
+        )
+    if air_rights_note:
+        _mark_envelope_field_source(
+            resolved_by=resolved_by,
+            unresolved_fields=unresolved_fields,
+            field="air_rights_note",
+            source="captured_development_constraints",
+        )
+
+    status["resolved_by"] = resolved_by
+    status["unresolved_fields"] = unresolved_fields
+    source_gaps = status.get("official_source_gaps")
+    if isinstance(source_gaps, list):
+        status["official_source_gaps"] = [
+            entry
+            for entry in source_gaps
+            if not (isinstance(entry, dict) and str(entry.get("field")) in resolved_by)
+        ]
+
+    captured_sources_present = any(
+        str(source).startswith("captured_") for source in resolved_by.values()
+    )
+    if unresolved_fields or captured_sources_present:
+        status["coverage_state"] = "partial"
+        status["confidence"] = status.get("confidence") or "medium"
+    else:
+        status["coverage_state"] = "approved"
+        status["confidence"] = status.get("confidence") or "medium"
+
+    return status
 
 
 async def _derive_build_envelope(
@@ -455,7 +574,7 @@ async def _derive_build_envelope(
         setback_side = fallback_setback_side
         step_backs = fallback_step_backs
         air_rights_note = fallback_air_rights_note
-        source_reference = "URA Service (Mock Data - RefRule not found)"
+        source_reference = rules_result.source_reference
 
     site_area = _coerce_float(
         property_info.get("site_area_sqm") or property_info.get("siteAreaSqm")
@@ -476,6 +595,114 @@ async def _derive_build_envelope(
     additional: Optional[float] = None
     if max_buildable is not None and current_gfa is not None:
         additional = max(max_buildable - current_gfa, 0.0)
+
+    rule_corpus_status = _augment_rule_corpus_status_for_envelope(
+        rules_result.rule_corpus_status,
+        zone_description=zone_description,
+        plot_ratio=plot_ratio,
+        building_height_limit=building_height_limit,
+        site_coverage=site_coverage,
+        setback_front=setback_front,
+        setback_rear=setback_rear,
+        setback_side=setback_side,
+        step_backs=step_backs,
+        air_rights_note=air_rights_note,
+    )
+    if settings.CAPTURE_LIVE_SOURCE_SCAN_ENABLED and rule_corpus_status:
+        source_gaps = rule_corpus_status.get("official_source_gaps")
+        if isinstance(source_gaps, list) and source_gaps:
+            try:
+                from app.services.rules.official_source_ingestion import (
+                    OfficialSourceIngestionService,
+                )
+
+                ingestion_result = (
+                    await OfficialSourceIngestionService().ingest_source_gaps(
+                        session,
+                        jurisdiction=jurisdiction,
+                        zone_code=(
+                            str(rule_corpus_status.get("zone_code"))
+                            if rule_corpus_status.get("zone_code")
+                            else None
+                        ),
+                        source_gaps=[
+                            gap for gap in source_gaps if isinstance(gap, dict)
+                        ],
+                    )
+                )
+                rule_corpus_status["official_source_ingestion"] = (
+                    ingestion_result.as_rule_corpus_payload()
+                )
+                if ingestion_result.resolved_count:
+                    rules_result = await get_zoning_rules_for_zone(
+                        session=session,
+                        zone_code=raw_zone_code,
+                        jurisdiction=jurisdiction,
+                    )
+                    if rules_result.has_data:
+                        plot_ratio = rules_result.plot_ratio or fallback_plot_ratio
+                        zone_code = fallback_zone_code or rules_result.zone_code
+                        zone_description = (
+                            fallback_zone_description or rules_result.zone_description
+                        )
+                        building_height_limit = (
+                            rules_result.building_height_limit_m
+                            or fallback_building_height_limit
+                        )
+                        site_coverage = (
+                            rules_result.site_coverage_pct or fallback_site_coverage
+                        )
+                        setback_front = (
+                            rules_result.setback_front_m or fallback_setback_front
+                        )
+                        setback_rear = (
+                            rules_result.setback_rear_m or fallback_setback_rear
+                        )
+                        setback_side = (
+                            rules_result.setback_side_m or fallback_setback_side
+                        )
+                        step_backs = rules_result.step_backs or fallback_step_backs
+                        air_rights_note = (
+                            rules_result.air_rights_note or fallback_air_rights_note
+                        )
+                        source_reference = rules_result.source_reference
+
+                    if site_area is not None and plot_ratio is not None:
+                        max_buildable = site_area * plot_ratio
+                    else:
+                        max_buildable = None
+                    if max_buildable is not None and current_gfa is not None:
+                        additional = max(max_buildable - current_gfa, 0.0)
+                    else:
+                        additional = None
+
+                    rule_corpus_status = _augment_rule_corpus_status_for_envelope(
+                        rules_result.rule_corpus_status,
+                        zone_description=zone_description,
+                        plot_ratio=plot_ratio,
+                        building_height_limit=building_height_limit,
+                        site_coverage=site_coverage,
+                        setback_front=setback_front,
+                        setback_rear=setback_rear,
+                        setback_side=setback_side,
+                        step_backs=step_backs,
+                        air_rights_note=air_rights_note,
+                    )
+                    if rule_corpus_status is not None:
+                        rule_corpus_status["official_source_ingestion"] = (
+                            ingestion_result.as_rule_corpus_payload()
+                        )
+            except Exception as exc:
+                logger.warning(
+                    "Capture official source ingestion failed",
+                    jurisdiction=jurisdiction,
+                    error=str(exc),
+                )
+                if rule_corpus_status is not None:
+                    rule_corpus_status["official_source_ingestion"] = {
+                        "status": "failed",
+                        "message": str(exc),
+                    }
 
     assumptions: list[str] = []
     if plot_ratio is not None and site_area is not None:
@@ -499,7 +726,7 @@ async def _derive_build_envelope(
         assumptions.append(
             "Resolved deeper controls: " + ", ".join(resolved_deeper_controls) + "."
         )
-    corpus_status = rules_result.rule_corpus_status or {}
+    corpus_status = rule_corpus_status or {}
     if corpus_status:
         coverage_state = corpus_status.get("coverage_state")
         confidence = corpus_status.get("confidence")
@@ -516,12 +743,25 @@ async def _derive_build_envelope(
             )
         elif coverage_state == "missing":
             assumptions.append(
-                "No approved RefRule corpus found for this zone; envelope falls back to captured zoning metadata."
+                "No configured rule values were resolved for this zone; envelope falls back to captured zoning metadata while official sources are ingested."
             )
         elif coverage_state == "approved":
             assumptions.append(
                 f"Rule corpus approved with {approved_count} published entries ({confidence} confidence)."
             )
+        source_gaps = corpus_status.get("official_source_gaps")
+        if isinstance(source_gaps, list) and source_gaps:
+            gap_fields = [
+                str(entry.get("field"))
+                for entry in source_gaps
+                if isinstance(entry, dict) and entry.get("field")
+            ]
+            if gap_fields:
+                assumptions.append(
+                    "Official Singapore source ingestion still required for: "
+                    + ", ".join(gap_fields[:4])
+                    + ("." if len(gap_fields) <= 4 else ", ...")
+                )
         if needs_review_count:
             assumptions.append(
                 f"{needs_review_count} zoning rule entries still require review."
@@ -557,7 +797,7 @@ async def _derive_build_envelope(
         air_rights_note=air_rights_note,
         assumptions=assumptions,
         source_reference=source_reference,
-        rule_corpus_status=rules_result.rule_corpus_status,
+        rule_corpus_status=rule_corpus_status,
     )
 
 

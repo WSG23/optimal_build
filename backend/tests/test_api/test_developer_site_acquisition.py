@@ -32,6 +32,91 @@ class _StubDeveloperLogger:
         return self._payload
 
 
+class _FakeOfficialSourceIngestionResult:
+    resolved_count = 0
+
+    def as_rule_corpus_payload(self) -> dict[str, Any]:
+        return {
+            "jurisdiction": "SG",
+            "zone_code": "SG:commercial",
+            "staged_count": 2,
+            "resolved_count": 0,
+            "existing_count": 1,
+            "failed_count": 0,
+            "candidates": [
+                {
+                    "field": "setbacks",
+                    "authority": "URA",
+                    "title": "Development Control Guidelines - setback controls",
+                    "url": "https://www.ura.gov.sg/Corporate/Guidelines/Development-Control",
+                    "status": "staged",
+                    "rule_id": 101,
+                    "message": None,
+                }
+            ],
+        }
+
+
+class _FakeOfficialSourceIngestionService:
+    calls: list[dict[str, Any]] = []
+
+    async def ingest_source_gaps(self, session, **kwargs: Any):
+        self.calls.append(kwargs)
+        return _FakeOfficialSourceIngestionResult()
+
+
+class _ResolvingHeightLimitIngestionResult:
+    resolved_count = 1
+
+    def as_rule_corpus_payload(self) -> dict[str, Any]:
+        return {
+            "jurisdiction": "SG",
+            "zone_code": "SG:commercial",
+            "staged_count": 0,
+            "resolved_count": 1,
+            "existing_count": 0,
+            "failed_count": 0,
+            "candidates": [
+                {
+                    "field": "building_height_limit_m",
+                    "authority": "URA",
+                    "title": "Development Control Guidelines and control plans",
+                    "url": "https://www.ura.gov.sg/Corporate/Guidelines/Development-Control",
+                    "status": "resolved",
+                    "rule_id": 202,
+                    "message": "normalized height-limit rule approved from machine-readable source",
+                }
+            ],
+        }
+
+
+class _ResolvingHeightLimitIngestionService:
+    calls: list[dict[str, Any]] = []
+
+    async def ingest_source_gaps(self, session, **kwargs: Any):
+        self.calls.append(kwargs)
+        session.add(
+            RefRule(
+                jurisdiction="SG",
+                authority="URA",
+                topic="zoning",
+                parameter_key="zoning.max_building_height_m",
+                operator="<=",
+                value="80",
+                unit="m",
+                applicability={"zone_code": kwargs["zone_code"]},
+                source_provenance={
+                    "ingestion_stage": "official_source_normalized",
+                    "field": "building_height_limit_m",
+                },
+                review_status="approved",
+                is_published=True,
+            )
+        )
+        await session.flush()
+        return _ResolvingHeightLimitIngestionResult()
+
+
 def _build_stub_payload(property_id: UUID) -> PropertyLogResult:
     address = Address(
         full_address="1 Developer Way",
@@ -132,6 +217,85 @@ def _build_stub_payload(property_id: UUID) -> PropertyLogResult:
     )
 
 
+def test_extract_heritage_context_does_not_flag_default_low_risk() -> None:
+    envelope = developers_api.DeveloperBuildEnvelope(
+        zone_code="B1",
+        zone_description="Business 1",
+        plot_ratio=2.5,
+        assumptions=["No pollutive uses allowed"],
+    )
+
+    context = developers_api._extract_heritage_context(
+        envelope=envelope,
+        property_info={"site_area_sqm": 12000, "gfa_approved": 30000},
+        quick_analysis={"scenarios": []},
+        heritage_overlay=None,
+    )
+
+    assert context["flag"] is False
+    assert context["risk"] == "low"
+    assert context["constraints"] == []
+    assert context["assumption"] is None
+    assert context["overlay"] is None
+
+
+def test_extract_heritage_context_ignores_low_risk_quick_scenario() -> None:
+    envelope = developers_api.DeveloperBuildEnvelope(
+        zone_code="B1",
+        zone_description="Business 1",
+        plot_ratio=2.5,
+    )
+
+    context = developers_api._extract_heritage_context(
+        envelope=envelope,
+        property_info={},
+        quick_analysis={
+            "scenarios": [
+                {
+                    "scenario": "heritage_property",
+                    "metrics": {
+                        "heritage_risk": "low",
+                        "heritage_signal": False,
+                    },
+                    "notes": [
+                        "2 planned projects nearby may influence planning context"
+                    ],
+                }
+            ]
+        },
+        heritage_overlay=None,
+    )
+
+    assert context["flag"] is False
+    assert context["risk"] == "low"
+    assert context["constraints"] == []
+
+
+def test_extract_heritage_context_flags_explicit_overlay() -> None:
+    envelope = developers_api.DeveloperBuildEnvelope(
+        zone_code="C1",
+        zone_description="Commercial",
+        plot_ratio=4.0,
+    )
+
+    context = developers_api._extract_heritage_context(
+        envelope=envelope,
+        property_info={},
+        quick_analysis={"scenarios": []},
+        heritage_overlay={
+            "name": "Telok Ayer Conservation",
+            "risk": "high",
+            "notes": ["Facade retention required."],
+            "source": "URA",
+        },
+    )
+
+    assert context["flag"] is True
+    assert context["risk"] == "high"
+    assert context["overlay"]["name"] == "Telok Ayer Conservation"
+    assert "Overlay: Telok Ayer Conservation" in context["constraints"]
+
+
 @pytest.mark.asyncio
 async def test_developer_log_property_returns_envelope(
     app_client: AsyncClient,
@@ -197,6 +361,17 @@ async def test_developer_log_property_returns_envelope(
                         if key != "operator"
                     },
                 ),
+                RefRule(
+                    parameter_key="zoning.site_coverage.max_percent",
+                    value="50",
+                    unit="%",
+                    topic="building",
+                    **{
+                        key: value
+                        for key, value in rule_defaults.items()
+                        if key != "topic"
+                    },
+                ),
             ]
         )
         await session.commit()
@@ -232,8 +407,29 @@ async def test_developer_log_property_returns_envelope(
     assert envelope["setback_side_m"] == 3.0
     assert envelope["step_backs"] == [{"level": 8.0, "depth_m": 5.0}]
     assert envelope["air_rights_note"] == "Subject to aviation height review."
+    assert envelope["site_coverage_pct"] == 50.0
     assert envelope["assumptions"], "Assumptions should not be empty"
+    assert envelope["source_reference"] == "SG Rule Registry (RefRule)"
     assert envelope["rule_corpus_status"]["zone_code"] == "SG:commercial"
+    assert envelope["rule_corpus_status"]["resolved_by"]["land_use"] == (
+        "captured_zoning_metadata"
+    )
+    assert envelope["rule_corpus_status"]["resolved_by"]["plot_ratio"] == (
+        "captured_zoning_metadata"
+    )
+    assert envelope["rule_corpus_status"]["resolved_by"]["site_coverage_pct"] == (
+        "ref_rule"
+    )
+    assert "plot_ratio" not in envelope["rule_corpus_status"]["unresolved_fields"]
+    assert (
+        "site_coverage_pct" not in envelope["rule_corpus_status"]["unresolved_fields"]
+    )
+    source_gap_fields = {
+        gap["field"] for gap in envelope["rule_corpus_status"]["official_source_gaps"]
+    }
+    assert {"land_use", "plot_ratio", "site_coverage_pct"}.isdisjoint(source_gap_fields)
+    assert "building_height_limit_m" in source_gap_fields
+    assert "official_source_ingestion" not in envelope["rule_corpus_status"]
     assert envelope["rule_corpus_status"]["coverage_state"] in {
         "approved",
         "missing",
@@ -328,6 +524,118 @@ async def test_developer_log_property_returns_envelope(
     assert refresh_response.status_code == 200
     refreshed_payload = refresh_response.json()
     assert refreshed_payload["status"] in {"ready", "processing"}
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_attaches_live_source_ingestion_when_enabled(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    stub_logger = _StubDeveloperLogger(_build_stub_payload(property_id))
+    _FakeOfficialSourceIngestionService.calls = []
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+    monkeypatch.setattr(
+        developers_api.settings,
+        "CAPTURE_LIVE_SOURCE_SCAN_ENABLED",
+        True,
+    )
+
+    from app.services.rules import official_source_ingestion
+
+    monkeypatch.setattr(
+        official_source_ingestion,
+        "OfficialSourceIngestionService",
+        _FakeOfficialSourceIngestionService,
+    )
+
+    async with async_session_factory() as session:
+        session.add(
+            RefRule(
+                jurisdiction="SG",
+                authority="URA",
+                topic="building",
+                parameter_key="zoning.site_coverage.max_percent",
+                operator="<=",
+                value="50",
+                unit="%",
+                applicability={"zone_code": "SG:commercial"},
+                review_status="approved",
+                is_published=True,
+            )
+        )
+        await session.commit()
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.2801,
+            "longitude": 103.8198,
+            "development_scenarios": ["raw_land", "existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    rule_status = response.json()["build_envelope"]["rule_corpus_status"]
+    ingestion = rule_status["official_source_ingestion"]
+
+    assert ingestion["staged_count"] == 2
+    assert ingestion["existing_count"] == 1
+    assert ingestion["failed_count"] == 0
+    assert ingestion["candidates"][0]["status"] == "staged"
+    assert _FakeOfficialSourceIngestionService.calls
+    call = _FakeOfficialSourceIngestionService.calls[0]
+    assert call["jurisdiction"] == "SG"
+    assert call["zone_code"] == "SG:commercial"
+    source_gap_fields = {gap["field"] for gap in call["source_gaps"]}
+    assert "building_height_limit_m" in source_gap_fields
+    assert "plot_ratio" not in source_gap_fields
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_re_resolves_height_limit_after_ingestion(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    property_id = uuid4()
+    stub_logger = _StubDeveloperLogger(_build_stub_payload(property_id))
+    _ResolvingHeightLimitIngestionService.calls = []
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+    monkeypatch.setattr(
+        developers_api.settings,
+        "CAPTURE_LIVE_SOURCE_SCAN_ENABLED",
+        True,
+    )
+
+    from app.services.rules import official_source_ingestion
+
+    monkeypatch.setattr(
+        official_source_ingestion,
+        "OfficialSourceIngestionService",
+        _ResolvingHeightLimitIngestionService,
+    )
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.2801,
+            "longitude": 103.8198,
+            "development_scenarios": ["raw_land", "existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    envelope = response.json()["build_envelope"]
+    rule_status = envelope["rule_corpus_status"]
+
+    assert envelope["building_height_limit_m"] == 80.0
+    assert rule_status["resolved_by"]["building_height_limit_m"] == "ref_rule"
+    assert "building_height_limit_m" not in rule_status["unresolved_fields"]
+    source_gap_fields = {gap["field"] for gap in rule_status["official_source_gaps"]}
+    assert "building_height_limit_m" not in source_gap_fields
+    assert rule_status["official_source_ingestion"]["resolved_count"] == 1
+    assert _ResolvingHeightLimitIngestionService.calls
 
 
 @pytest.mark.asyncio

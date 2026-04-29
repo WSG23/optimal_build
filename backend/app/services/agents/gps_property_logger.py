@@ -836,13 +836,15 @@ class GPSPropertyLogger:
             if property_info and property_info.completion_year
             else None
         )
-        heritage_risk = "medium"
+        heritage_risk = "low"
+        heritage_signal = False
         notes: List[str] = []
 
         if heritage_overlay:
             overlay_risk = str(heritage_overlay.get("risk", "medium")).lower()
             if overlay_risk in {"high", "medium", "low"}:
                 heritage_risk = overlay_risk
+            heritage_signal = True
             overlay_notes = heritage_overlay.get("notes") or []
             for note in overlay_notes:
                 if note:
@@ -851,26 +853,35 @@ class GPSPropertyLogger:
         if completion_year and completion_year < 1970 and heritage_risk != "high":
             notes.append("Asset predates 1970 — likely conservation review required")
             heritage_risk = "high"
+            heritage_signal = True
         elif "conservation" in (existing_use or "").lower():
             notes.append("Existing use indicates conservation-sensitive asset")
             heritage_risk = "high"
+            heritage_signal = True
         else:
-            notes.append(
-                getattr(
-                    ura_zoning,
-                    "special_conditions",
-                    "Check URA conservation portal for obligations",
-                )
+            special_conditions = getattr(
+                ura_zoning,
+                "special_conditions",
+                "No protected-asset signal detected in current capture inputs",
             )
+            special_conditions_text = str(special_conditions)
+            notes.append(special_conditions_text)
+            if not heritage_signal and any(
+                token in special_conditions_text.lower()
+                for token in ("heritage", "conservation")
+            ):
+                heritage_risk = "medium"
+                heritage_signal = True
 
         if development_plans:
             notes.append(
-                f"{len(development_plans)} planned projects nearby may influence heritage dialogue"
+                f"{len(development_plans)} planned projects nearby may influence planning context"
             )
 
         metrics = {
             "completion_year": completion_year,
             "heritage_risk": heritage_risk,
+            "heritage_signal": heritage_signal,
         }
         return {
             "scenario": DevelopmentScenario.HERITAGE_PROPERTY.value,
