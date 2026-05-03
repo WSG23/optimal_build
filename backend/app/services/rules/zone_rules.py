@@ -8,8 +8,9 @@ This replaces the hardcoded mock values in URAIntegrationService.get_zoning_info
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import json
 from collections import Counter
+from dataclasses import dataclass
 from typing import Any, Optional
 
 import structlog
@@ -275,6 +276,148 @@ def _coerce_attr_string(
     return None
 
 
+def _coerce_attr_mapping(value: object) -> dict[str, object]:
+    if isinstance(value, dict):
+        return {str(key).lower(): entry for key, entry in value.items()}
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            return {}
+        if isinstance(parsed, dict):
+            return {str(key).lower(): entry for key, entry in parsed.items()}
+    return {}
+
+
+def _coerce_attr_setbacks(
+    attributes: dict[str, object],
+) -> tuple[Optional[float], Optional[float], Optional[float]]:
+    """Extract setback controls from captured zoning-layer attributes."""
+
+    lowered = {str(key).lower(): value for key, value in attributes.items()}
+    front = _coerce_attr_float(
+        attributes,
+        (
+            "setback_front_m",
+            "front_setback_m",
+            "frontSetbackM",
+            "front_setback",
+            "frontSetback",
+        ),
+    )
+    rear = _coerce_attr_float(
+        attributes,
+        (
+            "setback_rear_m",
+            "rear_setback_m",
+            "rearSetbackM",
+            "rear_setback",
+            "rearSetback",
+        ),
+    )
+    side = _coerce_attr_float(
+        attributes,
+        (
+            "setback_side_m",
+            "side_setback_m",
+            "sideSetbackM",
+            "side_setback",
+            "sideSetback",
+        ),
+    )
+
+    for key in ("setbacks", "setback_controls", "setbackcontrols"):
+        nested = _coerce_attr_mapping(lowered.get(key))
+        if not nested:
+            continue
+        front = (
+            front
+            if front is not None
+            else _coerce_registry_float(
+                nested.get("front") or nested.get("front_m") or nested.get("frontminm")
+            )
+        )
+        rear = (
+            rear
+            if rear is not None
+            else _coerce_registry_float(
+                nested.get("rear") or nested.get("rear_m") or nested.get("rearminm")
+            )
+        )
+        side = (
+            side
+            if side is not None
+            else _coerce_registry_float(
+                nested.get("side") or nested.get("side_m") or nested.get("sideminm")
+            )
+        )
+
+    return front, rear, side
+
+
+def _coerce_attr_step_backs(
+    attributes: dict[str, object],
+) -> list[dict[str, float]]:
+    """Extract step-back controls from captured zoning-layer attributes."""
+
+    lowered = {str(key).lower(): value for key, value in attributes.items()}
+    raw_value: object = None
+    for key in (
+        "step_backs",
+        "stepbacks",
+        "step_backs_json",
+        "stepback_controls",
+        "stepbackcontrols",
+    ):
+        raw_value = lowered.get(key)
+        if raw_value not in (None, ""):
+            break
+
+    if isinstance(raw_value, str):
+        try:
+            raw_value = json.loads(raw_value)
+        except json.JSONDecodeError:
+            return []
+
+    entries: list[object]
+    if isinstance(raw_value, list):
+        entries = raw_value
+    elif isinstance(raw_value, dict):
+        if isinstance(raw_value.get("items"), list):
+            entries = raw_value["items"]
+        elif isinstance(raw_value.get("controls"), list):
+            entries = raw_value["controls"]
+        else:
+            entries = [raw_value]
+    else:
+        entries = []
+
+    step_backs: list[dict[str, float]] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        entry_lowered = {str(key).lower(): value for key, value in entry.items()}
+        depth_m = _coerce_registry_float(
+            entry_lowered.get("depth_m")
+            or entry_lowered.get("depthm")
+            or entry_lowered.get("depth")
+        )
+        if depth_m is None:
+            continue
+        level = _coerce_registry_float(
+            entry_lowered.get("level")
+            or entry_lowered.get("storey")
+            or entry_lowered.get("floor")
+        )
+        step_backs.append(
+            {
+                "level": level or float(len(step_backs) + 1),
+                "depth_m": depth_m,
+            }
+        )
+    return step_backs
+
+
 def _coerce_registry_float(value: object) -> Optional[float]:
     if value in (None, ""):
         return None
@@ -477,6 +620,29 @@ async def get_zoning_rules_for_zone(
         resolved_by["building_height_limit_m"] = "ref_zoning_layer"
     if zoning_layer_site_coverage is not None:
         resolved_by["site_coverage_pct"] = "ref_zoning_layer"
+
+    (
+        zoning_layer_setback_front,
+        zoning_layer_setback_rear,
+        zoning_layer_setback_side,
+    ) = _coerce_attr_setbacks(zoning_layer_attributes)
+    if any(
+        value is not None
+        for value in (
+            zoning_layer_setback_front,
+            zoning_layer_setback_rear,
+            zoning_layer_setback_side,
+        )
+    ):
+        setback_front_m = zoning_layer_setback_front
+        setback_rear_m = zoning_layer_setback_rear
+        setback_side_m = zoning_layer_setback_side
+        resolved_by["setbacks"] = "ref_zoning_layer"
+
+    zoning_layer_step_backs = _coerce_attr_step_backs(zoning_layer_attributes)
+    if zoning_layer_step_backs:
+        step_backs = zoning_layer_step_backs
+        resolved_by["step_backs"] = "ref_zoning_layer"
 
     for rule in approved_rules:
         parameter_key = (rule.parameter_key or "").lower()

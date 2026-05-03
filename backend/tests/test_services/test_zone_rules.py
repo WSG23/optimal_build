@@ -125,6 +125,50 @@ async def test_get_zoning_rules_for_zone_uses_singapore_zoning_layer_gpr(
 
 
 @pytest.mark.asyncio
+async def test_get_zoning_rules_for_zone_uses_zoning_layer_deeper_controls(
+    async_session_factory,
+) -> None:
+    async with async_session_factory() as session:
+        layer = RefZoningLayer(
+            jurisdiction="SG",
+            layer_name="CapturedURAControls",
+            zone_code="SG:commercial",
+            attributes={
+                "LU_DESC": "Commercial",
+                "GPR": "4.2",
+                "setbacks": {"front": "6", "rear": "4.5", "side": "3"},
+                "stepBacks": [
+                    {"level": "8", "depthM": "5"},
+                    {"storey": "12", "depth_m": "7.5"},
+                ],
+            },
+        )
+        session.add(layer)
+        await session.flush()
+
+        result = await get_zoning_rules_for_zone(session, "commercial")
+
+    assert result.plot_ratio == 4.2
+    assert result.setback_front_m == 6
+    assert result.setback_rear_m == 4.5
+    assert result.setback_side_m == 3
+    assert result.step_backs == [
+        {"level": 8.0, "depth_m": 5.0},
+        {"level": 12.0, "depth_m": 7.5},
+    ]
+    assert result.rule_corpus_status is not None
+    assert result.rule_corpus_status["resolved_by"]["setbacks"] == "ref_zoning_layer"
+    assert result.rule_corpus_status["resolved_by"]["step_backs"] == "ref_zoning_layer"
+    assert "setbacks" not in result.rule_corpus_status["unresolved_fields"]
+    assert "step_backs" not in result.rule_corpus_status["unresolved_fields"]
+    source_gap_fields = {
+        gap["field"] for gap in result.rule_corpus_status["official_source_gaps"]
+    }
+    assert "setbacks" not in source_gap_fields
+    assert "step_backs" not in source_gap_fields
+
+
+@pytest.mark.asyncio
 async def test_get_zoning_rules_for_zone_reads_building_topic_site_coverage(
     async_session_factory,
 ) -> None:
