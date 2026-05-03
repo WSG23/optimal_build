@@ -654,6 +654,12 @@ async def test_developer_log_property_resolves_configured_industrial_height_limi
     assert "building_height_limit_m" not in source_gap_fields
     assert "setbacks" not in source_gap_fields
     assert "step_backs" not in source_gap_fields
+    project_clearance_fields = {
+        gap["field"] for gap in rule_status["project_clearance_required"]
+    }
+    assert project_clearance_fields == {"air_rights_note"}
+    air_rights_gap = rule_status["project_clearance_required"][0]
+    assert air_rights_gap["reason"] == "project_specific_clearance_required"
     ingestion = rule_status["official_source_ingestion"]
     assert ingestion["resolved_count"] == 3
     assert ingestion["staged_count"] == 0

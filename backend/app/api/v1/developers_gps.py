@@ -454,6 +454,13 @@ def _augment_rule_corpus_status_for_envelope(
             for entry in source_gaps
             if not (isinstance(entry, dict) and str(entry.get("field")) in resolved_by)
         ]
+    project_clearance_required = status.get("project_clearance_required")
+    if isinstance(project_clearance_required, list):
+        status["project_clearance_required"] = [
+            entry
+            for entry in project_clearance_required
+            if not (isinstance(entry, dict) and str(entry.get("field")) in resolved_by)
+        ]
 
     captured_sources_present = any(
         str(source).startswith("captured_") for source in resolved_by.values()

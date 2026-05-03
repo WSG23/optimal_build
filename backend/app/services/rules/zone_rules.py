@@ -327,6 +327,16 @@ def _official_source_gaps(
     return gaps
 
 
+def _project_clearance_required(
+    official_source_gaps: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    return [
+        gap
+        for gap in official_source_gaps
+        if gap.get("reason") == "project_specific_clearance_required"
+    ]
+
+
 async def get_zoning_rules_for_zone(
     session: AsyncSession,
     zone_code: Optional[str],
@@ -521,6 +531,7 @@ async def get_zoning_rules_for_zone(
     unresolved_fields = [
         field for field in RESOLVABLE_FIELDS if field not in resolved_by
     ]
+    official_source_gaps = _official_source_gaps(jurisdiction, unresolved_fields)
     rule_corpus_status = {
         "zone_code": normalized_zone,
         "coverage_state": coverage_state,
@@ -538,7 +549,8 @@ async def get_zoning_rules_for_zone(
         "applied_zoning_layer_id": zoning_layer.id if zoning_layer else None,
         "resolved_by": resolved_by,
         "unresolved_fields": unresolved_fields,
-        "official_source_gaps": _official_source_gaps(jurisdiction, unresolved_fields),
+        "official_source_gaps": official_source_gaps,
+        "project_clearance_required": _project_clearance_required(official_source_gaps),
     }
 
     logger.info(

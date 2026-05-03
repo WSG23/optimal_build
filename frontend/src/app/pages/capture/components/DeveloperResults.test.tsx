@@ -1003,6 +1003,107 @@ describe('DeveloperResults', () => {
     expect(screen.getByText('Live source scan')).toBeInTheDocument()
   })
 
+  it('keeps the compact recommendation decision-oriented while details stay behind the audit toggle', () => {
+    const result = buildResult()
+    result.buildEnvelope.sourceReference = 'SG Rule Registry (RefRule)'
+    result.buildEnvelope.ruleCorpusStatus = {
+      coverage_state: 'partial',
+      resolved_by: {
+        land_use: 'captured_zoning_metadata',
+        plot_ratio: 'captured_zoning_metadata',
+        building_height_limit_m: 'ref_rule',
+        site_coverage_pct: 'captured_development_constraints',
+      },
+      unresolved_fields: ['setbacks', 'step_backs', 'air_rights_note'],
+      official_source_gaps: [
+        {
+          field: 'setbacks',
+          reason: 'not_resolved_from_current_registry',
+          candidate_sources: [
+            {
+              authority: 'URA',
+              title: 'Development Control Guidelines',
+            },
+          ],
+        },
+        {
+          field: 'step_backs',
+          reason: 'not_resolved_from_current_registry',
+          candidate_sources: [
+            {
+              authority: 'URA',
+              title: 'Development Control Guidelines',
+            },
+          ],
+        },
+        {
+          field: 'air_rights_note',
+          reason: 'project_specific_clearance_required',
+          candidate_sources: [
+            {
+              authority: 'URA/CAAS',
+              title: 'Height control and aviation-related clearance sources',
+              resolution_workflow: 'project_specific_clearance',
+            },
+          ],
+        },
+      ],
+      project_clearance_required: [
+        {
+          field: 'air_rights_note',
+          reason: 'project_specific_clearance_required',
+          candidate_sources: [
+            {
+              authority: 'URA/CAAS',
+              title: 'Height control and aviation-related clearance sources',
+              resolution_workflow: 'project_specific_clearance',
+            },
+          ],
+        },
+      ],
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={['existing_building'] as DevelopmentScenario[]}
+      />,
+    )
+
+    expect(screen.getByText('Decision Brief')).toBeInTheDocument()
+    expect(screen.getByText('Program')).toBeInTheDocument()
+    expect(screen.getByText('Use basis')).toBeInTheDocument()
+    expect(screen.getByText('GFA envelope')).toBeInTheDocument()
+    expect(screen.getByText('Code fit')).toBeInTheDocument()
+    expect(screen.getByText('Official controls pending')).toBeInTheDocument()
+    expect(screen.getByText('Source review needed')).toBeInTheDocument()
+    expect(screen.getByText('setbacks, step-backs.')).toBeInTheDocument()
+    expect(screen.getByText('Project clearance required')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'air-rights clearance (URA/CAAS) requires site-specific aviation and height-clearance review before Capture treats it as resolved.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Capture completeness')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Source ingestion status'),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /show data details/i }))
+    expect(screen.getByText('Capture completeness')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        '2 official controls still need source review (setbacks, step-backs).',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Source ingestion status')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'setbacks (URA), step-backs (URA) have official source categories identified. Ingestion and review are still pending.',
+      ),
+    ).toBeInTheDocument()
+  })
+
   it('surfaces resolved and unresolved rule fields in the capture data basis', () => {
     const result = buildResult()
     result.buildEnvelope.sourceReference = 'SG Rule Registry (RefRule)'
@@ -1078,9 +1179,7 @@ describe('DeveloperResults', () => {
       0,
     )
     expect(
-      screen.getByText(
-        'height limit - separate official control, air-rights clearance, step-backs.',
-      ),
+      screen.getByText('height limit - separate official control, step-backs.'),
     ).toBeInTheDocument()
     expect(
       screen.queryByText('Source identified, not ingested'),
@@ -1103,7 +1202,7 @@ describe('DeveloperResults', () => {
     fireEvent.click(screen.getByRole('button', { name: /show data details/i }))
     expect(
       screen.getByText(
-        '3 official controls still need source review (height limit - separate official control, air-rights clearance, step-backs).',
+        '2 official controls still need source review (height limit - separate official control, step-backs).',
       ),
     ).toBeInTheDocument()
     expect(screen.getByText('Resolved controls')).toBeInTheDocument()
@@ -1158,6 +1257,20 @@ describe('DeveloperResults', () => {
           ],
         },
       ],
+      project_clearance_required: [
+        {
+          field: 'air_rights_note',
+          reason: 'project_specific_clearance_required',
+          candidate_sources: [
+            {
+              authority: 'URA/CAAS',
+              title: 'Height control and aviation-related clearance sources',
+              url: 'https://www.ura.gov.sg/Corporate/Guidelines/Development-Control',
+              resolution_workflow: 'project_specific_clearance',
+            },
+          ],
+        },
+      ],
     }
 
     render(
@@ -1170,15 +1283,10 @@ describe('DeveloperResults', () => {
     fireEvent.click(screen.getByRole('button', { name: /show data details/i }))
     expect(
       screen.getByText(
-        '1 official control still needs source review (air-rights clearance).',
+        '1 project clearance is still required (air-rights clearance (URA/CAAS)).',
       ),
     ).toBeInTheDocument()
-    expect(screen.getAllByText('Source review needed').length).toBeGreaterThan(
-      0,
-    )
-    expect(screen.getAllByText('air-rights clearance.').length).toBeGreaterThan(
-      0,
-    )
+    expect(screen.queryByText('Source review needed')).not.toBeInTheDocument()
     expect(
       screen.getAllByText('Project clearance required').length,
     ).toBeGreaterThan(0)

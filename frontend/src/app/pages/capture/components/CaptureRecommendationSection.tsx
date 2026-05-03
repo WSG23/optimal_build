@@ -203,6 +203,59 @@ function compactStatusItem(item: CaptureDataBasisItem | undefined) {
   )
 }
 
+function decisionBriefTile(
+  label: string,
+  value: string,
+  options: { emphasis?: boolean } = {},
+) {
+  return (
+    <Box
+      key={label}
+      sx={{
+        minHeight: '104px',
+        p: 'var(--ob-space-075)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        gap: 'var(--ob-space-075)',
+        borderRadius: 'var(--ob-radius-sm)',
+        border: options.emphasis
+          ? '1px solid rgba(59, 130, 246, 0.3)'
+          : 'var(--ob-border-fine)',
+        background: options.emphasis
+          ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(14, 165, 233, 0.04))'
+          : 'rgba(148, 163, 184, 0.04)',
+      }}
+    >
+      <Typography
+        sx={{
+          fontSize: 'var(--ob-font-size-xs)',
+          fontWeight: 'var(--ob-font-weight-semibold)',
+          color: 'text.secondary',
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+        }}
+      >
+        {label}
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: options.emphasis
+            ? 'var(--ob-font-size-md)'
+            : 'var(--ob-font-size-sm)',
+          fontWeight: options.emphasis
+            ? 'var(--ob-font-weight-semibold)'
+            : 'var(--ob-font-weight-medium)',
+          color: 'text.primary',
+          lineHeight: 'var(--ob-line-height-normal)',
+        }}
+      >
+        {value}
+      </Typography>
+    </Box>
+  )
+}
+
 export function CaptureRecommendationSection({
   recommendationCardTitle,
   formatScenarioLabel,
@@ -265,6 +318,11 @@ export function CaptureRecommendationSection({
   const hasSourceReview = Boolean(
     unresolvedControls || projectClearance || liveSourceScan,
   )
+  const compactPendingItems = [
+    unresolvedControls,
+    projectClearance,
+    liveSourceScan,
+  ].filter((item): item is CaptureDataBasisItem => Boolean(item))
   const hasDataDetails =
     captureDataBasis.length > 0 || programDrivers.length > 0
   const detailToggleLabel = showDataDetails
@@ -389,7 +447,7 @@ export function CaptureRecommendationSection({
             sx={{
               display: 'flex',
               flexDirection: 'column',
-              gap: 'var(--ob-space-075)',
+              gap: 'var(--ob-space-100)',
               mt: 'var(--ob-space-025)',
               pt: 'var(--ob-space-100)',
               borderTop: 'var(--ob-border-fine)',
@@ -429,26 +487,70 @@ export function CaptureRecommendationSection({
             <Box
               sx={{
                 display: 'grid',
-                gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-                gap: 'var(--ob-space-075) var(--ob-space-125)',
+                gridTemplateColumns: { xs: '1fr', md: '1.15fr 1fr 1fr' },
+                gap: 'var(--ob-space-075)',
               }}
             >
-              {labelValueRow('Program', programDirectionLabel)}
-              {programBasis ? labelValueRow('Use basis', programBasis) : null}
-              {labelValueRow('Code fit', scenarioFitSummary.comparisonSummary)}
-              {labelValueRow(
+              {decisionBriefTile('Program', programDirectionLabel, {
+                emphasis: true,
+              })}
+              {programBasis
+                ? decisionBriefTile('Use basis', programBasis)
+                : null}
+              {decisionBriefTile(
                 'GFA envelope',
                 scenarioFitSummary.headroomSummary,
               )}
             </Box>
-            {resolvedControls ? compactStatusItem(resolvedControls) : null}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: '160px 1fr' },
+                gap: 'var(--ob-space-050)',
+                alignItems: 'start',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-xs)',
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                  color: 'text.secondary',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                Code fit
+              </Typography>
+              <Typography
+                sx={{
+                  maxWidth: '72ch',
+                  fontSize: 'var(--ob-font-size-sm)',
+                  color: 'text.primary',
+                  lineHeight: 'var(--ob-line-height-normal)',
+                }}
+              >
+                {scenarioFitSummary.comparisonSummary}
+              </Typography>
+            </Box>
+            {resolvedControls ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--ob-space-050)',
+                  flexWrap: 'wrap',
+                }}
+              >
+                {compactStatusItem(resolvedControls)}
+              </Box>
+            ) : null}
             {hasSourceReview ? (
               <Box
                 sx={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 'var(--ob-space-050)',
-                  p: 'var(--ob-space-075)',
+                  gap: 'var(--ob-space-075)',
+                  p: 'var(--ob-space-100)',
                   border: '1px solid rgba(234, 179, 8, 0.2)',
                   borderRadius: 'var(--ob-radius-xs)',
                   background: 'rgba(234, 179, 8, 0.04)',
@@ -465,11 +567,33 @@ export function CaptureRecommendationSection({
                 >
                   Official controls pending
                 </Typography>
-                {unresolvedControls
-                  ? compactStatusItem(unresolvedControls)
-                  : null}
-                {projectClearance ? compactStatusItem(projectClearance) : null}
-                {liveSourceScan ? compactStatusItem(liveSourceScan) : null}
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: {
+                      xs: '1fr',
+                      lg:
+                        compactPendingItems.length > 1
+                          ? 'repeat(2, minmax(0, 1fr))'
+                          : '1fr',
+                    },
+                    gap: 'var(--ob-space-075)',
+                  }}
+                >
+                  {compactPendingItems.map((item) => (
+                    <Box
+                      key={item.label}
+                      sx={{
+                        p: 'var(--ob-space-075)',
+                        borderRadius: 'var(--ob-radius-xs)',
+                        border: '1px solid rgba(234, 179, 8, 0.14)',
+                        background: 'rgba(3, 7, 18, 0.22)',
+                      }}
+                    >
+                      {compactStatusItem(item)}
+                    </Box>
+                  ))}
+                </Box>
               </Box>
             ) : null}
           </Box>

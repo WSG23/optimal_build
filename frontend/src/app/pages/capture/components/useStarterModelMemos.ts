@@ -147,13 +147,15 @@ function formatUnresolvedRuleFieldLabel(
 function getUnresolvedRuleFieldSummary(
   value: unknown,
   codeConstraints: CaptureResultV2['codeConstraints'],
+  excludedFields: Set<string> = new Set(),
 ): string[] {
-  return getRuleFieldIds(value).map((entry) =>
-    formatUnresolvedRuleFieldLabel(entry, codeConstraints),
-  )
+  return getRuleFieldIds(value)
+    .filter((entry) => !excludedFields.has(entry))
+    .map((entry) => formatUnresolvedRuleFieldLabel(entry, codeConstraints))
 }
 
 interface OfficialSourceGapSummary {
+  field: string
   label: string
   workflow: string | null
 }
@@ -204,6 +206,7 @@ function getOfficialSourceGapSummaries(
 
       const label = formatUnresolvedRuleFieldLabel(rawField, codeConstraints)
       return {
+        field: rawField,
         label: authorities.length
           ? `${label} (${authorities.join(', ')})`
           : label,
@@ -211,6 +214,42 @@ function getOfficialSourceGapSummaries(
       }
     })
     .filter((entry): entry is OfficialSourceGapSummary => Boolean(entry))
+}
+
+function getProjectClearanceFieldIds(
+  explicitValue: unknown,
+  sourceGapSummaries: OfficialSourceGapSummary[],
+): Set<string> {
+  const explicitFields = Array.isArray(explicitValue)
+    ? explicitValue
+        .map((entry) => {
+          const record = getObjectRecord(entry)
+          return typeof record?.field === 'string' && record.field.trim()
+            ? record.field.trim()
+            : null
+        })
+        .filter((field): field is string => Boolean(field))
+    : []
+  const inferredFields = sourceGapSummaries
+    .filter((gap) => gap.workflow === 'project_specific_clearance')
+    .map((gap) => gap.field)
+
+  return new Set([...explicitFields, ...inferredFields])
+}
+
+function getProjectClearanceGapSummaries(
+  explicitValue: unknown,
+  sourceGapSummaries: OfficialSourceGapSummary[],
+  codeConstraints: CaptureResultV2['codeConstraints'],
+): string[] {
+  const explicitSummaries = getOfficialSourceGapSummaries(
+    explicitValue,
+    codeConstraints,
+  ).map((gap) => gap.label)
+  const inferredSummaries = sourceGapSummaries
+    .filter((gap) => gap.workflow === 'project_specific_clearance')
+    .map((gap) => gap.label)
+  return Array.from(new Set([...explicitSummaries, ...inferredSummaries]))
 }
 
 interface LiveSourceScanSummary {
@@ -440,17 +479,24 @@ export function useStarterModelMemos({
     const resolvedBy = getObjectRecord(ruleCorpusStatus?.resolved_by)
     const resolvedSourcesByField = getRuleFieldSources(resolvedBy)
     const resolvedRuleFields = Object.keys(resolvedSourcesByField)
-    const unresolvedRuleFields = getUnresolvedRuleFieldSummary(
-      ruleCorpusStatus?.unresolved_fields,
-      captureResultV2.codeConstraints,
-    )
     const officialSourceGapSummaries = getOfficialSourceGapSummaries(
       ruleCorpusStatus?.official_source_gaps,
       captureResultV2.codeConstraints,
     )
-    const projectClearanceGaps = officialSourceGapSummaries
-      .filter((gap) => gap.workflow === 'project_specific_clearance')
-      .map((gap) => gap.label)
+    const projectClearanceGaps = getProjectClearanceGapSummaries(
+      ruleCorpusStatus?.project_clearance_required,
+      officialSourceGapSummaries,
+      captureResultV2.codeConstraints,
+    )
+    const projectClearanceFieldIds = getProjectClearanceFieldIds(
+      ruleCorpusStatus?.project_clearance_required,
+      officialSourceGapSummaries,
+    )
+    const unresolvedRuleFields = getUnresolvedRuleFieldSummary(
+      ruleCorpusStatus?.unresolved_fields,
+      captureResultV2.codeConstraints,
+      projectClearanceFieldIds,
+    )
     const sourceIngestionGaps = officialSourceGapSummaries
       .filter((gap) => gap.workflow !== 'project_specific_clearance')
       .map((gap) => gap.label)
@@ -509,15 +555,22 @@ export function useStarterModelMemos({
       : unresolvedCount === 1
         ? 'is still unresolved'
         : 'are still unresolved'
+    const projectClearanceSummary = `${projectClearanceGaps.slice(0, 3).join(', ')}${projectClearanceGaps.length > 3 ? ', …' : ''}`
+    const isPartialCapture =
+      unresolvedCount > 0 || projectClearanceGaps.length > 0
+    const completenessValue =
+      unresolvedCount > 0
+        ? `${unresolvedCount} ${unresolvedSubject} ${unresolvedAction} (${unresolvedSummary}).`
+        : projectClearanceGaps.length > 0
+          ? `${projectClearanceGaps.length} project ${projectClearanceGaps.length === 1 ? 'clearance is' : 'clearances are'} still required (${projectClearanceSummary}).`
+          : 'Core rule controls resolved for this capture.'
     items.push({
       label: 'Capture completeness',
-      value:
-        unresolvedCount > 0
-          ? `${unresolvedCount} ${unresolvedSubject} ${unresolvedAction} (${unresolvedSummary}).`
-          : 'Core rule controls resolved for this capture.',
-      tone: unresolvedCount > 0 ? 'warning' : 'success',
-      statusLabel:
-        unresolvedCount > 0 ? 'Partial capture' : 'Core controls resolved',
+      value: completenessValue,
+      tone: isPartialCapture ? 'warning' : 'success',
+      statusLabel: isPartialCapture
+        ? 'Partial capture'
+        : 'Core controls resolved',
     })
 
     if (resolvedRuleFields.length > 0) {

@@ -196,6 +196,7 @@ async def test_get_zoning_rules_for_zone_exposes_configured_industrial_sources(
         gap for gap in source_gaps if gap["field"] == "air_rights_note"
     )
     assert air_rights_gap["reason"] == "project_specific_clearance_required"
+    assert result.rule_corpus_status["project_clearance_required"] == [air_rights_gap]
     air_rights_source = air_rights_gap["candidate_sources"][0]
     assert air_rights_source["authority"] == "URA/CAAS"
     assert air_rights_source["resolution_workflow"] == "project_specific_clearance"
