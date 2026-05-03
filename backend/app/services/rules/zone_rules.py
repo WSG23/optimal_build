@@ -275,6 +275,37 @@ def _coerce_attr_string(
     return None
 
 
+def _coerce_registry_float(value: object) -> Optional[float]:
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _configured_registry_value(
+    field: str,
+    *,
+    jurisdiction: str,
+    normalized_zone: str,
+) -> object | None:
+    if jurisdiction != "SG":
+        return None
+
+    zone_key = normalized_zone.lower()
+    for source in SINGAPORE_RULE_SOURCE_REGISTRY.get(field, []):
+        if not isinstance(source, dict):
+            continue
+        values_by_zone = source.get("configured_values_by_zone")
+        if not isinstance(values_by_zone, dict):
+            continue
+        for candidate_zone, candidate_value in values_by_zone.items():
+            if str(candidate_zone).lower() == zone_key:
+                return candidate_value
+    return None
+
+
 async def _get_zoning_layer_for_zone(
     session: AsyncSession,
     *,
@@ -490,7 +521,80 @@ async def get_zoning_rules_for_zone(
                 error=str(e),
             )
 
-    if not applicable_rules and zoning_layer is None:
+    if building_height_limit_m is None:
+        registry_height_limit = _coerce_registry_float(
+            _configured_registry_value(
+                "building_height_limit_m",
+                jurisdiction=jurisdiction,
+                normalized_zone=normalized_zone,
+            )
+        )
+        if registry_height_limit is not None:
+            building_height_limit_m = registry_height_limit
+            resolved_by["building_height_limit_m"] = "official_source_registry"
+
+    if "setbacks" not in resolved_by:
+        registry_setbacks = _configured_registry_value(
+            "setbacks",
+            jurisdiction=jurisdiction,
+            normalized_zone=normalized_zone,
+        )
+        if isinstance(registry_setbacks, dict):
+            setback_front_m = _coerce_registry_float(registry_setbacks.get("front"))
+            setback_rear_m = _coerce_registry_float(registry_setbacks.get("rear"))
+            setback_side_m = _coerce_registry_float(registry_setbacks.get("side"))
+            if any(
+                value is not None
+                for value in (setback_front_m, setback_rear_m, setback_side_m)
+            ):
+                resolved_by["setbacks"] = "official_source_registry"
+
+    if "step_backs" not in resolved_by:
+        registry_step_backs = _configured_registry_value(
+            "step_backs",
+            jurisdiction=jurisdiction,
+            normalized_zone=normalized_zone,
+        )
+        if isinstance(registry_step_backs, list):
+            parsed_step_backs: list[dict[str, float]] = []
+            for entry in registry_step_backs:
+                if not isinstance(entry, dict):
+                    continue
+                depth_m = _coerce_registry_float(
+                    entry.get("depth_m") or entry.get("depth")
+                )
+                if depth_m is None:
+                    continue
+                level = _coerce_registry_float(
+                    entry.get("level") or entry.get("storey")
+                )
+                parsed_step_backs.append(
+                    {
+                        "level": level or float(len(parsed_step_backs) + 1),
+                        "depth_m": depth_m,
+                    }
+                )
+            if parsed_step_backs:
+                step_backs = parsed_step_backs
+                resolved_by["step_backs"] = "official_source_registry"
+
+    if (
+        not applicable_rules
+        and zoning_layer is None
+        and not any(
+            value is not None
+            for value in (
+                plot_ratio,
+                building_height_limit_m,
+                site_coverage_pct,
+                setback_front_m,
+                setback_rear_m,
+                setback_side_m,
+                air_rights_note,
+            )
+        )
+        and not step_backs
+    ):
         logger.info(
             "No configured rule data resolved for zone",
             zone_code=normalized_zone,

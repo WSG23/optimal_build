@@ -153,7 +153,7 @@ async def test_get_zoning_rules_for_zone_reads_building_topic_site_coverage(
 
 
 @pytest.mark.asyncio
-async def test_get_zoning_rules_for_zone_exposes_configured_industrial_sources(
+async def test_get_zoning_rules_for_zone_resolves_configured_industrial_sources(
     async_session_factory,
 ) -> None:
     async with async_session_factory() as session:
@@ -161,37 +161,29 @@ async def test_get_zoning_rules_for_zone_exposes_configured_industrial_sources(
 
     assert result.rule_corpus_status is not None
     assert result.rule_corpus_status["zone_code"] == "SG:industrial"
-    source_gaps = result.rule_corpus_status["official_source_gaps"]
-    height_gap = next(
-        gap for gap in source_gaps if gap["field"] == "building_height_limit_m"
+    assert result.building_height_limit_m == 80
+    assert result.setback_front_m == 7.5
+    assert result.setback_rear_m == 7.5
+    assert result.setback_side_m == 3
+    assert result.step_backs == [{"level": 8.0, "depth_m": 5.0}]
+    assert result.rule_corpus_status["resolved_by"]["building_height_limit_m"] == (
+        "official_source_registry"
     )
-    height_source = height_gap["candidate_sources"][0]
-    assert height_source["authority"] == "URA"
-    assert height_source["configured_values_by_zone"] == {"SG:industrial": "80"}
-    assert height_source["unit"] == "m"
-    setbacks_gap = next(gap for gap in source_gaps if gap["field"] == "setbacks")
-    setbacks_source = setbacks_gap["candidate_sources"][0]
-    assert setbacks_source["authority"] == "URA"
-    assert setbacks_source["configured_values_by_zone"] == {
-        "SG:industrial": {
-            "front": "7.5",
-            "rear": "7.5",
-            "side": "3",
-        }
-    }
-    assert setbacks_source["unit"] == "m"
-    step_backs_gap = next(gap for gap in source_gaps if gap["field"] == "step_backs")
-    step_backs_source = step_backs_gap["candidate_sources"][0]
-    assert step_backs_source["authority"] == "URA"
-    assert step_backs_source["configured_values_by_zone"] == {
-        "SG:industrial": [
-            {
-                "level": "8",
-                "depth_m": "5",
-            }
-        ]
-    }
-    assert step_backs_source["unit"] == "m"
+    assert result.rule_corpus_status["resolved_by"]["setbacks"] == (
+        "official_source_registry"
+    )
+    assert result.rule_corpus_status["resolved_by"]["step_backs"] == (
+        "official_source_registry"
+    )
+    assert (
+        "building_height_limit_m" not in result.rule_corpus_status["unresolved_fields"]
+    )
+    assert "setbacks" not in result.rule_corpus_status["unresolved_fields"]
+    assert "step_backs" not in result.rule_corpus_status["unresolved_fields"]
+    source_gaps = result.rule_corpus_status["official_source_gaps"]
+    assert "building_height_limit_m" not in {gap["field"] for gap in source_gaps}
+    assert "setbacks" not in {gap["field"] for gap in source_gaps}
+    assert "step_backs" not in {gap["field"] for gap in source_gaps}
     air_rights_gap = next(
         gap for gap in source_gaps if gap["field"] == "air_rights_note"
     )
