@@ -463,13 +463,26 @@ export function useStarterModelMemos({
       })
     }
 
-    const unresolvedCount = captureResultV2.analysisStatus.missingInputs.length
+    const hasUnresolvedRuleFieldStatus = Array.isArray(
+      ruleCorpusStatus?.unresolved_fields,
+    )
+    const captureCompletenessFields = hasUnresolvedRuleFieldStatus
+      ? unresolvedRuleFields
+      : captureResultV2.analysisStatus.missingInputs
+    const unresolvedCount = captureCompletenessFields.length
+    const unresolvedSummary = `${captureCompletenessFields.slice(0, 3).join(', ')}${unresolvedCount > 3 ? ', …' : ''}`
+    const unresolvedSubject = hasUnresolvedRuleFieldStatus
+      ? `official ${unresolvedCount === 1 ? 'control' : 'controls'}`
+      : `capture ${unresolvedCount === 1 ? 'input' : 'inputs'}`
+    const unresolvedAction = hasUnresolvedRuleFieldStatus
+      ? 'still need source review'
+      : 'still unresolved'
     items.push({
       label: 'Capture completeness',
       value:
         unresolvedCount > 0
-          ? `${unresolvedCount} capture inputs still unresolved (${captureResultV2.analysisStatus.missingInputs.slice(0, 3).join(', ')}${unresolvedCount > 3 ? ', …' : ''}).`
-          : 'Core capture inputs resolved for this capture.',
+          ? `${unresolvedCount} ${unresolvedSubject} ${unresolvedAction} (${unresolvedSummary}).`
+          : 'Core rule controls resolved for this capture.',
       tone: unresolvedCount > 0 ? 'warning' : 'success',
       statusLabel:
         unresolvedCount > 0 ? 'Partial capture' : 'Core controls resolved',
@@ -486,7 +499,7 @@ export function useStarterModelMemos({
 
     if (unresolvedRuleFields.length > 0) {
       items.push({
-        label: 'Unresolved controls',
+        label: 'Official controls pending',
         value: formatRuleFieldSummary(unresolvedRuleFields),
         tone: 'warning',
         statusLabel: 'Source review needed',
@@ -731,7 +744,7 @@ export function useStarterModelMemos({
       summary === 'rules_with_property_adjustments'
         ? 'Rule defaults with property-specific adjustments'
         : summary === 'rules_only'
-          ? 'Rule defaults only'
+          ? 'Starter model defaults'
           : summary === 'frontend_fallback_defaults'
             ? 'Frontend fallback defaults'
             : assumptions.source === 'hybrid'
@@ -739,7 +752,7 @@ export function useStarterModelMemos({
               : assumptions.source === 'heuristic_fallback'
                 ? 'Heuristic fallback defaults'
                 : assumptions.source === 'rules'
-                  ? 'Rule defaults'
+                  ? 'Starter model defaults'
                   : assumptions.source.replace(/_/g, ' ')
 
     if (!adjustments.length) {

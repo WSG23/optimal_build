@@ -1,9 +1,8 @@
 """Live official-source ingestion for unresolved Capture rule fields.
 
 This service fetches mapped official source pages and stages source-review
-candidates. It intentionally does not approve or publish rules; reviewed,
-normalized RefRule entries remain the only inputs that Capture treats as
-rule-backed.
+candidates. It can also publish narrow, pre-normalized values from the reviewed
+source registry; broader live-source findings remain review-only until approved.
 """
 
 from __future__ import annotations
@@ -41,6 +40,12 @@ FIELD_PARAMETER_KEYS = {
 
 RESOLVED_PARAMETER_KEYS = {
     "building_height_limit_m": "zoning.max_building_height_m",
+}
+
+SETBACK_PARAMETER_KEYS = {
+    "front": "zoning.setback.front_min_m",
+    "rear": "zoning.setback.rear_min_m",
+    "side": "zoning.setback.side_min_m",
 }
 
 HEIGHT_LIMIT_MARKER_RE = re.compile(
@@ -111,7 +116,7 @@ class OfficialSourceIngestionResult:
 
 
 class OfficialSourceIngestionService:
-    """Fetch mapped official sources and stage review-only RefRule candidates."""
+    """Fetch mapped official sources and resolve only reviewed registry values."""
 
     def __init__(self, http_client: OfficialSourceHTTPClient | None = None) -> None:
         self._http = http_client or SimpleHTTPClient(timeout=5.0, max_attempts=1)
@@ -158,6 +163,7 @@ class OfficialSourceIngestionService:
                     authority=authority,
                     title=title,
                     url=url,
+                    source=source,
                 )
                 result.candidates.append(candidate)
 
@@ -174,7 +180,65 @@ class OfficialSourceIngestionService:
         authority: str,
         title: str,
         url: str,
+        source: dict[str, Any],
     ) -> OfficialSourceIngestionCandidate:
+        configured_value = _extract_configured_registry_value(
+            field_name=field_name,
+            source=source,
+            zone_code=zone_code,
+        )
+        if configured_value is not None:
+            resolved_rules = self._build_configured_resolved_rules(
+                jurisdiction=jurisdiction,
+                zone_code=zone_code,
+                field_name=field_name,
+                authority=authority,
+                title=title,
+                url=url,
+                normalized_value=configured_value,
+            )
+            if resolved_rules:
+                existing_rules: list[RefRule] = []
+                new_rules: list[RefRule] = []
+                for resolved_rule in resolved_rules:
+                    existing_resolved = await self._find_existing_resolved_rule(
+                        session,
+                        jurisdiction=jurisdiction,
+                        zone_code=zone_code,
+                        parameter_key=resolved_rule.parameter_key,
+                        value=resolved_rule.value,
+                    )
+                    if existing_resolved:
+                        existing_rules.append(existing_resolved)
+                    else:
+                        new_rules.append(resolved_rule)
+
+                if not new_rules:
+                    return OfficialSourceIngestionCandidate(
+                        field=field_name,
+                        authority=authority,
+                        title=title,
+                        url=url,
+                        status="existing",
+                        rule_id=existing_rules[0].id if existing_rules else None,
+                        message="configured normalized rule already approved",
+                    )
+
+                session.add_all(new_rules)
+                await session.flush()
+                return OfficialSourceIngestionCandidate(
+                    field=field_name,
+                    authority=authority,
+                    title=title,
+                    url=url,
+                    status="resolved",
+                    rule_id=new_rules[0].id,
+                    message=(
+                        f"normalized {field_name} rule approved from configured "
+                        "official source registry"
+                    ),
+                )
+
         existing = await self._find_existing_candidate(
             session,
             jurisdiction=jurisdiction,
@@ -409,6 +473,104 @@ class OfficialSourceIngestionService:
             ),
         )
 
+    def _build_configured_resolved_rules(
+        self,
+        *,
+        jurisdiction: str,
+        zone_code: str | None,
+        field_name: str,
+        authority: str,
+        title: str,
+        url: str,
+        normalized_value: float | dict[str, float],
+    ) -> list[RefRule]:
+        if field_name == "setbacks":
+            if not isinstance(normalized_value, dict):
+                return []
+            rules = []
+            for direction, parameter_key in SETBACK_PARAMETER_KEYS.items():
+                value = normalized_value.get(direction)
+                if value is None:
+                    continue
+                rules.append(
+                    self._build_configured_resolved_rule(
+                        jurisdiction=jurisdiction,
+                        zone_code=zone_code,
+                        field_name=field_name,
+                        authority=authority,
+                        title=title,
+                        url=url,
+                        parameter_key=parameter_key,
+                        operator=">=",
+                        normalized_value=value,
+                        source_detail={"setback_direction": direction},
+                    )
+                )
+            return rules
+
+        parameter_key = RESOLVED_PARAMETER_KEYS.get(field_name)
+        if not parameter_key or not isinstance(normalized_value, float):
+            return []
+
+        return [
+            self._build_configured_resolved_rule(
+                jurisdiction=jurisdiction,
+                zone_code=zone_code,
+                field_name=field_name,
+                authority=authority,
+                title=title,
+                url=url,
+                parameter_key=parameter_key,
+                operator="<=",
+                normalized_value=normalized_value,
+                source_detail={},
+            )
+        ]
+
+    def _build_configured_resolved_rule(
+        self,
+        *,
+        jurisdiction: str,
+        zone_code: str | None,
+        field_name: str,
+        authority: str,
+        title: str,
+        url: str,
+        parameter_key: str,
+        operator: str,
+        normalized_value: float,
+        source_detail: dict[str, Any],
+    ) -> RefRule:
+        now = datetime.now(timezone.utc)
+        return RefRule(
+            jurisdiction=jurisdiction,
+            authority=authority.split("/")[0],
+            topic="zoning",
+            parameter_key=parameter_key,
+            operator=operator,
+            value=f"{normalized_value:g}",
+            unit="m",
+            applicability={"zone_code": zone_code} if zone_code else {},
+            source_provenance={
+                "ingestion_stage": "official_source_normalized",
+                "field": field_name,
+                "official_source_title": title,
+                "official_source_url": url,
+                "retrieved_at": now.isoformat(),
+                "normalization_method": "configured_official_source_registry",
+                **source_detail,
+            },
+            review_status="approved",
+            reviewer="capture-official-source-ingestion",
+            reviewed_at=now,
+            is_published=True,
+            published_at=now,
+            notes=(
+                "Normalized from configured official-source registry extract. "
+                "Review source provenance before production certification."
+            ),
+        )
+
     def _source_provenance(
         self,
         *,
@@ -474,6 +636,51 @@ def _extract_machine_readable_value(
         value = _coerce_positive_float(payload.get("value"))
         if value is not None:
             return value
+
+    return None
+
+
+def _extract_configured_registry_value(
+    *,
+    field_name: str,
+    source: dict[str, Any],
+    zone_code: str | None,
+) -> float | dict[str, float] | None:
+    if field_name not in {"building_height_limit_m", "setbacks"} or not zone_code:
+        return None
+
+    values_by_zone = source.get("configured_values_by_zone")
+    if not isinstance(values_by_zone, dict):
+        return None
+
+    unit = str(source.get("unit") or "").lower()
+    if unit and unit not in {"m", "meter", "meters", "metre", "metres"}:
+        return None
+
+    raw_value = None
+    zone_key = zone_code.lower()
+    for candidate_zone, candidate_value in values_by_zone.items():
+        if str(candidate_zone).lower() == zone_key:
+            raw_value = candidate_value
+            break
+    if raw_value is None:
+        return None
+
+    if field_name == "building_height_limit_m":
+        return _coerce_positive_float(raw_value)
+
+    if field_name == "setbacks":
+        if not isinstance(raw_value, dict):
+            return None
+        setbacks = {
+            direction: value
+            for direction, value in (
+                (direction, _coerce_positive_float(raw_value.get(direction)))
+                for direction in SETBACK_PARAMETER_KEYS
+            )
+            if value is not None
+        }
+        return setbacks or None
 
     return None
 

@@ -468,6 +468,33 @@ def _augment_rule_corpus_status_for_envelope(
     return status
 
 
+def _source_gap_has_configured_value(
+    gap: dict[str, Any],
+    *,
+    zone_code: str | None,
+) -> bool:
+    """Return true when a source gap can be resolved from reviewed registry data."""
+
+    if not zone_code:
+        return False
+    candidate_sources = gap.get("candidate_sources")
+    if not isinstance(candidate_sources, list):
+        return False
+
+    zone_key = zone_code.lower()
+    for source in candidate_sources:
+        if not isinstance(source, dict):
+            continue
+        values_by_zone = source.get("configured_values_by_zone")
+        if not isinstance(values_by_zone, dict):
+            continue
+        if any(
+            str(candidate_zone).lower() == zone_key for candidate_zone in values_by_zone
+        ):
+            return True
+    return False
+
+
 async def _derive_build_envelope(
     result: PropertyLogResult,
     session: AsyncSession,
@@ -608,8 +635,28 @@ async def _derive_build_envelope(
         step_backs=step_backs,
         air_rights_note=air_rights_note,
     )
-    if settings.CAPTURE_LIVE_SOURCE_SCAN_ENABLED and rule_corpus_status:
+    if rule_corpus_status:
         source_gaps = rule_corpus_status.get("official_source_gaps")
+        if isinstance(source_gaps, list) and source_gaps:
+            normalized_status_zone = (
+                str(rule_corpus_status.get("zone_code"))
+                if rule_corpus_status.get("zone_code")
+                else None
+            )
+            source_gaps_to_ingest = [
+                gap
+                for gap in source_gaps
+                if isinstance(gap, dict)
+                and (
+                    settings.CAPTURE_LIVE_SOURCE_SCAN_ENABLED
+                    or _source_gap_has_configured_value(
+                        gap,
+                        zone_code=normalized_status_zone,
+                    )
+                )
+            ]
+            if not source_gaps_to_ingest:
+                source_gaps = []
         if isinstance(source_gaps, list) and source_gaps:
             try:
                 from app.services.rules.official_source_ingestion import (
@@ -620,14 +667,8 @@ async def _derive_build_envelope(
                     await OfficialSourceIngestionService().ingest_source_gaps(
                         session,
                         jurisdiction=jurisdiction,
-                        zone_code=(
-                            str(rule_corpus_status.get("zone_code"))
-                            if rule_corpus_status.get("zone_code")
-                            else None
-                        ),
-                        source_gaps=[
-                            gap for gap in source_gaps if isinstance(gap, dict)
-                        ],
+                        zone_code=normalized_status_zone,
+                        source_gaps=source_gaps_to_ingest,
                     )
                 )
                 rule_corpus_status["official_source_ingestion"] = (

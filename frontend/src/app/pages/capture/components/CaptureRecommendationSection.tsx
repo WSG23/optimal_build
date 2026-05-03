@@ -251,7 +251,7 @@ export function CaptureRecommendationSection({
     (item) => item.label === 'Resolved controls',
   )
   const unresolvedControls = captureDataBasis.find(
-    (item) => item.label === 'Unresolved controls',
+    (item) => item.label === 'Official controls pending',
   )
   const sourceIngestion = captureDataBasis.find(
     (item) => item.label === 'Source ingestion status',
@@ -458,7 +458,7 @@ export function CaptureRecommendationSection({
                     letterSpacing: '0.04em',
                   }}
                 >
-                  Official Controls Pending
+                  Official controls pending
                 </Typography>
                 {unresolvedControls
                   ? compactStatusItem(unresolvedControls)
@@ -698,6 +698,15 @@ export function CaptureRecommendationSection({
               lineHeight: 'var(--ob-line-height-normal)',
             }}
           >
+            These values are modeling assumptions, not certified code controls.
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: 'var(--ob-font-size-xs)',
+              color: 'text.secondary',
+              lineHeight: 'var(--ob-line-height-normal)',
+            }}
+          >
             {starterModelAssumptionSourceLine}
           </Typography>
           {starterModelAssumptionFallbackReason ? (
@@ -783,7 +792,7 @@ export function CaptureRecommendationSection({
                       letterSpacing: '0.04em',
                     }}
                   >
-                    Starter defaults still tunable
+                    Model inputs open for refinement
                   </Typography>
                   <Box
                     sx={{

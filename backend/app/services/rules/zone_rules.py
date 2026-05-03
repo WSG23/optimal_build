@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from collections import Counter
-from typing import Optional
+from typing import Any, Optional
 
 import structlog
 from sqlalchemy import select
@@ -47,7 +47,7 @@ ZONE_CODE_MAPPING = {
 DEFAULT_ZONE = "SG:residential"
 
 
-SINGAPORE_RULE_SOURCE_REGISTRY: dict[str, list[dict[str, str]]] = {
+SINGAPORE_RULE_SOURCE_REGISTRY: dict[str, list[dict[str, Any]]] = {
     "land_use": [
         {
             "authority": "URA",
@@ -72,6 +72,13 @@ SINGAPORE_RULE_SOURCE_REGISTRY: dict[str, list[dict[str, str]]] = {
             "authority": "URA",
             "title": "Development Control Guidelines and control plans",
             "url": "https://www.ura.gov.sg/Corporate/Guidelines/Development-Control",
+            "configured_values_by_zone": {
+                # First normalized Singapore height-control fixture. This is
+                # deliberately scoped to the current B1/industrial demo path so
+                # broader zones remain source-review pending until ingested.
+                "SG:industrial": "80",
+            },
+            "unit": "m",
         }
     ],
     "site_coverage_pct": [
@@ -86,6 +93,17 @@ SINGAPORE_RULE_SOURCE_REGISTRY: dict[str, list[dict[str, str]]] = {
             "authority": "URA",
             "title": "Development Control Guidelines - building setback controls",
             "url": "https://www.ura.gov.sg/Corporate/Guidelines/Development-Control",
+            "configured_values_by_zone": {
+                # First normalized Singapore setback fixture. Scoped to the
+                # current B1/industrial demo path until more zone/use-specific
+                # official controls are ingested and reviewed.
+                "SG:industrial": {
+                    "front": "7.5",
+                    "rear": "7.5",
+                    "side": "3",
+                },
+            },
+            "unit": "m",
         }
     ],
     "step_backs": [

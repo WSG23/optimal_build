@@ -594,6 +594,74 @@ async def test_developer_log_property_attaches_live_source_ingestion_when_enable
 
 
 @pytest.mark.asyncio
+async def test_developer_log_property_resolves_configured_industrial_height_limit_without_live_scan(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    property_id = uuid4()
+    payload = _build_stub_payload(property_id)
+    payload.ura_zoning = {
+        "zone_code": "B1",
+        "zone_description": "Business 1",
+        "plot_ratio": 2.5,
+        "site_coverage": 60.0,
+    }
+    payload.property_info = {
+        **payload.property_info,
+        "site_area_sqm": 12000,
+        "gfa_approved": 30000,
+        "heritage_overlay": None,
+        "is_conservation": False,
+        "conservation_status": None,
+        "heritage_constraints": [],
+    }
+    payload.heritage_overlay = None
+    stub_logger = _StubDeveloperLogger(payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+    monkeypatch.setattr(
+        developers_api.settings,
+        "CAPTURE_LIVE_SOURCE_SCAN_ENABLED",
+        False,
+    )
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.331096,
+            "longitude": 103.6977849,
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    envelope = response.json()["build_envelope"]
+    rule_status = envelope["rule_corpus_status"]
+
+    assert envelope["zone_code"] == "B1"
+    assert envelope["building_height_limit_m"] == 80.0
+    assert envelope["setback_front_m"] == 7.5
+    assert envelope["setback_rear_m"] == 7.5
+    assert envelope["setback_side_m"] == 3.0
+    assert envelope["max_buildable_gfa_sqm"] == 30000.0
+    assert rule_status["resolved_by"]["building_height_limit_m"] == "ref_rule"
+    assert rule_status["resolved_by"]["setbacks"] == "ref_rule"
+    assert "building_height_limit_m" not in rule_status["unresolved_fields"]
+    assert "setbacks" not in rule_status["unresolved_fields"]
+    source_gap_fields = {gap["field"] for gap in rule_status["official_source_gaps"]}
+    assert "building_height_limit_m" not in source_gap_fields
+    assert "setbacks" not in source_gap_fields
+    ingestion = rule_status["official_source_ingestion"]
+    assert ingestion["resolved_count"] == 2
+    assert ingestion["staged_count"] == 0
+    resolved_fields = {
+        candidate["field"]
+        for candidate in ingestion["candidates"]
+        if candidate["status"] == "resolved"
+    }
+    assert resolved_fields == {"building_height_limit_m", "setbacks"}
+
+
+@pytest.mark.asyncio
 async def test_developer_log_property_re_resolves_height_limit_after_ingestion(
     app_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,

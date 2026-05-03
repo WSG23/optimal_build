@@ -150,3 +150,33 @@ async def test_get_zoning_rules_for_zone_reads_building_topic_site_coverage(
     assert result.site_coverage_pct == 45
     assert result.rule_corpus_status is not None
     assert result.rule_corpus_status["resolved_by"]["site_coverage_pct"] == "ref_rule"
+
+
+@pytest.mark.asyncio
+async def test_get_zoning_rules_for_zone_exposes_configured_industrial_sources(
+    async_session_factory,
+) -> None:
+    async with async_session_factory() as session:
+        result = await get_zoning_rules_for_zone(session, "B1")
+
+    assert result.rule_corpus_status is not None
+    assert result.rule_corpus_status["zone_code"] == "SG:industrial"
+    source_gaps = result.rule_corpus_status["official_source_gaps"]
+    height_gap = next(
+        gap for gap in source_gaps if gap["field"] == "building_height_limit_m"
+    )
+    height_source = height_gap["candidate_sources"][0]
+    assert height_source["authority"] == "URA"
+    assert height_source["configured_values_by_zone"] == {"SG:industrial": "80"}
+    assert height_source["unit"] == "m"
+    setbacks_gap = next(gap for gap in source_gaps if gap["field"] == "setbacks")
+    setbacks_source = setbacks_gap["candidate_sources"][0]
+    assert setbacks_source["authority"] == "URA"
+    assert setbacks_source["configured_values_by_zone"] == {
+        "SG:industrial": {
+            "front": "7.5",
+            "rear": "7.5",
+            "side": "3",
+        }
+    }
+    assert setbacks_source["unit"] == "m"

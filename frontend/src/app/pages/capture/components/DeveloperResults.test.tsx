@@ -809,7 +809,12 @@ describe('DeveloperResults', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Pinned by site facts')).toBeInTheDocument()
     expect(
-      screen.getByText('Starter defaults still tunable'),
+      screen.getByText('Model inputs open for refinement'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'These values are modeling assumptions, not certified code controls.',
+      ),
     ).toBeInTheDocument()
 
     expect(lastPreviewViewerProps).toMatchObject({
@@ -991,6 +996,9 @@ describe('DeveloperResults', () => {
         '1 normalized into approved rules. Normalized source values are now available to the rule resolver.',
       ),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/height limit - separate official control/i),
+    ).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /show data details/i }))
     expect(screen.getByText('Live source scan')).toBeInTheDocument()
   })
@@ -1057,7 +1065,7 @@ describe('DeveloperResults', () => {
       />,
     )
 
-    expect(screen.getByText('Official Controls Pending')).toBeInTheDocument()
+    expect(screen.getByText('Official controls pending')).toBeInTheDocument()
     expect(screen.queryByText('Resolved controls')).not.toBeInTheDocument()
     expect(screen.queryByText('Unresolved controls')).not.toBeInTheDocument()
     expect(
@@ -1087,8 +1095,15 @@ describe('DeveloperResults', () => {
       ),
     ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /show data details/i }))
+    expect(
+      screen.getByText(
+        '3 official controls still need source review (height limit - separate official control, air-rights note, step-backs).',
+      ),
+    ).toBeInTheDocument()
     expect(screen.getByText('Resolved controls')).toBeInTheDocument()
-    expect(screen.getByText('Unresolved controls')).toBeInTheDocument()
+    expect(
+      screen.getAllByText('Official controls pending').length,
+    ).toBeGreaterThan(0)
     expect(screen.getByText('Source ingestion status')).toBeInTheDocument()
     expect(
       screen.getByText('Source identified, not ingested'),
@@ -1132,7 +1147,7 @@ describe('DeveloperResults', () => {
       ),
     ).toBeInTheDocument()
     expect(
-      screen.getByText('Starter defaults still tunable'),
+      screen.getByText('Model inputs open for refinement'),
     ).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /raw land/i }))
@@ -1151,6 +1166,77 @@ describe('DeveloperResults', () => {
     expect(
       screen.getByText(
         /Capture is using fallback assumptions because no scenario-specific preview jobs are attached to this property yet\./i,
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('labels rules-only starter assumptions as modeling defaults', () => {
+    const result = buildResult()
+    previewJobsByScenarioValue = {
+      existing_building: {
+        id: 'preview-rules-only',
+        propertyId: 'prop-123',
+        scenario: 'existing_building',
+        status: 'ready',
+        previewUrl: '/static/dev-previews/example/rules-only.gltf',
+        metadataUrl: '/static/dev-previews/example/rules-only.json',
+        thumbnailUrl: '/static/dev-previews/example/rules-only.png',
+        assetVersion: '20260407093405',
+        requestedAt: '2026-01-06T10:00:00Z',
+        startedAt: '2026-01-06T10:00:02Z',
+        finishedAt: '2026-01-06T10:00:10Z',
+        message: null,
+        geometryDetailLevel: 'medium',
+        starterModelAssumptions: {
+          wallThicknessMm: 210,
+          coreRatioPct: 15,
+          commonAreaRatioPct: 11,
+          floorToFloorM: 3.7,
+          clearCeilingM: 2.7,
+          hvacSpaceRatioPct: 7,
+          electricalSpaceRatioPct: 4,
+          structuralGridNote: 'preserve existing bulk',
+          source: 'rules',
+          retentionStrategy: 'preserve_existing_bulk',
+          efficiencyFactor: 0.96,
+          provenance: {
+            summary: 'rules_only',
+            fields: {
+              retention_strategy: 'rules',
+              efficiency_factor: 'rules',
+              floor_to_floor_m: 'rules',
+              clear_ceiling_m: 'rules',
+              wall_thickness_mm: 'rules',
+              core_ratio_pct: 'rules',
+              common_area_ratio_pct: 'rules',
+              hvac_space_ratio_pct: 'rules',
+              electrical_space_ratio_pct: 'rules',
+            },
+            adjustments: [],
+          },
+        },
+      },
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={['existing_building'] as DevelopmentScenario[]}
+      />,
+    )
+
+    expect(
+      screen.getByText(/Assumption source: Starter model defaults\./i),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/Assumption source: Rule defaults only\./i),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText('Model inputs open for refinement'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'These values are modeling assumptions, not certified code controls.',
       ),
     ).toBeInTheDocument()
   })
@@ -1439,7 +1525,7 @@ describe('DeveloperResults', () => {
     ).not.toBeInTheDocument()
     expect(screen.getByText('Pinned by site facts')).toBeInTheDocument()
     expect(
-      screen.getByText('Starter defaults still tunable'),
+      screen.getByText('Model inputs open for refinement'),
     ).toBeInTheDocument()
     expect(screen.queryByText('Use-Type Profiles')).not.toBeInTheDocument()
   })
