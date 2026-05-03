@@ -642,23 +642,27 @@ async def test_developer_log_property_resolves_configured_industrial_height_limi
     assert envelope["setback_front_m"] == 7.5
     assert envelope["setback_rear_m"] == 7.5
     assert envelope["setback_side_m"] == 3.0
+    assert envelope["step_backs"] == [{"level": 8.0, "depth_m": 5.0}]
     assert envelope["max_buildable_gfa_sqm"] == 30000.0
     assert rule_status["resolved_by"]["building_height_limit_m"] == "ref_rule"
     assert rule_status["resolved_by"]["setbacks"] == "ref_rule"
+    assert rule_status["resolved_by"]["step_backs"] == "ref_rule"
     assert "building_height_limit_m" not in rule_status["unresolved_fields"]
     assert "setbacks" not in rule_status["unresolved_fields"]
+    assert "step_backs" not in rule_status["unresolved_fields"]
     source_gap_fields = {gap["field"] for gap in rule_status["official_source_gaps"]}
     assert "building_height_limit_m" not in source_gap_fields
     assert "setbacks" not in source_gap_fields
+    assert "step_backs" not in source_gap_fields
     ingestion = rule_status["official_source_ingestion"]
-    assert ingestion["resolved_count"] == 2
+    assert ingestion["resolved_count"] == 3
     assert ingestion["staged_count"] == 0
     resolved_fields = {
         candidate["field"]
         for candidate in ingestion["candidates"]
         if candidate["status"] == "resolved"
     }
-    assert resolved_fields == {"building_height_limit_m", "setbacks"}
+    assert resolved_fields == {"building_height_limit_m", "setbacks", "step_backs"}
 
 
 @pytest.mark.asyncio

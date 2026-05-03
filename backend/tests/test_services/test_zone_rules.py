@@ -180,3 +180,23 @@ async def test_get_zoning_rules_for_zone_exposes_configured_industrial_sources(
         }
     }
     assert setbacks_source["unit"] == "m"
+    step_backs_gap = next(gap for gap in source_gaps if gap["field"] == "step_backs")
+    step_backs_source = step_backs_gap["candidate_sources"][0]
+    assert step_backs_source["authority"] == "URA"
+    assert step_backs_source["configured_values_by_zone"] == {
+        "SG:industrial": [
+            {
+                "level": "8",
+                "depth_m": "5",
+            }
+        ]
+    }
+    assert step_backs_source["unit"] == "m"
+    air_rights_gap = next(
+        gap for gap in source_gaps if gap["field"] == "air_rights_note"
+    )
+    assert air_rights_gap["reason"] == "project_specific_clearance_required"
+    air_rights_source = air_rights_gap["candidate_sources"][0]
+    assert air_rights_source["authority"] == "URA/CAAS"
+    assert air_rights_source["resolution_workflow"] == "project_specific_clearance"
+    assert "site-specific aviation" in air_rights_source["review_note"]

@@ -79,7 +79,7 @@ const RULE_FIELD_LABELS = new Map<string, string>([
   ['site_coverage_pct', 'site coverage'],
   ['setbacks', 'setbacks'],
   ['step_backs', 'step-backs'],
-  ['air_rights_note', 'air-rights note'],
+  ['air_rights_note', 'air-rights clearance'],
 ])
 
 function getObjectRecord(value: unknown): Record<string, unknown> | null {
@@ -153,10 +153,15 @@ function getUnresolvedRuleFieldSummary(
   )
 }
 
-function getOfficialSourceGapSummary(
+interface OfficialSourceGapSummary {
+  label: string
+  workflow: string | null
+}
+
+function getOfficialSourceGapSummaries(
   value: unknown,
   codeConstraints: CaptureResultV2['codeConstraints'],
-): string[] {
+): OfficialSourceGapSummary[] {
   if (!Array.isArray(value)) {
     return []
   }
@@ -184,11 +189,28 @@ function getOfficialSourceGapSummary(
             .filter((authority): authority is string => Boolean(authority)),
         ),
       )
+      const workflows = Array.from(
+        new Set(
+          sources
+            .map((source) => {
+              const sourceRecord = getObjectRecord(source)
+              return typeof sourceRecord?.resolution_workflow === 'string'
+                ? sourceRecord.resolution_workflow
+                : null
+            })
+            .filter((workflow): workflow is string => Boolean(workflow)),
+        ),
+      )
 
       const label = formatUnresolvedRuleFieldLabel(rawField, codeConstraints)
-      return authorities.length ? `${label} (${authorities.join(', ')})` : label
+      return {
+        label: authorities.length
+          ? `${label} (${authorities.join(', ')})`
+          : label,
+        workflow: workflows[0] ?? null,
+      }
     })
-    .filter((entry): entry is string => Boolean(entry))
+    .filter((entry): entry is OfficialSourceGapSummary => Boolean(entry))
 }
 
 interface LiveSourceScanSummary {
@@ -422,10 +444,16 @@ export function useStarterModelMemos({
       ruleCorpusStatus?.unresolved_fields,
       captureResultV2.codeConstraints,
     )
-    const officialSourceGaps = getOfficialSourceGapSummary(
+    const officialSourceGapSummaries = getOfficialSourceGapSummaries(
       ruleCorpusStatus?.official_source_gaps,
       captureResultV2.codeConstraints,
     )
+    const projectClearanceGaps = officialSourceGapSummaries
+      .filter((gap) => gap.workflow === 'project_specific_clearance')
+      .map((gap) => gap.label)
+    const sourceIngestionGaps = officialSourceGapSummaries
+      .filter((gap) => gap.workflow !== 'project_specific_clearance')
+      .map((gap) => gap.label)
     const liveSourceScanSummary = getLiveSourceScanSummary(
       ruleCorpusStatus?.official_source_ingestion,
     )
@@ -475,8 +503,12 @@ export function useStarterModelMemos({
       ? `official ${unresolvedCount === 1 ? 'control' : 'controls'}`
       : `capture ${unresolvedCount === 1 ? 'input' : 'inputs'}`
     const unresolvedAction = hasUnresolvedRuleFieldStatus
-      ? 'still need source review'
-      : 'still unresolved'
+      ? unresolvedCount === 1
+        ? 'still needs source review'
+        : 'still need source review'
+      : unresolvedCount === 1
+        ? 'is still unresolved'
+        : 'are still unresolved'
     items.push({
       label: 'Capture completeness',
       value:
@@ -506,10 +538,21 @@ export function useStarterModelMemos({
       })
     }
 
-    if (officialSourceGaps.length > 0) {
+    if (projectClearanceGaps.length > 0) {
+      const clearanceList = `${projectClearanceGaps.slice(0, 4).join(', ')}${projectClearanceGaps.length > 4 ? ', ...' : ''}`
+      items.push({
+        label: 'Project clearance required',
+        value: `${clearanceList} ${projectClearanceGaps.length === 1 ? 'requires' : 'require'} site-specific aviation and height-clearance review before Capture treats ${projectClearanceGaps.length === 1 ? 'it' : 'them'} as resolved.`,
+        tone: 'warning',
+        statusLabel: 'Project clearance required',
+      })
+    }
+
+    if (sourceIngestionGaps.length > 0) {
+      const sourceList = `${sourceIngestionGaps.slice(0, 4).join(', ')}${sourceIngestionGaps.length > 4 ? ', ...' : ''}`
       items.push({
         label: 'Source ingestion status',
-        value: `${officialSourceGaps.slice(0, 4).join(', ')}${officialSourceGaps.length > 4 ? ', ...' : ''} have official source categories identified. Ingestion and review are still pending.`,
+        value: `${sourceList} ${sourceIngestionGaps.length === 1 ? 'has' : 'have'} official source categories identified. Ingestion and review are still pending.`,
         tone: 'warning',
         statusLabel: 'Source identified, not ingested',
       })

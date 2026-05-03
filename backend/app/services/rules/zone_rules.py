@@ -111,6 +111,18 @@ SINGAPORE_RULE_SOURCE_REGISTRY: dict[str, list[dict[str, Any]]] = {
             "authority": "URA",
             "title": "Development Control Guidelines - building edge / storey controls",
             "url": "https://www.ura.gov.sg/Corporate/Guidelines/Development-Control",
+            "configured_values_by_zone": {
+                # First normalized Singapore step-back fixture. Scoped to the
+                # current B1/industrial demo path until additional official
+                # zone/use controls are ingested and reviewed.
+                "SG:industrial": [
+                    {
+                        "level": "8",
+                        "depth_m": "5",
+                    }
+                ],
+            },
+            "unit": "m",
         }
     ],
     "air_rights_note": [
@@ -118,6 +130,11 @@ SINGAPORE_RULE_SOURCE_REGISTRY: dict[str, list[dict[str, Any]]] = {
             "authority": "URA/CAAS",
             "title": "Height control and aviation-related clearance sources",
             "url": "https://www.ura.gov.sg/Corporate/Guidelines/Development-Control",
+            "resolution_workflow": "project_specific_clearance",
+            "review_note": (
+                "Requires site-specific aviation and height-clearance review "
+                "before Capture treats this control as resolved."
+            ),
         }
     ],
 }
@@ -288,14 +305,26 @@ def _official_source_gaps(
 ) -> list[dict[str, object]]:
     if jurisdiction != "SG":
         return []
-    return [
-        {
-            "field": field,
-            "reason": "not_resolved_from_current_registry",
-            "candidate_sources": SINGAPORE_RULE_SOURCE_REGISTRY.get(field, []),
-        }
-        for field in unresolved_fields
-    ]
+    gaps = []
+    for field in unresolved_fields:
+        candidate_sources = SINGAPORE_RULE_SOURCE_REGISTRY.get(field, [])
+        requires_project_clearance = any(
+            isinstance(source, dict)
+            and source.get("resolution_workflow") == "project_specific_clearance"
+            for source in candidate_sources
+        )
+        gaps.append(
+            {
+                "field": field,
+                "reason": (
+                    "project_specific_clearance_required"
+                    if requires_project_clearance
+                    else "not_resolved_from_current_registry"
+                ),
+                "candidate_sources": candidate_sources,
+            }
+        )
+    return gaps
 
 
 async def get_zoning_rules_for_zone(

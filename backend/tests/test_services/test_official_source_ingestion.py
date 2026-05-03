@@ -256,6 +256,62 @@ async def test_official_source_ingestion_resolves_configured_registry_setbacks_w
 
 
 @pytest.mark.asyncio
+async def test_official_source_ingestion_resolves_configured_registry_step_backs_without_fetch(
+    async_session_factory,
+) -> None:
+    http = _FakeHTTPClient(status_code=503)
+    service = OfficialSourceIngestionService(http_client=http)
+    source_gaps = [
+        {
+            "field": "step_backs",
+            "reason": "not_resolved_from_current_registry",
+            "candidate_sources": [
+                {
+                    "authority": "URA",
+                    "title": "Development Control Guidelines - building edge controls",
+                    "url": "https://www.ura.gov.sg/Corporate/Guidelines/Development-Control",
+                    "configured_values_by_zone": {
+                        "SG:industrial": [{"level": "8", "depth_m": "5"}]
+                    },
+                    "unit": "m",
+                }
+            ],
+        }
+    ]
+
+    async with async_session_factory() as session:
+        result = await service.ingest_source_gaps(
+            session,
+            jurisdiction="SG",
+            zone_code="SG:industrial",
+            source_gaps=source_gaps,
+        )
+        await session.commit()
+
+    assert result.resolved_count == 1
+    assert result.staged_count == 0
+    assert result.failed_count == 0
+    assert http.calls == []
+
+    async with async_session_factory() as session:
+        rules = (await session.execute(select(RefRule))).scalars().all()
+
+    assert len(rules) == 1
+    rule = rules[0]
+    assert rule.parameter_key == "zoning.stepback.level_8_depth_m"
+    assert rule.value == "5"
+    assert rule.unit == "m"
+    assert rule.applicability == {"zone_code": "SG:industrial", "level": 8}
+    assert rule.review_status == "approved"
+    assert rule.is_published is True
+    assert rule.source_provenance["field"] == "step_backs"
+    assert rule.source_provenance["stepback_level"] == 8
+    assert rule.source_provenance["normalization_method"] == (
+        "configured_official_source_registry"
+    )
+
+
+@pytest.mark.asyncio
 async def test_official_source_ingestion_reports_failed_fetch_without_rule(
     async_session_factory,
 ) -> None:

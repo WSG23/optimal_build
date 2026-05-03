@@ -647,6 +647,7 @@ async def _derive_build_envelope(
                 gap
                 for gap in source_gaps
                 if isinstance(gap, dict)
+                and gap.get("reason") != "project_specific_clearance_required"
                 and (
                     settings.CAPTURE_LIVE_SOURCE_SCAN_ENABLED
                     or _source_gap_has_configured_value(

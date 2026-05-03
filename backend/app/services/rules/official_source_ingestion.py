@@ -48,6 +48,8 @@ SETBACK_PARAMETER_KEYS = {
     "side": "zoning.setback.side_min_m",
 }
 
+ConfiguredRegistryValue = float | dict[str, float] | list[dict[str, float]]
+
 HEIGHT_LIMIT_MARKER_RE = re.compile(
     r"capture-rule\s*:\s*building_height_limit_m\s*=\s*(?P<value>\d+(?:\.\d+)?)\s*m\b",
     re.IGNORECASE,
@@ -482,7 +484,7 @@ class OfficialSourceIngestionService:
         authority: str,
         title: str,
         url: str,
-        normalized_value: float | dict[str, float],
+        normalized_value: ConfiguredRegistryValue,
     ) -> list[RefRule]:
         if field_name == "setbacks":
             if not isinstance(normalized_value, dict):
@@ -508,6 +510,35 @@ class OfficialSourceIngestionService:
                 )
             return rules
 
+        if field_name == "step_backs":
+            if not isinstance(normalized_value, list):
+                return []
+            rules = []
+            for stepback in normalized_value:
+                level = stepback.get("level")
+                depth_m = stepback.get("depth_m")
+                if level is None or depth_m is None:
+                    continue
+                level_number = _coerce_positive_int(level)
+                if level_number is None:
+                    continue
+                rules.append(
+                    self._build_configured_resolved_rule(
+                        jurisdiction=jurisdiction,
+                        zone_code=zone_code,
+                        field_name=field_name,
+                        authority=authority,
+                        title=title,
+                        url=url,
+                        parameter_key=f"zoning.stepback.level_{level_number}_depth_m",
+                        operator=">=",
+                        normalized_value=depth_m,
+                        source_detail={"stepback_level": level_number},
+                        applicability_detail={"level": level_number},
+                    )
+                )
+            return rules
+
         parameter_key = RESOLVED_PARAMETER_KEYS.get(field_name)
         if not parameter_key or not isinstance(normalized_value, float):
             return []
@@ -524,6 +555,7 @@ class OfficialSourceIngestionService:
                 operator="<=",
                 normalized_value=normalized_value,
                 source_detail={},
+                applicability_detail=None,
             )
         ]
 
@@ -540,8 +572,12 @@ class OfficialSourceIngestionService:
         operator: str,
         normalized_value: float,
         source_detail: dict[str, Any],
+        applicability_detail: dict[str, Any] | None = None,
     ) -> RefRule:
         now = datetime.now(timezone.utc)
+        applicability = {"zone_code": zone_code} if zone_code else {}
+        if applicability_detail:
+            applicability.update(applicability_detail)
         return RefRule(
             jurisdiction=jurisdiction,
             authority=authority.split("/")[0],
@@ -550,7 +586,7 @@ class OfficialSourceIngestionService:
             operator=operator,
             value=f"{normalized_value:g}",
             unit="m",
-            applicability={"zone_code": zone_code} if zone_code else {},
+            applicability=applicability,
             source_provenance={
                 "ingestion_stage": "official_source_normalized",
                 "field": field_name,
@@ -645,8 +681,11 @@ def _extract_configured_registry_value(
     field_name: str,
     source: dict[str, Any],
     zone_code: str | None,
-) -> float | dict[str, float] | None:
-    if field_name not in {"building_height_limit_m", "setbacks"} or not zone_code:
+) -> ConfiguredRegistryValue | None:
+    if (
+        field_name not in {"building_height_limit_m", "setbacks", "step_backs"}
+        or not zone_code
+    ):
         return None
 
     values_by_zone = source.get("configured_values_by_zone")
@@ -682,6 +721,20 @@ def _extract_configured_registry_value(
         }
         return setbacks or None
 
+    if field_name == "step_backs":
+        if not isinstance(raw_value, list):
+            return None
+        step_backs = []
+        for entry in raw_value:
+            if not isinstance(entry, dict):
+                continue
+            level = _coerce_positive_float(entry.get("level") or entry.get("storey"))
+            depth_m = _coerce_positive_float(entry.get("depth_m") or entry.get("depth"))
+            if level is None or depth_m is None:
+                continue
+            step_backs.append({"level": level, "depth_m": depth_m})
+        return step_backs or None
+
     return None
 
 
@@ -693,3 +746,10 @@ def _coerce_positive_float(value: object) -> float | None:
     except ValueError:
         return None
     return number if number > 0 else None
+
+
+def _coerce_positive_int(value: object) -> int | None:
+    number = _coerce_positive_float(value)
+    if number is None or not number.is_integer():
+        return None
+    return int(number)

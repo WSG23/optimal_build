@@ -253,13 +253,18 @@ export function CaptureRecommendationSection({
   const unresolvedControls = captureDataBasis.find(
     (item) => item.label === 'Official controls pending',
   )
+  const projectClearance = captureDataBasis.find(
+    (item) => item.label === 'Project clearance required',
+  )
   const sourceIngestion = captureDataBasis.find(
     (item) => item.label === 'Source ingestion status',
   )
   const liveSourceScan = captureDataBasis.find(
     (item) => item.label === 'Live source scan',
   )
-  const hasSourceReview = Boolean(unresolvedControls) || Boolean(liveSourceScan)
+  const hasSourceReview = Boolean(
+    unresolvedControls || projectClearance || liveSourceScan,
+  )
   const hasDataDetails =
     captureDataBasis.length > 0 || programDrivers.length > 0
   const detailToggleLabel = showDataDetails
@@ -463,6 +468,7 @@ export function CaptureRecommendationSection({
                 {unresolvedControls
                   ? compactStatusItem(unresolvedControls)
                   : null}
+                {projectClearance ? compactStatusItem(projectClearance) : null}
                 {liveSourceScan ? compactStatusItem(liveSourceScan) : null}
               </Box>
             ) : null}
