@@ -126,6 +126,13 @@ function buildProgramBasis(
   return parts.join(' / ')
 }
 
+const RESOLVED_CONTROL_LABELS = new Set([
+  'Resolved controls',
+  'Site captured controls',
+  'Rule-backed controls',
+  'Other resolved controls',
+])
+
 function dataBasisItem(item: CaptureDataBasisItem) {
   return (
     <Box
@@ -247,8 +254,8 @@ export function CaptureRecommendationSection({
   const captureCompleteness = captureDataBasis.find(
     (item) => item.label === 'Capture completeness',
   )
-  const resolvedControls = captureDataBasis.find(
-    (item) => item.label === 'Resolved controls',
+  const resolvedControlItems = captureDataBasis.filter((item) =>
+    RESOLVED_CONTROL_LABELS.has(item.label),
   )
   const unresolvedControls = captureDataBasis.find(
     (item) => item.label === 'Official controls pending',
@@ -445,7 +452,7 @@ export function CaptureRecommendationSection({
                 labelValueRow(label, value),
               )}
             </Box>
-            {resolvedControls ? (
+            {resolvedControlItems.length > 0 ? (
               <Box
                 sx={{
                   display: 'flex',
@@ -454,7 +461,7 @@ export function CaptureRecommendationSection({
                   flexWrap: 'wrap',
                 }}
               >
-                {compactStatusItem(resolvedControls)}
+                {resolvedControlItems.map((item) => compactStatusItem(item))}
               </Box>
             ) : null}
             {hasSourceReview ? (

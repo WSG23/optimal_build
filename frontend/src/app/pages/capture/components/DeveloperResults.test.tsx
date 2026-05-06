@@ -539,6 +539,8 @@ describe('DeveloperResults', () => {
 
   it('renders the capture recommendation and starter-model summary from CaptureResultV2', () => {
     const result = buildResult()
+    result.buildEnvelope.maxBuildableGfaSqm = result.buildEnvelope.currentGfaSqm
+    result.buildEnvelope.additionalPotentialGfaSqm = 0
     result.previewJobs = [
       {
         id: 'preview-1',
@@ -764,22 +766,17 @@ describe('DeveloperResults', () => {
       screen.getByText('The renovation starter model is ready for review.'),
     ).toBeInTheDocument()
     expect(screen.getByText('Capture Recommendation')).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        'User-selected renovation overrides the default capture recommendation.',
-      ),
-    ).toBeInTheDocument()
     expect(screen.getByText('ready')).toBeInTheDocument()
     expect(
       screen.getByText(/Geometry scope: massing stack/i),
     ).toBeInTheDocument()
     expect(screen.getByText(/Estimated floors: 6/i)).toBeInTheDocument()
     expect(
-      screen.getByText(/Capture recommended: Adaptive Reuse/i),
-    ).toBeInTheDocument()
-    expect(screen.getAllByText(/User override/i).length).toBeGreaterThan(0)
+      screen.queryByText(/Capture recommended: Adaptive Reuse/i),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/User override/i)).not.toBeInTheDocument()
     expect(
-      screen.getAllByText(/Current GFA remains below today’s code envelope/i)
+      screen.getAllByText(/Current GFA appears to match today’s code envelope/i)
         .length,
     ).toBeGreaterThan(0)
     expect(screen.getByText('Vertical profile')).toBeInTheDocument()
@@ -1173,8 +1170,11 @@ describe('DeveloperResults', () => {
     expect(
       screen.queryByText('Source ingestion status'),
     ).not.toBeInTheDocument()
-    expect(screen.getByText('Mixed source')).toBeInTheDocument()
-    expect(screen.getByText('plot ratio, setbacks.')).toBeInTheDocument()
+    expect(screen.queryByText('Mixed source')).not.toBeInTheDocument()
+    expect(screen.getByText('Site / captured')).toBeInTheDocument()
+    expect(screen.getByText('plot ratio.')).toBeInTheDocument()
+    expect(screen.getByText('Rule-backed')).toBeInTheDocument()
+    expect(screen.getByText('setbacks.')).toBeInTheDocument()
     expect(screen.getAllByText('Source review needed').length).toBeGreaterThan(
       0,
     )
@@ -1205,7 +1205,8 @@ describe('DeveloperResults', () => {
         '2 official controls still need source review (height limit - separate official control, step-backs).',
       ),
     ).toBeInTheDocument()
-    expect(screen.getByText('Resolved controls')).toBeInTheDocument()
+    expect(screen.getByText('Site captured controls')).toBeInTheDocument()
+    expect(screen.getByText('Rule-backed controls')).toBeInTheDocument()
     expect(
       screen.getAllByText('Official controls pending').length,
     ).toBeGreaterThan(0)
@@ -1353,6 +1354,8 @@ describe('DeveloperResults', () => {
 
   it('labels rules-only starter assumptions as modeling defaults', () => {
     const result = buildResult()
+    result.buildEnvelope.maxBuildableGfaSqm = result.buildEnvelope.currentGfaSqm
+    result.buildEnvelope.additionalPotentialGfaSqm = 0
     previewJobsByScenarioValue = {
       existing_building: {
         id: 'preview-rules-only',

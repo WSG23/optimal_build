@@ -49,6 +49,51 @@ def test_lookup_returns_none_outside_overlay_bounds() -> None:
     assert result is None
 
 
+def test_lookup_address_matches_queen_street_historic_site_by_postal_code() -> None:
+    service = HeritageOverlayService()
+
+    result = service.lookup_address(
+        "269 Queen St, Singapore 180269",
+        postal_code="180269",
+        street_name="Queen Street",
+        block_number="269",
+    )
+
+    assert result is not None
+    assert result["name"] == "Central Sikh Temple"
+    assert result["risk"] == "medium"
+    assert result["source"] == "NHB Historic Site"
+    assert result["matched_by"] == "address_metadata"
+
+
+def test_lookup_address_matches_queen_street_historic_site_by_block_and_street() -> (
+    None
+):
+    service = HeritageOverlayService()
+
+    result = service.lookup_address(
+        "Block 269 Queen Street",
+        street_name="Queen Street",
+        block_number="269",
+    )
+
+    assert result is not None
+    assert result["name"] == "Central Sikh Temple"
+    assert result["matched_by"] == "address_metadata"
+
+
+def test_lookup_address_does_not_match_different_queen_street_block() -> None:
+    service = HeritageOverlayService()
+
+    result = service.lookup_address(
+        "270 Queen Street",
+        street_name="Queen Street",
+        block_number="270",
+    )
+
+    assert result is None
+
+
 def test_overlay_contains_matches_centroid_point() -> None:
     service, overlay = _service_and_sample_overlay()
     centroid_point = Point(overlay.centroid[0], overlay.centroid[1])

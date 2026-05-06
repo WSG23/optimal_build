@@ -1,7 +1,8 @@
 """URA (Urban Redevelopment Authority) integration service for Singapore property data."""
 
-from functools import lru_cache
 from datetime import date, datetime
+from functools import lru_cache
+import re
 from typing import Any, Dict, List, Optional
 
 import structlog
@@ -13,6 +14,29 @@ from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceS
 from app.services.base import AsyncClientService
 
 logger = structlog.get_logger()
+
+BUSINESS_MOCK_ADDRESS_TOKENS = (
+    "fusionopolis",
+    "one-north",
+    "industrial",
+    "jurong",
+    "soon lee",
+    "boon lay",
+    "tuas",
+    "pioneer",
+    "kwong min",
+    "wan lee",
+    "enterprise rd",
+)
+BUSINESS_MOCK_POSTAL_PREFIXES = ("62", "63")
+
+
+def _has_mock_business_postal_prefix(address: str) -> bool:
+    """Identify western industrial postal areas for the mock URA classifier."""
+    postal_match = re.search(r"\b(\d{6})\b", address)
+    return bool(
+        postal_match and postal_match.group(1).startswith(BUSINESS_MOCK_POSTAL_PREFIXES)
+    )
 
 
 class URAZoningInfo(BaseModel):
@@ -165,9 +189,8 @@ class URAIntegrationService(AsyncClientService):
         if "orchard" in normalized_address or "raffles" in normalized_address:
             return mock_zones["Commercial"]
         elif any(
-            token in normalized_address
-            for token in ("fusionopolis", "one-north", "industrial", "jurong")
-        ):
+            token in normalized_address for token in BUSINESS_MOCK_ADDRESS_TOKENS
+        ) or _has_mock_business_postal_prefix(normalized_address):
             return mock_zones["Business"]
         elif "marina" in normalized_address:
             return mock_zones["Mixed"]

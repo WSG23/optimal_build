@@ -306,21 +306,46 @@ function formatRuleFieldSummary(fields: string[]): string {
   return `${uniqueFields.slice(0, 5).join(', ')}${uniqueFields.length > 5 ? ', ...' : ''}.`
 }
 
-function getResolvedRuleStatusLabel(sourcesByField: Record<string, string>) {
-  const sources = Object.values(sourcesByField)
-  if (!sources.length) {
-    return 'Resolved'
+interface ResolvedRuleSourceGroup {
+  label: string
+  statusLabel: string
+  fields: string[]
+}
+
+function getResolvedRuleSourceGroups(
+  sourcesByField: Record<string, string>,
+): ResolvedRuleSourceGroup[] {
+  const siteCaptured: string[] = []
+  const ruleBacked: string[] = []
+  const otherResolved: string[] = []
+
+  for (const [field, source] of Object.entries(sourcesByField)) {
+    if (source.startsWith('captured_')) {
+      siteCaptured.push(field)
+    } else if (/rule|registry|ref_rule/i.test(source)) {
+      ruleBacked.push(field)
+    } else {
+      otherResolved.push(field)
+    }
   }
-  const capturedCount = sources.filter((source) =>
-    source.startsWith('captured_'),
-  ).length
-  if (capturedCount === sources.length) {
-    return 'Site / captured'
-  }
-  if (capturedCount > 0) {
-    return 'Mixed source'
-  }
-  return 'Rule-backed'
+
+  return [
+    {
+      label: 'Site captured controls',
+      statusLabel: 'Site / captured',
+      fields: siteCaptured,
+    },
+    {
+      label: 'Rule-backed controls',
+      statusLabel: 'Rule-backed',
+      fields: ruleBacked,
+    },
+    {
+      label: 'Other resolved controls',
+      statusLabel: 'Resolved',
+      fields: otherResolved,
+    },
+  ].filter((group) => group.fields.length > 0)
 }
 
 export function useStarterModelMemos({
@@ -478,7 +503,9 @@ export function useStarterModelMemos({
     )
     const resolvedBy = getObjectRecord(ruleCorpusStatus?.resolved_by)
     const resolvedSourcesByField = getRuleFieldSources(resolvedBy)
-    const resolvedRuleFields = Object.keys(resolvedSourcesByField)
+    const resolvedRuleGroups = getResolvedRuleSourceGroups(
+      resolvedSourcesByField,
+    )
     const officialSourceGapSummaries = getOfficialSourceGapSummaries(
       ruleCorpusStatus?.official_source_gaps,
       captureResultV2.codeConstraints,
@@ -573,12 +600,12 @@ export function useStarterModelMemos({
         : 'Core controls resolved',
     })
 
-    if (resolvedRuleFields.length > 0) {
+    for (const group of resolvedRuleGroups) {
       items.push({
-        label: 'Resolved controls',
-        value: formatRuleFieldSummary(resolvedRuleFields),
+        label: group.label,
+        value: formatRuleFieldSummary(group.fields),
         tone: 'success',
-        statusLabel: getResolvedRuleStatusLabel(resolvedSourcesByField),
+        statusLabel: group.statusLabel,
       })
     }
 

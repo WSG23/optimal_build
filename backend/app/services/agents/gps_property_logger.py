@@ -310,6 +310,13 @@ class GPSPropertyLogger:
             )
 
             heritage_overlay = self.heritage_service.lookup(latitude, longitude)
+            if heritage_overlay is None:
+                heritage_overlay = self.heritage_service.lookup_address(
+                    address.full_address,
+                    postal_code=address.postal_code,
+                    street_name=address.street_name,
+                    block_number=address.block_number,
+                )
 
             # Step 5: Create or update property record
             if property_record:

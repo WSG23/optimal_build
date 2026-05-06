@@ -61,6 +61,153 @@ function formatAssetTypeLabel(assetType: string): string {
   }
 }
 
+function normalizeUseSignal(value: string | null | undefined): string {
+  return value?.trim().toLowerCase().replace(/[_-]+/g, ' ') ?? ''
+}
+
+function ruleCorpusString(
+  ruleCorpusStatus: Record<string, unknown> | null | undefined,
+  key: string,
+): string | null {
+  const value = ruleCorpusStatus?.[key]
+  return typeof value === 'string' ? value : null
+}
+
+function deriveZoningProgramDrivers(
+  capturedProperty: SiteAcquisitionResult,
+): string[] | null {
+  const useGroups = Array.isArray(capturedProperty.uraZoning?.useGroups)
+    ? capturedProperty.uraZoning.useGroups
+    : []
+
+  const signals = [
+    capturedProperty.address?.fullAddress,
+    capturedProperty.address?.district,
+    capturedProperty.propertyInfo?.propertyName,
+    capturedProperty.buildEnvelope?.zoneCode,
+    capturedProperty.buildEnvelope?.zoneDescription,
+    ruleCorpusString(
+      capturedProperty.buildEnvelope?.ruleCorpusStatus,
+      'zone_code',
+    ),
+    ruleCorpusString(
+      capturedProperty.buildEnvelope?.ruleCorpusStatus,
+      'zone_description',
+    ),
+    capturedProperty.uraZoning?.zoneCode,
+    capturedProperty.uraZoning?.zoneDescription,
+    ...useGroups,
+    capturedProperty.existingUse,
+  ]
+    .map(normalizeUseSignal)
+    .filter(Boolean)
+
+  const compactSignals = signals.map((signal) =>
+    signal.replace(/[^a-z0-9]/g, ''),
+  )
+  const zoningSignals = [
+    capturedProperty.buildEnvelope?.zoneCode,
+    capturedProperty.buildEnvelope?.zoneDescription,
+    ruleCorpusString(
+      capturedProperty.buildEnvelope?.ruleCorpusStatus,
+      'zone_code',
+    ),
+    ruleCorpusString(
+      capturedProperty.buildEnvelope?.ruleCorpusStatus,
+      'zone_description',
+    ),
+    capturedProperty.uraZoning?.zoneCode,
+    capturedProperty.uraZoning?.zoneDescription,
+  ]
+    .map(normalizeUseSignal)
+    .filter(Boolean)
+  const compactZoningSignals = zoningSignals.map((signal) =>
+    signal.replace(/[^a-z0-9]/g, ''),
+  )
+
+  const hasIndustrialSignal = signals.some((signal, index) => {
+    const compact = compactSignals[index]
+    return (
+      /\bb[12]\b/.test(signal) ||
+      signal.includes('business 1') ||
+      signal.includes('business 2') ||
+      signal.includes('industrial') ||
+      compact === 'sgindustrial' ||
+      compact === 'b1' ||
+      compact === 'b2'
+    )
+  })
+
+  if (hasIndustrialSignal) {
+    return ['Industrial', 'Office']
+  }
+
+  const hasHospitalitySignal = signals.some((signal) =>
+    ['hotel', 'hospitality'].some((needle) => signal.includes(needle)),
+  )
+
+  if (hasHospitalitySignal) {
+    return ['Hospitality', 'Retail']
+  }
+
+  const hasSimLimSignal = signals.some((signal, index) => {
+    const compact = compactSignals[index]
+    return signal.includes('sim lim') || compact === 'simlimtower'
+  })
+
+  if (hasSimLimSignal) {
+    return ['Office', 'Retail']
+  }
+
+  const hasResidentialZoningSignal = zoningSignals.some((signal, index) => {
+    const compact = compactZoningSignals[index]
+    return (
+      signal.includes('residential') ||
+      signal.includes('housing') ||
+      compact === 'r'
+    )
+  })
+
+  if (hasResidentialZoningSignal) {
+    return ['Residential', 'Amenities']
+  }
+
+  const hasCommercialSignal = signals.some((signal, index) => {
+    const compact = compactSignals[index]
+    return (
+      signal.includes('commercial') ||
+      signal.includes('office') ||
+      signal.includes('retail') ||
+      signal.includes('shopping') ||
+      signal.includes('mall') ||
+      signal.includes('plaza') ||
+      signal.includes('mixed use') ||
+      compact === 'c' ||
+      compact === 'sgcommercial' ||
+      compact === 'mixeduse'
+    )
+  })
+
+  if (hasCommercialSignal) {
+    return ['Office', 'Retail']
+  }
+
+  const hasResidentialSignal = signals.some((signal, index) => {
+    const compact = compactSignals[index]
+    return (
+      signal.includes('residential') ||
+      signal.includes('housing') ||
+      compact === 'r'
+    )
+  })
+
+  if (hasResidentialSignal) {
+    return ['Residential', 'Amenities']
+  }
+
+  return null
+}
+
 function uniqueScenarios(
   scenarios: readonly DevelopmentScenario[],
 ): DevelopmentScenario[] {
@@ -187,15 +334,19 @@ function buildProgramDirection(
     capturedProperty.uraZoning?.useGroups?.[0]?.trim() ||
     'mixed_use'
 
+  const zoningProgramDrivers = deriveZoningProgramDrivers(capturedProperty)
   const primary =
-    optimizationCandidates[0]?.label ?? formatAssetTypeLabel(fallbackAssetType)
+    zoningProgramDrivers?.[0] ??
+    optimizationCandidates[0]?.label ??
+    formatAssetTypeLabel(fallbackAssetType)
   const secondaryCandidate = optimizationCandidates[1]
   const secondary =
-    secondaryCandidate &&
+    zoningProgramDrivers?.find((driver) => driver !== primary) ??
+    (secondaryCandidate &&
     secondaryCandidate.weight >= 15 &&
     secondaryCandidate.label !== primary
       ? secondaryCandidate.label
-      : null
+      : null)
 
   const programSummaryLabel = secondary
     ? `${primary.toLowerCase()}-led program with ${secondary.toLowerCase()} support`
@@ -247,6 +398,16 @@ function buildProgramDirection(
   }
 }
 
+function buildHeritageExplanation(
+  capturedProperty: SiteAcquisitionResult,
+): string {
+  const heritageName = capturedProperty.heritageContext?.overlay?.name?.trim()
+  if (heritageName) {
+    return `Heritage context detected: ${heritageName}. Capture prioritises a conservation-compatible starting path.`
+  }
+  return 'Heritage context is present, so Capture prioritises a conservation-compatible starting path.'
+}
+
 export function buildScenarioRecommendation(
   capturedProperty: SiteAcquisitionResult,
   options: BuildCaptureResultV2Options = {},
@@ -258,9 +419,7 @@ export function buildScenarioRecommendation(
   )
   const ruleChoice = chooseRecommendedScenario(capturedProperty)
 
-  const explicitOverride =
-    options.overrideScenario ??
-    (availableScenarios.length === 1 ? availableScenarios[0] : null)
+  const explicitOverride = options.overrideScenario ?? null
 
   const recommended = explicitOverride ?? ruleChoice.scenario
   const userOverride =
@@ -293,7 +452,7 @@ export function buildScenarioRecommendation(
           ? `${formatScenarioProductLabel(recommended)} is applied as a learnable preference candidate.`
           : `User-selected ${formatScenarioProductLabel(recommended)} overrides the default capture recommendation.`
     : recommended === 'heritage_property'
-      ? 'Heritage context is present, so Capture prioritises a conservation-compatible starting path.'
+      ? buildHeritageExplanation(capturedProperty)
       : recommended === 'existing_building'
         ? 'Existing bulk and current-code conditions favour a renovation-first starting point.'
         : recommended === 'underused_asset'

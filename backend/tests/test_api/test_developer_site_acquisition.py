@@ -666,6 +666,47 @@ async def test_developer_log_property_resolves_configured_industrial_controls_wi
 
 
 @pytest.mark.asyncio
+async def test_developer_log_property_resolves_configured_commercial_controls_without_live_scan(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    property_id = uuid4()
+    stub_logger = _StubDeveloperLogger(_build_stub_payload(property_id))
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+    monkeypatch.setattr(
+        developers_api.settings,
+        "CAPTURE_LIVE_SOURCE_SCAN_ENABLED",
+        False,
+    )
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.2801,
+            "longitude": 103.8198,
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    envelope = response.json()["build_envelope"]
+    rule_status = envelope["rule_corpus_status"]
+
+    assert envelope["zone_code"] == "C1"
+    assert envelope["setback_front_m"] == 7.5
+    assert envelope["setback_rear_m"] == 7.5
+    assert envelope["setback_side_m"] == 3.0
+    assert envelope["step_backs"] == [{"level": 8.0, "depth_m": 5.0}]
+    assert rule_status["resolved_by"]["setbacks"] == "official_source_registry"
+    assert rule_status["resolved_by"]["step_backs"] == "official_source_registry"
+    assert "setbacks" not in rule_status["unresolved_fields"]
+    assert "step_backs" not in rule_status["unresolved_fields"]
+    source_gap_fields = {gap["field"] for gap in rule_status["official_source_gaps"]}
+    assert "setbacks" not in source_gap_fields
+    assert "step_backs" not in source_gap_fields
+
+
+@pytest.mark.asyncio
 async def test_developer_log_property_re_resolves_height_limit_after_ingestion(
     app_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,

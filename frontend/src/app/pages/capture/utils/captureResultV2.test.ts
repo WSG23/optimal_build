@@ -191,8 +191,8 @@ describe('captureResultV2', () => {
     expect(recommendation.defaultRecommended).toBe('heritage_property')
     expect(recommendation.confidence).toBe('high')
     expect(recommendation.reasonCodes).toContain('HERITAGE_OVERLAY_DETECTED')
-    expect(recommendation.programDirectionLabel).toBe('Retail-led heritage mix')
-    expect(recommendation.programDrivers).toEqual(['Retail', 'Amenities'])
+    expect(recommendation.programDirectionLabel).toBe('Office-led heritage mix')
+    expect(recommendation.programDrivers).toEqual(['Office', 'Retail'])
   })
 
   it('honours an explicit override even when code logic would prefer renovation', () => {
@@ -214,6 +214,124 @@ describe('captureResultV2', () => {
       'Exploratory new construction override is active for this session.',
     )
     expect(recommendation.alternatives).toContain('existing_building')
+  })
+
+  it('does not let a single requested scenario replace the rule-based recommendation', () => {
+    const capturedProperty = buildCapturedProperty()
+    capturedProperty.buildEnvelope.currentGfaSqm = 25000
+    capturedProperty.buildEnvelope.maxBuildableGfaSqm = 14000
+    capturedProperty.heritageContext = {
+      flag: true,
+      risk: 'medium',
+      notes: ['Source: NHB Historic Site'],
+      constraints: ['Heritage record.'],
+      assumption: 'Heritage overlay detected.',
+      overlay: {
+        name: 'Central Sikh Temple',
+        source: 'NHB Historic Site',
+        heritagePremiumPct: null,
+      },
+    }
+
+    const recommendation = buildScenarioRecommendation(capturedProperty, {
+      selectedScenarios: ['existing_building'],
+    })
+
+    expect(recommendation.recommended).toBe('heritage_property')
+    expect(recommendation.defaultRecommended).toBe('heritage_property')
+    expect(recommendation.userOverride).toBe(false)
+    expect(recommendation.reasonCodes).toContain('HERITAGE_OVERLAY_DETECTED')
+    expect(recommendation.explanation).toBe(
+      'Heritage context detected: Central Sikh Temple. Capture prioritises a conservation-compatible starting path.',
+    )
+  })
+
+  it('uses industrial zoning signals before office defaults for renovation program direction', () => {
+    const capturedProperty = buildCapturedProperty()
+    capturedProperty.buildEnvelope.zoneCode = 'B1'
+    capturedProperty.buildEnvelope.zoneDescription = 'Business 1'
+    capturedProperty.buildEnvelope.currentGfaSqm = 25000
+    capturedProperty.buildEnvelope.maxBuildableGfaSqm = 12500
+    capturedProperty.buildEnvelope.additionalPotentialGfaSqm = 0
+    capturedProperty.existingUse = 'Office'
+    capturedProperty.uraZoning = {
+      ...capturedProperty.uraZoning,
+      zoneCode: 'B1',
+      zoneDescription: 'Business 1',
+      useGroups: ['Office'],
+    }
+
+    const recommendation = buildScenarioRecommendation(capturedProperty)
+
+    expect(recommendation.recommended).toBe('existing_building')
+    expect(recommendation.programDirectionLabel).toBe(
+      'Industrial-led renovation mix',
+    )
+    expect(recommendation.programDrivers).toEqual(['Industrial', 'Office'])
+    expect(recommendation.programDirectionSummary).toBe(
+      'Capture is shaping the starter model around industrial-led program with office support for renovation within the current-code envelope.',
+    )
+  })
+
+  it('uses Sim Lim commercial address signals before stale residential defaults', () => {
+    const capturedProperty = buildCapturedProperty()
+    capturedProperty.address.fullAddress =
+      '10 Jln Besar, #11-06 Sim Lim Tower, Singapore 208787'
+    capturedProperty.address.district = 'Rochor'
+    capturedProperty.propertyInfo.propertyName = 'Sim Lim Tower'
+    capturedProperty.buildEnvelope.zoneCode = 'R'
+    capturedProperty.buildEnvelope.zoneDescription = 'Residential'
+    capturedProperty.buildEnvelope.currentGfaSqm = 25000
+    capturedProperty.buildEnvelope.maxBuildableGfaSqm = 14000
+    capturedProperty.buildEnvelope.additionalPotentialGfaSqm = 0
+    capturedProperty.existingUse = 'Residential'
+    capturedProperty.uraZoning = {
+      ...capturedProperty.uraZoning,
+      zoneCode: 'R',
+      zoneDescription: 'Residential',
+      useGroups: ['Residential'],
+    }
+
+    const recommendation = buildScenarioRecommendation(capturedProperty)
+
+    expect(recommendation.recommended).toBe('existing_building')
+    expect(recommendation.programDirectionLabel).toBe(
+      'Office-led renovation mix',
+    )
+    expect(recommendation.programDrivers).toEqual(['Office', 'Retail'])
+    expect(recommendation.programDirectionSummary).toBe(
+      'Capture is shaping the starter model around office-led program with retail support for renovation within the current-code envelope.',
+    )
+  })
+
+  it('uses residential zoning before generic commercial and home-office fallbacks', () => {
+    const capturedProperty = buildCapturedProperty()
+    capturedProperty.address.fullAddress = '45 Burghley Dr, Singapore 559022'
+    capturedProperty.address.district = 'Serangoon'
+    capturedProperty.propertyInfo.propertyName = '45 Burghley Drive'
+    capturedProperty.buildEnvelope.zoneCode = 'R'
+    capturedProperty.buildEnvelope.zoneDescription = 'Residential'
+    capturedProperty.buildEnvelope.currentGfaSqm = 25000
+    capturedProperty.buildEnvelope.maxBuildableGfaSqm = 14000
+    capturedProperty.buildEnvelope.additionalPotentialGfaSqm = 0
+    capturedProperty.existingUse = 'Commercial Building'
+    capturedProperty.uraZoning = {
+      ...capturedProperty.uraZoning,
+      zoneCode: 'R',
+      zoneDescription: 'Residential',
+      useGroups: ['Residential', 'Home Office'],
+    }
+
+    const recommendation = buildScenarioRecommendation(capturedProperty)
+
+    expect(recommendation.recommended).toBe('existing_building')
+    expect(recommendation.programDirectionLabel).toBe(
+      'Residential-led renovation mix',
+    )
+    expect(recommendation.programDrivers).toEqual(['Residential', 'Amenities'])
+    expect(recommendation.programDirectionSummary).toBe(
+      'Capture is shaping the starter model around residential-led program with amenities support for renovation within the current-code envelope.',
+    )
   })
 
   it('maps starter-model and analysis fields into CaptureResultV2', () => {

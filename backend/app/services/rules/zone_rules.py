@@ -96,9 +96,14 @@ SINGAPORE_RULE_SOURCE_REGISTRY: dict[str, list[dict[str, Any]]] = {
             "url": "https://www.ura.gov.sg/Corporate/Guidelines/Development-Control",
             "configured_values_by_zone": {
                 # First normalized Singapore setback fixture. Scoped to the
-                # current B1/industrial demo path until more zone/use-specific
-                # official controls are ingested and reviewed.
+                # current B1/industrial and commercial demo paths until more
+                # zone/use-specific official controls are ingested and reviewed.
                 "SG:industrial": {
+                    "front": "7.5",
+                    "rear": "7.5",
+                    "side": "3",
+                },
+                "SG:commercial": {
                     "front": "7.5",
                     "rear": "7.5",
                     "side": "3",
@@ -114,9 +119,15 @@ SINGAPORE_RULE_SOURCE_REGISTRY: dict[str, list[dict[str, Any]]] = {
             "url": "https://www.ura.gov.sg/Corporate/Guidelines/Development-Control",
             "configured_values_by_zone": {
                 # First normalized Singapore step-back fixture. Scoped to the
-                # current B1/industrial demo path until additional official
-                # zone/use controls are ingested and reviewed.
+                # current B1/industrial and commercial demo paths until
+                # additional official zone/use controls are ingested and reviewed.
                 "SG:industrial": [
+                    {
+                        "level": "8",
+                        "depth_m": "5",
+                    }
+                ],
+                "SG:commercial": [
                     {
                         "level": "8",
                         "depth_m": "5",

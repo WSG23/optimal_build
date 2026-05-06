@@ -237,3 +237,31 @@ async def test_get_zoning_rules_for_zone_resolves_configured_industrial_sources(
     assert air_rights_source["authority"] == "URA/CAAS"
     assert air_rights_source["resolution_workflow"] == "project_specific_clearance"
     assert "site-specific aviation" in air_rights_source["review_note"]
+
+
+@pytest.mark.asyncio
+async def test_get_zoning_rules_for_zone_resolves_configured_commercial_deeper_controls(
+    async_session_factory,
+) -> None:
+    async with async_session_factory() as session:
+        result = await get_zoning_rules_for_zone(session, "C1")
+
+    assert result.rule_corpus_status is not None
+    assert result.rule_corpus_status["zone_code"] == "SG:commercial"
+    assert result.setback_front_m == 7.5
+    assert result.setback_rear_m == 7.5
+    assert result.setback_side_m == 3
+    assert result.step_backs == [{"level": 8.0, "depth_m": 5.0}]
+    assert result.rule_corpus_status["resolved_by"]["setbacks"] == (
+        "official_source_registry"
+    )
+    assert result.rule_corpus_status["resolved_by"]["step_backs"] == (
+        "official_source_registry"
+    )
+    assert "setbacks" not in result.rule_corpus_status["unresolved_fields"]
+    assert "step_backs" not in result.rule_corpus_status["unresolved_fields"]
+    source_gap_fields = {
+        gap["field"] for gap in result.rule_corpus_status["official_source_gaps"]
+    }
+    assert "setbacks" not in source_gap_fields
+    assert "step_backs" not in source_gap_fields
