@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from '../i18n'
 import { useDeveloperMode } from '../contexts/useDeveloperMode'
-import { useProject } from '../contexts/useProject'
+import { useOptionalProject } from '../contexts/useProject'
 
 export type NavGroup = {
   title?: string
@@ -11,7 +11,8 @@ export type NavGroup = {
 export function useNavGroups(): NavGroup[] {
   const { t } = useTranslation()
   const { isDeveloperMode } = useDeveloperMode()
-  const { currentProject } = useProject()
+  const projectContext = useOptionalProject()
+  const currentProject = projectContext?.currentProject ?? null
 
   const projectBase = currentProject?.id
     ? `/projects/${currentProject.id}`

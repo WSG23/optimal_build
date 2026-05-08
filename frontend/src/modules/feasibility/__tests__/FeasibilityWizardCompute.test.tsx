@@ -31,6 +31,11 @@ vi.mock('../../../contexts/useProject', () => ({
     isProjectLoading: false,
     projectError: null,
   }),
+  useOptionalProject: () => ({
+    currentProject: { id: 'proj-1', name: 'Test Project' },
+    isProjectLoading: false,
+    projectError: null,
+  }),
 }))
 
 describe('FeasibilityWizard Compute Flow', () => {

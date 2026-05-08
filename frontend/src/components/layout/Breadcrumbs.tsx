@@ -3,7 +3,7 @@ import { Breadcrumbs as MuiBreadcrumbs, Typography } from '@mui/material'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 
 import { Link, useRouterPath } from '../../router'
-import { useProject } from '../../contexts/useProject'
+import { useOptionalProject } from '../../contexts/useProject'
 
 /**
  * Maps project-scoped URL path segments to human-readable display names.
@@ -97,7 +97,8 @@ const currentSx = {
  */
 export function ProjectBreadcrumbs() {
   const path = useRouterPath()
-  const { currentProject } = useProject()
+  const projectContext = useOptionalProject()
+  const currentProject = projectContext?.currentProject ?? null
 
   const segments = useMemo(
     () => parseProjectBreadcrumbs(path, currentProject?.name),

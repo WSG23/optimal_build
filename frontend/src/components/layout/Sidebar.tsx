@@ -5,7 +5,7 @@ import {
   DEVELOPER_NAV_ITEMS,
   resolveNavPath,
 } from '../../app/navigation'
-import { useProject } from '../../contexts/useProject'
+import { useOptionalProject } from '../../contexts/useProject'
 
 type NavGroup = {
   title: string
@@ -51,7 +51,8 @@ const DEVELOPER_GROUPS = [
 export function Sidebar({ workspace = 'developer' }: SidebarProps) {
   const path = useRouterPath()
   const theme = useTheme()
-  const { currentProject } = useProject()
+  const projectContext = useOptionalProject()
+  const currentProject = projectContext?.currentProject ?? null
 
   const navSource =
     workspace === 'agent' ? AGENT_NAV_ITEMS : DEVELOPER_NAV_ITEMS

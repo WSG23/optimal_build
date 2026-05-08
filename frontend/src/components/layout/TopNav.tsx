@@ -21,7 +21,7 @@ import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined'
 import SearchIcon from '@mui/icons-material/Search'
 import { Link, useRouterPath } from '../../router'
 import { useDeveloperMode } from '../../contexts/useDeveloperMode'
-import { useProject } from '../../contexts/useProject'
+import { useOptionalProject } from '../../contexts/useProject'
 import { useNavGroups } from '../../hooks/useNavGroups'
 import { useNavReveal } from '../../hooks/useNavReveal'
 import { useScrollAffordance } from '../../hooks/useScrollAffordance'
@@ -47,7 +47,8 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
   const path = useRouterPath()
   const theme = useTheme()
   const { isDeveloperMode } = useDeveloperMode()
-  const { currentProject } = useProject()
+  const projectContext = useOptionalProject()
+  const currentProject = projectContext?.currentProject ?? null
   const navGroups = useNavGroups()
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
 
@@ -604,7 +605,7 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
                     />
                   }
                 >
-                  <ProjectSelector />
+                  {projectContext ? <ProjectSelector /> : null}
                   <TopUtilityMenu />
                 </Suspense>
               </ErrorBoundary>

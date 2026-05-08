@@ -66,11 +66,9 @@ describe('ProjectListPage', () => {
     expect(
       screen.getByRole('button', { name: /open sample project/i }),
     ).toBeInTheDocument()
-    expect(screen.getByText('No projects yet')).toBeInTheDocument()
+    expect(screen.getByText('Welcome to Optimal Build')).toBeInTheDocument()
     expect(
-      screen.getByText(
-        'Start with the deal calculator, import an existing workbook, or open the seeded Singapore sample project.',
-      ),
+      screen.getByText(/Start by screening a deal, then build your project/i),
     ).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /create project/i }))

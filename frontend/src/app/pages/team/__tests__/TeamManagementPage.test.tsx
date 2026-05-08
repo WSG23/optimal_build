@@ -162,7 +162,9 @@ describe('TeamManagementPage', () => {
     it('renders page header with project name', async () => {
       renderWithProviders(<TeamManagementPage />)
 
-      expect(screen.getByText(/Team Management/i)).toBeInTheDocument()
+      expect(
+        screen.getByRole('heading', { name: /Consultant Coordination/i }),
+      ).toBeInTheDocument()
       expect(screen.getByText(/Project: Test Project/i)).toBeInTheDocument()
     })
 
@@ -328,6 +330,12 @@ describe('TeamManagementPage', () => {
 
       const removeButtons = screen.getAllByText(/Remove/i)
       fireEvent.click(removeButtons[0])
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument()
+      })
+
+      fireEvent.click(screen.getAllByText(/^Remove$/i).at(-1)!)
 
       await waitFor(() => {
         expect(teamApi.removeMember).toHaveBeenCalledWith('project-1', 'user-1')
