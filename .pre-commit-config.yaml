@@ -82,7 +82,7 @@ repos:
 
       - id: mypy-critical
         name: mypy (critical paths - blocks on new errors)
-        entry: bash -c 'cd backend && ../.venv/bin/mypy app/api/ app/schemas/ --config-file=../mypy.ini --no-error-summary --exclude "(app/api/v1/test_users\.py|app/schemas/buildable\.py|app/api/v1/users_secure\.py)"'
+        entry: bash -c 'cd backend && if [ -x ../.venv/bin/python ]; then PYTHON=../.venv/bin/python; else PYTHON=python3; fi; "$PYTHON" -m mypy app/api/ app/schemas/ --config-file=../mypy.ini --no-error-summary --exclude "(app/api/v1/test_users\.py|app/schemas/buildable\.py|app/api/v1/users_secure\.py)"'
         language: system
         types: [python]
         pass_filenames: false
@@ -144,7 +144,7 @@ repos:
           - sqlalchemy[asyncio]==2.0.23
           - asyncpg==0.29.0
           - alembic==1.13.0
-          - python-multipart==0.0.22
+          - python-multipart==0.0.27
           - bcrypt==5.0.0
           - httpx==0.25.2
           - python-dateutil==2.8.2

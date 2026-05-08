@@ -52,6 +52,16 @@ jobs:
       - name: Validate warning allowlist
         run: python scripts/check_warning_allowlist.py --fail-on-expired
 
+      - name: Set up Node.js for pre-commit hooks
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install frontend pre-commit dependencies
+        run: |
+          npm --prefix frontend ci
+          npm --prefix ui-admin ci
+
       - name: Run pre-commit hooks
         run: pre-commit run --all-files --show-diff-on-failure
 
