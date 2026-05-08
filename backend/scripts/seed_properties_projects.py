@@ -13,6 +13,7 @@ from uuid import UUID, uuid4
 import structlog
 
 from app.core.database import AsyncSessionLocal, engine
+from app.models import load_model_modules
 from app.models.developer_checklists import DeveloperChecklistTemplate
 from app.models.market import YieldBenchmark
 from app.models.projects import ProjectPhase, ProjectType
@@ -481,6 +482,7 @@ async def seed_properties_and_projects(
 
 
 async def _run_async(reset_existing: bool) -> SeedSummary:
+    load_model_modules()
     async with engine.begin() as conn:
         await conn.run_sync(Property.metadata.create_all)
 
