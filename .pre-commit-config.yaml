@@ -93,7 +93,9 @@ repos:
     rev: v4.6.0
     hooks:
       - id: end-of-file-fixer
+        exclude: ^(frontend|ui-admin)/node_modules/
       - id: trailing-whitespace
+        exclude: ^(frontend|ui-admin)/node_modules/
       - id: check-yaml
         args: [--allow-multiple-documents, --unsafe]
         exclude: ^infra/helm/
