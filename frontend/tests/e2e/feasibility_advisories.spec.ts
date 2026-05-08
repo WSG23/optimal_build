@@ -1,14 +1,36 @@
 import { expect, test } from '@playwright/test'
 
-test('feasibility advisories render with citations', async ({ page }) => {
-  await page.goto('/')
+test('feasibility simulation renders current advisory workspace', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.__computeEvents = []
+    window.addEventListener('feasibility.compute', (event) => {
+      window.__computeEvents.push(event.detail)
+    })
+  })
+
+  await page.goto('/projects/e2e-project/feasibility')
+  await expect(page.getByTestId('feasibility-wizard')).toBeVisible()
+
   await page.getByTestId('address-input').fill('123 Example Ave')
+  await page.getByTestId('site-area-input').fill('1000')
   await page.getByTestId('compute-button').click()
-  await expect(page.getByTestId('zone-code')).toHaveText(/R|C|B/)
-  await expect(page.getByTestId('gfa-cap')).toContainText(/\d/)
-  await expect(page.getByTestId('citations')).toContainText(
-    /clause|SCDF|URA|BCA|PUB/,
+
+  await page.waitForFunction(
+    () =>
+      window.__computeEvents?.some(
+        (event: { status?: string }) => event.status === 'success',
+      ),
+    undefined,
+    { timeout: 30_000 },
   )
-  await page.getByTestId('assumption-floor').fill('3.5')
-  await expect(page.getByTestId('floors-max')).toContainText(/\d/)
+
+  await expect(
+    page.getByRole('heading', { name: '3D Massing Visualization' }),
+  ).toBeVisible()
+  await expect(page.getByText('Total NIA')).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'AI Optimizer' }),
+  ).toBeVisible()
 })

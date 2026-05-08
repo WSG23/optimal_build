@@ -509,6 +509,10 @@ jobs:
         if: needs.changes.outputs.frontend == 'true'
         run: npm --prefix frontend run test:coverage
 
+      - name: Build frontend for end-to-end tests
+        if: needs.changes.outputs.frontend == 'true'
+        run: npm --prefix frontend run build
+
       - name: Run frontend end-to-end tests
         env:
           PLAYWRIGHT_SKIP_BROWSER_INSTALL: '1'
