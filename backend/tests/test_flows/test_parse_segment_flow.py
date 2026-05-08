@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
 
 import pytest
 
@@ -12,6 +13,56 @@ from app.models.rkp import RefClause, RefDocument, RefSource
 from app.services.reference_storage import ReferenceStorage
 from flows.parse_segment import parse_reference_documents
 from sqlalchemy import select
+
+parse_segment_module = importlib.import_module("flows.parse_segment")
+
+
+async def test_parse_reference_documents_loads_model_registry_before_query(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[object] = []
+
+    class FakeSession:
+        async def __aenter__(self) -> "FakeSession":
+            return self
+
+        async def __aexit__(self, *_: object) -> None:
+            return None
+
+        async def execute(self, _statement: object) -> object:
+            calls.append("query")
+
+            class FakeResult:
+                def scalars(self) -> "FakeResult":
+                    return self
+
+                def all(self) -> list[object]:
+                    return []
+
+            return FakeResult()
+
+        async def commit(self) -> None:
+            calls.append("commit")
+
+    class FakeSessionFactory:
+        def __call__(self) -> FakeSession:
+            return FakeSession()
+
+    monkeypatch.setattr(
+        parse_segment_module,
+        "load_model_modules",
+        lambda: calls.append("models-loaded"),
+    )
+
+    processed = await parse_segment_module.parse_reference_documents(
+        FakeSessionFactory(),
+        storage=object(),
+        parser=object(),
+    )
+
+    assert processed == []
+    assert calls[0] == "models-loaded"
+    assert calls[1:] == ["query", "commit"]
 
 
 @pytest.mark.asyncio

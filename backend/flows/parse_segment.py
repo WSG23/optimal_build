@@ -18,6 +18,7 @@ if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.core.database import AsyncSessionLocal
+from app.models import load_model_modules
 from app.models.rkp import RefClause, RefDocument, RefSource
 from app.services.reference_parsers import ClauseParser, ParsedClause
 from app.services.reference_storage import ReferenceStorage
@@ -34,6 +35,7 @@ async def parse_reference_documents(
 ) -> list[int]:
     """Parse pending ``RefDocument`` records into ``RefClause`` entries."""
 
+    load_model_modules()
     storage = storage or ReferenceStorage()
     parser = parser or ClauseParser()
     processed: list[int] = []
@@ -158,6 +160,7 @@ async def _run_once(
 
 
 async def _collect_counts() -> tuple[int, int]:
+    load_model_modules()
     async with AsyncSessionLocal() as session:
         documents = (await session.execute(select(RefDocument))).scalars().all()
         clauses = (await session.execute(select(RefClause))).scalars().all()
