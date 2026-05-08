@@ -8,7 +8,7 @@ describe('capturePropertyForDevelopment', () => {
   })
 
   it('maps deeper envelope controls from the developer capture response', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(
         JSON.stringify({
           property_id: 'prop-456',
@@ -21,11 +21,26 @@ describe('capturePropertyForDevelopment', () => {
             zone_code: 'B2',
             zone_description: 'Industrial',
             plot_ratio: 2.5,
+            special_conditions: 'non_standard_or_non_developable_control',
+            development_control_status: 'non_standard_or_non_developable',
+            source: 'ref_zoning_layer',
+            source_reason: 'parcel_dominant_zoning',
           },
           existing_use: 'industrial',
           property_info: {
             site_area_sqm: 5600,
             gross_floor_area_sqm: 12000,
+            current_use: 'Hotel / lodging',
+            current_use_evidence: [
+              {
+                use: 'Hotel / lodging',
+                source: 'google_places_autocomplete',
+                confidence: 'medium',
+                basis: 'Selected place is tagged as lodging.',
+                place_name: 'lyf one-north Singapore',
+                place_types: ['lodging', 'point_of_interest'],
+              },
+            ],
           },
           nearby_amenities: {
             mrt_stations: [],
@@ -46,6 +61,7 @@ describe('capturePropertyForDevelopment', () => {
             zone_description: 'Industrial',
             site_area_sqm: 5600,
             allowable_plot_ratio: 2.5,
+            gross_plot_ratio: 2.5,
             max_buildable_gfa_sqm: 14000,
             current_gfa_sqm: 12000,
             additional_potential_gfa_sqm: 2000,
@@ -101,13 +117,36 @@ describe('capturePropertyForDevelopment', () => {
     const result = await capturePropertyForDevelopment({
       latitude: 1.331096,
       longitude: 103.6977849,
+      submittedAddress: '28 Soon Lee Rd, Singapore 628083',
+      placeId: 'google-place-123',
+      placeName: 'lyf one-north Singapore',
+      placeTypes: ['lodging', 'point_of_interest'],
       developmentScenarios: ['existing_building'],
       jurisdictionCode: 'SG',
+      currentGfaSqm: 12000,
+      currentGfaSource: 'approved plans',
     })
 
+    const [, requestInit] = fetchMock.mock.calls[0] as [
+      RequestInfo | URL,
+      RequestInit,
+    ]
+    expect(JSON.parse(String(requestInit.body))).toMatchObject({
+      latitude: 1.331096,
+      longitude: 103.6977849,
+      submitted_address: '28 Soon Lee Rd, Singapore 628083',
+      place_id: 'google-place-123',
+      place_name: 'lyf one-north Singapore',
+      place_types: ['lodging', 'point_of_interest'],
+      development_scenarios: ['existing_building'],
+      jurisdiction_code: 'SG',
+      current_gfa_sqm: 12000,
+      current_gfa_source: 'approved plans',
+    })
     expect(result.buildEnvelope).toMatchObject({
       zoneCode: 'B2',
       allowablePlotRatio: 2.5,
+      grossPlotRatio: 2.5,
       setbackFrontM: 7.5,
       setbackRearM: 5,
       setbackSideM: 3,
@@ -123,5 +162,46 @@ describe('capturePropertyForDevelopment', () => {
         unresolved_fields: ['air_rights_note'],
       },
     })
+    expect(result.uraZoning).toMatchObject({
+      zoneCode: 'B2',
+      specialConditions: 'non_standard_or_non_developable_control',
+      developmentControlStatus: 'non_standard_or_non_developable',
+      source: 'ref_zoning_layer',
+      sourceReason: 'parcel_dominant_zoning',
+    })
+    expect(result.propertyInfo?.currentUse).toBe('Hotel / lodging')
+    expect(result.propertyInfo?.currentUseEvidence?.[0]).toMatchObject({
+      use: 'Hotel / lodging',
+      source: 'google_places_autocomplete',
+      confidence: 'medium',
+      placeName: 'lyf one-north Singapore',
+      placeTypes: ['lodging', 'point_of_interest'],
+    })
+  })
+
+  it('surfaces structured developer capture errors as readable messages', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          detail:
+            'Submitted address does not match the resolved map point. Please re-geocode.',
+        }),
+        {
+          status: 409,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      ),
+    )
+
+    await expect(
+      capturePropertyForDevelopment({
+        latitude: 1.3286413,
+        longitude: 103.698443,
+        submittedAddress: '25 Soon Lee Rd, Singapore 628083',
+        developmentScenarios: [],
+      }),
+    ).rejects.toThrow(
+      'Submitted address does not match the resolved map point. Please re-geocode.',
+    )
   })
 })

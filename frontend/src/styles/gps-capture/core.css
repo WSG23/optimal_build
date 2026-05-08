@@ -241,6 +241,17 @@
     padding-bottom: var(--ob-space-075); /* Align with input text baseline */
 }
 
+.gps-form__coordinate-source {
+    margin: calc(var(--ob-space-025) * -1) 0 0;
+    color: var(--ob-color-text-muted);
+    font-size: var(--ob-font-size-2xs);
+    line-height: var(--ob-line-height-snug);
+}
+
+.gps-form__coordinate-source span {
+    color: var(--ob-color-text-secondary);
+}
+
 /* ── Ghost Inputs — element-qualified selectors for specificity ── */
 
 input.gps-input-ghost,

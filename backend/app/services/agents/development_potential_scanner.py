@@ -84,6 +84,28 @@ class DevelopmentPotentialScanner:
         self.finance = finance_calculator
         self.ura = ura_service
 
+    @staticmethod
+    def _resolve_zone_code(property_data: Property, zoning_info: Any) -> str:
+        zone_code = getattr(property_data, "zoning_code", None) or getattr(
+            zoning_info, "zone_code", None
+        )
+        if not zone_code:
+            raise ValueError(
+                "Zoning code is unavailable; ingest a real zoning layer or provide property zoning metadata."
+            )
+        return str(zone_code)
+
+    @staticmethod
+    def _resolve_plot_ratio(property_data: Property, zoning_info: Any) -> float:
+        plot_ratio = getattr(property_data, "plot_ratio", None)
+        if plot_ratio is None:
+            plot_ratio = getattr(zoning_info, "plot_ratio", None)
+        if plot_ratio is None:
+            raise ValueError(
+                "Plot ratio is unavailable; ingest a real zoning layer or provide property zoning metadata."
+            )
+        return float(plot_ratio)
+
     async def analyze_property(
         self,
         property_data: Property,
@@ -138,8 +160,8 @@ class DevelopmentPotentialScanner:
         # Calculate GFA potential using BuildableService
         buildable_input = BuildableInput(
             land_area=float(property_data.land_area_sqm or 0),
-            zone_code=property_data.zoning_code or zoning_info.zone_code,
-            plot_ratio=float(property_data.plot_ratio or zoning_info.plot_ratio),
+            zone_code=self._resolve_zone_code(property_data, zoning_info),
+            plot_ratio=self._resolve_plot_ratio(property_data, zoning_info),
         )
 
         buildable_result = await self.buildable.calculate_parameters(buildable_input)
@@ -189,8 +211,8 @@ class DevelopmentPotentialScanner:
         # Calculate redevelopment GFA potential
         buildable_input = BuildableInput(
             land_area=float(property_data.land_area_sqm or 0),
-            zone_code=property_data.zoning_code or zoning_info.zone_code,
-            plot_ratio=float(property_data.plot_ratio or zoning_info.plot_ratio),
+            zone_code=self._resolve_zone_code(property_data, zoning_info),
+            plot_ratio=self._resolve_plot_ratio(property_data, zoning_info),
         )
 
         buildable_result = await self.buildable.calculate_parameters(buildable_input)
@@ -284,7 +306,8 @@ class DevelopmentPotentialScanner:
         }
 
         # Get base template
-        base_mix = use_mix_templates.get(zoning_info.zone_description, {"mixed": 1.0})
+        zone_description = getattr(zoning_info, "zone_description", None)
+        base_mix = use_mix_templates.get(zone_description, {"mixed": 1.0})
 
         # Adjust based on market conditions and location factors
         adjusted_mix = self._apply_market_adjustments(base_mix, zoning_info, location)
@@ -467,20 +490,23 @@ class DevelopmentPotentialScanner:
         constraints = []
 
         # Height restrictions
-        if zoning_info.building_height_limit:
-            constraints.append(f"Height limit: {zoning_info.building_height_limit}m")
+        building_height_limit = getattr(zoning_info, "building_height_limit", None)
+        if building_height_limit:
+            constraints.append(f"Height limit: {building_height_limit}m")
 
         # Conservation status
         if property_data.is_conservation:
             constraints.append("Conservation requirements apply")
 
         # Site coverage
-        if zoning_info.site_coverage:
-            constraints.append(f"Maximum site coverage: {zoning_info.site_coverage}%")
+        site_coverage = getattr(zoning_info, "site_coverage", None)
+        if site_coverage:
+            constraints.append(f"Maximum site coverage: {site_coverage}%")
 
         # Special conditions
-        if zoning_info.special_conditions:
-            constraints.append(zoning_info.special_conditions)
+        special_conditions = getattr(zoning_info, "special_conditions", None)
+        if special_conditions:
+            constraints.append(special_conditions)
 
         # Tenure limitations
         if property_data.tenure_type != TenureType.FREEHOLD:
@@ -556,7 +582,7 @@ class DevelopmentPotentialScanner:
             opportunities.append("Prime CBD location")
 
         # Zoning advantages
-        if zoning_info.plot_ratio >= 10:
+        if (getattr(zoning_info, "plot_ratio", 0) or 0) >= 10:
             opportunities.append("High density development allowed")
 
         # Mixed use potential

@@ -41,8 +41,6 @@ export function UnifiedCapturePage() {
     longitude,
     address,
     selectedScenarios,
-    setLatitude,
-    setLongitude,
     setAddress,
     isCapturing,
     isScanning,
@@ -55,6 +53,7 @@ export function UnifiedCapturePage() {
     siteAcquisitionResult,
     geocodeError,
     isGeocoding,
+    coordinateSourceLabel,
     mapContainerRef,
     addressInputRef,
     mapError,
@@ -201,7 +200,7 @@ export function UnifiedCapturePage() {
                       className="gps-input-ghost gps-input-ghost--sm"
                       placeholder="-36.8485"
                       value={latitude}
-                      onChange={(e) => setLatitude(e.target.value)}
+                      readOnly
                       inputMode="decimal"
                     />
                   </div>
@@ -218,11 +217,17 @@ export function UnifiedCapturePage() {
                       className="gps-input-ghost gps-input-ghost--sm"
                       placeholder="174.7633"
                       value={longitude}
-                      onChange={(e) => setLongitude(e.target.value)}
+                      readOnly
                       inputMode="decimal"
                     />
                   </div>
                 </div>
+                {(latitude || longitude || coordinateSourceLabel) && (
+                  <p className="gps-form__coordinate-source">
+                    Coordinate source:{' '}
+                    <span>{coordinateSourceLabel ?? 'Not resolved yet'}</span>
+                  </p>
+                )}
               </fieldset>
 
               {/* ── Section 2: Mode + Action ── */}
@@ -264,10 +269,8 @@ export function UnifiedCapturePage() {
                       <RadarIcon />
                       <span>Scan &amp; Analyze</span>
                       <kbd className="gps-kbd">
-                        {navigator.platform?.includes('Mac')
-                          ? '\u2318'
-                          : 'Ctrl'}
-                        +\u23CE
+                        {navigator.platform?.includes('Mac') ? 'Cmd' : 'Ctrl'}
+                        +Enter
                       </kbd>
                     </>
                   </button>

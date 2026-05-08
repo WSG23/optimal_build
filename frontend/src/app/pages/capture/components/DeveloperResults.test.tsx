@@ -88,6 +88,7 @@ function buildResult(): SiteAcquisitionResult {
       zoneDescription: 'Commercial',
       siteAreaSqm: 5000,
       allowablePlotRatio: 4.2,
+      grossPlotRatio: 4.2,
       maxBuildableGfaSqm: 21000,
       currentGfaSqm: 18000,
       additionalPotentialGfaSqm: 3000,
@@ -539,6 +540,19 @@ describe('DeveloperResults', () => {
 
   it('renders the capture recommendation and starter-model summary from CaptureResultV2', () => {
     const result = buildResult()
+    result.propertyInfo = {
+      currentUse: 'Hotel / lodging',
+      currentUseEvidence: [
+        {
+          use: 'Hotel / lodging',
+          source: 'google_places_autocomplete',
+          confidence: 'medium',
+          basis: 'Selected place is tagged as lodging.',
+          placeName: 'lyf one-north Singapore',
+          placeTypes: ['lodging', 'point_of_interest'],
+        },
+      ],
+    }
     result.buildEnvelope.maxBuildableGfaSqm = result.buildEnvelope.currentGfaSqm
     result.buildEnvelope.additionalPotentialGfaSqm = 0
     result.previewJobs = [
@@ -713,12 +727,13 @@ describe('DeveloperResults', () => {
     expect(screen.getByText('Starter Model Status')).toBeInTheDocument()
     expect(screen.getByText('Starter Model Assumptions')).toBeInTheDocument()
     expect(screen.getByText('Decision Brief')).toBeInTheDocument()
-    expect(screen.getByText('Program')).toBeInTheDocument()
+    expect(screen.getByText("Today's zoning program")).toBeInTheDocument()
     expect(screen.getByText('Office-led renovation mix')).toBeInTheDocument()
-    expect(screen.getByText('Use basis')).toBeInTheDocument()
+    expect(screen.queryByText('Use basis')).not.toBeInTheDocument()
     expect(
-      screen.getByText('Office primary / Retail support'),
-    ).toBeInTheDocument()
+      screen.queryByText('Office primary / Retail support'),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText('Commercial (C)')).toBeInTheDocument()
     expect(
       screen.getByText(
         'Capture is shaping the starter model around office-led program with retail support for renovation within the current-code envelope.',
@@ -732,14 +747,21 @@ describe('DeveloperResults', () => {
     expect(screen.queryByText('Site input')).not.toBeInTheDocument()
     expect(screen.queryByText('Envelope source')).not.toBeInTheDocument()
     expect(screen.queryByText('Use Signals')).not.toBeInTheDocument()
+    expect(screen.queryByText('Program signals')).not.toBeInTheDocument()
     const detailsToggle = screen.getByRole('button', {
       name: /show data details/i,
     })
     expect(detailsToggle).toHaveAttribute('aria-expanded', 'false')
     fireEvent.click(detailsToggle)
     expect(detailsToggle).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByText('Program direction')).toBeInTheDocument()
-    expect(screen.getByText('Program basis')).toBeInTheDocument()
+    expect(
+      screen.getAllByText("Today's zoning program").length,
+    ).toBeGreaterThan(0)
+    expect(screen.queryByText('Program basis')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Zoning').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Commercial (C)').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('GPR').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('4.2').length).toBeGreaterThan(0)
     expect(screen.getByText('Capture completeness')).toBeInTheDocument()
     expect(
       screen.getByText(/6 capture inputs are still unresolved/i),
@@ -748,6 +770,11 @@ describe('DeveloperResults', () => {
     expect(screen.getByText('Site-specific')).toBeInTheDocument()
     expect(
       screen.getByText('Address and coordinates are site-specific.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Current use evidence')).toBeInTheDocument()
+    expect(screen.getByText('Current use signal')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Hotel \/ lodging \(lyf one-north Singapore\)/i),
     ).toBeInTheDocument()
     expect(screen.getByText('Envelope source')).toBeInTheDocument()
     expect(screen.getByText('Source unresolved')).toBeInTheDocument()
@@ -761,7 +788,7 @@ describe('DeveloperResults', () => {
         'Scenario-specific starter model is generated from the preview pipeline.',
       ),
     ).toBeInTheDocument()
-    expect(screen.getByText('Use Signals')).toBeInTheDocument()
+    expect(screen.getByText('Program signals')).toBeInTheDocument()
     expect(
       screen.getByText('The renovation starter model is ready for review.'),
     ).toBeInTheDocument()
@@ -1068,8 +1095,8 @@ describe('DeveloperResults', () => {
     )
 
     expect(screen.getByText('Decision Brief')).toBeInTheDocument()
-    expect(screen.getByText('Program')).toBeInTheDocument()
-    expect(screen.getByText('Use basis')).toBeInTheDocument()
+    expect(screen.getByText("Today's zoning program")).toBeInTheDocument()
+    expect(screen.queryByText('Use basis')).not.toBeInTheDocument()
     expect(screen.getByText('GFA envelope')).toBeInTheDocument()
     expect(screen.getByText('Code fit')).toBeInTheDocument()
     expect(screen.getByText('Official controls pending')).toBeInTheDocument()
@@ -1078,13 +1105,11 @@ describe('DeveloperResults', () => {
     expect(screen.getByText('Project clearance required')).toBeInTheDocument()
     expect(
       screen.getByText(
-        'air-rights clearance (URA/CAAS) requires site-specific aviation and height-clearance review before Capture treats it as resolved.',
+        'air-rights clearance (URA/CAAS) requires site-specific aviation and height-clearance review. Capture does not resolve this clearance.',
       ),
     ).toBeInTheDocument()
     expect(screen.queryByText('Capture completeness')).not.toBeInTheDocument()
-    expect(
-      screen.queryByText('Source ingestion status'),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByText('Control source status')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /show data details/i }))
     expect(screen.getByText('Capture completeness')).toBeInTheDocument()
@@ -1093,12 +1118,705 @@ describe('DeveloperResults', () => {
         '2 official controls still need source review (setbacks, step-backs).',
       ),
     ).toBeInTheDocument()
-    expect(screen.getByText('Source ingestion status')).toBeInTheDocument()
+    expect(screen.getByText('Control source status')).toBeInTheDocument()
     expect(
       screen.getByText(
-        'setbacks (URA), step-backs (URA) have official source categories identified. Ingestion and review are still pending.',
+        'setbacks (URA), step-backs (URA) have official source categories identified, but Capture has not mapped reviewed values for this zone yet.',
       ),
     ).toBeInTheDocument()
+  })
+
+  it('keeps Orchard commercial capture from becoming a false ground-up office assumption', () => {
+    const result = buildResult()
+    result.address = {
+      fullAddress: '2 Orchard Turn, Singapore 238801',
+      district: 'Orchard',
+    }
+    result.existingUse = 'Unknown'
+    result.propertyInfo = {
+      propertyName: 'ION Orchard',
+      tenure: null,
+      siteAreaSqm: null,
+      gfaApproved: null,
+      buildingHeight: null,
+      completionYear: null,
+      lastTransactionDate: null,
+      lastTransactionPrice: null,
+    }
+    result.optimizations = []
+    result.uraZoning = {
+      zoneCode: 'SG:commercial',
+      zoneDescription: 'Commercial',
+      plotRatio: 6.3,
+      buildingHeightLimit: null,
+      siteCoverage: null,
+      useGroups: ['Commercial'],
+      specialConditions: null,
+      source: 'ref_zoning_layer',
+    }
+    result.buildEnvelope = {
+      ...result.buildEnvelope,
+      zoneCode: 'SG:commercial',
+      zoneDescription: 'Commercial',
+      siteAreaSqm: null,
+      allowablePlotRatio: 6.3,
+      maxBuildableGfaSqm: null,
+      currentGfaSqm: null,
+      additionalPotentialGfaSqm: null,
+      buildingHeightLimitM: null,
+      siteCoveragePct: null,
+      sourceReference: 'SG Rule Registry (RefRule + zoning layers)',
+      ruleCorpusStatus: {
+        coverage_state: 'partial',
+        zone_code: 'SG:commercial',
+        zone_description: 'Commercial',
+        resolved_by: {
+          land_use: 'ref_zoning_layer',
+          plot_ratio: 'ref_zoning_layer',
+          setbacks: 'ref_rule',
+          step_backs: 'ref_rule',
+        },
+        unresolved_fields: [
+          'building_height_limit_m',
+          'site_coverage_pct',
+          'air_rights_note',
+        ],
+        project_clearance_required: [
+          {
+            field: 'air_rights_note',
+            candidate_sources: [
+              {
+                authority: 'URA/CAAS',
+                resolution_workflow: 'project_specific_clearance',
+              },
+            ],
+          },
+        ],
+        official_source_gaps: [
+          {
+            field: 'building_height_limit_m',
+            candidate_sources: [{ authority: 'URA' }],
+          },
+          {
+            field: 'site_coverage_pct',
+            candidate_sources: [{ authority: 'URA' }],
+          },
+        ],
+      },
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={['existing_building'] as DevelopmentScenario[]}
+      />,
+    )
+
+    expect(screen.getAllByText('Scenario pending').length).toBeGreaterThan(0)
+    expect(screen.getByText('Retail-led program pending')).toBeInTheDocument()
+    expect(
+      screen.queryByText('Retail primary / Office support'),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText('Commercial (SG:commercial)')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Current GFA is unavailable, so current-versus-code fit is pending.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Max GFA cannot be calculated until site area is resolved; current GFA is unavailable.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Existing GFA unavailable/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Current-code comparison pending/i),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/No existing GFA detected/i),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText(/Ground up baseline/i)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Retail-led renovation mix'),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /show data details/i }))
+    expect(
+      screen.getByText('Official land use + plot ratio'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getAllByText(
+        'air-rights clearance (URA/CAAS) requires site-specific aviation and height-clearance review. Capture does not resolve this clearance.',
+      ).length,
+    ).toBeGreaterThan(0)
+  })
+
+  it('explains missing max GFA as envelope-control gap when site area is known', () => {
+    const result = buildResult()
+    result.buildEnvelope.currentGfaSqm = null
+    result.buildEnvelope.maxBuildableGfaSqm = null
+    result.buildEnvelope.additionalPotentialGfaSqm = null
+    result.buildEnvelope.allowablePlotRatio = null
+    result.buildEnvelope.siteAreaSqm = 557
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={['existing_building'] as DevelopmentScenario[]}
+      />,
+    )
+
+    expect(
+      screen.getByText(
+        'Max GFA cannot be calculated until plot ratio or envelope controls are resolved; current GFA is unavailable.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('presents Marina mixed-use zoning as mixed-use instead of residential-only', () => {
+    const result = buildResult()
+    result.address = {
+      fullAddress: '10 Marina Boulevard, Singapore 018983',
+      district: 'Marina Bay',
+    }
+    result.existingUse = 'Unknown'
+    result.propertyInfo = {
+      propertyName: null,
+      tenure: null,
+      siteAreaSqm: null,
+      gfaApproved: null,
+      buildingHeight: null,
+      completionYear: null,
+      lastTransactionDate: null,
+      lastTransactionPrice: null,
+    }
+    result.optimizations = []
+    result.uraZoning = {
+      zoneCode: 'SG:mixed_use',
+      zoneDescription: null,
+      plotRatio: null,
+      buildingHeightLimit: null,
+      siteCoverage: null,
+      useGroups: ['Commercial', 'Residential', 'Office'],
+      specialConditions: null,
+      source: 'ref_zoning_layer',
+    }
+    result.buildEnvelope = {
+      ...result.buildEnvelope,
+      zoneCode: 'SG:mixed_use',
+      zoneDescription: null,
+      siteAreaSqm: null,
+      allowablePlotRatio: null,
+      maxBuildableGfaSqm: null,
+      currentGfaSqm: null,
+      additionalPotentialGfaSqm: null,
+      buildingHeightLimitM: null,
+      siteCoveragePct: null,
+      sourceReference: 'SG Rule Registry (RefRule + zoning layers)',
+      ruleCorpusStatus: {
+        coverage_state: 'partial',
+        zone_code: 'SG:mixed_use',
+        resolved_by: {
+          land_use: 'ref_zoning_layer',
+          setbacks: 'ref_rule',
+          step_backs: 'ref_rule',
+        },
+        unresolved_fields: [
+          'plot_ratio',
+          'building_height_limit_m',
+          'site_coverage_pct',
+          'setbacks',
+          'step_backs',
+          'air_rights_note',
+        ],
+        project_clearance_required: [
+          {
+            field: 'air_rights_note',
+            candidate_sources: [
+              {
+                authority: 'URA/CAAS',
+                resolution_workflow: 'project_specific_clearance',
+              },
+            ],
+          },
+        ],
+      },
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={['existing_building'] as DevelopmentScenario[]}
+      />,
+    )
+
+    expect(screen.getAllByText('Scenario pending').length).toBeGreaterThan(0)
+    expect(
+      screen.getByText('Mixed-use-led program pending'),
+    ).toBeInTheDocument()
+    expect(lastUsePreviewJobOptions).toMatchObject({
+      preferredScenario: 'existing_building',
+    })
+    expect(
+      screen.getByText('Starter model scenario: Renovation'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText('Mixed-use primary / Retail support'),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText('SG:mixed_use')).toBeInTheDocument()
+    expect(
+      screen.queryByText('Residential-led renovation mix'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Mixed-use-led renovation mix'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Residential primary / Amenities support'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('presents hotel zoning as hotel-led while scenario remains pending', () => {
+    const result = buildResult()
+    result.address = {
+      fullAddress: '10 Scotts Rd, Singapore 228211',
+      district: 'Orchard',
+    }
+    result.existingUse = 'Unknown'
+    result.propertyInfo = {
+      propertyName: null,
+      tenure: null,
+      siteAreaSqm: 9711.9,
+      gfaApproved: null,
+      buildingHeight: null,
+      completionYear: null,
+      lastTransactionDate: null,
+      lastTransactionPrice: null,
+    }
+    result.optimizations = []
+    result.uraZoning = {
+      zoneCode: 'SG:hotel',
+      zoneDescription: 'Hotel',
+      plotRatio: 4.2,
+      buildingHeightLimit: null,
+      siteCoverage: null,
+      useGroups: ['Hotel', 'Retail'],
+      specialConditions: null,
+      source: 'ref_zoning_layer',
+    }
+    result.buildEnvelope = {
+      ...result.buildEnvelope,
+      zoneCode: 'SG:hotel',
+      zoneDescription: 'Hotel',
+      siteAreaSqm: 9711.9,
+      allowablePlotRatio: 4.2,
+      maxBuildableGfaSqm: 40790,
+      currentGfaSqm: null,
+      additionalPotentialGfaSqm: null,
+      buildingHeightLimitM: null,
+      siteCoveragePct: null,
+      sourceReference: 'SG Rule Registry (RefRule + zoning layers)',
+      ruleCorpusStatus: {
+        coverage_state: 'partial',
+        zone_code: 'SG:hotel',
+        resolved_by: {
+          land_use: 'ref_zoning_layer',
+          plot_ratio: 'ref_zoning_layer',
+          site_area: 'ref_parcel',
+        },
+        unresolved_fields: [
+          'building_height_limit_m',
+          'site_coverage_pct',
+          'setbacks',
+          'step_backs',
+        ],
+        official_source_gaps: [
+          {
+            field: 'height_limit_m',
+            candidate_sources: [{ authority: 'URA' }],
+          },
+        ],
+      },
+    }
+    previewJobsByScenarioValue = {
+      existing_building: {
+        id: 'preview-envelope',
+        propertyId: 'prop-123',
+        scenario: 'existing_building',
+        status: 'ready',
+        previewUrl: '/static/dev-previews/example/envelope.gltf',
+        metadataUrl: '/static/dev-previews/example/envelope.json',
+        thumbnailUrl: null,
+        assetVersion: '20260506232000',
+        requestedAt: '2026-05-06T23:20:00Z',
+        startedAt: '2026-05-06T23:20:01Z',
+        finishedAt: '2026-05-06T23:20:10Z',
+        message: null,
+        geometryDetailLevel: 'medium',
+      },
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={['existing_building'] as DevelopmentScenario[]}
+      />,
+    )
+
+    expect(screen.getAllByText('Scenario pending').length).toBeGreaterThan(0)
+    expect(screen.getByText('Hotel-led program pending')).toBeInTheDocument()
+    expect(
+      screen.queryByText('Hotel primary / Retail support'),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText('Hotel (SG:hotel)')).toBeInTheDocument()
+    expect(
+      screen.queryByText('Retail-led program pending'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Current GFA unavailable for comparison with 40,790 sqm current-code max.',
+      ),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /show data details/i }))
+    expect(screen.getByText('Envelope starter model')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Envelope-based starter model is generated from the preview pipeline while scenario selection remains pending.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Control source status')).toBeInTheDocument()
+    expect(screen.getByText('Control source not mapped')).toBeInTheDocument()
+    expect(
+      screen.queryByText('Source ingestion status'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Source identified, not ingested'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('presents business park white zoning as business park led', () => {
+    const result = buildResult()
+    result.address = {
+      fullAddress: '1 Fusionopolis Way, Singapore 138632',
+      district: 'one-north',
+    }
+    result.existingUse = 'Unknown'
+    result.propertyInfo = {
+      propertyName: null,
+      tenure: null,
+      siteAreaSqm: 34496.6,
+      gfaApproved: null,
+      buildingHeight: null,
+      completionYear: null,
+      lastTransactionDate: null,
+      lastTransactionPrice: null,
+    }
+    result.optimizations = []
+    result.uraZoning = {
+      zoneCode: 'SG:business_park_white',
+      zoneDescription: 'Business Park - White',
+      plotRatio: 3.5,
+      buildingHeightLimit: null,
+      siteCoverage: null,
+      useGroups: ['Business park', 'Office-lab'],
+      specialConditions: null,
+      source: 'ref_zoning_layer',
+    }
+    result.buildEnvelope = {
+      ...result.buildEnvelope,
+      zoneCode: 'SG:business_park_white',
+      zoneDescription: 'Business Park - White',
+      siteAreaSqm: 34496.6,
+      allowablePlotRatio: 3.5,
+      maxBuildableGfaSqm: 120738,
+      currentGfaSqm: null,
+      additionalPotentialGfaSqm: null,
+      buildingHeightLimitM: null,
+      siteCoveragePct: null,
+      sourceReference: 'SG Rule Registry (RefRule + zoning layers)',
+      ruleCorpusStatus: {
+        coverage_state: 'partial',
+        zone_code: 'SG:business_park_white',
+        resolved_by: {
+          land_use: 'ref_zoning_layer',
+          plot_ratio: 'ref_zoning_layer',
+          site_area: 'ref_parcel',
+        },
+        unresolved_fields: [
+          'building_height_limit_m',
+          'site_coverage_pct',
+          'setbacks',
+          'step_backs',
+        ],
+      },
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={['existing_building'] as DevelopmentScenario[]}
+      />,
+    )
+
+    expect(screen.getAllByText('Scenario pending').length).toBeGreaterThan(0)
+    expect(
+      screen.getByText('Business park-led program pending'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText('Business park primary / Office-lab support'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText('Business Park - White (SG:business_park_white)'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText('Office-led program pending'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Office primary / Retail support'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('presents health and medical zoning as healthcare led', () => {
+    const result = buildResult()
+    result.address = {
+      fullAddress: '5 Lower Kent Ridge Rd, Singapore 119074',
+      district: 'Queenstown',
+    }
+    result.existingUse = 'Unknown'
+    result.propertyInfo = {
+      propertyName: null,
+      tenure: null,
+      siteAreaSqm: 5000,
+      gfaApproved: null,
+      buildingHeight: null,
+      completionYear: null,
+      lastTransactionDate: null,
+      lastTransactionPrice: null,
+    }
+    result.optimizations = []
+    result.uraZoning = {
+      zoneCode: 'SG:health_medical_care',
+      zoneDescription: 'Health & Medical Care',
+      plotRatio: null,
+      buildingHeightLimit: null,
+      siteCoverage: null,
+      useGroups: ['Health & Medical Care'],
+      specialConditions: null,
+      source: 'ref_zoning_layer',
+    }
+    result.buildEnvelope = {
+      ...result.buildEnvelope,
+      zoneCode: 'SG:health_medical_care',
+      zoneDescription: 'Health & Medical Care',
+      siteAreaSqm: 5000,
+      allowablePlotRatio: null,
+      maxBuildableGfaSqm: null,
+      currentGfaSqm: null,
+      additionalPotentialGfaSqm: null,
+      buildingHeightLimitM: null,
+      siteCoveragePct: null,
+      sourceReference: 'SG Rule Registry (RefRule + zoning layers)',
+      ruleCorpusStatus: {
+        coverage_state: 'partial',
+        zone_code: 'SG:health_medical_care',
+        site_development_status: 'developed',
+        resolved_by: {
+          land_use: 'ref_zoning_layer',
+          site_area: 'ref_parcel',
+        },
+        unresolved_fields: [
+          'plot_ratio',
+          'building_height_limit_m',
+          'site_coverage_pct',
+          'setbacks',
+          'step_backs',
+        ],
+      },
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={['existing_building'] as DevelopmentScenario[]}
+      />,
+    )
+
+    expect(screen.getAllByText('Scenario pending').length).toBeGreaterThan(0)
+    expect(
+      screen.getByText('Specialized operator-led program'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Capture matched health/medical-care zoning. Scenario selection stays pending because this is a specialized operator-led use; Capture needs current GFA and site-specific controls before recommending renovation or redevelopment.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText('Healthcare primary / Institutional support'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText('Health & Medical Care (SG:health_medical_care)'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText('Office-led program pending'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Office primary / Retail support'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('presents sports and recreation zoning without office retail fallback copy', () => {
+    const result = buildResult()
+    result.address = {
+      fullAddress: '39A Soon Lee Rd, Singapore',
+      district: 'Boon Lay',
+    }
+    result.existingUse = 'Unknown'
+    result.propertyInfo = {
+      propertyName: null,
+      tenure: null,
+      siteAreaSqm: 8000,
+      gfaApproved: null,
+      buildingHeight: null,
+      completionYear: null,
+      lastTransactionDate: null,
+      lastTransactionPrice: null,
+    }
+    result.optimizations = []
+    result.uraZoning = {
+      zoneCode: 'SG:sports_recreation',
+      zoneDescription: 'Sports & Recreation',
+      plotRatio: null,
+      buildingHeightLimit: null,
+      siteCoverage: null,
+      useGroups: ['Sports & Recreation'],
+      specialConditions: null,
+      source: 'ref_zoning_layer',
+    }
+    result.buildEnvelope = {
+      ...result.buildEnvelope,
+      zoneCode: 'SG:sports_recreation',
+      zoneDescription: 'Sports & Recreation',
+      siteAreaSqm: 8000,
+      allowablePlotRatio: null,
+      grossPlotRatio: null,
+      maxBuildableGfaSqm: null,
+      currentGfaSqm: null,
+      additionalPotentialGfaSqm: null,
+      sourceReference: 'SG Rule Registry (RefRule + zoning layers)',
+      ruleCorpusStatus: {
+        coverage_state: 'partial',
+        zone_code: 'SG:sports_recreation',
+        site_development_status: 'developed',
+        resolved_by: {
+          land_use: 'ref_zoning_layer',
+          site_area: 'ref_parcel',
+        },
+        unresolved_fields: ['plot_ratio', 'building_height_limit_m'],
+      },
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={['existing_building'] as DevelopmentScenario[]}
+      />,
+    )
+
+    expect(
+      screen.getByText('Specialized operator-led program'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Capture matched sports/recreation zoning. Scenario selection stays pending because this is a specialized operator-led use; Capture needs current GFA and site-specific controls before recommending renovation or redevelopment.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Sports & Recreation (SG:sports_recreation)'),
+    ).toBeInTheDocument()
+    expect(screen.getByText("Today's zoning program")).toBeInTheDocument()
+    expect(
+      screen.queryByText('Office-led program pending'),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Office primary / Retail support'),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText('Use basis')).not.toBeInTheDocument()
+  })
+
+  it('presents park zoning as no standard building program without duplicate review copy', () => {
+    const result = buildResult()
+    result.address = {
+      fullAddress: '1 Nassim Rd, Singapore',
+      district: 'Tanglin',
+    }
+    result.existingUse = 'Unknown'
+    result.propertyInfo = {
+      propertyName: null,
+      tenure: null,
+      siteAreaSqm: 4200,
+      gfaApproved: null,
+      buildingHeight: null,
+      completionYear: null,
+      lastTransactionDate: null,
+      lastTransactionPrice: null,
+    }
+    result.optimizations = []
+    result.uraZoning = {
+      zoneCode: 'SG:park',
+      zoneDescription: 'Park',
+      plotRatio: null,
+      buildingHeightLimit: null,
+      siteCoverage: null,
+      useGroups: [],
+      specialConditions: 'non_standard_or_non_developable_control',
+      developmentControlStatus: 'non_standard_or_non_developable',
+      source: 'ref_zoning_layer',
+    }
+    result.buildEnvelope = {
+      ...result.buildEnvelope,
+      zoneCode: 'SG:park',
+      zoneDescription: 'Park',
+      siteAreaSqm: 4200,
+      allowablePlotRatio: null,
+      grossPlotRatio: null,
+      maxBuildableGfaSqm: null,
+      currentGfaSqm: null,
+      additionalPotentialGfaSqm: null,
+      sourceReference: 'SG Rule Registry (RefRule + zoning layers)',
+      ruleCorpusStatus: {
+        coverage_state: 'partial',
+        zone_code: 'SG:park',
+        site_development_status: 'developed',
+        resolved_by: {
+          land_use: 'ref_zoning_layer',
+          site_area: 'ref_parcel',
+        },
+        unresolved_fields: ['plot_ratio', 'building_height_limit_m'],
+      },
+    }
+
+    render(
+      <DeveloperResults
+        result={result}
+        selectedScenarios={['existing_building'] as DevelopmentScenario[]}
+      />,
+    )
+
+    const parkReviewCopy =
+      'Capture matched park/open-space zoning. Scenario selection stays pending because this control is not a standard private development program; site-specific approval, rezoning, or public-use review may be required before a building scenario is studied.'
+
+    expect(screen.getByText('No standard private program')).toBeInTheDocument()
+    expect(screen.getByText('Park (SG:park)')).toBeInTheDocument()
+    expect(screen.getAllByText(parkReviewCopy)).toHaveLength(1)
+    expect(screen.queryByText('Control review pending')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(
+        'Capture matched a non-standard planning control. Scenario selection stays pending until the official control is reviewed.',
+      ),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Office-led program pending'),
+    ).not.toBeInTheDocument()
   })
 
   it('surfaces resolved and unresolved rule fields in the capture data basis', () => {
@@ -1167,9 +1885,7 @@ describe('DeveloperResults', () => {
     expect(screen.getByText('Official controls pending')).toBeInTheDocument()
     expect(screen.queryByText('Resolved controls')).not.toBeInTheDocument()
     expect(screen.queryByText('Unresolved controls')).not.toBeInTheDocument()
-    expect(
-      screen.queryByText('Source ingestion status'),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByText('Control source status')).not.toBeInTheDocument()
     expect(screen.queryByText('Mixed source')).not.toBeInTheDocument()
     expect(screen.getByText('Site / captured')).toBeInTheDocument()
     expect(screen.getByText('plot ratio.')).toBeInTheDocument()
@@ -1182,11 +1898,11 @@ describe('DeveloperResults', () => {
       screen.getByText('height limit - separate official control, step-backs.'),
     ).toBeInTheDocument()
     expect(
-      screen.queryByText('Source identified, not ingested'),
+      screen.queryByText('Control source not mapped'),
     ).not.toBeInTheDocument()
     expect(
       screen.queryByText(
-        'height limit - separate official control (URA), air-rights clearance (URA/CAAS), step-backs (URA) have official source categories identified. Ingestion and review are still pending.',
+        'height limit - separate official control (URA), air-rights clearance (URA/CAAS), step-backs (URA) have official source categories identified, but Capture has not mapped reviewed values for this zone yet.',
       ),
     ).not.toBeInTheDocument()
     expect(
@@ -1206,17 +1922,17 @@ describe('DeveloperResults', () => {
       ),
     ).toBeInTheDocument()
     expect(screen.getByText('Site captured controls')).toBeInTheDocument()
-    expect(screen.getByText('Rule-backed controls')).toBeInTheDocument()
+    expect(screen.getAllByText('Rule-backed controls').length).toBeGreaterThan(
+      0,
+    )
     expect(
       screen.getAllByText('Official controls pending').length,
     ).toBeGreaterThan(0)
-    expect(screen.getByText('Source ingestion status')).toBeInTheDocument()
-    expect(
-      screen.getByText('Source identified, not ingested'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Control source status')).toBeInTheDocument()
+    expect(screen.getByText('Control source not mapped')).toBeInTheDocument()
     expect(
       screen.getByText(
-        'height limit - separate official control (URA), step-backs (URA) have official source categories identified. Ingestion and review are still pending.',
+        'height limit - separate official control (URA), step-backs (URA) have official source categories identified, but Capture has not mapped reviewed values for this zone yet.',
       ),
     ).toBeInTheDocument()
     expect(
@@ -1224,7 +1940,7 @@ describe('DeveloperResults', () => {
     ).toBeGreaterThan(0)
     expect(
       screen.getAllByText(
-        'air-rights clearance (URA/CAAS) requires site-specific aviation and height-clearance review before Capture treats it as resolved.',
+        'air-rights clearance (URA/CAAS) requires site-specific aviation and height-clearance review. Capture does not resolve this clearance.',
       ).length,
     ).toBeGreaterThan(0)
     expect(screen.getByText('Live source scan')).toBeInTheDocument()
@@ -1293,7 +2009,7 @@ describe('DeveloperResults', () => {
     ).toBeGreaterThan(0)
     expect(
       screen.getAllByText(
-        'air-rights clearance (URA/CAAS) requires site-specific aviation and height-clearance review before Capture treats it as resolved.',
+        'air-rights clearance (URA/CAAS) requires site-specific aviation and height-clearance review. Capture does not resolve this clearance.',
       ).length,
     ).toBeGreaterThan(0)
   })

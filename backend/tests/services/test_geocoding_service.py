@@ -118,6 +118,55 @@ async def test_geocode_returns_google_coordinates() -> None:
 
 
 @pytest.mark.asyncio
+async def test_geocode_lookup_prefers_onemap_for_singapore_addresses() -> None:
+    def responder(url: str, params: dict[str, Any]) -> _FakeResponse:
+        if "common/elastic/search" in url:
+            assert params["searchVal"] == "1 Nassim Rd, Singapore 258458"
+            return _FakeResponse(
+                200,
+                {
+                    "found": 2,
+                    "results": [
+                        {
+                            "SEARCHVAL": "10 TANGLIN ROAD",
+                            "BLK_NO": "10",
+                            "ROAD_NAME": "TANGLIN ROAD",
+                            "BUILDING": "NIL",
+                            "ADDRESS": "10 TANGLIN ROAD SINGAPORE 247908",
+                            "POSTAL": "247908",
+                            "LATITUDE": "1.3065566",
+                            "LONGITUDE": "103.8262787",
+                        },
+                        {
+                            "SEARCHVAL": "1 NASSIM ROAD",
+                            "BLK_NO": "1",
+                            "ROAD_NAME": "NASSIM ROAD",
+                            "BUILDING": "NIL",
+                            "ADDRESS": "1 NASSIM ROAD SINGAPORE 258458",
+                            "POSTAL": "258458",
+                            "LATITUDE": "1.3071",
+                            "LONGITUDE": "103.8259",
+                        },
+                    ],
+                },
+            )
+        raise AssertionError("unexpected URL in test")
+
+    service = _make_service_with_responder(responder)
+    result = await service.geocode_lookup("1 Nassim Rd, Singapore 258458")
+
+    assert result is not None
+    assert result.latitude == pytest.approx(1.3071)
+    assert result.longitude == pytest.approx(103.8259)
+    assert result.formatted_address == "1 NASSIM ROAD SINGAPORE 258458"
+    assert result.address.street_name == "NASSIM ROAD"
+    assert result.address.block_number == "1"
+    assert result.address.postal_code == "258458"
+    assert result.source.provider == "onemap_address_search"
+    assert result.source.state == ExternalSourceState.LIVE
+
+
+@pytest.mark.asyncio
 async def test_reverse_geocode_with_none_client() -> None:
     """Test reverse_geocode when client is None."""
     service = GeocodingService()

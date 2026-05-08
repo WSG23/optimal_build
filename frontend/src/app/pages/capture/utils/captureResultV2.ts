@@ -5,6 +5,7 @@ import type {
   CaptureEngineeringAssumptionsV2,
   CaptureGrandfatheredLikelihood,
   CaptureOverrideIntent,
+  CaptureRecommendationScenario,
   CaptureResultV2,
   CaptureScenarioRecommendationV2,
   CaptureStarterModelV2,
@@ -20,8 +21,12 @@ export interface BuildCaptureResultV2Options {
   overrideIntent?: CaptureOverrideIntent | null
 }
 
-function formatScenarioProductLabel(scenario: DevelopmentScenario): string {
+function formatScenarioProductLabel(
+  scenario: CaptureRecommendationScenario,
+): string {
   switch (scenario) {
+    case 'scenario_pending':
+      return 'scenario pending'
     case 'raw_land':
       return 'new construction'
     case 'existing_building':
@@ -37,16 +42,33 @@ function formatScenarioProductLabel(scenario: DevelopmentScenario): string {
   }
 }
 
+function getPreviewScenarioForRecommendation(
+  scenario: CaptureRecommendationScenario,
+): DevelopmentScenario {
+  return scenario === 'scenario_pending' ? 'existing_building' : scenario
+}
+
 function formatAssetTypeLabel(assetType: string): string {
   switch (assetType.toLowerCase()) {
+    case 'hotel':
+      return 'Hotel'
     case 'retail':
       return 'Retail'
     case 'office':
       return 'Office'
+    case 'commercial':
+      return 'Commercial'
     case 'residential':
       return 'Residential'
     case 'hospitality':
       return 'Hospitality'
+    case 'healthcare':
+      return 'Healthcare'
+    case 'medical':
+    case 'medical_care':
+      return 'Medical care'
+    case 'institutional':
+      return 'Institutional'
     case 'amenities':
       return 'Amenities'
     case 'industrial':
@@ -73,9 +95,282 @@ function ruleCorpusString(
   return typeof value === 'string' ? value : null
 }
 
+function deriveSiteDevelopmentStatus(
+  capturedProperty: SiteAcquisitionResult,
+): 'developed' | 'vacant' | 'uncertain' {
+  const status = ruleCorpusString(
+    capturedProperty.buildEnvelope?.ruleCorpusStatus,
+    'site_development_status',
+  )
+  return status === 'developed' || status === 'vacant' ? status : 'uncertain'
+}
+
+function deriveSiteDevelopmentSourceKind(
+  capturedProperty: SiteAcquisitionResult,
+): string | null {
+  const lookupSource =
+    capturedProperty.buildEnvelope?.ruleCorpusStatus?.[
+      'site_development_lookup_source'
+    ]
+  if (!lookupSource || typeof lookupSource !== 'object') {
+    return null
+  }
+  const kind = (lookupSource as Record<string, unknown>).kind
+  return typeof kind === 'string' ? kind : null
+}
+
+type SpecialZoningControl = {
+  kind:
+    | 'road'
+    | 'open_space'
+    | 'transport_facilities'
+    | 'specialized_operator'
+    | 'non_standard'
+  label: string
+  drivers: string[]
+  summary: string
+  explanation: string
+}
+
+function buildNonStandardPrivateProgramControl(
+  kind: SpecialZoningControl['kind'],
+  planningControlLabel: string,
+  driverLabel: string,
+): SpecialZoningControl {
+  const explanation = `Capture matched ${planningControlLabel} zoning. Scenario selection stays pending because this control is not a standard private development program; site-specific approval, rezoning, or public-use review may be required before a building scenario is studied.`
+  return {
+    kind,
+    label: 'No standard private program',
+    drivers: [driverLabel, 'Control review'],
+    summary: explanation,
+    explanation,
+  }
+}
+
+function buildSpecializedOperatorProgramControl(
+  planningControlLabel: string,
+  primaryDriver: string,
+  supportDriver: string,
+): SpecialZoningControl {
+  const explanation = `Capture matched ${planningControlLabel} zoning. Scenario selection stays pending because this is a specialized operator-led use; Capture needs current GFA and site-specific controls before recommending renovation or redevelopment.`
+  return {
+    kind: 'specialized_operator',
+    label: 'Specialized operator-led program',
+    drivers: [primaryDriver, supportDriver, 'Operator-led use'],
+    summary: explanation,
+    explanation,
+  }
+}
+
+function deriveSpecialZoningControl(
+  capturedProperty: SiteAcquisitionResult,
+): SpecialZoningControl | null {
+  const rawZoning = capturedProperty.uraZoning as
+    | (typeof capturedProperty.uraZoning & {
+        developmentControlStatus?: string | null
+      })
+    | null
+    | undefined
+  const status = normalizeUseSignal(rawZoning?.developmentControlStatus)
+  const specialConditions = normalizeUseSignal(rawZoning?.specialConditions)
+  const zoningSignals = [
+    capturedProperty.buildEnvelope?.zoneCode,
+    capturedProperty.buildEnvelope?.zoneDescription,
+    ruleCorpusString(
+      capturedProperty.buildEnvelope?.ruleCorpusStatus,
+      'zone_code',
+    ),
+    ruleCorpusString(
+      capturedProperty.buildEnvelope?.ruleCorpusStatus,
+      'zone_description',
+    ),
+    rawZoning?.zoneCode,
+    rawZoning?.zoneDescription,
+  ]
+    .map(normalizeUseSignal)
+    .filter(Boolean)
+  const compactSignals = zoningSignals.map((signal) =>
+    signal.replace(/[^a-z0-9]/g, ''),
+  )
+  const hasNonStandardFlag =
+    status === 'non standard or non developable' ||
+    status === 'non_standard_or_non_developable' ||
+    specialConditions === 'non standard or non developable control' ||
+    specialConditions === 'non_standard_or_non_developable_control'
+
+  const hasRoad = zoningSignals.some((signal, index) => {
+    const compact = compactSignals[index]
+    return signal === 'road' || compact === 'sgroad'
+  })
+  const hasParkOrOpenSpace = zoningSignals.some((signal, index) => {
+    const compact = compactSignals[index]
+    return (
+      signal === 'park' ||
+      signal === 'open space' ||
+      signal === 'open-space' ||
+      compact === 'sgpark' ||
+      compact === 'sgopenspace'
+    )
+  })
+  const hasTransportFacilities = zoningSignals.some((signal, index) => {
+    const compact = compactSignals[index]
+    return (
+      signal === 'transport facilities' ||
+      signal === 'transport-facilities' ||
+      compact === 'sgtransportfacilities'
+    )
+  })
+  const hasEducation = zoningSignals.some((signal, index) => {
+    const compact = compactSignals[index]
+    return (
+      signal === 'education' ||
+      signal === 'educational institution' ||
+      signal === 'school' ||
+      signal.includes('educational institution') ||
+      compact === 'sgeducation' ||
+      compact === 'sgeducationalinstitution' ||
+      compact.includes('educationalinstitution')
+    )
+  })
+  const hasSpecialUse = zoningSignals.some((signal, index) => {
+    const compact = compactSignals[index]
+    return (
+      signal === 'special use' ||
+      signal === 'special-use' ||
+      signal.includes('special use') ||
+      compact === 'sgspecialuse' ||
+      compact === 'specialuse'
+    )
+  })
+  const hasReserveSite = zoningSignals.some((signal, index) => {
+    const compact = compactSignals[index]
+    return (
+      signal === 'reserve site' ||
+      signal === 'reserve' ||
+      signal.includes('reserve site') ||
+      compact === 'sgreservesite' ||
+      compact === 'reservesite'
+    )
+  })
+  const hasCivicCommunityInstitution = zoningSignals.some((signal, index) => {
+    const compact = compactSignals[index]
+    return (
+      signal === 'civic & community institution' ||
+      signal === 'civic and community institution' ||
+      signal === 'community institution' ||
+      signal.includes('civic') ||
+      signal.includes('community institution') ||
+      compact === 'sgciviccommunityinstitution' ||
+      compact === 'civiccommunityinstitution' ||
+      compact.includes('civiccommunityinstitution')
+    )
+  })
+  const hasHealthcare = zoningSignals.some((signal, index) => {
+    const compact = compactSignals[index]
+    return (
+      signal === 'health & medical care' ||
+      signal === 'health and medical care' ||
+      signal === 'hospital' ||
+      signal.includes('health') ||
+      signal.includes('medical') ||
+      signal.includes('hospital') ||
+      compact === 'sghealthmedicalcare' ||
+      compact.includes('healthmedicalcare')
+    )
+  })
+  const hasSportsRecreation = zoningSignals.some((signal, index) => {
+    const compact = compactSignals[index]
+    return (
+      signal === 'sports & recreation' ||
+      signal === 'sports and recreation' ||
+      signal.includes('sports') ||
+      signal.includes('recreation') ||
+      compact === 'sgsportsrecreation' ||
+      compact.includes('sportsrecreation')
+    )
+  })
+
+  if (hasRoad) {
+    return buildNonStandardPrivateProgramControl('road', 'road', 'Road reserve')
+  }
+  if (hasParkOrOpenSpace) {
+    return buildNonStandardPrivateProgramControl(
+      'open_space',
+      'park/open-space',
+      'Park / open space',
+    )
+  }
+  if (hasTransportFacilities) {
+    return buildNonStandardPrivateProgramControl(
+      'transport_facilities',
+      'transport-facilities',
+      'Transport facilities',
+    )
+  }
+  if (hasEducation) {
+    return buildNonStandardPrivateProgramControl(
+      'non_standard',
+      'education',
+      'Education',
+    )
+  }
+  if (hasSpecialUse) {
+    return buildNonStandardPrivateProgramControl(
+      'non_standard',
+      'special-use',
+      'Special use',
+    )
+  }
+  if (hasReserveSite) {
+    return buildNonStandardPrivateProgramControl(
+      'non_standard',
+      'reserve-site',
+      'Reserve site',
+    )
+  }
+  if (hasCivicCommunityInstitution) {
+    return buildNonStandardPrivateProgramControl(
+      'non_standard',
+      'civic/community institution',
+      'Civic/community institution',
+    )
+  }
+  if (hasHealthcare) {
+    return buildSpecializedOperatorProgramControl(
+      'health/medical-care',
+      'Healthcare',
+      'Institutional',
+    )
+  }
+  if (hasSportsRecreation) {
+    return buildSpecializedOperatorProgramControl(
+      'sports/recreation',
+      'Recreation',
+      'Amenities',
+    )
+  }
+  if (hasNonStandardFlag) {
+    const explanation =
+      'Capture matched a non-standard planning control. Scenario selection stays pending until the official control is reviewed.'
+    return {
+      kind: 'non_standard',
+      label: 'No standard private program',
+      drivers: ['Non-standard control', 'Control review'],
+      summary: explanation,
+      explanation,
+    }
+  }
+
+  return null
+}
+
 function deriveZoningProgramDrivers(
   capturedProperty: SiteAcquisitionResult,
 ): string[] | null {
+  if (deriveSpecialZoningControl(capturedProperty)) {
+    return null
+  }
+
   const useGroups = Array.isArray(capturedProperty.uraZoning?.useGroups)
     ? capturedProperty.uraZoning.useGroups
     : []
@@ -124,6 +419,14 @@ function deriveZoningProgramDrivers(
   const compactZoningSignals = zoningSignals.map((signal) =>
     signal.replace(/[^a-z0-9]/g, ''),
   )
+  const propertyUseSignals = [
+    capturedProperty.address?.fullAddress,
+    capturedProperty.address?.district,
+    capturedProperty.propertyInfo?.propertyName,
+    capturedProperty.existingUse,
+  ]
+    .map(normalizeUseSignal)
+    .filter(Boolean)
 
   const hasIndustrialSignal = signals.some((signal, index) => {
     const compact = compactSignals[index]
@@ -142,12 +445,82 @@ function deriveZoningProgramDrivers(
     return ['Industrial', 'Office']
   }
 
-  const hasHospitalitySignal = signals.some((signal) =>
-    ['hotel', 'hospitality'].some((needle) => signal.includes(needle)),
+  const hasBusinessParkZoningSignal = zoningSignals.some((signal) => {
+    const compact = signal.replace(/[^a-z0-9]/g, '')
+    return (
+      signal.includes('business park') ||
+      compact.includes('businesspark') ||
+      compact.startsWith('sgbusinesspark')
+    )
+  })
+
+  if (hasBusinessParkZoningSignal) {
+    return ['Business park', 'Office-lab']
+  }
+
+  const hasHospitalitySignal = [...zoningSignals, ...propertyUseSignals].some(
+    (signal) => {
+      const compact = signal.replace(/[^a-z0-9]/g, '')
+      return (
+        signal.includes('hotel') ||
+        signal.includes('hospitality') ||
+        compact === 'sghotel'
+      )
+    },
   )
 
   if (hasHospitalitySignal) {
-    return ['Hospitality', 'Retail']
+    return ['Hotel', 'Retail']
+  }
+
+  const hasHealthcareZoningSignal = zoningSignals.some((signal, index) => {
+    const compact = compactZoningSignals[index]
+    return (
+      signal.includes('health') ||
+      signal.includes('medical') ||
+      signal.includes('hospital') ||
+      compact.includes('healthmedicalcare') ||
+      compact === 'sghealthmedicalcare'
+    )
+  })
+
+  if (hasHealthcareZoningSignal) {
+    return ['Healthcare', 'Institutional']
+  }
+
+  const hasSportsRecreationZoningSignal = zoningSignals.some(
+    (signal, index) => {
+      const compact = compactZoningSignals[index]
+      return (
+        signal.includes('sports') ||
+        signal.includes('recreation') ||
+        compact.includes('sportsrecreation') ||
+        compact === 'sgsportsrecreation'
+      )
+    },
+  )
+
+  if (hasSportsRecreationZoningSignal) {
+    return ['Recreation', 'Amenities']
+  }
+
+  const hasInstitutionalZoningSignal = zoningSignals.some((signal, index) => {
+    const compact = compactZoningSignals[index]
+    return (
+      signal.includes('civic') ||
+      signal.includes('community institution') ||
+      signal.includes('educational institution') ||
+      signal.includes('institution') ||
+      signal.includes('university') ||
+      signal.includes('school') ||
+      compact.includes('civicinstitution') ||
+      compact.includes('educationalinstitution') ||
+      compact === 'sgcivicinstitutional'
+    )
+  })
+
+  if (hasInstitutionalZoningSignal) {
+    return ['Institutional', 'Amenities']
   }
 
   const hasSimLimSignal = signals.some((signal, index) => {
@@ -157,6 +530,21 @@ function deriveZoningProgramDrivers(
 
   if (hasSimLimSignal) {
     return ['Office', 'Retail']
+  }
+
+  const hasMixedUseZoningSignal = zoningSignals.some((signal, index) => {
+    const compact = compactZoningSignals[index]
+    return (
+      signal.includes('mixed use') ||
+      signal.includes('mixed-use') ||
+      compact === 'mu' ||
+      compact === 'mixeduse' ||
+      compact === 'sgmixeduse'
+    )
+  })
+
+  if (hasMixedUseZoningSignal) {
+    return ['Mixed-use', 'Retail', 'Residential']
   }
 
   const hasResidentialZoningSignal = zoningSignals.some((signal, index) => {
@@ -172,24 +560,21 @@ function deriveZoningProgramDrivers(
     return ['Residential', 'Amenities']
   }
 
-  const hasCommercialSignal = signals.some((signal, index) => {
+  const hasRetailSpecificSignal = signals.some((signal, index) => {
     const compact = compactSignals[index]
     return (
-      signal.includes('commercial') ||
-      signal.includes('office') ||
+      signal.includes('orchard') ||
       signal.includes('retail') ||
       signal.includes('shopping') ||
       signal.includes('mall') ||
-      signal.includes('plaza') ||
-      signal.includes('mixed use') ||
-      compact === 'c' ||
-      compact === 'sgcommercial' ||
-      compact === 'mixeduse'
+      signal.includes('restaurant') ||
+      compact.includes('shoppingcentre') ||
+      compact.includes('shoppingmall')
     )
   })
 
-  if (hasCommercialSignal) {
-    return ['Office', 'Retail']
+  if (hasRetailSpecificSignal) {
+    return ['Retail', 'Office']
   }
 
   const hasResidentialSignal = signals.some((signal, index) => {
@@ -251,14 +636,30 @@ export function deriveGrandfatheredLikelihood(
 }
 
 function chooseRecommendedScenario(capturedProperty: SiteAcquisitionResult): {
-  scenario: DevelopmentScenario
+  scenario: CaptureRecommendationScenario
   reasonCodes: string[]
   confidence: CaptureScenarioRecommendationV2['confidence']
 } {
   const status = deriveCurrentVsCodeStatus(capturedProperty)
+  const specialZoningControl = deriveSpecialZoningControl(capturedProperty)
   const heritageDetected =
     Boolean(capturedProperty.heritageContext?.flag) ||
     Boolean(capturedProperty.heritageContext?.overlay?.name)
+
+  if (specialZoningControl) {
+    const reasonCodes =
+      specialZoningControl.kind === 'specialized_operator'
+        ? ['SPECIALIZED_OPERATOR_LED_ZONE', 'CURRENT_CODE_COMPARISON_PENDING']
+        : [
+            'NON_STANDARD_OR_NON_DEVELOPABLE_ZONE',
+            'MAP_POINT_OR_CONTROL_REVIEW_REQUIRED',
+          ]
+    return {
+      scenario: 'scenario_pending',
+      reasonCodes,
+      confidence: 'low',
+    }
+  }
 
   if (heritageDetected) {
     return {
@@ -282,14 +683,46 @@ function chooseRecommendedScenario(capturedProperty: SiteAcquisitionResult): {
     }
   }
 
-  const currentGfa = capturedProperty.buildEnvelope.currentGfaSqm ?? 0
+  const currentGfa = capturedProperty.buildEnvelope.currentGfaSqm
   const additionalPotential =
     capturedProperty.buildEnvelope.additionalPotentialGfaSqm ?? null
+  const siteDevelopmentStatus = deriveSiteDevelopmentStatus(capturedProperty)
+  const siteDevelopmentSourceKind =
+    deriveSiteDevelopmentSourceKind(capturedProperty)
+
+  if (currentGfa == null) {
+    if (siteDevelopmentStatus === 'vacant') {
+      return {
+        scenario: 'raw_land',
+        reasonCodes: [
+          'NO_BUILDING_FOOTPRINT_DETECTED',
+          'GROUND_UP_STUDY_BASELINE',
+        ],
+        confidence: 'medium',
+      }
+    }
+    return {
+      scenario: 'scenario_pending',
+      reasonCodes: [
+        'EXISTING_GFA_UNAVAILABLE',
+        siteDevelopmentStatus === 'developed'
+          ? siteDevelopmentSourceKind === 'capture_address_evidence'
+            ? 'EXISTING_ASSET_EVIDENCE_DETECTED'
+            : 'EXISTING_BUILDING_FOOTPRINT_DETECTED'
+          : 'EXISTING_ASSET_STATUS_UNRESOLVED',
+        'CURRENT_CODE_COMPARISON_PENDING',
+      ],
+      confidence: 'low',
+    }
+  }
 
   if (currentGfa <= 0) {
     return {
       scenario: 'raw_land',
-      reasonCodes: ['NO_EXISTING_GFA_DETECTED', 'GROUND_UP_BASELINE'],
+      reasonCodes: [
+        'CURRENT_GFA_ZERO_OR_UNAVAILABLE',
+        'GROUND_UP_STUDY_BASELINE',
+      ],
       confidence: 'medium',
     }
   }
@@ -311,11 +744,20 @@ function chooseRecommendedScenario(capturedProperty: SiteAcquisitionResult): {
 
 function buildProgramDirection(
   capturedProperty: SiteAcquisitionResult,
-  recommendedScenario: DevelopmentScenario,
+  recommendedScenario: CaptureRecommendationScenario,
 ): Pick<
   CaptureScenarioRecommendationV2,
   'programDirectionLabel' | 'programDirectionSummary' | 'programDrivers'
 > {
+  const specialZoningControl = deriveSpecialZoningControl(capturedProperty)
+  if (specialZoningControl) {
+    return {
+      programDirectionLabel: specialZoningControl.label,
+      programDirectionSummary: specialZoningControl.summary,
+      programDrivers: specialZoningControl.drivers,
+    }
+  }
+
   const optimizationCandidates = capturedProperty.optimizations
     .map((entry) => ({
       assetType: entry.assetType,
@@ -329,8 +771,15 @@ function buildProgramDirection(
     .filter((entry) => entry.assetType && entry.weight > 0)
     .sort((left, right) => right.weight - left.weight)
 
+  const existingUseFallback =
+    capturedProperty.existingUse &&
+    !/^unknown$/i.test(capturedProperty.existingUse.trim())
+      ? capturedProperty.existingUse.trim()
+      : null
   const fallbackAssetType =
-    capturedProperty.existingUse?.trim() ||
+    existingUseFallback ||
+    capturedProperty.buildEnvelope.zoneDescription?.trim() ||
+    capturedProperty.uraZoning?.zoneDescription?.trim() ||
     capturedProperty.uraZoning?.useGroups?.[0]?.trim() ||
     'mixed_use'
 
@@ -354,6 +803,14 @@ function buildProgramDirection(
   const programDrivers = secondary ? [primary, secondary] : [primary]
 
   switch (recommendedScenario) {
+    case 'scenario_pending':
+      return {
+        programDirectionLabel: secondary
+          ? `${primary}-led program pending`
+          : `${primary}-focused program pending`,
+        programDirectionSummary: `Based on today's zoning, Capture can identify ${programSummaryLabel}. Scenario selection is pending until current GFA evidence is available.`,
+        programDrivers,
+      }
     case 'heritage_property':
       return {
         programDirectionLabel: secondary
@@ -453,11 +910,19 @@ export function buildScenarioRecommendation(
           : `User-selected ${formatScenarioProductLabel(recommended)} overrides the default capture recommendation.`
     : recommended === 'heritage_property'
       ? buildHeritageExplanation(capturedProperty)
-      : recommended === 'existing_building'
-        ? 'Existing bulk and current-code conditions favour a renovation-first starting point.'
-        : recommended === 'underused_asset'
-          ? 'Existing conditions appear reusable and current controls still leave headroom for uplift.'
-          : 'No existing bulk was detected, so Capture starts from a ground-up massing path.'
+      : recommended === 'scenario_pending'
+        ? (deriveSpecialZoningControl(capturedProperty)?.explanation ??
+          (deriveSiteDevelopmentStatus(capturedProperty) === 'developed'
+            ? deriveSiteDevelopmentSourceKind(capturedProperty) ===
+              'capture_address_evidence'
+              ? 'Capture detected existing-asset evidence, but needs current GFA before recommending renovation or redevelopment.'
+              : 'Capture detected an existing building footprint, but needs current GFA before recommending renovation or redevelopment.'
+            : 'Capture needs current GFA or existing-asset evidence before recommending renovation, redevelopment, or ground-up.'))
+        : recommended === 'existing_building'
+          ? 'Existing bulk and current-code conditions favour a renovation-first starting point.'
+          : recommended === 'underused_asset'
+            ? 'Existing conditions appear reusable and current controls still leave headroom for uplift.'
+            : 'No existing bulk was detected, so Capture starts from a ground-up massing path.'
 
   const alternatives = availableScenarios.filter(
     (scenario) => scenario !== recommended,
@@ -640,6 +1105,11 @@ function buildCodeConstraints(
       envelope.zoneDescription ?? zoning?.zoneDescription ?? null,
     allowablePlotRatio:
       envelope.allowablePlotRatio ?? zoning?.plotRatio ?? null,
+    grossPlotRatio:
+      envelope.grossPlotRatio ??
+      envelope.allowablePlotRatio ??
+      zoning?.plotRatio ??
+      null,
     maxBuildableGfaSqm: envelope.maxBuildableGfaSqm,
     currentGfaSqm: envelope.currentGfaSqm,
     sourceReference: envelope.sourceReference ?? null,
@@ -742,11 +1212,11 @@ export function mapSiteAcquisitionResultToCaptureResultV2(
     codeConstraints,
     engineeringAssumptions: buildEngineeringAssumptions(
       capturedProperty,
-      scenarioRecommendation.recommended,
+      getPreviewScenarioForRecommendation(scenarioRecommendation.recommended),
     ),
     starterModel: buildStarterModel(
       capturedProperty,
-      scenarioRecommendation.recommended,
+      getPreviewScenarioForRecommendation(scenarioRecommendation.recommended),
     ),
     scenarioRecommendation,
     analysisStatus: buildAnalysisStatus(capturedProperty),

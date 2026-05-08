@@ -30,19 +30,18 @@ async def forward_geocode(
     """Translate a free-form address into coordinates."""
 
     try:
-        result = await geocoding_service.geocode_details(address)
+        result = await geocoding_service.geocode_lookup(address)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     if result is None:
         raise HTTPException(status_code=404, detail="No results for this address")
 
-    latitude, longitude, formatted = result
     return GeocodeResponse(
-        latitude=latitude,
-        longitude=longitude,
-        formatted_address=formatted or address,
-        source=geocoding_service.get_google_geocoding_metadata(),
+        latitude=result.latitude,
+        longitude=result.longitude,
+        formatted_address=result.formatted_address or address,
+        source=result.source,
     )
 
 

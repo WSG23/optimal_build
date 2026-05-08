@@ -37,10 +37,14 @@ describe('UnifiedCapturePage', () => {
       latitude: '1.3',
       longitude: '103.85',
       address: '',
+      currentGfaSqm: '',
+      currentGfaSource: '',
       selectedScenarios: [],
       setLatitude: vi.fn(),
       setLongitude: vi.fn(),
       setAddress: vi.fn(),
+      setCurrentGfaSqm: vi.fn(),
+      setCurrentGfaSource: vi.fn(),
       handleScenarioToggle: vi.fn(),
       isCapturing: false,
       isScanning: false,
@@ -54,6 +58,7 @@ describe('UnifiedCapturePage', () => {
       siteAcquisitionResult: null,
       geocodeError: null,
       isGeocoding: false,
+      coordinateSourceLabel: null,
       mapContainerRef: { current: null },
       addressInputRef: { current: null },
       mapError: null,
@@ -122,6 +127,30 @@ describe('UnifiedCapturePage', () => {
     expect(document.querySelector('form')).toHaveAttribute('novalidate')
     expect(screen.getByLabelText('Lat')).not.toHaveAttribute('pattern')
     expect(screen.getByLabelText('Lng')).not.toHaveAttribute('pattern')
+    expect(screen.getByLabelText('Lat')).toHaveAttribute('readonly')
+    expect(screen.getByLabelText('Lng')).toHaveAttribute('readonly')
+  })
+
+  it('shows the coordinate source when geocoding provenance is available', () => {
+    mockUseDeveloperMode.mockReturnValue({
+      isDeveloperMode: true,
+      toggleDeveloperMode: mockToggleDeveloperMode,
+    })
+
+    mockUseUnifiedCapture.mockReturnValue(
+      buildCaptureHookValue({
+        latitude: '1.3065566',
+        longitude: '103.8262787',
+        coordinateSourceLabel: 'OneMap address search (Singapore)',
+      }),
+    )
+
+    render(<UnifiedCapturePage />)
+
+    expect(screen.getByText(/Coordinate source:/i)).toBeInTheDocument()
+    expect(
+      screen.getByText('OneMap address search (Singapore)'),
+    ).toBeInTheDocument()
   })
 
   it('renders the developer workspace when developer mode has results', async () => {
@@ -140,5 +169,35 @@ describe('UnifiedCapturePage', () => {
 
     expect(await screen.findByTestId('developer-results')).toBeInTheDocument()
     expect(screen.getByTestId('mission-log')).toBeInTheDocument()
+  })
+
+  it('does not render manual current GFA fields in developer mode', () => {
+    mockUseDeveloperMode.mockReturnValue({
+      isDeveloperMode: true,
+      toggleDeveloperMode: mockToggleDeveloperMode,
+    })
+
+    mockUseUnifiedCapture.mockReturnValue(buildCaptureHookValue())
+
+    render(<UnifiedCapturePage />)
+
+    expect(screen.queryByText('Existing GFA Evidence')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('GFA')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Source')).not.toBeInTheDocument()
+  })
+
+  it('renders a readable keyboard shortcut on the scan button', () => {
+    mockUseDeveloperMode.mockReturnValue({
+      isDeveloperMode: true,
+      toggleDeveloperMode: mockToggleDeveloperMode,
+    })
+
+    mockUseUnifiedCapture.mockReturnValue(buildCaptureHookValue())
+
+    render(<UnifiedCapturePage />)
+
+    const scanButton = screen.getByRole('button', { name: /scan & analyze/i })
+    expect(scanButton.textContent).toMatch(/(?:Cmd|Ctrl)\+Enter/)
+    expect(scanButton.textContent).not.toContain('\\u23CE')
   })
 })

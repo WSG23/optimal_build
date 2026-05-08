@@ -9,17 +9,23 @@ This replaces the hardcoded mock values in URAIntegrationService.get_zoning_info
 from __future__ import annotations
 
 import json
+import math
 from collections import Counter
 from dataclasses import dataclass
 from typing import Any, Optional
 
 import structlog
-from sqlalchemy import select
+from shapely.geometry import Point, shape
+from shapely.validation import make_valid
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.rkp import RefRule, RefZoningLayer
+from app.models.rkp import RefBuildingFootprint, RefParcel, RefRule, RefZoningLayer
 
 logger = structlog.get_logger(__name__)
+
+NEAREST_PARCEL_LOOKUP_RADIUS_M = 60.0
+APPROX_METERS_PER_DEGREE = 111_320.0
 
 # Zone code mapping from URA short codes to RefRule format
 ZONE_CODE_MAPPING = {
@@ -162,6 +168,55 @@ RESOLVABLE_FIELDS = (
     "air_rights_note",
 )
 
+BUILDING_FOOTPRINT_COVERAGE_RADIUS_DEGREES = 0.00225
+MIN_NEARBY_FOOTPRINTS_FOR_VACANT_SIGNAL = 3
+MIN_POINT_LOOKUP_CACHE_ROWS = 1000
+ENVELOPE_CONTROL_GPR_TOKENS = frozenset(
+    {
+        "eva",
+        "envelope",
+        "envelope control",
+        "envelope control area",
+    }
+)
+
+
+@dataclass(slots=True)
+class _PointLookupCacheEntry:
+    id: int
+    bbox: tuple[float, float, float, float]
+
+
+_PointLookupCacheKey = tuple[str, int, int]
+
+_ZONING_POINT_LOOKUP_CACHE: dict[_PointLookupCacheKey, list[_PointLookupCacheEntry]] = (
+    {}
+)
+_PARCEL_POINT_LOOKUP_CACHE: dict[_PointLookupCacheKey, list[_PointLookupCacheEntry]] = (
+    {}
+)
+_PARCEL_ZONING_LOOKUP_CACHE: dict[
+    tuple[_PointLookupCacheKey, int], "_ParcelZoningCacheEntry | None"
+] = {}
+
+
+@dataclass(slots=True)
+class _ParcelZoningCacheEntry:
+    layer_id: int
+    overlap_area: float
+    overlap_ratio: float | None
+
+
+@dataclass
+class ParcelZoningResolution:
+    """Parcel-dominant zoning layer resolved from polygon overlap."""
+
+    layer: RefZoningLayer | None
+    overlap_area: float | None = None
+    overlap_ratio: float | None = None
+    source: str = "parcel_dominant_zoning"
+    reason: str | None = None
+
 
 @dataclass
 class ZoningRulesResult:
@@ -198,6 +253,17 @@ class ZoningRulesResult:
         ) or bool(self.step_backs)
 
 
+@dataclass
+class SiteDevelopmentResult:
+    """Parcel-level existing-asset signal from reference building footprints."""
+
+    status: str
+    building_count: int = 0
+    footprint_area_sqm: float | None = None
+    source: str | None = None
+    reason: str | None = None
+
+
 def normalize_zone_code(
     zone_code: Optional[str], jurisdiction: str = "SG"
 ) -> Optional[str]:
@@ -222,7 +288,8 @@ def normalize_zone_code(
 
     # If already in correct format (e.g., "SG:residential")
     if clean_code.startswith(f"{jurisdiction.lower()}:"):
-        return clean_code
+        _, zone_part = clean_code.split(":", 1)
+        return f"{jurisdiction.upper()}:{zone_part}"
 
     # Try to construct from jurisdiction + code
     constructed = f"{jurisdiction}:{clean_code}".lower()
@@ -260,6 +327,863 @@ def _zone_aliases(zone_code: str, raw_zone_code: Optional[str]) -> set[str]:
     return aliases
 
 
+def _iter_geojson_geometries(payload: Any) -> list[dict[str, Any]]:
+    if not isinstance(payload, dict):
+        return []
+
+    geo_type = payload.get("type")
+    if geo_type == "Feature":
+        geometry = payload.get("geometry")
+        return [geometry] if isinstance(geometry, dict) else []
+    if geo_type == "FeatureCollection":
+        geometries: list[dict[str, Any]] = []
+        features = payload.get("features")
+        if isinstance(features, list):
+            for feature in features:
+                geometries.extend(_iter_geojson_geometries(feature))
+        return geometries
+    if geo_type == "GeometryCollection":
+        geometries = payload.get("geometries")
+        return (
+            [entry for entry in geometries if isinstance(entry, dict)]
+            if isinstance(geometries, list)
+            else []
+        )
+    if geo_type in {"Polygon", "MultiPolygon"}:
+        return [payload]
+    return []
+
+
+def _point_on_segment(
+    lon: float,
+    lat: float,
+    start: Any,
+    end: Any,
+    *,
+    epsilon: float = 1e-10,
+) -> bool:
+    if (
+        not isinstance(start, (list, tuple))
+        or not isinstance(end, (list, tuple))
+        or len(start) < 2
+        or len(end) < 2
+    ):
+        return False
+    try:
+        x1, y1 = float(start[0]), float(start[1])
+        x2, y2 = float(end[0]), float(end[1])
+    except (TypeError, ValueError):
+        return False
+    cross = (lat - y1) * (x2 - x1) - (lon - x1) * (y2 - y1)
+    if abs(cross) > epsilon:
+        return False
+    return (
+        min(x1, x2) - epsilon <= lon <= max(x1, x2) + epsilon
+        and min(y1, y2) - epsilon <= lat <= max(y1, y2) + epsilon
+    )
+
+
+def _point_in_ring(lon: float, lat: float, ring: Any) -> bool:
+    if not isinstance(ring, list) or len(ring) < 4:
+        return False
+
+    inside = False
+    previous = ring[-1]
+    for current in ring:
+        if _point_on_segment(lon, lat, previous, current):
+            return True
+        if (
+            isinstance(previous, (list, tuple))
+            and isinstance(current, (list, tuple))
+            and len(previous) >= 2
+            and len(current) >= 2
+        ):
+            try:
+                x1, y1 = float(previous[0]), float(previous[1])
+                x2, y2 = float(current[0]), float(current[1])
+            except (TypeError, ValueError):
+                previous = current
+                continue
+            intersects = (y1 > lat) != (y2 > lat)
+            if intersects:
+                x_intersection = (x2 - x1) * (lat - y1) / (y2 - y1) + x1
+                if lon <= x_intersection:
+                    inside = not inside
+        previous = current
+    return inside
+
+
+def _point_in_polygon(lon: float, lat: float, polygon: Any) -> bool:
+    if not isinstance(polygon, list) or not polygon:
+        return False
+    shell = polygon[0]
+    if not _point_in_ring(lon, lat, shell):
+        return False
+    holes = polygon[1:]
+    return not any(_point_in_ring(lon, lat, hole) for hole in holes)
+
+
+def _geojson_contains_point(payload: Any, *, latitude: float, longitude: float) -> bool:
+    for geometry in _iter_geojson_geometries(payload):
+        coordinates = geometry.get("coordinates")
+        geo_type = geometry.get("type")
+        if geo_type == "Polygon" and _point_in_polygon(
+            longitude, latitude, coordinates
+        ):
+            return True
+        if geo_type == "MultiPolygon" and isinstance(coordinates, list):
+            if any(
+                _point_in_polygon(longitude, latitude, polygon)
+                for polygon in coordinates
+            ):
+                return True
+    return False
+
+
+def _geojson_bbox(payload: Any) -> tuple[float, float, float, float] | None:
+    points: list[tuple[float, float]] = []
+
+    def collect_coordinates(value: Any) -> None:
+        if (
+            isinstance(value, (list, tuple))
+            and len(value) >= 2
+            and isinstance(value[0], (int, float))
+            and isinstance(value[1], (int, float))
+        ):
+            points.append((float(value[0]), float(value[1])))
+            return
+        if isinstance(value, (list, tuple)):
+            for child in value:
+                collect_coordinates(child)
+
+    for geometry in _iter_geojson_geometries(payload):
+        collect_coordinates(geometry.get("coordinates"))
+    if not points:
+        return None
+    lons = [point[0] for point in points]
+    lats = [point[1] for point in points]
+    return min(lons), min(lats), max(lons), max(lats)
+
+
+def _bbox_contains_point(
+    bbox: tuple[float, float, float, float],
+    *,
+    latitude: float,
+    longitude: float,
+) -> bool:
+    min_lon, min_lat, max_lon, max_lat = bbox
+    return min_lon <= longitude <= max_lon and min_lat <= latitude <= max_lat
+
+
+def _bbox_intersects(
+    left: tuple[float, float, float, float],
+    right: tuple[float, float, float, float],
+) -> bool:
+    left_min_lon, left_min_lat, left_max_lon, left_max_lat = left
+    right_min_lon, right_min_lat, right_max_lon, right_max_lat = right
+    return not (
+        left_max_lon < right_min_lon
+        or left_min_lon > right_max_lon
+        or left_max_lat < right_min_lat
+        or left_min_lat > right_max_lat
+    )
+
+
+def _bbox_distance_m(
+    bbox: tuple[float, float, float, float],
+    *,
+    latitude: float,
+    longitude: float,
+) -> float:
+    min_lon, min_lat, max_lon, max_lat = bbox
+    clamped_lon = min(max(longitude, min_lon), max_lon)
+    clamped_lat = min(max(latitude, min_lat), max_lat)
+    lat_delta_m = (latitude - clamped_lat) * APPROX_METERS_PER_DEGREE
+    lon_delta_m = (
+        (longitude - clamped_lon)
+        * APPROX_METERS_PER_DEGREE
+        * math.cos(math.radians(latitude))
+    )
+    return math.hypot(lat_delta_m, lon_delta_m)
+
+
+def _geojson_distance_to_point_m(
+    payload: Any,
+    *,
+    latitude: float,
+    longitude: float,
+) -> float | None:
+    point = Point(longitude, latitude)
+    best_distance: float | None = None
+    for geometry in _geojson_shapes(payload):
+        if geometry.is_empty:
+            continue
+        try:
+            distance_degrees = float(geometry.distance(point))
+        except Exception:
+            continue
+        distance_m = distance_degrees * APPROX_METERS_PER_DEGREE
+        if best_distance is None or distance_m < best_distance:
+            best_distance = distance_m
+    return best_distance
+
+
+async def _point_lookup_cache_key(
+    session: AsyncSession,
+    model: type[RefZoningLayer] | type[RefParcel],
+    *,
+    jurisdiction: str,
+) -> _PointLookupCacheKey:
+    count_value, max_id_value = (
+        await session.execute(
+            select(func.count(model.id), func.max(model.id)).where(
+                model.jurisdiction == jurisdiction
+            )
+        )
+    ).one()
+    return jurisdiction, int(count_value or 0), int(max_id_value or 0)
+
+
+def _geojson_intersects(left: Any, right: Any) -> bool:
+    try:
+        left_geometries = [
+            make_valid(shape(geometry)) for geometry in _iter_geojson_geometries(left)
+        ]
+        right_geometries = [
+            make_valid(shape(geometry)) for geometry in _iter_geojson_geometries(right)
+        ]
+    except Exception:
+        return False
+    return any(
+        not left_geometry.is_empty
+        and not right_geometry.is_empty
+        and left_geometry.intersects(right_geometry)
+        for left_geometry in left_geometries
+        for right_geometry in right_geometries
+    )
+
+
+def _geojson_shapes(payload: Any) -> list[Any]:
+    try:
+        return [
+            make_valid(shape(geometry))
+            for geometry in _iter_geojson_geometries(payload)
+        ]
+    except Exception:
+        return []
+
+
+def _geojson_intersection_area(left: Any, right: Any) -> float:
+    left_geometries = _geojson_shapes(left)
+    right_geometries = _geojson_shapes(right)
+    overlap_area = 0.0
+    for left_geometry in left_geometries:
+        if left_geometry.is_empty:
+            continue
+        for right_geometry in right_geometries:
+            if right_geometry.is_empty:
+                continue
+            try:
+                intersection = left_geometry.intersection(right_geometry)
+            except Exception:
+                continue
+            if not intersection.is_empty:
+                overlap_area += float(intersection.area)
+    return overlap_area
+
+
+def _geojson_area(payload: Any) -> float:
+    return sum(
+        float(geometry.area)
+        for geometry in _geojson_shapes(payload)
+        if not geometry.is_empty
+    )
+
+
+async def find_zoning_layer_for_point(
+    session: AsyncSession,
+    *,
+    latitude: float,
+    longitude: float,
+    jurisdiction: str = "SG",
+) -> RefZoningLayer | None:
+    """Resolve an imported zoning layer containing the supplied WGS84 point."""
+
+    geometry_column = getattr(RefZoningLayer, "geometry", None)
+    if geometry_column is not None:
+        point = func.ST_SetSRID(func.ST_Point(longitude, latitude), 4326)
+        stmt = (
+            select(RefZoningLayer)
+            .where(RefZoningLayer.jurisdiction == jurisdiction)
+            .where(func.ST_Covers(geometry_column, point))
+        )
+        try:
+            result = await session.execute(stmt)
+            layer = result.scalars().first()
+            if layer is not None:
+                return layer
+        except Exception:
+            logger.debug(
+                "PostGIS zoning-layer point lookup failed; falling back to GeoJSON bounds",
+                jurisdiction=jurisdiction,
+                latitude=latitude,
+                longitude=longitude,
+            )
+
+    cache_key = await _point_lookup_cache_key(
+        session,
+        RefZoningLayer,
+        jurisdiction=jurisdiction,
+    )
+    if cache_key[1] < MIN_POINT_LOOKUP_CACHE_ROWS:
+        stmt = select(RefZoningLayer).where(RefZoningLayer.jurisdiction == jurisdiction)
+        result = await session.execute(stmt)
+        for layer in result.scalars().all():
+            try:
+                if _geojson_contains_point(
+                    layer.bounds_json,
+                    latitude=latitude,
+                    longitude=longitude,
+                ):
+                    return layer
+            except Exception:
+                logger.debug(
+                    "Skipping invalid zoning-layer GeoJSON bounds",
+                    layer_id=layer.id,
+                    jurisdiction=jurisdiction,
+                )
+        return None
+
+    cache = _ZONING_POINT_LOOKUP_CACHE.get(cache_key)
+    if cache is None:
+        stmt = select(RefZoningLayer.id, RefZoningLayer.bounds_json).where(
+            RefZoningLayer.jurisdiction == jurisdiction
+        )
+        result = await session.execute(stmt)
+        cache = []
+        for layer_id, bounds_json in result.all():
+            bbox = _geojson_bbox(bounds_json)
+            if bbox is not None:
+                cache.append(_PointLookupCacheEntry(id=layer_id, bbox=bbox))
+        _ZONING_POINT_LOOKUP_CACHE[cache_key] = cache
+
+    candidate_ids = [
+        entry.id
+        for entry in cache
+        if _bbox_contains_point(
+            entry.bbox,
+            latitude=latitude,
+            longitude=longitude,
+        )
+    ]
+    for layer_id in candidate_ids:
+        layer = await session.get(RefZoningLayer, layer_id)
+        if layer is None:
+            continue
+        try:
+            if _geojson_contains_point(
+                layer.bounds_json,
+                latitude=latitude,
+                longitude=longitude,
+            ):
+                return layer
+        except Exception:
+            logger.debug(
+                "Skipping invalid zoning-layer GeoJSON bounds",
+                layer_id=layer.id,
+                jurisdiction=jurisdiction,
+            )
+    return None
+
+
+async def find_dominant_zoning_layer_for_parcel(
+    session: AsyncSession,
+    parcel: RefParcel | None,
+    *,
+    jurisdiction: str = "SG",
+) -> ParcelZoningResolution:
+    """Resolve the zoning layer with the largest overlap across the parcel.
+
+    Raw geocoder points can land on a driveway, edge, road reserve, or open-space
+    sliver. Parcel-level overlap is a more stable Capture default because it
+    answers which planning polygon controls the intended parcel, not just which
+    polygon contains the marker pixel.
+    """
+
+    if parcel is None:
+        return ParcelZoningResolution(
+            layer=None,
+            reason="parcel_unavailable",
+        )
+
+    parcel_geometry_column = getattr(RefParcel, "geometry", None)
+    zoning_geometry_column = getattr(RefZoningLayer, "geometry", None)
+    if parcel_geometry_column is not None and zoning_geometry_column is not None:
+        stmt = (
+            select(
+                RefZoningLayer,
+                func.ST_Area(
+                    func.ST_Intersection(zoning_geometry_column, parcel_geometry_column)
+                ).label("overlap_area"),
+                (
+                    func.ST_Area(
+                        func.ST_Intersection(
+                            zoning_geometry_column,
+                            parcel_geometry_column,
+                        )
+                    )
+                    / func.nullif(func.ST_Area(parcel_geometry_column), 0)
+                ).label("overlap_ratio"),
+            )
+            .select_from(RefZoningLayer)
+            .join(RefParcel, RefParcel.id == parcel.id)
+            .where(RefZoningLayer.jurisdiction == jurisdiction)
+            .where(func.ST_Intersects(zoning_geometry_column, parcel_geometry_column))
+            .order_by(
+                func.ST_Area(
+                    func.ST_Intersection(zoning_geometry_column, parcel_geometry_column)
+                ).desc()
+            )
+            .limit(1)
+        )
+        try:
+            result = await session.execute(stmt)
+            row = result.first()
+            if row is not None:
+                layer, overlap_area, overlap_ratio = row
+                return ParcelZoningResolution(
+                    layer=layer,
+                    overlap_area=float(overlap_area) if overlap_area else None,
+                    overlap_ratio=float(overlap_ratio) if overlap_ratio else None,
+                )
+        except Exception:
+            logger.debug(
+                "PostGIS parcel zoning lookup failed; falling back to GeoJSON overlap",
+                jurisdiction=jurisdiction,
+                parcel_id=parcel.id,
+            )
+
+    parcel_bbox = _geojson_bbox(parcel.bounds_json)
+    if parcel_bbox is None:
+        return ParcelZoningResolution(
+            layer=None,
+            reason="parcel_bounds_unavailable",
+        )
+
+    cache_key = await _point_lookup_cache_key(
+        session,
+        RefZoningLayer,
+        jurisdiction=jurisdiction,
+    )
+    parcel_cache_key = (cache_key, int(parcel.id or 0))
+    cached = _PARCEL_ZONING_LOOKUP_CACHE.get(parcel_cache_key)
+    if parcel_cache_key in _PARCEL_ZONING_LOOKUP_CACHE:
+        if cached is None:
+            return ParcelZoningResolution(
+                layer=None,
+                reason="no_zoning_layer_intersects_parcel",
+            )
+        layer = await session.get(RefZoningLayer, cached.layer_id)
+        return ParcelZoningResolution(
+            layer=layer,
+            overlap_area=cached.overlap_area,
+            overlap_ratio=cached.overlap_ratio,
+            reason=None if layer is not None else "cached_zoning_layer_missing",
+        )
+
+    if cache_key[1] >= MIN_POINT_LOOKUP_CACHE_ROWS:
+        cache = _ZONING_POINT_LOOKUP_CACHE.get(cache_key)
+        if cache is None:
+            stmt = select(RefZoningLayer.id, RefZoningLayer.bounds_json).where(
+                RefZoningLayer.jurisdiction == jurisdiction
+            )
+            result = await session.execute(stmt)
+            cache = []
+            for layer_id, bounds_json in result.all():
+                bbox = _geojson_bbox(bounds_json)
+                if bbox is not None:
+                    cache.append(_PointLookupCacheEntry(id=layer_id, bbox=bbox))
+            _ZONING_POINT_LOOKUP_CACHE[cache_key] = cache
+        candidate_ids = [
+            entry.id for entry in cache if _bbox_intersects(entry.bbox, parcel_bbox)
+        ]
+        candidates = [
+            layer
+            for layer_id in candidate_ids
+            if (layer := await session.get(RefZoningLayer, layer_id)) is not None
+        ]
+    else:
+        stmt = select(RefZoningLayer).where(RefZoningLayer.jurisdiction == jurisdiction)
+        result = await session.execute(stmt)
+        candidates = [
+            layer
+            for layer in result.scalars().all()
+            if (layer_bbox := _geojson_bbox(layer.bounds_json)) is not None
+            and _bbox_intersects(layer_bbox, parcel_bbox)
+        ]
+
+    parcel_area = _geojson_area(parcel.bounds_json)
+    best_layer: RefZoningLayer | None = None
+    best_overlap_area = 0.0
+    for layer in candidates:
+        overlap_area = _geojson_intersection_area(parcel.bounds_json, layer.bounds_json)
+        if overlap_area > best_overlap_area:
+            best_layer = layer
+            best_overlap_area = overlap_area
+
+    if best_layer is None or best_overlap_area <= 0:
+        _PARCEL_ZONING_LOOKUP_CACHE[parcel_cache_key] = None
+        return ParcelZoningResolution(
+            layer=None,
+            reason="no_zoning_layer_intersects_parcel",
+        )
+
+    overlap_ratio = best_overlap_area / parcel_area if parcel_area > 0 else None
+    _PARCEL_ZONING_LOOKUP_CACHE[parcel_cache_key] = _ParcelZoningCacheEntry(
+        layer_id=best_layer.id,
+        overlap_area=best_overlap_area,
+        overlap_ratio=overlap_ratio,
+    )
+    return ParcelZoningResolution(
+        layer=best_layer,
+        overlap_area=best_overlap_area,
+        overlap_ratio=overlap_ratio,
+    )
+
+
+async def find_parcel_for_point(
+    session: AsyncSession,
+    *,
+    latitude: float,
+    longitude: float,
+    jurisdiction: str = "SG",
+) -> RefParcel | None:
+    """Resolve an imported reference parcel containing the supplied WGS84 point."""
+
+    geometry_column = getattr(RefParcel, "geometry", None)
+    if geometry_column is not None:
+        point = func.ST_SetSRID(func.ST_Point(longitude, latitude), 4326)
+        stmt = (
+            select(RefParcel)
+            .where(RefParcel.jurisdiction == jurisdiction)
+            .where(func.ST_Covers(geometry_column, point))
+        )
+        try:
+            result = await session.execute(stmt)
+            parcel = result.scalars().first()
+            if parcel is not None:
+                return parcel
+        except Exception:
+            logger.debug(
+                "PostGIS parcel point lookup failed; falling back to GeoJSON bounds",
+                jurisdiction=jurisdiction,
+                latitude=latitude,
+                longitude=longitude,
+            )
+
+    cache_key = await _point_lookup_cache_key(
+        session,
+        RefParcel,
+        jurisdiction=jurisdiction,
+    )
+    if cache_key[1] < MIN_POINT_LOOKUP_CACHE_ROWS:
+        stmt = select(RefParcel).where(RefParcel.jurisdiction == jurisdiction)
+        result = await session.execute(stmt)
+        for parcel in result.scalars().all():
+            try:
+                if _geojson_contains_point(
+                    parcel.bounds_json,
+                    latitude=latitude,
+                    longitude=longitude,
+                ):
+                    return parcel
+            except Exception:
+                logger.debug(
+                    "Skipping invalid parcel GeoJSON bounds",
+                    parcel_id=parcel.id,
+                    jurisdiction=jurisdiction,
+                )
+        return None
+
+    cache = _PARCEL_POINT_LOOKUP_CACHE.get(cache_key)
+    if cache is None:
+        stmt = select(RefParcel.id, RefParcel.bounds_json).where(
+            RefParcel.jurisdiction == jurisdiction
+        )
+        result = await session.execute(stmt)
+        cache = []
+        for parcel_id, bounds_json in result.all():
+            bbox = _geojson_bbox(bounds_json)
+            if bbox is not None:
+                cache.append(_PointLookupCacheEntry(id=parcel_id, bbox=bbox))
+        _PARCEL_POINT_LOOKUP_CACHE[cache_key] = cache
+
+    candidate_ids = [
+        entry.id
+        for entry in cache
+        if _bbox_contains_point(
+            entry.bbox,
+            latitude=latitude,
+            longitude=longitude,
+        )
+    ]
+    for parcel_id in candidate_ids:
+        parcel = await session.get(RefParcel, parcel_id)
+        if parcel is None:
+            continue
+        try:
+            if _geojson_contains_point(
+                parcel.bounds_json,
+                latitude=latitude,
+                longitude=longitude,
+            ):
+                return parcel
+        except Exception:
+            logger.debug(
+                "Skipping invalid parcel GeoJSON bounds",
+                parcel_id=parcel.id,
+                jurisdiction=jurisdiction,
+            )
+    return None
+
+
+async def find_nearest_parcel_for_point(
+    session: AsyncSession,
+    *,
+    latitude: float,
+    longitude: float,
+    jurisdiction: str = "SG",
+    max_distance_m: float = NEAREST_PARCEL_LOOKUP_RADIUS_M,
+) -> RefParcel | None:
+    """Resolve the nearest imported parcel when a geocoder point lands just off-parcel."""
+
+    cache_key = await _point_lookup_cache_key(
+        session,
+        RefParcel,
+        jurisdiction=jurisdiction,
+    )
+    if cache_key[1] < MIN_POINT_LOOKUP_CACHE_ROWS:
+        stmt = select(RefParcel).where(RefParcel.jurisdiction == jurisdiction)
+        result = await session.execute(stmt)
+        candidates = result.scalars().all()
+    else:
+        cache = _PARCEL_POINT_LOOKUP_CACHE.get(cache_key)
+        if cache is None:
+            stmt = select(RefParcel.id, RefParcel.bounds_json).where(
+                RefParcel.jurisdiction == jurisdiction
+            )
+            result = await session.execute(stmt)
+            cache = []
+            for parcel_id, bounds_json in result.all():
+                bbox = _geojson_bbox(bounds_json)
+                if bbox is not None:
+                    cache.append(_PointLookupCacheEntry(id=parcel_id, bbox=bbox))
+            _PARCEL_POINT_LOOKUP_CACHE[cache_key] = cache
+
+        candidate_ids = [
+            entry.id
+            for entry in cache
+            if _bbox_distance_m(
+                entry.bbox,
+                latitude=latitude,
+                longitude=longitude,
+            )
+            <= max_distance_m
+        ]
+        candidates = [
+            parcel
+            for parcel_id in candidate_ids
+            if (parcel := await session.get(RefParcel, parcel_id)) is not None
+        ]
+
+    best_parcel: RefParcel | None = None
+    best_distance_m: float | None = None
+    for parcel in candidates:
+        bbox = _geojson_bbox(parcel.bounds_json)
+        if (
+            bbox is not None
+            and _bbox_distance_m(
+                bbox,
+                latitude=latitude,
+                longitude=longitude,
+            )
+            > max_distance_m
+        ):
+            continue
+        distance_m = _geojson_distance_to_point_m(
+            parcel.bounds_json,
+            latitude=latitude,
+            longitude=longitude,
+        )
+        if distance_m is None or distance_m > max_distance_m:
+            continue
+        if best_distance_m is None or distance_m < best_distance_m:
+            best_parcel = parcel
+            best_distance_m = distance_m
+
+    return best_parcel
+
+
+async def classify_site_development_for_parcel(
+    session: AsyncSession,
+    parcel: RefParcel | None,
+    *,
+    jurisdiction: str = "SG",
+) -> SiteDevelopmentResult:
+    """Classify whether a parcel appears vacant or developed from footprints."""
+
+    if parcel is None:
+        return SiteDevelopmentResult(
+            status="uncertain",
+            source="ref_building_footprints",
+            reason="parcel_unavailable",
+        )
+
+    footprint_total = int(
+        await session.scalar(
+            select(func.count(RefBuildingFootprint.id)).where(
+                RefBuildingFootprint.jurisdiction == jurisdiction
+            )
+        )
+        or 0
+    )
+    if footprint_total == 0:
+        return SiteDevelopmentResult(
+            status="uncertain",
+            source="ref_building_footprints",
+            reason="building_footprints_not_loaded",
+        )
+
+    parcel_geometry_column = getattr(RefParcel, "geometry", None)
+    footprint_geometry_column = getattr(RefBuildingFootprint, "geometry", None)
+    if parcel_geometry_column is not None and footprint_geometry_column is not None:
+        stmt = (
+            select(
+                func.count(RefBuildingFootprint.id),
+                func.sum(RefBuildingFootprint.area_m2),
+            )
+            .select_from(RefBuildingFootprint)
+            .join(
+                RefParcel,
+                RefParcel.id == parcel.id,
+            )
+            .where(RefBuildingFootprint.jurisdiction == jurisdiction)
+            .where(
+                func.ST_Intersects(footprint_geometry_column, parcel_geometry_column)
+            )
+        )
+        try:
+            result = await session.execute(stmt)
+            count, area = result.one()
+            building_count = int(count or 0)
+            footprint_area = float(area) if area is not None else None
+            if building_count == 0:
+                return await _classify_absent_footprint_signal(
+                    session,
+                    parcel,
+                    jurisdiction=jurisdiction,
+                )
+            return SiteDevelopmentResult(
+                status="developed",
+                building_count=building_count,
+                footprint_area_sqm=footprint_area,
+                source="ref_building_footprints",
+                reason=None,
+            )
+        except Exception:
+            logger.debug(
+                "PostGIS building-footprint parcel lookup failed; falling back to GeoJSON bounds",
+                jurisdiction=jurisdiction,
+                parcel_id=parcel.id,
+            )
+
+    bbox = _geojson_bbox(parcel.bounds_json)
+    stmt = select(RefBuildingFootprint).where(
+        RefBuildingFootprint.jurisdiction == jurisdiction
+    )
+    if bbox is not None:
+        min_lon, min_lat, max_lon, max_lat = bbox
+        stmt = stmt.where(
+            RefBuildingFootprint.centroid_lon >= min_lon,
+            RefBuildingFootprint.centroid_lon <= max_lon,
+            RefBuildingFootprint.centroid_lat >= min_lat,
+            RefBuildingFootprint.centroid_lat <= max_lat,
+        )
+    result = await session.execute(stmt)
+    building_count = 0
+    footprint_area = 0.0
+    for footprint in result.scalars().all():
+        try:
+            intersects = _geojson_intersects(parcel.bounds_json, footprint.bounds_json)
+        except Exception:
+            intersects = False
+        if not intersects:
+            continue
+        building_count += 1
+        try:
+            footprint_area += float(footprint.area_m2 or 0)
+        except (TypeError, ValueError):
+            pass
+
+    if building_count == 0:
+        return await _classify_absent_footprint_signal(
+            session,
+            parcel,
+            jurisdiction=jurisdiction,
+        )
+
+    return SiteDevelopmentResult(
+        status="developed",
+        building_count=building_count,
+        footprint_area_sqm=footprint_area,
+        source="ref_building_footprints",
+        reason=None,
+    )
+
+
+async def _classify_absent_footprint_signal(
+    session: AsyncSession,
+    parcel: RefParcel,
+    *,
+    jurisdiction: str,
+) -> SiteDevelopmentResult:
+    """Classify no-intersection cases only when local footprint coverage is dense."""
+
+    bbox = _geojson_bbox(parcel.bounds_json)
+    if bbox is None:
+        return SiteDevelopmentResult(
+            status="uncertain",
+            source="ref_building_footprints",
+            reason="parcel_bounds_unavailable_for_footprint_coverage_check",
+        )
+
+    min_lon, min_lat, max_lon, max_lat = bbox
+    radius = BUILDING_FOOTPRINT_COVERAGE_RADIUS_DEGREES
+    nearby_count = int(
+        await session.scalar(
+            select(func.count(RefBuildingFootprint.id))
+            .where(RefBuildingFootprint.jurisdiction == jurisdiction)
+            .where(RefBuildingFootprint.centroid_lon >= min_lon - radius)
+            .where(RefBuildingFootprint.centroid_lon <= max_lon + radius)
+            .where(RefBuildingFootprint.centroid_lat >= min_lat - radius)
+            .where(RefBuildingFootprint.centroid_lat <= max_lat + radius)
+        )
+        or 0
+    )
+    if nearby_count < MIN_NEARBY_FOOTPRINTS_FOR_VACANT_SIGNAL:
+        return SiteDevelopmentResult(
+            status="uncertain",
+            source="ref_building_footprints",
+            reason="building_footprint_coverage_sparse_near_parcel",
+        )
+
+    return SiteDevelopmentResult(
+        status="vacant",
+        source="ref_building_footprints",
+        reason="no_footprint_intersects_parcel",
+    )
+
+
 def _coerce_attr_float(
     attributes: dict[str, object], keys: tuple[str, ...]
 ) -> Optional[float]:
@@ -273,6 +1197,46 @@ def _coerce_attr_float(
         except (TypeError, ValueError):
             continue
     return None
+
+
+def _raw_attr_value(attributes: dict[str, object], keys: tuple[str, ...]) -> object:
+    lowered = {str(key).lower(): value for key, value in attributes.items()}
+    for key in keys:
+        value = lowered.get(key.lower())
+        if value not in (None, ""):
+            return value
+    return None
+
+
+def _intensity_control_status(
+    attributes: dict[str, object],
+) -> dict[str, object] | None:
+    raw_gpr = _raw_attr_value(
+        attributes,
+        ("gpr", "GPR", "plot_ratio", "plotRatio", "gross_plot_ratio", "max_far"),
+    )
+    if raw_gpr in (None, ""):
+        return None
+    if _coerce_registry_float(raw_gpr) is not None:
+        return None
+
+    raw_text = str(raw_gpr).strip()
+    normalized = raw_text.lower().replace("_", " ").replace("-", " ")
+    status = (
+        "envelope_control_area"
+        if normalized in ENVELOPE_CONTROL_GPR_TOKENS
+        else "non_numeric_intensity_control"
+    )
+    return {
+        "field": "GPR",
+        "raw_value": raw_text,
+        "status": status,
+        "reason": (
+            "URA Master Plan records this site with envelope controls instead of a numeric GPR."
+            if status == "envelope_control_area"
+            else "URA Master Plan intensity field is non-numeric and cannot be used as plot ratio."
+        ),
+    }
 
 
 def _coerce_attr_string(
@@ -526,6 +1490,7 @@ async def get_zoning_rules_for_zone(
     session: AsyncSession,
     zone_code: Optional[str],
     jurisdiction: str = "SG",
+    preferred_zoning_layer: RefZoningLayer | None = None,
 ) -> ZoningRulesResult:
     """Query RefRule database for zoning parameters.
 
@@ -545,11 +1510,13 @@ async def get_zoning_rules_for_zone(
             source_reference="No zone code provided",
         )
 
-    zoning_layer = await _get_zoning_layer_for_zone(
-        session,
-        normalized_zone=normalized_zone,
-        raw_zone_code=zone_code,
-        jurisdiction=jurisdiction,
+    zoning_layer = preferred_zoning_layer or (
+        await _get_zoning_layer_for_zone(
+            session,
+            normalized_zone=normalized_zone,
+            raw_zone_code=zone_code,
+            jurisdiction=jurisdiction,
+        )
     )
     zoning_layer_attributes = (
         zoning_layer.attributes
@@ -561,6 +1528,7 @@ async def get_zoning_rules_for_zone(
         zoning_layer_attributes,
         ("gpr", "GPR", "plot_ratio", "plotRatio", "gross_plot_ratio", "max_far"),
     )
+    zoning_layer_intensity_control = _intensity_control_status(zoning_layer_attributes)
     zoning_layer_height_limit = _coerce_attr_float(
         zoning_layer_attributes,
         (
@@ -813,6 +1781,15 @@ async def get_zoning_rules_for_zone(
         field for field in RESOLVABLE_FIELDS if field not in resolved_by
     ]
     official_source_gaps = _official_source_gaps(jurisdiction, unresolved_fields)
+    if (
+        zoning_layer_intensity_control is not None
+        and zoning_layer_intensity_control.get("status") == "envelope_control_area"
+    ):
+        for gap in official_source_gaps:
+            if gap.get("field") == "plot_ratio":
+                gap["reason"] = "envelope_control_area_requires_site_specific_controls"
+                gap["source_value"] = zoning_layer_intensity_control.get("raw_value")
+                gap["review_note"] = zoning_layer_intensity_control.get("reason")
     rule_corpus_status = {
         "zone_code": normalized_zone,
         "coverage_state": coverage_state,
@@ -833,6 +1810,10 @@ async def get_zoning_rules_for_zone(
         "official_source_gaps": official_source_gaps,
         "project_clearance_required": _project_clearance_required(official_source_gaps),
     }
+    if zoning_layer_intensity_control is not None:
+        rule_corpus_status["zoning_layer_intensity_control"] = (
+            zoning_layer_intensity_control
+        )
 
     logger.info(
         "Zoning rules retrieved from configured registry",

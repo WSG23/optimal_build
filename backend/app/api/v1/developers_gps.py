@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
+import re
 from datetime import datetime
+from decimal import Decimal
 from typing import Any, Dict, Optional, Sequence
 from uuid import UUID, uuid4
 
@@ -45,7 +48,7 @@ from app.core.jwt_auth import TokenData, get_optional_user
 from app.api.deps import RequestIdentity, require_reviewer
 from app.models.property import Property
 from app.models.projects import Project, ProjectPhase, ProjectType
-from app.schemas.external_sources import ExternalSourceMetadata
+from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 from app.schemas.finance import FinanceAssetMixInput
 from app.services.finance_project_creation import (
     create_finance_project_from_capture,
@@ -58,7 +61,7 @@ from app.services.agents.gps_property_logger import (
 from app.services.developer_checklist_service import DeveloperChecklistService
 from app.services.asset_mix import AssetOptimizationOutcome, build_asset_mix
 from app.services import preview_generator
-from app.services.geocoding import Address
+from app.services.geocoding import Address, GeocodeLookupResult
 from app.services.jurisdictions import get_jurisdiction_config
 from app.services.preview_jobs import PreviewJobService, PreviewJobStatus
 from app.utils.lazy import LazyProxy
@@ -95,6 +98,24 @@ developer_gps_logger = LazyProxy(_create_developer_gps_logger)
 # =============================================================================
 # Asset Type Colors and Formatting
 # =============================================================================
+
+_CURRENT_GFA_KEYS = (
+    "gross_floor_area_sqm",
+    "grossFloorAreaSqm",
+    "gfa_approved",
+    "gfaApproved",
+)
+
+_TRUSTED_CURRENT_GFA_SOURCE_KINDS = frozenset(
+    {
+        "capture_user_evidence",
+        "saved_property_metadata",
+        "official_current_gfa",
+        "current_gfa_registry",
+        "document_extraction",
+        "cad_extraction",
+    }
+)
 
 _ASSET_TYPE_COLORS: dict[str, str] = {
     "office": "#1C7ED6",
@@ -371,6 +392,8 @@ def _mark_envelope_field_source(
 def _augment_rule_corpus_status_for_envelope(
     raw_status: dict[str, Any] | None,
     *,
+    site_area: float | None,
+    site_area_source: str | None,
     zone_description: object | None,
     plot_ratio: float | None,
     building_height_limit: float | None,
@@ -391,10 +414,19 @@ def _augment_rule_corpus_status_for_envelope(
         for field in status.get("unresolved_fields") or []
         if field is not None
     ]
+    if site_area is None and "site_area" not in unresolved_fields:
+        unresolved_fields.append("site_area")
 
     # The rule resolver reports RefRule/zoning-layer sources only. The final
     # envelope can still use captured zoning metadata, so record those fields as
     # resolved-by-capture instead of leaving them listed as unresolved.
+    if site_area is not None and site_area_source:
+        _mark_envelope_field_source(
+            resolved_by=resolved_by,
+            unresolved_fields=unresolved_fields,
+            field="site_area",
+            source=site_area_source,
+        )
     if zone_description:
         _mark_envelope_field_source(
             resolved_by=resolved_by,
@@ -506,25 +538,89 @@ async def _derive_build_envelope(
     result: PropertyLogResult,
     session: AsyncSession,
     jurisdiction: str = "SG",
+    *,
+    allow_captured_zoning_fallback: bool = False,
 ) -> DeveloperBuildEnvelope:
     """Construct zoning/buildability summary from RefRule database.
 
     Queries the RefRule database for zoning parameters (plot ratio, height limits,
     site coverage) instead of using hardcoded mock values from URAIntegrationService.
     """
-    from app.services.rules.zone_rules import get_zoning_rules_for_zone
+    from app.services.rules.zone_rules import (
+        classify_site_development_for_parcel,
+        find_dominant_zoning_layer_for_parcel,
+        find_nearest_parcel_for_point,
+        find_parcel_for_point,
+        find_zoning_layer_for_point,
+        get_zoning_rules_for_zone,
+    )
+    from app.services.postgis import parcel_area as get_parcel_area
 
     ura_data = result.ura_zoning or {}
     property_info = result.property_info or {}
 
-    # Get zone code from URA service (still used for zone identification)
-    raw_zone_code = ura_data.get("zone_code") or ura_data.get("zoneCode")
+    point_parcel = await find_parcel_for_point(
+        session,
+        latitude=result.coordinates[0],
+        longitude=result.coordinates[1],
+        jurisdiction=jurisdiction,
+    )
+    parcel_lookup_source_kind = "ref_parcel"
+    if point_parcel is None:
+        point_parcel = await find_nearest_parcel_for_point(
+            session,
+            latitude=result.coordinates[0],
+            longitude=result.coordinates[1],
+            jurisdiction=jurisdiction,
+        )
+        if point_parcel is not None:
+            parcel_lookup_source_kind = "nearest_ref_parcel"
+    parcel_zoning = await find_dominant_zoning_layer_for_parcel(
+        session,
+        point_parcel,
+        jurisdiction=jurisdiction,
+    )
+    if parcel_zoning.layer is not None:
+        point_zoning_layer = parcel_zoning.layer
+        zoning_lookup_source_kind = "parcel_dominant_zoning"
+    else:
+        point_zoning_layer = await find_zoning_layer_for_point(
+            session,
+            latitude=result.coordinates[0],
+            longitude=result.coordinates[1],
+            jurisdiction=jurisdiction,
+        )
+        zoning_lookup_source_kind = "point_zoning_layer"
+    site_development = await classify_site_development_for_parcel(
+        session,
+        point_parcel,
+        jurisdiction=jurisdiction,
+    )
+
+    captured_zone_code = ura_data.get("zone_code") or ura_data.get("zoneCode")
+    using_point_zoning_layer = point_zoning_layer is not None
+    using_captured_zoning_fallback = (
+        not using_point_zoning_layer
+        and allow_captured_zoning_fallback
+        and bool(captured_zone_code)
+    )
+
+    # Prefer imported zoning overlays by coordinate. GPS capture keeps zoning
+    # unresolved when no polygon contains the point; persisted-property preview
+    # paths may opt into their saved zoning metadata.
+    if using_point_zoning_layer:
+        raw_zone_code = point_zoning_layer.zone_code
+    elif using_captured_zoning_fallback:
+        raw_zone_code = captured_zone_code
+    else:
+        raw_zone_code = None
 
     # Query RefRule database for zoning parameters
     rules_result = await get_zoning_rules_for_zone(
         session=session,
         zone_code=raw_zone_code,
         jurisdiction=jurisdiction,
+        preferred_zoning_layer=point_zoning_layer,
     )
 
     development_constraints = property_info.get("development_constraints")
@@ -533,19 +629,26 @@ async def _derive_build_envelope(
     if not isinstance(development_constraints, dict):
         development_constraints = {}
 
-    fallback_plot_ratio = _coerce_float(
-        ura_data.get("plot_ratio") or ura_data.get("plotRatio")
+    fallback_plot_ratio = (
+        _coerce_float(ura_data.get("plot_ratio") or ura_data.get("plotRatio"))
+        if using_captured_zoning_fallback
+        else None
     )
     fallback_zone_code = str(raw_zone_code) if raw_zone_code else None
-    fallback_zone_description = ura_data.get("zone_description") or ura_data.get(
-        "zoneDescription"
-    )
-    fallback_building_height_limit = _coerce_float(
-        ura_data.get("building_height_limit") or ura_data.get("buildingHeightLimit")
-    )
-    fallback_site_coverage = _coerce_float(
-        ura_data.get("site_coverage") or ura_data.get("siteCoverage")
-    )
+    if using_captured_zoning_fallback:
+        fallback_zone_description = ura_data.get("zone_description") or ura_data.get(
+            "zoneDescription"
+        )
+        fallback_building_height_limit = _coerce_float(
+            ura_data.get("building_height_limit") or ura_data.get("buildingHeightLimit")
+        )
+        fallback_site_coverage = _coerce_float(
+            ura_data.get("site_coverage") or ura_data.get("siteCoverage")
+        )
+    else:
+        fallback_zone_description = None
+        fallback_building_height_limit = None
+        fallback_site_coverage = None
     fallback_setback_front = _coerce_float(
         development_constraints.get("setback_front_m")
         or development_constraints.get("front_setback_m")
@@ -571,12 +674,15 @@ async def _derive_build_envelope(
         or ura_data.get("stepBacks")
     )
     fallback_step_backs = raw_step_backs if isinstance(raw_step_backs, list) else []
-    fallback_air_rights_note = (
-        development_constraints.get("air_rights_note")
-        or development_constraints.get("airRightsNote")
-        or ura_data.get("air_rights_note")
-        or ura_data.get("airRightsNote")
-    )
+    if using_captured_zoning_fallback:
+        fallback_air_rights_note = (
+            development_constraints.get("air_rights_note")
+            or development_constraints.get("airRightsNote")
+            or ura_data.get("air_rights_note")
+            or ura_data.get("airRightsNote")
+        )
+    else:
+        fallback_air_rights_note = None
     fallback_air_rights_note = (
         str(fallback_air_rights_note) if fallback_air_rights_note else None
     )
@@ -584,8 +690,16 @@ async def _derive_build_envelope(
     # Use rules data if available, otherwise fall back to URA service data
     if rules_result.has_data:
         plot_ratio = rules_result.plot_ratio or fallback_plot_ratio
-        zone_code = fallback_zone_code or rules_result.zone_code
-        zone_description = fallback_zone_description or rules_result.zone_description
+        zone_code = (
+            rules_result.zone_code or fallback_zone_code
+            if using_point_zoning_layer
+            else fallback_zone_code or rules_result.zone_code
+        )
+        zone_description = (
+            rules_result.zone_description or fallback_zone_description
+            if using_point_zoning_layer
+            else fallback_zone_description or rules_result.zone_description
+        )
         building_height_limit = (
             rules_result.building_height_limit_m or fallback_building_height_limit
         )
@@ -597,10 +711,10 @@ async def _derive_build_envelope(
         air_rights_note = rules_result.air_rights_note or fallback_air_rights_note
         source_reference = rules_result.source_reference
     else:
-        # Fallback to URA service data (mocked)
+        # Only persisted-property preview paths can opt into saved zoning metadata.
         plot_ratio = fallback_plot_ratio
-        zone_code = fallback_zone_code
-        zone_description = fallback_zone_description
+        zone_code = rules_result.zone_code or fallback_zone_code
+        zone_description = rules_result.zone_description or fallback_zone_description
         building_height_limit = fallback_building_height_limit
         site_coverage = fallback_site_coverage
         setback_front = fallback_setback_front
@@ -610,8 +724,17 @@ async def _derive_build_envelope(
         air_rights_note = fallback_air_rights_note
         source_reference = rules_result.source_reference
 
-    site_area = _coerce_float(
+    captured_site_area = _coerce_float(
         property_info.get("site_area_sqm") or property_info.get("siteAreaSqm")
+    )
+    parcel_site_area = await get_parcel_area(session, point_parcel)
+    site_area = (
+        captured_site_area if captured_site_area is not None else parcel_site_area
+    )
+    site_area_source = (
+        "captured_property_metadata"
+        if captured_site_area is not None
+        else "ref_parcel" if parcel_site_area is not None else None
     )
     current_gfa = _coerce_float(
         property_info.get("gross_floor_area_sqm")
@@ -619,6 +742,12 @@ async def _derive_build_envelope(
         or property_info.get("gfa_approved")
         or property_info.get("gfaApproved")
     )
+    current_gfa_source = property_info.get("current_gfa_source") or property_info.get(
+        "currentGfaSource"
+    )
+    current_gfa_source_kind = property_info.get(
+        "current_gfa_source_kind"
+    ) or property_info.get("currentGfaSourceKind")
 
     max_buildable: Optional[float]
     if site_area is not None and plot_ratio is not None:
@@ -632,6 +761,8 @@ async def _derive_build_envelope(
 
     rule_corpus_status = _augment_rule_corpus_status_for_envelope(
         rules_result.rule_corpus_status,
+        site_area=site_area,
+        site_area_source=site_area_source,
         zone_description=zone_description,
         plot_ratio=plot_ratio,
         building_height_limit=building_height_limit,
@@ -671,13 +802,14 @@ async def _derive_build_envelope(
                     OfficialSourceIngestionService,
                 )
 
-                ingestion_result = (
-                    await OfficialSourceIngestionService().ingest_source_gaps(
+                ingestion_result = await asyncio.wait_for(
+                    OfficialSourceIngestionService().ingest_source_gaps(
                         session,
                         jurisdiction=jurisdiction,
                         zone_code=normalized_status_zone,
                         source_gaps=source_gaps_to_ingest,
-                    )
+                    ),
+                    timeout=CAPTURE_OFFICIAL_SOURCE_SCAN_TIMEOUT_SECONDS,
                 )
                 rule_corpus_status["official_source_ingestion"] = (
                     ingestion_result.as_rule_corpus_payload()
@@ -687,12 +819,20 @@ async def _derive_build_envelope(
                         session=session,
                         zone_code=raw_zone_code,
                         jurisdiction=jurisdiction,
+                        preferred_zoning_layer=point_zoning_layer,
                     )
                     if rules_result.has_data:
                         plot_ratio = rules_result.plot_ratio or fallback_plot_ratio
-                        zone_code = fallback_zone_code or rules_result.zone_code
+                        zone_code = (
+                            rules_result.zone_code or fallback_zone_code
+                            if using_point_zoning_layer
+                            else fallback_zone_code or rules_result.zone_code
+                        )
                         zone_description = (
-                            fallback_zone_description or rules_result.zone_description
+                            rules_result.zone_description or fallback_zone_description
+                            if using_point_zoning_layer
+                            else fallback_zone_description
+                            or rules_result.zone_description
                         )
                         building_height_limit = (
                             rules_result.building_height_limit_m
@@ -727,6 +867,8 @@ async def _derive_build_envelope(
 
                     rule_corpus_status = _augment_rule_corpus_status_for_envelope(
                         rules_result.rule_corpus_status,
+                        site_area=site_area,
+                        site_area_source=site_area_source,
                         zone_description=zone_description,
                         plot_ratio=plot_ratio,
                         building_height_limit=building_height_limit,
@@ -741,6 +883,21 @@ async def _derive_build_envelope(
                         rule_corpus_status["official_source_ingestion"] = (
                             ingestion_result.as_rule_corpus_payload()
                         )
+            except asyncio.TimeoutError:
+                logger.warning(
+                    "Capture official source ingestion timed out",
+                    jurisdiction=jurisdiction,
+                    zone_code=normalized_status_zone,
+                    timeout_seconds=CAPTURE_OFFICIAL_SOURCE_SCAN_TIMEOUT_SECONDS,
+                )
+                if rule_corpus_status is not None:
+                    rule_corpus_status["official_source_ingestion"] = {
+                        "status": "timed_out",
+                        "message": (
+                            "Official source scan exceeded Capture's request "
+                            "budget and will need background review."
+                        ),
+                    }
             except Exception as exc:
                 logger.warning(
                     "Capture official source ingestion failed",
@@ -753,14 +910,218 @@ async def _derive_build_envelope(
                         "message": str(exc),
                     }
 
+    if rule_corpus_status is not None and point_zoning_layer is not None:
+        zoning_lookup_source = {
+            "kind": zoning_lookup_source_kind,
+            "layer_id": point_zoning_layer.id,
+            "layer_name": point_zoning_layer.layer_name,
+            "zone_code": point_zoning_layer.zone_code,
+            "jurisdiction": point_zoning_layer.jurisdiction,
+        }
+        if zoning_lookup_source_kind == "parcel_dominant_zoning":
+            zoning_lookup_source.update(
+                {
+                    "parcel_id": point_parcel.id if point_parcel else None,
+                    "parcel_ref": point_parcel.parcel_ref if point_parcel else None,
+                    "parcel_lookup_source": parcel_lookup_source_kind,
+                    "overlap_area": _round_optional(parcel_zoning.overlap_area),
+                    "overlap_ratio": _round_optional(parcel_zoning.overlap_ratio),
+                }
+            )
+        rule_corpus_status["zoning_lookup_source"] = zoning_lookup_source
+    elif rule_corpus_status is not None and using_captured_zoning_fallback:
+        rule_corpus_status["zoning_lookup_source"] = {
+            "kind": "captured_zoning_metadata",
+            "reason": "persisted_property_or_non_gps_preview",
+            "zone_code": raw_zone_code,
+            "jurisdiction": jurisdiction,
+        }
+    if (
+        rule_corpus_status is not None
+        and site_area_source == "ref_parcel"
+        and point_parcel is not None
+    ):
+        rule_corpus_status["site_area_lookup_source"] = {
+            "kind": "ref_parcel",
+            "parcel_id": point_parcel.id,
+            "parcel_ref": point_parcel.parcel_ref,
+            "lookup_source": parcel_lookup_source_kind,
+            "source": point_parcel.source,
+            "jurisdiction": jurisdiction,
+        }
+    elif (
+        rule_corpus_status is not None
+        and site_area_source == "captured_property_metadata"
+    ):
+        rule_corpus_status["site_area_lookup_source"] = {
+            "kind": "captured_property_metadata",
+            "jurisdiction": jurisdiction,
+        }
+    elif rule_corpus_status is not None:
+        rule_corpus_status["site_area_lookup_source"] = {
+            "kind": "unavailable",
+            "reason": "no_reference_parcel_contains_capture_point",
+            "jurisdiction": jurisdiction,
+        }
+    elif rule_corpus_status is None:
+        missing_unresolved_fields = [
+            "site_area",
+            "land_use",
+            "plot_ratio",
+            "building_height_limit_m",
+            "site_coverage_pct",
+            "setbacks",
+            "step_backs",
+            "air_rights_note",
+        ]
+        missing_resolved_by: dict[str, str] = {}
+        if site_area_source is not None:
+            missing_resolved_by["site_area"] = site_area_source
+            missing_unresolved_fields.remove("site_area")
+        rule_corpus_status = {
+            "zone_code": None,
+            "coverage_state": "missing",
+            "confidence": "low",
+            "counts": {
+                "applicable": 0,
+                "approved": 0,
+                "published": 0,
+                "traceable": 0,
+                "needs_review": 0,
+                "rejected": 0,
+                "zoning_layers": 0,
+            },
+            "applied_rule_ids": [],
+            "applied_zoning_layer_id": None,
+            "resolved_by": missing_resolved_by,
+            "unresolved_fields": missing_unresolved_fields,
+            "official_source_gaps": [],
+            "project_clearance_required": [],
+            "zoning_lookup_source": {
+                "kind": "unavailable",
+                "reason": "no_zoning_layer_contains_capture_point",
+                "jurisdiction": jurisdiction,
+            },
+            "site_area_lookup_source": {
+                "kind": (
+                    "ref_parcel"
+                    if site_area_source == "ref_parcel"
+                    else (
+                        "captured_property_metadata"
+                        if site_area_source == "captured_property_metadata"
+                        else "unavailable"
+                    )
+                ),
+                "reason": (
+                    None
+                    if site_area_source is not None
+                    else "no_reference_parcel_contains_capture_point"
+                ),
+                "parcel_id": point_parcel.id if point_parcel is not None else None,
+                "parcel_ref": (
+                    point_parcel.parcel_ref if point_parcel is not None else None
+                ),
+                "source": point_parcel.source if point_parcel is not None else None,
+                "jurisdiction": jurisdiction,
+            },
+        }
+
+    if rule_corpus_status is not None:
+        site_development = _promote_site_development_from_capture_address(
+            site_development,
+            result,
+            zone_code=zone_code,
+            zone_description=zone_description,
+        )
+        rule_corpus_status["site_development_status"] = site_development.status
+        rule_corpus_status["site_development_lookup_source"] = {
+            "kind": site_development.source or "ref_building_footprints",
+            "status": site_development.status,
+            "building_count": site_development.building_count,
+            "footprint_area_sqm": _round_optional(site_development.footprint_area_sqm),
+            "reason": site_development.reason,
+            "jurisdiction": jurisdiction,
+        }
+        if current_gfa is not None:
+            rule_corpus_status["current_gfa_lookup_source"] = {
+                "kind": str(current_gfa_source_kind or "captured_property_metadata"),
+                "source": str(current_gfa_source) if current_gfa_source else None,
+                "area_sqm": _round_optional(current_gfa),
+                "jurisdiction": jurisdiction,
+            }
+        else:
+            rule_corpus_status["current_gfa_lookup_source"] = {
+                "kind": "unavailable",
+                "reason": "no_current_gfa_evidence_loaded",
+                "jurisdiction": jurisdiction,
+            }
+
     assumptions: list[str] = []
     if plot_ratio is not None and site_area is not None:
         assumptions.append(
             f"Plot ratio {plot_ratio:g} applied to {site_area:,.0f} sqm site area."
         )
+    if current_gfa is not None:
+        source_suffix = (
+            f" from {current_gfa_source}"
+            if isinstance(current_gfa_source, str) and current_gfa_source
+            else ""
+        )
+        assumptions.append(
+            f"Current GFA resolved{source_suffix} at {current_gfa:,.0f} sqm."
+        )
+    if site_development.status == "developed":
+        if site_development.source == "capture_address_evidence":
+            assumptions.append(
+                "Resolved address evidence indicates an existing asset, but imported building footprints are not available for this parcel."
+            )
+        else:
+            assumptions.append(
+                f"Imported building footprints indicate {site_development.building_count} existing structure"
+                f"{'' if site_development.building_count == 1 else 's'} on the parcel."
+            )
+    elif site_development.status == "vacant":
+        assumptions.append(
+            "No imported building footprint intersects the parcel; Capture treats the site as a ground-up candidate until contradicted by evidence."
+        )
+    else:
+        assumptions.append(
+            "Building-footprint evidence is unavailable, so existing-asset status remains unresolved."
+        )
+    if point_parcel is not None and parcel_site_area is not None:
+        if parcel_lookup_source_kind == "nearest_ref_parcel":
+            assumptions.append(
+                f"Site area resolved from nearest imported parcel {point_parcel.parcel_ref} because the captured point landed just outside a parcel."
+            )
+        else:
+            assumptions.append(
+                f"Site area resolved from imported parcel {point_parcel.parcel_ref}."
+            )
+    elif captured_site_area is not None:
+        assumptions.append("Site area resolved from captured property metadata.")
     if zone_description:
         assumptions.append(
             f"Envelope derived from {str(zone_description).lower()} zoning rules."
+        )
+    if point_zoning_layer is not None:
+        if zoning_lookup_source_kind == "parcel_dominant_zoning":
+            if parcel_lookup_source_kind == "nearest_ref_parcel":
+                assumptions.append(
+                    "Zoning identity resolved from the dominant imported zoning layer across the nearest matched parcel."
+                )
+            else:
+                assumptions.append(
+                    "Zoning identity resolved from the dominant imported zoning layer across the matched parcel."
+                )
+        else:
+            assumptions.append(
+                "Zoning identity resolved from imported zoning layer at captured coordinates."
+            )
+    elif using_captured_zoning_fallback:
+        assumptions.append("Zoning identity resolved from saved property metadata.")
+    else:
+        assumptions.append(
+            "No zoning layer contains the captured coordinates; zoning and code envelope are unavailable until official layers are ingested."
         )
     if rules_result.rules_found > 0:
         assumptions.append(f"Data from {rules_result.rules_found} RefRule entries.")
@@ -789,6 +1150,14 @@ async def _derive_build_envelope(
         elif coverage_state == "review_pending":
             assumptions.append(
                 "Rule corpus exists but is pending review; treat envelope outputs as provisional."
+            )
+        elif (
+            coverage_state == "missing"
+            and isinstance(corpus_status.get("zoning_lookup_source"), dict)
+            and corpus_status["zoning_lookup_source"].get("kind") == "unavailable"
+        ):
+            assumptions.append(
+                "No imported zoning layer was available for this point; zoning-sensitive outputs are suppressed."
             )
         elif coverage_state == "missing":
             assumptions.append(
@@ -825,6 +1194,7 @@ async def _derive_build_envelope(
         zone_description=str(zone_description) if zone_description else None,
         site_area_sqm=_round_optional(site_area),
         allowable_plot_ratio=_round_optional(plot_ratio),
+        gross_plot_ratio=_round_optional(plot_ratio),
         max_buildable_gfa_sqm=_round_optional(max_buildable),
         current_gfa_sqm=_round_optional(current_gfa),
         additional_potential_gfa_sqm=_round_optional(additional),
@@ -847,6 +1217,61 @@ async def _derive_build_envelope(
         assumptions=assumptions,
         source_reference=source_reference,
         rule_corpus_status=rule_corpus_status,
+    )
+
+
+def _has_address_level_existing_asset_evidence(result: PropertyLogResult) -> bool:
+    address = result.address
+    if address is None:
+        return False
+    if address.building_name and address.building_name.strip():
+        return True
+    if address.block_number and address.postal_code:
+        return True
+    return bool(
+        _leading_street_number(address.full_address)
+        and _singapore_postal_code(address.full_address)
+    )
+
+
+def _promote_site_development_from_capture_address(
+    site_development: Any,
+    result: PropertyLogResult,
+    *,
+    zone_code: str | None,
+    zone_description: str | None,
+) -> Any:
+    """Use address-level evidence when footprint coverage misses a building address.
+
+    This does not estimate GFA. It only prevents a sparse footprint layer from
+    erasing the fact that Capture resolved a normal building address.
+    """
+
+    source_status = getattr(site_development, "status", None)
+    if source_status not in {"uncertain", "vacant"}:
+        return site_development
+    if getattr(site_development, "reason", None) not in {
+        "building_footprint_coverage_sparse_near_parcel",
+        "building_footprints_not_loaded",
+        "no_footprint_intersects_parcel",
+    }:
+        return site_development
+    if _is_non_standard_or_non_developable_zone(zone_code, zone_description):
+        return site_development
+    if not _has_address_level_existing_asset_evidence(result):
+        return site_development
+
+    reason = (
+        "resolved_building_address_overrides_absent_footprint_signal"
+        if source_status == "vacant"
+        else "resolved_building_address_without_footprint_coverage"
+    )
+    return type(site_development)(
+        status="developed",
+        building_count=0,
+        footprint_area_sqm=None,
+        source="capture_address_evidence",
+        reason=reason,
     )
 
 
@@ -944,6 +1369,292 @@ def _build_visualization_summary(
     )
 
 
+def _zone_use_groups(zone_code: str | None, zone_description: str | None) -> list[str]:
+    zone_signal = f"{zone_code or ''} {zone_description or ''}".lower()
+    if _is_non_standard_or_non_developable_zone(zone_code, zone_description):
+        return []
+    if any(token in zone_signal for token in ("hotel", "hospitality", "sg:hotel")):
+        return ["Hotel", "Retail"]
+    if any(
+        token in zone_signal
+        for token in ("business park", "business_park", "sg:business_park")
+    ):
+        return ["Business park", "Office-lab"]
+    if any(
+        token in zone_signal for token in ("residential", "housing", "sg:residential")
+    ):
+        return ["Residential", "Amenities"]
+    if any(
+        token in zone_signal
+        for token in ("industrial", "business 1", "business 2", "b1", "b2")
+    ):
+        return ["Light Industrial", "Office", "Warehouse"]
+    if "mixed" in zone_signal:
+        return ["Commercial", "Residential", "Office"]
+    if any(token in zone_signal for token in ("commercial", "office", "retail")):
+        return ["Office", "Retail"]
+    return []
+
+
+def _is_non_standard_or_non_developable_zone(
+    zone_code: str | None,
+    zone_description: str | None,
+) -> bool:
+    zone_signal = f"{zone_code or ''} {zone_description or ''}".lower()
+    compact = "".join(char for char in zone_signal if char.isalnum())
+    is_park_control = zone_signal.strip() == "park" or compact == "sgpark"
+    return (
+        is_park_control
+        or any(
+            token in zone_signal
+            for token in (
+                "road",
+                "open space",
+                "open_space",
+                "waterbody",
+                "water body",
+                "transport facilities",
+                "transport_facilities",
+            )
+        )
+        or any(
+            token in compact
+            for token in (
+                "sgroad",
+                "sgopenspace",
+                "sgpark",
+                "sgwaterbody",
+                "sgtransportfacilities",
+            )
+        )
+    )
+
+
+def _build_response_zoning_payload(
+    original_zoning: dict[str, Any] | None,
+    envelope: DeveloperBuildEnvelope,
+) -> dict[str, Any]:
+    rule_status = envelope.rule_corpus_status or {}
+    lookup_source = rule_status.get("zoning_lookup_source")
+    if isinstance(lookup_source, dict) and lookup_source.get("kind") == "unavailable":
+        return {
+            "zone_code": None,
+            "zone_description": None,
+            "plot_ratio": None,
+            "building_height_limit": None,
+            "site_coverage": None,
+            "use_groups": [],
+            "special_conditions": None,
+            "source": "unavailable",
+            "source_reason": lookup_source.get("reason"),
+        }
+    if not isinstance(lookup_source, dict) or lookup_source.get("kind") not in {
+        "point_zoning_layer",
+        "parcel_dominant_zoning",
+    }:
+        return dict(original_zoning or {})
+
+    zone_code = envelope.zone_code
+    zone_description = envelope.zone_description
+    use_groups = _zone_use_groups(zone_code, zone_description)
+    non_standard_zone = _is_non_standard_or_non_developable_zone(
+        zone_code,
+        zone_description,
+    )
+    return {
+        "zone_code": zone_code,
+        "zone_description": zone_description,
+        "plot_ratio": envelope.allowable_plot_ratio,
+        "building_height_limit": envelope.building_height_limit_m,
+        "site_coverage": envelope.site_coverage_pct,
+        "use_groups": use_groups,
+        "special_conditions": (
+            "non_standard_or_non_developable_control" if non_standard_zone else None
+        ),
+        "development_control_status": (
+            "non_standard_or_non_developable"
+            if non_standard_zone
+            else "standard_development_control"
+        ),
+        "source": "ref_zoning_layer",
+    }
+
+
+_CURRENT_USE_TYPE_RULES: tuple[tuple[set[str], str, str], ...] = (
+    ({"lodging", "hotel"}, "Hotel / lodging", "Selected place is tagged as lodging."),
+    (
+        {"restaurant", "cafe", "bar", "meal_takeaway", "meal_delivery", "food"},
+        "Food and beverage",
+        "Selected place is tagged as a food and beverage use.",
+    ),
+    (
+        {"shopping_mall", "department_store", "store", "supermarket"},
+        "Retail",
+        "Selected place is tagged as a retail use.",
+    ),
+    (
+        {"school", "university", "primary_school", "secondary_school"},
+        "Education",
+        "Selected place is tagged as an education use.",
+    ),
+    (
+        {"hospital", "doctor", "dentist", "health"},
+        "Healthcare",
+        "Selected place is tagged as a healthcare use.",
+    ),
+    (
+        {"transit_station", "bus_station", "train_station", "subway_station"},
+        "Transport",
+        "Selected place is tagged as a transport use.",
+    ),
+    (
+        {"storage", "moving_company"},
+        "Logistics / storage",
+        "Selected place is tagged as a logistics or storage use.",
+    ),
+)
+CAPTURE_PLACE_DETAILS_TIMEOUT_SECONDS = 3.0
+CAPTURE_ADDRESS_LOOKUP_TIMEOUT_SECONDS = 3.0
+CAPTURE_OFFICIAL_SOURCE_SCAN_TIMEOUT_SECONDS = 6.0
+
+
+def _normalise_place_type_list(value: Sequence[Any] | None) -> list[str]:
+    if not value:
+        return []
+    normalised: list[str] = []
+    for entry in value:
+        text = str(entry).strip().lower()
+        if text and text not in normalised:
+            normalised.append(text)
+    return normalised
+
+
+def _infer_current_use_from_place(
+    *,
+    place_name: str | None,
+    place_types: Sequence[Any] | None,
+    source: str,
+    place_id: str | None = None,
+) -> dict[str, Any] | None:
+    types = _normalise_place_type_list(place_types)
+    type_set = set(types)
+    name = (place_name or "").strip()
+    name_lower = name.lower()
+
+    inferred_use: str | None = None
+    basis: str | None = None
+    for matched_types, use_label, rule_basis in _CURRENT_USE_TYPE_RULES:
+        if matched_types.intersection(type_set):
+            inferred_use = use_label
+            basis = rule_basis
+            break
+
+    if inferred_use is None and any(
+        token in name_lower
+        for token in (
+            "hotel",
+            "hostel",
+            "serviced apartment",
+            "serviced residence",
+            "residence hotel",
+        )
+    ):
+        inferred_use = "Hotel / lodging"
+        basis = "Selected place name indicates a lodging use."
+
+    if inferred_use is None:
+        return None
+
+    evidence: dict[str, Any] = {
+        "use": inferred_use,
+        "source": source,
+        "confidence": "medium",
+        "basis": basis,
+    }
+    if name:
+        evidence["place_name"] = name
+    if place_id:
+        evidence["place_id"] = place_id
+    if types:
+        evidence["place_types"] = types
+    return evidence
+
+
+def _current_use_from_official_existing_use(
+    existing_use: str | None,
+    ura_source: Any,
+) -> dict[str, Any] | None:
+    value = (existing_use or "").strip()
+    if not value or value.lower() == "unknown":
+        return None
+    state = str(getattr(ura_source, "state", "") or "").lower()
+    synthetic = bool(getattr(ura_source, "synthetic", True))
+    if "live" not in state or synthetic:
+        return None
+    return {
+        "use": value,
+        "source": "ura_existing_use",
+        "confidence": "high",
+        "basis": "Official URA existing-use service returned this use.",
+    }
+
+
+async def _resolve_current_use_evidence(
+    request: DeveloperGPSLogRequest,
+    *,
+    existing_use: str | None,
+    ura_source: Any,
+) -> list[dict[str, Any]]:
+    evidence: list[dict[str, Any]] = []
+    official_evidence = _current_use_from_official_existing_use(
+        existing_use,
+        ura_source,
+    )
+    if official_evidence:
+        evidence.append(official_evidence)
+
+    place_details: dict[str, Any] | None = None
+    if request.place_id:
+        try:
+            place_details = await asyncio.wait_for(
+                _developer_geocoding.instance.get_google_place_details(
+                    request.place_id
+                ),
+                timeout=CAPTURE_PLACE_DETAILS_TIMEOUT_SECONDS,
+            )
+        except Exception as exc:  # pragma: no cover - enrichment is non-critical
+            logger.warning(
+                "capture_google_place_details_failed",
+                place_id=request.place_id,
+                error=str(exc),
+            )
+
+    if place_details:
+        server_place_evidence = _infer_current_use_from_place(
+            place_name=str(place_details.get("name") or request.place_name or ""),
+            place_types=place_details.get("types"),
+            source="google_places_details",
+            place_id=str(place_details.get("place_id") or request.place_id or ""),
+        )
+        if server_place_evidence:
+            evidence.append(server_place_evidence)
+
+    client_place_evidence = _infer_current_use_from_place(
+        place_name=request.place_name,
+        place_types=request.place_types,
+        source="google_places_autocomplete",
+        place_id=request.place_id,
+    )
+    if client_place_evidence and not any(
+        item.get("source") == client_place_evidence["source"]
+        and item.get("use") == client_place_evidence["use"]
+        for item in evidence
+    ):
+        evidence.append(client_place_evidence)
+
+    return evidence
+
+
 async def _build_property_preview_inputs(
     property_record: Property,
     session: AsyncSession,
@@ -1025,6 +1736,7 @@ async def _build_property_preview_inputs(
         pseudo_result,
         session,
         property_record.jurisdiction_code or "SG",
+        allow_captured_zoning_fallback=True,
     )
     (
         scenario_envelope,
@@ -1898,6 +2610,44 @@ class DeveloperGPSLogRequest(BaseModel):
         alias="jurisdictionCode",
         description="Jurisdiction code for the captured property (e.g. 'SG', 'HK').",
     )
+    submitted_address: str | None = Field(
+        default=None,
+        alias="submittedAddress",
+        max_length=300,
+        description=(
+            "Address text submitted with the coordinates. Used to reject stale "
+            "address-coordinate pairs before Capture returns a result."
+        ),
+    )
+    current_gfa_sqm: float | None = Field(
+        default=None,
+        alias="currentGfaSqm",
+        ge=0,
+        description="Existing/current gross floor area in square metres from project evidence.",
+    )
+    current_gfa_source: str | None = Field(
+        default=None,
+        alias="currentGfaSource",
+        max_length=180,
+        description="Short source note for the provided current GFA evidence.",
+    )
+    place_id: str | None = Field(
+        default=None,
+        alias="placeId",
+        max_length=180,
+        description="Google Place ID selected by the address autocomplete, if available.",
+    )
+    place_name: str | None = Field(
+        default=None,
+        alias="placeName",
+        max_length=220,
+        description="Google Place name selected by the address autocomplete, if available.",
+    )
+    place_types: list[str] = Field(
+        default_factory=list,
+        alias="placeTypes",
+        description="Google Place types selected by the address autocomplete.",
+    )
 
     @field_validator("preview_geometry_detail_level")
     @classmethod
@@ -1919,6 +2669,42 @@ class DeveloperGPSLogRequest(BaseModel):
             return None
         trimmed = value.strip().upper()
         return trimmed or "SG"
+
+    @field_validator("current_gfa_source")
+    @classmethod
+    def _normalise_current_gfa_source(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        trimmed = value.strip()
+        return trimmed or None
+
+    @field_validator("place_id", "place_name")
+    @classmethod
+    def _normalise_place_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        trimmed = value.strip()
+        return trimmed or None
+
+    @field_validator("place_types")
+    @classmethod
+    def _normalise_place_types(cls, value: list[str] | None) -> list[str]:
+        if not value:
+            return []
+        normalised: list[str] = []
+        for entry in value[:12]:
+            trimmed = str(entry).strip().lower()
+            if trimmed and trimmed not in normalised:
+                normalised.append(trimmed)
+        return normalised
+
+    @field_validator("submitted_address")
+    @classmethod
+    def _normalise_submitted_address(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        trimmed = value.strip()
+        return trimmed or None
 
 
 class PreviewJobRefreshRequest(BaseModel):
@@ -2100,6 +2886,243 @@ class CaptureProjectLinkResponse(BaseModel):
 # =============================================================================
 
 
+def _apply_current_gfa_evidence(
+    *,
+    property_info: dict[str, Any],
+    property_record: Property | None,
+    current_gfa_sqm: float | None,
+    current_gfa_source: str | None,
+) -> dict[str, Any]:
+    """Merge evidence-backed current GFA into capture metadata.
+
+    The value is not estimated here. It must either already exist on the saved
+    property record or be supplied as capture evidence by the caller.
+    """
+
+    saved_current_gfa = None
+    saved_current_gfa_source = None
+    saved_current_gfa_source_kind = None
+    if property_record is not None and property_record.gross_floor_area_sqm is not None:
+        current_gfa_reference = None
+        external_references = property_record.external_references
+        if isinstance(external_references, dict):
+            current_gfa_reference = external_references.get("current_gfa")
+        if isinstance(current_gfa_reference, dict):
+            reference_source_kind = current_gfa_reference.get("source_kind")
+            if reference_source_kind in _TRUSTED_CURRENT_GFA_SOURCE_KINDS:
+                saved_current_gfa = _coerce_float(
+                    current_gfa_reference.get("area_sqm")
+                ) or float(property_record.gross_floor_area_sqm)
+                saved_current_gfa_source = current_gfa_reference.get("source")
+                saved_current_gfa_source_kind = reference_source_kind
+    requested_current_gfa = current_gfa_sqm
+    resolved_current_gfa = (
+        requested_current_gfa
+        if requested_current_gfa is not None
+        else saved_current_gfa
+    )
+    if resolved_current_gfa is None:
+        return property_info
+
+    if requested_current_gfa is not None:
+        source_note = current_gfa_source or "capture evidence"
+        source_kind = "capture_user_evidence"
+    else:
+        source_note = saved_current_gfa_source or "saved property metadata"
+        source_kind = saved_current_gfa_source_kind or "saved_property_metadata"
+
+    property_info["gross_floor_area_sqm"] = resolved_current_gfa
+    property_info.setdefault("grossFloorAreaSqm", resolved_current_gfa)
+    property_info["gfa_approved"] = resolved_current_gfa
+    property_info["current_gfa_source"] = source_note
+    property_info["current_gfa_source_kind"] = source_kind
+
+    if property_record is not None and requested_current_gfa is not None:
+        property_record.gross_floor_area_sqm = Decimal(str(requested_current_gfa))
+        external_references = dict(property_record.external_references or {})
+        external_references["current_gfa"] = {
+            "source": source_note,
+            "source_kind": source_kind,
+            "area_sqm": requested_current_gfa,
+        }
+        property_record.external_references = external_references
+
+    return property_info
+
+
+def _leading_street_number(value: str | None) -> str | None:
+    if not value:
+        return None
+    match = re.match(r"^\s*(\d+[a-zA-Z]?)(?=\s)", value)
+    if not match:
+        return None
+    return match.group(1).lower()
+
+
+def _singapore_postal_code(value: str | None) -> str | None:
+    if not value:
+        return None
+    matches = re.findall(r"\b(\d{6})\b", value)
+    return matches[-1] if matches else None
+
+
+_SG_STREET_ABBREVIATIONS = {
+    "ave": "avenue",
+    "blvd": "boulevard",
+    "cres": "crescent",
+    "dr": "drive",
+    "ln": "lane",
+    "pk": "park",
+    "pl": "place",
+    "rd": "road",
+    "st": "street",
+}
+
+
+def _normalised_sg_street_name(value: str | None) -> str | None:
+    if not value:
+        return None
+
+    candidate = re.sub(r"\b\d{6}\b", "", value.lower())
+    candidate = candidate.split(",", 1)[0]
+    candidate = re.sub(r"^\s*\d+[a-zA-Z]?\s+", "", candidate)
+    candidate = re.sub(r"[^a-z0-9\s]", " ", candidate)
+    tokens = [token for token in candidate.split() if token != "singapore"]
+    if not tokens:
+        return None
+
+    normalised_tokens = [_SG_STREET_ABBREVIATIONS.get(token, token) for token in tokens]
+    return " ".join(normalised_tokens)
+
+
+def _address_from_submitted_address(
+    submitted_address: str | None,
+    resolved_address: Address | None,
+) -> Address | None:
+    if not submitted_address:
+        return resolved_address
+
+    submitted_number = _leading_street_number(submitted_address)
+    submitted_postal = _singapore_postal_code(submitted_address)
+    submitted_street = _normalised_sg_street_name(submitted_address)
+    street_name = submitted_street.title() if submitted_street else None
+    return Address(
+        full_address=submitted_address,
+        street_name=street_name
+        or (resolved_address.street_name if resolved_address else None),
+        building_name=resolved_address.building_name if resolved_address else None,
+        block_number=submitted_number
+        or (resolved_address.block_number if resolved_address else None),
+        postal_code=submitted_postal
+        or (resolved_address.postal_code if resolved_address else None),
+        district=resolved_address.district if resolved_address else None,
+        country=resolved_address.country if resolved_address else "Singapore",
+    )
+
+
+def _is_trusted_sg_address_lookup(
+    lookup: GeocodeLookupResult | None,
+) -> bool:
+    if lookup is None:
+        return False
+    source = lookup.source
+    return (
+        source.provider == "onemap_address_search"
+        and source.state == ExternalSourceState.LIVE
+        and source.synthetic is False
+    )
+
+
+async def _resolve_submitted_sg_address_lookup(
+    request: DeveloperGPSLogRequest,
+) -> GeocodeLookupResult | None:
+    if not request.submitted_address:
+        return None
+    if (request.jurisdiction_code or "SG").upper() != "SG":
+        return None
+
+    try:
+        lookup = await asyncio.wait_for(
+            _developer_geocoding.instance.geocode_lookup(request.submitted_address),
+            timeout=CAPTURE_ADDRESS_LOOKUP_TIMEOUT_SECONDS,
+        )
+    except Exception as exc:  # pragma: no cover - non-critical enrichment
+        logger.warning(
+            "capture_sg_address_lookup_failed",
+            address=request.submitted_address,
+            error=str(exc),
+        )
+        return None
+
+    return lookup if _is_trusted_sg_address_lookup(lookup) else None
+
+
+def _has_conflicting_submitted_address(
+    submitted_address: str | None,
+    resolved_address: Address | None,
+    *,
+    selected_place_id: str | None = None,
+) -> bool:
+    if not submitted_address or resolved_address is None:
+        return False
+    if selected_place_id:
+        # Google reverse geocoding can name a nearby landmark or street address
+        # for a valid selected Place point. When the request carries the
+        # autocomplete Place ID, treat that selection as the address-coordinate
+        # binding and use this guard only for stale/manual coordinate pairs.
+        return False
+
+    resolved_text = resolved_address.full_address
+    submitted_street = _normalised_sg_street_name(submitted_address)
+    resolved_street = _normalised_sg_street_name(
+        resolved_address.street_name or resolved_text
+    )
+    if submitted_street and resolved_street and submitted_street != resolved_street:
+        return False
+
+    submitted_number = _leading_street_number(submitted_address)
+    resolved_number = _leading_street_number(resolved_text)
+
+    submitted_postal = _singapore_postal_code(submitted_address)
+    resolved_postal = resolved_address.postal_code or _singapore_postal_code(
+        resolved_text
+    )
+    if submitted_postal and resolved_postal and submitted_postal != resolved_postal:
+        return True
+    if (
+        submitted_postal
+        and submitted_number
+        and resolved_number
+        and submitted_number != resolved_number
+    ):
+        return True
+
+    return False
+
+
+def _remove_untrusted_current_gfa_metadata(
+    property_info: dict[str, Any],
+) -> dict[str, Any]:
+    """Drop current-GFA-like fields unless the payload declares a trusted source."""
+
+    current_gfa_source_kind = property_info.get(
+        "current_gfa_source_kind"
+    ) or property_info.get("currentGfaSourceKind")
+    if current_gfa_source_kind in _TRUSTED_CURRENT_GFA_SOURCE_KINDS:
+        return property_info
+
+    removed_keys = [key for key in _CURRENT_GFA_KEYS if key in property_info]
+    if not removed_keys:
+        return property_info
+
+    for key in removed_keys:
+        property_info.pop(key, None)
+    property_info["current_gfa_suppressed_reason"] = (
+        "current GFA was present in property metadata but had no trusted evidence source"
+    )
+    return property_info
+
+
 @router.post(
     "/properties/log-gps",
     response_model=DeveloperGPSLogResponse,
@@ -2121,20 +3144,72 @@ async def developer_log_property_by_gps(
                 supplied_user_id=token.user_id,
             )
 
+    submitted_address_lookup = await _resolve_submitted_sg_address_lookup(request)
+    capture_latitude = (
+        submitted_address_lookup.latitude
+        if submitted_address_lookup is not None
+        else request.latitude
+    )
+    capture_longitude = (
+        submitted_address_lookup.longitude
+        if submitted_address_lookup is not None
+        else request.longitude
+    )
+
     try:
         result = await developer_gps_logger.log_property_from_gps(
-            latitude=request.latitude,
-            longitude=request.longitude,
+            latitude=capture_latitude,
+            longitude=capture_longitude,
             session=session,
             user_id=user_uuid,
             scenarios=request.development_scenarios,
             jurisdiction_code=request.jurisdiction_code,
+            resolved_address=(
+                submitted_address_lookup.address
+                if submitted_address_lookup is not None
+                else None
+            ),
+            geocoding_source_override=(
+                submitted_address_lookup.source
+                if submitted_address_lookup is not None
+                else None
+            ),
         )
     except (RuntimeError, ValueError) as exc:
         raise HTTPException(
             status_code=503,
             detail="GPS capture unavailable: geocoding failed",
         ) from exc
+
+    if submitted_address_lookup is None and _has_conflicting_submitted_address(
+        request.submitted_address,
+        result.address,
+        selected_place_id=request.place_id,
+    ):
+        await session.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Submitted address does not match the resolved map point. "
+                f'Submitted "{request.submitted_address}", but coordinates resolved '
+                f'to "{result.address.full_address}". Please pick the exact map point '
+                "or re-geocode the address before running Capture."
+            ),
+        )
+    trusted_address = (
+        submitted_address_lookup.address
+        if submitted_address_lookup is not None
+        else result.address
+    )
+    result.address = (
+        _address_from_submitted_address(
+            request.submitted_address,
+            trusted_address,
+        )
+        or result.address
+    )
+    if submitted_address_lookup is not None:
+        result.geocoding_source = submitted_address_lookup.source
 
     quick_analysis_payload = result.quick_analysis or {
         "generated_at": utcnow().isoformat(),
@@ -2167,6 +3242,22 @@ async def developer_log_property_by_gps(
             property_info_dict.setdefault(
                 "heritage_constraints", property_metadata.heritage_constraints
             )
+    property_info_dict = _remove_untrusted_current_gfa_metadata(property_info_dict)
+    property_info_dict = _apply_current_gfa_evidence(
+        property_info=property_info_dict,
+        property_record=property_metadata,
+        current_gfa_sqm=request.current_gfa_sqm,
+        current_gfa_source=request.current_gfa_source,
+    )
+    current_use_evidence = await _resolve_current_use_evidence(
+        request,
+        existing_use=result.existing_use,
+        ura_source=result.ura_source,
+    )
+    if current_use_evidence:
+        property_info_dict["current_use_evidence"] = current_use_evidence
+        property_info_dict["current_use"] = current_use_evidence[0].get("use")
+    result.property_info = property_info_dict
 
     property_info_for_mix: dict[str, Any] | None = (
         property_info_dict if property_info_dict else None
@@ -2177,8 +3268,17 @@ async def developer_log_property_by_gps(
     build_envelope = await _derive_build_envelope(
         result, session, property_jurisdiction
     )
+    response_zoning = _build_response_zoning_payload(
+        result.ura_zoning,
+        build_envelope,
+    )
+    zoning_land_use = (
+        build_envelope.zone_description
+        or response_zoning.get("zone_description")
+        or result.existing_use
+    )
     optimizations, heritage_context, optimization_outcome = _build_asset_optimizations(
-        result.existing_use,
+        str(zoning_land_use),
         build_envelope,
         result.existing_use,
         property_info_for_mix,
@@ -2207,6 +3307,7 @@ async def developer_log_property_by_gps(
         camera_orbit=visualization.camera_orbit_hint or {},
         geometry_detail_level=request.preview_geometry_detail_level,
         color_legend=legend_payload,
+        inline_execution="background",
     )
     preview_status = (
         preview_job.status.value
@@ -2270,7 +3371,7 @@ async def developer_log_property_by_gps(
         amenities_source=result.amenities_source,
         ura_source=result.ura_source,
         jurisdiction_code=property_jurisdiction,
-        ura_zoning=result.ura_zoning,
+        ura_zoning=response_zoning,
         existing_use=result.existing_use,
         nearby_amenities=result.nearby_amenities,
         quick_analysis=quick_analysis,

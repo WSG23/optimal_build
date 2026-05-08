@@ -111,7 +111,7 @@ class DealCalculatorFinanceSummary(BaseModel):
     dscr: Decimal | None = None
     npv_sgd: Decimal | None = None
     irr: Decimal | None = None
-    moic: Decimal | None = None
+    moic: float | None = None
     estimated_exit_value_sgd: Decimal | None = None
     notes: list[str] = Field(default_factory=list)
 

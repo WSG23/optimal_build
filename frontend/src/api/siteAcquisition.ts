@@ -43,9 +43,15 @@ import {
 export interface SiteAcquisitionRequest {
   latitude: number
   longitude: number
+  submittedAddress?: string | null
+  placeId?: string | null
+  placeName?: string | null
+  placeTypes?: string[]
   developmentScenarios: DevelopmentScenario[]
   previewDetailLevel?: GeometryDetailLevel
   jurisdictionCode?: string
+  currentGfaSqm?: number | null
+  currentGfaSource?: string | null
 }
 
 export interface DeveloperBuildEnvelope {
@@ -53,6 +59,7 @@ export interface DeveloperBuildEnvelope {
   zoneDescription: string | null
   siteAreaSqm: number | null
   allowablePlotRatio: number | null
+  grossPlotRatio: number | null
   maxBuildableGfaSqm: number | null
   currentGfaSqm: number | null
   additionalPotentialGfaSqm: number | null
@@ -139,6 +146,10 @@ export type CaptureStarterModelStatus =
 
 export type CaptureOverrideIntent = 'exploratory' | 'saved' | 'learnable'
 
+export type CaptureRecommendationScenario =
+  | DevelopmentScenario
+  | 'scenario_pending'
+
 export type CaptureGeometryScope =
   | 'scalar_envelope'
   | 'setback_envelope'
@@ -169,6 +180,7 @@ export interface CaptureCodeConstraintsV2 {
   zoningCode: string | null
   zoningDescription: string | null
   allowablePlotRatio: number | null
+  grossPlotRatio: number | null
   maxBuildableGfaSqm: number | null
   currentGfaSqm: number | null
   sourceReference: string | null
@@ -235,8 +247,8 @@ export interface CaptureStarterModelV2 {
 }
 
 export interface CaptureScenarioRecommendationV2 {
-  recommended: DevelopmentScenario
-  defaultRecommended: DevelopmentScenario
+  recommended: CaptureRecommendationScenario
+  defaultRecommended: CaptureRecommendationScenario
   alternatives: DevelopmentScenario[]
   reasonCodes: string[]
   explanation: string
@@ -623,6 +635,8 @@ interface RawDeveloperEnvelope {
   siteAreaSqm?: unknown
   allowable_plot_ratio?: unknown
   allowablePlotRatio?: unknown
+  gross_plot_ratio?: unknown
+  grossPlotRatio?: unknown
   max_buildable_gfa_sqm?: unknown
   maxBuildableGfaSqm?: unknown
   current_gfa_sqm?: unknown
@@ -718,6 +732,10 @@ function mapDeveloperEnvelope(
   const plotRatio =
     coerceNumeric(payload?.allowable_plot_ratio) ??
     coerceNumeric(payload?.allowablePlotRatio)
+  const grossPlotRatio =
+    coerceNumeric(payload?.gross_plot_ratio) ??
+    coerceNumeric(payload?.grossPlotRatio) ??
+    plotRatio
   const maxBuildable =
     coerceNumeric(payload?.max_buildable_gfa_sqm) ??
     coerceNumeric(payload?.maxBuildableGfaSqm)
@@ -789,6 +807,7 @@ function mapDeveloperEnvelope(
     zoneDescription: zoneDescription ?? null,
     siteAreaSqm: roundOptional(siteArea),
     allowablePlotRatio: roundOptional(plotRatio),
+    grossPlotRatio: roundOptional(grossPlotRatio),
     maxBuildableGfaSqm: roundOptional(maxBuildable),
     currentGfaSqm: roundOptional(currentGfa),
     additionalPotentialGfaSqm: roundOptional(additional),
@@ -1554,6 +1573,7 @@ function deriveEnvelopeFromSummary(
     zoneDescription,
     siteAreaSqm: roundOptional(siteArea),
     allowablePlotRatio: roundOptional(plotRatio),
+    grossPlotRatio: roundOptional(plotRatio),
     maxBuildableGfaSqm: roundOptional(maxBuildable),
     currentGfaSqm: roundOptional(currentGfa),
     additionalPotentialGfaSqm: roundOptional(additional),
@@ -1784,6 +1804,27 @@ export async function capturePropertyForDevelopment(
       if (request.jurisdictionCode) {
         requestBody.jurisdiction_code = request.jurisdictionCode
       }
+      if (request.submittedAddress) {
+        requestBody.submitted_address = request.submittedAddress
+      }
+      if (request.placeId) {
+        requestBody.place_id = request.placeId
+      }
+      if (request.placeName) {
+        requestBody.place_name = request.placeName
+      }
+      if (request.placeTypes?.length) {
+        requestBody.place_types = request.placeTypes
+      }
+      if (
+        request.currentGfaSqm !== undefined &&
+        request.currentGfaSqm !== null
+      ) {
+        requestBody.current_gfa_sqm = request.currentGfaSqm
+      }
+      if (request.currentGfaSource) {
+        requestBody.current_gfa_source = request.currentGfaSource
+      }
 
       const response = await fetch(buildUrl(DEVELOPER_GPS_ENDPOINT), {
         method: 'POST',
@@ -1793,7 +1834,16 @@ export async function capturePropertyForDevelopment(
       })
 
       if (!response.ok) {
-        const detail = await response.text()
+        const detailText = await response.text()
+        let detail = detailText
+        try {
+          const parsed = JSON.parse(detailText) as { detail?: unknown }
+          if (typeof parsed.detail === 'string') {
+            detail = parsed.detail
+          }
+        } catch {
+          detail = detailText
+        }
         throw new Error(
           detail ||
             `Request to ${DEVELOPER_GPS_ENDPOINT} failed with ${response.status}`,

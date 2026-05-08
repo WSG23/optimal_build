@@ -18,7 +18,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback when geoalchemy missi
 from backend._compat.datetime import utcnow
 
 from app.models.property import Property, PropertyStatus, PropertyType
-from app.schemas.external_sources import ExternalSourceMetadata
+from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 from app.services.agents.ura_integration import URAIntegrationService
 from app.services.geocoding import Address, GeocodingService
 from app.services.heritage_overlay import HeritageOverlayService
@@ -26,6 +26,65 @@ from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger()
+
+TRUSTED_CURRENT_GFA_SOURCE_KINDS = frozenset(
+    {
+        "capture_user_evidence",
+        "saved_property_metadata",
+        "official_current_gfa",
+        "current_gfa_registry",
+        "document_extraction",
+        "cad_extraction",
+    }
+)
+
+CAPTURE_URA_METADATA_TIMEOUT_SECONDS = 4.0
+CAPTURE_URA_MARKET_ENRICHMENT_TIMEOUT_SECONDS = 5.0
+CAPTURE_AMENITIES_TIMEOUT_SECONDS = 3.0
+CAPTURE_REVERSE_GEOCODE_TIMEOUT_SECONDS = 3.0
+
+
+async def _await_capture_enrichment(
+    awaitable: Any,
+    *,
+    timeout_seconds: float,
+    fallback: Any,
+    label: str,
+) -> Any:
+    """Fail fast on non-critical Capture enrichment calls."""
+
+    try:
+        return await asyncio.wait_for(awaitable, timeout=timeout_seconds)
+    except asyncio.TimeoutError:
+        logger.warning(
+            "Capture enrichment timed out; continuing without optional data",
+            label=label,
+            timeout_seconds=timeout_seconds,
+        )
+        return fallback
+
+
+def _trusted_current_gfa(property_info: Any) -> Decimal | None:
+    reference = _trusted_current_gfa_reference(property_info)
+    if reference is None:
+        return None
+    return Decimal(str(reference["area_sqm"]))
+
+
+def _trusted_current_gfa_reference(property_info: Any) -> dict[str, Any] | None:
+    if property_info is None:
+        return None
+    source_kind = getattr(property_info, "current_gfa_source_kind", None)
+    if source_kind not in TRUSTED_CURRENT_GFA_SOURCE_KINDS:
+        return None
+    gfa_approved = getattr(property_info, "gfa_approved", None)
+    if gfa_approved is None:
+        return None
+    return {
+        "area_sqm": float(gfa_approved),
+        "source": getattr(property_info, "current_gfa_source", None),
+        "source_kind": source_kind,
+    }
 
 
 def _get_developer_checklist_service():
@@ -255,6 +314,8 @@ class GPSPropertyLogger:
         user_id: Optional[UUID] = None,
         scenarios: Optional[List[DevelopmentScenario]] = None,
         jurisdiction_code: str | None = None,
+        resolved_address: Address | None = None,
+        geocoding_source_override: ExternalSourceMetadata | None = None,
     ) -> PropertyLogResult:
         """
         Log a property from GPS coordinates.
@@ -270,11 +331,19 @@ class GPSPropertyLogger:
         jurisdiction = (jurisdiction_code or "SG").strip().upper() or "SG"
         try:
             # Step 1: Reverse geocode to get address
-            logger.info(f"Reverse geocoding coordinates: {latitude}, {longitude}")
-            geocoding_source = self.geocoding.get_google_geocoding_metadata()
+            logger.info(f"Resolving coordinates: {latitude}, {longitude}")
+            geocoding_source = (
+                geocoding_source_override
+                or self.geocoding.get_google_geocoding_metadata()
+            )
             amenities_source = self.geocoding.get_onemap_amenities_metadata()
             ura_source = self.ura.source_metadata()
-            address = await self.geocoding.reverse_geocode(latitude, longitude)
+            address = resolved_address or await _await_capture_enrichment(
+                self.geocoding.reverse_geocode(latitude, longitude),
+                timeout_seconds=CAPTURE_REVERSE_GEOCODE_TIMEOUT_SECONDS,
+                fallback=None,
+                label="reverse_geocode",
+            )
 
             if not address:
                 raise ValueError(
@@ -289,9 +358,29 @@ class GPSPropertyLogger:
             )
 
             # Step 3: Fetch URA data
-            ura_zoning = await self.ura.get_zoning_info(address.full_address)
-            existing_use = await self.ura.get_existing_use(address.full_address)
-            property_info = await self.ura.get_property_info(address.full_address)
+            ura_zoning = await _await_capture_enrichment(
+                self.ura.get_zoning_info(address.full_address),
+                timeout_seconds=CAPTURE_URA_METADATA_TIMEOUT_SECONDS,
+                fallback=None,
+                label="ura_zoning",
+            )
+            authoritative_ura_zoning = (
+                ura_zoning if self._is_authoritative_zoning_source(ura_source) else None
+            )
+            existing_use, property_info = await asyncio.gather(
+                _await_capture_enrichment(
+                    self.ura.get_existing_use(address.full_address),
+                    timeout_seconds=CAPTURE_URA_METADATA_TIMEOUT_SECONDS,
+                    fallback=None,
+                    label="ura_existing_use",
+                ),
+                _await_capture_enrichment(
+                    self.ura.get_property_info(address.full_address),
+                    timeout_seconds=CAPTURE_URA_METADATA_TIMEOUT_SECONDS,
+                    fallback=None,
+                    label="ura_property_info",
+                ),
+            )
             property_type = self._determine_property_type(existing_use or "")
 
             development_plans_task = asyncio.create_task(
@@ -305,8 +394,21 @@ class GPSPropertyLogger:
             )
 
             # Step 4: Get nearby amenities
-            nearby_amenities = await self.geocoding.get_nearby_amenities(
-                latitude, longitude, radius_m=1000
+            nearby_amenities = await _await_capture_enrichment(
+                self.geocoding.get_nearby_amenities(
+                    latitude,
+                    longitude,
+                    radius_m=1000,
+                ),
+                timeout_seconds=CAPTURE_AMENITIES_TIMEOUT_SECONDS,
+                fallback={
+                    "mrt_stations": [],
+                    "bus_stops": [],
+                    "schools": [],
+                    "shopping_malls": [],
+                    "parks": [],
+                },
+                label="nearby_amenities",
             )
 
             heritage_overlay = self.heritage_service.lookup(latitude, longitude)
@@ -325,7 +427,7 @@ class GPSPropertyLogger:
                     session,
                     property_record,
                     address,
-                    ura_zoning,
+                    authoritative_ura_zoning,
                     property_info,
                     jurisdiction,
                 )
@@ -336,7 +438,7 @@ class GPSPropertyLogger:
                     latitude,
                     longitude,
                     property_type,
-                    ura_zoning,
+                    authoritative_ura_zoning,
                     existing_use,
                     property_info,
                     jurisdiction,
@@ -366,13 +468,30 @@ class GPSPropertyLogger:
             # Step 6: Log the property access
             await self._log_property_access(session, property_id, user_id)
 
-            development_plans = await development_plans_task
-            transactions = await transactions_task
-            rentals = await rentals_task
+            development_plans, transactions, rentals = await asyncio.gather(
+                _await_capture_enrichment(
+                    development_plans_task,
+                    timeout_seconds=CAPTURE_URA_MARKET_ENRICHMENT_TIMEOUT_SECONDS,
+                    fallback=[],
+                    label="ura_development_plans",
+                ),
+                _await_capture_enrichment(
+                    transactions_task,
+                    timeout_seconds=CAPTURE_URA_MARKET_ENRICHMENT_TIMEOUT_SECONDS,
+                    fallback=[],
+                    label="ura_transactions",
+                ),
+                _await_capture_enrichment(
+                    rentals_task,
+                    timeout_seconds=CAPTURE_URA_MARKET_ENRICHMENT_TIMEOUT_SECONDS,
+                    fallback=[],
+                    label="ura_rentals",
+                ),
+            )
 
             quick_analysis = self._generate_quick_analysis(
                 scenarios or DevelopmentScenario.default_set(),
-                ura_zoning=ura_zoning,
+                ura_zoning=authoritative_ura_zoning,
                 property_info=property_info,
                 existing_use=existing_use,
                 nearby_amenities=nearby_amenities,
@@ -416,7 +535,11 @@ class GPSPropertyLogger:
                 property_id=property_id,
                 address=address,
                 coordinates=(latitude, longitude),
-                ura_zoning=ura_zoning.model_dump() if ura_zoning else {},
+                ura_zoning=(
+                    authoritative_ura_zoning.model_dump()
+                    if authoritative_ura_zoning
+                    else {}
+                ),
                 existing_use=existing_use or "Unknown",
                 property_info=property_info_payload or None,
                 nearby_amenities=nearby_amenities,
@@ -433,6 +556,18 @@ class GPSPropertyLogger:
             logger.error(f"Error logging property from GPS: {str(e)}")
             await session.rollback()
             raise
+
+    @staticmethod
+    def _is_authoritative_zoning_source(
+        source: ExternalSourceMetadata | None,
+    ) -> bool:
+        """Return true only when zoning can be persisted as authoritative."""
+
+        if source is None:
+            return False
+        state = getattr(source, "state", None)
+        synthetic = bool(getattr(source, "synthetic", True))
+        return state == ExternalSourceState.LIVE and not synthetic
 
     async def _find_existing_property(
         self, session: AsyncSession, latitude: float, longitude: float, address: Address
@@ -508,6 +643,14 @@ class GPSPropertyLogger:
 
         # Add property info if available
         if property_info:
+            trusted_current_gfa_reference = _trusted_current_gfa_reference(
+                property_info
+            )
+            trusted_current_gfa = (
+                Decimal(str(trusted_current_gfa_reference["area_sqm"]))
+                if trusted_current_gfa_reference is not None
+                else None
+            )
             property_data.update(
                 {
                     "land_area_sqm": (
@@ -515,20 +658,22 @@ class GPSPropertyLogger:
                         if property_info.site_area_sqm
                         else None
                     ),
-                    "gross_floor_area_sqm": (
-                        Decimal(str(property_info.gfa_approved))
-                        if property_info.gfa_approved
-                        else None
-                    ),
+                    "gross_floor_area_sqm": trusted_current_gfa,
                     "building_height_m": (
                         Decimal(str(property_info.building_height))
                         if property_info.building_height
                         else None
                     ),
                     "year_built": property_info.completion_year,
-                    "tenure_type": self._map_tenure_type(property_info.tenure),
+                    "tenure_type": self._map_tenure_type(
+                        getattr(property_info, "tenure", None)
+                    ),
                 }
             )
+            if trusted_current_gfa_reference is not None:
+                property_data["external_references"] = {
+                    "current_gfa": trusted_current_gfa_reference
+                }
 
         stmt = insert(Property).values(**property_data)
         await session.execute(stmt)
@@ -554,10 +699,16 @@ class GPSPropertyLogger:
             property_record.zoning_code = ura_zoning.zone_code
             property_record.plot_ratio = float(ura_zoning.plot_ratio)
 
-        if property_info and property_info.gfa_approved:
-            property_record.gross_floor_area_sqm = Decimal(
-                str(property_info.gfa_approved)
+        trusted_current_gfa = _trusted_current_gfa(property_info)
+        if trusted_current_gfa is not None:
+            property_record.gross_floor_area_sqm = trusted_current_gfa
+            external_references = dict(property_record.external_references or {})
+            trusted_current_gfa_reference = _trusted_current_gfa_reference(
+                property_info
             )
+            if trusted_current_gfa_reference is not None:
+                external_references["current_gfa"] = trusted_current_gfa_reference
+                property_record.external_references = external_references
 
         logger.info(f"Updated property record: {property_record.id}")
 
@@ -596,8 +747,10 @@ class GPSPropertyLogger:
         else:
             return PropertyType.SPECIAL_PURPOSE
 
-    def _map_tenure_type(self, tenure_str: str) -> str:
+    def _map_tenure_type(self, tenure_str: Optional[str]) -> Optional[str]:
         """Map tenure string to TenureType enum value."""
+        if not tenure_str:
+            return None
         tenure_lower = tenure_str.lower()
 
         if "freehold" in tenure_lower:

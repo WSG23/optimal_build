@@ -124,6 +124,7 @@ class DeveloperBuildEnvelope(BaseModel):
     zone_description: Optional[str] = None
     site_area_sqm: Optional[float] = None
     allowable_plot_ratio: Optional[float] = None
+    gross_plot_ratio: Optional[float] = None
     max_buildable_gfa_sqm: Optional[float] = None
     current_gfa_sqm: Optional[float] = None
     additional_potential_gfa_sqm: Optional[float] = None

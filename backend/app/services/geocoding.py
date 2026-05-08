@@ -1,5 +1,6 @@
 """Geocoding service for address lookup and reverse geocoding."""
 
+import re
 from typing import Any, Dict, Optional, Tuple
 
 import structlog
@@ -25,12 +26,25 @@ class Address(BaseModel):
     country: str = "Singapore"
 
 
+class GeocodeLookupResult(BaseModel):
+    """Forward-geocode result with structured provenance."""
+
+    latitude: float
+    longitude: float
+    formatted_address: str
+    address: Address
+    source: ExternalSourceMetadata
+
+
 class GeocodingService(AsyncClientService):
     """Service for geocoding and reverse geocoding using Google Maps."""
 
     def __init__(self) -> None:
         self.onemap_base_url = "https://www.onemap.gov.sg/api"
         self.google_maps_base_url = "https://maps.googleapis.com/maps/api/geocode/json"
+        self.google_places_details_url = (
+            "https://maps.googleapis.com/maps/api/place/details/json"
+        )
         self.google_maps_api_key = settings.GOOGLE_MAPS_API_KEY
         self.offline_mode = settings.OFFLINE_MODE
         if self.offline_mode:
@@ -102,6 +116,32 @@ class GeocodingService(AsyncClientService):
             )
         return ExternalSourceMetadata(
             provider="onemap",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
+        )
+
+    def get_onemap_address_metadata(self) -> ExternalSourceMetadata:
+        """Describe the current OneMap address-search integration mode."""
+
+        if self.offline_mode:
+            return ExternalSourceMetadata(
+                provider="onemap_address_search",
+                state=ExternalSourceState.MOCK,
+                configured=False,
+                synthetic=True,
+                reason="OFFLINE_MODE enabled",
+            )
+        if self.client is None:
+            return ExternalSourceMetadata(
+                provider="onemap_address_search",
+                state=ExternalSourceState.UNAVAILABLE,
+                configured=True,
+                synthetic=False,
+                reason="Geocoding client unavailable",
+            )
+        return ExternalSourceMetadata(
+            provider="onemap_address_search",
             state=ExternalSourceState.LIVE,
             configured=True,
             synthetic=False,
@@ -202,37 +242,118 @@ class GeocodingService(AsyncClientService):
 
     async def geocode(self, address: str) -> Optional[Tuple[float, float]]:
         """Convert address to coordinates using Google Maps."""
-        if self.offline_mode:
-            return (1.3000, 103.8500)
-        if not self.google_maps_api_key:
-            logger.warning("geocode_mock_fallback", address=address)
-            return (1.3000, 103.8500)
-
-        try:
-            result = await self._google_geocode(address)
-        except Exception as exc:
-            logger.error("geocode_failed", error=str(exc), address=address)
-            raise
-
+        result = await self.geocode_lookup(address)
         if result is None:
             logger.warning("geocode_no_results", address=address)
             return None
-
-        latitude, longitude, _ = result
-        return (latitude, longitude)
+        return (result.latitude, result.longitude)
 
     async def geocode_details(self, address: str) -> Optional[Tuple[float, float, str]]:
         """Return coordinates plus a formatted address for the input."""
+        result = await self.geocode_lookup(address)
+        if result is None:
+            return None
+        return (result.latitude, result.longitude, result.formatted_address)
+
+    async def geocode_lookup(self, address: str) -> Optional[GeocodeLookupResult]:
+        """Return coordinates, formatted address, structured address, and source."""
+
         if self.offline_mode:
-            return (1.3000, 103.8500, address)
+            mock_address = Address(
+                full_address=address,
+                street_name=None,
+                building_name=None,
+                block_number=None,
+                postal_code=self._extract_singapore_postal(address),
+                district=None,
+            )
+            return GeocodeLookupResult(
+                latitude=1.3000,
+                longitude=103.8500,
+                formatted_address=address,
+                address=mock_address,
+                source=self.get_google_geocoding_metadata(),
+            )
+
+        if self._looks_like_singapore_address(address):
+            try:
+                onemap_result = await self._onemap_geocode(address)
+                if onemap_result is not None:
+                    return onemap_result
+            except Exception as exc:
+                logger.warning(
+                    "onemap_address_geocode_failed",
+                    error=str(exc),
+                    address=address,
+                )
+
         if not self.google_maps_api_key:
             logger.warning("geocode_details_mock_fallback", address=address)
-            return (1.3000, 103.8500, address)
+            mock_address = Address(
+                full_address=address,
+                postal_code=self._extract_singapore_postal(address),
+            )
+            return GeocodeLookupResult(
+                latitude=1.3000,
+                longitude=103.8500,
+                formatted_address=address,
+                address=mock_address,
+                source=self.get_google_geocoding_metadata(),
+            )
 
         result = await self._google_geocode(address)
         if result is None:
             return None
-        return result
+        latitude, longitude, formatted = result
+        parsed_address = await self._google_address_for_forward_result(
+            formatted=formatted,
+            fallback=address,
+        )
+        return GeocodeLookupResult(
+            latitude=latitude,
+            longitude=longitude,
+            formatted_address=formatted,
+            address=parsed_address,
+            source=self.get_google_geocoding_metadata(),
+        )
+
+    async def get_google_place_details(
+        self, place_id: str | None
+    ) -> Optional[Dict[str, Any]]:
+        """Return selected Google Place details for current-use enrichment."""
+        if not place_id:
+            return None
+        trimmed_place_id = place_id.strip()
+        if not trimmed_place_id:
+            return None
+        if self.offline_mode or not self.google_maps_api_key or self.client is None:
+            return None
+
+        response = await self.client.get(
+            self.google_places_details_url,
+            params={
+                "place_id": trimmed_place_id,
+                "fields": "place_id,name,types,business_status,formatted_address",
+                "key": self.google_maps_api_key,
+            },
+        )
+        if response.status_code != 200:
+            logger.warning(
+                "google_place_details_failed",
+                status_code=response.status_code,
+                place_id=trimmed_place_id,
+            )
+            return None
+
+        payload = response.json()
+        if payload.get("status") != "OK" or not isinstance(payload.get("result"), dict):
+            logger.info(
+                "google_place_details_no_result",
+                status=payload.get("status"),
+                place_id=trimmed_place_id,
+            )
+            return None
+        return payload["result"]
 
     async def get_nearby_amenities(
         self, latitude: float, longitude: float, radius_m: int = 1000
@@ -417,6 +538,180 @@ class GeocodingService(AsyncClientService):
 
         formatted = result.get("formatted_address") or address
         return (float(lat), float(lng), formatted)
+
+    async def _google_address_for_forward_result(
+        self,
+        *,
+        formatted: str,
+        fallback: str,
+    ) -> Address:
+        postal_code = self._extract_singapore_postal(formatted) or (
+            self._extract_singapore_postal(fallback)
+        )
+        return Address(
+            full_address=formatted or fallback,
+            postal_code=postal_code,
+            district=(
+                self._get_district_from_postal(postal_code) if postal_code else None
+            ),
+            country="Singapore" if postal_code else "Unknown",
+        )
+
+    async def _onemap_geocode(self, address: str) -> Optional[GeocodeLookupResult]:
+        if self.client is None:
+            return None
+
+        client = self.client
+        response = await client.get(
+            f"{self.onemap_base_url}/common/elastic/search",
+            params={
+                "searchVal": address,
+                "returnGeom": "Y",
+                "getAddrDetails": "Y",
+                "pageNum": 1,
+            },
+        )
+        if response.status_code != 200:
+            logger.warning(
+                "onemap_address_geocode_status",
+                status_code=response.status_code,
+                address=address,
+            )
+            return None
+
+        payload = response.json()
+        raw_results = payload.get("results")
+        if not isinstance(raw_results, list) or not raw_results:
+            return None
+
+        candidates = [
+            result
+            for result in raw_results
+            if isinstance(result, dict)
+            and self._coerce_coordinate(result.get("LATITUDE")) is not None
+            and self._coerce_coordinate(result.get("LONGITUDE")) is not None
+        ]
+        if not candidates:
+            return None
+
+        best = max(
+            candidates,
+            key=lambda entry: self._score_onemap_candidate(address, entry),
+        )
+        latitude = self._coerce_coordinate(best.get("LATITUDE"))
+        longitude = self._coerce_coordinate(best.get("LONGITUDE"))
+        if latitude is None or longitude is None:
+            return None
+
+        address_payload = self._parse_onemap_address(best, fallback=address)
+        return GeocodeLookupResult(
+            latitude=latitude,
+            longitude=longitude,
+            formatted_address=address_payload.full_address,
+            address=address_payload,
+            source=self.get_onemap_address_metadata(),
+        )
+
+    def _parse_onemap_address(
+        self,
+        result: dict[str, Any],
+        *,
+        fallback: str,
+    ) -> Address:
+        raw_address = str(result.get("ADDRESS") or "").strip()
+        postal_code = self._normalise_onemap_text(result.get("POSTAL"))
+        if not postal_code:
+            postal_code = self._extract_singapore_postal(raw_address) or (
+                self._extract_singapore_postal(fallback)
+            )
+        road_name = self._normalise_onemap_text(result.get("ROAD_NAME"))
+        block_number = self._normalise_onemap_text(result.get("BLK_NO"))
+        building_name = self._normalise_onemap_text(result.get("BUILDING"))
+        search_value = self._normalise_onemap_text(result.get("SEARCHVAL"))
+
+        formatted = raw_address or search_value or fallback
+        if formatted and "singapore" not in formatted.lower():
+            formatted = f"{formatted}, Singapore"
+        if postal_code and postal_code not in formatted:
+            formatted = f"{formatted} {postal_code}"
+
+        return Address(
+            full_address=formatted,
+            street_name=road_name,
+            building_name=building_name,
+            block_number=block_number,
+            postal_code=postal_code,
+            district=self._get_district_from_postal(postal_code or ""),
+            country="Singapore",
+        )
+
+    def _score_onemap_candidate(
+        self,
+        submitted_address: str,
+        candidate: dict[str, Any],
+    ) -> int:
+        submitted = submitted_address.lower()
+        candidate_address = " ".join(
+            str(candidate.get(key) or "").lower()
+            for key in ("ADDRESS", "SEARCHVAL", "ROAD_NAME", "BLK_NO", "POSTAL")
+        )
+        score = 0
+        submitted_postal = self._extract_singapore_postal(submitted_address)
+        candidate_postal = self._normalise_onemap_text(candidate.get("POSTAL"))
+        if submitted_postal and candidate_postal == submitted_postal:
+            score += 100
+
+        submitted_number = self._leading_block_number(submitted_address)
+        candidate_block = self._normalise_onemap_text(candidate.get("BLK_NO"))
+        if (
+            submitted_number
+            and candidate_block
+            and submitted_number == candidate_block.lower()
+        ):
+            score += 30
+
+        for token in re.findall(r"[a-z0-9]+", submitted):
+            if len(token) >= 3 and token in candidate_address:
+                score += 3
+
+        return score
+
+    @staticmethod
+    def _normalise_onemap_text(value: Any) -> str | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        if not text or text.upper() == "NIL":
+            return None
+        return text
+
+    @staticmethod
+    def _coerce_coordinate(value: Any) -> float | None:
+        try:
+            coordinate = float(value)
+        except (TypeError, ValueError):
+            return None
+        return coordinate if coordinate else None
+
+    @staticmethod
+    def _extract_singapore_postal(value: str | None) -> str | None:
+        if not value:
+            return None
+        matches = re.findall(r"\b(\d{6})\b", value)
+        return matches[-1] if matches else None
+
+    @staticmethod
+    def _leading_block_number(value: str | None) -> str | None:
+        if not value:
+            return None
+        match = re.match(r"^\s*(\d+[a-zA-Z]?)(?=\s)", value)
+        return match.group(1).lower() if match else None
+
+    def _looks_like_singapore_address(self, address: str) -> bool:
+        lower = address.lower()
+        return (
+            "singapore" in lower or self._extract_singapore_postal(address) is not None
+        )
 
     def _require_google_client(self) -> httpx.AsyncClient:
         if not self.google_maps_api_key:

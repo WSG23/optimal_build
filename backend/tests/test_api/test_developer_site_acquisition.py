@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 from typing import Any
+from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
 
 import pytest
@@ -12,10 +13,11 @@ from app.models.finance import FinCapitalStack, FinProject, FinScenario
 from app.models.preview import PreviewJob
 from app.models.projects import Project
 from app.models.property import Property, PropertyStatus, PropertyType
-from app.models.rkp import RefRule
+from app.models.rkp import RefBuildingFootprint, RefParcel, RefRule, RefZoningLayer
 from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 from app.services.agents.gps_property_logger import PropertyLogResult
-from app.services.geocoding import Address
+from app.services.geocoding import Address, GeocodeLookupResult
+from app.services.rules.zone_rules import SiteDevelopmentResult
 from httpx import AsyncClient
 from sqlalchemy import select
 
@@ -117,6 +119,40 @@ class _ResolvingHeightLimitIngestionService:
         return _ResolvingHeightLimitIngestionResult()
 
 
+@pytest.mark.asyncio
+async def test_current_use_evidence_is_inferred_from_selected_place_metadata() -> None:
+    request = developers_api.DeveloperGPSLogRequest.model_validate(
+        {
+            "latitude": 1.3008041,
+            "longitude": 103.7881032,
+            "placeName": "lyf one-north Singapore",
+            "placeTypes": ["lodging", "point_of_interest"],
+        }
+    )
+
+    evidence = await developers_api._resolve_current_use_evidence(
+        request,
+        existing_use="Unknown",
+        ura_source=ExternalSourceMetadata(
+            provider="ura",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
+        ),
+    )
+
+    assert evidence == [
+        {
+            "use": "Hotel / lodging",
+            "source": "google_places_autocomplete",
+            "confidence": "medium",
+            "basis": "Selected place is tagged as lodging.",
+            "place_name": "lyf one-north Singapore",
+            "place_types": ["lodging", "point_of_interest"],
+        }
+    ]
+
+
 def _build_stub_payload(property_id: UUID) -> PropertyLogResult:
     address = Address(
         full_address="1 Developer Way",
@@ -215,6 +251,119 @@ def _build_stub_payload(property_id: UUID) -> PropertyLogResult:
             reason="URA_ACCESS_KEY not configured",
         ),
     )
+
+
+def _sg_zoning_layer(
+    *,
+    zone_code: str = "SG:commercial",
+    lu_desc: str = "Commercial",
+    gpr: str = "4.0",
+    height_m: str | None = None,
+    lat_min: float = 1.27,
+    lat_max: float = 1.30,
+    lon_min: float = 103.80,
+    lon_max: float = 103.84,
+) -> RefZoningLayer:
+    attributes: dict[str, Any] = {"LU_DESC": lu_desc, "GPR": gpr}
+    if height_m is not None:
+        attributes["height_m"] = height_m
+    return RefZoningLayer(
+        jurisdiction="SG",
+        layer_name="MasterPlanImported",
+        zone_code=zone_code,
+        bounds_json={
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [lon_min, lat_min],
+                    [lon_max, lat_min],
+                    [lon_max, lat_max],
+                    [lon_min, lat_max],
+                    [lon_min, lat_min],
+                ]
+            ],
+        },
+        attributes=attributes,
+    )
+
+
+def _sg_parcel(
+    *,
+    parcel_ref: str = "SG:LOT:MK01-00001",
+    area_m2: float = 5000.0,
+    lat_min: float = 1.27,
+    lat_max: float = 1.30,
+    lon_min: float = 103.80,
+    lon_max: float = 103.84,
+) -> RefParcel:
+    return RefParcel(
+        jurisdiction="SG",
+        parcel_ref=parcel_ref,
+        bounds_json={
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [lon_min, lat_min],
+                    [lon_max, lat_min],
+                    [lon_max, lat_max],
+                    [lon_min, lat_max],
+                    [lon_min, lat_min],
+                ]
+            ],
+        },
+        centroid_lat=(lat_min + lat_max) / 2,
+        centroid_lon=(lon_min + lon_max) / 2,
+        area_m2=area_m2,
+        source="sla_onemap",
+    )
+
+
+def test_zone_use_groups_maps_hotel_zoning_to_hotel_program() -> None:
+    assert developers_api._zone_use_groups("SG:hotel", "Hotel") == [
+        "Hotel",
+        "Retail",
+    ]
+
+
+def test_zone_use_groups_maps_business_park_white_to_business_park_program() -> None:
+    assert developers_api._zone_use_groups(
+        "SG:business_park_white",
+        "Business Park - White",
+    ) == ["Business park", "Office-lab"]
+
+
+def test_zone_use_groups_keeps_transport_facilities_out_of_standard_programs() -> None:
+    assert (
+        developers_api._zone_use_groups(
+            "SG:transport_facilities",
+            "Transport Facilities",
+        )
+        == []
+    )
+
+
+def test_zone_use_groups_keeps_road_out_of_standard_programs() -> None:
+    assert developers_api._zone_use_groups("SG:road", None) == []
+
+
+def test_build_response_zoning_payload_marks_non_developable_controls() -> None:
+    payload = developers_api._build_response_zoning_payload(
+        {},
+        developers_api.DeveloperBuildEnvelope(
+            zone_code="SG:road",
+            zone_description="Road",
+            rule_corpus_status={
+                "zoning_lookup_source": {
+                    "kind": "point_zoning_layer",
+                },
+            },
+        ),
+    )
+
+    assert payload["source"] == "ref_zoning_layer"
+    assert payload["use_groups"] == []
+    assert payload["special_conditions"] == "non_standard_or_non_developable_control"
+    assert payload["development_control_status"] == "non_standard_or_non_developable"
 
 
 def test_extract_heritage_context_does_not_flag_default_low_risk() -> None:
@@ -322,6 +471,7 @@ async def test_developer_log_property_returns_envelope(
         }
         session.add_all(
             [
+                _sg_zoning_layer(),
                 RefRule(
                     parameter_key="zoning.setback.front_min_m",
                     value="6",
@@ -382,6 +532,8 @@ async def test_developer_log_property_returns_envelope(
             "latitude": 1.2801,
             "longitude": 103.8198,
             "development_scenarios": ["raw_land", "existing_building"],
+            "currentGfaSqm": 12500,
+            "currentGfaSource": "test approved plans",
         },
     )
 
@@ -396,8 +548,9 @@ async def test_developer_log_property_returns_envelope(
     assert payload["quick_analysis"]["scenarios"][0]["scenario"] == "raw_land"
 
     envelope = payload["build_envelope"]
-    assert envelope["zone_code"] == "C1"
+    assert envelope["zone_code"] == "SG:commercial"
     assert envelope["allowable_plot_ratio"] == 4.0
+    assert envelope["gross_plot_ratio"] == 4.0
     assert envelope["site_area_sqm"] == 4500.0
     assert envelope["max_buildable_gfa_sqm"] == 18000.0
     assert envelope["current_gfa_sqm"] == 12500.0
@@ -409,13 +562,13 @@ async def test_developer_log_property_returns_envelope(
     assert envelope["air_rights_note"] == "Subject to aviation height review."
     assert envelope["site_coverage_pct"] == 50.0
     assert envelope["assumptions"], "Assumptions should not be empty"
-    assert envelope["source_reference"] == "SG Rule Registry (RefRule)"
+    assert envelope["source_reference"] == "SG Rule Registry (RefRule + zoning layers)"
     assert envelope["rule_corpus_status"]["zone_code"] == "SG:commercial"
     assert envelope["rule_corpus_status"]["resolved_by"]["land_use"] == (
-        "captured_zoning_metadata"
+        "ref_zoning_layer"
     )
     assert envelope["rule_corpus_status"]["resolved_by"]["plot_ratio"] == (
-        "captured_zoning_metadata"
+        "ref_zoning_layer"
     )
     assert envelope["rule_corpus_status"]["resolved_by"]["site_coverage_pct"] == (
         "ref_rule"
@@ -438,9 +591,12 @@ async def test_developer_log_property_returns_envelope(
     }
 
     visualization = payload["visualization"]
-    assert visualization["status"] in {"ready", "placeholder"}
-    assert visualization["preview_available"] is True
-    assert visualization["concept_mesh_url"].endswith((".json", ".gltf", ".glb"))
+    assert visualization["status"] in {"queued", "ready", "placeholder"}
+    assert visualization["preview_available"] is (visualization["status"] == "ready")
+    if visualization["status"] == "ready":
+        assert visualization["concept_mesh_url"].endswith((".json", ".gltf", ".glb"))
+    else:
+        assert visualization["concept_mesh_url"] is None
     assert visualization["preview_job_id"]
     assert visualization["massing_layers"], "Massing layers should be included"
     assert visualization["color_legend"], "Colour legend should be populated"
@@ -484,7 +640,11 @@ async def test_developer_log_property_returns_envelope(
     )
 
     preview_jobs = payload["preview_jobs"]
-    assert preview_jobs and preview_jobs[0]["status"] in {"ready", "processing"}
+    assert preview_jobs and preview_jobs[0]["status"] in {
+        "queued",
+        "ready",
+        "processing",
+    }
     preview_job_id = preview_jobs[0]["id"]
 
     property_info = payload["property_info"]
@@ -527,6 +687,965 @@ async def test_developer_log_property_returns_envelope(
 
 
 @pytest.mark.asyncio
+async def test_developer_envelope_uses_reference_parcel_area_for_max_gfa(
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.property_info.pop("site_area_sqm", None)
+    stub_payload.property_info.pop("gfa_approved", None)
+
+    async with async_session_factory() as session:
+        session.add_all(
+            [
+                _sg_zoning_layer(gpr="6.3"),
+                _sg_parcel(
+                    parcel_ref="SG:LOT:MK01-12345",
+                    area_m2=4321.0,
+                ),
+            ]
+        )
+        await session.flush()
+
+        envelope = await developers_api._derive_build_envelope(
+            stub_payload,
+            session,
+            jurisdiction="SG",
+        )
+
+    assert envelope.site_area_sqm == pytest.approx(4321.0)
+    assert envelope.allowable_plot_ratio == pytest.approx(6.3)
+    assert envelope.max_buildable_gfa_sqm == pytest.approx(27222.3)
+    assert envelope.current_gfa_sqm is None
+    assert envelope.additional_potential_gfa_sqm is None
+    assert envelope.rule_corpus_status is not None
+    assert envelope.rule_corpus_status["resolved_by"]["site_area"] == "ref_parcel"
+    assert (
+        envelope.rule_corpus_status["site_area_lookup_source"]["parcel_ref"]
+        == "SG:LOT:MK01-12345"
+    )
+    assert "site_area" not in envelope.rule_corpus_status["unresolved_fields"]
+    assert any(
+        "Site area resolved from imported parcel SG:LOT:MK01-12345." == assumption
+        for assumption in envelope.assumptions
+    )
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_prefers_point_zoning_layer_over_mock_ura(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.ura_zoning = {
+        "zone_code": "C1",
+        "zone_description": "Commercial",
+        "plot_ratio": 12.0,
+    }
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+
+    async with async_session_factory() as session:
+        session.add(
+            _sg_zoning_layer(
+                zone_code="SG:residential",
+                lu_desc="Residential",
+                gpr="2.8",
+                height_m="36",
+            )
+        )
+        await session.commit()
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.2801,
+            "longitude": 103.8198,
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    envelope = payload["build_envelope"]
+    assert envelope["zone_code"] == "SG:residential"
+    assert envelope["zone_description"] == "Residential"
+    assert envelope["allowable_plot_ratio"] == 2.8
+    assert envelope["building_height_limit_m"] == 36.0
+    assert envelope["rule_corpus_status"]["zoning_lookup_source"] == {
+        "kind": "point_zoning_layer",
+        "layer_id": envelope["rule_corpus_status"]["applied_zoning_layer_id"],
+        "layer_name": "MasterPlanImported",
+        "zone_code": "SG:residential",
+        "jurisdiction": "SG",
+    }
+    assert payload["ura_zoning"]["source"] == "ref_zoning_layer"
+    assert payload["ura_zoning"]["zone_code"] == "SG:residential"
+    assert payload["ura_zoning"]["use_groups"] == ["Residential", "Amenities"]
+    optimizations = payload["optimizations"]
+    assert optimizations[0]["asset_type"] == "residential"
+    assert optimizations[0]["allocation_pct"] > 0
+    assert optimizations[0]["allocated_gfa_sqm"] is not None
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_prefers_parcel_dominant_zoning_over_point_sliver(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.coordinates = (1.25, 103.805)
+    stub_payload.property_info.pop("site_area_sqm", None)
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+
+    async with async_session_factory() as session:
+        session.add_all(
+            [
+                _sg_parcel(
+                    parcel_ref="SG:LOT:MK01-DOMINANT",
+                    area_m2=10_000,
+                    lat_min=1.20,
+                    lat_max=1.30,
+                    lon_min=103.80,
+                    lon_max=103.90,
+                ),
+                _sg_zoning_layer(
+                    zone_code="SG:road",
+                    lu_desc="Road",
+                    gpr="NA",
+                    lat_min=1.20,
+                    lat_max=1.30,
+                    lon_min=103.80,
+                    lon_max=103.815,
+                ),
+                _sg_zoning_layer(
+                    zone_code="SG:commercial",
+                    lu_desc="Commercial",
+                    gpr="4.0",
+                    lat_min=1.20,
+                    lat_max=1.30,
+                    lon_min=103.815,
+                    lon_max=103.90,
+                ),
+            ]
+        )
+        await session.commit()
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.25,
+            "longitude": 103.805,
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    envelope = payload["build_envelope"]
+    assert envelope["zone_code"] == "SG:commercial"
+    assert envelope["allowable_plot_ratio"] == 4.0
+    assert envelope["max_buildable_gfa_sqm"] == 40_000.0
+    assert envelope["rule_corpus_status"]["zoning_lookup_source"] == {
+        "kind": "parcel_dominant_zoning",
+        "layer_id": envelope["rule_corpus_status"]["applied_zoning_layer_id"],
+        "layer_name": "MasterPlanImported",
+        "zone_code": "SG:commercial",
+        "jurisdiction": "SG",
+        "parcel_id": envelope["rule_corpus_status"]["site_area_lookup_source"][
+            "parcel_id"
+        ],
+        "parcel_ref": "SG:LOT:MK01-DOMINANT",
+        "parcel_lookup_source": "ref_parcel",
+        "overlap_area": 0.01,
+        "overlap_ratio": 0.85,
+    }
+    assert any(
+        "dominant imported zoning layer across the matched parcel" in assumption
+        for assumption in envelope["assumptions"]
+    )
+    assert payload["ura_zoning"]["source"] == "ref_zoning_layer"
+    assert payload["ura_zoning"]["zone_code"] == "SG:commercial"
+    assert payload["ura_zoning"]["use_groups"] == ["Office", "Retail"]
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_uses_nearest_parcel_when_geocoder_point_is_off_parcel(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.coordinates = (1.2001, 103.80035)
+    stub_payload.property_info.pop("site_area_sqm", None)
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+
+    async with async_session_factory() as session:
+        session.add_all(
+            [
+                _sg_parcel(
+                    parcel_ref="SG:LOT:MK01-NEAREST",
+                    area_m2=500,
+                    lat_min=1.2000,
+                    lat_max=1.2002,
+                    lon_min=103.8000,
+                    lon_max=103.8002,
+                ),
+                _sg_zoning_layer(
+                    zone_code="SG:residential",
+                    lu_desc="Residential",
+                    gpr="2.1",
+                    lat_min=1.1999,
+                    lat_max=1.2003,
+                    lon_min=103.7999,
+                    lon_max=103.8003,
+                ),
+            ]
+        )
+        await session.commit()
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.2001,
+            "longitude": 103.80035,
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    envelope = payload["build_envelope"]
+    assert envelope["zone_code"] == "SG:residential"
+    assert envelope["site_area_sqm"] == 500.0
+    assert envelope["max_buildable_gfa_sqm"] == 1050.0
+    assert (
+        envelope["rule_corpus_status"]["site_area_lookup_source"]["lookup_source"]
+        == "nearest_ref_parcel"
+    )
+    assert (
+        envelope["rule_corpus_status"]["zoning_lookup_source"]["parcel_lookup_source"]
+        == "nearest_ref_parcel"
+    )
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_surfaces_eva_and_address_asset_evidence(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.coordinates = (1.2797934, 103.8538274)
+    stub_payload.address = Address(
+        full_address="10 Marina Boulevard, Singapore 018983",
+        street_name="Marina Boulevard",
+        block_number="10",
+        postal_code="018983",
+        district="D01",
+    )
+    stub_payload.property_info.pop("site_area_sqm", None)
+    stub_payload.property_info.pop("gfa_approved", None)
+    stub_payload.ura_zoning = None
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+
+    async with async_session_factory() as session:
+        session.add_all(
+            [
+                _sg_parcel(
+                    parcel_ref="SG:LOT:TS30-00289N",
+                    area_m2=15_251.57,
+                    lat_min=1.2789,
+                    lat_max=1.2807,
+                    lon_min=103.8533,
+                    lon_max=103.8551,
+                ),
+                _sg_zoning_layer(
+                    zone_code="SG:mixed_use",
+                    lu_desc="White",
+                    gpr="EVA",
+                    lat_min=1.2789,
+                    lat_max=1.2807,
+                    lon_min=103.8533,
+                    lon_max=103.8551,
+                ),
+                RefBuildingFootprint(
+                    jurisdiction="SG",
+                    layer_name="MasterPlanBuilding",
+                    footprint_ref="SG:BUILDING:DISTANT",
+                    bounds_json={
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [103.70, 1.10],
+                                [103.701, 1.10],
+                                [103.701, 1.101],
+                                [103.70, 1.101],
+                                [103.70, 1.10],
+                            ]
+                        ],
+                    },
+                    centroid_lat=1.1005,
+                    centroid_lon=103.7005,
+                    area_m2=900.0,
+                    source="ura_data_gov",
+                ),
+            ]
+        )
+        await session.commit()
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.2797934,
+            "longitude": 103.8538274,
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    envelope = payload["build_envelope"]
+    rule_status = envelope["rule_corpus_status"]
+    assert envelope["zone_code"] == "SG:mixed_use"
+    assert envelope["zone_description"] == "White"
+    assert envelope["allowable_plot_ratio"] is None
+    assert envelope["max_buildable_gfa_sqm"] is None
+    assert rule_status["zoning_layer_intensity_control"]["status"] == (
+        "envelope_control_area"
+    )
+    plot_ratio_gap = next(
+        gap
+        for gap in rule_status["official_source_gaps"]
+        if gap["field"] == "plot_ratio"
+    )
+    assert plot_ratio_gap["reason"] == (
+        "envelope_control_area_requires_site_specific_controls"
+    )
+    assert plot_ratio_gap["source_value"] == "EVA"
+    assert rule_status["site_development_status"] == "developed"
+    assert rule_status["site_development_lookup_source"] == {
+        "kind": "capture_address_evidence",
+        "status": "developed",
+        "building_count": 0,
+        "footprint_area_sqm": None,
+        "reason": "resolved_building_address_without_footprint_coverage",
+        "jurisdiction": "SG",
+    }
+    assert any(
+        "Resolved address evidence indicates an existing asset" in assumption
+        for assumption in envelope["assumptions"]
+    )
+
+
+def test_capture_address_evidence_does_not_promote_non_developable_zones() -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.address = Address(
+        full_address="25 Soon Lee Rd, Singapore 628083",
+        street_name="Soon Lee Rd",
+        block_number="25",
+        postal_code="628083",
+        district="D22",
+    )
+    sparse_result = SiteDevelopmentResult(
+        status="uncertain",
+        source="ref_building_footprints",
+        reason="building_footprint_coverage_sparse_near_parcel",
+    )
+
+    promoted = developers_api._promote_site_development_from_capture_address(
+        sparse_result,
+        stub_payload,
+        zone_code="SG:road",
+        zone_description="Road",
+    )
+
+    assert promoted is sparse_result
+    assert promoted.status == "uncertain"
+
+
+def test_capture_address_evidence_overrides_absent_footprint_signal() -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.address = Address(
+        full_address="80 Nepal Pk, Singapore 139409",
+        street_name="Nepal Park",
+        block_number="80",
+        postal_code="139409",
+        district="D05",
+    )
+    vacant_result = SiteDevelopmentResult(
+        status="vacant",
+        source="ref_building_footprints",
+        reason="no_footprint_intersects_parcel",
+    )
+
+    promoted = developers_api._promote_site_development_from_capture_address(
+        vacant_result,
+        stub_payload,
+        zone_code="SG:residential",
+        zone_description="Residential",
+    )
+
+    assert promoted.status == "developed"
+    assert promoted.source == "capture_address_evidence"
+    assert (
+        promoted.reason == "resolved_building_address_overrides_absent_footprint_signal"
+    )
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_rejects_stale_submitted_address(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.address = Address(
+        full_address="20 Soon Lee Rd, Singapore 628086",
+        street_name="Soon Lee Rd",
+        block_number="20",
+        postal_code="628086",
+        district="D22",
+    )
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+    monkeypatch.setattr(
+        developers_api,
+        "_resolve_submitted_sg_address_lookup",
+        AsyncMock(return_value=None),
+    )
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.3286413,
+            "longitude": 103.698443,
+            "submittedAddress": "25 Soon Lee Rd, Singapore 628083",
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 409
+    payload = response.json()
+    assert (
+        "Submitted address does not match the resolved map point" in payload["detail"]
+    )
+    assert "25 Soon Lee Rd" in payload["detail"]
+    assert "20 Soon Lee Rd" in payload["detail"]
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_accepts_number_alias_without_submitted_postal(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.address = Address(
+        full_address="20 Soon Lee Rd, Singapore 628086",
+        street_name="Soon Lee Rd",
+        block_number="20",
+        postal_code="628086",
+        district="D22",
+    )
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+    monkeypatch.setattr(
+        developers_api,
+        "_resolve_submitted_sg_address_lookup",
+        AsyncMock(return_value=None),
+    )
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.3282813,
+            "longitude": 103.6984406,
+            "submittedAddress": "25 Soon Lee Rd, Singapore",
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["address"]["full_address"] == "25 Soon Lee Rd, Singapore"
+    assert payload["address"]["block_number"] == "25"
+    assert payload["address"]["postal_code"] == "628086"
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_prefers_onemap_submitted_address_coordinates(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.address = Address(
+        full_address="20 Soon Lee Rd, Singapore 628086",
+        street_name="Soon Lee Rd",
+        block_number="20",
+        postal_code="628086",
+        district="D22",
+    )
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+    lookup = GeocodeLookupResult(
+        latitude=1.3282813,
+        longitude=103.6984406,
+        formatted_address="25 SOON LEE ROAD SINGAPORE 628083",
+        address=Address(
+            full_address="25 SOON LEE ROAD SINGAPORE 628083",
+            street_name="SOON LEE ROAD",
+            block_number="25",
+            postal_code="628083",
+            district="D22 - Boon Lay, Jurong, Tuas",
+        ),
+        source=ExternalSourceMetadata(
+            provider="onemap_address_search",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
+        ),
+    )
+    monkeypatch.setattr(
+        developers_api,
+        "_resolve_submitted_sg_address_lookup",
+        AsyncMock(return_value=lookup),
+    )
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.0,
+            "longitude": 103.0,
+            "submittedAddress": "25 Soon Lee Rd, Singapore 628083",
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert stub_logger.calls[0]["latitude"] == pytest.approx(1.3282813)
+    assert stub_logger.calls[0]["longitude"] == pytest.approx(103.6984406)
+    assert stub_logger.calls[0]["resolved_address"].postal_code == "628083"
+    assert (
+        stub_logger.calls[0]["geocoding_source_override"].provider
+        == "onemap_address_search"
+    )
+    assert payload["address"]["full_address"] == "25 Soon Lee Rd, Singapore 628083"
+    assert payload["address"]["postal_code"] == "628083"
+    assert payload["geocoding_source"]["provider"] == "onemap_address_search"
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_accepts_selected_place_reverse_geocode_alias(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.address = Address(
+        full_address="10 Tanglin Rd, Singapore 247908",
+        street_name="Tanglin Rd",
+        block_number="10",
+        postal_code="247908",
+        district="D10",
+    )
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+    monkeypatch.setattr(
+        developers_api,
+        "_resolve_submitted_sg_address_lookup",
+        AsyncMock(return_value=None),
+    )
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.3065566,
+            "longitude": 103.8262787,
+            "submittedAddress": "1 Nassim Rd, Singapore 258458",
+            "placeId": "google-place-for-1-nassim",
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["address"]["full_address"] == "1 Nassim Rd, Singapore 258458"
+    assert payload["address"]["postal_code"] == "258458"
+    assert stub_logger.calls[0]["latitude"] == pytest.approx(1.3065566)
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_accepts_different_street_reverse_geocode_alias(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.address = Address(
+        full_address="10 Tanglin Rd, Singapore 247908",
+        street_name="Tanglin Rd",
+        block_number="10",
+        postal_code="247908",
+        district="D10",
+    )
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+    monkeypatch.setattr(
+        developers_api,
+        "_resolve_submitted_sg_address_lookup",
+        AsyncMock(return_value=None),
+    )
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.3065566,
+            "longitude": 103.8262787,
+            "submittedAddress": "1 Nassim Rd, Singapore 258458",
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["address"]["full_address"] == "1 Nassim Rd, Singapore 258458"
+    assert payload["address"]["postal_code"] == "258458"
+    assert stub_logger.calls[0]["latitude"] == pytest.approx(1.3065566)
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_rejects_submitted_postal_code_mismatch(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.address = Address(
+        full_address="20 Soon Lee Rd, Singapore 628086",
+        street_name="Soon Lee Rd",
+        block_number="20",
+        postal_code="628086",
+        district="D22",
+    )
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+    monkeypatch.setattr(
+        developers_api,
+        "_resolve_submitted_sg_address_lookup",
+        AsyncMock(return_value=None),
+    )
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.3286413,
+            "longitude": 103.698443,
+            "submittedAddress": "20 Soon Lee Rd, Singapore 628083",
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 409
+    payload = response.json()
+    assert (
+        "Submitted address does not match the resolved map point" in payload["detail"]
+    )
+    assert "628083" in payload["detail"]
+    assert "628086" in payload["detail"]
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_uses_current_gfa_evidence_from_request(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.property_info.pop("gfa_approved", None)
+    stub_payload.property_info.pop("gross_floor_area_sqm", None)
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+
+    async with async_session_factory() as session:
+        session.add(_sg_zoning_layer())
+        await session.commit()
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.2801,
+            "longitude": 103.8198,
+            "development_scenarios": ["existing_building"],
+            "currentGfaSqm": 16500,
+            "currentGfaSource": "approved plans",
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    envelope = payload["build_envelope"]
+    assert envelope["current_gfa_sqm"] == 16500.0
+    assert envelope["max_buildable_gfa_sqm"] == 18000.0
+    assert envelope["additional_potential_gfa_sqm"] == 1500.0
+    assert payload["property_info"]["gross_floor_area_sqm"] == 16500.0
+    assert payload["property_info"]["current_gfa_source"] == "approved plans"
+    assert envelope["rule_corpus_status"]["current_gfa_lookup_source"] == {
+        "kind": "capture_user_evidence",
+        "source": "approved plans",
+        "area_sqm": 16500.0,
+        "jurisdiction": "SG",
+    }
+    assert any(
+        "Current GFA resolved from approved plans" in assumption
+        for assumption in envelope["assumptions"]
+    )
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_suppresses_untrusted_current_gfa_metadata(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.property_info["gfa_approved"] = 25000
+    stub_payload.property_info.pop("current_gfa_source", None)
+    stub_payload.property_info.pop("current_gfa_source_kind", None)
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+
+    async with async_session_factory() as session:
+        session.add(_sg_zoning_layer())
+        await session.commit()
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.2801,
+            "longitude": 103.8198,
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    envelope = payload["build_envelope"]
+    assert envelope["current_gfa_sqm"] is None
+    assert envelope["additional_potential_gfa_sqm"] is None
+    assert "gfa_approved" not in payload["property_info"]
+    assert "gross_floor_area_sqm" not in payload["property_info"]
+    assert payload["property_info"]["current_gfa_suppressed_reason"]
+    assert envelope["rule_corpus_status"]["current_gfa_lookup_source"] == {
+        "kind": "unavailable",
+        "reason": "no_current_gfa_evidence_loaded",
+        "jurisdiction": "SG",
+    }
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_ignores_legacy_saved_current_gfa_without_reference(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.property_info.pop("gfa_approved", None)
+    stub_payload.property_info.pop("gross_floor_area_sqm", None)
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+
+    async with async_session_factory() as session:
+        session.add_all(
+            [
+                _sg_zoning_layer(),
+                Property(
+                    id=property_id,
+                    name="Legacy GFA Row",
+                    address="45 Burghley Dr, Singapore 559022",
+                    jurisdiction_code="SG",
+                    property_type=PropertyType.RESIDENTIAL,
+                    status=PropertyStatus.EXISTING,
+                    location="POINT(103.8198 1.2801)",
+                    gross_floor_area_sqm=Decimal("25000"),
+                    external_references=None,
+                ),
+            ]
+        )
+        await session.commit()
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.2801,
+            "longitude": 103.8198,
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    envelope = response.json()["build_envelope"]
+    assert envelope["current_gfa_sqm"] is None
+    assert envelope["additional_potential_gfa_sqm"] is None
+    assert envelope["rule_corpus_status"]["current_gfa_lookup_source"]["kind"] == (
+        "unavailable"
+    )
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_maps_hotel_zoning_to_hotel_use_groups(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.property_info.pop("gfa_approved", None)
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+
+    async with async_session_factory() as session:
+        session.add(
+            _sg_zoning_layer(
+                zone_code="SG:hotel",
+                lu_desc="Hotel",
+                gpr="4.2",
+            )
+        )
+        await session.commit()
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.2801,
+            "longitude": 103.8198,
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["build_envelope"]["zone_code"] == "SG:hotel"
+    assert payload["build_envelope"]["zone_description"] == "Hotel"
+    assert payload["ura_zoning"]["source"] == "ref_zoning_layer"
+    assert payload["ura_zoning"]["zone_code"] == "SG:hotel"
+    assert payload["ura_zoning"]["use_groups"] == ["Hotel", "Retail"]
+
+
+@pytest.mark.asyncio
+async def test_developer_log_property_reports_unavailable_zoning_without_layer(
+    app_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.ura_zoning = {
+        "zone_code": "C1",
+        "zone_description": "Commercial",
+        "plot_ratio": 12.0,
+    }
+    stub_logger = _StubDeveloperLogger(stub_payload)
+    monkeypatch.setattr(developers_api, "developer_gps_logger", stub_logger)
+
+    response = await app_client.post(
+        "/api/v1/developers/properties/log-gps",
+        json={
+            "latitude": 1.2801,
+            "longitude": 103.8198,
+            "development_scenarios": ["existing_building"],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    envelope = payload["build_envelope"]
+    assert envelope["zone_code"] is None
+    assert envelope["allowable_plot_ratio"] is None
+    assert envelope["max_buildable_gfa_sqm"] is None
+    assert envelope["rule_corpus_status"]["coverage_state"] == "missing"
+    assert envelope["rule_corpus_status"]["zoning_lookup_source"] == {
+        "kind": "unavailable",
+        "reason": "no_zoning_layer_contains_capture_point",
+        "jurisdiction": "SG",
+    }
+    assert payload["ura_zoning"] == {
+        "zone_code": None,
+        "zone_description": None,
+        "plot_ratio": None,
+        "building_height_limit": None,
+        "site_coverage": None,
+        "use_groups": [],
+        "special_conditions": None,
+        "source": "unavailable",
+        "source_reason": "no_zoning_layer_contains_capture_point",
+    }
+
+
+@pytest.mark.asyncio
+async def test_derive_build_envelope_allows_saved_zoning_metadata_for_preview(
+    async_session_factory,
+) -> None:
+    property_id = uuid4()
+    stub_payload = _build_stub_payload(property_id)
+    stub_payload.ura_zoning = {
+        "zone_code": "C1",
+        "zone_description": "Commercial",
+        "plot_ratio": 4.0,
+        "building_height_limit": 45.0,
+        "site_coverage": 50.0,
+    }
+    stub_payload.property_info = {
+        **stub_payload.property_info,
+        "site_area_sqm": 4500,
+        "gfa_approved": 12500,
+    }
+
+    async with async_session_factory() as session:
+        envelope = await developers_api._derive_build_envelope(
+            stub_payload,
+            session,
+            "SG",
+            allow_captured_zoning_fallback=True,
+        )
+
+    assert envelope.zone_code == "C1"
+    assert envelope.zone_description == "Commercial"
+    assert envelope.allowable_plot_ratio == 4.0
+    assert envelope.max_buildable_gfa_sqm == 18000.0
+    assert envelope.building_height_limit_m == 45.0
+    assert envelope.site_coverage_pct == 50.0
+    assert envelope.rule_corpus_status is not None
+    assert envelope.rule_corpus_status["zoning_lookup_source"] == {
+        "kind": "captured_zoning_metadata",
+        "reason": "persisted_property_or_non_gps_preview",
+        "zone_code": "C1",
+        "jurisdiction": "SG",
+    }
+    assert envelope.rule_corpus_status["resolved_by"]["land_use"] == (
+        "captured_zoning_metadata"
+    )
+    assert envelope.rule_corpus_status["resolved_by"]["plot_ratio"] == (
+        "captured_zoning_metadata"
+    )
+
+
+@pytest.mark.asyncio
 async def test_developer_log_property_attaches_live_source_ingestion_when_enabled(
     app_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
@@ -551,19 +1670,22 @@ async def test_developer_log_property_attaches_live_source_ingestion_when_enable
     )
 
     async with async_session_factory() as session:
-        session.add(
-            RefRule(
-                jurisdiction="SG",
-                authority="URA",
-                topic="building",
-                parameter_key="zoning.site_coverage.max_percent",
-                operator="<=",
-                value="50",
-                unit="%",
-                applicability={"zone_code": "SG:commercial"},
-                review_status="approved",
-                is_published=True,
-            )
+        session.add_all(
+            [
+                _sg_zoning_layer(),
+                RefRule(
+                    jurisdiction="SG",
+                    authority="URA",
+                    topic="building",
+                    parameter_key="zoning.site_coverage.max_percent",
+                    operator="<=",
+                    value="50",
+                    unit="%",
+                    applicability={"zone_code": "SG:commercial"},
+                    review_status="approved",
+                    is_published=True,
+                ),
+            ]
         )
         await session.commit()
 
@@ -597,6 +1719,7 @@ async def test_developer_log_property_attaches_live_source_ingestion_when_enable
 async def test_developer_log_property_resolves_configured_industrial_controls_without_live_scan(
     app_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
+    async_session_factory,
 ) -> None:
     property_id = uuid4()
     payload = _build_stub_payload(property_id)
@@ -606,6 +1729,7 @@ async def test_developer_log_property_resolves_configured_industrial_controls_wi
         "plot_ratio": 2.5,
         "site_coverage": 60.0,
     }
+    payload.coordinates = (1.331096, 103.6977849)
     payload.property_info = {
         **payload.property_info,
         "site_area_sqm": 12000,
@@ -623,6 +1747,19 @@ async def test_developer_log_property_resolves_configured_industrial_controls_wi
         "CAPTURE_LIVE_SOURCE_SCAN_ENABLED",
         False,
     )
+    async with async_session_factory() as session:
+        session.add(
+            _sg_zoning_layer(
+                zone_code="SG:industrial",
+                lu_desc="Business 1",
+                gpr="2.5",
+                lat_min=1.30,
+                lat_max=1.36,
+                lon_min=103.66,
+                lon_max=103.73,
+            )
+        )
+        await session.commit()
 
     response = await app_client.post(
         "/api/v1/developers/properties/log-gps",
@@ -637,7 +1774,7 @@ async def test_developer_log_property_resolves_configured_industrial_controls_wi
     envelope = response.json()["build_envelope"]
     rule_status = envelope["rule_corpus_status"]
 
-    assert envelope["zone_code"] == "B1"
+    assert envelope["zone_code"] == "SG:industrial"
     assert envelope["building_height_limit_m"] == 80.0
     assert envelope["setback_front_m"] == 7.5
     assert envelope["setback_rear_m"] == 7.5
@@ -669,6 +1806,7 @@ async def test_developer_log_property_resolves_configured_industrial_controls_wi
 async def test_developer_log_property_resolves_configured_commercial_controls_without_live_scan(
     app_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
+    async_session_factory,
 ) -> None:
     property_id = uuid4()
     stub_logger = _StubDeveloperLogger(_build_stub_payload(property_id))
@@ -678,6 +1816,9 @@ async def test_developer_log_property_resolves_configured_commercial_controls_wi
         "CAPTURE_LIVE_SOURCE_SCAN_ENABLED",
         False,
     )
+    async with async_session_factory() as session:
+        session.add(_sg_zoning_layer())
+        await session.commit()
 
     response = await app_client.post(
         "/api/v1/developers/properties/log-gps",
@@ -692,7 +1833,7 @@ async def test_developer_log_property_resolves_configured_commercial_controls_wi
     envelope = response.json()["build_envelope"]
     rule_status = envelope["rule_corpus_status"]
 
-    assert envelope["zone_code"] == "C1"
+    assert envelope["zone_code"] == "SG:commercial"
     assert envelope["setback_front_m"] == 7.5
     assert envelope["setback_rear_m"] == 7.5
     assert envelope["setback_side_m"] == 3.0
@@ -710,6 +1851,7 @@ async def test_developer_log_property_resolves_configured_commercial_controls_wi
 async def test_developer_log_property_re_resolves_height_limit_after_ingestion(
     app_client: AsyncClient,
     monkeypatch: pytest.MonkeyPatch,
+    async_session_factory,
 ) -> None:
     property_id = uuid4()
     stub_logger = _StubDeveloperLogger(_build_stub_payload(property_id))
@@ -728,6 +1870,9 @@ async def test_developer_log_property_re_resolves_height_limit_after_ingestion(
         "OfficialSourceIngestionService",
         _ResolvingHeightLimitIngestionService,
     )
+    async with async_session_factory() as session:
+        session.add(_sg_zoning_layer())
+        await session.commit()
 
     response = await app_client.post(
         "/api/v1/developers/properties/log-gps",

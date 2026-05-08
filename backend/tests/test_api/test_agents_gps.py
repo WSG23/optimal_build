@@ -108,7 +108,9 @@ async def test_log_property_by_gps_fallback(client, monkeypatch):
     body = response.json()
     assert body["geocoding_source"]["state"] == "mock"
     assert body["amenities_source"]["provider"] == "onemap"
-    assert body["ura_source"]["state"] == "mock"
-    assert body["ura_zoning"]["zone_code"] == "MU"
+    assert body["ura_source"]["state"] == "unavailable"
+    assert body["ura_zoning"] == {}
+    assert body["property_info"] is None
+    assert body["existing_use"] == "Unknown"
     ensure_seeded.assert_awaited()
     auto_populate.assert_awaited()

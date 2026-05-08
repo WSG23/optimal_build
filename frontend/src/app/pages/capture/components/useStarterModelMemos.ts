@@ -8,10 +8,10 @@
 import { useMemo } from 'react'
 
 import type {
+  CaptureRecommendationScenario,
   CaptureResultV2,
   CaptureStarterModelV2,
 } from '../../../../api/siteAcquisition'
-import type { DevelopmentScenario } from '../../../../api/agents'
 
 export type CaptureResultV2StarterModel = CaptureStarterModelV2 & {
   generatedFrom: string[]
@@ -56,7 +56,9 @@ interface UseStarterModelMemosOptions {
   isRefreshingPreview: boolean
   hasPreferredScenarioPreview: boolean
   previewJobs: PreviewJobLike[] | undefined
-  formatScenarioLabel: (scenario: DevelopmentScenario | 'all' | null) => string
+  formatScenarioLabel: (
+    scenario: CaptureRecommendationScenario | 'all' | null,
+  ) => string
   formatNumber: (value: number, options?: Intl.NumberFormatOptions) => string
 }
 
@@ -73,6 +75,7 @@ const ASSUMPTION_FIELD_LABELS = new Map<string, string>([
 ])
 
 const RULE_FIELD_LABELS = new Map<string, string>([
+  ['site_area', 'site area'],
   ['land_use', 'land use'],
   ['plot_ratio', 'plot ratio'],
   ['building_height_limit_m', 'height limit'],
@@ -102,10 +105,6 @@ function getRuleFieldIds(value: unknown): string[] {
     : []
 }
 
-function getRuleFieldList(value: unknown): string[] {
-  return getRuleFieldIds(value).map((entry) => formatRuleFieldLabel(entry))
-}
-
 function getRuleFieldSources(
   value: Record<string, unknown> | null,
 ): Record<string, string> {
@@ -129,6 +128,19 @@ function isGfaEnvelopeAvailable(
     codeConstraints.maxBuildableGfaSqm != null &&
     codeConstraints.currentGfaSqm != null,
   )
+}
+
+function formatZoningSummary(
+  codeConstraints: CaptureResultV2['codeConstraints'],
+): string {
+  const description = codeConstraints.zoningDescription?.trim()
+  const code = codeConstraints.zoningCode?.trim()
+
+  if (description && code && description.toLowerCase() !== code.toLowerCase()) {
+    return `${description} (${code})`
+  }
+
+  return description || code || 'Zoning unresolved'
 }
 
 function formatUnresolvedRuleFieldLabel(
@@ -169,7 +181,7 @@ function getOfficialSourceGapSummaries(
   }
 
   return value
-    .map((entry) => {
+    .map((entry): OfficialSourceGapSummary | null => {
       const record = getObjectRecord(entry)
       const rawField = typeof record?.field === 'string' ? record.field : null
       if (!rawField) {
@@ -214,6 +226,32 @@ function getOfficialSourceGapSummaries(
       }
     })
     .filter((entry): entry is OfficialSourceGapSummary => Boolean(entry))
+}
+
+function getEnvelopeSourceStatusLabel(
+  sourceReference: string,
+  resolvedSourcesByField: Record<string, string>,
+): string {
+  const landUseSource = resolvedSourcesByField['land use']
+  const plotRatioSource = resolvedSourcesByField['plot ratio']
+  const siteAreaSource = resolvedSourcesByField['site area']
+  if (
+    landUseSource === 'ref_zoning_layer' &&
+    plotRatioSource === 'ref_zoning_layer' &&
+    siteAreaSource === 'ref_parcel'
+  ) {
+    return 'Official zoning + parcel area'
+  }
+  if (
+    landUseSource === 'ref_zoning_layer' &&
+    plotRatioSource === 'ref_zoning_layer'
+  ) {
+    return 'Official land use + plot ratio'
+  }
+  if (/zoning layers/i.test(sourceReference)) {
+    return 'Official zoning layer'
+  }
+  return 'Rule-backed controls'
 }
 
 function getProjectClearanceFieldIds(
@@ -421,31 +459,48 @@ export function useStarterModelMemos({
     hasPreferredScenarioPreview,
   ])
 
+  const starterModelScenarioLabel = useMemo(() => {
+    return captureResultV2.scenarioRecommendation.recommended ===
+      'scenario_pending'
+      ? 'envelope'
+      : formatScenarioLabel(captureResultV2.scenarioRecommendation.recommended)
+  }, [captureResultV2.scenarioRecommendation.recommended, formatScenarioLabel])
+
   const starterModelStatusSummary = useMemo(() => {
-    const scenarioLabel = formatScenarioLabel(
-      captureResultV2.scenarioRecommendation.recommended,
-    )
+    const isScenarioPending =
+      captureResultV2.scenarioRecommendation.recommended === 'scenario_pending'
+    const scenarioLabel = starterModelScenarioLabel
     switch (effectiveStarterModel.status) {
       case 'queued':
-        return `A ${scenarioLabel.toLowerCase()} starter model has been queued. Capture will replace the fallback preview when the render is ready.`
+        return isScenarioPending
+          ? 'An envelope-based starter model has been queued. Capture will replace the fallback preview when the render is ready.'
+          : `A ${scenarioLabel.toLowerCase()} starter model has been queued. Capture will replace the fallback preview when the render is ready.`
       case 'processing':
-        return `Capture is generating the ${scenarioLabel.toLowerCase()} starter model now.`
+        return isScenarioPending
+          ? 'Capture is generating an envelope-based starter model now.'
+          : `Capture is generating the ${scenarioLabel.toLowerCase()} starter model now.`
       case 'ready':
-        return hasPreferredScenarioPreview
-          ? `The ${scenarioLabel.toLowerCase()} starter model is ready for review.`
-          : `The ${scenarioLabel.toLowerCase()} starter model is not ready yet. Capture is still showing the ${fallbackPreviewScenarioLabel.toLowerCase()} preview until a scenario-specific model is available.`
+        return isScenarioPending
+          ? 'The envelope-based starter model is ready for review; scenario selection remains pending until existing GFA is available.'
+          : hasPreferredScenarioPreview
+            ? `The ${scenarioLabel.toLowerCase()} starter model is ready for review.`
+            : `The ${scenarioLabel.toLowerCase()} starter model is not ready yet. Capture is still showing the ${fallbackPreviewScenarioLabel.toLowerCase()} preview until a scenario-specific model is available.`
       case 'failed':
-        return `Capture could not generate the ${scenarioLabel.toLowerCase()} starter model yet. Retry generation from this panel.`
+        return isScenarioPending
+          ? 'Capture could not generate the envelope-based starter model yet. Retry generation from this panel.'
+          : `Capture could not generate the ${scenarioLabel.toLowerCase()} starter model yet. Retry generation from this panel.`
       case 'placeholder':
       default:
-        return 'No scenario-specific starter model is available yet. Capture is currently showing the best available fallback preview.'
+        return isScenarioPending
+          ? 'No envelope-based starter model is available yet. Capture is currently showing the best available fallback preview.'
+          : 'No scenario-specific starter model is available yet. Capture is currently showing the best available fallback preview.'
     }
   }, [
     captureResultV2.scenarioRecommendation.recommended,
     effectiveStarterModel.status,
     fallbackPreviewScenarioLabel,
-    formatScenarioLabel,
     hasPreferredScenarioPreview,
+    starterModelScenarioLabel,
   ])
 
   const effectiveEngineeringAssumptions = useMemo(
@@ -467,7 +522,11 @@ export function useStarterModelMemos({
           ? 'Current GFA remains below today\u2019s code envelope, leaving compliant headroom to study.'
           : codeConstraints.currentVsCodeStatus === 'at_limit'
             ? 'Current GFA appears to match today\u2019s code envelope.'
-            : 'Current-versus-code envelope relationship is still unresolved.'
+            : codeConstraints.currentGfaSqm == null
+              ? 'Current GFA is unavailable, so current-versus-code fit is pending.'
+              : codeConstraints.maxBuildableGfaSqm == null
+                ? 'Current-code envelope is incomplete, so code fit is pending.'
+                : 'Current-versus-code envelope relationship is still unresolved.'
 
     const headroomSummary =
       codeConstraints.maxBuildableGfaSqm != null &&
@@ -480,7 +539,25 @@ export function useStarterModelMemos({
               maximumFractionDigits: 0,
             },
           )} sqm current-code max.`
-        : 'Current and maximum GFA comparison is still pending.'
+        : codeConstraints.maxBuildableGfaSqm != null
+          ? `Current GFA unavailable for comparison with ${formatNumber(
+              codeConstraints.maxBuildableGfaSqm,
+              {
+                maximumFractionDigits: 0,
+              },
+            )} sqm current-code max.`
+          : codeConstraints.currentGfaSqm != null
+            ? 'Max GFA cannot be calculated until site area and official envelope controls are resolved.'
+            : captureResultV2.siteContext.siteAreaSqm != null
+              ? 'Max GFA cannot be calculated until plot ratio or envelope controls are resolved; current GFA is unavailable.'
+              : 'Max GFA cannot be calculated until site area is resolved; current GFA is unavailable.'
+
+    const gprSummary =
+      codeConstraints.grossPlotRatio != null
+        ? formatNumber(codeConstraints.grossPlotRatio, {
+            maximumFractionDigits: 2,
+          })
+        : 'GPR unresolved'
 
     const heritageSummary = captureResultV2.siteContext.heritageOverlay
       ? `Context: ${captureResultV2.siteContext.heritageOverlay}.`
@@ -488,8 +565,10 @@ export function useStarterModelMemos({
 
     return {
       comparisonSummary,
+      gprSummary,
       headroomSummary,
       heritageSummary,
+      zoningSummary: formatZoningSummary(codeConstraints),
     }
   }, [
     captureResultV2.codeConstraints,
@@ -539,6 +618,30 @@ export function useStarterModelMemos({
         statusLabel: 'Site-specific',
       },
     ]
+    const currentUseEvidence =
+      captureResultV2.sourceCapture.propertyInfo?.currentUseEvidence?.[0]
+    if (currentUseEvidence) {
+      const evidenceSource = currentUseEvidence.source
+        .replace(/^google_places_details$/i, 'Google Places details')
+        .replace(/^google_places_autocomplete$/i, 'Google Places autocomplete')
+        .replace(/^ura_existing_use$/i, 'URA existing-use service')
+        .replace(/_/g, ' ')
+      const placeName = currentUseEvidence.placeName
+        ? ` (${currentUseEvidence.placeName})`
+        : ''
+      items.push({
+        label: 'Current use evidence',
+        value: `${currentUseEvidence.use}${placeName}. Source: ${evidenceSource}; ${currentUseEvidence.basis}`,
+        tone:
+          currentUseEvidence.confidence.toLowerCase() === 'high'
+            ? 'success'
+            : 'warning',
+        statusLabel:
+          currentUseEvidence.confidence.toLowerCase() === 'high'
+            ? 'Current use verified'
+            : 'Current use signal',
+      })
+    }
 
     const sourceReference = captureResultV2.codeConstraints.sourceReference
     if (!sourceReference) {
@@ -560,7 +663,10 @@ export function useStarterModelMemos({
         label: 'Envelope source',
         value: sourceReference,
         tone: 'success',
-        statusLabel: 'Partially rule-backed',
+        statusLabel: getEnvelopeSourceStatusLabel(
+          sourceReference,
+          resolvedSourcesByField,
+        ),
       })
     }
 
@@ -622,7 +728,7 @@ export function useStarterModelMemos({
       const clearanceList = `${projectClearanceGaps.slice(0, 4).join(', ')}${projectClearanceGaps.length > 4 ? ', ...' : ''}`
       items.push({
         label: 'Project clearance required',
-        value: `${clearanceList} ${projectClearanceGaps.length === 1 ? 'requires' : 'require'} site-specific aviation and height-clearance review before Capture treats ${projectClearanceGaps.length === 1 ? 'it' : 'them'} as resolved.`,
+        value: `${clearanceList} ${projectClearanceGaps.length === 1 ? 'requires' : 'require'} site-specific aviation and height-clearance review. Capture does not resolve ${projectClearanceGaps.length === 1 ? 'this clearance' : 'these clearances'}.`,
         tone: 'warning',
         statusLabel: 'Project clearance required',
       })
@@ -631,10 +737,10 @@ export function useStarterModelMemos({
     if (sourceIngestionGaps.length > 0) {
       const sourceList = `${sourceIngestionGaps.slice(0, 4).join(', ')}${sourceIngestionGaps.length > 4 ? ', ...' : ''}`
       items.push({
-        label: 'Source ingestion status',
-        value: `${sourceList} ${sourceIngestionGaps.length === 1 ? 'has' : 'have'} official source categories identified. Ingestion and review are still pending.`,
+        label: 'Control source status',
+        value: `${sourceList} ${sourceIngestionGaps.length === 1 ? 'has' : 'have'} official source categories identified, but Capture has not mapped reviewed values for this zone yet.`,
         tone: 'warning',
-        statusLabel: 'Source identified, not ingested',
+        statusLabel: 'Control source not mapped',
       })
     }
 
@@ -652,7 +758,10 @@ export function useStarterModelMemos({
       value:
         effectiveStarterModel.status === 'ready' &&
         effectiveStarterModel.generatedFrom.includes('preview_job')
-          ? 'Scenario-specific starter model is generated from the preview pipeline.'
+          ? captureResultV2.scenarioRecommendation.recommended ===
+            'scenario_pending'
+            ? 'Envelope-based starter model is generated from the preview pipeline while scenario selection remains pending.'
+            : 'Scenario-specific starter model is generated from the preview pipeline.'
           : 'Geometry is still preliminary and may rely on fallback or placeholder massing.',
       tone:
         effectiveStarterModel.status === 'ready' &&
@@ -662,15 +771,20 @@ export function useStarterModelMemos({
       statusLabel:
         effectiveStarterModel.status === 'ready' &&
         effectiveStarterModel.generatedFrom.includes('preview_job')
-          ? 'Starter model pipeline'
+          ? captureResultV2.scenarioRecommendation.recommended ===
+            'scenario_pending'
+            ? 'Envelope starter model'
+            : 'Starter model pipeline'
           : 'Preliminary geometry',
     })
 
     return items
   }, [
     captureResultV2.analysisStatus.missingInputs,
-    captureResultV2.codeConstraints.sourceReference,
+    captureResultV2.codeConstraints,
+    captureResultV2.scenarioRecommendation.recommended,
     captureResultV2.sourceCapture.buildEnvelope.ruleCorpusStatus,
+    captureResultV2.sourceCapture.propertyInfo?.currentUseEvidence,
     effectiveStarterModel.generatedFrom,
     effectiveStarterModel.status,
   ])
@@ -895,9 +1009,7 @@ export function useStarterModelMemos({
       return null
     }
 
-    const scenarioLabel = formatScenarioLabel(
-      captureResultV2.scenarioRecommendation.recommended,
-    )
+    const scenarioLabel = starterModelScenarioLabel
 
     if (!previewJobs?.length) {
       return `Capture is using fallback assumptions because no scenario-specific preview jobs are attached to this property yet.`
@@ -914,10 +1026,9 @@ export function useStarterModelMemos({
     return `Capture is using fallback assumptions because backend starter-model assumptions are not available for this scenario yet.`
   }, [
     effectiveEngineeringAssumptions,
-    captureResultV2.scenarioRecommendation.recommended,
-    formatScenarioLabel,
     previewJob,
     previewJobs,
+    starterModelScenarioLabel,
   ])
 
   const starterModelOverridePreviewNotice = useMemo(() => {

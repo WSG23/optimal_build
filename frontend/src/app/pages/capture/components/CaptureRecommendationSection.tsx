@@ -9,7 +9,7 @@ import { Box, Typography } from '@mui/material'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import ViewInArIcon from '@mui/icons-material/ViewInAr'
 
-import type { DevelopmentScenario } from '../../../../api/agents'
+import type { CaptureRecommendationScenario } from '../../../../api/siteAcquisition'
 import { Card } from '../../../../components/canonical/Card'
 import { Button } from '../../../../components/canonical/Button'
 import { Tag } from '../../../../components/canonical/Tag'
@@ -24,9 +24,9 @@ import type {
 export interface CaptureRecommendationSectionProps {
   recommendationCardTitle: string
   formatScenarioLabel: (
-    scenario: DevelopmentScenario | 'all' | null | undefined,
+    scenario: CaptureRecommendationScenario | 'all' | null | undefined,
   ) => string
-  recommendedScenario: DevelopmentScenario
+  recommendedScenario: CaptureRecommendationScenario
   userOverride: boolean
   defaultRecommendationLabel: string
   explanation: string
@@ -40,8 +40,10 @@ export interface CaptureRecommendationSectionProps {
   confidence: string
   scenarioFitSummary: {
     comparisonSummary: string
+    gprSummary: string
     headroomSummary: string
     heritageSummary: string
+    zoningSummary: string
   }
   captureDataBasis: CaptureDataBasisItem[]
   reasonCodes: string[]
@@ -57,6 +59,36 @@ export interface CaptureRecommendationSectionProps {
 
 function formatReasonLabel(code: string): string {
   return code
+    .replace(/^EXISTING_GFA_UNAVAILABLE$/i, 'Existing GFA unavailable')
+    .replace(
+      /^CURRENT_CODE_COMPARISON_PENDING$/i,
+      'Current-code comparison pending',
+    )
+    .replace(
+      /^CURRENT_GFA_ZERO_OR_UNAVAILABLE$/i,
+      'Current GFA zero or unavailable',
+    )
+    .replace(
+      /^EXISTING_ASSET_EVIDENCE_DETECTED$/i,
+      'Existing asset evidence detected',
+    )
+    .replace(
+      /^EXISTING_BUILDING_FOOTPRINT_DETECTED$/i,
+      'Existing building footprint detected',
+    )
+    .replace(/^GROUND_UP_STUDY_BASELINE$/i, 'Ground-up study baseline')
+    .replace(
+      /^SPECIALIZED_OPERATOR_LED_ZONE$/i,
+      'Specialized operator-led zone',
+    )
+    .replace(
+      /^NON_STANDARD_OR_NON_DEVELOPABLE_ZONE$/i,
+      'No standard private program',
+    )
+    .replace(
+      /^MAP_POINT_OR_CONTROL_REVIEW_REQUIRED$/i,
+      'Control review required',
+    )
     .replace(/^EXPLORATORY_OVERRIDE$/i, 'Exploratory override')
     .replace(/^SAVED_OVERRIDE$/i, 'Saved override')
     .replace(/^USER_OVERRIDE$/i, 'User override')
@@ -104,26 +136,12 @@ function labelValueRow(label: string, value: string) {
   )
 }
 
-function buildProgramBasis(
-  programDrivers: string[],
-  recommendedScenario: DevelopmentScenario,
-): string | null {
-  const primary = programDrivers[0]
-  if (!primary) {
-    return null
-  }
-
-  const parts = [`${primary} primary`]
-  const secondary = programDrivers.find((driver) => driver !== primary)
-  if (secondary) {
-    parts.push(`${secondary} support`)
-  }
-
-  if (recommendedScenario === 'heritage_property') {
-    parts.push('Heritage constrained')
-  }
-
-  return parts.join(' / ')
+function normalizeCopyForComparison(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[.,;:]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 const RESOLVED_CONTROL_LABELS = new Set([
@@ -238,12 +256,21 @@ export function CaptureRecommendationSection({
   starterModelAssetProfileLines,
 }: CaptureRecommendationSectionProps) {
   const [showDataDetails, setShowDataDetails] = useState(false)
-  const programBasis = buildProgramBasis(programDrivers, recommendedScenario)
+  const normalizedExplanation = normalizeCopyForComparison(explanation)
+  const normalizedProgramDirectionSummary = normalizeCopyForComparison(
+    programDirectionSummary,
+  )
+  const shouldShowProgramDirectionSummary =
+    normalizedProgramDirectionSummary.length > 0 &&
+    normalizedProgramDirectionSummary !== normalizedExplanation &&
+    !normalizedExplanation.includes(normalizedProgramDirectionSummary) &&
+    !normalizedProgramDirectionSummary.includes(normalizedExplanation)
   const metadataRows = [
     ['Mode', overrideModeLine],
     ['Confidence', confidence.replace(/_/g, ' ')],
-    ['Program direction', programDirectionLabel],
-    ...(programBasis ? [['Program basis', programBasis]] : []),
+    ["Today's zoning program", programDirectionLabel],
+    ['Zoning', scenarioFitSummary.zoningSummary],
+    ['GPR', scenarioFitSummary.gprSummary],
     ['Code fit', scenarioFitSummary.comparisonSummary],
     ['GFA envelope', scenarioFitSummary.headroomSummary],
     [
@@ -280,8 +307,9 @@ export function CaptureRecommendationSection({
     ? 'Hide data details'
     : 'Show data details'
   const decisionBriefRows = [
-    ['Program', programDirectionLabel],
-    ...(programBasis ? [['Use basis', programBasis]] : []),
+    ["Today's zoning program", programDirectionLabel],
+    ['Zoning', scenarioFitSummary.zoningSummary],
+    ['GPR', scenarioFitSummary.gprSummary],
     ['GFA envelope', scenarioFitSummary.headroomSummary],
     ['Code fit', scenarioFitSummary.comparisonSummary],
   ]
@@ -378,15 +406,17 @@ export function CaptureRecommendationSection({
             >
               {explanation}
             </Typography>
-            <Typography
-              sx={{
-                fontSize: 'var(--ob-font-size-sm)',
-                color: 'text.secondary',
-                lineHeight: 'var(--ob-line-height-normal)',
-              }}
-            >
-              {programDirectionSummary}
-            </Typography>
+            {shouldShowProgramDirectionSummary ? (
+              <Typography
+                sx={{
+                  fontSize: 'var(--ob-font-size-sm)',
+                  color: 'text.secondary',
+                  lineHeight: 'var(--ob-line-height-normal)',
+                }}
+              >
+                {programDirectionSummary}
+              </Typography>
+            ) : null}
             {overrideIntentGuidance ? (
               <Typography
                 sx={{
@@ -595,7 +625,7 @@ export function CaptureRecommendationSection({
                             letterSpacing: '0.04em',
                           }}
                         >
-                          Use Signals
+                          Program signals
                         </Typography>
                         <Box
                           sx={{

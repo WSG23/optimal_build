@@ -47,6 +47,17 @@ ura_service = URAIntegrationService()
 
 _MONEY = Decimal("0.01")
 _RATIO = Decimal("0.0001")
+_DEFAULT_DEVELOPMENT_COST_PSM: dict[str, Decimal] = {
+    "residential": Decimal("4200"),
+    "serviced_apartments": Decimal("4600"),
+    "office": Decimal("4500"),
+    "retail": Decimal("3800"),
+    "hospitality": Decimal("5200"),
+    "industrial": Decimal("2800"),
+    "light_industrial": Decimal("2800"),
+    "warehouse": Decimal("2600"),
+    "amenities": Decimal("2500"),
+}
 
 
 def _to_decimal(value: object | None) -> Decimal | None:
@@ -68,6 +79,16 @@ def _quantize_ratio(value: Decimal | None) -> Decimal | None:
     if value is None:
         return None
     return value.quantize(_RATIO, rounding=ROUND_HALF_UP)
+
+
+def _normalise_moic(value: Decimal | None) -> Decimal | None:
+    """Return MOIC as an ``x`` multiple for API/frontend display."""
+
+    if value is None:
+        return None
+    if value >= Decimal("100"):
+        value = value / Decimal("100")
+    return _quantize_ratio(value)
 
 
 def _fraction_from_pct(value: float) -> Decimal:
@@ -140,6 +161,28 @@ def _build_finance_inputs(asset_optimizations: list[Any]) -> list[AssetFinanceIn
     ]
 
 
+def _estimate_development_capex(asset_optimizations: list[Any]) -> Decimal | None:
+    """Estimate shell/core development cost from allocated GFA.
+
+    Asset mix capex is fit-out oriented. The standalone deal calculator needs a
+    project-level denominator for DSCR/MOIC, so include a conservative hard-cost
+    proxy when allocated GFA is available.
+    """
+
+    total = Decimal("0")
+    for entry in asset_optimizations:
+        allocated_gfa = _to_decimal(getattr(entry, "allocated_gfa_sqm", None))
+        if allocated_gfa is None or allocated_gfa <= 0:
+            continue
+        asset_type = str(getattr(entry, "asset_type", "") or "").lower()
+        cost_psm = _DEFAULT_DEVELOPMENT_COST_PSM.get(
+            asset_type,
+            Decimal("4000"),
+        )
+        total += allocated_gfa * cost_psm
+    return _quantize_money(total) if total > 0 else None
+
+
 def _average_absorption_years(asset_optimizations: list[Any]) -> int:
     months = [
         float(entry.absorption_months)
@@ -165,7 +208,13 @@ def _build_finance_summary(
         breakdowns, project_name="Quick Screen"
     )
 
-    total_capex = asset_mix_summary.total_capex_sgd if asset_mix_summary else None
+    fitout_capex = asset_mix_summary.total_capex_sgd if asset_mix_summary else None
+    development_capex = _estimate_development_capex(asset_optimizations)
+    total_capex = None
+    if development_capex is not None:
+        total_capex = development_capex + (fitout_capex or Decimal("0"))
+    else:
+        total_capex = fitout_capex
     annual_revenue = (
         asset_mix_summary.total_annual_revenue_sgd if asset_mix_summary else None
     )
@@ -263,7 +312,7 @@ def _build_finance_summary(
             gross_project_multiple = (
                 operating_distributions + exit_distributions
             ) / total_capex
-            moic_value = _quantize_ratio(gross_project_multiple)
+            moic_value = _normalise_moic(gross_project_multiple)
         try:
             irr_value = _quantize_ratio(irr(cash_flows))
         except ValueError:
@@ -277,6 +326,7 @@ def _build_finance_summary(
     notes = [
         "Standalone quick screen. Validate planning, construction, and financing assumptions before investment committee use.",
         "Finance outputs are derived from the suggested asset mix and a simplified construction-to-stabilisation hold model.",
+        "Total CAPEX includes an indicative shell/core development cost plus asset fit-out where allocated GFA is available.",
         "MOIC is shown as a gross project multiple to avoid overstating levered equity outcomes in the quick screen.",
     ]
 
@@ -299,7 +349,7 @@ def _build_finance_summary(
         dscr=metrics.dscr if metrics else None,
         npv_sgd=npv_value,
         irr=irr_value,
-        moic=moic_value,
+        moic=float(moic_value) if moic_value is not None else None,
         estimated_exit_value_sgd=estimated_exit_value,
         notes=notes,
     )

@@ -25,7 +25,10 @@ import {
 } from 'react'
 import { Box, Typography } from '@mui/material'
 
-import type { SiteAcquisitionResult } from '../../../../api/siteAcquisition'
+import type {
+  CaptureRecommendationScenario,
+  SiteAcquisitionResult,
+} from '../../../../api/siteAcquisition'
 import type { CaptureOverrideIntent } from '../../../../api/siteAcquisition'
 import type { DevelopmentScenario } from '../../../../api/agents'
 import { Button } from '../../../../components/canonical/Button'
@@ -153,6 +156,13 @@ export function DeveloperResults({
     [activeScenario, overrideIntent, result, selectedScenarios],
   )
 
+  const previewScenario = useMemo<DevelopmentScenario>(() => {
+    const recommended = captureResultV2.scenarioRecommendation.recommended
+    return recommended === 'scenario_pending'
+      ? 'existing_building'
+      : recommended
+  }, [captureResultV2.scenarioRecommendation.recommended])
+
   // Currency symbol for formatting
   const currencySymbol = result.currencySymbol ?? 'S$'
   const suggestedProjectName =
@@ -203,6 +213,21 @@ export function DeveloperResults({
     currencySymbol,
   })
 
+  const formatCaptureScenarioLabel = useCallback(
+    (
+      scenario: CaptureRecommendationScenario | 'all' | null | undefined,
+    ): string => {
+      if (scenario === 'scenario_pending') {
+        return 'Scenario pending'
+      }
+      if (scenario == null) {
+        return formatScenarioLabel(null)
+      }
+      return formatScenarioLabel(scenario as DevelopmentScenario | 'all' | null)
+    },
+    [formatScenarioLabel],
+  )
+
   // Preview job state
   const {
     previewJob,
@@ -230,7 +255,7 @@ export function DeveloperResults({
     handleLegendReset,
   } = usePreviewJob({
     capturedProperty: result,
-    preferredScenario: captureResultV2.scenarioRecommendation.recommended,
+    preferredScenario: previewScenario,
   })
 
   // Extracted starter model computations
@@ -257,7 +282,7 @@ export function DeveloperResults({
     isRefreshingPreview,
     hasPreferredScenarioPreview,
     previewJobs: result.previewJobs,
-    formatScenarioLabel,
+    formatScenarioLabel: formatCaptureScenarioLabel,
     formatNumber,
   })
 
@@ -445,13 +470,21 @@ export function DeveloperResults({
       : 'Capture reflects the currently resolved scalar controls for this site, without setback or floor-by-floor compliance modelling.'
     const scenarioNote = recommendation.userOverride
       ? recommendation.overrideIntent === 'exploratory'
-        ? `Exploratory override active: ${formatScenarioLabel(recommendation.recommended)} is selected temporarily and does not change learned defaults.`
+        ? `Exploratory override active: ${formatCaptureScenarioLabel(recommendation.recommended)} is selected temporarily and does not change learned defaults.`
         : recommendation.overrideIntent === 'saved'
-          ? `Saved project override active: ${formatScenarioLabel(recommendation.recommended)} is pinned for this project until you return to the Capture recommendation.`
-          : `User override active: ${formatScenarioLabel(recommendation.recommended)} remains selected even though Capture would otherwise prefer ${recommendation.alternatives[0] ? formatScenarioLabel(recommendation.alternatives[0]) : 'another scenario'}.`
-      : `Capture currently recommends ${formatScenarioLabel(recommendation.defaultRecommended)} first.`
+          ? `Saved project override active: ${formatCaptureScenarioLabel(recommendation.recommended)} is pinned for this project until you return to the Capture recommendation.`
+          : `User override active: ${formatCaptureScenarioLabel(recommendation.recommended)} remains selected even though Capture would otherwise prefer ${recommendation.alternatives[0] ? formatScenarioLabel(recommendation.alternatives[0]) : 'another scenario'}.`
+      : recommendation.defaultRecommended === 'scenario_pending'
+        ? 'Capture cannot recommend a scenario yet because current GFA and current-code fit are pending.'
+        : `Capture currently recommends ${formatCaptureScenarioLabel(recommendation.defaultRecommended)} first.`
     return `Instant capture analysis for ${result.address?.district ?? 'this location'} highlights ${analysisSummary}. Preview status: ${previewStatus}. ${scenarioNote} ${scopeNote}`
-  }, [captureResultV2, effectiveStarterModel, formatScenarioLabel, result])
+  }, [
+    captureResultV2,
+    effectiveStarterModel,
+    formatCaptureScenarioLabel,
+    formatScenarioLabel,
+    result,
+  ])
 
   // Hydrate saved override from project
   useEffect(() => {
@@ -483,11 +516,9 @@ export function DeveloperResults({
 
   // Auto-request starter model when preferred scenario changes
   useEffect(() => {
-    const preferredScenario = captureResultV2.scenarioRecommendation.recommended
     const propertyId = result.propertyId
     if (
       !propertyId ||
-      !preferredScenario ||
       hasPreferredScenarioPreview ||
       isGeneratingStarterModel ||
       previewGenerationError
@@ -495,7 +526,7 @@ export function DeveloperResults({
       return
     }
 
-    const requestKey = `${propertyId}:${preferredScenario}`
+    const requestKey = `${propertyId}:${previewScenario}`
     if (autoRequestedStarterModelRef.current.has(requestKey)) {
       return
     }
@@ -503,10 +534,10 @@ export function DeveloperResults({
     autoRequestedStarterModelRef.current.add(requestKey)
     void handleEnsureStarterModel()
   }, [
-    captureResultV2.scenarioRecommendation.recommended,
     handleEnsureStarterModel,
     hasPreferredScenarioPreview,
     isGeneratingStarterModel,
+    previewScenario,
     previewGenerationError,
     result.propertyId,
   ])
@@ -541,7 +572,7 @@ export function DeveloperResults({
         starterModelStatusSummary={starterModelStatusSummary}
         handleEnsureStarterModel={handleEnsureStarterModel}
         formatScenarioLabel={formatScenarioLabel}
-        recommendedScenario={captureResultV2.scenarioRecommendation.recommended}
+        recommendedScenario={previewScenario}
         supportsFullCompliance={
           captureResultV2.analysisStatus.supportsFullCompliance
         }
@@ -551,7 +582,7 @@ export function DeveloperResults({
 
       <CaptureRecommendationSection
         recommendationCardTitle={recommendationCardTitle}
-        formatScenarioLabel={formatScenarioLabel}
+        formatScenarioLabel={formatCaptureScenarioLabel}
         recommendedScenario={captureResultV2.scenarioRecommendation.recommended}
         userOverride={captureResultV2.scenarioRecommendation.userOverride}
         defaultRecommendationLabel={defaultRecommendationLabel}

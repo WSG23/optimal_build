@@ -235,6 +235,45 @@ class RefZoningLayer(BaseModel):
     )
 
 
+class RefBuildingFootprint(BaseModel):
+    """Reference building footprint model for existing-asset detection."""
+
+    __tablename__ = "ref_building_footprints"
+
+    id = Column(Integer, primary_key=True, index=True)
+    jurisdiction = Column(String(10), nullable=False, index=True, default="SG")
+    layer_name = Column(String(100), index=True)
+    footprint_ref = Column(String(100), index=True)
+
+    bounds_json = Column(JSONType)
+    if Geometry is not None:
+        geometry = Column(Geometry(geometry_type="MULTIPOLYGON", srid=4326))
+
+    centroid_lat = Column(Numeric(10, 7))
+    centroid_lon = Column(Numeric(10, 7))
+    area_m2 = Column(Numeric(12, 2))
+    attributes = Column(JSONType)
+    source = Column(String(50))
+
+    __table_args__ = (
+        Index(
+            "idx_ref_building_footprints_centroid",
+            "centroid_lat",
+            "centroid_lon",
+        ),
+        Index(
+            "idx_ref_building_footprints_jurisdiction_layer",
+            "jurisdiction",
+            "layer_name",
+        ),
+        Index(
+            "idx_ref_building_footprints_jurisdiction_ref",
+            "jurisdiction",
+            "footprint_ref",
+        ),
+    )
+
+
 class RefGeocodeCache(BaseModel):
     """Geocoding cache for address lookups."""
 
