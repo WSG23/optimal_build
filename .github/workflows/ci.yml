@@ -75,20 +75,6 @@ jobs:
         if: needs.changes.outputs.frontend == 'true'
         run: corepack enable
 
-      - name: Resolve pnpm store path
-        if: needs.changes.outputs.frontend == 'true'
-        id: lint-pnpm-store
-        run: echo "store-path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache pnpm store
-        if: needs.changes.outputs.frontend == 'true'
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.lint-pnpm-store.outputs.store-path }}
-          key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
-          restore-keys: |
-            pnpm-${{ runner.os }}-
-
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
         run: pnpm -C frontend install --frozen-lockfile
@@ -149,26 +135,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Enable Corepack
         if: needs.changes.outputs.frontend == 'true'
         run: corepack enable
-
-      - name: Resolve pnpm store path
-        if: needs.changes.outputs.frontend == 'true'
-        id: typecheck-pnpm-store
-        run: echo "store-path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache pnpm store
-        if: needs.changes.outputs.frontend == 'true'
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.typecheck-pnpm-store.outputs.store-path }}
-          key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
-          restore-keys: |
-            pnpm-${{ runner.os }}-
 
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
@@ -210,26 +180,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Enable Corepack
         if: needs.changes.outputs.frontend == 'true'
         run: corepack enable
-
-      - name: Resolve pnpm store path
-        if: needs.changes.outputs.frontend == 'true'
-        id: build-pnpm-store
-        run: echo "store-path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache pnpm store
-        if: needs.changes.outputs.frontend == 'true'
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.build-pnpm-store.outputs.store-path }}
-          key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
-          restore-keys: |
-            pnpm-${{ runner.os }}-
 
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
@@ -285,26 +239,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-          cache-dependency-path: frontend/pnpm-lock.yaml
 
       - name: Enable Corepack
         if: needs.changes.outputs.frontend == 'true'
         run: corepack enable
-
-      - name: Resolve pnpm store path
-        if: needs.changes.outputs.frontend == 'true'
-        id: tests-pnpm-store
-        run: echo "store-path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache pnpm store
-        if: needs.changes.outputs.frontend == 'true'
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.tests-pnpm-store.outputs.store-path }}
-          key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
-          restore-keys: |
-            pnpm-${{ runner.os }}-
 
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
