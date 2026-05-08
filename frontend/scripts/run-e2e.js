@@ -39,18 +39,16 @@ if (
   !env.PLAYWRIGHT_BROWSERS_PATH ||
   env.PLAYWRIGHT_BROWSERS_PATH.trim() === ''
 ) {
-  if (hasBrowserMetadata(defaultCache)) {
-    env.PLAYWRIGHT_BROWSERS_PATH = defaultCache
-  } else if (hasBrowserMetadata(homeCache)) {
-    env.PLAYWRIGHT_BROWSERS_PATH = homeCache
-  } else {
-    env.PLAYWRIGHT_BROWSERS_PATH = defaultCache
-  }
+  const preferredCaches = env.CI
+    ? [homeCache, defaultCache]
+    : [defaultCache, homeCache]
+  env.PLAYWRIGHT_BROWSERS_PATH =
+    preferredCaches.find(hasBrowserMetadata) ?? defaultCache
 }
 
 const cachePath = env.PLAYWRIGHT_BROWSERS_PATH
 
-const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 
 function parseBoolean(value, defaultValue = false) {
   if (value === undefined || value === null) {
@@ -89,11 +87,11 @@ if (!shouldSkipInstall) {
     installWithDeps = false
   }
 
-  const installArgs = ['exec', 'playwright', 'install']
+  const installArgs = ['exec', 'playwright', '--', 'install']
   if (installWithDeps) {
     installArgs.push('--with-deps')
   }
-  const installResult = spawnSync(pnpmCommand, installArgs, {
+  const installResult = spawnSync(npmCommand, installArgs, {
     stdio: 'inherit',
     cwd: frontendDir,
     env,
@@ -119,7 +117,7 @@ if (!fs.existsSync(cachePath)) {
     'Populate the directory by running the install command on a machine with internet access:',
   )
   console.error(
-    '  PLAYWRIGHT_BROWSERS_PATH="$(pwd)/.playwright-browsers" pnpm -C frontend exec playwright install',
+    '  PLAYWRIGHT_BROWSERS_PATH="$(pwd)/.playwright-browsers" npm --prefix frontend exec playwright -- install',
   )
   console.error(
     'Then copy the contents of that directory (or ~/.cache/ms-playwright) into the target environment.',
