@@ -43,6 +43,9 @@ except Exception:  # pragma: no cover - fallback for stubbed environments
 
             return decorator
 
+        def exempt(self, func: Any) -> Any:
+            return func
+
         def _inject_headers(self, response: Response, _rate_limit: Any) -> Response:
             return response
 
@@ -68,7 +71,7 @@ from app.api.error_handlers import (
 )
 from app.api.v1 import TAGS_METADATA, build_api_router
 from app.core.config import settings
-from app.core.database import engine, get_session
+from app.core.database import AsyncSessionLocal, engine, get_session
 from app.middleware.observability import (
     ApiErrorLoggingMiddleware,
     RequestMetricsMiddleware,
@@ -454,14 +457,16 @@ async def root() -> dict[str, str]:
 
 
 @app.get("/health")
-async def health_check(session: AsyncSession = Depends(get_session)) -> dict[str, Any]:
+@limiter.exempt
+async def health_check() -> dict[str, Any]:
     """Health check endpoint with database connectivity."""
 
     ref_rule_model = _load_ref_rule_model()
     try:
-        rules_count_result = await session.execute(
-            select(func.count()).select_from(ref_rule_model)
-        )
+        async with AsyncSessionLocal() as session:
+            rules_count_result = await session.execute(
+                select(func.count()).select_from(ref_rule_model)
+            )
         rules_count = rules_count_result.scalar_one()
         payload = {
             "status": "healthy",
