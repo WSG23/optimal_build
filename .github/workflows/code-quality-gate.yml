@@ -10,6 +10,10 @@ jobs:
   quality-check:
     name: Code Quality Verification
     runs-on: ubuntu-latest
+    env:
+      # CI runs Python via setup-python (no .venv); override Makefile defaults
+      # that point at .venv/bin/python so `make check-coding-rules` resolves.
+      PY: python
 
     steps:
       - name: Checkout code

@@ -211,6 +211,12 @@ jobs:
       REFERENCE_STORAGE: ${{ github.workspace }}/artifacts/reference_storage
       VITE_API_BASE_URL: http://127.0.0.1:8000/
       CI: 'true'
+      # CI runs Python via setup-python (no .venv); override Makefile defaults
+      # that point at .venv/bin/python.
+      PY: python
+      # Point Alembic and seeders at the Postgres service brought up by
+      # docker-compose; otherwise the Makefile falls back to DEV_SQLITE_URL.
+      SQLALCHEMY_DATABASE_URI: postgresql+asyncpg://postgres:password@127.0.0.1:5432/building_compliance
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
