@@ -454,13 +454,14 @@ jobs:
 
       - name: Run backend tests
         # This step intentionally runs a smoke subset of high-value
-        # tests, so it cannot meet a project-wide --cov-fail-under
-        # threshold. Coverage XML is still emitted for reporting; a
-        # future full-suite or scheduled job is the right place to
-        # gate on percentage.
+        # tests, so it cannot meet a project-wide coverage threshold.
+        # Pass --cov-fail-under=0 to override fail_under=80 in
+        # backend/.coveragerc. Coverage XML is still emitted via
+        # --cov-report=xml for reporting; a future full-suite or
+        # scheduled job is the right place to gate on percentage.
         run: |
           cd backend
-          pytest -q --maxfail=1 --cov=app --cov-report=xml \
+          pytest -q --maxfail=1 --cov=app --cov-report=xml --cov-fail-under=0 \
             --junitxml="$CI_ARTIFACTS/backend-junit.xml" \
             --durations=25 --durations-min=1.0 \
             tests/test_api/test_rules.py \
