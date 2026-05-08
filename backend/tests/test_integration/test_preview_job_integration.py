@@ -18,6 +18,39 @@ from httpx import AsyncClient
 from sqlalchemy import select
 
 
+async def _wait_for_job_to_leave_queued(
+    async_session_factory,
+    job_id: UUID,
+    *,
+    timeout: float = 15.0,
+    poll_interval: float = 0.2,
+) -> PreviewJob:
+    """Poll the database until ``job_id`` leaves QUEUED, or fail after ``timeout``.
+
+    The GPS log endpoint queues preview generation with
+    ``inline_execution="background"`` — it returns ``status="queued"``
+    immediately and runs ``generate_preview_job`` on a separate asyncio
+    task. Tests still need to confirm the background scheduler actually
+    runs the task; the regression we care about is the job *staying*
+    queued forever, not the initial response showing ``queued``.
+    """
+    loop = asyncio.get_event_loop()
+    deadline = loop.time() + timeout
+    while True:
+        async with async_session_factory() as session:
+            job = await session.get(PreviewJob, job_id)
+            if job is not None and job.status != PreviewJobStatus.QUEUED:
+                return job
+        if loop.time() >= deadline:
+            pytest.fail(
+                f"Preview job {job_id} stuck in QUEUED after {timeout}s. "
+                "The background generate_preview_job() task did not make "
+                "progress; check inline_execution='background' scheduling "
+                "in preview_jobs.py."
+            )
+        await asyncio.sleep(poll_interval)
+
+
 @pytest.mark.asyncio
 async def test_capture_property_completes_without_hanging(
     app_client: AsyncClient,
@@ -25,9 +58,12 @@ async def test_capture_property_completes_without_hanging(
 ) -> None:
     """Test that capture property completes within reasonable time.
 
-    This test prevents regression of the bug where preview job execution
-    would hang indefinitely due to transaction rollback issues in inline
-    backend mode.
+    Regression prevention: with ``inline_execution="background"`` on the
+    GPS log endpoint, the API response can return ``status="queued"``
+    while the asyncio task that runs ``generate_preview_job`` is still
+    pending. The regression we care about is the job *staying* queued —
+    i.e. the background scheduler never running — not the immediate
+    response showing ``queued``.
 
     Regression prevention for: Backend hanging during capture (2025-01-09)
     """
@@ -54,38 +90,30 @@ async def test_capture_property_completes_without_hanging(
     assert response.status_code == 200, response.text
     payload = response.json()
 
-    # Verify preview job was created
+    # Verify preview job was created. The immediate response may show
+    # status="queued" — the background asyncio task hasn't necessarily
+    # started yet — so don't assert on the response's status here.
     assert "preview_jobs" in payload
     assert len(payload["preview_jobs"]) > 0
     preview_job = payload["preview_jobs"][0]
-
-    # Verify job reached a terminal state (not stuck in QUEUED)
-    assert preview_job["status"] in {"ready", "processing", "failed"}
-
-    # If status is READY, verify all URLs are populated
-    if preview_job["status"] == "ready":
-        assert preview_job[
-            "preview_url"
-        ], "preview_url should be populated for READY jobs"
-        assert preview_job[
-            "metadata_url"
-        ], "metadata_url should be populated for READY jobs"
-        assert preview_job[
-            "thumbnail_url"
-        ], "thumbnail_url should be populated for READY jobs"
-
-    # Verify job exists in database and is not stuck
     job_id = UUID(preview_job["id"])
-    async with async_session_factory() as session:
-        db_job = await session.get(PreviewJob, job_id)
-        assert db_job is not None
-        assert db_job.metadata is not None
 
-        # Verify job is not stuck in QUEUED status
-        # (The main bug we're preventing - jobs getting stuck without executing)
-        assert (
-            db_job.status != PreviewJobStatus.QUEUED
-        ), f"Job should not be stuck in QUEUED status. Current status: {db_job.status}"
+    # Wait for the background scheduler to make progress. Failing here
+    # means the job is genuinely stuck — the regression this test exists
+    # to catch.
+    db_job = await _wait_for_job_to_leave_queued(async_session_factory, job_id)
+    assert db_job.metadata is not None
+    assert db_job.status in {
+        PreviewJobStatus.READY,
+        PreviewJobStatus.PROCESSING,
+        PreviewJobStatus.FAILED,
+    }, f"Job ended in unexpected status: {db_job.status}"
+
+    # If status is READY, verify all URLs are populated.
+    if db_job.status == PreviewJobStatus.READY:
+        assert db_job.preview_url, "preview_url should be populated for READY jobs"
+        assert db_job.metadata_url, "metadata_url should be populated for READY jobs"
+        assert db_job.thumbnail_url, "thumbnail_url should be populated for READY jobs"
 
 
 @pytest.mark.asyncio
@@ -256,15 +284,22 @@ async def test_multiple_concurrent_captures(
             "This may indicate deadlock or resource contention issues."
         )
 
-    # Verify all 3 completed successfully
+    # Verify all 3 responses parsed. Status may be "queued" because
+    # log-gps schedules generation in a background asyncio task — we
+    # confirm progress below by polling each job's DB state.
     assert len(results) == 3
+    job_ids: list[UUID] = []
     for result in results:
         assert "preview_jobs" in result
         assert len(result["preview_jobs"]) > 0
-        preview_job = result["preview_jobs"][0]
-        assert preview_job["status"] in {"ready", "processing", "failed"}
+        job_ids.append(UUID(result["preview_jobs"][0]["id"]))
 
-    # Verify all jobs are in database and not stuck
+    # Wait for each background scheduler task to leave QUEUED. Failing
+    # here means a job is genuinely stuck under concurrent load.
+    for job_id in job_ids:
+        await _wait_for_job_to_leave_queued(async_session_factory, job_id)
+
+    # Verify all jobs are in database and not stuck.
     async with async_session_factory() as session:
         all_jobs = (await session.execute(select(PreviewJob))).scalars().all()
 
