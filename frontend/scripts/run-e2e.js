@@ -39,11 +39,13 @@ if (
   !env.PLAYWRIGHT_BROWSERS_PATH ||
   env.PLAYWRIGHT_BROWSERS_PATH.trim() === ''
 ) {
-  const preferredCaches = env.CI
-    ? [homeCache, defaultCache]
-    : [defaultCache, homeCache]
-  env.PLAYWRIGHT_BROWSERS_PATH =
-    preferredCaches.find(hasBrowserMetadata) ?? defaultCache
+  if (env.CI) {
+    env.PLAYWRIGHT_BROWSERS_PATH = homeCache
+  } else {
+    env.PLAYWRIGHT_BROWSERS_PATH = hasBrowserMetadata(defaultCache)
+      ? defaultCache
+      : homeCache
+  }
 }
 
 const cachePath = env.PLAYWRIGHT_BROWSERS_PATH
@@ -127,11 +129,9 @@ if (!fs.existsSync(cachePath)) {
 
 const metadataFile = path.join(cachePath, 'browsers.json')
 if (!fs.existsSync(metadataFile)) {
-  console.error(`Playwright metadata missing at ${metadataFile}.`)
-  console.error(
-    'Ensure the cache directory contains the downloaded browser builds expected by Playwright.',
+  console.warn(
+    `Playwright metadata missing at ${metadataFile}; continuing and letting Playwright validate browser executables.`,
   )
-  process.exit(1)
 }
 
 fs.rmSync(sqlitePath, { force: true })
