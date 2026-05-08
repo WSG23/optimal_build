@@ -37,6 +37,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -88,6 +90,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -112,7 +116,7 @@ jobs:
             base="${{ github.event.before }}"
           fi
           if [ -n "$base" ]; then
-            git fetch --no-tags --depth=1 origin "$base" || true
+            git fetch --no-tags origin "$base" || true
             args+=(--diff-base "$base")
           fi
           python scripts/check_type_guardrails.py "${args[@]}"
