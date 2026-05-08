@@ -9,7 +9,6 @@ on:
 env:
   PYTHON_VERSION: '3.11'
   NODE_VERSION: '20'
-  PNPM_VERSION: '9.15.9'
 
 jobs:
   changes:
@@ -72,19 +71,13 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Enable Corepack
-        if: needs.changes.outputs.frontend == 'true'
-        run: |
-          corepack enable
-          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
-
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
-        run: pnpm -C frontend install --frozen-lockfile
+        run: npm --prefix frontend ci
 
       - name: Run frontend lint
         if: needs.changes.outputs.frontend == 'true'
-        run: pnpm -C frontend lint
+        run: npm --prefix frontend run lint
 
   typecheck:
     name: Type Check
@@ -139,19 +132,13 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Enable Corepack
-        if: needs.changes.outputs.frontend == 'true'
-        run: |
-          corepack enable
-          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
-
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
-        run: pnpm -C frontend install --frozen-lockfile
+        run: npm --prefix frontend ci
 
       - name: Run frontend type checks
         if: needs.changes.outputs.frontend == 'true'
-        run: pnpm -C frontend exec tsc --noEmit
+        run: npm --prefix frontend run typecheck
 
   build:
     name: Build
@@ -186,19 +173,13 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Enable Corepack
-        if: needs.changes.outputs.frontend == 'true'
-        run: |
-          corepack enable
-          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
-
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
-        run: pnpm -C frontend install --frozen-lockfile
+        run: npm --prefix frontend ci
 
       - name: Build frontend application
         if: needs.changes.outputs.frontend == 'true'
-        run: pnpm -C frontend build
+        run: npm --prefix frontend run build
 
   tests:
     name: Tests
@@ -247,28 +228,22 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Enable Corepack
-        if: needs.changes.outputs.frontend == 'true'
-        run: |
-          corepack enable
-          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
-
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
-        run: pnpm -C frontend install --frozen-lockfile
+        run: npm --prefix frontend ci
 
       - name: Cache Playwright browsers
         if: needs.changes.outputs.frontend == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/package.json') }}
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json', 'frontend/package.json') }}
           restore-keys: |
             playwright-${{ runner.os }}-
 
       - name: Install Playwright browsers
         if: needs.changes.outputs.frontend == 'true'
-        run: pnpm -C frontend exec playwright install --with-deps
+        run: npm --prefix frontend exec playwright -- install --with-deps
 
       - name: Start backing services
         run: |
@@ -464,7 +439,7 @@ jobs:
 
       - name: Run frontend unit tests
         if: needs.changes.outputs.frontend == 'true'
-        run: pnpm -C frontend run test:coverage
+        run: npm --prefix frontend run test:coverage
 
       - name: Launch backend API for E2E tests
         if: needs.changes.outputs.frontend == 'true'
@@ -493,7 +468,7 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_INSTALL: '1'
         if: needs.changes.outputs.frontend == 'true'
-        run: pnpm -C frontend test:e2e
+        run: npm --prefix frontend run test:e2e
 
       - name: Stop backend API (E2E)
         if: always() && needs.changes.outputs.frontend == 'true'
