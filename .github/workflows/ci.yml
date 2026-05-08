@@ -217,6 +217,9 @@ jobs:
       # Point Alembic and seeders at the Postgres service brought up by
       # docker-compose; otherwise the Makefile falls back to DEV_SQLITE_URL.
       SQLALCHEMY_DATABASE_URI: postgresql+asyncpg://postgres:password@127.0.0.1:5432/building_compliance
+      # Required by app.core.config.Settings; only used outside the
+      # pytest auto-fallback (e.g. when Alembic loads settings).
+      SECRET_KEY: ci-secret-key
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
