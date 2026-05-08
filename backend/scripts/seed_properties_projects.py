@@ -152,7 +152,7 @@ _PROPERTIES: Sequence[dict[str, object]] = (
         "address": "400 Broad Street, Seattle, WA 98109, USA",
         "postal_code": "98109",
         "jurisdiction_code": "SEA",
-        "property_type": PropertyType.COMMERCIAL,
+        "property_type": PropertyType.SPECIAL_PURPOSE,
         "status": PropertyStatus.EXISTING,
         "location": "SRID=4326;POINT(-122.3493129 47.6205054)",
         "district": "Seattle Center",

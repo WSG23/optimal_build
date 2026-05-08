@@ -14,6 +14,7 @@ import structlog
 from backend._compat import compat_zip
 
 from app.core.database import AsyncSessionLocal, engine
+from app.models import load_model_modules
 from app.models.base import BaseModel
 from app.models.finance import (
     FinCapitalStack,
@@ -573,6 +574,7 @@ def _serialise_cashflows(values: Iterable[Decimal]) -> list[str]:
 async def ensure_schema() -> None:
     """Create database tables if they do not yet exist."""
 
+    load_model_modules()
     async with engine.begin() as conn:
         await conn.run_sync(BaseModel.metadata.create_all)
 
