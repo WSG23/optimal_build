@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import importlib
 
@@ -63,6 +64,42 @@ async def test_parse_reference_documents_loads_model_registry_before_query(
     assert processed == []
     assert calls[0] == "models-loaded"
     assert calls[1:] == ["query", "commit"]
+
+
+def test_main_collects_counts_on_same_event_loop(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    loop_ids: list[int] = []
+
+    async def fake_run_once(**_: object) -> list[int]:
+        loop_ids.append(id(asyncio.get_running_loop()))
+        return [7]
+
+    async def fake_collect_counts() -> tuple[int, int]:
+        loop_ids.append(id(asyncio.get_running_loop()))
+        return (1, 2)
+
+    monkeypatch.setattr(parse_segment_module, "_run_once", fake_run_once)
+    monkeypatch.setattr(parse_segment_module, "_collect_counts", fake_collect_counts)
+
+    summary = parse_segment_module.main(
+        [
+            "--storage-path",
+            str(tmp_path),
+            "--min-documents",
+            "1",
+            "--min-clauses",
+            "1",
+        ]
+    )
+
+    assert summary == {
+        "processed_documents": [7],
+        "document_count": 1,
+        "clause_count": 2,
+    }
+    assert len(loop_ids) == 2
+    assert len(set(loop_ids)) == 1
 
 
 @pytest.mark.asyncio

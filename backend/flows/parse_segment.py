@@ -167,6 +167,14 @@ async def _collect_counts() -> tuple[int, int]:
     return len(documents), len(clauses)
 
 
+async def _run_cli(
+    *, storage: ReferenceStorage, parser: ClauseParser | None = None
+) -> tuple[list[int], int, int]:
+    processed = await _run_once(storage=storage, parser=parser)
+    document_count, clause_count = await _collect_counts()
+    return processed, document_count, clause_count
+
+
 def main(argv: Sequence[str] | None = None) -> dict[str, int | list[int]]:
     parser = _build_cli_parser()
     args = parser.parse_args(argv)
@@ -174,8 +182,7 @@ def main(argv: Sequence[str] | None = None) -> dict[str, int | list[int]]:
         base_path=args.storage_path if args.storage_path is not None else None,
     )
 
-    processed = asyncio.run(_run_once(storage=storage))
-    document_count, clause_count = asyncio.run(_collect_counts())
+    processed, document_count, clause_count = asyncio.run(_run_cli(storage=storage))
 
     summary: dict[str, int | list[int]] = {
         "processed_documents": processed,
