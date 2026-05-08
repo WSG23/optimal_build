@@ -56,10 +56,9 @@ class StubURAService:
     def source_metadata(self) -> ExternalSourceMetadata:
         return ExternalSourceMetadata(
             provider="ura",
-            state=ExternalSourceState.MOCK,
-            configured=False,
-            synthetic=True,
-            reason="URA_ACCESS_KEY not configured",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
         )
 
     async def get_zoning_info(self, address: str) -> URAZoningInfo:
@@ -245,7 +244,7 @@ async def test_gps_logging_generates_quick_analysis() -> None:
     assert payload["quick_analysis"] == quick_analysis
     assert payload["geocoding_source"]["provider"] == "google_maps"
     assert payload["amenities_source"]["provider"] == "onemap"
-    assert payload["ura_source"]["state"] == "mock"
+    assert payload["ura_source"]["state"] == "live"
 
 
 @pytest.mark.asyncio
