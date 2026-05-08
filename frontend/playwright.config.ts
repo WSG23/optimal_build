@@ -1,6 +1,9 @@
 import { defineConfig } from '@playwright/test'
+import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 const rootDir = path.resolve(__dirname, '..')
 const backendDir = path.resolve(rootDir, 'backend')
 const pythonPathEntries = [backendDir, rootDir]
