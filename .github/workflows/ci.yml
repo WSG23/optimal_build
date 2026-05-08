@@ -353,6 +353,13 @@ jobs:
           PY
 
       - name: Launch backend API for smoke tests
+        env:
+          # cwd is <repo>/backend (so `app.main:app` resolves), but several
+          # routers do `from backend._compat...` — that needs the repo root
+          # on sys.path so the `backend` namespace package is discoverable.
+          # Job-level PYTHONPATH is the relative string "backend", which
+          # resolves wrong from this cwd. Pin both with absolute paths.
+          PYTHONPATH: ${{ github.workspace }}/backend:${{ github.workspace }}
         run: |
           # Capture uvicorn output so we can surface tracebacks if a smoke
           # request fails (uvicorn is backgrounded; without redirection its
