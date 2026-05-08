@@ -118,6 +118,7 @@ class TestBeforeSend:
 
         class HTTPException(Exception):
             def __init__(self, status_code: int) -> None:
+                super().__init__(status_code)
                 self.status_code = status_code
 
         for status_code in [400, 401, 403, 404, 422]:
@@ -137,6 +138,7 @@ class TestBeforeSend:
 
         class HTTPException(Exception):
             def __init__(self, status_code: int) -> None:
+                super().__init__(status_code)
                 self.status_code = status_code
 
         exc = HTTPException(500)
