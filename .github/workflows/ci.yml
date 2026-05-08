@@ -302,7 +302,16 @@ jobs:
           mkdir -p "$REFERENCE_STORAGE"
 
       - name: Run database migrations
-        run: make db.upgrade
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 5); do
+            if make db.upgrade; then
+              exit 0
+            fi
+            echo "Database migration attempt $attempt failed; retrying after Postgres settles..." >&2
+            sleep 5
+          done
+          make db.upgrade
 
       - name: Seed reference data
         # Docker Compose is available, but only postgres/redis/minio are
