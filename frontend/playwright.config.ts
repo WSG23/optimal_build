@@ -23,8 +23,8 @@ const buildableUsePostgis = process.env.BUILDABLE_USE_POSTGIS ?? '0'
 const isCI = Boolean(process.env.CI)
 const frontendPort = isCI ? 4173 : 3000
 const frontendCommand = isCI
-  ? 'pnpm preview:ci'
-  : 'pnpm dev -- --host 127.0.0.1 --port 3000'
+  ? 'npm run preview:ci'
+  : 'npm run dev -- --host 127.0.0.1 --port 3000'
 const frontendUrl = `http://127.0.0.1:${frontendPort}`
 
 export default defineConfig({
