@@ -58,6 +58,7 @@ jobs:
       - name: Run migrations on PostgreSQL
         env:
           DATABASE_URL: postgresql+asyncpg://optimal_user:password@localhost:5432/optimal_db
+          SECRET_KEY: test-secret-key-for-ci
         run: |
           cd backend
           python -m alembic upgrade head
@@ -65,6 +66,7 @@ jobs:
       - name: Run schema validation tests
         env:
           DATABASE_URL: postgresql+asyncpg://optimal_user:password@localhost:5432/optimal_db
+          SECRET_KEY: test-secret-key-for-ci
         run: |
           pytest backend/tests/test_migrations/test_schema_validation.py -v --tb=short
 
@@ -124,6 +126,7 @@ jobs:
       - name: Run migrations
         env:
           DATABASE_URL: postgresql+asyncpg://optimal_user:password@localhost:5432/optimal_db
+          SECRET_KEY: test-secret-key-for-ci
         run: |
           cd backend
           python -m alembic upgrade head
@@ -132,6 +135,7 @@ jobs:
         env:
           DATABASE_URL: postgresql+asyncpg://optimal_user:password@localhost:5432/optimal_db
           REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: test-secret-key-for-ci
         run: |
           python -m backend.scripts.run_smokes --artifacts artifacts/smokes
         continue-on-error: true
