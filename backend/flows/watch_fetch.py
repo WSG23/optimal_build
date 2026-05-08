@@ -29,6 +29,7 @@ if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.core.database import AsyncSessionLocal
+from app.models import load_model_modules
 from app.models.base import BaseModel
 from app.models.rkp import RefClause, RefDocument, RefSource
 from app.services.reference_sources import FetchedDocument, ReferenceSourceFetcher
@@ -393,6 +394,7 @@ async def _run_flow(
 ) -> dict[str, Any]:
     """Execute the ingestion flow and derive a summary in one event loop."""
 
+    load_model_modules()
     await _ensure_database_schema(AsyncSessionLocal)
     results = await _run_once(storage=storage, fetcher=fetcher)
     return await _summarise_ingestion(results)
