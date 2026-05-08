@@ -10,10 +10,15 @@ env:
   PYTHON_VERSION: '3.11'
   NODE_VERSION: '20'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   changes:
     name: Detect Changes
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
@@ -33,6 +38,7 @@ jobs:
   lint:
     name: Lint & Format
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: changes
     steps:
       - name: Checkout repository
@@ -58,6 +64,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            ui-admin/package-lock.json
 
       - name: Install frontend pre-commit dependencies
         run: |
@@ -67,16 +77,6 @@ jobs:
       - name: Run pre-commit hooks
         run: pre-commit run --all-files --show-diff-on-failure
 
-      - name: Set up Node.js
-        if: needs.changes.outputs.frontend == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install frontend dependencies
-        if: needs.changes.outputs.frontend == 'true'
-        run: npm --prefix frontend ci
-
       - name: Run frontend lint
         if: needs.changes.outputs.frontend == 'true'
         run: npm --prefix frontend run lint
@@ -84,9 +84,8 @@ jobs:
   typecheck:
     name: Type Check
     runs-on: ubuntu-latest
-    needs:
-      - lint
-      - changes
+    timeout-minutes: 25
+    needs: changes
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -135,6 +134,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
@@ -147,9 +148,8 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs:
-      - typecheck
-      - changes
+    timeout-minutes: 20
+    needs: changes
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -176,6 +176,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
@@ -188,6 +190,7 @@ jobs:
   tests:
     name: Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     needs:
       - build
       - changes
@@ -240,6 +243,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
@@ -349,10 +354,14 @@ jobs:
 
       - name: Launch backend API for smoke tests
         run: |
+          # Capture uvicorn output so we can surface tracebacks if a smoke
+          # request fails (uvicorn is backgrounded; without redirection its
+          # logs are otherwise lost when the step ends).
           python -m uvicorn app.main:app \
             --host 0.0.0.0 \
             --port 8000 \
-            --log-level warning &
+            --log-level info \
+            > "$CI_ARTIFACTS/backend-smoke.log" 2>&1 &
           echo $! > "$RUNNER_TEMP/backend-e2e.pid"
         working-directory: backend
 
@@ -372,10 +381,21 @@ jobs:
         run: |
           set -euo pipefail
           payload='{"address":"123 Example Ave","typ_floor_to_floor_m":3.4,"efficiency_ratio":0.8}'
-          curl -sSf -X POST http://127.0.0.1:8000/api/v1/screen/buildable \
+          # Capture status + body separately so a non-2xx response is logged
+          # in full (curl -sSf would otherwise discard the body and print
+          # only the HTTP code).
+          status=$(curl -sS -o "$CI_ARTIFACTS/buildable_response.json" \
+            -w '%{http_code}' \
+            -X POST http://127.0.0.1:8000/api/v1/screen/buildable \
             -H 'content-type: application/json' \
-            -d "$payload" \
-            -o "$CI_ARTIFACTS/buildable_response.json"
+            -d "$payload")
+          if [ "$status" != "200" ]; then
+            echo "::error::buildable smoke returned HTTP $status"
+            echo '--- response body ---'
+            cat "$CI_ARTIFACTS/buildable_response.json" || true
+            echo
+            exit 1
+          fi
           python - <<'PY'
           import json
           import os
@@ -389,6 +409,16 @@ jobs:
           if "gfa_cap_m2" not in metrics:
               raise SystemExit("gfa_cap_m2 missing from buildable metrics")
           PY
+
+      - name: Dump backend smoke log on failure
+        if: failure()
+        run: |
+          if [ -f "$CI_ARTIFACTS/backend-smoke.log" ]; then
+            echo '--- backend-smoke.log (tail) ---'
+            tail -n 200 "$CI_ARTIFACTS/backend-smoke.log"
+          else
+            echo "no backend-smoke.log found"
+          fi
 
       - name: Fetch OpenAPI schema
         run: |
@@ -457,59 +487,16 @@ jobs:
         if: needs.changes.outputs.frontend == 'true'
         run: npm --prefix frontend run test:coverage
 
-      - name: Launch backend API for E2E tests
-        if: needs.changes.outputs.frontend == 'true'
-        run: |
-          python -m uvicorn app.main:app \
-            --host 0.0.0.0 \
-            --port 8000 \
-            --log-level warning &
-          echo $! > "$RUNNER_TEMP/backend-e2e.pid"
-        working-directory: backend
-
-      - name: Wait for backend readiness (E2E)
-        if: needs.changes.outputs.frontend == 'true'
-        run: |
-          set -euo pipefail
-          for attempt in $(seq 1 40); do
-            if curl -sSf http://127.0.0.1:8000/health > /dev/null; then
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Backend API did not become ready in time" >&2
-          exit 1
-
       - name: Run frontend end-to-end tests
         env:
           PLAYWRIGHT_SKIP_BROWSER_INSTALL: '1'
         if: needs.changes.outputs.frontend == 'true'
         run: npm --prefix frontend run test:e2e
 
-      - name: Stop backend API (E2E)
-        if: always() && needs.changes.outputs.frontend == 'true'
-        run: |
-          if [ -f "$RUNNER_TEMP/backend-e2e.pid" ]; then
-            PID=$(cat "$RUNNER_TEMP/backend-e2e.pid")
-            if ps -p "$PID" > /dev/null 2>&1; then
-              kill "$PID"
-              for attempt in $(seq 1 15); do
-                if ps -p "$PID" > /dev/null 2>&1; then
-                  sleep 1
-                else
-                  break
-                fi
-              done
-              if ps -p "$PID" > /dev/null 2>&1; then
-                kill -9 "$PID" || true
-              fi
-            fi
-            rm -f "$RUNNER_TEMP/backend-e2e.pid"
-          fi
-
       - name: Stop services
         if: always()
-        run: docker compose -f docker-compose.yml down --volumes
+        timeout-minutes: 5
+        run: docker compose -f docker-compose.yml down --remove-orphans
 
       - name: Upload backend artifacts
         if: always()
@@ -518,6 +505,7 @@ jobs:
           name: backend-artifacts
           path: artifacts
           if-no-files-found: warn
+          retention-days: 7
 
       - name: Upload Playwright artifacts
         if: always() && needs.changes.outputs.frontend == 'true'
@@ -528,11 +516,14 @@ jobs:
             frontend/test-results
             frontend/playwright-report
           if-no-files-found: warn
+          retention-days: 7
 
   security:
     name: Security Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
