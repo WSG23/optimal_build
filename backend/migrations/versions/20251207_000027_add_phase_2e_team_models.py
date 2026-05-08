@@ -10,6 +10,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "20251207_000027"
@@ -24,7 +25,10 @@ def upgrade() -> None:
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'userrole') THEN
-                CREATE TYPE userrole AS ENUM ('admin', 'developer', 'investor', 'contractor', 'consultant', 'regulatory_officer', 'viewer');
+                CREATE TYPE userrole AS ENUM (
+                    'admin', 'developer', 'investor', 'contractor',
+                    'consultant', 'regulatory_officer', 'viewer'
+                );
             END IF;
         END$$;
         """)
@@ -40,7 +44,9 @@ def upgrade() -> None:
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'workflowstatus') THEN
-                CREATE TYPE workflowstatus AS ENUM ('draft', 'in_progress', 'approved', 'rejected', 'cancelled');
+                CREATE TYPE workflowstatus AS ENUM (
+                    'draft', 'in_progress', 'approved', 'rejected', 'cancelled'
+                );
             END IF;
         END$$;
         """)
@@ -48,7 +54,9 @@ def upgrade() -> None:
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'stepstatus') THEN
-                CREATE TYPE stepstatus AS ENUM ('pending', 'in_review', 'approved', 'rejected', 'skipped');
+                CREATE TYPE stepstatus AS ENUM (
+                    'pending', 'in_review', 'approved', 'rejected', 'skipped'
+                );
             END IF;
         END$$;
         """)
@@ -56,9 +64,9 @@ def upgrade() -> None:
     # team_members
     op.create_table(
         "team_members",
-        sa.Column("id", sa.CHAR(36), nullable=False),
-        sa.Column("project_id", sa.CHAR(36), nullable=False),
-        sa.Column("user_id", sa.CHAR(36), nullable=False),
+        sa.Column("id", postgresql.UUID(as_uuid=False), nullable=False),
+        sa.Column("project_id", postgresql.UUID(as_uuid=False), nullable=False),
+        sa.Column("user_id", postgresql.UUID(as_uuid=False), nullable=False),
         sa.Column(
             "role",
             sa.String(),
@@ -81,8 +89,8 @@ def upgrade() -> None:
     # team_invitations
     op.create_table(
         "team_invitations",
-        sa.Column("id", sa.CHAR(36), nullable=False),
-        sa.Column("project_id", sa.CHAR(36), nullable=False),
+        sa.Column("id", postgresql.UUID(as_uuid=False), nullable=False),
+        sa.Column("project_id", postgresql.UUID(as_uuid=False), nullable=False),
         sa.Column("email", sa.String(length=255), nullable=False),
         sa.Column(
             "role",
@@ -95,7 +103,7 @@ def upgrade() -> None:
             sa.String(),
             nullable=False,
         ),
-        sa.Column("invited_by_id", sa.CHAR(36), nullable=False),
+        sa.Column("invited_by_id", postgresql.UUID(as_uuid=False), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("expires_at", sa.DateTime(), nullable=False),
         sa.Column("accepted_at", sa.DateTime(), nullable=True),
@@ -119,8 +127,8 @@ def upgrade() -> None:
     # approval_workflows
     op.create_table(
         "approval_workflows",
-        sa.Column("id", sa.CHAR(36), nullable=False),
-        sa.Column("project_id", sa.CHAR(36), nullable=False),
+        sa.Column("id", postgresql.UUID(as_uuid=False), nullable=False),
+        sa.Column("project_id", postgresql.UUID(as_uuid=False), nullable=False),
         sa.Column("title", sa.String(length=255), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("workflow_type", sa.String(length=50), nullable=False),
@@ -129,7 +137,7 @@ def upgrade() -> None:
             sa.String(),
             nullable=False,
         ),
-        sa.Column("created_by_id", sa.CHAR(36), nullable=False),
+        sa.Column("created_by_id", postgresql.UUID(as_uuid=False), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.Column("completed_at", sa.DateTime(), nullable=True),
@@ -159,8 +167,8 @@ def upgrade() -> None:
     # approval_steps
     op.create_table(
         "approval_steps",
-        sa.Column("id", sa.CHAR(36), nullable=False),
-        sa.Column("workflow_id", sa.CHAR(36), nullable=False),
+        sa.Column("id", postgresql.UUID(as_uuid=False), nullable=False),
+        sa.Column("workflow_id", postgresql.UUID(as_uuid=False), nullable=False),
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("sequence_order", sa.Integer(), nullable=False),
         sa.Column(
@@ -168,13 +176,13 @@ def upgrade() -> None:
             sa.String(),
             nullable=True,
         ),
-        sa.Column("required_user_id", sa.CHAR(36), nullable=True),
+        sa.Column("required_user_id", postgresql.UUID(as_uuid=False), nullable=True),
         sa.Column(
             "status",
             sa.String(),
             nullable=False,
         ),
-        sa.Column("approved_by_id", sa.CHAR(36), nullable=True),
+        sa.Column("approved_by_id", postgresql.UUID(as_uuid=False), nullable=True),
         sa.Column("decision_at", sa.DateTime(), nullable=True),
         sa.Column("comments", sa.Text(), nullable=True),
         sa.ForeignKeyConstraint(["approved_by_id"], ["users.id"]),
@@ -212,8 +220,9 @@ def downgrade() -> None:
     op.execute('DROP INDEX IF EXISTS "ix_team_members_project_id"')
     op.execute("DROP TABLE IF EXISTS team_members")
 
-    # Enums are usually not dropped automatically in Postgres, but if we created types we might need to drop them.
-    # However, 'userrole' likely existed. 'invitationstatus', 'workflowstatus', 'stepstatus' are new.
+    # Enums are usually not dropped automatically in Postgres, but if we created
+    # types we might need to drop them.
+    # However, 'userrole' likely existed. The other workflow enums are new.
     # Enums are usually not dropped automatically in Postgres.
-    # To be safe in downgrade, we should try to drop them if we want a clean slate, but strict downgrade often leaves Enums.
+    # Strict downgrade often leaves enums in place.
     pass
