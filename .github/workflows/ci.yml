@@ -9,6 +9,7 @@ on:
 env:
   PYTHON_VERSION: '3.11'
   NODE_VERSION: '20'
+  PNPM_VERSION: '9.15.9'
 
 jobs:
   changes:
@@ -73,7 +74,9 @@ jobs:
 
       - name: Enable Corepack
         if: needs.changes.outputs.frontend == 'true'
-        run: corepack enable
+        run: |
+          corepack enable
+          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
 
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
@@ -138,7 +141,9 @@ jobs:
 
       - name: Enable Corepack
         if: needs.changes.outputs.frontend == 'true'
-        run: corepack enable
+        run: |
+          corepack enable
+          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
 
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
@@ -183,7 +188,9 @@ jobs:
 
       - name: Enable Corepack
         if: needs.changes.outputs.frontend == 'true'
-        run: corepack enable
+        run: |
+          corepack enable
+          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
 
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
@@ -242,7 +249,9 @@ jobs:
 
       - name: Enable Corepack
         if: needs.changes.outputs.frontend == 'true'
-        run: corepack enable
+        run: |
+          corepack enable
+          corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
 
       - name: Install frontend dependencies
         if: needs.changes.outputs.frontend == 'true'
