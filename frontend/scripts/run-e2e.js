@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-/* eslint-disable @typescript-eslint/no-require-imports */
-const { spawnSync } = require('node:child_process')
-const fs = require('node:fs')
-const os = require('node:os')
-const path = require('node:path')
+import { spawnSync } from 'node:child_process'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 const repoRoot = path.resolve(__dirname, '..', '..')
 const frontendDir = path.resolve(repoRoot, 'frontend')
 const defaultCache = path.join(repoRoot, '.playwright-browsers')
