@@ -82,6 +82,10 @@ export type {
   SkeletonCardProps,
 } from './Skeleton'
 
+// Inline elements
+export { Kbd } from './Kbd'
+export type { KbdProps } from './Kbd'
+
 // Layout helpers (existing, to be updated)
 export { SectionHeader } from './SectionHeader'
 export type { SectionHeaderProps } from './SectionHeader'

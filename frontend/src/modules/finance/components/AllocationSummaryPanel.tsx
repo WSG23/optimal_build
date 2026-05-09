@@ -39,7 +39,7 @@ export function AllocationSummaryPanel({
         <Typography
           variant="h6"
           sx={{
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             mb: 'var(--ob-space-150)',
             textTransform: 'uppercase',
             letterSpacing: 'var(--ob-letter-spacing-wider)',
@@ -60,45 +60,11 @@ export function AllocationSummaryPanel({
             gap: 'var(--ob-space-200)',
           }}
         >
-          <Box
-            sx={{
-              position: 'relative',
-              width: 'var(--ob-size-drop-zone)',
-              height: 'var(--ob-size-drop-zone)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <AllocationRing
-              data={chartData}
-              totalAllocation={100 - unallocated}
-              size={160}
-            />
-            <Box
-              sx={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                textAlign: 'center',
-              }}
-            >
-              <Typography
-                variant="caption"
-                sx={{
-                  color: 'text.secondary',
-                  display: 'block',
-                  lineHeight: 1,
-                }}
-              >
-                Pending
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1 }}>
-                {unallocated}%
-              </Typography>
-            </Box>
-          </Box>
+          <AllocationRing
+            data={chartData}
+            totalAllocation={100 - unallocated}
+            size={160}
+          />
 
           <Box
             sx={{
@@ -132,7 +98,10 @@ export function AllocationSummaryPanel({
                   >
                     {entry.name}
                   </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
+                  >
                     {entry.value}%
                   </Typography>
                 </Box>
@@ -158,7 +127,10 @@ export function AllocationSummaryPanel({
           >
             {t('finance.scenarioCreator.totalAnnualRevenue')}
           </Typography>
-          <Typography variant="h4" sx={{ fontWeight: 700 }}>
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 'var(--ob-font-weight-bold)' }}
+          >
             ${totalRevenue.toLocaleString()}
           </Typography>
         </Card>

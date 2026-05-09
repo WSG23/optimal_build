@@ -1,12 +1,12 @@
 /* finance/core.css
    Workspace, project selector, access gate, table wrapper.
-   Uses canonical --ob-spacing-*, --ob-font-size-*, --ob-radius-*, --ob-color-* variables.
+   Uses canonical --ob-space-*, --ob-font-size-*, --ob-radius-*, --ob-color-* variables.
 */
 
 .finance-workspace {
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-500);
+    gap: var(--ob-space-500);
     max-width: 1400px;
     margin: 0 auto;
     /* padding removed - Shell provides canonical 16px layout padding */
@@ -19,61 +19,61 @@
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm); /* 4px - cards */
     box-shadow: var(--ob-shadow-md);
-    padding: var(--ob-spacing-500);
+    padding: var(--ob-space-500);
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-350);
+    gap: var(--ob-space-350);
 }
 
 .finance-project-selector__header {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: var(--ob-spacing-300);
+    gap: var(--ob-space-300);
 }
 
 .finance-project-selector__header h2 {
     margin: 0;
     font-size: var(--ob-font-size-lg);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-primary);
 }
 
 .finance-project-selector__header p {
-    margin: var(--ob-spacing-100) 0 0;
+    margin: var(--ob-space-100) 0 0;
     color: var(--ob-color-text-secondary);
     font-size: var(--ob-font-size-sm);
 }
 
 .finance-project-selector__active {
     margin: 0;
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-primary);
 }
 
 .finance-project-selector__body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: var(--ob-spacing-350);
+    gap: var(--ob-space-350);
 }
 
 .finance-project-selector__form,
 .finance-project-selector__recent {
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-100);
+    gap: var(--ob-space-100);
 }
 
 .finance-project-selector__form label,
 .finance-project-selector__recent label {
     font-size: var(--ob-font-size-sm);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-secondary);
 }
 
 .finance-project-selector__input-row {
     display: flex;
-    gap: var(--ob-spacing-200);
+    gap: var(--ob-space-200);
 }
 
 .finance-project-selector__input-row input,
@@ -81,7 +81,7 @@
     flex: 1;
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-md); /* 6px - inputs */
-    padding: var(--ob-spacing-200) var(--ob-spacing-300);
+    padding: var(--ob-space-200) var(--ob-space-300);
     font-size: var(--ob-font-size-sm);
     background: var(--ob-color-bg-surface);
     color: var(--ob-color-text-primary);
@@ -107,35 +107,24 @@
 .finance-project-selector__refresh {
     border: none;
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
-    padding: var(--ob-spacing-200) var(--ob-spacing-350);
-    background: linear-gradient(
-        135deg,
-        #1d4ed8 0%,
-        var(--ob-color-brand-primary) 100%
-    );
-    color: #0a1628;
-    font-weight: 600;
+    padding: var(--ob-space-200) var(--ob-space-350);
+    background: var(--ob-color-brand-primary);
+    color: var(--ob-color-text-inverse, #0a1628);
+    font-weight: var(--ob-font-weight-semibold);
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: var(--ob-shadow-sm);
+    transition: background-color 0.2s ease;
 }
 
 .finance-project-selector__input-row button:hover:not(:disabled),
 .finance-project-selector__refresh:hover:not(:disabled) {
-    background: linear-gradient(
-        135deg,
-        var(--ob-color-brand-primary) 0%,
-        #1d4ed8 100%
-    );
-    box-shadow: var(--ob-shadow-md);
-    transform: translateY(-1px);
+    background: var(--ob-color-brand-primary-strong);
 }
 
 .finance-project-selector__recent-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: var(--ob-spacing-100);
+    gap: var(--ob-space-100);
 }
 
 .finance-project-selector__empty,
@@ -148,22 +137,22 @@
 .finance-privacy-banner,
 .finance-access-gate {
     border-radius: var(--ob-radius-sm); /* 4px - cards */
-    padding: var(--ob-spacing-350) var(--ob-spacing-400);
+    padding: var(--ob-space-350) var(--ob-space-400);
     border: 1px solid var(--ob-warning-subtle);
     background: var(--ob-warning-muted);
     color: var(--ob-warning-500);
-    margin-bottom: var(--ob-spacing-400);
+    margin-bottom: var(--ob-space-400);
 }
 
 .finance-access-gate {
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-200);
+    gap: var(--ob-space-200);
 }
 
 .finance-access-gate code {
     background: var(--ob-color-bg-muted);
-    padding: var(--ob-spacing-100) var(--ob-spacing-200);
+    padding: var(--ob-space-100) var(--ob-space-200);
     border-radius: var(--ob-radius-md);
     font-size: var(--ob-font-size-sm);
     font-family: var(--ob-font-family-mono);
@@ -176,31 +165,20 @@
 }
 
 .finance-access-gate__action {
-    margin-top: var(--ob-spacing-100);
-    padding: var(--ob-spacing-150) var(--ob-spacing-350);
+    margin-top: var(--ob-space-100);
+    padding: var(--ob-space-150) var(--ob-space-350);
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     border: none;
-    background: linear-gradient(
-        135deg,
-        #1d4ed8 0%,
-        var(--ob-color-brand-primary) 100%
-    );
-    color: #0a1628;
-    font-weight: 600;
+    background: var(--ob-color-brand-primary);
+    color: var(--ob-color-text-inverse, #0a1628);
+    font-weight: var(--ob-font-weight-semibold);
     cursor: pointer;
     width: fit-content;
-    transition: all 0.2s ease;
-    box-shadow: var(--ob-shadow-sm);
+    transition: background-color 0.2s ease;
 }
 
 .finance-access-gate__action:hover:not(:disabled) {
-    background: linear-gradient(
-        135deg,
-        var(--ob-color-brand-primary) 0%,
-        #1d4ed8 100%
-    );
-    box-shadow: var(--ob-shadow-md);
-    transform: translateY(-1px);
+    background: var(--ob-color-brand-primary-strong);
 }
 
 .finance-access-gate__action:focus-visible {
@@ -216,12 +194,12 @@
 .finance-identity-helper {
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-100);
-    margin-top: var(--ob-spacing-100);
+    gap: var(--ob-space-100);
+    margin-top: var(--ob-space-100);
 }
 
 .finance-identity-helper--compact {
-    margin-top: var(--ob-spacing-100);
+    margin-top: var(--ob-space-100);
 }
 
 .finance-access-gate__status {
@@ -234,63 +212,21 @@
     color: var(--ob-error-400);
 }
 
-.finance-workspace__actions {
-    display: flex;
-    gap: var(--ob-spacing-300);
-    align-items: center;
-}
-
-.finance-workspace__refresh,
-.finance-workspace__export {
-    padding: var(--ob-spacing-150) var(--ob-spacing-350);
-    border-radius: var(--ob-radius-xs); /* 2px - buttons */
-    border: none;
-    background: linear-gradient(
-        135deg,
-        #1d4ed8 0%,
-        var(--ob-color-brand-primary) 100%
-    );
-    color: #0a1628;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: var(--ob-shadow-sm);
-}
-
-.finance-workspace__refresh:hover:not(:disabled),
-.finance-workspace__export:hover:not(:disabled) {
-    background: linear-gradient(
-        135deg,
-        var(--ob-color-brand-primary) 0%,
-        #1d4ed8 100%
-    );
-    box-shadow: var(--ob-shadow-md);
-    transform: translateY(-1px);
-}
-
-.finance-workspace__refresh:disabled,
-.finance-workspace__export:disabled {
-    background: var(--ob-color-bg-muted);
-    color: var(--ob-color-text-muted);
-    box-shadow: none;
-    cursor: not-allowed;
-}
-
 .finance-workspace__error {
     margin: 0;
-    padding: var(--ob-spacing-300) var(--ob-spacing-350);
+    padding: var(--ob-space-300) var(--ob-space-350);
     border-radius: var(--ob-radius-sm); /* 4px - cards */
     background: var(--ob-error-muted);
     border: 1px solid var(--ob-error-subtle);
     color: var(--ob-error-400);
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-100);
+    gap: var(--ob-space-100);
     font-size: var(--ob-font-size-sm);
 }
 
 .finance-workspace__error-detail {
-    font-weight: 400;
+    font-weight: var(--ob-font-weight-regular);
 }
 
 .finance-workspace__status,
@@ -303,7 +239,7 @@
 .finance-workspace__sections {
     display: flex;
     flex-direction: column;
-    gap: var(--ob-spacing-500);
+    gap: var(--ob-space-500);
 }
 
 .finance-table__wrapper {
@@ -321,22 +257,22 @@
 
 .finance-table__caption {
     text-align: left;
-    font-weight: 600;
-    padding: var(--ob-spacing-400) var(--ob-spacing-450) var(--ob-spacing-200);
+    font-weight: var(--ob-font-weight-semibold);
+    padding: var(--ob-space-400) var(--ob-space-450) var(--ob-space-200);
     color: var(--ob-color-text-primary);
     font-size: var(--ob-font-size-base);
 }
 
 .finance-table th,
 .finance-table td {
-    padding: var(--ob-spacing-300) var(--ob-spacing-450);
+    padding: var(--ob-space-300) var(--ob-space-450);
     border-bottom: 1px solid var(--ob-color-border-subtle);
     text-align: left;
     font-size: var(--ob-font-size-sm);
 }
 
 .finance-table th {
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-secondary);
 }
 
@@ -353,7 +289,7 @@
     display: inline-flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--ob-spacing-200);
+    gap: var(--ob-space-200);
 }
 
 .finance-table__badge {
@@ -361,8 +297,8 @@
     color: var(--ob-info-400);
     border-radius: var(--ob-radius-pill);
     font-size: var(--ob-font-size-xs);
-    font-weight: 600;
-    padding: var(--ob-spacing-100) var(--ob-spacing-200);
+    font-weight: var(--ob-font-weight-semibold);
+    padding: var(--ob-space-100) var(--ob-space-200);
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
@@ -372,9 +308,9 @@
     background: transparent;
     color: var(--ob-color-brand-primary);
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
-    padding: var(--ob-spacing-150) var(--ob-spacing-300);
+    padding: var(--ob-space-150) var(--ob-space-300);
     font-size: var(--ob-font-size-sm);
-    font-weight: 500;
+    font-weight: var(--ob-font-weight-medium);
     cursor: pointer;
     transition: all 0.2s ease;
 }

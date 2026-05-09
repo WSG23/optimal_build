@@ -261,7 +261,7 @@ html[data-theme='light'] .ob-card-module {
 
 .ob-page-header__title {
     font-size: var(--ob-font-size-xl);
-    font-weight: 700;
+    font-weight: var(--ob-font-weight-bold);
     color: var(--ob-color-text-primary);
     margin: 0 0 var(--ob-space-025) 0;
 }
@@ -405,8 +405,8 @@ html[data-theme='light'] .ob-seamless-grid > * {
 
 /* Technical precision label */
 .ob-precision-label {
-    font-size: 9px;
-    font-weight: 600;
+    font-size: var(--ob-font-size-2xs);
+    font-weight: var(--ob-font-weight-semibold);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--ob-color-text-tertiary);

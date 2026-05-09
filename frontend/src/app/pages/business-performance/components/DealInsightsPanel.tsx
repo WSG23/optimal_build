@@ -57,7 +57,11 @@ export function DealInsightsPanel({
       <Box className="bp-deal-panel__header">
         <Box>
           <Typography variant="h6">{deal.title ?? deal.id}</Typography>
-          <Stack direction="row" spacing={1} className="bp-deal-panel__meta">
+          <Stack
+            direction="row"
+            spacing="var(--ob-space-100)"
+            className="bp-deal-panel__meta"
+          >
             <Chip size="small" label={`Assigned to ${deal.agentName}`} />
             {deal.leadSource && (
               <Chip size="small" label={`Source ${deal.leadSource}`} />
@@ -72,10 +76,15 @@ export function DealInsightsPanel({
         </Box>
       </Box>
 
-      <Divider sx={{ my: 2 }} />
+      <Divider sx={{ my: 'var(--ob-space-200)' }} />
 
       <Box className="bp-deal-panel__section">
-        <Stack direction="row" spacing={1} alignItems="center" mb={1}>
+        <Stack
+          direction="row"
+          spacing="var(--ob-space-100)"
+          alignItems="center"
+          mb="var(--ob-space-100)"
+        >
           <TimelineIcon fontSize="small" color="primary" />
           <Typography variant="subtitle1">Stage timeline</Typography>
         </Stack>
@@ -107,7 +116,7 @@ export function DealInsightsPanel({
                   </Typography>
                   <Stack
                     direction="row"
-                    spacing={1}
+                    spacing="var(--ob-space-100)"
                     flexWrap="wrap"
                     className="bp-deal-panel__timeline-body"
                   >
@@ -158,10 +167,15 @@ export function DealInsightsPanel({
         )}
       </Box>
 
-      <Divider sx={{ my: 2 }} />
+      <Divider sx={{ my: 'var(--ob-space-200)' }} />
 
       <Box className="bp-deal-panel__section">
-        <Stack direction="row" spacing={1} alignItems="center" mb={1}>
+        <Stack
+          direction="row"
+          spacing="var(--ob-space-100)"
+          alignItems="center"
+          mb="var(--ob-space-100)"
+        >
           <HistoryIcon fontSize="small" color="primary" />
           <Typography variant="subtitle1">Commission ledger</Typography>
         </Stack>

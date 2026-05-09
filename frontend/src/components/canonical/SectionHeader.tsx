@@ -58,7 +58,7 @@ export function SectionHeader({
             color: 'var(--ob-color-text-primary)',
             fontWeight: 'var(--ob-font-weight-semibold)',
             fontSize: titleSize,
-            lineHeight: 1.2,
+            lineHeight: 'var(--ob-line-height-tight)',
           }}
         >
           {title}

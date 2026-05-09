@@ -174,6 +174,7 @@ export function AssumptionsPanel({
                 </label>
                 <div className="assumptions-panel__input-wrapper">
                   <input
+                    id="assumption-efficiency"
                     type="number"
                     value={Math.round(
                       (Number(assumptionInputs.efficiencyRatio) || 0) * 100,

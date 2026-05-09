@@ -31,12 +31,12 @@ export function AddressForm({
 }: AddressFormProps) {
   // Shared Input Styles for Dark/Glass Theme
   const inputStyle = {
-    background: 'rgba(255, 255, 255, 0.05)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    background: 'rgba(245, 235, 220, 0.05)',
+    border: '1px solid rgba(245, 235, 220, 0.1)',
     color: 'white',
-    borderRadius: '6px',
-    padding: '10px 12px',
-    fontSize: '0.9rem',
+    borderRadius: 'var(--ob-radius-md)',
+    padding: 'var(--ob-space-065) var(--ob-space-075)',
+    fontSize: 'var(--ob-font-size-sm)',
     width: '100%',
     outline: 'none',
     transition: 'border-color 0.2s',
@@ -44,9 +44,9 @@ export function AddressForm({
 
   const labelStyle = {
     color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: '0.8rem',
-    fontWeight: 500,
-    marginBottom: '6px',
+    fontSize: 'var(--ob-font-size-sm-minus)',
+    fontWeight: 'var(--ob-font-weight-medium)',
+    marginBottom: 'var(--ob-space-050)',
     display: 'block',
   }
 

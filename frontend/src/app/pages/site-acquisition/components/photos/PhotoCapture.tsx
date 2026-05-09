@@ -93,7 +93,7 @@ export function PhotoCapture({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: '1rem',
+        gap: 'var(--ob-space-100)',
       }}
     >
       {/* Notes input */}
@@ -102,10 +102,10 @@ export function PhotoCapture({
           htmlFor="photo-notes"
           style={{
             display: 'block',
-            fontSize: '0.8125rem',
-            fontWeight: 600,
+            fontSize: 'var(--ob-font-size-sm-minus)',
+            fontWeight: 'var(--ob-font-weight-semibold)',
             color: 'var(--ob-color-text-primary)',
-            marginBottom: '0.25rem',
+            marginBottom: 'var(--ob-space-025)',
           }}
         >
           Photo Notes (optional)
@@ -119,10 +119,10 @@ export function PhotoCapture({
           disabled={disabled || isUploading}
           style={{
             width: '100%',
-            padding: '0.5rem 0.75rem',
-            borderRadius: '6px',
+            padding: 'var(--ob-space-050) var(--ob-space-075)',
+            borderRadius: 'var(--ob-radius-md)',
             border: '1px solid var(--ob-color-border-subtle)',
-            fontSize: '0.875rem',
+            fontSize: 'var(--ob-font-size-sm)',
           }}
         />
       </div>
@@ -141,7 +141,7 @@ export function PhotoCapture({
         style={{
           border: `2px dashed ${dragActive ? 'var(--ob-color-brand-primary)' : 'var(--ob-color-border-subtle)'}`,
           borderRadius: 'var(--ob-radius-sm)',
-          padding: '2rem',
+          padding: 'var(--ob-space-200)',
           textAlign: 'center',
           background: dragActive
             ? 'var(--ob-color-bg-surface)'
@@ -170,30 +170,34 @@ export function PhotoCapture({
               style={{
                 width: '44px',
                 height: '44px',
-                margin: '0 auto 0.75rem',
+                margin: '0 auto var(--ob-space-075)',
                 border: '3px solid var(--ob-color-border-subtle)',
                 borderTop: '3px solid var(--ob-color-brand-primary)',
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite',
               }}
             />
-            <p style={{ margin: 0, fontWeight: 500 }}>Uploading...</p>
+            <p
+              style={{ margin: 0, fontWeight: 'var(--ob-font-weight-medium)' }}
+            >
+              Uploading...
+            </p>
           </div>
         ) : (
           <>
             <div
               style={{
-                fontSize: '2.5rem',
-                marginBottom: '0.5rem',
+                fontSize: 'var(--ob-font-size-4xl)',
+                marginBottom: 'var(--ob-space-050)',
               }}
             >
               {'\uD83D\uDCF7'}
             </div>
             <p
               style={{
-                margin: '0 0 0.25rem',
-                fontSize: '0.9375rem',
-                fontWeight: 600,
+                margin: '0 0 var(--ob-space-025)',
+                fontSize: 'var(--ob-font-size-md)',
+                fontWeight: 'var(--ob-font-weight-semibold)',
                 color: 'var(--ob-color-text-primary)',
               }}
             >
@@ -202,7 +206,7 @@ export function PhotoCapture({
             <p
               style={{
                 margin: 0,
-                fontSize: '0.8125rem',
+                fontSize: 'var(--ob-font-size-sm-minus)',
                 color: 'var(--ob-color-text-secondary)',
               }}
             >
@@ -210,8 +214,8 @@ export function PhotoCapture({
             </p>
             <p
               style={{
-                margin: '0.5rem 0 0',
-                fontSize: '0.75rem',
+                margin: 'var(--ob-space-050) 0 0',
+                fontSize: 'var(--ob-font-size-xs)',
                 color: 'var(--ob-color-text-muted)',
               }}
             >

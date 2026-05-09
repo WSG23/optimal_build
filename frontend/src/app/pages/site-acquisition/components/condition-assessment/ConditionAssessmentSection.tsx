@@ -304,7 +304,7 @@ export function ConditionAssessmentSection({
                   sx={{
                     m: 0,
                     fontSize: 'var(--ob-font-size-base)',
-                    fontWeight: 600,
+                    fontWeight: 'var(--ob-font-weight-semibold)',
                     letterSpacing: '-0.01em',
                     color: 'text.primary',
                   }}
@@ -426,7 +426,7 @@ export function ConditionAssessmentSection({
                       sx={{
                         m: 0,
                         fontSize: 'var(--ob-font-size-base)',
-                        fontWeight: 600,
+                        fontWeight: 'var(--ob-font-weight-semibold)',
                         color: 'text.primary',
                       }}
                     >
@@ -530,7 +530,10 @@ export function ConditionAssessmentSection({
                         >
                           <Typography
                             component="span"
-                            sx={{ fontWeight: 600, fontSize: 'inherit' }}
+                            sx={{
+                              fontWeight: 'var(--ob-font-weight-semibold)',
+                              fontSize: 'inherit',
+                            }}
                           >
                             Baseline:
                           </Typography>
@@ -569,7 +572,7 @@ export function ConditionAssessmentSection({
                         <Typography
                           sx={{
                             fontSize: 'var(--ob-font-size-2xs)',
-                            fontWeight: 600,
+                            fontWeight: 'var(--ob-font-weight-semibold)',
                             letterSpacing: '0.08em',
                             textTransform: 'uppercase',
                             color: 'text.secondary',
@@ -592,7 +595,7 @@ export function ConditionAssessmentSection({
                             sx={{
                               fontSize: 'inherit',
                               color: 'text.primary',
-                              fontWeight: 600,
+                              fontWeight: 'var(--ob-font-weight-semibold)',
                             }}
                           >
                             {baseScenarioAssessment.overallRating}

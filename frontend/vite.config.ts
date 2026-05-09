@@ -4,43 +4,17 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { compression } from 'vite-plugin-compression2'
 
-function resolveManualChunk(id: string): string | undefined {
-  if (id.includes('/node_modules/')) {
-    if (id.includes('/@mui/icons-material/')) {
-      return 'vendor-mui-icons'
-    }
-    if (id.includes('/@emotion/')) {
-      return 'vendor-emotion'
-    }
-    if (
-      id.includes('/@mui/material/') ||
-      id.includes('/@mui/system/') ||
-      id.includes('/@mui/utils/') ||
-      id.includes('/@mui/lab/') ||
-      id.includes('/@popperjs/')
-    ) {
-      return 'vendor-mui-core'
-    }
-    if (id.includes('/recharts/')) {
-      return 'vendor-charts'
-    }
-    if (id.includes('/react-leaflet/') || id.includes('/leaflet/')) {
-      return 'vendor-leaflet'
-    }
-    if (id.includes('/three/')) {
-      return 'vendor-three'
-    }
-    if (
-      id.includes('/react/') ||
-      id.includes('/react-dom/') ||
-      id.includes('/scheduler/')
-    ) {
-      return 'vendor-react'
-    }
-  }
-
-  return undefined
-}
+// NOTE: This file used to define a `resolveManualChunk` that put
+// @emotion, @mui/material, recharts, @mui/icons-material, leaflet,
+// three, and react/react-dom into separate vendor-* chunks. Every one
+// of those splits produced a runtime TDZ in the production build
+// ("Cannot access 'X' before initialization") because the chunked
+// packages have cyclic transitive deps (hoist-non-react-statics,
+// @babel/runtime helpers, victory-vendor/d3-*, etc.) that Rollup
+// places in other chunks. The resulting cross-chunk init order is
+// undefined and breaks every E2E test on the prod build with a blank
+// page. Vite/Rollup's default chunking handles these cycles correctly,
+// so we no longer pass `output.manualChunks`.
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -68,6 +42,7 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       port: Number.isFinite(serverPort) ? serverPort : 3000,
+      strictPort: false, // Auto-pick next available port if taken
       host,
       fs: {
         allow: [path.resolve(__dirname, '..')],
@@ -99,13 +74,6 @@ export default defineConfig(({ mode }) => {
       minify: 'esbuild',
       sourcemap: false,
       chunkSizeWarningLimit: 1000,
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            return resolveManualChunk(id)
-          },
-        },
-      },
     },
   }
 })

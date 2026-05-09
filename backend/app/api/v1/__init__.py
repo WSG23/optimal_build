@@ -90,6 +90,10 @@ TAGS_METADATA: Final[list[dict[str, str]]] = [
         "name": "geocoding",
         "description": "Address lookup and reverse geocoding endpoints.",
     },
+    {
+        "name": "data-readiness",
+        "description": "Source dataset readiness checks for Capture workflows.",
+    },
 ]
 
 _ROUTER_MODULES: Final[tuple[str, ...]] = (
@@ -138,6 +142,7 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "ai",  # AI services endpoints (Phase 1-4 AI rollout)
     "ai_config",  # AI configuration management endpoints
     "geocoding",  # Address lookup endpoints
+    "data_readiness",  # Capture source dataset readiness endpoints
 )
 
 _LAZY_SUBMODULES: Final[tuple[str, ...]] = (

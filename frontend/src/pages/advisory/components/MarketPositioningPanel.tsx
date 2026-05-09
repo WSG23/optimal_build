@@ -11,20 +11,29 @@ export function MarketPositioningPanel({ data }: MarketPositioningPanelProps) {
   return (
     <GlassCard className="advisory-panel">
       <Box
-        sx={{ p: 2, borderBottom: '1px solid var(--ob-color-border-subtle)' }}
+        sx={{
+          p: 'var(--ob-space-200)',
+          borderBottom: '1px solid var(--ob-color-border-subtle)',
+        }}
       >
-        <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontSize: 'var(--ob-font-size-base)',
+            fontWeight: 'var(--ob-font-weight-semibold)',
+          }}
+        >
           Market Positioning
         </Typography>
       </Box>
 
-      <Box sx={{ p: 3 }}>
-        <Grid container spacing={3}>
+      <Box sx={{ p: 'var(--ob-space-200)' }}>
+        <Grid container spacing="var(--ob-space-200)">
           {/* Header Metric */}
           <Grid item xs={12} md={4}>
             <Box
               sx={{
-                p: 2,
+                p: 'var(--ob-space-200)',
                 borderRadius: 'var(--ob-radius-sm)',
                 bgcolor: 'var(--ob-background-surface-1)',
                 border: '1px solid var(--ob-color-border-subtle)',
@@ -44,9 +53,9 @@ export function MarketPositioningPanel({ data }: MarketPositioningPanelProps) {
                 variant="h4"
                 sx={{
                   color: 'var(--ob-color-brand-primary)',
-                  fontWeight: 700,
-                  mt: 1,
-                  mb: 1,
+                  fontWeight: 'var(--ob-font-weight-bold)',
+                  mt: 'var(--ob-space-100)',
+                  mb: 'var(--ob-space-100)',
                 }}
               >
                 {data.market_tier}
@@ -57,14 +66,20 @@ export function MarketPositioningPanel({ data }: MarketPositioningPanelProps) {
 
           {/* Pricing Guidance */}
           <Grid item xs={12} md={8}>
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
+            <Box sx={{ mb: 'var(--ob-space-200)' }}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  mb: 'var(--ob-space-150)',
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                }}
+              >
                 Pricing Guidance (PSF)
               </Typography>
               <Box
                 sx={{
                   display: 'flex',
-                  gap: 2,
+                  gap: 'var(--ob-space-200)',
                   flexWrap: 'wrap',
                 }}
               >
@@ -73,7 +88,7 @@ export function MarketPositioningPanel({ data }: MarketPositioningPanelProps) {
                     key={key}
                     variant="seamless"
                     sx={{
-                      p: 2,
+                      p: 'var(--ob-space-200)',
                       minWidth: 140,
                       bgcolor: 'rgba(255,255,255,0.02)',
                     }}
@@ -89,7 +104,10 @@ export function MarketPositioningPanel({ data }: MarketPositioningPanelProps) {
                     </Typography>
                     <Typography
                       variant="body1"
-                      sx={{ fontWeight: 600, mt: 0.5 }}
+                      sx={{
+                        fontWeight: 'var(--ob-font-weight-semibold)',
+                        mt: 'var(--ob-space-050)',
+                      }}
                     >
                       {range.target_min.toLocaleString()} –{' '}
                       {range.target_max.toLocaleString()}
@@ -101,10 +119,22 @@ export function MarketPositioningPanel({ data }: MarketPositioningPanelProps) {
 
             {/* Segments */}
             <Box>
-              <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  mb: 'var(--ob-space-150)',
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                }}
+              >
                 Target Segments
               </Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 'var(--ob-space-100)',
+                  flexWrap: 'wrap',
+                }}
+              >
                 {data.target_segments.map((seg, i) => (
                   <Chip
                     key={i}
@@ -113,7 +143,7 @@ export function MarketPositioningPanel({ data }: MarketPositioningPanelProps) {
                     sx={{
                       borderColor: 'var(--ob-color-border-subtle)',
                       color: 'var(--ob-color-text-primary)',
-                      bgcolor: 'rgba(255,255,255,0.03)',
+                      bgcolor: 'rgba(245, 235, 220, 0.03)',
                     }}
                   />
                 ))}
@@ -126,21 +156,27 @@ export function MarketPositioningPanel({ data }: MarketPositioningPanelProps) {
             <Grid item xs={12}>
               <Box
                 sx={{
-                  pt: 2,
+                  pt: 'var(--ob-space-200)',
                   borderTop: '1px solid var(--ob-color-border-subtle)',
                 }}
               >
-                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    mb: 'var(--ob-space-100)',
+                    fontWeight: 'var(--ob-font-weight-semibold)',
+                  }}
+                >
                   Key Messaging
                 </Typography>
-                <Grid container spacing={2}>
+                <Grid container spacing="var(--ob-space-200)">
                   {data.messaging.map((msg, i) => (
                     <Grid item xs={12} md={6} key={i}>
                       <Box
                         sx={{
                           display: 'flex',
                           alignItems: 'baseline',
-                          gap: 1.5,
+                          gap: 'var(--ob-space-150)',
                         }}
                       >
                         <Box

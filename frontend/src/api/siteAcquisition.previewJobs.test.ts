@@ -44,6 +44,22 @@ describe('requestStarterModelForScenario', () => {
               },
               adjustments: ['older_building_age'],
             },
+            asset_profiles: [
+              {
+                asset_type: 'office',
+                floor_to_floor_m: 3.7,
+                clear_ceiling_m: 2.7,
+                nia_efficiency: 0.82,
+                source: 'hybrid',
+              },
+              {
+                asset_type: 'retail',
+                floor_to_floor_m: 4.8,
+                clear_ceiling_m: 3.8,
+                nia_efficiency: 0.82,
+                source: 'hybrid',
+              },
+            ],
           },
         }),
         {
@@ -106,6 +122,16 @@ describe('requestStarterModelForScenario', () => {
           }),
           adjustments: ['older_building_age'],
         },
+        assetProfiles: [
+          expect.objectContaining({
+            assetType: 'office',
+            floorToFloorM: 3.7,
+          }),
+          expect.objectContaining({
+            assetType: 'retail',
+            floorToFloorM: 4.8,
+          }),
+        ],
       },
     })
   })

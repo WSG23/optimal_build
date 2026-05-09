@@ -246,7 +246,10 @@ export function DueDiligencePage() {
             gap: 'var(--ob-space-100)',
           }}
         >
-          <Typography variant="h4" sx={{ m: 0, fontWeight: 600 }}>
+          <Typography
+            variant="h4"
+            sx={{ m: 0, fontWeight: 'var(--ob-font-weight-semibold)' }}
+          >
             No captured property in context
           </Typography>
           <Typography color="text.secondary">
@@ -296,7 +299,10 @@ export function DueDiligencePage() {
               gap: 'var(--ob-space-25)',
             }}
           >
-            <Typography variant="h4" sx={{ m: 0, fontWeight: 600 }}>
+            <Typography
+              variant="h4"
+              sx={{ m: 0, fontWeight: 'var(--ob-font-weight-semibold)' }}
+            >
               {propertyLabel ?? 'Captured property'}
             </Typography>
             <Typography color="text.secondary">

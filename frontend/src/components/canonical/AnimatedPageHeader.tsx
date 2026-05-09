@@ -20,7 +20,7 @@ export function AnimatedPageHeader({
   return (
     <Box
       sx={{
-        mb: 4,
+        mb: 'var(--ob-space-300)',
         animation:
           'ob-slide-down-fade var(--ob-motion-header-duration-slow) var(--ob-motion-header-ease) both',
         '@media (prefers-reduced-motion: reduce)': {
@@ -32,7 +32,7 @@ export function AnimatedPageHeader({
         <Breadcrumbs
           separator={<NavigateNext fontSize="small" />}
           aria-label="breadcrumb"
-          sx={{ mb: 2 }}
+          sx={{ mb: 'var(--ob-space-200)' }}
         >
           {breadcrumbs.map((crumb, idx) => {
             const isLast = idx === breadcrumbs.length - 1
@@ -74,7 +74,7 @@ export function AnimatedPageHeader({
                 'linear-gradient(45deg, var(--ob-color-text-primary), var(--ob-color-text-secondary))',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              mb: 1,
+              mb: 'var(--ob-space-100)',
             }}
           >
             {title}
@@ -90,7 +90,11 @@ export function AnimatedPageHeader({
           )}
         </Box>
 
-        {actions && <Box sx={{ display: 'flex', gap: 2 }}>{actions}</Box>}
+        {actions && (
+          <Box sx={{ display: 'flex', gap: 'var(--ob-space-200)' }}>
+            {actions}
+          </Box>
+        )}
       </Stack>
     </Box>
   )

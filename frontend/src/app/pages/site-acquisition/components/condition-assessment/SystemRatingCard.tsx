@@ -97,7 +97,7 @@ export function SystemRatingCard({
             style={{
               margin: 0,
               fontSize: 'var(--ob-font-size-lg)',
-              fontWeight: 600,
+              fontWeight: 'var(--ob-font-weight-semibold)',
             }}
           >
             {systemName}
@@ -129,7 +129,7 @@ export function SystemRatingCard({
               padding: 'var(--ob-space-025) var(--ob-space-065)',
               borderRadius: 'var(--ob-radius-xs)',
               fontSize: 'var(--ob-font-size-xs)',
-              fontWeight: 700,
+              fontWeight: 'var(--ob-font-weight-bold)',
               textTransform: 'uppercase',
               letterSpacing: 'var(--ob-letter-spacing-widest)',
               border: `1px solid ${badgeVisuals.badgeBorder}`,
@@ -156,7 +156,7 @@ export function SystemRatingCard({
                 padding: 'var(--ob-space-025) var(--ob-space-050)',
                 borderRadius: 'var(--ob-radius-xs)',
                 fontSize: 'var(--ob-font-size-xs)',
-                fontWeight: 600,
+                fontWeight: 'var(--ob-font-weight-semibold)',
                 background: deltaVisuals.background,
                 color: deltaVisuals.text,
                 border: `1px solid ${deltaVisuals.border}`,

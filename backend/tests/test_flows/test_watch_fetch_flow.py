@@ -5,6 +5,7 @@ from __future__ import annotations
 import collections.abc
 import hashlib
 import inspect
+import importlib
 from collections.abc import Mapping, Sequence
 
 import pytest
@@ -22,6 +23,8 @@ from flows.watch_fetch import watch_reference_sources
 from scripts.seed_screening import seed_screening_sample_data
 from sqlalchemy import select
 
+watch_fetch_module = importlib.import_module("flows.watch_fetch")
+
 
 def test_watch_fetch_flow_exposed_as_callable() -> None:
     """The Prefect shim should preserve the original coroutine signature."""
@@ -32,6 +35,56 @@ def test_watch_fetch_flow_exposed_as_callable() -> None:
     with_options = getattr(watch_reference_sources, "with_options", None)
     assert callable(with_options)
     assert with_options() is watch_reference_sources
+
+
+async def test_run_flow_loads_model_registry_before_database_work(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[object] = []
+
+    async def fake_ensure_database_schema(_session_factory: object) -> None:
+        calls.append("schema")
+
+    async def fake_run_once(
+        *, storage: object, fetcher: object
+    ) -> list[dict[str, object]]:
+        calls.append(("run-once", storage, fetcher))
+        return []
+
+    async def fake_summarise_ingestion(
+        _results: list[dict[str, object]],
+    ) -> dict[str, object]:
+        calls.append("summary")
+        return {"document_count": 0, "results": []}
+
+    storage = object()
+    fetcher = object()
+    monkeypatch.setattr(
+        watch_fetch_module,
+        "load_model_modules",
+        lambda: calls.append("models-loaded"),
+    )
+    monkeypatch.setattr(
+        watch_fetch_module,
+        "_ensure_database_schema",
+        fake_ensure_database_schema,
+    )
+    monkeypatch.setattr(watch_fetch_module, "_run_once", fake_run_once)
+    monkeypatch.setattr(
+        watch_fetch_module,
+        "_summarise_ingestion",
+        fake_summarise_ingestion,
+    )
+
+    summary = await watch_fetch_module._run_flow(storage=storage, fetcher=fetcher)
+
+    assert summary == {"document_count": 0, "results": []}
+    assert calls == [
+        "models-loaded",
+        "schema",
+        ("run-once", storage, fetcher),
+        "summary",
+    ]
 
 
 class FakeHTTPClient:

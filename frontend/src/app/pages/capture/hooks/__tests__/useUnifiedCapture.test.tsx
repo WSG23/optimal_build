@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import React from 'react'
-import { act, render } from '@testing-library/react'
+import { act, cleanup, render } from '@testing-library/react'
 
 import {
   useUnifiedCapture,
@@ -99,9 +99,11 @@ function renderHookHarness(
 
 describe('useUnifiedCapture', () => {
   afterEach(() => {
+    cleanup()
     vi.useRealTimers()
-    vi.clearAllMocks()
+    vi.resetAllMocks()
     sessionStorage.clear()
+    document.body.classList.remove('capture-results-active')
     delete (window as { google?: unknown }).google
   })
 
@@ -113,7 +115,7 @@ describe('useUnifiedCapture', () => {
     })
 
     expect(hookRef.current!.mapError).toBe(
-      'Google Maps API key not set; map preview disabled.',
+      'Google Maps API key not configured. Set VITE_GOOGLE_MAPS_API_KEY in your .env file.',
     )
   })
 
@@ -129,27 +131,18 @@ describe('useUnifiedCapture', () => {
     expect(mockMarkerConstructor).toHaveBeenCalled()
   })
 
-  it('validates forward geocoding requires an address', async () => {
-    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
-
-    await act(async () => {
-      hookRef.current!.setAddress('')
-    })
-
-    await act(async () => {
-      await hookRef.current!.handleForwardGeocode()
-    })
-
-    expect(hookRef.current!.geocodeError).toBe(
-      'Please enter an address to geocode.',
-    )
-    expect(mockForwardGeocodeAddress).not.toHaveBeenCalled()
-  })
-
-  it('updates coordinates when forward geocoding succeeds', async () => {
+  it('auto-geocodes address changes and updates coordinates', async () => {
+    vi.useFakeTimers()
     mockForwardGeocodeAddress.mockResolvedValue({
       latitude: 1.2345,
       longitude: 103.9876,
+      formattedAddress: '123 Main St, Singapore',
+      source: {
+        provider: 'onemap_address_search',
+        state: 'live',
+        configured: true,
+        synthetic: false,
+      },
     })
 
     const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
@@ -159,14 +152,19 @@ describe('useUnifiedCapture', () => {
     })
 
     await act(async () => {
-      await hookRef.current!.handleForwardGeocode()
+      vi.advanceTimersByTime(800)
     })
 
+    expect(mockForwardGeocodeAddress).toHaveBeenCalledWith('123 Main St')
     expect(hookRef.current!.latitude).toBe('1.2345')
     expect(hookRef.current!.longitude).toBe('103.9876')
+    expect(hookRef.current!.coordinateSourceLabel).toBe(
+      'OneMap address search (Singapore)',
+    )
   })
 
-  it('surfaces an error when forward geocoding fails', async () => {
+  it('surfaces an error when address auto-geocoding fails', async () => {
+    vi.useFakeTimers()
     mockForwardGeocodeAddress.mockRejectedValue(new Error('Geocode down'))
     const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
@@ -175,64 +173,10 @@ describe('useUnifiedCapture', () => {
     })
 
     await act(async () => {
-      await hookRef.current!.handleForwardGeocode()
+      vi.advanceTimersByTime(800)
     })
 
     expect(hookRef.current!.geocodeError).toBe('Geocode down')
-  })
-
-  it('validates reverse geocoding requires valid coordinates', async () => {
-    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
-
-    await act(async () => {
-      hookRef.current!.setLatitude('not-a-number')
-      hookRef.current!.setLongitude('103.8500')
-    })
-
-    await act(async () => {
-      await hookRef.current!.handleReverseGeocode()
-    })
-
-    expect(hookRef.current!.geocodeError).toBe(
-      'Please provide valid coordinates before reverse geocoding.',
-    )
-    expect(mockReverseGeocodeCoords).not.toHaveBeenCalled()
-  })
-
-  it('updates address when reverse geocoding succeeds', async () => {
-    mockReverseGeocodeCoords.mockResolvedValue({
-      formattedAddress: 'Resolved Address',
-    })
-
-    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
-
-    await act(async () => {
-      hookRef.current!.setLatitude('1.1111')
-      hookRef.current!.setLongitude('103.2222')
-    })
-
-    await act(async () => {
-      await hookRef.current!.handleReverseGeocode()
-    })
-
-    expect(hookRef.current!.address).toBe('Resolved Address')
-  })
-
-  it('surfaces an error when reverse geocoding fails', async () => {
-    mockReverseGeocodeCoords.mockRejectedValue(new Error('Reverse down'))
-
-    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
-
-    await act(async () => {
-      hookRef.current!.setLatitude('1.1111')
-      hookRef.current!.setLongitude('103.2222')
-    })
-
-    await act(async () => {
-      await hookRef.current!.handleReverseGeocode()
-    })
-
-    expect(hookRef.current!.geocodeError).toBe('Reverse down')
   })
 
   it('runs the developer capture flow and persists the capture', async () => {
@@ -252,6 +196,8 @@ describe('useUnifiedCapture', () => {
     await act(async () => {
       hookRef.current!.setLatitude('1.2345')
       hookRef.current!.setLongitude('103.9876')
+      hookRef.current!.setCurrentGfaSqm('16,500')
+      hookRef.current!.setCurrentGfaSource('approved plans')
     })
 
     await act(async () => {
@@ -259,7 +205,8 @@ describe('useUnifiedCapture', () => {
         preventDefault: vi.fn(),
       } as unknown as React.FormEvent<HTMLFormElement>
       const promise = hookRef.current!.handleCapture(event)
-      vi.advanceTimersByTime(1500)
+      await Promise.resolve()
+      await vi.runAllTimersAsync()
       await promise
     })
 
@@ -267,8 +214,10 @@ describe('useUnifiedCapture', () => {
       expect.objectContaining({
         latitude: 1.2345,
         longitude: 103.9876,
-        jurisdictionCode: 'SG',
+        jurisdictionCode: undefined,
         previewDetailLevel: 'medium',
+        currentGfaSqm: 16500,
+        currentGfaSource: 'approved plans',
       }),
       expect.any(AbortSignal),
     )
@@ -283,6 +232,125 @@ describe('useUnifiedCapture', () => {
     expect(hookRef.current!.capturedSites[0]?.address).toBe('1 Cyber Ave')
     expect(hookRef.current!.capturedSites[0]?.capturedAt).toBe(
       '2026-01-06T10:00:01.500Z',
+    )
+    expect(document.body).toHaveClass('capture-results-active')
+  })
+
+  it('uses the submitted address for target-acquired confirmation', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-06T10:00:00.000Z'))
+
+    mockForwardGeocodeAddress.mockResolvedValue({
+      latitude: 1.331096,
+      longitude: 103.6977849,
+      formattedAddress: '25 Soon Lee Rd, Singapore 628083',
+    })
+    mockCapturePropertyForDevelopment.mockResolvedValue({
+      propertyId: 'prop-soon-lee',
+      currencySymbol: 'S$',
+      address: { fullAddress: '20 Soon Lee Rd, Singapore', district: 'Jurong' },
+      quickAnalysis: { generatedAt: '2026-01-06T09:58:00Z', scenarios: [] },
+      previewJob: null,
+    })
+
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
+
+    await act(async () => {
+      hookRef.current!.setAddress('25 Soon Lee Rd, Singapore 628083')
+    })
+
+    await act(async () => {
+      const event = {
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent<HTMLFormElement>
+      const promise = hookRef.current!.handleCapture(event)
+      await Promise.resolve()
+      await vi.runAllTimersAsync()
+      await promise
+    })
+
+    expect(hookRef.current!.targetAcquired).toBe(
+      '25 Soon Lee Rd, Singapore 628083',
+    )
+    expect(hookRef.current!.capturedSites[0]?.address).toBe(
+      '25 Soon Lee Rd, Singapore 628083',
+    )
+    expect(hookRef.current!.siteAcquisitionResult?.address.fullAddress).toBe(
+      '20 Soon Lee Rd, Singapore',
+    )
+    expect(mockCapturePropertyForDevelopment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        submittedAddress: '25 Soon Lee Rd, Singapore 628083',
+      }),
+      expect.any(AbortSignal),
+    )
+  })
+
+  it('blocks developer capture when geocoding changes the street number', async () => {
+    vi.useFakeTimers()
+    mockForwardGeocodeAddress.mockResolvedValue({
+      latitude: 1.3286413,
+      longitude: 103.698443,
+      formattedAddress: '20 Soon Lee Rd, Singapore 628086',
+    })
+
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
+
+    await act(async () => {
+      hookRef.current!.setAddress('25 Soon Lee Rd, Singapore 628083')
+    })
+
+    await act(async () => {
+      const event = {
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent<HTMLFormElement>
+      const promise = hookRef.current!.handleCapture(event)
+      await Promise.resolve()
+      await vi.runAllTimersAsync()
+      await promise
+    })
+
+    expect(mockCapturePropertyForDevelopment).not.toHaveBeenCalled()
+    expect(hookRef.current!.captureError).toContain(
+      'Geocoding resolved "25 Soon Lee Rd, Singapore 628083" to "20 Soon Lee Rd, Singapore 628086"',
+    )
+  })
+
+  it('blocks developer capture when a prior auto-geocode changed the street number', async () => {
+    vi.useFakeTimers()
+    mockForwardGeocodeAddress.mockResolvedValue({
+      latitude: 1.3286413,
+      longitude: 103.698443,
+      formattedAddress: '20 Soon Lee Rd, Singapore 628086',
+    })
+
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
+
+    await act(async () => {
+      hookRef.current!.setAddress('25 Soon Lee Rd, Singapore 628083')
+    })
+
+    await act(async () => {
+      vi.advanceTimersByTime(800)
+      await Promise.resolve()
+    })
+
+    expect(hookRef.current!.latitude).toBe('1.3286413')
+    expect(hookRef.current!.longitude).toBe('103.698443')
+
+    await act(async () => {
+      const event = {
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent<HTMLFormElement>
+      const promise = hookRef.current!.handleCapture(event)
+      await Promise.resolve()
+      await vi.runAllTimersAsync()
+      await promise
+    })
+
+    expect(mockCapturePropertyForDevelopment).not.toHaveBeenCalled()
+    expect(hookRef.current!.captureError).toContain(
+      'Geocoding resolved "25 Soon Lee Rd, Singapore 628083" to "20 Soon Lee Rd, Singapore 628086"',
     )
   })
 
@@ -300,10 +368,6 @@ describe('useUnifiedCapture', () => {
 
     const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
-    await act(async () => {
-      hookRef.current!.handleScenarioToggle('raw_land')
-      hookRef.current!.handleScenarioToggle('en_bloc')
-    })
     expect(hookRef.current!.selectedScenarios.length).toBe(0)
 
     await act(async () => {
@@ -311,7 +375,8 @@ describe('useUnifiedCapture', () => {
         preventDefault: vi.fn(),
       } as unknown as React.FormEvent<HTMLFormElement>
       const promise = hookRef.current!.handleCapture(event)
-      vi.advanceTimersByTime(1500)
+      await Promise.resolve()
+      await vi.runAllTimersAsync()
       await promise
     })
 
@@ -324,7 +389,7 @@ describe('useUnifiedCapture', () => {
   })
 
   it('resets state and clears persisted capture when starting a new capture', async () => {
-    const hookRef = renderHookHarness(true)
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
 
     sessionStorage.setItem(
       'site-acquisition:captured-property',
@@ -335,18 +400,23 @@ describe('useUnifiedCapture', () => {
       hookRef.current!.setLatitude('1.1111')
       hookRef.current!.setLongitude('103.2222')
       hookRef.current!.setAddress('Some address')
+      hookRef.current!.setCurrentGfaSqm('12000')
+      hookRef.current!.setCurrentGfaSource('source memo')
     })
 
     await act(async () => {
       hookRef.current!.handleNewCapture()
     })
 
-    expect(hookRef.current!.latitude).toBe('1.3000')
-    expect(hookRef.current!.longitude).toBe('103.8500')
+    expect(hookRef.current!.latitude).toBe('')
+    expect(hookRef.current!.longitude).toBe('')
     expect(hookRef.current!.address).toBe('')
+    expect(hookRef.current!.currentGfaSqm).toBe('')
+    expect(hookRef.current!.currentGfaSource).toBe('')
     expect(
       sessionStorage.getItem('site-acquisition:captured-property'),
     ).toBeNull()
+    expect(document.body).not.toHaveClass('capture-results-active')
   })
 
   it('runs the agent capture flow and fetches market intelligence', async () => {
@@ -359,6 +429,10 @@ describe('useUnifiedCapture', () => {
       quickAnalysis: { scenarios: [{ scenario: 'raw_land' }] },
       developerFeatures: { preview3D: false },
       timestamp: '2026-01-06T10:00:00.000Z',
+    })
+    mockForwardGeocodeAddress.mockResolvedValue({
+      latitude: 1.1111,
+      longitude: 103.2222,
     })
     mockFetchPropertyMarketIntelligence.mockResolvedValue({ summary: 'ok' })
 
@@ -375,7 +449,8 @@ describe('useUnifiedCapture', () => {
         preventDefault: vi.fn(),
       } as unknown as React.FormEvent<HTMLFormElement>
       const promise = hookRef.current!.handleCapture(event)
-      vi.advanceTimersByTime(1500)
+      await Promise.resolve()
+      await vi.runAllTimersAsync()
       await promise
     })
 
@@ -383,7 +458,7 @@ describe('useUnifiedCapture', () => {
       expect.objectContaining({
         latitude: 1.1111,
         longitude: 103.2222,
-        jurisdictionCode: 'SG',
+        jurisdictionCode: undefined,
         enabledFeatures: expect.any(Object),
       }),
     )

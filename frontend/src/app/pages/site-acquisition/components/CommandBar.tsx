@@ -62,7 +62,7 @@ export function CommandBar({
     <div className="command-bar">
       {/* Target Acquisition Label */}
       <div className="command-bar__label">
-        <Search sx={{ fontSize: 16 }} />
+        <Search sx={{ fontSize: 'var(--ob-font-size-base)' }} />
         <span>TARGET</span>
       </div>
 
@@ -102,9 +102,9 @@ export function CommandBar({
         />
         {isGeocoding && (
           <CircularProgress
-            size={14}
+            size={16}
             sx={{
-              color: 'var(--ob-color-neon-cyan)',
+              color: 'var(--ob-color-brand-primary)',
               ml: 'var(--ob-space-050)',
             }}
           />
@@ -119,7 +119,7 @@ export function CommandBar({
           className="command-bar__recenter"
           aria-label="Recenter map"
         >
-          <MyLocation sx={{ fontSize: 16 }} />
+          <MyLocation sx={{ fontSize: 'var(--ob-font-size-base)' }} />
         </IconButton>
       )}
 

@@ -46,7 +46,7 @@ export function CapitalStackScenarioCards({
       <Typography
         sx={{
           fontSize: 'var(--ob-font-size-sm)',
-          fontWeight: 600,
+          fontWeight: 'var(--ob-font-weight-semibold)',
           color: 'text.secondary',
           textTransform: 'uppercase',
           letterSpacing: 'var(--ob-letter-spacing-wider)',
@@ -77,19 +77,19 @@ export function CapitalStackScenarioCards({
               p: 'var(--ob-space-100)',
               borderRadius: 'var(--ob-radius-sm)',
               border: 1,
-              borderColor: isActive ? 'rgba(0, 243, 255, 0.3)' : 'divider',
+              borderColor: isActive ? 'var(--ob-color-brand-soft)' : 'divider',
               bgcolor: isActive
-                ? 'rgba(0, 243, 255, 0.05)'
+                ? 'var(--ob-color-brand-soft)'
                 : 'background.paper',
-              boxShadow: isActive ? 'var(--ob-glow-neon-cyan)' : 'none',
+              boxShadow: 'none',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
               '&:hover': {
-                borderColor: 'var(--ob-color-neon-cyan)',
-                boxShadow: 'var(--ob-glow-neon-cyan)',
+                borderColor: 'var(--ob-color-brand-primary)',
+                boxShadow: 'none',
               },
               '&:focus-visible': {
-                outline: '2px solid var(--ob-color-neon-cyan)',
+                outline: '2px solid var(--ob-color-brand-primary)',
                 outlineOffset: 2,
               },
             }}
@@ -105,12 +105,11 @@ export function CapitalStackScenarioCards({
             >
               <Typography
                 sx={{
-                  fontWeight: 700,
+                  fontWeight: 'var(--ob-font-weight-bold)',
                   color: isActive
-                    ? 'var(--ob-color-neon-cyan)'
+                    ? 'var(--ob-color-brand-primary)'
                     : 'text.primary',
                   fontSize: 'var(--ob-font-size-md)',
-                  ...(isActive && { textShadow: 'var(--ob-glow-neon-text)' }),
                 }}
               >
                 {scenario.scenarioName}
@@ -121,8 +120,8 @@ export function CapitalStackScenarioCards({
                     width: 8,
                     height: 8,
                     borderRadius: '50%',
-                    bgcolor: 'var(--ob-color-neon-cyan)',
-                    boxShadow: 'var(--ob-glow-neon-cyan)',
+                    bgcolor: 'var(--ob-color-brand-primary)',
+                    boxShadow: 'none',
                     flexShrink: 0,
                   }}
                 />
@@ -141,7 +140,7 @@ export function CapitalStackScenarioCards({
                 sx={{
                   fontSize: 'var(--ob-font-size-sm)',
                   color: isActive
-                    ? 'var(--ob-color-neon-cyan)'
+                    ? 'var(--ob-color-brand-primary)'
                     : 'text.secondary',
                 }}
               >

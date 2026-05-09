@@ -272,6 +272,9 @@ export function VoiceObservationsPanel({
         onClick={isRecording ? stopRecording : startRecording}
         disabled={!canRecord && !isRecording}
         className={`voice-observations-panel__primary-btn ${isRecording ? 'voice-observations-panel__primary-btn--active' : ''}`}
+        aria-label={
+          isRecording ? 'Stop recording voice note' : 'Record voice note'
+        }
         title="Site notes. Transcripts appear after upload."
       >
         <span className="voice-observations-panel__primary-btn-icon">

@@ -9,6 +9,7 @@ from uuid import uuid4
 import pytest
 
 from app.models.property import PropertyType
+from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 from app.services.agents import gps_property_logger as gps_module
 from app.services.agents.gps_property_logger import (
     DevelopmentScenario,
@@ -71,6 +72,19 @@ def make_zoning(**overrides):
     )
 
 
+def make_source(
+    state: ExternalSourceState = ExternalSourceState.LIVE,
+    *,
+    synthetic: bool = False,
+) -> ExternalSourceMetadata:
+    return ExternalSourceMetadata(
+        provider="ura",
+        state=state,
+        configured=state == ExternalSourceState.LIVE,
+        synthetic=synthetic,
+    )
+
+
 class StubSession:
     def __init__(self, execute_returns=None):
         self.execute_returns = list(execute_returns or [])
@@ -95,10 +109,27 @@ class StubSession:
 def stub_services(monkeypatch):
     monkeypatch.setenv("GPCS_SKIP_CHECKLIST_SEED", "1")
     geocoding = AsyncMock()
+    geocoding.get_google_geocoding_metadata = MagicMock(
+        return_value=ExternalSourceMetadata(
+            provider="google_maps",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
+        )
+    )
+    geocoding.get_onemap_amenities_metadata = MagicMock(
+        return_value=ExternalSourceMetadata(
+            provider="onemap",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
+        )
+    )
     geocoding.reverse_geocode = AsyncMock(return_value=make_address())
     geocoding.get_nearby_amenities = AsyncMock(return_value={"coffee": 3})
 
     ura = AsyncMock()
+    ura.source_metadata = MagicMock(return_value=make_source())
     ura.get_zoning_info = AsyncMock(return_value=make_zoning())
     ura.get_existing_use = AsyncMock(return_value="Office tower")
     ura.get_property_info = AsyncMock(return_value=make_property_info())
@@ -170,6 +201,148 @@ async def test_log_property_creates_record(monkeypatch, stub_services):
 
 
 @pytest.mark.asyncio
+async def test_log_property_uses_resolved_address_without_reverse_geocoding(
+    monkeypatch,
+    stub_services,
+):
+    logger, geocoding, _ura, _ensure_seeded, _auto_populate = stub_services
+    session = StubSession(execute_returns=[_result_with_scalar(None)])
+    property_id = uuid4()
+    resolved_address = make_address(
+        full_address="25 Soon Lee Rd, Singapore 628083",
+        street_name="Soon Lee Rd",
+        postal_code="628083",
+    )
+    source = ExternalSourceMetadata(
+        provider="onemap_address_search",
+        state=ExternalSourceState.LIVE,
+        configured=True,
+        synthetic=False,
+    )
+    monkeypatch.setattr(logger, "_create_property", AsyncMock(return_value=property_id))
+    monkeypatch.setattr(logger, "_update_property", AsyncMock())
+    monkeypatch.setattr(logger, "_log_property_access", AsyncMock())
+    monkeypatch.setattr(
+        logger,
+        "_generate_quick_analysis",
+        MagicMock(return_value={"summary": "analysis"}),
+    )
+
+    result = await logger.log_property_from_gps(
+        latitude=1.3282813,
+        longitude=103.6984406,
+        session=session,
+        user_id=uuid4(),
+        resolved_address=resolved_address,
+        geocoding_source_override=source,
+    )
+
+    geocoding.reverse_geocode.assert_not_awaited()
+    assert result.address.postal_code == "628083"
+    assert result.geocoding_source is source
+
+
+@pytest.mark.asyncio
+async def test_log_property_fails_fast_when_optional_ura_enrichment_times_out(
+    monkeypatch,
+    stub_services,
+):
+    logger, _geocoding, ura, _ensure_seeded, _auto_populate = stub_services
+
+    async def slow_property_info(*_args, **_kwargs):
+        await gps_module.asyncio.sleep(1)
+        return make_property_info()
+
+    async def slow_zoning(*_args, **_kwargs):
+        await gps_module.asyncio.sleep(1)
+        return make_zoning()
+
+    async def slow_list(*_args, **_kwargs):
+        await gps_module.asyncio.sleep(1)
+        return [{"slow": True}]
+
+    async def slow_amenities(*_args, **_kwargs):
+        await gps_module.asyncio.sleep(1)
+        return {"coffee": 99}
+
+    ura.get_zoning_info.side_effect = slow_zoning
+    ura.get_property_info.side_effect = slow_property_info
+    ura.get_development_plans.side_effect = slow_list
+    ura.get_transaction_data.side_effect = slow_list
+    ura.get_rental_data.side_effect = slow_list
+    _geocoding.get_nearby_amenities.side_effect = slow_amenities
+    monkeypatch.setattr(gps_module, "CAPTURE_URA_METADATA_TIMEOUT_SECONDS", 0.01)
+    monkeypatch.setattr(
+        gps_module,
+        "CAPTURE_URA_MARKET_ENRICHMENT_TIMEOUT_SECONDS",
+        0.01,
+    )
+    monkeypatch.setattr(gps_module, "CAPTURE_AMENITIES_TIMEOUT_SECONDS", 0.01)
+
+    session = StubSession(execute_returns=[_result_with_scalar(None)])
+    property_id = uuid4()
+    monkeypatch.setattr(logger, "_create_property", AsyncMock(return_value=property_id))
+    monkeypatch.setattr(logger, "_update_property", AsyncMock())
+    monkeypatch.setattr(logger, "_log_property_access", AsyncMock())
+    quick_analysis = MagicMock(return_value={"summary": "analysis"})
+    monkeypatch.setattr(logger, "_generate_quick_analysis", quick_analysis)
+
+    result = await logger.log_property_from_gps(
+        latitude=1.3,
+        longitude=103.8,
+        session=session,
+        user_id=uuid4(),
+    )
+
+    assert result.property_id == property_id
+    assert session.committed is True
+    quick_analysis.assert_called_once()
+    assert quick_analysis.call_args.kwargs["ura_zoning"] is None
+    assert quick_analysis.call_args.kwargs["property_info"] is None
+    assert result.ura_zoning == {}
+    assert quick_analysis.call_args.kwargs["development_plans"] == []
+    assert quick_analysis.call_args.kwargs["transactions"] == []
+    assert quick_analysis.call_args.kwargs["rentals"] == []
+    assert result.nearby_amenities == {
+        "mrt_stations": [],
+        "bus_stops": [],
+        "schools": [],
+        "shopping_malls": [],
+        "parks": [],
+    }
+
+
+@pytest.mark.asyncio
+async def test_log_property_does_not_persist_mock_zoning(monkeypatch, stub_services):
+    logger, geocoding, ura, ensure_seeded, auto_populate = stub_services
+    ura.source_metadata = MagicMock(
+        return_value=make_source(ExternalSourceState.MOCK, synthetic=True)
+    )
+    session = StubSession(execute_returns=[_result_with_scalar(None)])
+    property_id = uuid4()
+    create_property = AsyncMock(return_value=property_id)
+    quick_analysis = MagicMock(return_value={"summary": "analysis"})
+    monkeypatch.setattr(logger, "_create_property", create_property)
+    monkeypatch.setattr(logger, "_update_property", AsyncMock())
+    monkeypatch.setattr(logger, "_log_property_access", AsyncMock())
+    monkeypatch.setattr(logger, "_generate_quick_analysis", quick_analysis)
+
+    result = await logger.log_property_from_gps(
+        latitude=1.3,
+        longitude=103.8,
+        session=session,
+        user_id=uuid4(),
+    )
+
+    assert result.ura_zoning == {}
+    create_property.assert_awaited_once()
+    assert create_property.await_args.args[5] is None
+    assert quick_analysis.call_args.kwargs["ura_zoning"] is None
+    assert result.ura_source is not None
+    assert result.ura_source.state == ExternalSourceState.MOCK
+
+
+@pytest.mark.asyncio
 async def test_log_property_updates_existing_record(monkeypatch, stub_services):
     logger, geocoding, ura, ensure_seeded, auto_populate = stub_services
     session = StubSession()
@@ -203,6 +376,33 @@ async def test_log_property_updates_existing_record(monkeypatch, stub_services):
     assert session.committed is True
     ensure_seeded.assert_awaited()
     assert auto_populate.await_args.kwargs["property_id"] == existing_id
+
+
+@pytest.mark.asyncio
+async def test_update_property_preserves_existing_zoning_when_source_not_authoritative(
+    stub_services,
+):
+    logger, *_ = stub_services
+    session = StubSession()
+    existing = SimpleNamespace(
+        id=uuid4(),
+        zoning_code="SG:commercial",
+        plot_ratio=4.0,
+        updated_at=None,
+        jurisdiction_code="SG",
+    )
+
+    await logger._update_property(
+        session,
+        existing,
+        make_address(),
+        None,
+        None,
+        "SG",
+    )
+
+    assert existing.zoning_code == "SG:commercial"
+    assert existing.plot_ratio == 4.0
 
 
 @pytest.mark.asyncio

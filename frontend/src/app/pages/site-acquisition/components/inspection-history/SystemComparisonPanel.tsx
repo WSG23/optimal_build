@@ -35,7 +35,9 @@ function renderSystemRow(entry: SystemComparisonEntry) {
     typeof entry.scoreDelta === 'number' ? entry.scoreDelta : null
   return (
     <>
-      <span style={{ fontWeight: 600 }}>{entry.name}</span>
+      <span style={{ fontWeight: 'var(--ob-font-weight-semibold)' }}>
+        {entry.name}
+      </span>
       <span>
         {entry.latest
           ? `${entry.latest.rating} \u00b7 ${entry.latest.score}/100`
@@ -48,7 +50,7 @@ function renderSystemRow(entry: SystemComparisonEntry) {
       </span>
       <span
         style={{
-          fontWeight: 600,
+          fontWeight: 'var(--ob-font-weight-semibold)',
           color:
             scoreDeltaValue === null
               ? 'var(--ob-color-text-secondary)'
@@ -150,7 +152,7 @@ export function SystemComparisonPanel({
         style={{
           margin: 0,
           fontSize: 'var(--ob-font-size-sm)',
-          fontWeight: 600,
+          fontWeight: 'var(--ob-font-weight-semibold)',
         }}
       >
         System comparison
@@ -163,7 +165,7 @@ export function SystemComparisonPanel({
             gridTemplateColumns:
               'minmax(160px, 2fr) repeat(3, minmax(110px, 1fr))',
             fontSize: 'var(--ob-font-size-xs)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
             color: 'var(--ob-color-text-secondary)',

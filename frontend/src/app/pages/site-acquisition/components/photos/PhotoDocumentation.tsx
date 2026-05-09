@@ -114,7 +114,7 @@ export function PhotoDocumentation({
         background: 'var(--ob-color-surface-primary)',
         border: '1px solid var(--ob-color-border-subtle, #e5e7eb)',
         borderRadius: 'var(--ob-radius-sm)',
-        padding: '1.5rem',
+        padding: 'var(--ob-space-150)',
       }}
     >
       {/* Header */}
@@ -123,15 +123,15 @@ export function PhotoDocumentation({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '1.5rem',
+          marginBottom: 'var(--ob-space-150)',
         }}
       >
         <div>
           <h3
             style={{
               margin: 0,
-              fontSize: '1.125rem',
-              fontWeight: 600,
+              fontSize: 'var(--ob-font-size-lg)',
+              fontWeight: 'var(--ob-font-weight-semibold)',
               color: 'var(--ob-color-text-primary)',
             }}
           >
@@ -139,7 +139,7 @@ export function PhotoDocumentation({
           </h3>
           <p
             style={{
-              margin: '0.25rem 0 0',
+              margin: 'var(--ob-space-025) 0 0',
               fontSize: 'var(--ob-font-size-xs)',
               color: 'var(--ob-color-text-secondary)',
             }}
@@ -153,7 +153,7 @@ export function PhotoDocumentation({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: 'var(--ob-space-050)',
           }}
         >
           <span
@@ -168,7 +168,7 @@ export function PhotoDocumentation({
             value={phase}
             onChange={(e) => setPhase(e.target.value as PropertyPhase)}
             style={{
-              padding: '0.375rem 0.75rem',
+              padding: 'var(--ob-space-035) var(--ob-space-075)',
               borderRadius: 'var(--ob-radius-md)',
               border: '1px solid var(--ob-color-border-default, #d1d5db)',
               fontSize: 'var(--ob-font-size-sm)',
@@ -186,13 +186,13 @@ export function PhotoDocumentation({
       {error && (
         <div
           style={{
-            padding: '0.75rem 1rem',
+            padding: 'var(--ob-space-075) var(--ob-space-100)',
             background: 'var(--ob-color-surface-error)',
             border: '1px solid var(--ob-color-border-error, #fecaca)',
             borderRadius: 'var(--ob-radius-sm)',
             color: 'var(--ob-color-status-error)',
             fontSize: 'var(--ob-font-size-sm)',
-            marginBottom: '1rem',
+            marginBottom: 'var(--ob-space-100)',
           }}
         >
           {error}
@@ -203,13 +203,13 @@ export function PhotoDocumentation({
       {isOffline && (
         <div
           style={{
-            padding: '0.75rem 1rem',
+            padding: 'var(--ob-space-075) var(--ob-space-100)',
             background: 'var(--ob-color-surface-warning)',
             border: '1px solid var(--ob-color-border-warning, #fcd34d)',
             borderRadius: 'var(--ob-radius-sm)',
             color: 'var(--ob-color-status-warning)',
             fontSize: 'var(--ob-font-size-sm)',
-            marginBottom: '1rem',
+            marginBottom: 'var(--ob-space-100)',
           }}
         >
           Photo upload is not available in offline mode. Save the property first
@@ -218,7 +218,7 @@ export function PhotoDocumentation({
       )}
 
       {/* Upload area */}
-      <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{ marginBottom: 'var(--ob-space-150)' }}>
         <PhotoCapture
           propertyId={propertyId}
           phase={phase}
@@ -233,8 +233,8 @@ export function PhotoDocumentation({
       {/* Watermark info */}
       <div
         style={{
-          marginTop: '1.5rem',
-          padding: '1rem',
+          marginTop: 'var(--ob-space-150)',
+          padding: 'var(--ob-space-100)',
           background: 'var(--ob-color-surface-secondary)',
           borderRadius: 'var(--ob-radius-sm)',
           border: '1px solid var(--ob-color-border-subtle, #e5e7eb)',
@@ -242,9 +242,9 @@ export function PhotoDocumentation({
       >
         <h4
           style={{
-            margin: '0 0 0.5rem',
+            margin: '0 0 var(--ob-space-050)',
             fontSize: 'var(--ob-font-size-sm)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             color: 'var(--ob-color-text-primary)',
           }}
         >
@@ -254,14 +254,14 @@ export function PhotoDocumentation({
           style={{
             fontSize: 'var(--ob-font-size-xs)',
             color: 'var(--ob-color-text-secondary)',
-            lineHeight: 1.5,
+            lineHeight: 'var(--ob-line-height-normal)',
           }}
         >
-          <p style={{ margin: '0 0 0.5rem' }}>
+          <p style={{ margin: '0 0 var(--ob-space-050)' }}>
             <strong>Original:</strong> No watermark - for internal team use
             only. Do not share externally.
           </p>
-          <p style={{ margin: '0 0 0.5rem' }}>
+          <p style={{ margin: '0 0 var(--ob-space-050)' }}>
             <strong>Marketing:</strong> Diagonal watermark applied - safe for
             external sharing and marketing materials.
           </p>

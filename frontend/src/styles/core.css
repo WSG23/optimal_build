@@ -158,8 +158,8 @@ div[style*='border-radius'] {
 
 :root {
     font-family: var(--ob-font-family-base);
-    line-height: 1.6;
-    font-weight: 400;
+    line-height: var(--ob-line-height-relaxed);
+    font-weight: var(--ob-font-weight-regular);
 
     color-scheme: dark light; /* Prefer dark */
     color: var(--ob-color-text-primary);
@@ -195,7 +195,7 @@ body {
 }
 
 a {
-    font-weight: 500;
+    font-weight: var(--ob-font-weight-medium);
     color: var(--ob-color-brand-primary);
     text-decoration: none;
     transition: color 0.2s ease;
@@ -213,8 +213,8 @@ h3,
 h4,
 h5,
 h6 {
-    line-height: 1.2;
-    margin: 0 0 1rem 0;
+    line-height: var(--ob-line-height-tight);
+    margin: 0 0 var(--ob-space-100) 0;
     color: var(--ob-color-text-primary);
 }
 
@@ -232,7 +232,7 @@ h6 {
 /* Home / Dashboard Grid */
 .app-home {
     display: grid;
-    gap: 1.5rem;
+    gap: var(--ob-space-150);
     grid-template-columns: repeat(
         auto-fit,
         minmax(280px, 1fr)
@@ -245,14 +245,14 @@ h6 {
 /* Premium Card Style */
 .app-home__card {
     background: var(--ob-color-bg-surface);
-    padding: 2rem;
+    padding: var(--ob-space-200);
     border-radius: var(--ob-radius-sm); /* 4px - Square Cyber-Minimalism */
     border: 1px solid var(--ob-color-border-subtle);
     box-shadow: var(--ob-shadow-sm);
 
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: var(--ob-space-125);
 
     transition:
         transform 0.2s ease,
@@ -270,26 +270,29 @@ h6 {
 
 .app-home__card h3 {
     margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: var(--ob-font-size-xl);
+    font-weight: var(--ob-font-weight-semibold);
 }
 
 .app-home__card p {
     margin: 0;
     color: var(--ob-color-text-secondary);
     flex: 1;
-    line-height: 1.6;
+    line-height: var(--ob-line-height-relaxed);
 }
 
 .app-home__cta {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem 1.5rem;
+    padding: var(--ob-space-075) var(--ob-space-150);
     border-radius: var(--ob-radius-xs); /* 2px - Square Cyber-Minimalism */
     background: var(--ob-color-brand-primary);
-    color: #ffffff; /* Always white text on brand button */
-    font-weight: 600;
+    color: var(
+        --ob-color-text-on-brand,
+        #ffffff
+    ); /* Always white text on brand button */
+    font-weight: var(--ob-font-weight-semibold);
     width: fit-content;
     text-decoration: none !important;
     transition: all 0.2s ease;
@@ -361,6 +364,83 @@ select,
 input[type='checkbox'],
 input[type='radio'] {
     min-width: 44px;
+}
+
+/* =============================================================================
+   MOBILE: Responsive scaling for small screens
+   ============================================================================= */
+
+/* @breakpoint: sm (600px) */
+@media (max-width: 600px) {
+    /* Reduce card padding on mobile */
+    .app-home__card {
+        padding: var(--ob-space-150);
+        gap: var(--ob-space-100);
+    }
+
+    /* Scale down page title for mobile */
+    .page__title {
+        font-size: var(--ob-font-size-xl);
+    }
+
+    .page__subtitle {
+        font-size: var(--ob-font-size-base);
+    }
+
+    /* Form rows wrap vertically on mobile */
+    .page__form-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* Reduce section padding */
+    .page__section {
+        padding: var(--ob-space-150);
+    }
+
+    /* Cards: tighter on mobile */
+    .page__card {
+        padding: var(--ob-space-150);
+    }
+
+    /* Metric values: slightly smaller */
+    .page__metric-value {
+        font-size: var(--ob-font-size-lg);
+    }
+
+    .page__card-value {
+        font-size: var(--ob-font-size-xl);
+    }
+
+    /* Empty states: less vertical padding */
+    .page__empty {
+        padding: var(--ob-space-300);
+    }
+
+    /* Ensure dialog content doesn't overflow */
+    .MuiDialog-paper {
+        margin: var(--ob-space-100) !important;
+        max-width: calc(100vw - var(--ob-space-200)) !important;
+    }
+
+    /* Horizontal scroll affordance for wide tables */
+    .ob-table-scroll,
+    .MuiTableContainer-root {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    /* MUI Grid: allow items to stack */
+    .MuiGrid-container {
+        overflow: visible;
+    }
+
+    /* Two-column layout stacks on mobile */
+    .page__two-col,
+    .page__two-col--reverse {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* =============================================================================

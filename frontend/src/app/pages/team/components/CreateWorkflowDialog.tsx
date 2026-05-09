@@ -187,7 +187,12 @@ export const CreateWorkflowDialog: React.FC<CreateWorkflowDialogProps> = ({
               </Box>
             ))}
             <Button variant="ghost" size="sm" onClick={handleAddStep}>
-              <AddIcon sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }} />
+              <AddIcon
+                sx={{
+                  fontSize: 'var(--ob-font-size-base)',
+                  mr: 'var(--ob-space-050)',
+                }}
+              />
               Add Step
             </Button>
           </Box>

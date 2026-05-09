@@ -1,8 +1,8 @@
 """Stream Singapore cadastral parcels into ``ref_parcels``.
 
-This loader consumes the SLA/OneMap Land Lot Boundary GeoJSON export (SVY21 /
-EPSG:3414), reprojects each polygon into WGS84, and upserts the geometry into
-the reference parcels table so Singapore remains the canonical baseline for GPS
+This loader consumes the SLA Cadastral Land Parcel GeoJSON export from
+data.gov.sg, keeps each WGS84 polygon in WGS84, and upserts the geometry into the
+reference parcels table so Singapore remains the canonical baseline for GPS
 logging, preview, and finance flows.
 
 Example usage::
@@ -17,9 +17,8 @@ Example usage::
       .venv/bin/python -m backend.scripts.ingest_sg_parcels \\
       --input-path /tmp/land_lots.geojson --no-reset
 
-The loader requires read access to the downloaded GeoJSON. Download the latest
-SLA "Land Lot Boundary" dataset from data.gov.sg or the OneMap Theme API and
-place it under ``data/sg/parcels`` before running the script.
+The loader can download the latest SLA "Cadastral Land Parcel" GeoJSON from
+data.gov.sg or ingest a file already placed under ``data/sg/parcels``.
 """
 
 from __future__ import annotations
@@ -32,6 +31,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator, Sequence
 
+import httpx
 import structlog
 from pyproj import Transformer
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, shape
@@ -54,6 +54,11 @@ except ModuleNotFoundError:  # pragma: no cover - geoalchemy2 not installed
 logger = structlog.get_logger(__name__)
 
 DEFAULT_DATASET_PATH = Path("data/sg/parcels/land_lot_boundary.geojson")
+SG_CADASTRAL_LAND_PARCEL_DATASET_ID = "d_e7395d743076a2bcc487b0d12b9bf33b"
+DATA_GOV_POLL_DOWNLOAD_URL = (
+    "https://api-open.data.gov.sg/v1/public/api/datasets/"
+    f"{SG_CADASTRAL_LAND_PARCEL_DATASET_ID}/poll-download"
+)
 
 IDENTIFIER_FIELDS = (
     "LOT_KEY",  # data.gov.sg export (e.g., "MK26-07308N")
@@ -76,6 +81,7 @@ class ParcelIngestionOptions:
     reset: bool
     source_epsg: int
     source_label: str
+    download: bool
 
 
 @dataclass(slots=True)
@@ -153,6 +159,29 @@ def _iter_geojson_features(path: Path) -> Iterator[dict[str, Any]]:
 
     if inside_features:
         raise RuntimeError(f"Unexpected EOF before completing features array in {path}")
+
+
+async def _download_cadastral_geojson(output_path: Path) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    async with httpx.AsyncClient(timeout=300.0, follow_redirects=True) as client:
+        poll_response = await client.get(DATA_GOV_POLL_DOWNLOAD_URL)
+        poll_response.raise_for_status()
+        poll_payload = poll_response.json()
+        if poll_payload.get("code") != 0:
+            raise RuntimeError(poll_payload.get("errMsg") or "data.gov.sg poll failed")
+        download_url = poll_payload.get("data", {}).get("url")
+        if not isinstance(download_url, str) or not download_url:
+            raise RuntimeError(
+                "data.gov.sg poll response did not include a download URL"
+            )
+
+        async with client.stream("GET", download_url) as response:
+            response.raise_for_status()
+            with output_path.open("wb") as handle:
+                async for chunk in response.aiter_bytes():
+                    handle.write(chunk)
+    logger.info("sg_parcels:downloaded", output_path=str(output_path))
+    return output_path
 
 
 def _force_multipolygon(geometry: BaseGeometry) -> MultiPolygon:
@@ -299,6 +328,10 @@ async def _delete_specific(
 
 async def ingest_parcels(options: ParcelIngestionOptions) -> ParcelIngestionStats:
     stats = ParcelIngestionStats()
+    input_path = options.input_path
+    if options.download or not input_path.exists():
+        input_path = await _download_cadastral_geojson(input_path)
+
     transformer = Transformer.from_crs(
         f"EPSG:{options.source_epsg}", "EPSG:4326", always_xy=True
     )
@@ -311,9 +344,7 @@ async def ingest_parcels(options: ParcelIngestionOptions) -> ParcelIngestionStat
 
     async with AsyncSessionLocal() as session:
         batch: list[ParcelRecord] = []
-        for feature_index, feature in enumerate(
-            _iter_geojson_features(options.input_path)
-        ):
+        for feature_index, feature in enumerate(_iter_geojson_features(input_path)):
             stats.seen_features += 1
             if feature_index < options.skip:
                 stats.skipped_features += 1
@@ -423,13 +454,21 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--source-epsg",
         type=int,
-        default=3414,
-        help="EPSG code of the source dataset coordinates (default: 3414 SVY21).",
+        default=4326,
+        help=(
+            "EPSG code of the source dataset coordinates "
+            "(default: 4326 for data.gov.sg GeoJSON)."
+        ),
     )
     parser.add_argument(
         "--source-label",
-        default="sla_onemap",
-        help="Label stored in the RefParcel.source column (default: sla_onemap).",
+        default="sla_data_gov",
+        help="Label stored in the RefParcel.source column (default: sla_data_gov).",
+    )
+    parser.add_argument(
+        "--download",
+        action="store_true",
+        help="Fetch the latest SLA Cadastral Land Parcel GeoJSON from data.gov.sg.",
     )
     return parser
 
@@ -444,6 +483,7 @@ async def _run_from_cli(args: argparse.Namespace) -> ParcelIngestionStats:
         reset=args.reset,
         source_epsg=args.source_epsg,
         source_label=args.source_label,
+        download=args.download,
     )
     logger.info(
         "sg_parcels:starting",

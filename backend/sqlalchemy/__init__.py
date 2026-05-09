@@ -4,13 +4,18 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from types import ModuleType
 
+import_runtime_dependency: Callable[[str, str], ModuleType] | None
 try:
     from backend._stub_loader import import_runtime_dependency
 except ModuleNotFoundError:  # pragma: no cover - fallback when loader unavailable
-    import_runtime_dependency = None  # type: ignore[assignment]
+    try:
+        from _stub_loader import import_runtime_dependency
+    except ModuleNotFoundError:
+        import_runtime_dependency = None
 
 _package = __name__.split(".", 1)[-1]
 _current_file = Path(__file__).resolve()

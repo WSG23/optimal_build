@@ -213,7 +213,7 @@ export function ConditionAssessmentEditor({
               style={{
                 margin: 0,
                 fontSize: 'var(--ob-font-size-2xl)',
-                fontWeight: 600,
+                fontWeight: 'var(--ob-font-weight-semibold)',
                 letterSpacing: 'var(--ob-letter-spacing-tight)',
               }}
             >
@@ -264,7 +264,7 @@ export function ConditionAssessmentEditor({
                           : 'var(--ob-color-text-primary)',
                         padding: 'var(--ob-space-025) var(--ob-space-085)',
                         fontSize: 'var(--ob-font-size-xs)',
-                        fontWeight: 600,
+                        fontWeight: 'var(--ob-font-weight-semibold)',
                         cursor: 'pointer',
                       }}
                     >
@@ -306,7 +306,7 @@ export function ConditionAssessmentEditor({
               <span
                 style={{
                   fontSize: 'var(--ob-font-size-sm-minus)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                 }}
               >
                 Scenario
@@ -346,7 +346,7 @@ export function ConditionAssessmentEditor({
               <span
                 style={{
                   fontSize: 'var(--ob-font-size-sm-minus)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                 }}
               >
                 Overall rating
@@ -380,7 +380,7 @@ export function ConditionAssessmentEditor({
               <span
                 style={{
                   fontSize: 'var(--ob-font-size-sm-minus)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                 }}
               >
                 Overall score
@@ -411,7 +411,7 @@ export function ConditionAssessmentEditor({
               <span
                 style={{
                   fontSize: 'var(--ob-font-size-sm-minus)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                 }}
               >
                 Risk level
@@ -445,7 +445,7 @@ export function ConditionAssessmentEditor({
               <span
                 style={{
                   fontSize: 'var(--ob-font-size-sm-minus)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                 }}
               >
                 Inspector name
@@ -475,7 +475,7 @@ export function ConditionAssessmentEditor({
               <span
                 style={{
                   fontSize: 'var(--ob-font-size-sm-minus)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                 }}
               >
                 Inspection date &amp; time
@@ -508,7 +508,7 @@ export function ConditionAssessmentEditor({
             <span
               style={{
                 fontSize: 'var(--ob-font-size-sm-minus)',
-                fontWeight: 600,
+                fontWeight: 'var(--ob-font-weight-semibold)',
               }}
             >
               Summary
@@ -538,7 +538,7 @@ export function ConditionAssessmentEditor({
             <span
               style={{
                 fontSize: 'var(--ob-font-size-sm-minus)',
-                fontWeight: 600,
+                fontWeight: 'var(--ob-font-weight-semibold)',
               }}
             >
               Scenario context
@@ -568,7 +568,7 @@ export function ConditionAssessmentEditor({
             <span
               style={{
                 fontSize: 'var(--ob-font-size-sm-minus)',
-                fontWeight: 600,
+                fontWeight: 'var(--ob-font-weight-semibold)',
               }}
             >
               Attachments (one per line as &quot;Label | URL&quot;)
@@ -621,7 +621,7 @@ export function ConditionAssessmentEditor({
                     <span
                       style={{
                         fontSize: 'var(--ob-font-size-xs)',
-                        fontWeight: 600,
+                        fontWeight: 'var(--ob-font-weight-semibold)',
                       }}
                     >
                       System
@@ -660,7 +660,7 @@ export function ConditionAssessmentEditor({
                       <span
                         style={{
                           fontSize: 'var(--ob-font-size-xs)',
-                          fontWeight: 600,
+                          fontWeight: 'var(--ob-font-weight-semibold)',
                         }}
                       >
                         Rating
@@ -692,7 +692,7 @@ export function ConditionAssessmentEditor({
                       <span
                         style={{
                           fontSize: 'var(--ob-font-size-xs)',
-                          fontWeight: 600,
+                          fontWeight: 'var(--ob-font-weight-semibold)',
                         }}
                       >
                         Score
@@ -729,7 +729,7 @@ export function ConditionAssessmentEditor({
                   <span
                     style={{
                       fontSize: 'var(--ob-font-size-xs)',
-                      fontWeight: 600,
+                      fontWeight: 'var(--ob-font-weight-semibold)',
                     }}
                   >
                     Notes
@@ -761,7 +761,7 @@ export function ConditionAssessmentEditor({
                   <span
                     style={{
                       fontSize: 'var(--ob-font-size-xs)',
-                      fontWeight: 600,
+                      fontWeight: 'var(--ob-font-weight-semibold)',
                     }}
                   >
                     Recommended actions (one per line)
@@ -800,7 +800,7 @@ export function ConditionAssessmentEditor({
             <span
               style={{
                 fontSize: 'var(--ob-font-size-sm-minus)',
-                fontWeight: 600,
+                fontWeight: 'var(--ob-font-weight-semibold)',
               }}
             >
               Additional recommended actions

@@ -7,12 +7,12 @@ interface CriticalPathViewProps {
 
 export function CriticalPathView({ data }: CriticalPathViewProps) {
   return (
-    <Stack spacing={3}>
-      <Paper variant="outlined" sx={{ p: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
+    <Stack spacing="var(--ob-space-200)">
+      <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+        <Typography variant="h6" sx={{ mb: 'var(--ob-space-200)' }}>
           Critical Path Analysis
         </Typography>
-        <Typography variant="body1" sx={{ mb: 2 }}>
+        <Typography variant="body1" sx={{ mb: 'var(--ob-space-200)' }}>
           Total Duration: <strong>{data.totalDuration} days</strong>
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -22,25 +22,29 @@ export function CriticalPathView({ data }: CriticalPathViewProps) {
         </Typography>
       </Paper>
 
-      <Grid container spacing={2}>
+      <Grid container spacing="var(--ob-space-200)">
         <Grid item xs={12} md={6}>
-          <Paper variant="outlined" sx={{ p: 2 }}>
+          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
             <Typography
               variant="subtitle1"
-              sx={{ fontWeight: 600, mb: 2, color: 'error.main' }}
+              sx={{
+                fontWeight: 'var(--ob-font-weight-semibold)',
+                mb: 'var(--ob-space-200)',
+                color: 'error.main',
+              }}
             >
               Critical Phases ({data.criticalPhases.length})
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing="var(--ob-space-100)">
               {data.criticalPhases.map((phase) => (
                 <Box
                   key={phase.phaseId}
                   sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    p: 1,
+                    p: 'var(--ob-space-100)',
                     backgroundColor: (t) => alpha(t.palette.error.main, 0.08),
-                    borderRadius: 1,
+                    borderRadius: 'var(--ob-radius-sm)',
                   }}
                 >
                   <Typography variant="body2">{phase.name}</Typography>
@@ -53,23 +57,27 @@ export function CriticalPathView({ data }: CriticalPathViewProps) {
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Paper variant="outlined" sx={{ p: 2 }}>
+          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
             <Typography
               variant="subtitle1"
-              sx={{ fontWeight: 600, mb: 2, color: 'success.main' }}
+              sx={{
+                fontWeight: 'var(--ob-font-weight-semibold)',
+                mb: 'var(--ob-space-200)',
+                color: 'success.main',
+              }}
             >
               Non-Critical Phases ({data.nonCriticalPhases.length})
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing="var(--ob-space-100)">
               {data.nonCriticalPhases.map((phase) => (
                 <Box
                   key={phase.phaseId}
                   sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    p: 1,
+                    p: 'var(--ob-space-100)',
                     backgroundColor: (t) => alpha(t.palette.success.main, 0.08),
-                    borderRadius: 1,
+                    borderRadius: 'var(--ob-radius-sm)',
                   }}
                 >
                   <Typography variant="body2">{phase.name}</Typography>

@@ -30,13 +30,13 @@ export const getGlassCardSx = (dark: boolean): SxProps<Theme> =>
         borderColor: 'var(--ob-border-glass)',
         color: 'var(--ob-color-text-primary)',
         boxShadow: 'var(--ob-shadow-sm)',
-        p: 3,
+        p: 'var(--ob-space-200)',
       }
     : {
         bgcolor: 'var(--ob-surface-glass-1)',
         borderColor: 'var(--ob-border-glass-strong)',
         boxShadow: 'var(--ob-shadow-sm)',
-        p: 3,
+        p: 'var(--ob-space-200)',
       }
 
 /**
@@ -129,8 +129,8 @@ export const getPrimaryButtonSx = (): SxProps<Theme> => ({
   background: 'var(--ob-brand-600)',
   color: 'var(--ob-neutral-50)',
   fontWeight: 'var(--ob-font-weight-semibold)',
-  px: 3,
-  py: 1.5,
+  px: 'var(--ob-space-200)',
+  py: 'var(--ob-space-150)',
   borderRadius: 'var(--ob-radius-xs)', // 2px - Square Cyber-Minimalism
   boxShadow: 'var(--ob-shadow-sm)',
   transition: 'background-color 0.2s ease, transform 0.2s ease',
@@ -182,8 +182,8 @@ export const getStickyHeaderSx = (dark: boolean): SxProps<Theme> => ({
     ? 'var(--ob-color-bg-root)'
     : 'var(--ob-color-bg-surface)',
   borderBottom: `1px solid ${dark ? 'var(--ob-border-glass)' : 'var(--ob-color-border-subtle)'}`,
-  py: 2,
-  px: 3,
+  py: 'var(--ob-space-200)',
+  px: 'var(--ob-space-200)',
 })
 
 /**
@@ -216,11 +216,11 @@ export const getPageBackgroundSx = (dark: boolean): SxProps<Theme> =>
 export const getStatusBadgeSx = (
   status: 'success' | 'warning' | 'error' | 'info',
 ): SxProps<Theme> => ({
-  px: 1,
-  py: 0.25,
+  px: 'var(--ob-space-100)',
+  py: 'var(--ob-space-025)',
   borderRadius: 'var(--ob-radius-sm)',
   fontSize: 'var(--ob-font-size-xs)',
-  fontWeight: 500,
+  fontWeight: 'var(--ob-font-weight-medium)',
   textTransform: 'uppercase',
   ...(status === 'success' && {
     backgroundColor: 'var(--ob-color-success-soft)',

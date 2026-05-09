@@ -928,7 +928,7 @@ export function FeasibilityWizard({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: '4px',
+              borderRadius: 'var(--ob-radius-sm)',
               position: 'relative',
               transition: 'transform 0.3s',
             }}
@@ -945,9 +945,11 @@ export function FeasibilityWizard({
               }}
             >
               {/* Placeholder for Cover Image */}
-              <span style={{ fontSize: '3rem' }}>🏢</span>
+              <span style={{ fontSize: 'var(--ob-font-size-5xl)' }}>🏢</span>
             </div>
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
+            <div
+              style={{ padding: 'var(--ob-space-200)', textAlign: 'center' }}
+            >
               <Typography variant="h6" gutterBottom>
                 {addressInput || 'Site Address'}
               </Typography>
@@ -956,7 +958,7 @@ export function FeasibilityWizard({
               </Typography>
               <div
                 style={{
-                  marginTop: '1rem',
+                  marginTop: 'var(--ob-space-100)',
                   height: '4px',
                   minWidth: '40px',
                   width: '40px',
@@ -968,7 +970,7 @@ export function FeasibilityWizard({
             <div
               style={{
                 marginTop: 'auto',
-                padding: '1rem',
+                padding: 'var(--ob-space-100)',
                 width: '100%',
                 borderTop: '1px solid var(--ob-color-border-light)',
                 display: 'flex',
@@ -977,7 +979,7 @@ export function FeasibilityWizard({
             >
               <span
                 style={{
-                  fontSize: '0.7rem',
+                  fontSize: 'var(--ob-font-size-2xs)',
                   color: 'var(--ob-color-text-muted)',
                 }}
               >
@@ -985,7 +987,7 @@ export function FeasibilityWizard({
               </span>
               <span
                 style={{
-                  fontSize: '0.7rem',
+                  fontSize: 'var(--ob-font-size-2xs)',
                   color: 'var(--ob-color-text-muted)',
                 }}
               >
@@ -996,7 +998,7 @@ export function FeasibilityWizard({
         </DialogContent>
         <DialogActions
           sx={{
-            padding: '1rem',
+            padding: 'var(--ob-space-100)',
             borderTop: '1px solid var(--ob-color-border-light)',
           }}
         >

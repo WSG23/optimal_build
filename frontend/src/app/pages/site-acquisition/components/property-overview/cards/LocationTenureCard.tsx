@@ -61,7 +61,7 @@ export const LocationTenureCard = memo(function LocationTenureCard({
                 fontSize: 'var(--ob-font-size-sm)',
                 fontWeight: 'var(--ob-font-weight-semibold)',
                 color: 'text.primary',
-                lineHeight: 1.4,
+                lineHeight: 'var(--ob-line-height-snug)',
                 mt: 'var(--ob-space-025)',
               }}
             >

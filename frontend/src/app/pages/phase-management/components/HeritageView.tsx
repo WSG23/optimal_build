@@ -15,27 +15,27 @@ interface HeritageViewProps {
 
 export function HeritageView({ data }: HeritageViewProps) {
   return (
-    <Stack spacing={3}>
-      <Paper variant="outlined" sx={{ p: 3 }}>
+    <Stack spacing="var(--ob-space-200)">
+      <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
         <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="center"
-          sx={{ mb: 2 }}
+          sx={{ mb: 'var(--ob-space-200)' }}
         >
           <Typography variant="h6">Heritage Preservation Status</Typography>
           <Typography
             variant="body2"
             sx={{
-              px: 2,
-              py: 0.5,
+              px: 'var(--ob-space-200)',
+              py: 'var(--ob-space-050)',
               backgroundColor: (t) =>
                 data.overallApprovalStatus === 'approved'
                   ? alpha(t.palette.success.main, 0.12)
                   : data.overallApprovalStatus === 'pending'
                     ? alpha(t.palette.warning.main, 0.12)
                     : alpha(t.palette.error.main, 0.12),
-              borderRadius: 1,
+              borderRadius: 'var(--ob-radius-sm)',
             }}
           >
             {data.overallApprovalStatus}
@@ -47,13 +47,19 @@ export function HeritageView({ data }: HeritageViewProps) {
         </Typography>
       </Paper>
 
-      <Grid container spacing={2}>
+      <Grid container spacing="var(--ob-space-200)">
         <Grid item xs={12} md={4}>
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 'var(--ob-font-weight-semibold)',
+                mb: 'var(--ob-space-200)',
+              }}
+            >
               Required Approvals
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing="var(--ob-space-100)">
               {data.requiredApprovals.map((approval, idx) => (
                 <Typography key={idx} variant="body2">
                   • {approval}
@@ -63,14 +69,18 @@ export function HeritageView({ data }: HeritageViewProps) {
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper variant="outlined" sx={{ p: 2 }}>
+          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
             <Typography
               variant="subtitle2"
-              sx={{ fontWeight: 600, mb: 2, color: 'warning.main' }}
+              sx={{
+                fontWeight: 'var(--ob-font-weight-semibold)',
+                mb: 'var(--ob-space-200)',
+                color: 'warning.main',
+              }}
             >
               Preservation Risks
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing="var(--ob-space-100)">
               {data.preservationRisks.map((risk, idx) => (
                 <Typography key={idx} variant="body2">
                   • {risk}
@@ -80,14 +90,18 @@ export function HeritageView({ data }: HeritageViewProps) {
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper variant="outlined" sx={{ p: 2 }}>
+          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
             <Typography
               variant="subtitle2"
-              sx={{ fontWeight: 600, mb: 2, color: 'info.main' }}
+              sx={{
+                fontWeight: 'var(--ob-font-weight-semibold)',
+                mb: 'var(--ob-space-200)',
+                color: 'info.main',
+              }}
             >
               Recommendations
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing="var(--ob-space-100)">
               {data.recommendations.map((rec, idx) => (
                 <Typography key={idx} variant="body2">
                   • {rec}
@@ -98,12 +112,18 @@ export function HeritageView({ data }: HeritageViewProps) {
         </Grid>
       </Grid>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+      <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 'var(--ob-font-weight-semibold)',
+            mb: 'var(--ob-space-200)',
+          }}
+        >
           Heritage Phases
         </Typography>
-        <Divider sx={{ mb: 2 }} />
-        <Stack spacing={2}>
+        <Divider sx={{ mb: 'var(--ob-space-200)' }} />
+        <Stack spacing="var(--ob-space-200)">
           {data.phases.map((phase) => (
             <Box
               key={phase.phaseId}
@@ -111,18 +131,21 @@ export function HeritageView({ data }: HeritageViewProps) {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                p: 1.5,
+                p: 'var(--ob-space-150)',
                 backgroundColor: (t) =>
                   phase.approvalRequired
                     ? alpha(t.palette.warning.main, 0.08)
                     : t.palette.action.hover,
-                borderRadius: 1,
+                borderRadius: 'var(--ob-radius-sm)',
                 border: '1px solid',
                 borderColor: 'divider',
               }}
             >
               <Box>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 'var(--ob-font-weight-medium)' }}
+                >
                   {phase.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -133,13 +156,13 @@ export function HeritageView({ data }: HeritageViewProps) {
                 <Typography
                   variant="caption"
                   sx={{
-                    px: 1.5,
-                    py: 0.5,
+                    px: 'var(--ob-space-150)',
+                    py: 'var(--ob-space-050)',
                     backgroundColor: (t) =>
                       phase.approvalStatus === 'approved'
                         ? alpha(t.palette.success.main, 0.12)
                         : alpha(t.palette.warning.main, 0.12),
-                    borderRadius: 1,
+                    borderRadius: 'var(--ob-radius-sm)',
                   }}
                 >
                   {phase.approvalStatus ?? 'Pending'}

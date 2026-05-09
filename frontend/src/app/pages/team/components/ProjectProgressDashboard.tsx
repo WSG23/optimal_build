@@ -365,7 +365,7 @@ export const ProjectProgressDashboard: React.FC<
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-3xl)',
-                fontWeight: 700,
+                fontWeight: 'var(--ob-font-weight-bold)',
                 mt: 'var(--ob-space-050)',
               }}
             >
@@ -413,7 +413,7 @@ export const ProjectProgressDashboard: React.FC<
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-3xl)',
-                fontWeight: 700,
+                fontWeight: 'var(--ob-font-weight-bold)',
                 mt: 'var(--ob-space-050)',
               }}
             >
@@ -452,7 +452,7 @@ export const ProjectProgressDashboard: React.FC<
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-3xl)',
-                fontWeight: 700,
+                fontWeight: 'var(--ob-font-weight-bold)',
                 mt: 'var(--ob-space-050)',
               }}
             >
@@ -491,7 +491,7 @@ export const ProjectProgressDashboard: React.FC<
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-3xl)',
-                fontWeight: 700,
+                fontWeight: 'var(--ob-font-weight-bold)',
                 mt: 'var(--ob-space-050)',
               }}
             >

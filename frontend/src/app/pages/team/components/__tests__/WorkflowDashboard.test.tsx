@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import React from 'react'
 
@@ -141,10 +142,10 @@ describe('WorkflowDashboard', () => {
       render(<WorkflowDashboard projectId="project-1" />)
 
       await waitFor(() => {
-        // Look for "Type:" text - there may be multiple workflows showing this
-        const typeLabels = screen.getAllByText(/Type:/i)
-        expect(typeLabels.length).toBeGreaterThan(0)
+        expect(screen.getByText('design review')).toBeInTheDocument()
       })
+
+      expect(screen.getByText('budget approval')).toBeInTheDocument()
     })
 
     it('displays workflow steps', async () => {
@@ -232,10 +233,19 @@ describe('WorkflowDashboard', () => {
       fireEvent.click(screen.getByRole('button', { name: /Approve/i }))
 
       await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument()
+      })
+      fireEvent.click(
+        within(screen.getByRole('dialog')).getByRole('button', {
+          name: /^Approve$/i,
+        }),
+      )
+
+      await waitFor(() => {
         expect(workflowApi.approveStep).toHaveBeenCalledWith(
           'step-2',
           true,
-          'Approved from dashboard',
+          undefined,
         )
       })
     })
@@ -269,6 +279,11 @@ describe('WorkflowDashboard', () => {
       })
 
       fireEvent.click(screen.getByRole('button', { name: /Approve/i }))
+      fireEvent.click(
+        within(screen.getByRole('dialog')).getByRole('button', {
+          name: /^Approve$/i,
+        }),
+      )
 
       // Should not call API for mock steps
       expect(workflowApi.approveStep).not.toHaveBeenCalled()

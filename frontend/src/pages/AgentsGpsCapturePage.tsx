@@ -44,22 +44,27 @@ function loadGoogleMapsScript(apiKey: string): Promise<void> {
   if (typeof window === 'undefined') {
     return Promise.reject(new Error('Window is not available.'))
   }
-  if (window.google?.maps) {
-    return Promise.resolve()
-  }
   if (googleMapsPromise) {
     return googleMapsPromise
   }
 
-  googleMapsPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async`
-    script.async = true
-    script.defer = true
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error('Failed to load Google Maps'))
-    document.head.appendChild(script)
-  })
+  googleMapsPromise = (async () => {
+    if (!window.google?.maps) {
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async`
+        script.async = true
+        script.defer = true
+        script.onload = () => resolve()
+        script.onerror = () => reject(new Error('Failed to load Google Maps'))
+        document.head.appendChild(script)
+      })
+    }
+
+    // With loading=async, we must importLibrary to get the actual classes
+    await google.maps.importLibrary('maps')
+    await google.maps.importLibrary('marker')
+  })()
 
   return googleMapsPromise
 }

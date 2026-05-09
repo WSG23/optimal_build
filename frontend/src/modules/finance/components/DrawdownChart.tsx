@@ -97,7 +97,7 @@ export function DrawdownChart({ scenarios, scenarioId }: DrawdownChartProps) {
       <Box sx={{ ...tooltipStyle, minWidth: 220 }}>
         <Typography
           sx={{
-            fontWeight: 700,
+            fontWeight: 'var(--ob-font-weight-bold)',
             fontSize: 'var(--ob-font-size-sm)',
             mb: 'var(--ob-space-050)',
             color: 'text.primary',
@@ -146,7 +146,7 @@ export function DrawdownChart({ scenarios, scenarioId }: DrawdownChartProps) {
             <Typography
               sx={{
                 fontSize: 'var(--ob-font-size-sm)',
-                fontWeight: 500,
+                fontWeight: 'var(--ob-font-weight-medium)',
                 fontFamily: 'var(--ob-font-family-mono)',
                 color: 'text.primary',
               }}

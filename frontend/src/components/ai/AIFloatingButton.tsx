@@ -45,14 +45,13 @@ export function AIFloatingButton({
               bottom: 'var(--ob-space-400)',
               right: 'var(--ob-space-400)',
               background:
-                'linear-gradient(135deg, var(--ob-color-neon-cyan), var(--ob-color-neon-blue))',
+                'linear-gradient(135deg, var(--ob-color-brand-primary), var(--ob-color-neon-blue))',
               color: 'var(--ob-color-bg-base)',
-              boxShadow: 'var(--ob-glow-neon-cyan)',
               '&:hover': {
                 background:
-                  'linear-gradient(135deg, var(--ob-color-neon-cyan), var(--ob-color-neon-blue))',
-                boxShadow: '0 0 24px var(--ob-color-neon-cyan)',
-                filter: 'brightness(1.15)',
+                  'linear-gradient(135deg, var(--ob-color-brand-primary), var(--ob-color-neon-blue))',
+                boxShadow:
+                  '0 0 var(--ob-space-150) var(--ob-color-brand-primary)',
               },
               zIndex: 1200,
             }}

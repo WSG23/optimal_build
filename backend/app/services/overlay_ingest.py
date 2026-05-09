@@ -138,6 +138,7 @@ async def ingest_parsed_import_geometry(
 
 
 INGESTION_HANDLERS: dict[str, str] = {
+    "sg": "backend.scripts.ingest_sg_zones:ingest_sg_zones",
     "hk": "backend.scripts.ingest_hk_zones:ingest_hk_zones",
     "nz": "backend.scripts.ingest_nz_zones:ingest_nz_zones",
     "sea": "backend.scripts.ingest_seattle_zones:ingest_seattle_zones",

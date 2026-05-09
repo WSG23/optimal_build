@@ -33,17 +33,17 @@
 
 .page__title {
     font-size: var(--ob-font-size-3xl);
-    font-weight: 700;
+    font-weight: var(--ob-font-weight-bold);
     letter-spacing: -0.015em;
     margin: 0 0 var(--ob-spacing-100);
-    line-height: 1.1;
+    line-height: var(--ob-line-height-tight);
     color: var(--ob-color-text-primary);
 }
 
 .page__subtitle {
     font-size: var(--ob-font-size-lg);
     color: var(--ob-color-text-secondary);
-    font-weight: 400;
+    font-weight: var(--ob-font-weight-regular);
     margin: 0;
     letter-spacing: -0.01em;
 }
@@ -62,7 +62,7 @@
 
 .page__section-title {
     font-size: var(--ob-font-size-lg);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     margin: 0 0 var(--ob-spacing-400);
     letter-spacing: -0.01em;
     color: var(--ob-color-text-primary);
@@ -95,7 +95,7 @@
 .page__label {
     display: block;
     font-size: var(--ob-font-size-sm);
-    font-weight: 500;
+    font-weight: var(--ob-font-weight-medium);
     color: var(--ob-color-text-primary);
     margin-bottom: var(--ob-spacing-100);
     letter-spacing: -0.005em;
@@ -199,7 +199,7 @@
     gap: var(--ob-spacing-100);
     padding: var(--ob-spacing-200) var(--ob-spacing-400);
     font-size: var(--ob-font-size-base);
-    font-weight: 500;
+    font-weight: var(--ob-font-weight-medium);
     border: none;
     border-radius: var(--ob-radius-xs); /* 2px - buttons */
     cursor: pointer;
@@ -210,10 +210,10 @@
 .page__btn--primary {
     background: linear-gradient(
         135deg,
-        #1d4ed8 0%,
+        var(--ob-brand-700) 0%,
         var(--ob-color-brand-primary) 100%
     );
-    color: #0a1628;
+    color: var(--ob-color-text-inverse, #0a1628);
     box-shadow: var(--ob-shadow-sm);
 }
 
@@ -221,7 +221,7 @@
     background: linear-gradient(
         135deg,
         var(--ob-color-brand-primary) 0%,
-        #1d4ed8 100%
+        var(--ob-brand-700) 100%
     );
     box-shadow: var(--ob-shadow-md);
     transform: translateY(-1px);
@@ -234,7 +234,7 @@
 }
 
 .page__btn--secondary:hover:not(:disabled) {
-    background: rgba(59, 130, 246, 0.08);
+    background: var(--ob-color-brand-muted);
     border-color: var(--ob-color-brand-primary);
 }
 
@@ -355,14 +355,14 @@
 
 .page__card-title {
     font-size: var(--ob-font-size-base);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     margin: 0 0 var(--ob-spacing-200);
     color: var(--ob-color-text-primary);
 }
 
 .page__card-value {
     font-size: var(--ob-font-size-2xl);
-    font-weight: 700;
+    font-weight: var(--ob-font-weight-bold);
     color: var(--ob-color-text-primary);
     margin: 0;
 }
@@ -386,12 +386,12 @@
 .page__metric-label {
     font-size: var(--ob-font-size-sm);
     color: var(--ob-color-text-secondary);
-    font-weight: 500;
+    font-weight: var(--ob-font-weight-medium);
 }
 
 .page__metric-value {
     font-size: var(--ob-font-size-xl);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     color: var(--ob-color-text-primary);
     font-family: var(--ob-font-family-mono);
 }
@@ -448,7 +448,7 @@
 
 .page__empty-title {
     font-size: var(--ob-font-size-lg);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
     margin: 0 0 var(--ob-spacing-200);
     color: var(--ob-color-text-primary);
 }

@@ -38,6 +38,9 @@ export interface UraZoningSummary {
   siteCoverage?: number | null
   useGroups: string[]
   specialConditions?: string | null
+  developmentControlStatus?: string | null
+  source?: string | null
+  sourceReason?: string | null
 }
 
 export interface PropertyInfoSummary {
@@ -49,6 +52,17 @@ export interface PropertyInfoSummary {
   completionYear?: number | null
   lastTransactionDate?: string | null
   lastTransactionPrice?: number | null
+  currentUse?: string | null
+  currentUseEvidence?: CurrentUseEvidenceSummary[]
+}
+
+export interface CurrentUseEvidenceSummary {
+  use: string
+  source: string
+  confidence: string
+  basis: string
+  placeName?: string | null
+  placeTypes?: string[]
 }
 
 export interface AmenitySummary {
@@ -196,6 +210,9 @@ function mapUraZoning(
       siteCoverage: null,
       useGroups: [],
       specialConditions: undefined,
+      developmentControlStatus: undefined,
+      source: undefined,
+      sourceReason: undefined,
     }
   }
   const useGroups = Array.isArray(payload.use_groups)
@@ -212,6 +229,15 @@ function mapUraZoning(
     siteCoverage: coerceNumber(payload.site_coverage),
     useGroups,
     specialConditions: coerceString(payload.special_conditions) ?? null,
+    developmentControlStatus:
+      coerceString(payload.development_control_status) ??
+      coerceString(payload.developmentControlStatus) ??
+      null,
+    source: coerceString(payload.source) ?? null,
+    sourceReason:
+      coerceString(payload.source_reason) ??
+      coerceString(payload.sourceReason) ??
+      null,
   }
 }
 
@@ -221,6 +247,36 @@ function mapPropertyInfo(
   if (!payload) {
     return null
   }
+  const currentUseEvidence = Array.isArray(payload.current_use_evidence)
+    ? payload.current_use_evidence
+        .map((entry): CurrentUseEvidenceSummary | null => {
+          if (!entry || typeof entry !== 'object') {
+            return null
+          }
+          const record = entry as Record<string, unknown>
+          const use = coerceString(record.use)
+          const source = coerceString(record.source)
+          const confidence = coerceString(record.confidence)
+          const basis = coerceString(record.basis)
+          if (!use || !source || !confidence || !basis) {
+            return null
+          }
+          const placeTypes = Array.isArray(record.place_types)
+            ? record.place_types
+                .map((item) => coerceString(item))
+                .filter((item): item is string => Boolean(item))
+            : undefined
+          return {
+            use,
+            source,
+            confidence,
+            basis,
+            placeName: coerceString(record.place_name) ?? null,
+            placeTypes,
+          }
+        })
+        .filter((item): item is CurrentUseEvidenceSummary => item !== null)
+    : undefined
   return {
     propertyName: coerceString(payload.property_name) ?? null,
     tenure: coerceString(payload.tenure) ?? null,
@@ -230,6 +286,8 @@ function mapPropertyInfo(
     completionYear: coerceNumber(payload.completion_year),
     lastTransactionDate: coerceString(payload.last_transaction_date) ?? null,
     lastTransactionPrice: coerceNumber(payload.last_transaction_price),
+    currentUse: coerceString(payload.current_use) ?? null,
+    currentUseEvidence,
   }
 }
 

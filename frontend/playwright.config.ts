@@ -1,6 +1,9 @@
 import { defineConfig } from '@playwright/test'
+import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 const rootDir = path.resolve(__dirname, '..')
 const backendDir = path.resolve(rootDir, 'backend')
 const pythonPathEntries = [backendDir, rootDir]
@@ -20,8 +23,8 @@ const buildableUsePostgis = process.env.BUILDABLE_USE_POSTGIS ?? '0'
 const isCI = Boolean(process.env.CI)
 const frontendPort = isCI ? 4173 : 3000
 const frontendCommand = isCI
-  ? 'pnpm preview:ci'
-  : 'pnpm dev -- --host 127.0.0.1 --port 3000'
+  ? 'npm run preview:ci'
+  : 'npm run dev -- --host 127.0.0.1 --port 3000'
 const frontendUrl = `http://127.0.0.1:${frontendPort}`
 
 export default defineConfig({
@@ -33,18 +36,23 @@ export default defineConfig({
   reporter: [['list'], ['html', { outputFolder: 'playwright-report' }]],
   use: {
     baseURL: frontendUrl,
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
   },
   webServer: [
     {
-      command:
-        'python -m backend.uvicorn app.main:app --host 127.0.0.1 --port 8000',
+      command: 'python -m uvicorn app.main:app --host 127.0.0.1 --port 8000',
       cwd: backendDir,
       env: {
         PYTHONPATH: pythonPath,
         SQLALCHEMY_DATABASE_URI: configuredDbUrl,
         PLAYWRIGHT_E2E_DB_URL: e2eDbUrl,
         BUILDABLE_USE_POSTGIS: buildableUsePostgis,
+        // Allow the preview server's origin (`vite preview` defaults
+        // to 4173) so fetch from the built frontend isn't blocked by
+        // the backend's CORS preflight check.
+        BACKEND_ALLOWED_ORIGINS: `${frontendUrl},http://localhost:${frontendPort}`,
       },
       port: 8000,
       reuseExistingServer: !isCI,

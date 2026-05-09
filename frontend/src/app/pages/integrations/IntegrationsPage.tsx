@@ -40,13 +40,11 @@ export function IntegrationsPage() {
         width: '100%',
         maxWidth: 1200,
         mx: 'auto',
-        px: { xs: 2, md: 3 },
-        py: { xs: 3, md: 5 },
       }}
     >
-      <Stack spacing={3}>
+      <Stack spacing="var(--ob-space-300)">
         <Box>
-          <Typography variant="h3" sx={{ mb: 1 }}>
+          <Typography variant="h3" sx={{ mb: 'var(--ob-space-050)' }}>
             Singapore data partnerships
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -58,17 +56,17 @@ export function IntegrationsPage() {
 
         <Box
           sx={{
-            p: 2.5,
-            borderRadius: 2,
+            p: 'var(--ob-space-200)',
+            borderRadius: 'var(--ob-radius-sm)',
             border: '1px solid',
             borderColor: 'divider',
             bgcolor: 'background.paper',
           }}
         >
-          <Stack spacing={1.5}>
+          <Stack spacing="var(--ob-space-150)">
             <Stack
               direction={{ xs: 'column', md: 'row' }}
-              spacing={1.5}
+              spacing="var(--ob-space-150)"
               justifyContent="space-between"
             >
               <Box>
@@ -93,23 +91,23 @@ export function IntegrationsPage() {
           </Stack>
         </Box>
 
-        <Grid container spacing={2}>
+        <Grid container spacing="var(--ob-space-200)">
           {PARTNER_INTEGRATIONS.map((integration) => (
             <Grid item xs={12} md={6} key={integration.id}>
               <Box
                 sx={{
-                  p: 2.5,
-                  borderRadius: 2,
+                  p: 'var(--ob-space-200)',
+                  borderRadius: 'var(--ob-radius-sm)',
                   border: '1px solid',
                   borderColor: 'divider',
                   bgcolor: 'background.paper',
                   height: '100%',
                 }}
               >
-                <Stack spacing={1.5} sx={{ height: '100%' }}>
+                <Stack spacing="var(--ob-space-150)" sx={{ height: '100%' }}>
                   <Stack
                     direction="row"
-                    spacing={1}
+                    spacing="var(--ob-space-100)"
                     justifyContent="space-between"
                     alignItems="flex-start"
                   >

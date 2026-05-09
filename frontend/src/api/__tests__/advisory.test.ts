@@ -42,7 +42,7 @@ describe('advisory API client', () => {
 
     globalThis.fetch = vi.fn(async (input) => {
       const url = typeof input === 'string' ? input : input.url
-      expect(url).toBe(
+      expect(new URL(url, 'http://test.local').pathname).toBe(
         '/api/v1/agents/commercial-property/properties/prop-1/advisory',
       )
       return {

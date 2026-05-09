@@ -35,14 +35,26 @@ export function AbsorptionChart({ data }: AbsorptionChartProps) {
   return (
     <GlassCard className="advisory-panel">
       <Box
-        sx={{ p: 2, borderBottom: '1px solid var(--ob-color-border-subtle)' }}
+        sx={{
+          p: 'var(--ob-space-200)',
+          borderBottom: '1px solid var(--ob-color-border-subtle)',
+        }}
       >
-        <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontSize: 'var(--ob-font-size-base)',
+            fontWeight: 'var(--ob-font-weight-semibold)',
+          }}
+        >
           Absorption Forecast
         </Typography>
         <Typography
           variant="body2"
-          sx={{ color: 'var(--ob-color-text-secondary)', mt: 0.5 }}
+          sx={{
+            color: 'var(--ob-color-text-secondary)',
+            mt: 'var(--ob-space-050)',
+          }}
         >
           Expected Stabilisation:{' '}
           <strong style={{ color: 'var(--ob-color-text-primary)' }}>
@@ -55,7 +67,7 @@ export function AbsorptionChart({ data }: AbsorptionChartProps) {
         </Typography>
       </Box>
 
-      <Box sx={{ p: 3, height: 400 }}>
+      <Box sx={{ p: 'var(--ob-space-200)', height: 400 }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={chartData}

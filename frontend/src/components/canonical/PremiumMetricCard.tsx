@@ -56,14 +56,12 @@ export interface PremiumMetricCardProps {
 }
 
 /**
- * PremiumMetricCard - Cyber Aesthetic Metric Display
+ * PremiumMetricCard - Institutional Metric Display
  *
- * Premium version with:
- * - Glassmorphism background
- * - Neon glow on value
- * - Optional progress ring
- * - Pulsing status indicator
- * - Holographic shine on featured state
+ * Features:
+ * - Clean card surface with optional progress ring
+ * - Featured state uses left border accent
+ * - Optional status indicator for live data feeds
  *
  * Usage:
  * ```tsx
@@ -71,7 +69,6 @@ export interface PremiumMetricCardProps {
  *   label="Total NPV"
  *   value="$1,234,567"
  *   trend={15.2}
- *   status="live"
  *   featured
  * />
  * ```
@@ -109,33 +106,16 @@ export function PremiumMetricCard({
       animated={!loading}
       onClick={onClick}
       sx={{
-        p: compact ? 'var(--ob-space-150)' : 'var(--ob-space-200)',
+        p: compact ? 'var(--ob-space-100)' : 'var(--ob-space-150)',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        gap: 'var(--ob-space-100)',
+        gap: 'var(--ob-space-075)',
         position: 'relative',
         overflow: 'hidden',
-        // Holographic shine effect on featured cards
+        // Featured cards use a subtle left border accent
         ...(featured && {
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            inset: 0,
-            background:
-              'linear-gradient(120deg, transparent 30%, rgba(0, 243, 255, 0.05) 50%, transparent 70%)',
-            backgroundSize: '200% 100%',
-            animation:
-              'ob-holographic-shine var(--ob-motion-shine-duration) ease-in-out infinite',
-            pointerEvents: 'none',
-          },
-          '@keyframes ob-holographic-shine': {
-            '0%': { backgroundPosition: '-200% center' },
-            '100%': { backgroundPosition: '200% center' },
-          },
-          '@media (prefers-reduced-motion: reduce)': {
-            '&::after': { animation: 'none' },
-          },
+          borderLeft: '3px solid var(--ob-color-brand-primary)',
         }),
         ...sx,
       }}
@@ -172,7 +152,7 @@ export function PremiumMetricCard({
         {icon && (
           <Box
             sx={{
-              color: 'var(--ob-color-neon-cyan)',
+              color: 'var(--ob-color-brand-primary)',
               opacity: 0.7,
               display: 'flex',
             }}
@@ -237,13 +217,11 @@ export function PremiumMetricCard({
                   cy="18"
                   r="15.5"
                   fill="none"
-                  stroke="var(--ob-color-neon-cyan)"
+                  stroke="var(--ob-color-brand-primary)"
                   strokeWidth="3"
                   strokeLinecap="round"
                   strokeDasharray={`${progress} 100`}
-                  style={{
-                    filter: 'drop-shadow(0 0 4px rgba(0, 243, 255, 0.5))',
-                  }}
+                  style={{}}
                 />
               </svg>
               <Typography
@@ -255,7 +233,7 @@ export function PremiumMetricCard({
                   justifyContent: 'center',
                   fontSize: 'var(--ob-font-size-xs)',
                   fontWeight: 'var(--ob-font-weight-bold)',
-                  color: 'var(--ob-color-neon-cyan)',
+                  color: 'var(--ob-color-brand-primary)',
                 }}
               >
                 {Math.round(progress)}%
@@ -278,7 +256,7 @@ export function PremiumMetricCard({
               fontSize: compact
                 ? 'var(--ob-font-size-2xl)'
                 : 'var(--ob-font-size-3xl)',
-              lineHeight: 1.1,
+              lineHeight: 'var(--ob-line-height-tight)',
             }}
           >
             {value}
@@ -311,13 +289,13 @@ export function PremiumMetricCard({
                 sx={{
                   fontWeight: 'var(--ob-font-weight-semibold)',
                   px: 'var(--ob-space-050)',
-                  py: '2px',
+                  py: 'var(--ob-space-025)',
                   borderRadius: 'var(--ob-radius-xs)',
                   bgcolor:
                     trend! > 0
-                      ? 'rgba(0, 255, 157, 0.1)'
+                      ? 'var(--ob-color-success-soft)'
                       : trend! < 0
-                        ? 'rgba(255, 51, 102, 0.1)'
+                        ? 'var(--ob-color-error-soft)'
                         : 'var(--ob-overlay-subtle)',
                 }}
               >

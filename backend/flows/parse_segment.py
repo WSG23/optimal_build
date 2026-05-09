@@ -18,6 +18,7 @@ if str(Path(__file__).resolve().parents[1]) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.core.database import AsyncSessionLocal
+from app.models import load_model_modules
 from app.models.rkp import RefClause, RefDocument, RefSource
 from app.services.reference_parsers import ClauseParser, ParsedClause
 from app.services.reference_storage import ReferenceStorage
@@ -34,6 +35,7 @@ async def parse_reference_documents(
 ) -> list[int]:
     """Parse pending ``RefDocument`` records into ``RefClause`` entries."""
 
+    load_model_modules()
     storage = storage or ReferenceStorage()
     parser = parser or ClauseParser()
     processed: list[int] = []
@@ -158,10 +160,19 @@ async def _run_once(
 
 
 async def _collect_counts() -> tuple[int, int]:
+    load_model_modules()
     async with AsyncSessionLocal() as session:
         documents = (await session.execute(select(RefDocument))).scalars().all()
         clauses = (await session.execute(select(RefClause))).scalars().all()
     return len(documents), len(clauses)
+
+
+async def _run_cli(
+    *, storage: ReferenceStorage, parser: ClauseParser | None = None
+) -> tuple[list[int], int, int]:
+    processed = await _run_once(storage=storage, parser=parser)
+    document_count, clause_count = await _collect_counts()
+    return processed, document_count, clause_count
 
 
 def main(argv: Sequence[str] | None = None) -> dict[str, int | list[int]]:
@@ -171,8 +182,7 @@ def main(argv: Sequence[str] | None = None) -> dict[str, int | list[int]]:
         base_path=args.storage_path if args.storage_path is not None else None,
     )
 
-    processed = asyncio.run(_run_once(storage=storage))
-    document_count, clause_count = asyncio.run(_collect_counts())
+    processed, document_count, clause_count = asyncio.run(_run_cli(storage=storage))
 
     summary: dict[str, int | list[int]] = {
         "processed_documents": processed,

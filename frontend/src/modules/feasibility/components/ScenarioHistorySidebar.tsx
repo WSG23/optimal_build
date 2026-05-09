@@ -51,7 +51,12 @@ export function ScenarioHistorySidebar({
           borderBottom: '1px solid var(--ob-color-border-light)',
         }}
       >
-        <History sx={{ marginRight: 1, color: 'var(--ob-color-text-muted)' }} />
+        <History
+          sx={{
+            marginRight: 'var(--ob-space-100)',
+            color: 'var(--ob-color-text-muted)',
+          }}
+        />
         <Typography variant="h6" className="text-heading">
           Scenario History
         </Typography>
@@ -74,7 +79,7 @@ export function ScenarioHistorySidebar({
               key={item.id}
               disablePadding
               sx={{
-                marginBottom: 1,
+                marginBottom: 'var(--ob-space-100)',
                 background: 'var(--ob-color-bg-surface-secondary)',
                 borderRadius: 'var(--ob-radius-md)',
               }}

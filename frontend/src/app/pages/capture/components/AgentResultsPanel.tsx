@@ -20,8 +20,8 @@ import {
   type GpsCaptureSummaryWithFeatures,
   type MarketIntelligenceSummary,
   type ProfessionalPackType,
-  type DevelopmentScenario,
 } from '../../../../api/agents'
+import { formatScenarioLabel } from '../utils/formatScenario'
 import { Button } from '../../../../components/canonical/Button'
 
 interface PackButtonProps {
@@ -189,7 +189,7 @@ export function AgentResultsPanel({
           </div>
         ) : (
           <div className="gps-hud-locked-overlay">
-            <span>Downlink Offline</span>
+            <span>Scan to receive market data</span>
           </div>
         )}
       </div>
@@ -242,24 +242,7 @@ export function AgentResultsPanel({
   )
 }
 
-// Helper functions (ported from GpsCapturePage)
-
-function formatScenarioLabel(value: DevelopmentScenario) {
-  switch (value) {
-    case 'raw_land':
-      return 'Raw land'
-    case 'existing_building':
-      return 'Existing building'
-    case 'heritage_property':
-      return 'Heritage property'
-    case 'underused_asset':
-      return 'Underused asset'
-    case 'mixed_use_redevelopment':
-      return 'Mixed-use redevelopment'
-    default:
-      return value
-  }
-}
+// Helper functions
 
 function formatPackLabel(value: ProfessionalPackType) {
   switch (value) {

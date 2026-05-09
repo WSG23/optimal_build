@@ -12,7 +12,7 @@ const designTokensDir: string = resolve(workspaceRoot, 'core/design-tokens')
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, currentDir, '')
-  const backendPort = env.BACKEND_PORT?.trim() || '8000'
+  const backendPort = (env.BACKEND_PORT || '').trim() || '8000'
   const proxyTarget = `http://127.0.0.1:${backendPort}`
 
   return {

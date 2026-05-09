@@ -1,14 +1,12 @@
 /**
  * FinanceMetricsGrid - 4-column responsive metrics grid
  *
- * Follows UI_STANDARDS.md Metrics Grid Pattern:
- * - Uses PremiumMetricCard for cyber aesthetic
+ * - Uses PremiumMetricCard with tooltips explaining each metric
  * - Grid uses xs={6} md={3} for responsive 2/4 columns
- * - Neon glow on key metrics
  */
 
 import { useMemo } from 'react'
-import { Box, Grid } from '@mui/material'
+import { Box, Grid, Tooltip } from '@mui/material'
 import MoneyIcon from '@mui/icons-material/AttachMoney'
 import TrendingIcon from '@mui/icons-material/TrendingUp'
 import BankIcon from '@mui/icons-material/AccountBalance'
@@ -26,6 +24,7 @@ interface FinanceMetricsGridProps {
 interface MetricItem {
   key: string
   label: string
+  tooltip?: string
   value: string
   icon: React.ReactNode
   featured?: boolean
@@ -71,12 +70,15 @@ export function FinanceMetricsGrid({ scenario }: FinanceMetricsGridProps) {
         label: t('finance.metrics.weightedRate', {
           defaultValue: 'Weighted Debt Rate',
         }),
+        tooltip: 'Blended interest rate across all debt facilities',
         value: weightedRate !== null ? formatPercent(weightedRate) : fallback,
         icon: <TrendingIcon />,
       },
       {
         key: 'loanToCost',
         label: t('finance.metrics.loanToCost', { defaultValue: 'LTC' }),
+        tooltip:
+          'Loan-to-cost ratio — total debt as a percentage of project cost',
         value: loanToCost !== null ? formatPercent(loanToCost) : fallback,
         icon: <BankIcon />,
       },
@@ -85,6 +87,7 @@ export function FinanceMetricsGrid({ scenario }: FinanceMetricsGridProps) {
         label: t('finance.metrics.equityShare', {
           defaultValue: 'Equity Share',
         }),
+        tooltip: 'Equity contribution as a percentage of total project cost',
         value: equityRatio !== null ? formatPercent(equityRatio) : fallback,
         icon: <PieIcon />,
       },
@@ -100,14 +103,17 @@ export function FinanceMetricsGrid({ scenario }: FinanceMetricsGridProps) {
       <Grid container spacing="var(--ob-space-100)">
         {metrics.map((metric) => (
           <Grid item xs={6} md={3} key={metric.key}>
-            <PremiumMetricCard
-              label={metric.label}
-              value={metric.value}
-              icon={metric.icon}
-              featured={metric.featured}
-              status="live"
-              compact
-            />
+            <Tooltip title={metric.tooltip ?? ''} placement="bottom" arrow>
+              <Box sx={{ height: '100%' }}>
+                <PremiumMetricCard
+                  label={metric.label}
+                  value={metric.value}
+                  icon={metric.icon}
+                  featured={metric.featured}
+                  compact
+                />
+              </Box>
+            </Tooltip>
           </Grid>
         ))}
       </Grid>

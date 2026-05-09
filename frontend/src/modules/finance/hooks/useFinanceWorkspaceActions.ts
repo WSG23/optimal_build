@@ -8,6 +8,7 @@
 
 import { type ChangeEvent, useCallback, useRef, useState } from 'react'
 import {
+  type FinanceScenarioSummary,
   deleteFinanceScenario,
   exportFinanceScenarioCsv,
   exportFinanceScenarioWorkbook,
@@ -20,7 +21,6 @@ import {
   updateConstructionLoan,
   type ConstructionLoanInput,
 } from '../../../api/finance'
-import type { FinanceScenarioSummary } from '../hooks/useFinanceScenarios'
 import {
   DEFAULT_SENSITIVITY_HEADERS,
   escapeCsvValue,

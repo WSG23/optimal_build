@@ -44,7 +44,7 @@ export function DrawdownHeader({
         <Typography
           variant="h4"
           sx={{
-            fontWeight: 700,
+            fontWeight: 'var(--ob-font-weight-bold)',
             color: 'text.primary',
             fontSize: 'var(--ob-font-size-3xl)',
           }}
@@ -70,7 +70,7 @@ export function DrawdownHeader({
           sx={{
             borderRadius: 'var(--ob-radius-sm)',
             textTransform: 'none',
-            fontWeight: 500,
+            fontWeight: 'var(--ob-font-weight-medium)',
             px: 'var(--ob-space-100)',
             py: 'var(--ob-space-050)',
           }}
@@ -84,7 +84,7 @@ export function DrawdownHeader({
           sx={{
             borderRadius: 'var(--ob-radius-sm)',
             textTransform: 'none',
-            fontWeight: 500,
+            fontWeight: 'var(--ob-font-weight-medium)',
             px: 'var(--ob-space-100)',
             py: 'var(--ob-space-050)',
           }}

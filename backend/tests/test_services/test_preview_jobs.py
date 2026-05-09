@@ -111,6 +111,33 @@ async def test_queue_preview_inline_backend_executes_job(
     assert (
         job.metadata["geometry_detail_level"] == settings.PREVIEW_GEOMETRY_DETAIL_LEVEL
     )
+
+
+@pytest.mark.asyncio
+async def test_queue_preview_inline_background_returns_without_running_job(
+    monkeypatch, db_session, demo_property
+):
+    inline_backend = _InlineBackend()
+    monkeypatch.setattr(job_queue_module.job_queue, "_backend", inline_backend)
+
+    scheduled: list[str] = []
+
+    def fake_schedule(job_id: UUID) -> None:
+        scheduled.append(str(job_id))
+
+    monkeypatch.setattr(preview_jobs, "_schedule_preview_generation", fake_schedule)
+
+    service = PreviewJobService(db_session)
+    job = await service.queue_preview(
+        property_id=demo_property,
+        scenario="base",
+        massing_layers=[{"id": "layer-1", "height": 120}],
+        inline_execution="background",
+    )
+
+    assert job.status == PreviewJobStatus.QUEUED
+    assert job.preview_url is None
+    assert scheduled == [str(job.id)]
     assert (
         job.metadata["geometry_detail_level"] == settings.PREVIEW_GEOMETRY_DETAIL_LEVEL
     )

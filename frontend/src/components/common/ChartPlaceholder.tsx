@@ -19,7 +19,7 @@ export function ChartPlaceholder({
         width: '100%',
         position: 'relative',
         bgcolor: 'background.paper',
-        borderRadius: 1,
+        borderRadius: 'var(--ob-radius-sm)',
         border: '1px dashed',
         borderColor: 'divider',
         overflow: 'hidden',
@@ -48,14 +48,14 @@ export function ChartPlaceholder({
               width: '8%',
               height: `${h}%`,
               bgcolor: 'text.primary',
-              borderRadius: '4px 4px 0 0',
+              borderRadius: 'var(--ob-radius-sm) var(--ob-radius-sm) 0 0',
             }}
           />
         ))}
       </Box>
 
       {/* Content Overlay */}
-      <Box sx={{ textAlign: 'center', zIndex: 1, p: 2 }}>
+      <Box sx={{ textAlign: 'center', zIndex: 1, p: 'var(--ob-space-200)' }}>
         <Box
           sx={{
             width: 64,

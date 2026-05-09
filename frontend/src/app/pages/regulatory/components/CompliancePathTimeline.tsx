@@ -128,7 +128,7 @@ function TimelineBar({
       <Box
         component="span"
         sx={{
-          fontWeight: 600,
+          fontWeight: 'var(--ob-font-weight-semibold)',
           fontSize: 'var(--ob-font-size-sm)',
           display: 'block',
         }}
@@ -217,7 +217,7 @@ function TimelineBar({
             textShadow: '0 1px 2px rgba(0,0,0,0.5)',
             position: 'relative',
             zIndex: 1,
-            px: 1,
+            px: 'var(--ob-space-100)',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -379,9 +379,11 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
 
   if (loading) {
     return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
+      <Box sx={{ p: 'var(--ob-space-300)', textAlign: 'center' }}>
         <Typography>Loading compliance path...</Typography>
-        <LinearProgress sx={{ mt: 2, maxWidth: 300, mx: 'auto' }} />
+        <LinearProgress
+          sx={{ mt: 'var(--ob-space-200)', maxWidth: 300, mx: 'auto' }}
+        />
       </Box>
     )
   }
@@ -406,13 +408,13 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
             }}
           >
             <RegulatoryIcon
-              sx={{ color: 'var(--ob-color-neon-cyan)', fontSize: 24 }}
+              sx={{ color: 'var(--ob-color-brand-primary)', fontSize: 24 }}
             />
             <Box
               component="h2"
               sx={{
                 fontSize: 'var(--ob-font-size-lg)',
-                fontWeight: 700,
+                fontWeight: 'var(--ob-font-weight-bold)',
                 color: 'var(--ob-color-text-primary)',
                 m: 0,
               }}
@@ -504,7 +506,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                 borderRight: '1px solid var(--ob-border-glass)',
                 display: 'flex',
                 alignItems: 'center',
-                px: 2,
+                px: 'var(--ob-space-200)',
               }}
             >
               <Typography
@@ -522,7 +524,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                 flex: 1,
                 display: 'flex',
                 alignItems: 'center',
-                px: 2,
+                px: 'var(--ob-space-200)',
               }}
             >
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -543,15 +545,15 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                 sx={{
                   display: 'flex',
                   height: `${ROW_HEIGHT}px`,
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                  borderBottom: '1px solid rgba(245, 235, 220, 0.05)',
                   backgroundColor:
                     selectedStep === step.id
-                      ? 'rgba(0, 243, 255, 0.05)'
+                      ? 'var(--ob-color-brand-soft)'
                       : 'transparent',
                   '&:hover': {
                     backgroundColor:
                       selectedStep === step.id
-                        ? 'rgba(0, 243, 255, 0.05)'
+                        ? 'var(--ob-color-brand-soft)'
                         : 'rgba(255, 255, 255, 0.02)',
                   },
                 }}
@@ -564,8 +566,8 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                     borderRight: '1px solid var(--ob-border-glass)',
                     display: 'flex',
                     alignItems: 'center',
-                    px: 2,
-                    gap: 1.5,
+                    px: 'var(--ob-space-200)',
+                    gap: 'var(--ob-space-150)',
                     bgcolor: 'rgba(var(--ob-color-surface-default-rgb) / 0.3)',
                     backdropFilter: 'blur(var(--ob-blur-sm))',
                   }}
@@ -575,7 +577,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
                     <Typography
                       variant="body2"
                       sx={{
-                        fontWeight: 500,
+                        fontWeight: 'var(--ob-font-weight-medium)',
                         color: 'text.primary',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -616,8 +618,8 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
         <Box
           sx={{
             display: 'flex',
-            gap: 3,
-            p: 2,
+            gap: 'var(--ob-space-200)',
+            p: 'var(--ob-space-200)',
             borderTop: '1px solid var(--ob-border-glass)',
             background: 'rgba(var(--ob-color-surface-default-rgb) / 0.95)',
             flexWrap: 'wrap',
@@ -628,7 +630,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
             <Stack
               key={status}
               direction="row"
-              spacing={0.5}
+              spacing="var(--ob-space-050)"
               alignItems="center"
             >
               <Box
@@ -647,14 +649,22 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
               </Typography>
             </Stack>
           ))}
-          <Box sx={{ display: 'flex', gap: 2, ml: 'auto' }}>
-            <Stack direction="row" spacing={0.5} alignItems="center">
+          <Box sx={{ display: 'flex', gap: 'var(--ob-space-200)', ml: 'auto' }}>
+            <Stack
+              direction="row"
+              spacing="var(--ob-space-050)"
+              alignItems="center"
+            >
               <AgencyIcon
                 sx={{ fontSize: 16, color: 'var(--ob-color-text-muted)' }}
               />
               <Typography variant="caption">Regulatory Agency</Typography>
             </Stack>
-            <Stack direction="row" spacing={0.5} alignItems="center">
+            <Stack
+              direction="row"
+              spacing="var(--ob-space-050)"
+              alignItems="center"
+            >
               <HeritageIcon
                 sx={{ fontSize: 16, color: 'var(--ob-color-text-muted)' }}
               />

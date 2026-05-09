@@ -2,84 +2,61 @@ import { Typography, TypographyProps, SxProps, Theme } from '@mui/material'
 import { ReactNode } from 'react'
 
 export interface NeonTextProps extends Omit<TypographyProps, 'sx'> {
-  /**
-   * Content to display
-   */
   children: ReactNode
   /**
-   * Glow intensity
+   * Color variant.
+   * - 'default': inherits text.primary — use for data readout values
+   * - 'brand': uses brand accent — use for highlighted/interactive values
+   * - 'success' / 'warning' / 'error': semantic status colors
    */
+  color?: 'default' | 'brand' | 'cyan' | 'success' | 'warning' | 'error'
+  /** @deprecated No longer applies visual effect. Kept for API compat. */
   intensity?: 'subtle' | 'medium' | 'strong'
-  /**
-   * Color variant
-   */
-  color?: 'cyan' | 'success' | 'warning' | 'error'
-  /**
-   * Whether to animate the glow
-   */
   animate?: boolean
-  /**
-   * Additional styles
-   */
   sx?: SxProps<Theme>
 }
 
-const colorConfig = {
+const colorConfig: Record<string, { color: string }> = {
+  default: {
+    color: 'var(--ob-color-text-primary, inherit)',
+  },
+  brand: {
+    color: 'var(--ob-color-brand-primary)',
+  },
+  // 'cyan' kept as alias for 'brand' for backward compat
   cyan: {
-    color: 'var(--ob-color-neon-cyan)',
-    glowSubtle: '0 0 4px var(--ob-glow-brand-color-30)',
-    glowMedium: 'var(--ob-glow-neon-text)',
-    glowStrong: 'var(--ob-glow-neon-cyan)',
+    color: 'var(--ob-color-brand-primary)',
   },
   success: {
     color: 'var(--ob-success-400)',
-    glowSubtle: '0 0 4px var(--ob-glow-success-color-30)',
-    glowMedium: '0 0 6px var(--ob-glow-success-color-40)',
-    glowStrong: 'var(--ob-glow-status-success)',
   },
   warning: {
     color: 'var(--ob-warning-400)',
-    glowSubtle: '0 0 4px var(--ob-glow-warning-color-30)',
-    glowMedium: '0 0 6px var(--ob-glow-warning-color-40)',
-    glowStrong: 'var(--ob-glow-status-warning)',
   },
   error: {
     color: 'var(--ob-error-400)',
-    glowSubtle: '0 0 4px var(--ob-glow-error-color-30)',
-    glowMedium: '0 0 6px var(--ob-glow-error-color-40)',
-    glowStrong: 'var(--ob-glow-status-error)',
   },
 }
 
 /**
- * NeonText - Glowing Text Component
+ * AccentText — Colored text for metric values and status indicators.
  *
- * Premium cyber aesthetic with neon glow effect.
- * Use for key metrics, highlighted values, and emphasis.
+ * Use `color="default"` (the default) for data readout values.
+ * Use `color="brand"` for highlighted or interactive values.
+ * Use `color="success"` / `color="error"` for trend indicators.
  *
- * Usage:
- * ```tsx
- * <NeonText variant="h3" intensity="strong">$1,234,567</NeonText>
- * <NeonText color="success" intensity="medium">+15.2%</NeonText>
- * <NeonText color="error">-5.3%</NeonText>
- * ```
+ * Exported as both `NeonText` (legacy) and `AccentText` (preferred).
  */
 export function NeonText({
   children,
-  intensity = 'medium',
-  color = 'cyan',
+  intensity: _intensity = 'medium',
+  color = 'default',
   animate = false,
   variant = 'body1',
   sx = {},
   ...typographyProps
 }: NeonTextProps) {
-  const config = colorConfig[color]
-  const glow =
-    intensity === 'subtle'
-      ? config.glowSubtle
-      : intensity === 'strong'
-        ? config.glowStrong
-        : config.glowMedium
+  const config = colorConfig[color] ?? colorConfig.default
 
   return (
     <Typography
@@ -87,7 +64,6 @@ export function NeonText({
       {...typographyProps}
       sx={{
         color: config.color,
-        textShadow: intensity === 'strong' ? glow : 'none',
         fontWeight: 'var(--ob-font-weight-bold)',
         ...(animate && {
           animation:
@@ -103,3 +79,6 @@ export function NeonText({
     </Typography>
   )
 }
+
+/** Preferred name for NeonText */
+export const AccentText = NeonText

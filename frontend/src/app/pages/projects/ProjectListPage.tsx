@@ -168,10 +168,20 @@ export function ProjectListPage() {
 
             <Grid container spacing="var(--ob-space-200)">
               <Grid item xs={12} md={4}>
-                <Card variant="outlined" sx={{ height: '100%' }}>
-                  <CardContent>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderTop: '2px solid var(--ob-brand-500)',
+                  }}
+                >
+                  <CardContent sx={{ flex: 1 }}>
                     <Stack spacing="var(--ob-space-125)">
-                      <CalculateOutlined color="primary" />
+                      <CalculateOutlined
+                        sx={{ color: 'var(--ob-brand-500)' }}
+                      />
                       <Typography variant="h6">Model a deal</Typography>
                       <Typography variant="body2" color="text.secondary">
                         Paste an address or enter assumptions to get Singapore
@@ -191,10 +201,20 @@ export function ProjectListPage() {
                 </Card>
               </Grid>
               <Grid item xs={12} md={4}>
-                <Card variant="outlined" sx={{ height: '100%' }}>
-                  <CardContent>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderTop: '2px solid var(--ob-accent-500)',
+                  }}
+                >
+                  <CardContent sx={{ flex: 1 }}>
                     <Stack spacing="var(--ob-space-125)">
-                      <UploadFileOutlined color="primary" />
+                      <UploadFileOutlined
+                        sx={{ color: 'var(--ob-accent-500)' }}
+                      />
                       <Typography variant="h6">Import workbook</Typography>
                       <Typography variant="body2" color="text.secondary">
                         Upload an existing Excel model and structure it into the
@@ -217,10 +237,20 @@ export function ProjectListPage() {
                 </Card>
               </Grid>
               <Grid item xs={12} md={4}>
-                <Card variant="outlined" sx={{ height: '100%' }}>
-                  <CardContent>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderTop: '2px solid var(--ob-info-500)',
+                  }}
+                >
+                  <CardContent sx={{ flex: 1 }}>
                     <Stack spacing="var(--ob-space-125)">
-                      <AutoStoriesOutlined color="primary" />
+                      <AutoStoriesOutlined
+                        sx={{ color: 'var(--ob-info-500)' }}
+                      />
                       <Typography variant="h6">Open sample project</Typography>
                       <Typography variant="body2" color="text.secondary">
                         Walk through a seeded Singapore mixed-use example with
@@ -321,29 +351,79 @@ export function ProjectListPage() {
       )}
 
       <Grid container spacing="var(--ob-space-200)">
-        {projects.map((project) => (
-          <Grid item xs={12} md={6} lg={4} key={project.id}>
-            <Card variant="outlined">
-              <CardContent>
-                <Typography variant="h6">{project.name}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Status: {project.status ?? 'active'}
-                </Typography>
-              </CardContent>
-              <CardActions>
-                <Button
-                  size="small"
-                  onClick={() => {
-                    setCurrentProject(project)
-                    navigate(`/projects/${project.id}`)
-                  }}
-                >
-                  Open
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
+        {projects.map((project) => {
+          const status = project.status ?? 'active'
+          const statusColor =
+            status === 'active'
+              ? 'var(--ob-success-500)'
+              : status === 'on_hold'
+                ? 'var(--ob-warning-500)'
+                : status === 'completed'
+                  ? 'var(--ob-brand-500)'
+                  : status === 'archived'
+                    ? 'var(--ob-neutral-500)'
+                    : 'var(--ob-info-500)'
+          const statusBg =
+            status === 'active'
+              ? 'var(--ob-success-bg)'
+              : status === 'on_hold'
+                ? 'var(--ob-warning-bg)'
+                : status === 'completed'
+                  ? 'var(--ob-color-brand-muted)'
+                  : status === 'archived'
+                    ? 'rgba(120, 113, 108, 0.15)'
+                    : 'var(--ob-info-bg)'
+          return (
+            <Grid item xs={12} md={6} lg={4} key={project.id}>
+              <Card
+                variant="outlined"
+                sx={{
+                  borderLeft: `3px solid ${statusColor}`,
+                  transition: 'border-color 0.2s ease',
+                  '&:hover': {
+                    borderColor: statusColor,
+                  },
+                }}
+              >
+                <CardContent>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="flex-start"
+                    spacing="var(--ob-space-100)"
+                  >
+                    <Typography variant="h6">{project.name}</Typography>
+                    <Chip
+                      size="small"
+                      label={status.replace('_', ' ')}
+                      sx={{
+                        textTransform: 'capitalize',
+                        fontSize: 'var(--ob-font-size-2xs, 10px)',
+                        fontWeight: 'var(--ob-font-weight-semibold)',
+                        letterSpacing: '0.05em',
+                        color: statusColor,
+                        bgcolor: statusBg,
+                        border: 'none',
+                        borderRadius: 'var(--ob-radius-xs)',
+                      }}
+                    />
+                  </Stack>
+                </CardContent>
+                <CardActions>
+                  <Button
+                    size="small"
+                    onClick={() => {
+                      setCurrentProject(project)
+                      navigate(`/projects/${project.id}`)
+                    }}
+                  >
+                    Open
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          )
+        })}
       </Grid>
 
       <Dialog open={createOpen} onClose={() => setCreateOpen(false)}>
@@ -386,11 +466,11 @@ export function ProjectListPage() {
           role: 'status',
           'aria-live': 'polite' as const,
           sx: {
-            bgcolor: 'var(--ob-gold-bg)',
-            color: 'var(--ob-gold-text)',
-            border: '1px solid var(--ob-gold-400)',
+            bgcolor: 'var(--ob-success-bg)',
+            color: 'var(--ob-success-text)',
+            border: '1px solid var(--ob-success-400)',
             borderRadius: 'var(--ob-radius-sm)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
           },
         }}
       />

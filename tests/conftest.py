@@ -118,7 +118,7 @@ else:  # pragma: no cover
         def __init__(
             self, status_code: int = 500, detail: object | None = None, headers=None
         ):
-            super().__init__(detail)
+            super().__init__(status_code, detail, headers)
             self.status_code = status_code
             self.detail = detail
             self.headers = headers
@@ -745,7 +745,7 @@ if _backend_flow_session_factory in (None, _missing_fixture):
             for module, previous in override_targets:
                 if previous is None:
                     try:
-                        delattr(module, "AsyncSessionLocal")
+                        del module.AsyncSessionLocal
                     except AttributeError:  # pragma: no cover - already absent
                         pass
                 else:

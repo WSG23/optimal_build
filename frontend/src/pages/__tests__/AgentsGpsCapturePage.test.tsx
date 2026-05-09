@@ -132,7 +132,7 @@ describe('AgentsGpsCapturePage', () => {
     assert.ok(screen.getByText(/Max GFA 20,000 sqm/i))
     assert.ok(screen.getByRole('heading', { name: /Market intelligence/i }))
     assert.ok(screen.getByText(/Transactions/i))
-    assert.ok(screen.getByText(/Add VITE_MAPBOX_ACCESS_TOKEN/))
+    assert.ok(screen.getByRole('heading', { name: /Site context map/i }))
 
     fireEvent.change(screen.getByLabelText(/Pack type/i), {
       target: { value: 'sales' },

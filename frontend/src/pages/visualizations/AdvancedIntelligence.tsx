@@ -1,12 +1,26 @@
-import { ReactNode, Suspense, lazy, useCallback, useMemo } from 'react'
-import { Box, Grid, Typography, useTheme } from '@mui/material'
+import { ReactNode, Suspense, lazy, useMemo, useState } from 'react'
+import { Box, Grid, Tooltip, Typography } from '@mui/material'
 import AccountTreeOutlined from '@mui/icons-material/AccountTreeOutlined'
 import AutoGraph from '@mui/icons-material/AutoGraph'
+import CloseIcon from '@mui/icons-material/Close'
 import ErrorOutline from '@mui/icons-material/ErrorOutline'
+import FileDownloadOutlined from '@mui/icons-material/FileDownloadOutlined'
 import HubOutlined from '@mui/icons-material/HubOutlined'
+import InfoOutlined from '@mui/icons-material/InfoOutlined'
+import SyncOutlined from '@mui/icons-material/SyncOutlined'
+import WarningAmberOutlined from '@mui/icons-material/WarningAmberOutlined'
 
 import { AppLayout } from '../../App'
-import { EmptyState, Skeleton, SkeletonText } from '../../components/canonical'
+import {
+  AlertBlock,
+  Button,
+  EmptyState,
+  MetricCard,
+  Panel,
+  SectionHeader,
+  Skeleton,
+  SkeletonText,
+} from '../../components/canonical'
 import {
   type CrossCorrelationIntelligenceState,
   type GraphIntelligenceState,
@@ -14,8 +28,6 @@ import {
   type PredictiveIntelligenceState,
   useInvestigationAnalytics,
 } from '../../hooks/useInvestigationAnalytics'
-import { KPITickerCard } from './components/KPITickerCard'
-import '../../styles/visualizations.css'
 
 const RelationshipGraph = lazy(async () => {
   const module = await import('./components/RelationshipGraph')
@@ -75,6 +87,18 @@ type CorrelationErrorState = Extract<
   { status: 'error' }
 >
 
+/** Metric tooltips — each describes what the computation actually measures */
+const METRIC_TOOLTIPS: Record<string, string> = {
+  avgDealConfidence:
+    'Average predicted probability across all forecast segments. Higher values indicate stronger model confidence in deal outcomes.',
+  avgYieldDelta:
+    'Mean percentage difference between projected and baseline values across segments with non-zero baselines.',
+  activeSegments:
+    'Number of forecast segments currently being tracked by the predictive model.',
+  correlationStrength:
+    'Average absolute correlation coefficient across all significant driver–outcome pairs. Higher values indicate stronger statistical relationships.',
+}
+
 function IntelligenceStatusPanel({
   status,
   icon,
@@ -96,17 +120,13 @@ function IntelligenceStatusPanel({
           gap: 'var(--ob-space-150)',
           px: 'var(--ob-space-150)',
           py: 'var(--ob-space-200)',
-          borderRadius: 'var(--ob-radius-sm)',
-          border: '1px solid var(--ob-border-fine)',
-          background:
-            'radial-gradient(circle at top, rgba(0, 214, 255, 0.08), transparent 65%), var(--ob-surface-glass-1)',
         }}
       >
         <Typography
           sx={{
             color: 'var(--ob-color-text-secondary)',
             textTransform: 'uppercase',
-            letterSpacing: '0.08em',
+            letterSpacing: 'var(--ob-letter-spacing-wider)',
             fontSize: 'var(--ob-font-size-xs)',
             fontWeight: 'var(--ob-font-weight-semibold)',
           }}
@@ -132,18 +152,15 @@ function IntelligenceStatusPanel({
       title={isError ? errorTitle : emptyTitle}
       description={
         isError
-          ? (errorMessage ?? 'Try refreshing the workspace.')
+          ? (errorMessage ?? 'Try syncing the workspace.')
           : emptyDescription
       }
       size={minHeight > 400 ? 'lg' : 'md'}
       sx={{
         minHeight,
         border: isError
-          ? '1px solid rgba(255, 99, 132, 0.28)'
-          : '1px dashed rgba(255, 255, 255, 0.12)',
-        background: isError
-          ? 'radial-gradient(circle at top, rgba(255, 99, 132, 0.08), transparent 65%), var(--ob-surface-glass-1)'
-          : 'radial-gradient(circle at top, rgba(0, 214, 255, 0.08), transparent 65%), var(--ob-surface-glass-1)',
+          ? '1px solid var(--ob-color-error-soft)'
+          : '1px dashed var(--ob-color-border-subtle)',
       }}
     />
   )
@@ -160,10 +177,6 @@ function IntelligenceLoadingPanel({ minHeight = 280 }: { minHeight?: number }) {
         gap: 'var(--ob-space-150)',
         px: 'var(--ob-space-150)',
         py: 'var(--ob-space-200)',
-        borderRadius: 'var(--ob-radius-sm)',
-        border: '1px solid var(--ob-border-fine)',
-        background:
-          'radial-gradient(circle at top, rgba(0, 214, 255, 0.08), transparent 65%), var(--ob-surface-glass-1)',
       }}
     >
       <Skeleton variant="rounded" width="38%" height={18} />
@@ -175,24 +188,6 @@ function IntelligenceLoadingPanel({ minHeight = 280 }: { minHeight?: number }) {
       <SkeletonText lines={2} lastLineWidth="72%" />
     </Box>
   )
-}
-
-function getGraphStatus(
-  graph: GraphIntelligenceState,
-): IntelligenceStatusPanelProps['status'] | 'ok' {
-  return graph.status
-}
-
-function getPredictiveStatus(
-  predictive: PredictiveIntelligenceState,
-): IntelligenceStatusPanelProps['status'] | 'ok' {
-  return predictive.status
-}
-
-function getCorrelationStatus(
-  correlation: CrossCorrelationIntelligenceState,
-): IntelligenceStatusPanelProps['status'] | 'ok' {
-  return correlation.status
 }
 
 function isGraphOk(graph: GraphIntelligenceState): graph is GraphOkState {
@@ -243,37 +238,183 @@ function isCorrelationError(
   return correlation.status === 'error'
 }
 
-// --- Mock Data Generators (until API provides trends) ---
-function generateSparkline(seedValue: number, length = 20): number[] {
-  let current = seedValue
-  return Array.from({ length }, () => {
-    current = current * (1 + (Math.random() - 0.5) * 0.1)
-    return current
-  })
+function getStatusFromState(state: {
+  status: string
+}): IntelligenceStatusPanelProps['status'] | 'ok' {
+  return state.status as IntelligenceStatusPanelProps['status'] | 'ok'
+}
+
+/** Node detail panel shown when a graph node is clicked */
+function NodeDetailPanel({
+  nodeId,
+  nodes,
+  links,
+  onClose,
+}: {
+  nodeId: string
+  nodes: Array<{ id: string; label: string; category: string; weight: number }>
+  links: Array<{ source: string; target: string; strength: number }>
+  onClose: () => void
+}) {
+  const node = nodes.find((n) => n.id === nodeId)
+  if (!node) return null
+
+  const connections = links
+    .filter((l) => l.source === nodeId || l.target === nodeId)
+    .map((l) => {
+      const connectedId = l.source === nodeId ? l.target : l.source
+      const connectedNode = nodes.find((n) => n.id === connectedId)
+      return {
+        label: connectedNode?.label ?? connectedId,
+        category: connectedNode?.category ?? 'unknown',
+        strength: l.strength,
+      }
+    })
+    .sort((a, b) => b.strength - a.strength)
+
+  return (
+    <Box
+      sx={{
+        p: 'var(--ob-space-150)',
+        borderTop: 'var(--ob-divider-strong)',
+        background: 'var(--ob-color-bg-surface-elevated)',
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 'var(--ob-space-100)',
+        }}
+      >
+        <Box>
+          <Typography
+            sx={{
+              fontSize: 'var(--ob-font-size-base)',
+              fontWeight: 'var(--ob-font-weight-semibold)',
+              color: 'var(--ob-color-text-primary)',
+            }}
+          >
+            {node.label}
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: 'var(--ob-font-size-xs)',
+              color: 'var(--ob-color-text-muted)',
+              textTransform: 'capitalize',
+            }}
+          >
+            {node.category} &middot; weight {node.weight.toFixed(2)}
+          </Typography>
+        </Box>
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          <CloseIcon sx={{ fontSize: 'var(--ob-font-size-base)' }} />
+        </Button>
+      </Box>
+
+      {connections.length > 0 ? (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--ob-space-050)',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: 'var(--ob-font-size-2xs)',
+              textTransform: 'uppercase',
+              letterSpacing: 'var(--ob-letter-spacing-wider)',
+              color: 'var(--ob-color-text-muted)',
+              mb: 'var(--ob-space-025)',
+            }}
+          >
+            Connections ({connections.length})
+          </Typography>
+          {connections.map((conn, i) => (
+            <Box
+              key={i}
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                py: 'var(--ob-space-050)',
+              }}
+            >
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: 'var(--ob-font-size-sm)',
+                    fontWeight: 'var(--ob-font-weight-medium)',
+                    color: 'var(--ob-color-text-primary)',
+                  }}
+                >
+                  {conn.label}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 'var(--ob-font-size-xs)',
+                    color: 'var(--ob-color-text-muted)',
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {conn.category}
+                </Typography>
+              </Box>
+              <Typography
+                sx={{
+                  fontFamily: 'var(--ob-font-family-mono)',
+                  fontSize: 'var(--ob-font-size-sm)',
+                  fontWeight: 'var(--ob-font-weight-bold)',
+                  color: 'var(--ob-color-text-secondary)',
+                }}
+              >
+                {conn.strength.toFixed(1)}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      ) : (
+        <Typography
+          sx={{
+            fontSize: 'var(--ob-font-size-sm)',
+            color: 'var(--ob-color-text-muted)',
+          }}
+        >
+          No connections found.
+        </Typography>
+      )}
+    </Box>
+  )
 }
 
 export function AdvancedIntelligencePage({
   workspaceId = DEFAULT_WORKSPACE_ID,
   services,
 }: AdvancedIntelligencePageProps) {
-  const { graph, predictive, correlation, isLoading, refetch } =
-    useInvestigationAnalytics(workspaceId, services)
-  const theme = useTheme()
+  const {
+    graph,
+    predictive,
+    correlation,
+    isLoading,
+    isUsingFixtureData,
+    refetch,
+  } = useInvestigationAnalytics(workspaceId, services)
 
-  const handleRefresh = useCallback(() => {
-    return refetch()
-  }, [refetch])
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  const [showAllSegments, setShowAllSegments] = useState(false)
 
-  // --- Derived Metrics ---
-  const adoptionRate = useMemo(() => {
-    if (predictive.status !== 'ok') return 0
+  // --- Derived Metrics (labels match computations) ---
+  const avgDealConfidence = useMemo(() => {
+    if (predictive.status !== 'ok') return null
     if (predictive.segments.length === 0) return 0
     const sum = predictive.segments.reduce((acc, s) => acc + s.probability, 0)
     return (sum / predictive.segments.length) * 100
   }, [predictive])
 
-  const uplift = useMemo(() => {
-    if (predictive.status !== 'ok') return 0
+  const avgYieldDelta = useMemo(() => {
+    if (predictive.status !== 'ok') return null
     let count = 0
     const sum = predictive.segments.reduce((acc, s) => {
       if (s.baseline === 0) return acc
@@ -283,13 +424,47 @@ export function AdvancedIntelligencePage({
     return count === 0 ? 0 : sum / count
   }, [predictive])
 
-  // Mock trends for the Hero Cards
-  const adoptionTrend = 12.5 // Fixed mock for demo
-  const upliftTrend = 44.7
-  const graphStatus = getGraphStatus(graph)
-  const predictiveStatus = getPredictiveStatus(predictive)
-  const correlationStatus = getCorrelationStatus(correlation)
+  const activeSegments = useMemo(() => {
+    if (predictive.status !== 'ok') return null
+    return predictive.segments.length
+  }, [predictive])
+
+  const correlationStrength = useMemo(() => {
+    if (correlation.status !== 'ok') return null
+    if (correlation.relationships.length === 0) return 0
+    const avgCoeff =
+      correlation.relationships.reduce(
+        (acc, r) => acc + Math.abs(r.coefficient),
+        0,
+      ) / correlation.relationships.length
+    return Math.round(avgCoeff * 100)
+  }, [correlation])
+
+  // Memoize graph arrays to prevent force simulation restarts on re-render
   const graphData = isGraphOk(graph) ? graph : null
+  const graphNodes = useMemo(
+    () =>
+      graphData?.graph.nodes.map((n) => ({
+        id: n.id,
+        label: n.label,
+        category: n.category,
+        weight: n.score,
+      })) ?? [],
+    [graphData],
+  )
+  const graphLinks = useMemo(
+    () =>
+      graphData?.graph.edges.map((e) => ({
+        source: e.source,
+        target: e.target,
+        strength: e.weight ?? 1,
+      })) ?? [],
+    [graphData],
+  )
+
+  const graphStatus = getStatusFromState(graph)
+  const predictiveStatus = getStatusFromState(predictive)
+  const correlationStatus = getStatusFromState(correlation)
   const predictiveData = isPredictiveOk(predictive) ? predictive : null
   const correlationData = isCorrelationOk(correlation) ? correlation : null
   const graphEmptySummary = isGraphEmpty(graph) ? graph.summary : undefined
@@ -307,128 +482,205 @@ export function AdvancedIntelligencePage({
     ? correlation.error
     : undefined
 
+  const visibleSegments = predictiveData
+    ? showAllSegments
+      ? predictiveData.segments
+      : predictiveData.segments.slice(0, 5)
+    : []
+  const hiddenSegmentCount = predictiveData
+    ? Math.max(0, predictiveData.segments.length - 5)
+    : 0
+
   return (
     <AppLayout
-      title="Advanced Intelligence"
-      subtitle="Predictive analytics and relationship insights"
+      title="Deal Intelligence"
+      subtitle="Pipeline analytics and cross-asset correlation"
       actions={
-        <button
-          type="button"
-          className="advanced-intelligence__refresh"
-          onClick={handleRefresh}
-          disabled={isLoading}
-          style={{
-            background: 'transparent',
-            border: `1px solid ${theme.palette.primary.main}`,
-            color: theme.palette.primary.main,
-            padding: '6px 12px',
-            borderRadius: '2px',
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            opacity: isLoading ? 0.5 : 1,
-            fontSize: '0.875rem',
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 'var(--ob-space-100)',
+            alignItems: 'center',
           }}
         >
-          {isLoading ? 'SYNCING...' : 'SYNC WORKSPACE'}
-        </button>
+          <Tooltip title="Export coming soon" placement="bottom" arrow>
+            <span>
+              <Button
+                variant="ghost"
+                size="sm"
+                startIcon={<FileDownloadOutlined />}
+                disabled
+              >
+                Export
+              </Button>
+            </span>
+          </Tooltip>
+          <Button
+            variant="secondary"
+            size="sm"
+            startIcon={<SyncOutlined />}
+            onClick={() => {
+              void refetch()
+            }}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Syncing...' : 'Sync'}
+          </Button>
+        </Box>
       }
     >
-      <Box
-        sx={{
-          width: '100%',
-          pb: 'var(--ob-space-400)',
-        }}
-      >
-        {/* 1. Hero Section: Workspace Signals - Depth 1 (Glass Card with cyan edge) */}
-        <Box className="ob-card-module ob-section-gap">
-          <Typography
-            variant="subtitle2"
-            sx={{
-              color: 'text.secondary',
-              mb: 'var(--ob-space-200)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}
+      <Box sx={{ width: '100%', pb: 'var(--ob-space-400)' }}>
+        {/* Sample data warning banner */}
+        {isUsingFixtureData && (
+          <AlertBlock
+            type="warning"
+            icon={<WarningAmberOutlined />}
+            sx={{ mb: 'var(--ob-space-200)' }}
           >
-            Workspace Signals
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={3}>
-              <KPITickerCard
-                label="Adoption Likelihood"
-                value={`${adoptionRate.toFixed(1)}%`}
-                trend={adoptionTrend}
-                data={generateSparkline(adoptionRate)}
-                active={true}
+            Showing sample data — analytics service is unreachable. Values below
+            are illustrative, not live.
+          </AlertBlock>
+        )}
+
+        {/* 1. KPI Section */}
+        <Box sx={{ mb: 'var(--ob-space-300)' }}>
+          <SectionHeader
+            title="Portfolio Signals"
+            size="sm"
+            sx={{ mb: 'var(--ob-space-150)' }}
+          />
+
+          <Grid container spacing="var(--ob-space-150)">
+            <Grid item xs={12} sm={6} lg={3}>
+              <MetricCard
+                label="Avg. Deal Confidence"
+                value={
+                  avgDealConfidence !== null
+                    ? `${avgDealConfidence.toFixed(1)}%`
+                    : '—'
+                }
+                loading={isLoading}
+                icon={
+                  <Tooltip
+                    title={METRIC_TOOLTIPS.avgDealConfidence}
+                    placement="top"
+                    arrow
+                  >
+                    <InfoOutlined
+                      sx={{
+                        fontSize: 'var(--ob-font-size-base)',
+                        cursor: 'help',
+                      }}
+                    />
+                  </Tooltip>
+                }
               />
             </Grid>
-            <Grid item xs={12} md={3}>
-              <KPITickerCard
-                label="Projected Uplift"
-                value={`${uplift.toFixed(1)}%`}
-                trend={upliftTrend}
-                data={generateSparkline(uplift)}
+            <Grid item xs={12} sm={6} lg={3}>
+              <MetricCard
+                label="Avg. Yield Delta"
+                value={
+                  avgYieldDelta !== null ? `${avgYieldDelta.toFixed(1)}%` : '—'
+                }
+                loading={isLoading}
+                icon={
+                  <Tooltip
+                    title={METRIC_TOOLTIPS.avgYieldDelta}
+                    placement="top"
+                    arrow
+                  >
+                    <InfoOutlined
+                      sx={{
+                        fontSize: 'var(--ob-font-size-base)',
+                        cursor: 'help',
+                      }}
+                    />
+                  </Tooltip>
+                }
               />
             </Grid>
-            <Grid item xs={12} md={3}>
-              <KPITickerCard
-                label="Active Experiments"
-                value="12"
-                trend={8.2}
-                data={generateSparkline(12)}
+            <Grid item xs={12} sm={6} lg={3}>
+              <MetricCard
+                label="Active Segments"
+                value={activeSegments ?? '—'}
+                loading={isLoading}
+                icon={
+                  <Tooltip
+                    title={METRIC_TOOLTIPS.activeSegments}
+                    placement="top"
+                    arrow
+                  >
+                    <InfoOutlined
+                      sx={{
+                        fontSize: 'var(--ob-font-size-base)',
+                        cursor: 'help',
+                      }}
+                    />
+                  </Tooltip>
+                }
               />
             </Grid>
-            <Grid item xs={12} md={3}>
-              <KPITickerCard
-                label="Intelligence Score"
-                value="94"
-                trend={-2.4}
-                data={generateSparkline(94)}
+            <Grid item xs={12} sm={6} lg={3}>
+              <MetricCard
+                label="Correlation Strength"
+                value={correlationStrength ?? '—'}
+                loading={isLoading}
+                icon={
+                  <Tooltip
+                    title={METRIC_TOOLTIPS.correlationStrength}
+                    placement="top"
+                    arrow
+                  >
+                    <InfoOutlined
+                      sx={{
+                        fontSize: 'var(--ob-font-size-base)',
+                        cursor: 'help',
+                      }}
+                    />
+                  </Tooltip>
+                }
               />
             </Grid>
           </Grid>
         </Box>
 
         {/* Main Content Grid */}
-        <Grid container spacing="var(--ob-space-300)">
-          {/* 2. Relationship Intelligence (Main Centerpiece) - Depth 1 */}
+        <Grid container spacing="var(--ob-space-200)">
+          {/* 2. Relationship Intelligence (Main Centerpiece) */}
           <Grid item xs={12} lg={8}>
-            <Box
-              className="ob-card-module"
+            <Panel
+              title="Relationship Intelligence"
+              subtitle="Entity connections across deals and workflows"
+              variant="glass"
+              padding="compact"
               sx={{ height: '100%', minHeight: 500 }}
             >
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: 'text.secondary',
-                  mb: 'var(--ob-space-200)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Relationship Intelligence
-              </Typography>
-              {graphStatus === 'ok' ? (
+              {graphStatus === 'ok' && graphData ? (
                 <Suspense
                   fallback={<IntelligenceLoadingPanel minHeight={600} />}
                 >
                   <RelationshipGraph
-                    nodes={graphData!.graph.nodes.map((n) => ({
-                      id: n.id,
-                      label: n.label,
-                      category: n.category as 'Team' | 'Workflow',
-                      weight: n.score,
-                    }))}
-                    links={graphData!.graph.edges.map((e) => ({
-                      source: e.source,
-                      target: e.target,
-                      strength: e.weight ?? 1,
-                    }))}
-                    height={600}
+                    nodes={graphNodes}
+                    links={graphLinks}
+                    height={560}
+                    onNodeClick={(id) => {
+                      setSelectedNodeId((prev) => (prev === id ? null : id))
+                    }}
                   />
+                  {selectedNodeId && (
+                    <NodeDetailPanel
+                      nodeId={selectedNodeId}
+                      nodes={graphNodes}
+                      links={graphLinks}
+                      onClose={() => {
+                        setSelectedNodeId(null)
+                      }}
+                    />
+                  )}
                 </Suspense>
               ) : (
                 <IntelligenceStatusPanel
-                  status={graphStatus}
+                  status={graphStatus as 'loading' | 'empty' | 'error'}
                   icon={
                     graphStatus === 'error' ? (
                       <ErrorOutline
@@ -445,42 +697,70 @@ export function AdvancedIntelligencePage({
                   emptyDescription={graphEmptySummary}
                   errorTitle="Unable to load intelligence graph"
                   errorMessage={graphErrorMessage}
-                  minHeight={600}
+                  minHeight={560}
                 />
               )}
-            </Box>
+            </Panel>
           </Grid>
 
-          {/* 3. Predictive & Correlation (Side Panel) - Depth 1 */}
+          {/* 3. Predictive & Correlation (Side Panel) */}
           <Grid item xs={12} lg={4}>
-            <Box className="ob-card-module" sx={{ mb: 'var(--ob-space-300)' }}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: 'text.secondary',
-                  mb: 'var(--ob-space-200)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Predictive Forecast
-              </Typography>
-              {predictiveStatus === 'ok' ? (
+            <Panel
+              title="Predictive Forecast"
+              subtitle="Deal outcome probability by segment"
+              variant="glass"
+              padding="compact"
+              sx={{ mb: 'var(--ob-space-200)' }}
+            >
+              {predictiveStatus === 'ok' && predictiveData ? (
                 <Suspense
                   fallback={<IntelligenceLoadingPanel minHeight={280} />}
                 >
-                  {predictiveData!.segments.slice(0, 5).map((segment) => (
-                    <ConfidenceGauge
-                      key={segment.segmentId}
-                      label={segment.segmentName}
-                      value={Math.round(segment.probability * 100)}
-                      projection={`Projection: ${segment.projection}`}
-                    />
-                  ))}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 'var(--ob-space-100)',
+                    }}
+                  >
+                    {visibleSegments.map((segment) => (
+                      <ConfidenceGauge
+                        key={segment.segmentId}
+                        label={segment.segmentName}
+                        value={Math.round(segment.probability * 100)}
+                        projection={segment.projection}
+                        baseline={segment.baseline}
+                      />
+                    ))}
+                    {!showAllSegments && hiddenSegmentCount > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setShowAllSegments(true)
+                        }}
+                        sx={{ alignSelf: 'center' }}
+                      >
+                        Show {hiddenSegmentCount} more
+                      </Button>
+                    )}
+                    {showAllSegments && hiddenSegmentCount > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setShowAllSegments(false)
+                        }}
+                        sx={{ alignSelf: 'center' }}
+                      >
+                        Show less
+                      </Button>
+                    )}
+                  </Box>
                 </Suspense>
               ) : (
                 <IntelligenceStatusPanel
-                  status={predictiveStatus}
+                  status={predictiveStatus as 'loading' | 'empty' | 'error'}
                   icon={
                     predictiveStatus === 'error' ? (
                       <ErrorOutline
@@ -500,26 +780,20 @@ export function AdvancedIntelligencePage({
                   minHeight={280}
                 />
               )}
-            </Box>
+            </Panel>
 
-            <Box className="ob-card-module">
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: 'text.secondary',
-                  mb: 'var(--ob-space-200)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                Cross-Correlation
-              </Typography>
-              {correlationStatus === 'ok' ? (
+            <Panel
+              title="Cross-Correlation"
+              subtitle="Driver–outcome relationships"
+              variant="glass"
+              padding="compact"
+            >
+              {correlationStatus === 'ok' && correlationData ? (
                 <Suspense
                   fallback={<IntelligenceLoadingPanel minHeight={280} />}
                 >
                   <CorrelationHeatmap
-                    data={correlationData!.relationships.map((r) => ({
+                    data={correlationData.relationships.map((r) => ({
                       id: r.pairId,
                       driver: r.driver,
                       outcome: r.outcome,
@@ -530,7 +804,7 @@ export function AdvancedIntelligencePage({
                 </Suspense>
               ) : (
                 <IntelligenceStatusPanel
-                  status={correlationStatus}
+                  status={correlationStatus as 'loading' | 'empty' | 'error'}
                   icon={
                     correlationStatus === 'error' ? (
                       <ErrorOutline
@@ -550,7 +824,7 @@ export function AdvancedIntelligencePage({
                   minHeight={280}
                 />
               )}
-            </Box>
+            </Panel>
           </Grid>
         </Grid>
       </Box>

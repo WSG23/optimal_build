@@ -15,7 +15,8 @@ jobs:
       - name: Install tooling
         run: |
           python -m pip install --upgrade pip
-          pip install black flake8 flake8-bugbear pytest
+          pip install -r backend/requirements-dev.txt
+          pip install flake8-bugbear
       - name: Black check (tests only)
         run: |
           if [ -d backend/tests ]; then black --check backend/tests; fi
@@ -25,4 +26,6 @@ jobs:
           if [ -d backend/tests ]; then flake8 backend/tests; fi
           if [ -d tests ]; then flake8 tests; fi
       - name: Pytest (quick)
+        env:
+          SECRET_KEY: test-secret-key-for-ci
         run: pytest -q

@@ -17,7 +17,6 @@ import type { FinanceScenarioSummary } from '../../../api/finance'
 import { useTranslation } from '../../../i18n'
 import { Card } from '../../../components/canonical/Card'
 import { CapitalStackFacilityTable } from './CapitalStackFacilityTable'
-import { FinanceMetricsGrid } from './FinanceMetricsGrid'
 import { CapitalStackScenarioGrid } from './CapitalStackScenarioGrid'
 import { CapitalStackInsightBox } from './CapitalStackInsightBox'
 
@@ -37,7 +36,7 @@ function CapitalStackChartFallback() {
         justifyContent: 'center',
         borderRadius: 'var(--ob-radius-sm)',
         border: '1px solid var(--ob-color-border-subtle)',
-        bgcolor: 'rgba(255,255,255,0.02)',
+        bgcolor: 'var(--ob-color-surface-subtle)',
       }}
     >
       <Typography color="text.secondary">Loading comparison chart…</Typography>
@@ -51,6 +50,7 @@ interface FinanceCapitalStackProps {
   updatingScenarioId?: number | null
   onRequestDelete?: (scenarioId: number, scenarioName: string) => void
   deletingScenarioId?: number | null
+  onActiveScenarioChange?: (scenario: FinanceScenarioSummary | null) => void
 }
 
 export function FinanceCapitalStack({
@@ -59,6 +59,7 @@ export function FinanceCapitalStack({
   updatingScenarioId = null,
   onRequestDelete,
   deletingScenarioId = null,
+  onActiveScenarioChange,
 }: FinanceCapitalStackProps) {
   const { t } = useTranslation()
 
@@ -109,6 +110,11 @@ export function FinanceCapitalStack({
     return scenarioList.find((s) => s.scenarioId === activeScenarioId) ?? null
   }, [scenarioList, activeScenarioId])
 
+  // Notify parent when the viewed scenario changes
+  useEffect(() => {
+    onActiveScenarioChange?.(activeScenario)
+  }, [activeScenario, onActiveScenarioChange])
+
   const handleScenarioSelect = (scenarioId: number) => {
     setActiveScenarioId(scenarioId)
   }
@@ -116,7 +122,10 @@ export function FinanceCapitalStack({
   if (scenarioList.length === 0) {
     return (
       <Card sx={{ p: 'var(--ob-space-200)' }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
+        >
           {t('finance.capitalStack.empty.title', {
             defaultValue: 'Capital stack details',
           })}
@@ -137,7 +146,7 @@ export function FinanceCapitalStack({
         sx={{
           display: 'flex',
           flexDirection: 'column',
-          gap: 'var(--ob-space-200)',
+          gap: 'var(--ob-space-150)',
         }}
       >
         <CapitalStackScenarioGrid
@@ -150,30 +159,23 @@ export function FinanceCapitalStack({
           deletingScenarioId={deletingScenarioId}
         />
 
-        <Box>
-          <Typography
-            variant="h5"
-            sx={{ mb: 'var(--ob-space-100)', fontWeight: 600 }}
+        <Typography
+          variant="body2"
+          sx={{ color: 'text.secondary', fontSize: 'var(--ob-font-size-sm)' }}
+        >
+          {t('finance.capitalStack.overview.showingFor', {
+            defaultValue: 'Visualizing data for',
+          })}{' '}
+          <Box
+            component="span"
+            sx={{
+              fontWeight: 'var(--ob-font-weight-bold)',
+              color: 'text.primary',
+            }}
           >
-            {t('finance.capitalStack.title')}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{ mb: 'var(--ob-space-100)', color: 'text.secondary' }}
-          >
-            {t('finance.capitalStack.overview.showingFor', {
-              defaultValue: 'Visualizing data for',
-            })}{' '}
-            <Box
-              component="span"
-              sx={{ fontWeight: 700, color: 'text.primary' }}
-            >
-              {activeScenario?.scenarioName}
-            </Box>
-            .
-          </Typography>
-          <FinanceMetricsGrid scenario={activeScenario} />
-        </Box>
+            {activeScenario?.scenarioName}
+          </Box>
+        </Typography>
 
         <Box
           sx={{
@@ -196,7 +198,10 @@ export function FinanceCapitalStack({
             <Card sx={{ p: 'var(--ob-space-100)', height: '100%' }}>
               <Typography
                 variant="h6"
-                sx={{ mb: 'var(--ob-space-100)', fontWeight: 600 }}
+                sx={{
+                  mb: 'var(--ob-space-100)',
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                }}
               >
                 {t('finance.capitalStack.comparison.title', {
                   defaultValue: 'Scenario Comparison',

@@ -234,7 +234,7 @@ export function FinanceScenarioTable({
             ) : (
               <span
                 style={{
-                  fontSize: '0.7rem',
+                  fontSize: 'var(--ob-font-size-2xs)',
                   color: 'var(--ob-color-text-muted)',
                 }}
               >

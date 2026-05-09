@@ -28,6 +28,7 @@ vi.mock('../../../../api/regulatory', () => ({
     getSubmissionStatus: vi.fn(),
     createSubmission: vi.fn(),
     getCompliancePaths: vi.fn(),
+    getCorenetCapability: vi.fn(),
   },
 }))
 
@@ -39,6 +40,8 @@ const mockSubmissions: AuthoritySubmission[] = [
     id: 'submission-1',
     project_id: 'project-1',
     agency_id: 'URA',
+    agency_code: 'URA',
+    agency_name: 'Urban Redevelopment Authority',
     submission_type: 'DC',
     submission_no: 'URA-2025-001',
     status: 'APPROVED',
@@ -53,6 +56,8 @@ const mockSubmissions: AuthoritySubmission[] = [
     id: 'submission-2',
     project_id: 'project-1',
     agency_id: 'BCA',
+    agency_code: 'BCA',
+    agency_name: 'Building & Construction Authority',
     submission_type: 'BP',
     status: 'IN_REVIEW',
     title: 'Building Plan Submission',
@@ -63,6 +68,8 @@ const mockSubmissions: AuthoritySubmission[] = [
     id: 'submission-3',
     project_id: 'project-1',
     agency_id: 'SCDF',
+    agency_code: 'SCDF',
+    agency_name: 'Singapore Civil Defence Force',
     submission_type: 'CONSULTATION',
     status: 'REJECTED',
     title: 'Fire Safety Consultation',
@@ -147,6 +154,18 @@ describe('RegulatoryDashboardPage', () => {
       mockHeritageSubmissions,
     )
     vi.mocked(regulatoryApi.getCompliancePaths).mockResolvedValue([])
+    vi.mocked(regulatoryApi.getCorenetCapability).mockResolvedValue({
+      submission_mode_default: 'submission_prep',
+      live_submission_available: false,
+      package_status: 'not_ready',
+      package_requirements: [],
+      delivery_blockers: [],
+      integration_status: {
+        provider: 'test',
+        state: 'mock',
+        synthetic: true,
+      },
+    })
     // Clear localStorage
     window.localStorage.clear()
   })
@@ -169,7 +188,7 @@ describe('RegulatoryDashboardPage', () => {
     })
 
     it('shows loading state while project is loading', () => {
-      renderWithProviders(
+      const { container } = renderWithProviders(
         <RegulatoryDashboardPage />,
         createMockProjectContext({
           currentProject: null,
@@ -177,7 +196,7 @@ describe('RegulatoryDashboardPage', () => {
         }),
       )
 
-      expect(screen.getByRole('progressbar')).toBeInTheDocument()
+      expect(container.querySelector('.MuiSkeleton-root')).toBeInTheDocument()
     })
 
     it('shows error when project error exists', () => {
@@ -231,43 +250,33 @@ describe('RegulatoryDashboardPage', () => {
     it('displays Change of Use action card', async () => {
       renderWithProviders(<RegulatoryDashboardPage />)
 
-      // Use getAllByText since the text may appear in multiple places
-      const changeOfUseTexts = screen.getAllByText(/Change of Use/i)
-      expect(changeOfUseTexts.length).toBeGreaterThan(0)
       expect(
-        screen.getByText(/Apply for land use conversion/i),
+        screen.getByRole('button', { name: /Start change of use/i }),
       ).toBeInTheDocument()
     })
 
     it('displays Heritage Submission action card', async () => {
       renderWithProviders(<RegulatoryDashboardPage />)
 
-      // Use getAllByText since the text appears multiple times
-      const heritageTexts = screen.getAllByText(/Heritage Submission/i)
-      expect(heritageTexts.length).toBeGreaterThan(0)
       expect(
-        screen.getByText(/STB conservation application/i),
+        screen.getByRole('button', { name: /heritage submission/i }),
       ).toBeInTheDocument()
     })
 
     it('displays Compliance Timeline action card', async () => {
       renderWithProviders(<RegulatoryDashboardPage />)
 
-      // Use getAllByText since the text may appear in tabs and action cards
-      const timelineTexts = screen.getAllByText(/Compliance/i)
-      expect(timelineTexts.length).toBeGreaterThan(0)
       expect(
-        screen.getByText(/View regulatory path by asset type/i),
+        screen.getByRole('button', { name: /View compliance path/i }),
       ).toBeInTheDocument()
     })
   })
 
   describe('Submissions tab', () => {
-    it('displays agency cards', async () => {
+    it('displays agency labels in the submissions table', async () => {
       renderWithProviders(<RegulatoryDashboardPage />)
 
       await waitFor(() => {
-        // Check for agency names (more specific than codes)
         expect(
           screen.getByText('Urban Redevelopment Authority'),
         ).toBeInTheDocument()
@@ -279,21 +288,17 @@ describe('RegulatoryDashboardPage', () => {
       expect(
         screen.getByText('Singapore Civil Defence Force'),
       ).toBeInTheDocument()
-      expect(
-        screen.getByText('National Environment Agency'),
-      ).toBeInTheDocument()
     })
 
     it('displays submissions table with data', async () => {
       renderWithProviders(<RegulatoryDashboardPage />)
 
       await waitFor(() => {
-        expect(screen.getByText('URA-2025-001')).toBeInTheDocument()
+        expect(
+          screen.getByText('Development Control Application'),
+        ).toBeInTheDocument()
       })
 
-      expect(
-        screen.getByText('Development Control Application'),
-      ).toBeInTheDocument()
       expect(screen.getByText('Building Plan Submission')).toBeInTheDocument()
     })
 
@@ -304,28 +309,28 @@ describe('RegulatoryDashboardPage', () => {
         expect(screen.getByText(/APPROVED/i)).toBeInTheDocument()
       })
 
-      expect(screen.getByText(/IN REVIEW/i)).toBeInTheDocument()
+      expect(screen.getByText(/IN_REVIEW/i)).toBeInTheDocument()
       expect(screen.getByText(/REJECTED/i)).toBeInTheDocument()
     })
 
-    it('displays Track buttons for each submission', async () => {
+    it('displays refresh buttons for submissions', async () => {
       renderWithProviders(<RegulatoryDashboardPage />)
 
       await waitFor(() => {
-        const trackButtons = screen.getAllByText(/Track/i)
-        expect(trackButtons.length).toBeGreaterThan(0)
+        const refreshButtons = screen.getAllByText(/Refresh/i)
+        expect(refreshButtons.length).toBeGreaterThan(0)
       })
     })
 
     it('shows empty state when no submissions', async () => {
       vi.mocked(regulatoryApi.listSubmissions).mockResolvedValue([])
+      vi.mocked(regulatoryApi.listChangeOfUseApplications).mockResolvedValue([])
+      vi.mocked(regulatoryApi.listHeritageSubmissions).mockResolvedValue([])
 
       renderWithProviders(<RegulatoryDashboardPage />)
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/No authority submissions yet/i),
-        ).toBeInTheDocument()
+        expect(screen.getByText(/No submissions yet/i)).toBeInTheDocument()
       })
     })
   })
@@ -335,10 +340,8 @@ describe('RegulatoryDashboardPage', () => {
       renderWithProviders(<RegulatoryDashboardPage />)
 
       await waitFor(() => {
-        expect(screen.getByText('office')).toBeInTheDocument()
+        expect(screen.getByText(/office to retail/i)).toBeInTheDocument()
       })
-
-      expect(screen.getByText('retail')).toBeInTheDocument()
     })
 
     it('shows empty state when no change of use applications', async () => {
@@ -348,7 +351,7 @@ describe('RegulatoryDashboardPage', () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText(/No change of use applications yet/i),
+          screen.getByText(/No change-of-use applications yet/i),
         ).toBeInTheDocument()
       })
     })
@@ -369,10 +372,8 @@ describe('RegulatoryDashboardPage', () => {
       renderWithProviders(<RegulatoryDashboardPage />)
 
       await waitFor(() => {
-        expect(screen.getByText(/national monument/i)).toBeInTheDocument()
+        expect(screen.getByText(/national_monument/i)).toBeInTheDocument()
       })
-
-      expect(screen.getByText('1920')).toBeInTheDocument()
     })
 
     it('shows empty state when no heritage submissions', async () => {
@@ -386,7 +387,7 @@ describe('RegulatoryDashboardPage', () => {
         ).toBeInTheDocument()
       })
 
-      expect(screen.getByText(/Start heritage submission/i)).toBeInTheDocument()
+      expect(screen.getByText(/New heritage submission/i)).toBeInTheDocument()
     })
   })
 
@@ -439,7 +440,9 @@ describe('RegulatoryDashboardPage', () => {
       renderWithProviders(<RegulatoryDashboardPage />)
 
       await waitFor(() => {
-        expect(screen.getByText('URA-2025-001')).toBeInTheDocument()
+        expect(
+          screen.getByText('Development Control Application'),
+        ).toBeInTheDocument()
       })
 
       // Clear mock call count

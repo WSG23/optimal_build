@@ -413,7 +413,10 @@ export function BusinessPerformancePage() {
         }}
       >
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+          <Typography
+            variant="h5"
+            sx={{ fontWeight: 'var(--ob-font-weight-bold)', lineHeight: 1.2 }}
+          >
             Business Performance
           </Typography>
           <Typography

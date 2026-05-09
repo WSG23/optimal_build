@@ -10,6 +10,10 @@ jobs:
   quality-check:
     name: Code Quality Verification
     runs-on: ubuntu-latest
+    env:
+      # CI runs Python via setup-python (no .venv); override Makefile defaults
+      # that point at .venv/bin/python so `make check-coding-rules` resolves.
+      PY: python
 
     steps:
       - name: Checkout code
@@ -17,10 +21,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python 3.13
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.11'
           cache: 'pip'
 
       - name: Install backend dependencies
@@ -53,11 +57,9 @@ jobs:
         run: make check-coding-rules
         continue-on-error: false
 
-      - name: Run backend tests
-        run: |
-          cd backend
-          python -m pytest tests/ -v --tb=short
-        continue-on-error: false
+      # Backend tests are run by the main `CI` workflow with the full
+      # docker-compose stack (Postgres/Redis/MinIO). This gate only enforces
+      # static code-quality checks.
 
       - name: Quality gate summary
         if: failure()

@@ -139,8 +139,8 @@ export function AIAssistantSidebar({
                       : 'var(--ob-color-brand-primary)',
                     color: isBot ? 'text.primary' : 'white',
                     boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                    fontSize: '0.9rem',
-                    lineHeight: 1.5,
+                    fontSize: 'var(--ob-font-size-sm)',
+                    lineHeight: 'var(--ob-line-height-normal)',
                   }}
                 >
                   {msg.content}
@@ -154,7 +154,8 @@ export function AIAssistantSidebar({
               <div
                 style={{
                   padding: 'var(--ob-space-75) var(--ob-space-100)',
-                  borderRadius: '4px 4px 4px 2px',
+                  borderRadius:
+                    'var(--ob-radius-sm) var(--ob-radius-sm) var(--ob-radius-sm) var(--ob-radius-xs)',
                   background: 'white',
                   boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
                 }}
@@ -228,7 +229,7 @@ export function AIAssistantSidebar({
                   <Send />
                 </IconButton>
               ),
-              sx: { borderRadius: '6px' },
+              sx: { borderRadius: 'var(--ob-radius-md)' },
             }}
           />
         </div>

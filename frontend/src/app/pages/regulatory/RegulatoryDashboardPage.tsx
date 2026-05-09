@@ -400,8 +400,8 @@ export const RegulatoryDashboardPage: React.FC = () => {
             component="h1"
             sx={{
               fontSize: 'var(--ob-font-size-2xl)',
-              fontWeight: 700,
-              lineHeight: 1.2,
+              fontWeight: 'var(--ob-font-weight-bold)',
+              lineHeight: 'var(--ob-line-height-tight)',
               color: 'var(--ob-color-text-primary)',
               m: 0,
             }}
@@ -438,7 +438,12 @@ export const RegulatoryDashboardPage: React.FC = () => {
             onClick={() => fetchSubmissions(true)}
             disabled={refreshing || loading}
           >
-            <RefreshIcon sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }} />
+            <RefreshIcon
+              sx={{
+                fontSize: 'var(--ob-font-size-base)',
+                mr: 'var(--ob-space-050)',
+              }}
+            />
             {refreshing ? 'Updating...' : 'Check Status'}
           </Button>
           <Button
@@ -446,7 +451,12 @@ export const RegulatoryDashboardPage: React.FC = () => {
             size="sm"
             onClick={() => setWizardOpen(true)}
           >
-            <AddIcon sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }} />
+            <AddIcon
+              sx={{
+                fontSize: 'var(--ob-font-size-base)',
+                mr: 'var(--ob-space-050)',
+              }}
+            />
             New Submission
           </Button>
         </Box>
@@ -601,11 +611,11 @@ export const RegulatoryDashboardPage: React.FC = () => {
           role: 'status',
           'aria-live': 'polite' as const,
           sx: {
-            bgcolor: 'var(--ob-gold-bg)',
-            color: 'var(--ob-gold-text)',
-            border: '1px solid var(--ob-gold-400)',
+            bgcolor: 'var(--ob-success-bg)',
+            color: 'var(--ob-success-text)',
+            border: '1px solid var(--ob-success-400)',
             borderRadius: 'var(--ob-radius-sm)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
           },
         }}
       />

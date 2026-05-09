@@ -22,7 +22,12 @@ export function ScenarioFAB({
 }: ScenarioFABProps) {
   return (
     <Box
-      sx={{ width: '100%', display: 'flex', justifyContent: 'center', p: 1 }}
+      sx={{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        p: 'var(--ob-space-100)',
+      }}
     >
       <Button
         onClick={onClick}
@@ -39,20 +44,20 @@ export function ScenarioFAB({
         }
         sx={{
           background:
-            'linear-gradient(135deg, var(--ob-color-neon-cyan) 0%, var(--ob-color-neon-blue) 100%)',
+            'linear-gradient(135deg, var(--ob-color-brand-primary) 0%, var(--ob-color-neon-blue) 100%)',
           color: 'white',
-          fontWeight: 700,
-          fontSize: '1rem',
+          fontWeight: 'var(--ob-font-weight-bold)',
+          fontSize: 'var(--ob-font-size-base)',
           textTransform: 'none',
-          py: 1.5,
-          borderRadius: '2px', // Square Cyber-Minimalism: xs for buttons
+          py: 'var(--ob-space-150)',
+          borderRadius: 'var(--ob-radius-xs)', // Square Cyber-Minimalism: xs for buttons
           boxShadow: '0 4px 15px rgba(0, 114, 255, 0.4)',
           position: 'relative',
           overflow: 'hidden',
           transition: 'all 0.3s ease',
           '&:hover': {
             background:
-              'linear-gradient(135deg, var(--ob-color-neon-cyan) 0%, var(--ob-color-neon-blue) 100%)',
+              'linear-gradient(135deg, var(--ob-color-brand-primary) 0%, var(--ob-color-neon-blue) 100%)',
             boxShadow: '0 6px 20px rgba(0, 114, 255, 0.6)',
             transform: 'translateY(-2px)',
           },
@@ -60,7 +65,7 @@ export function ScenarioFAB({
             transform: 'translateY(1px)',
           },
           '&.Mui-disabled': {
-            background: 'rgba(255, 255, 255, 0.12)',
+            background: 'rgba(245, 235, 220, 0.12)',
             color: 'rgba(255, 255, 255, 0.3)',
           },
           // Glow effect animation
@@ -68,7 +73,13 @@ export function ScenarioFAB({
         }}
       >
         {loading ? (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--ob-space-100)',
+            }}
+          >
             <span>Constructing Scenario...</span>
           </Box>
         ) : (

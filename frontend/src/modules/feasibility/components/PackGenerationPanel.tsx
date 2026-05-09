@@ -137,9 +137,9 @@ export function PackGenerationPanel({
           {vdrStatus === 'success' && (
             <span
               style={{
-                fontSize: '0.75rem',
+                fontSize: 'var(--ob-font-size-xs)',
                 color: 'var(--ob-color-success)',
-                fontWeight: 600,
+                fontWeight: 'var(--ob-font-weight-semibold)',
               }}
             >
               READY

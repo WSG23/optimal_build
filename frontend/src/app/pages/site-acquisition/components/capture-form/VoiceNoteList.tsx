@@ -142,20 +142,20 @@ export function VoiceNoteList({
       <div
         style={{
           background: 'var(--ob-color-surface-info, #f0f9ff)',
-          borderRadius: '4px',
-          padding: '1.25rem',
-          marginTop: '1.5rem',
+          borderRadius: 'var(--ob-radius-sm)',
+          padding: 'var(--ob-space-150)',
+          marginTop: 'var(--ob-space-150)',
         }}
       >
         <h4
           style={{
-            margin: '0 0 1rem 0',
-            fontSize: '1rem',
-            fontWeight: 600,
+            margin: '0 0 var(--ob-space-100) 0',
+            fontSize: 'var(--ob-font-size-base)',
+            fontWeight: 'var(--ob-font-weight-semibold)',
             color: 'var(--ob-color-text-primary, #1d1d1f)',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: 'var(--ob-space-050)',
           }}
         >
           <span role="img" aria-label="headphones">
@@ -166,7 +166,7 @@ export function VoiceNoteList({
         <p
           style={{
             margin: 0,
-            fontSize: '0.9rem',
+            fontSize: 'var(--ob-font-size-sm)',
             color: 'var(--ob-color-text-muted, #6b7280)',
           }}
         >
@@ -184,20 +184,20 @@ export function VoiceNoteList({
     <div
       style={{
         background: 'var(--ob-color-surface-info, #f0f9ff)',
-        borderRadius: '4px',
-        padding: '1.25rem',
-        marginTop: '1.5rem',
+        borderRadius: 'var(--ob-radius-sm)',
+        padding: 'var(--ob-space-150)',
+        marginTop: 'var(--ob-space-150)',
       }}
     >
       <h4
         style={{
-          margin: '0 0 1rem 0',
-          fontSize: '1rem',
-          fontWeight: 600,
+          margin: '0 0 var(--ob-space-100) 0',
+          fontSize: 'var(--ob-font-size-base)',
+          fontWeight: 'var(--ob-font-weight-semibold)',
           color: 'var(--ob-color-text-primary, #1d1d1f)',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem',
+          gap: 'var(--ob-space-050)',
         }}
       >
         <span role="img" aria-label="headphones">
@@ -209,27 +209,33 @@ export function VoiceNoteList({
       {error && (
         <div
           style={{
-            padding: '0.75rem',
+            padding: 'var(--ob-space-075)',
             background: 'var(--ob-color-surface-error, #fef2f2)',
             border: '1px solid var(--ob-color-border-error, #fecaca)',
-            borderRadius: '4px',
+            borderRadius: 'var(--ob-radius-sm)',
             color: 'var(--ob-color-status-error, #dc2626)',
-            fontSize: '0.875rem',
-            marginBottom: '1rem',
+            fontSize: 'var(--ob-font-size-sm)',
+            marginBottom: 'var(--ob-space-100)',
           }}
         >
           {error}
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--ob-space-075)',
+        }}
+      >
         {voiceNotes.map((note) => (
           <div
             key={note.voiceNoteId}
             style={{
               background: 'white',
               border: '1px solid var(--ob-color-border-subtle, #e5e7eb)',
-              borderRadius: '4px',
+              borderRadius: 'var(--ob-radius-sm)',
               overflow: 'hidden',
             }}
           >
@@ -238,8 +244,8 @@ export function VoiceNoteList({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.75rem',
+                gap: 'var(--ob-space-075)',
+                padding: 'var(--ob-space-075)',
               }}
             >
               {/* Audio player */}
@@ -254,8 +260,8 @@ export function VoiceNoteList({
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontSize: '0.9rem',
-                    fontWeight: 500,
+                    fontSize: 'var(--ob-font-size-sm)',
+                    fontWeight: 'var(--ob-font-weight-medium)',
                     color: 'var(--ob-color-text-primary, #1d1d1f)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -266,7 +272,7 @@ export function VoiceNoteList({
                 </div>
                 <div
                   style={{
-                    fontSize: '0.75rem',
+                    fontSize: 'var(--ob-font-size-xs)',
                     color: 'var(--ob-color-text-muted, #6b7280)',
                     marginTop: '2px',
                   }}
@@ -278,9 +284,9 @@ export function VoiceNoteList({
               {/* Duration */}
               <span
                 style={{
-                  fontSize: '0.8rem',
+                  fontSize: 'var(--ob-font-size-sm-minus)',
                   color: 'var(--ob-color-text-muted, #6b7280)',
-                  fontFamily: 'ui-monospace, monospace',
+                  fontFamily: 'var(--ob-font-family-mono)',
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -292,12 +298,12 @@ export function VoiceNoteList({
                 type="button"
                 onClick={() => toggleExpanded(note.voiceNoteId)}
                 style={{
-                  padding: '0.375rem 0.5rem',
-                  borderRadius: '4px',
+                  padding: 'var(--ob-space-025) var(--ob-space-050)',
+                  borderRadius: 'var(--ob-radius-sm)',
                   border: '1px solid var(--ob-color-border-default, #d1d5db)',
                   background: 'white',
                   color: 'var(--ob-color-text-secondary, #374151)',
-                  fontSize: '0.75rem',
+                  fontSize: 'var(--ob-font-size-xs)',
                   cursor: 'pointer',
                 }}
                 title={
@@ -315,8 +321,8 @@ export function VoiceNoteList({
                 onClick={() => handleDelete(note.voiceNoteId)}
                 disabled={deletingId === note.voiceNoteId}
                 style={{
-                  padding: '0.375rem',
-                  borderRadius: '4px',
+                  padding: 'var(--ob-space-025)',
+                  borderRadius: 'var(--ob-radius-sm)',
                   border: 'none',
                   background: 'transparent',
                   color:
@@ -325,7 +331,7 @@ export function VoiceNoteList({
                       : 'var(--ob-color-status-error, #ef4444)',
                   cursor:
                     deletingId === note.voiceNoteId ? 'not-allowed' : 'pointer',
-                  fontSize: '1rem',
+                  fontSize: 'var(--ob-font-size-base)',
                 }}
                 title="Delete voice note"
               >
@@ -338,9 +344,9 @@ export function VoiceNoteList({
               <div
                 style={{
                   borderTop: '1px solid var(--ob-color-border-subtle, #e5e7eb)',
-                  padding: '0.75rem',
+                  padding: 'var(--ob-space-075)',
                   background: 'var(--ob-color-bg-surface, #f9fafb)',
-                  fontSize: '0.8rem',
+                  fontSize: 'var(--ob-font-size-sm-minus)',
                   color: 'var(--ob-color-text-secondary, #4b5563)',
                 }}
               >
@@ -348,22 +354,32 @@ export function VoiceNoteList({
                   style={{
                     display: 'grid',
                     gridTemplateColumns: 'auto 1fr',
-                    gap: '0.5rem 1rem',
+                    gap: 'var(--ob-space-050) var(--ob-space-100)',
                   }}
                 >
-                  <span style={{ fontWeight: 500 }}>File:</span>
+                  <span style={{ fontWeight: 'var(--ob-font-weight-medium)' }}>
+                    File:
+                  </span>
                   <span>{note.filename}</span>
 
-                  <span style={{ fontWeight: 500 }}>Size:</span>
+                  <span style={{ fontWeight: 'var(--ob-font-weight-medium)' }}>
+                    Size:
+                  </span>
                   <span>{formatFileSize(note.fileSize)}</span>
 
-                  <span style={{ fontWeight: 500 }}>Format:</span>
+                  <span style={{ fontWeight: 'var(--ob-font-weight-medium)' }}>
+                    Format:
+                  </span>
                   <span>{note.mimeType}</span>
 
                   {note.location &&
                     (note.location.latitude || note.location.longitude) && (
                       <>
-                        <span style={{ fontWeight: 500 }}>Location:</span>
+                        <span
+                          style={{ fontWeight: 'var(--ob-font-weight-medium)' }}
+                        >
+                          Location:
+                        </span>
                         <span>
                           {note.location.latitude?.toFixed(6)},{' '}
                           {note.location.longitude?.toFixed(6)}
@@ -373,14 +389,22 @@ export function VoiceNoteList({
 
                   {note.tags.length > 0 && (
                     <>
-                      <span style={{ fontWeight: 500 }}>Tags:</span>
+                      <span
+                        style={{ fontWeight: 'var(--ob-font-weight-medium)' }}
+                      >
+                        Tags:
+                      </span>
                       <span>{note.tags.join(', ')}</span>
                     </>
                   )}
 
                   {note.transcript && (
                     <>
-                      <span style={{ fontWeight: 500 }}>Transcript:</span>
+                      <span
+                        style={{ fontWeight: 'var(--ob-font-weight-medium)' }}
+                      >
+                        Transcript:
+                      </span>
                       <span style={{ fontStyle: 'italic' }}>
                         {note.transcript}
                       </span>
@@ -399,17 +423,17 @@ export function VoiceNoteList({
         onClick={loadVoiceNotes}
         disabled={isLoading}
         style={{
-          marginTop: '1rem',
-          padding: '0.5rem 1rem',
-          borderRadius: '6px',
+          marginTop: 'var(--ob-space-100)',
+          padding: 'var(--ob-space-050) var(--ob-space-100)',
+          borderRadius: 'var(--ob-radius-md)',
           border: '1px solid var(--ob-color-border-default, #d1d5db)',
           background: 'white',
           color: 'var(--ob-color-text-secondary, #374151)',
-          fontSize: '0.8rem',
+          fontSize: 'var(--ob-font-size-sm-minus)',
           cursor: isLoading ? 'not-allowed' : 'pointer',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem',
+          gap: 'var(--ob-space-050)',
         }}
       >
         {isLoading ? '⏳ Refreshing...' : '🔄 Refresh'}

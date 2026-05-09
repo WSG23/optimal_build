@@ -4,7 +4,7 @@
 .home-overview__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
+    gap: var(--ob-space-150);
     max-width: 1600px;
     margin: 0 auto;
 }
@@ -14,7 +14,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: var(--ob-space-100);
 }
 
 /* ── Icon badge (pill circle in card header) ───────────────────── */
@@ -45,7 +45,7 @@
 
 /* ── CTA (full-width variant) ──────────────────────────────────── */
 .home-overview__cta {
-    margin-top: 1rem;
+    margin-top: var(--ob-space-100);
     width: 100%;
 }
 
@@ -63,7 +63,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--ob-space-050);
 }
 
 .home-overview__pipeline-title {
@@ -76,17 +76,15 @@
 .home-overview__pipeline-change {
     color: var(--ob-success-500);
     font-size: var(--ob-font-size-sm);
-    font-weight: 600;
+    font-weight: var(--ob-font-weight-semibold);
 }
 
 .home-overview__pipeline-value {
-    font-size: 2.5rem;
-    font-weight: 700;
+    font-size: var(--ob-font-size-4xl);
+    font-weight: var(--ob-font-weight-bold);
     color: var(--ob-neutral-50);
-    font-family:
-        JetBrains Mono,
-        monospace;
-    margin-bottom: 0.5rem;
+    font-family: var(--ob-font-family-mono);
+    margin-bottom: var(--ob-space-050);
 }
 
 .home-overview__pipeline-desc {
@@ -97,7 +95,7 @@
 /* ── Sparkline ─────────────────────────────────────────────────── */
 .home-overview__sparkline {
     height: 30px;
-    margin-top: 1rem;
+    margin-top: var(--ob-space-100);
     background: var(--ob-overlay-white-subtle);
     border-radius: var(--ob-radius-sm);
     position: relative;
@@ -119,7 +117,7 @@
 
 /* ── Pipeline CTA (brand tint variant) ─────────────────────────── */
 .home-overview__pipeline-cta {
-    margin-top: 1rem;
+    margin-top: var(--ob-space-100);
     width: 100%;
     background: var(--ob-accent-brand-bg);
     color: var(--ob-brand-400);

@@ -97,7 +97,7 @@ describe('VoiceObservationsPanel', () => {
 
     expect(screen.queryByText('Voice Notes')).not.toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: /voice record/i }),
+      screen.getByRole('button', { name: /record voice note/i }),
     ).toHaveAttribute('title', 'Site notes. Transcripts appear after upload.')
     expect(screen.getByText('Voice Record')).toBeInTheDocument()
     expect(screen.queryByText('Voice capture')).not.toBeInTheDocument()
@@ -156,7 +156,9 @@ describe('VoiceObservationsPanel', () => {
     render(<VoiceObservationsPanel propertyId={null} />)
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /voice record/i }))
+      fireEvent.click(
+        screen.getByRole('button', { name: /record voice note/i }),
+      )
       await Promise.resolve()
     })
 
@@ -198,7 +200,9 @@ describe('VoiceObservationsPanel', () => {
     render(<VoiceObservationsPanel propertyId="prop-1" />)
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /voice record/i }))
+      fireEvent.click(
+        screen.getByRole('button', { name: /record voice note/i }),
+      )
       await Promise.resolve()
     })
 
@@ -224,7 +228,9 @@ describe('VoiceObservationsPanel', () => {
     render(<VoiceObservationsPanel propertyId="prop-1" />)
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /voice record/i }))
+      fireEvent.click(
+        screen.getByRole('button', { name: /record voice note/i }),
+      )
       await Promise.resolve()
     })
 
@@ -248,7 +254,7 @@ describe('VoiceObservationsPanel', () => {
     })
 
     expect(
-      screen.getByRole('button', { name: /voice record/i }),
+      screen.getByRole('button', { name: /record voice note/i }),
     ).toBeInTheDocument()
   })
 })

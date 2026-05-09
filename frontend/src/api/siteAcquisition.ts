@@ -43,9 +43,15 @@ import {
 export interface SiteAcquisitionRequest {
   latitude: number
   longitude: number
+  submittedAddress?: string | null
+  placeId?: string | null
+  placeName?: string | null
+  placeTypes?: string[]
   developmentScenarios: DevelopmentScenario[]
   previewDetailLevel?: GeometryDetailLevel
   jurisdictionCode?: string
+  currentGfaSqm?: number | null
+  currentGfaSource?: string | null
 }
 
 export interface DeveloperBuildEnvelope {
@@ -53,13 +59,20 @@ export interface DeveloperBuildEnvelope {
   zoneDescription: string | null
   siteAreaSqm: number | null
   allowablePlotRatio: number | null
+  grossPlotRatio: number | null
   maxBuildableGfaSqm: number | null
   currentGfaSqm: number | null
   additionalPotentialGfaSqm: number | null
   buildingHeightLimitM: number | null
   siteCoveragePct: number | null
+  setbackFrontM: number | null
+  setbackRearM: number | null
+  setbackSideM: number | null
+  stepBacks: CaptureStepBackV2[]
+  airRightsNote: string | null
   assumptions: string[]
   sourceReference: string | null
+  ruleCorpusStatus: Record<string, unknown> | null
 }
 
 export interface DeveloperVisualizationSummary {
@@ -133,6 +146,10 @@ export type CaptureStarterModelStatus =
 
 export type CaptureOverrideIntent = 'exploratory' | 'saved' | 'learnable'
 
+export type CaptureRecommendationScenario =
+  | DevelopmentScenario
+  | 'scenario_pending'
+
 export type CaptureGeometryScope =
   | 'scalar_envelope'
   | 'setback_envelope'
@@ -163,8 +180,10 @@ export interface CaptureCodeConstraintsV2 {
   zoningCode: string | null
   zoningDescription: string | null
   allowablePlotRatio: number | null
+  grossPlotRatio: number | null
   maxBuildableGfaSqm: number | null
   currentGfaSqm: number | null
+  sourceReference: string | null
   currentVsCodeStatus: CaptureCurrentVsCodeStatus
   grandfatheredLikelihood: CaptureGrandfatheredLikelihood
   setbacks: CaptureSetbacksV2
@@ -199,6 +218,22 @@ export interface CaptureEngineeringAssumptionsV2 {
     fields: Record<string, string>
     adjustments: string[]
   } | null
+  assetProfiles?: CaptureEngineeringAssetProfileV2[]
+}
+
+export interface CaptureEngineeringAssetProfileV2 {
+  assetType: string
+  floorToFloorM: number | null
+  clearCeilingM: number | null
+  niaEfficiency: number | null
+  source:
+    | 'rules'
+    | 'learned'
+    | 'hybrid'
+    | 'property_specific'
+    | 'jurisdiction_default'
+    | 'heuristic_fallback'
+    | 'user_override'
 }
 
 export interface CaptureStarterModelV2 {
@@ -212,11 +247,14 @@ export interface CaptureStarterModelV2 {
 }
 
 export interface CaptureScenarioRecommendationV2 {
-  recommended: DevelopmentScenario
-  defaultRecommended: DevelopmentScenario
+  recommended: CaptureRecommendationScenario
+  defaultRecommended: CaptureRecommendationScenario
   alternatives: DevelopmentScenario[]
   reasonCodes: string[]
   explanation: string
+  programDirectionLabel: string
+  programDirectionSummary: string
+  programDrivers: string[]
   userOverride: boolean
   overrideIntent: CaptureOverrideIntent | null
   confidence: 'low' | 'medium' | 'high'
@@ -597,6 +635,8 @@ interface RawDeveloperEnvelope {
   siteAreaSqm?: unknown
   allowable_plot_ratio?: unknown
   allowablePlotRatio?: unknown
+  gross_plot_ratio?: unknown
+  grossPlotRatio?: unknown
   max_buildable_gfa_sqm?: unknown
   maxBuildableGfaSqm?: unknown
   current_gfa_sqm?: unknown
@@ -607,9 +647,21 @@ interface RawDeveloperEnvelope {
   buildingHeightLimitM?: unknown
   site_coverage_pct?: unknown
   siteCoveragePct?: unknown
+  setback_front_m?: unknown
+  setbackFrontM?: unknown
+  setback_rear_m?: unknown
+  setbackRearM?: unknown
+  setback_side_m?: unknown
+  setbackSideM?: unknown
+  step_backs?: unknown
+  stepBacks?: unknown
+  air_rights_note?: unknown
+  airRightsNote?: unknown
   assumptions?: unknown
   source_reference?: unknown
   sourceReference?: unknown
+  rule_corpus_status?: unknown
+  ruleCorpusStatus?: unknown
 }
 
 interface RawDeveloperVisualization {
@@ -680,6 +732,10 @@ function mapDeveloperEnvelope(
   const plotRatio =
     coerceNumeric(payload?.allowable_plot_ratio) ??
     coerceNumeric(payload?.allowablePlotRatio)
+  const grossPlotRatio =
+    coerceNumeric(payload?.gross_plot_ratio) ??
+    coerceNumeric(payload?.grossPlotRatio) ??
+    plotRatio
   const maxBuildable =
     coerceNumeric(payload?.max_buildable_gfa_sqm) ??
     coerceNumeric(payload?.maxBuildableGfaSqm)
@@ -695,9 +751,50 @@ function mapDeveloperEnvelope(
   const siteCoveragePct =
     coerceNumeric(payload?.site_coverage_pct) ??
     coerceNumeric(payload?.siteCoveragePct)
+  const setbackFrontM =
+    coerceNumeric(payload?.setback_front_m) ??
+    coerceNumeric(payload?.setbackFrontM)
+  const setbackRearM =
+    coerceNumeric(payload?.setback_rear_m) ??
+    coerceNumeric(payload?.setbackRearM)
+  const setbackSideM =
+    coerceNumeric(payload?.setback_side_m) ??
+    coerceNumeric(payload?.setbackSideM)
+  const rawStepBacks = Array.isArray(payload?.step_backs)
+    ? payload!.step_backs
+    : Array.isArray(payload?.stepBacks)
+      ? payload!.stepBacks
+      : []
+  const stepBacks = rawStepBacks
+    .map((entry): CaptureStepBackV2 | null => {
+      if (!entry || typeof entry !== 'object') {
+        return null
+      }
+      const record = entry as Record<string, unknown>
+      const level = coerceNumeric(record.level)
+      const depthM =
+        coerceNumeric(record.depth_m) ?? coerceNumeric(record.depthM)
+      if (level === null || depthM === null) {
+        return null
+      }
+      return {
+        level,
+        depthM: roundOptional(depthM) ?? depthM,
+      }
+    })
+    .filter((entry): entry is CaptureStepBackV2 => entry !== null)
+  const airRightsNote =
+    coerceString(payload?.air_rights_note) ??
+    coerceString(payload?.airRightsNote)
   const sourceReference =
     coerceString(payload?.source_reference) ??
     coerceString(payload?.sourceReference)
+  const rawRuleCorpusStatus =
+    payload?.rule_corpus_status ?? payload?.ruleCorpusStatus ?? null
+  const ruleCorpusStatus =
+    rawRuleCorpusStatus && typeof rawRuleCorpusStatus === 'object'
+      ? (rawRuleCorpusStatus as Record<string, unknown>)
+      : null
 
   const assumptions = Array.isArray(payload?.assumptions)
     ? payload!.assumptions
@@ -710,13 +807,20 @@ function mapDeveloperEnvelope(
     zoneDescription: zoneDescription ?? null,
     siteAreaSqm: roundOptional(siteArea),
     allowablePlotRatio: roundOptional(plotRatio),
+    grossPlotRatio: roundOptional(grossPlotRatio),
     maxBuildableGfaSqm: roundOptional(maxBuildable),
     currentGfaSqm: roundOptional(currentGfa),
     additionalPotentialGfaSqm: roundOptional(additional),
     buildingHeightLimitM: roundOptional(buildingHeightLimitM),
     siteCoveragePct: roundOptional(siteCoveragePct),
+    setbackFrontM: roundOptional(setbackFrontM),
+    setbackRearM: roundOptional(setbackRearM),
+    setbackSideM: roundOptional(setbackSideM),
+    stepBacks,
+    airRightsNote: airRightsNote ?? null,
     assumptions,
     sourceReference: sourceReference ?? null,
+    ruleCorpusStatus,
   }
 }
 
@@ -1046,6 +1150,54 @@ function mapCaptureEngineeringAssumptions(
     sourceValue === 'user_override'
       ? sourceValue
       : 'rules'
+  const rawAssetProfiles = Array.isArray(item.asset_profiles)
+    ? item.asset_profiles
+    : Array.isArray(item.assetProfiles)
+      ? item.assetProfiles
+      : []
+  const assetProfiles = rawAssetProfiles
+    .map((entry) => {
+      if (!entry || typeof entry !== 'object') {
+        return null
+      }
+      const profile = entry as Record<string, unknown>
+      const assetType =
+        coerceString(profile.asset_type) ?? coerceString(profile.assetType)
+      if (!assetType) {
+        return null
+      }
+      const profileSourceValue =
+        coerceString(profile.source)?.toLowerCase() ?? source
+      const profileSource: CaptureEngineeringAssetProfileV2['source'] =
+        profileSourceValue === 'rules' ||
+        profileSourceValue === 'learned' ||
+        profileSourceValue === 'hybrid' ||
+        profileSourceValue === 'property_specific' ||
+        profileSourceValue === 'jurisdiction_default' ||
+        profileSourceValue === 'heuristic_fallback' ||
+        profileSourceValue === 'user_override'
+          ? profileSourceValue
+          : source
+      return {
+        assetType,
+        floorToFloorM:
+          coerceNumeric(profile.floor_to_floor_m) ??
+          coerceNumeric(profile.floorToFloorM) ??
+          null,
+        clearCeilingM:
+          coerceNumeric(profile.clear_ceiling_m) ??
+          coerceNumeric(profile.clearCeilingM) ??
+          null,
+        niaEfficiency:
+          coerceNumeric(profile.nia_efficiency) ??
+          coerceNumeric(profile.niaEfficiency) ??
+          null,
+        source: profileSource,
+      }
+    })
+    .filter(
+      (value): value is CaptureEngineeringAssetProfileV2 => value !== null,
+    )
 
   return {
     wallThicknessMm:
@@ -1089,6 +1241,7 @@ function mapCaptureEngineeringAssumptions(
           adjustments: provenanceAdjustments,
         }
       : null,
+    assetProfiles,
   }
 }
 
@@ -1420,13 +1573,20 @@ function deriveEnvelopeFromSummary(
     zoneDescription,
     siteAreaSqm: roundOptional(siteArea),
     allowablePlotRatio: roundOptional(plotRatio),
+    grossPlotRatio: roundOptional(plotRatio),
     maxBuildableGfaSqm: roundOptional(maxBuildable),
     currentGfaSqm: roundOptional(currentGfa),
     additionalPotentialGfaSqm: roundOptional(additional),
     buildingHeightLimitM: null,
     siteCoveragePct: null,
+    setbackFrontM: null,
+    setbackRearM: null,
+    setbackSideM: null,
+    stepBacks: [],
+    airRightsNote: null,
     assumptions,
     sourceReference: null,
+    ruleCorpusStatus: null,
   }
 }
 
@@ -1644,6 +1804,27 @@ export async function capturePropertyForDevelopment(
       if (request.jurisdictionCode) {
         requestBody.jurisdiction_code = request.jurisdictionCode
       }
+      if (request.submittedAddress) {
+        requestBody.submitted_address = request.submittedAddress
+      }
+      if (request.placeId) {
+        requestBody.place_id = request.placeId
+      }
+      if (request.placeName) {
+        requestBody.place_name = request.placeName
+      }
+      if (request.placeTypes?.length) {
+        requestBody.place_types = request.placeTypes
+      }
+      if (
+        request.currentGfaSqm !== undefined &&
+        request.currentGfaSqm !== null
+      ) {
+        requestBody.current_gfa_sqm = request.currentGfaSqm
+      }
+      if (request.currentGfaSource) {
+        requestBody.current_gfa_source = request.currentGfaSource
+      }
 
       const response = await fetch(buildUrl(DEVELOPER_GPS_ENDPOINT), {
         method: 'POST',
@@ -1653,7 +1834,16 @@ export async function capturePropertyForDevelopment(
       })
 
       if (!response.ok) {
-        const detail = await response.text()
+        const detailText = await response.text()
+        let detail = detailText
+        try {
+          const parsed = JSON.parse(detailText) as { detail?: unknown }
+          if (typeof parsed.detail === 'string') {
+            detail = parsed.detail
+          }
+        } catch {
+          detail = detailText
+        }
         throw new Error(
           detail ||
             `Request to ${DEVELOPER_GPS_ENDPOINT} failed with ${response.status}`,

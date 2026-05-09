@@ -109,7 +109,10 @@ export function OverridesTab({
           }}
         >
           <Box>
-            <Typography variant="h5" sx={{ m: 0, fontWeight: 600 }}>
+            <Typography
+              variant="h5"
+              sx={{ m: 0, fontWeight: 'var(--ob-font-weight-semibold)' }}
+            >
               Due Diligence Matrix
             </Typography>
             <Typography
@@ -182,7 +185,11 @@ export function OverridesTab({
               </Typography>
               <Typography
                 variant="h6"
-                sx={{ m: 0, mt: 'var(--ob-space-050)', fontWeight: 600 }}
+                sx={{
+                  m: 0,
+                  mt: 'var(--ob-space-050)',
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                }}
               >
                 {value}
               </Typography>
@@ -200,7 +207,10 @@ export function OverridesTab({
           className="ob-seamless-panel ob-seamless-panel--glass"
           sx={{ p: 'var(--ob-space-125)' }}
         >
-          <Typography variant="h6" sx={{ m: 0, fontWeight: 600 }}>
+          <Typography
+            variant="h6"
+            sx={{ m: 0, fontWeight: 'var(--ob-font-weight-semibold)' }}
+          >
             Baseline scenario
           </Typography>
           <Box
@@ -283,7 +293,10 @@ export function OverridesTab({
                 }}
               >
                 <Box>
-                  <Typography variant="h6" sx={{ m: 0, fontWeight: 600 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{ m: 0, fontWeight: 'var(--ob-font-weight-semibold)' }}
+                  >
                     {row.label || formatScenarioLabel(row.key)}
                   </Typography>
                   <Typography
@@ -321,7 +334,9 @@ export function OverridesTab({
                   >
                     Condition
                   </Typography>
-                  <Typography sx={{ fontWeight: 600 }}>
+                  <Typography
+                    sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
+                  >
                     {row.conditionRating ?? 'Pending'}
                     {row.conditionScore != null
                       ? ` · ${row.conditionScore}/100`
@@ -337,7 +352,9 @@ export function OverridesTab({
                   >
                     Checklist
                   </Typography>
-                  <Typography sx={{ fontWeight: 600 }}>
+                  <Typography
+                    sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
+                  >
                     {row.checklistCompleted ?? 0}/{row.checklistTotal ?? 0}
                   </Typography>
                 </Box>
@@ -350,7 +367,9 @@ export function OverridesTab({
                   >
                     Risk
                   </Typography>
-                  <Typography sx={{ fontWeight: 600 }}>
+                  <Typography
+                    sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
+                  >
                     {row.riskLevel ?? 'Pending'}
                   </Typography>
                 </Box>
@@ -363,7 +382,9 @@ export function OverridesTab({
                   >
                     Logged
                   </Typography>
-                  <Typography sx={{ fontWeight: 600 }}>
+                  <Typography
+                    sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
+                  >
                     {formatRecordedTimestamp(row.recordedAt)}
                   </Typography>
                 </Box>
@@ -374,7 +395,9 @@ export function OverridesTab({
                   className="ob-seamless-panel"
                   sx={{ p: 'var(--ob-space-100)' }}
                 >
-                  <Typography sx={{ fontWeight: 600 }}>
+                  <Typography
+                    sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
+                  >
                     {row.primaryInsight.title}
                   </Typography>
                   <Typography

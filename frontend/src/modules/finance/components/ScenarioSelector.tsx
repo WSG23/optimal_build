@@ -82,7 +82,7 @@ export function ScenarioSelector({
               component="span"
               sx={{
                 fontSize: 'var(--ob-font-size-md)',
-                fontWeight: 500,
+                fontWeight: 'var(--ob-font-weight-medium)',
               }}
             >
               {scenario.isPrimary ? 'Base Case' : 'Scenario'}

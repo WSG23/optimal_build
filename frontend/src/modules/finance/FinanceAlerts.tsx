@@ -104,7 +104,7 @@ export function FinanceAlerts({
       )}
       {onboardingMode === 'workbook' && (
         <Alert severity="info" sx={{ mb: 'var(--ob-space-150)' }}>
-          <Stack spacing={1}>
+          <Stack spacing="var(--ob-space-100)">
             <Typography variant="body2">
               Workbook onboarding is active for this project. Import an existing
               Excel model to structure it into the Singapore finance workflow
@@ -127,13 +127,13 @@ export function FinanceAlerts({
       )}
       {onboardingMode === 'sample' && (
         <Alert severity="info" sx={{ mb: 'var(--ob-space-150)' }}>
-          <Stack spacing={1}>
+          <Stack spacing="var(--ob-space-100)">
             <Typography variant="body2">
               This sample project starts with a Singapore underwriting template.
               Review the template guidance below, then export lender or investor
               materials once the scenario is ready.
             </Typography>
-            <Stack direction="row" spacing={1}>
+            <Stack direction="row" spacing="var(--ob-space-100)">
               <Button
                 variant="secondary"
                 size="sm"
@@ -156,10 +156,10 @@ export function FinanceAlerts({
       )}
       {quickScreenDraft && (
         <Alert severity="info" sx={{ mb: 'var(--ob-space-150)' }}>
-          <Stack spacing={1.25}>
+          <Stack spacing="var(--ob-space-125)">
             <Stack
               direction={{ xs: 'column', md: 'row' }}
-              spacing={1}
+              spacing="var(--ob-space-100)"
               justifyContent="space-between"
               alignItems={{ xs: 'flex-start', md: 'center' }}
             >
@@ -189,7 +189,7 @@ export function FinanceAlerts({
                   </Box>
                 ) : null}
               </Box>
-              <Stack direction="row" spacing={1}>
+              <Stack direction="row" spacing="var(--ob-space-100)">
                 <Button
                   variant="secondary"
                   size="sm"
@@ -223,7 +223,7 @@ export function FinanceAlerts({
           severity={workbookPreview.isValid ? 'info' : 'warning'}
           sx={{ mb: 'var(--ob-space-150)' }}
         >
-          <Stack spacing={1.25}>
+          <Stack spacing="var(--ob-space-125)">
             <Box>
               <strong>{workbookPreview.filename}</strong>
               <Box component="span" sx={{ display: 'block' }}>
@@ -248,7 +248,7 @@ export function FinanceAlerts({
                 ))}
               </Box>
             )}
-            <Stack direction="row" spacing={1}>
+            <Stack direction="row" spacing="var(--ob-space-100)">
               {workbookPreview.isValid ? (
                 <Button
                   variant="secondary"

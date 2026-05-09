@@ -105,7 +105,7 @@ export function CapitalStackFacilityTable({
         <Typography
           variant="h6"
           sx={{
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             fontSize: 'var(--ob-font-size-lg)',
             color: 'text.primary',
           }}
@@ -134,7 +134,7 @@ export function CapitalStackFacilityTable({
               px: 'var(--ob-space-150)',
               py: 'var(--ob-space-075)',
               fontSize: 'var(--ob-font-size-xs)',
-              fontWeight: 600,
+              fontWeight: 'var(--ob-font-weight-semibold)',
               color: 'text.secondary',
               textTransform: 'uppercase',
               letterSpacing: 'var(--ob-letter-spacing-wider)',
@@ -240,7 +240,12 @@ export function CapitalStackFacilityTable({
               return (
                 <tr key={`${slice.name}-${slice.trancheOrder ?? 0}`}>
                   <td>
-                    <Typography sx={{ fontWeight: 500, color: 'text.primary' }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 'var(--ob-font-weight-medium)',
+                        color: 'text.primary',
+                      }}
+                    >
                       {slice.name}
                     </Typography>
                   </td>
@@ -323,7 +328,12 @@ export function CapitalStackFacilityTable({
               }}
             >
               <td>
-                <Typography sx={{ fontWeight: 600, color: 'text.primary' }}>
+                <Typography
+                  sx={{
+                    fontWeight: 'var(--ob-font-weight-semibold)',
+                    color: 'text.primary',
+                  }}
+                >
                   {t('common.total')}
                 </Typography>
               </td>
@@ -331,7 +341,7 @@ export function CapitalStackFacilityTable({
               <td>
                 <Typography
                   sx={{
-                    fontWeight: 600,
+                    fontWeight: 'var(--ob-font-weight-semibold)',
                     fontFamily: 'var(--ob-font-family-mono)',
                     color: 'text.primary',
                   }}
@@ -342,7 +352,12 @@ export function CapitalStackFacilityTable({
                 </Typography>
               </td>
               <td>
-                <Typography sx={{ fontWeight: 600, color: 'text.primary' }}>
+                <Typography
+                  sx={{
+                    fontWeight: 'var(--ob-font-weight-semibold)',
+                    color: 'text.primary',
+                  }}
+                >
                   100.00%
                 </Typography>
               </td>

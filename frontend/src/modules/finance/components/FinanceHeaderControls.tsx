@@ -6,7 +6,6 @@ import {
   Menu,
   MenuItem,
   Typography,
-  alpha,
   useMediaQuery,
   useTheme,
 } from '@mui/material'
@@ -178,39 +177,33 @@ export function FinanceHeaderControls({
   return (
     <Box
       sx={{
-        display: 'inline-flex',
-        alignItems: 'stretch',
-        height: 'var(--ob-space-250)',
-        border: 'var(--ob-border-fine-strong)',
-        borderRadius: 'var(--ob-radius-md)',
-        bgcolor: alpha(theme.palette.background.paper, 0.75),
-        backdropFilter: 'blur(var(--ob-blur-sm))',
-        overflow: 'hidden',
-        width: 'fit-content',
-        maxWidth: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 'var(--ob-space-075)',
+        flexWrap: 'nowrap',
         minWidth: 0,
         flexShrink: 1,
       }}
     >
-      {/* Label segment */}
-      <Box
+      {/* Project selector */}
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={(event) => setProjectMenuAnchor(event.currentTarget)}
+        aria-label={t('finance.projectSelector.title')}
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          px: 'var(--ob-space-150)',
-          borderRight: 1,
-          borderColor: alpha(theme.palette.divider, 0.6),
+          maxWidth: 'var(--ob-size-finance-project-select)',
           minWidth: 0,
         }}
       >
         <Typography
           sx={{
             fontSize: 'var(--ob-font-size-xs)',
-            fontWeight: 800,
-            letterSpacing: 'var(--ob-letter-spacing-wider)',
+            fontWeight: 'var(--ob-font-weight-semibold)',
+            letterSpacing: '0.1em',
             color: 'text.secondary',
-            textTransform: 'uppercase',
             whiteSpace: 'nowrap',
+            mr: 'var(--ob-space-050)',
             flexShrink: 0,
           }}
         >
@@ -218,54 +211,24 @@ export function FinanceHeaderControls({
             defaultValue: 'Project',
           })}
         </Typography>
-      </Box>
-
-      {/* Project selector segment */}
-      <Box
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 'var(--ob-space-075)',
-          px: 'var(--ob-space-150)',
-          borderRight: 1,
-          borderColor: alpha(theme.palette.divider, 0.6),
-          minWidth: 0,
-          flex: '0 1 auto',
-          width: 'fit-content',
-          maxWidth: 'var(--ob-size-finance-project-select)',
-          cursor: 'pointer',
-          userSelect: 'none',
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label={t('finance.projectSelector.title')}
-        onClick={(event) => setProjectMenuAnchor(event.currentTarget)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            setProjectMenuAnchor(event.currentTarget as HTMLElement)
-          }
-        }}
-      >
         <Typography
           sx={{
-            color: 'text.primary',
             fontSize: 'var(--ob-font-size-sm)',
-            fontWeight: 700,
-            fontFamily: 'var(--ob-font-family-base)',
+            fontWeight: 'var(--ob-font-weight-semibold)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             minWidth: 0,
-            maxWidth: '100%',
+            color: 'text.primary',
           }}
         >
           {selectedLabel}
         </Typography>
-        <Box aria-hidden sx={{ color: 'text.secondary', display: 'flex' }}>
-          <KeyboardArrowDown fontSize="small" />
-        </Box>
-      </Box>
+        <KeyboardArrowDown
+          fontSize="small"
+          sx={{ color: 'text.secondary', ml: 'var(--ob-space-025)' }}
+        />
+      </Button>
       <Menu
         anchorEl={projectMenuAnchor}
         open={Boolean(projectMenuAnchor)}
@@ -274,10 +237,8 @@ export function FinanceHeaderControls({
           paper: {
             sx: {
               mt: 'var(--ob-space-050)',
-              borderRadius: 'var(--ob-radius-md)',
+              borderRadius: 'var(--ob-radius-sm)',
               border: 'var(--ob-border-fine-strong)',
-              bgcolor: alpha(theme.palette.background.paper, 0.95),
-              backdropFilter: 'blur(var(--ob-blur-sm))',
             },
           },
         }}
@@ -316,15 +277,7 @@ export function FinanceHeaderControls({
         aria-label={t('finance.actions.refresh')}
         title={t('finance.actions.refresh')}
         disabled={refreshing}
-        sx={{
-          height: '100%',
-          minWidth: 0,
-          px: 0,
-          borderRadius: 0,
-          flexShrink: 0,
-          borderRight: 1,
-          borderColor: alpha(theme.palette.divider, 0.6),
-        }}
+        sx={{ minWidth: 0, px: 'var(--ob-space-075)' }}
       >
         {refreshing ? (
           <CircularProgress size={16} sx={{ color: 'inherit' }} />
@@ -333,10 +286,10 @@ export function FinanceHeaderControls({
         )}
       </Button>
 
-      {/* Export */}
+      {/* Import */}
       <Button
         size="sm"
-        variant="ghost"
+        variant="secondary"
         onClick={onImportWorkbook}
         disabled={importDisabled || importingWorkbook}
         aria-label={t('finance.actions.importWorkbook', {
@@ -345,20 +298,6 @@ export function FinanceHeaderControls({
         title={t('finance.actions.importWorkbook', {
           defaultValue: 'Import workbook',
         })}
-        sx={{
-          height: '100%',
-          px: 'var(--ob-space-150)',
-          borderRadius: 0,
-          fontWeight: 800,
-          letterSpacing: 'var(--ob-letter-spacing-wider)',
-          textTransform: 'uppercase',
-          whiteSpace: 'nowrap',
-          minWidth: 0,
-          flexShrink: 0,
-          justifyContent: 'center',
-          borderRight: 1,
-          borderColor: alpha(theme.palette.divider, 0.6),
-        }}
       >
         {importingWorkbook ? (
           <CircularProgress size={16} sx={{ color: 'inherit' }} />
@@ -374,9 +313,10 @@ export function FinanceHeaderControls({
         )}
       </Button>
 
+      {/* Export workbook */}
       <Button
         size="sm"
-        variant="ghost"
+        variant="secondary"
         onClick={onExportWorkbook}
         disabled={exportDisabled || exportingWorkbook}
         aria-label={t('finance.actions.exportWorkbook', {
@@ -385,20 +325,6 @@ export function FinanceHeaderControls({
         title={t('finance.actions.exportWorkbook', {
           defaultValue: 'Export workbook',
         })}
-        sx={{
-          height: '100%',
-          px: 'var(--ob-space-150)',
-          borderRadius: 0,
-          fontWeight: 800,
-          letterSpacing: 'var(--ob-letter-spacing-wider)',
-          textTransform: 'uppercase',
-          whiteSpace: 'nowrap',
-          minWidth: 0,
-          flexShrink: 0,
-          justifyContent: 'center',
-          borderRight: 1,
-          borderColor: alpha(theme.palette.divider, 0.6),
-        }}
       >
         {exportingWorkbook ? (
           <CircularProgress size={16} sx={{ color: 'inherit' }} />
@@ -414,6 +340,7 @@ export function FinanceHeaderControls({
         )}
       </Button>
 
+      {/* Export CSV */}
       <Button
         size="sm"
         variant="ghost"
@@ -421,18 +348,6 @@ export function FinanceHeaderControls({
         disabled={exportDisabled || exportingCsv}
         aria-label={t('finance.actions.exportCsv')}
         title={t('finance.actions.exportCsv')}
-        sx={{
-          height: '100%',
-          px: 'var(--ob-space-150)',
-          borderRadius: 0,
-          fontWeight: 800,
-          letterSpacing: 'var(--ob-letter-spacing-wider)',
-          textTransform: 'uppercase',
-          whiteSpace: 'nowrap',
-          minWidth: 0,
-          flexShrink: 0,
-          justifyContent: 'center',
-        }}
       >
         {exportingCsv ? (
           <CircularProgress size={16} sx={{ color: 'inherit' }} />

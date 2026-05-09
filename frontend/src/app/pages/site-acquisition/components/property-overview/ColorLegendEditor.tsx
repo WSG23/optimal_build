@@ -44,14 +44,14 @@ export function ColorLegendEditor({
   return (
     <section
       style={{
-        marginTop: '1.25rem',
+        marginTop: 'var(--ob-space-125)',
         border: '1px solid var(--ob-color-border-subtle, #e5e7eb)',
-        borderRadius: '4px',
-        padding: '1.25rem',
+        borderRadius: 'var(--ob-radius-sm)',
+        padding: 'var(--ob-space-125)',
         background: 'var(--ob-color-bg-surface, #ffffff)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '1rem',
+        gap: 'var(--ob-space-100)',
       }}
     >
       <div
@@ -59,7 +59,7 @@ export function ColorLegendEditor({
           display: 'flex',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '0.75rem',
+          gap: 'var(--ob-space-075)',
           alignItems: 'center',
         }}
       >
@@ -67,8 +67,8 @@ export function ColorLegendEditor({
           <h2
             style={{
               margin: 0,
-              fontSize: '1rem',
-              fontWeight: 600,
+              fontSize: 'var(--ob-font-size-base)',
+              fontWeight: 'var(--ob-font-weight-semibold)',
               letterSpacing: '-0.01em',
               color: 'var(--ob-color-text-primary, #111827)',
             }}
@@ -78,7 +78,7 @@ export function ColorLegendEditor({
           <p
             style={{
               margin: 0,
-              fontSize: '0.9rem',
+              fontSize: 'var(--ob-font-size-sm)',
               color: 'var(--ob-color-text-secondary, #4b5563)',
             }}
           >
@@ -88,8 +88,8 @@ export function ColorLegendEditor({
         </div>
         <span
           style={{
-            fontSize: '0.85rem',
-            fontWeight: 600,
+            fontSize: 'var(--ob-font-size-sm)',
+            fontWeight: 'var(--ob-font-weight-semibold)',
             color: hasPendingChanges
               ? 'var(--ob-color-status-warning, #b45309)'
               : 'var(--ob-color-status-success, #10b981)',
@@ -104,7 +104,7 @@ export function ColorLegendEditor({
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '1rem',
+          gap: 'var(--ob-space-100)',
         }}
       >
         {entries.map((entry) => (
@@ -112,20 +112,24 @@ export function ColorLegendEditor({
             key={entry.assetType}
             style={{
               border: '1px solid var(--ob-color-border-subtle, #e5e7eb)',
-              borderRadius: '4px',
-              padding: '0.9rem',
+              borderRadius: 'var(--ob-radius-sm)',
+              padding: 'var(--ob-space-085)',
               background: 'var(--ob-color-bg-surface, #f9fafb)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.6rem',
+              gap: 'var(--ob-space-065)',
             }}
           >
             <div
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--ob-space-050)',
+              }}
             >
               <strong
                 style={{
-                  fontSize: '0.9rem',
+                  fontSize: 'var(--ob-font-size-sm)',
                   color: 'var(--ob-color-text-primary, #111827)',
                 }}
               >
@@ -142,7 +146,7 @@ export function ColorLegendEditor({
                   width: '44px',
                   height: '44px',
                   border: '1px solid var(--ob-color-border-default, #d1d5db)',
-                  borderRadius: '6px',
+                  borderRadius: 'var(--ob-radius-md)',
                   padding: 0,
                   background: 'var(--ob-color-bg-surface, #fff)',
                 }}
@@ -152,8 +156,8 @@ export function ColorLegendEditor({
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.35rem',
-                fontSize: '0.8rem',
+                gap: 'var(--ob-space-035)',
+                fontSize: 'var(--ob-font-size-sm-minus)',
                 color: 'var(--ob-color-text-secondary, #4b5563)',
               }}
             >
@@ -165,10 +169,10 @@ export function ColorLegendEditor({
                   onChange(entry.assetType, 'label', event.target.value)
                 }
                 style={{
-                  padding: '0.4rem 0.55rem',
-                  borderRadius: '6px',
+                  padding: 'var(--ob-space-035) var(--ob-space-050)',
+                  borderRadius: 'var(--ob-radius-md)',
                   border: '1px solid var(--ob-color-border-default, #d1d5db)',
-                  fontSize: '0.9rem',
+                  fontSize: 'var(--ob-font-size-sm)',
                 }}
               />
             </label>
@@ -176,8 +180,8 @@ export function ColorLegendEditor({
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.35rem',
-                fontSize: '0.8rem',
+                gap: 'var(--ob-space-035)',
+                fontSize: 'var(--ob-font-size-sm-minus)',
                 color: 'var(--ob-color-text-secondary, #4b5563)',
               }}
             >
@@ -191,10 +195,10 @@ export function ColorLegendEditor({
                 style={{
                   resize: 'vertical',
                   minHeight: '56px',
-                  padding: '0.4rem 0.55rem',
-                  borderRadius: '6px',
+                  padding: 'var(--ob-space-035) var(--ob-space-050)',
+                  borderRadius: 'var(--ob-radius-md)',
                   border: '1px solid var(--ob-color-border-default, #d1d5db)',
-                  fontSize: '0.9rem',
+                  fontSize: 'var(--ob-font-size-sm)',
                 }}
               />
             </label>
@@ -205,7 +209,7 @@ export function ColorLegendEditor({
         style={{
           display: 'flex',
           flexWrap: 'wrap',
-          gap: '0.75rem',
+          gap: 'var(--ob-space-075)',
           alignItems: 'center',
         }}
       >
@@ -214,13 +218,13 @@ export function ColorLegendEditor({
           onClick={onReset}
           disabled={entries.length === 0}
           style={{
-            padding: '0.45rem 0.85rem',
-            borderRadius: '9999px',
+            padding: 'var(--ob-space-050) var(--ob-space-085)',
+            borderRadius: 'var(--ob-radius-pill)',
             border: '1px solid var(--ob-color-border-default, #d1d5db)',
             background: 'var(--ob-color-bg-surface, #f9fafb)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             color: 'var(--ob-color-text-primary, #111827)',
-            fontSize: '0.85rem',
+            fontSize: 'var(--ob-font-size-sm)',
             cursor: entries.length === 0 ? 'not-allowed' : 'pointer',
             opacity: entries.length === 0 ? 0.5 : 1,
           }}
@@ -230,7 +234,7 @@ export function ColorLegendEditor({
         <p
           style={{
             margin: 0,
-            fontSize: '0.85rem',
+            fontSize: 'var(--ob-font-size-sm)',
             color: 'var(--ob-color-text-secondary, #4b5563)',
           }}
         >

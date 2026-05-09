@@ -114,6 +114,37 @@ async def test_analyze_existing_building_returns_metrics(stub_services):
 
 
 @pytest.mark.asyncio
+async def test_analyze_raw_land_uses_property_zoning_when_ura_zoning_unavailable(
+    stub_services,
+):
+    buildable, finance, ura, zoning_info = stub_services
+    ura.get_zoning_info = AsyncMock(return_value=None)
+    scanner = DevelopmentPotentialScanner(buildable, finance, ura)
+    property_data = make_property(zoning_code="SG:commercial", plot_ratio=Decimal("4"))
+
+    analysis = await scanner._analyze_raw_land(property_data, session=AsyncMock())
+
+    assert isinstance(analysis, RawLandAnalysis)
+    buildable.calculate_parameters.assert_awaited_once()
+    buildable_input = buildable.calculate_parameters.await_args.args[0]
+    assert buildable_input.zone_code == "SG:commercial"
+    assert buildable_input.plot_ratio == 4.0
+
+
+@pytest.mark.asyncio
+async def test_analyze_raw_land_requires_real_or_saved_zoning_metadata(stub_services):
+    buildable, finance, ura, zoning_info = stub_services
+    ura.get_zoning_info = AsyncMock(return_value=None)
+    scanner = DevelopmentPotentialScanner(buildable, finance, ura)
+    property_data = make_property(zoning_code=None, plot_ratio=None)
+
+    with pytest.raises(ValueError, match="Zoning code is unavailable"):
+        await scanner._analyze_raw_land(property_data, session=AsyncMock())
+
+    buildable.calculate_parameters.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_analyze_historical_property_flags_constraints(stub_services):
     buildable, finance, ura, zoning_info = stub_services
     scanner = DevelopmentPotentialScanner(buildable, finance, ura)

@@ -17,24 +17,24 @@ import { Theme, alpha } from '@mui/material'
  */
 export function getChartColors(_theme: Theme) {
   return {
-    // Capital stack colors - cyan family for consistency
-    equity: '#00f3ff', // Bright cyan (neon)
-    seniorDebt: '#0096cc', // Medium cyan
-    mezzanine: '#0077a3', // Darker cyan
-    bridge: '#005577', // Deep cyan
-    other: '#1e293b', // Dark slate
+    // Capital stack colors — blue family for analytical consistency
+    equity: '#3B7CB8', // Brand slate blue
+    seniorDebt: '#2d6697', // Medium blue
+    mezzanine: '#1e4f7a', // Deep blue
+    bridge: '#153d5e', // Deepest blue
+    other: '#1c1917', // Warm stone dark
 
     // Chart structural colors
-    grid: 'rgba(255, 255, 255, 0.1)',
-    gridDashed: 'rgba(255, 255, 255, 0.15)',
-    axisText: 'rgba(255, 255, 255, 0.6)',
-    tooltipBg: 'rgba(15, 23, 42, 0.95)',
-    tooltipBorder: 'rgba(0, 243, 255, 0.2)',
+    grid: 'rgba(245, 235, 220, 0.1)',
+    gridDashed: 'rgba(245, 235, 220, 0.15)',
+    axisText: 'rgba(245, 235, 220, 0.6)',
+    tooltipBg: 'rgba(21, 19, 17, 0.95)',
+    tooltipBorder: 'var(--ob-color-brand-soft)',
 
-    // Line chart colors - cyan accent
-    line: '#00f3ff',
-    lineDot: '#00f3ff',
-    lineArea: 'rgba(0, 243, 255, 0.1)',
+    // Line chart colors — brand blue accent
+    line: '#3B7CB8',
+    lineDot: '#3B7CB8',
+    lineArea: 'var(--ob-color-brand-muted)',
   }
 }
 

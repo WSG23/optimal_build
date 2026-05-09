@@ -124,11 +124,17 @@ class DeveloperBuildEnvelope(BaseModel):
     zone_description: Optional[str] = None
     site_area_sqm: Optional[float] = None
     allowable_plot_ratio: Optional[float] = None
+    gross_plot_ratio: Optional[float] = None
     max_buildable_gfa_sqm: Optional[float] = None
     current_gfa_sqm: Optional[float] = None
     additional_potential_gfa_sqm: Optional[float] = None
     building_height_limit_m: Optional[float] = None
     site_coverage_pct: Optional[float] = None
+    setback_front_m: Optional[float] = None
+    setback_rear_m: Optional[float] = None
+    setback_side_m: Optional[float] = None
+    step_backs: list[dict[str, float]] = Field(default_factory=list)
+    air_rights_note: Optional[str] = None
     assumptions: list[str] = Field(default_factory=list)
     source_reference: Optional[str] = None  # Data source attribution
     rule_corpus_status: dict[str, Any] | None = None

@@ -91,10 +91,12 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
   return (
     <Box>
       <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={2}
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 'var(--ob-space-100)',
+        }}
       >
         <Typography variant="h6">Yield Benchmarks</Typography>
         <Typography variant="caption" color="textSecondary">
@@ -103,7 +105,11 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
       </Box>
 
       {statistics ? (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid
+          container
+          spacing="var(--ob-space-200)"
+          sx={{ mb: 'var(--ob-space-150)' }}
+        >
           <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent>
@@ -176,7 +182,7 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
           </Grid>
         </Grid>
       ) : (
-        <Paper sx={{ p: 3, mb: 3 }}>
+        <Paper sx={{ p: 'var(--ob-space-150)', mb: 'var(--ob-space-150)' }}>
           <Typography color="textSecondary">
             No yield benchmark data available.
           </Typography>
@@ -184,7 +190,14 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
       )}
 
       {trends && (
-        <Box display="flex" gap={1} flexWrap="wrap" mb={3}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 'var(--ob-space-050)',
+            flexWrap: 'wrap',
+            mb: 'var(--ob-space-150)',
+          }}
+        >
           {trendChip('Cap Rate', trends.cap_rate_trend)}
           {trendChip('Rental', trends.rental_trend)}
           <Chip
@@ -198,8 +211,8 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
         </Box>
       )}
 
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" gutterBottom>
+      <Paper sx={{ p: 'var(--ob-space-150)' }}>
+        <Typography variant="h6" sx={{ mb: 'var(--ob-space-100)' }}>
           Year-over-year movement
         </Typography>
         {yoyData.length === 0 ? (
@@ -207,7 +220,7 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
             No year-over-year analytics available.
           </Typography>
         ) : (
-          <Box height={320}>
+          <Box sx={{ height: '20rem' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={yoyData}
@@ -231,7 +244,7 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
                 />
                 <Bar
                   dataKey="value"
-                  fill="var(--ob-color-neon-cyan, #1976d2)"
+                  fill="var(--ob-color-brand-primary)"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>

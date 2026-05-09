@@ -112,7 +112,7 @@ export const HeritageCard = memo(function HeritageCard({
               sx={{
                 fontSize: 'var(--ob-font-size-xs)',
                 color: 'warning.dark',
-                lineHeight: 1.4,
+                lineHeight: 'var(--ob-line-height-snug)',
               }}
             >
               {card.note}

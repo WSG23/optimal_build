@@ -136,6 +136,7 @@ export type CssTokenName =
   | 'color-info-strong'
   | 'color-info-muted'
   // Typography
+  | 'font-family-display'
   | 'font-family-base'
   | 'font-family-mono'
   | 'font-size-xs'
@@ -214,39 +215,39 @@ export type CssRgbTokenName =
 // =============================================================================
 
 /**
- * Color palette values - mirrors tokens.css :root values
+ * Color palette values — mirrors tokens.css :root values
  * Use cssVar() in CSS contexts, these values for JS/MUI contexts
  *
  * Color Purposes:
- * - brand: Action Cyan - Primary actions, selections, focus states
- * - info: Contextual Indigo - Informational content, AI insights, metadata
- * - success: Emerald Green - Completed, approved, positive outcomes
- * - warning: Burnt Orange - Pending, attention needed, high priority
- * - error: Soft Red - Failed, rejected, urgent, destructive actions
+ * - brand: Institutional Slate Blue — Primary brand, interactive states, analytical precision
+ * - info: Soft Violet — Informational content, AI insights, metadata
+ * - success: Emerald Green — Completed, approved, positive outcomes
+ * - warning: Burnt Orange — Pending, attention needed, high priority
+ * - error: Soft Red — Failed, rejected, urgent, destructive actions
  */
 export const colors = {
   neutral: {
-    950: '#121212',
-    900: '#1e293b',
-    800: '#334155',
-    700: '#475569',
-    600: '#64748b',
-    500: '#94a3b8',
-    400: '#cbd5e1',
-    300: '#e2e8f0',
-    200: '#f1f5f9',
-    100: '#f8fafc',
-    50: '#ffffff',
+    950: '#0c0a09',
+    900: '#151311',
+    800: '#1c1917',
+    700: '#292524',
+    600: '#44403c',
+    500: '#78716c',
+    400: '#a8a29e',
+    300: '#d6d3d1',
+    200: '#e7e5e3',
+    100: '#f5f5f4',
+    50: '#fafaf9',
   },
-  /** Action Cyan - Interactive affordance, buttons, selections, active states */
+  /** Institutional Slate Blue — Brand identity, interactive states, analytical precision */
   brand: {
-    700: '#0891b2',
-    600: '#06b6d4',
-    500: '#22d3ee',
-    400: '#67e8f9',
-    300: '#a5f3fc',
-    200: '#cffafe',
-    100: '#ecfeff',
+    700: '#1e4f7a',
+    600: '#2d6697',
+    500: '#3B7CB8',
+    400: '#5a9ad4',
+    300: '#85b8e4',
+    200: '#b3d4f0',
+    100: '#e0eefa',
   },
   accent: {
     600: '#059669',
@@ -255,38 +256,38 @@ export const colors = {
     300: '#6ee7b7',
     200: '#d1fae5',
   },
-  /** Emerald Green - Completed, approved, positive outcomes */
+  /** Emerald Green — Completed, approved, positive outcomes */
   success: {
     700: '#047857',
     600: '#059669',
     500: '#10b981',
     400: '#34d399',
   },
-  /** Burnt Orange - Pending, attention needed, high priority */
+  /** Burnt Orange — Pending, attention needed, high priority */
   warning: {
     700: '#b45309',
     600: '#d97706',
     500: '#f59e0b',
     400: '#fbbf24',
   },
-  /** Soft Red - Failed, rejected, urgent, destructive actions */
+  /** Soft Red — Failed, rejected, urgent, destructive actions */
   error: {
     700: '#b91c1c',
     600: '#dc2626',
     500: '#ef4444',
     400: '#f87171',
   },
-  /** Contextual Indigo - Informational states, AI insights, metadata */
+  /** Soft Violet — Informational states, AI insights, metadata */
   info: {
-    700: '#4338ca',
-    600: '#4f46e5',
-    500: '#6366f1',
-    400: '#818cf8',
+    700: '#7c3aed',
+    600: '#8b5cf6',
+    500: '#a78bfa',
+    400: '#c4b5fd',
   },
 } as const
 
 /**
- * Spacing scale values - mirrors tokens.css
+ * Spacing scale values — mirrors tokens.css
  */
 export const spacing = {
   '025': '0.25rem',
@@ -303,7 +304,7 @@ export const spacing = {
 } as const
 
 /**
- * Border radius values - Square Cyber-Minimalism scale
+ * Border radius values — Square Cyber-Minimalism scale
  * Sharp, geometric aesthetic for architect/designer appeal
  */
 export const radii = {
@@ -320,35 +321,36 @@ export const radii = {
 } as const
 
 /**
- * Elegant fine line borders - low opacity for sophistication
+ * Elegant fine line borders — cream-tinted for warmth (dark mode)
  */
 export const borders = {
-  fine: '1px solid rgba(255, 255, 255, 0.08)',
-  fineStrong: '1px solid rgba(255, 255, 255, 0.12)',
-  fineHover: '1px solid rgba(255, 255, 255, 0.18)',
-  divider: '1px solid rgba(255, 255, 255, 0.06)',
-  dividerStrong: '1px solid rgba(255, 255, 255, 0.10)',
+  fine: '1px solid rgba(245, 235, 220, 0.08)',
+  fineStrong: '1px solid rgba(245, 235, 220, 0.12)',
+  fineHover: '1px solid rgba(245, 235, 220, 0.18)',
+  divider: '1px solid rgba(245, 235, 220, 0.06)',
+  dividerStrong: '1px solid rgba(245, 235, 220, 0.10)',
 } as const
 
 /**
- * Glow effects - consistent across components
+ * Glow effects — brand glows (blue) + gold accent for financial highlights
  */
 export const glows = {
-  brandSubtle: '0 0 8px rgba(34, 211, 238, 0.15)',
-  brandMedium: '0 0 12px rgba(34, 211, 238, 0.25)',
-  brandStrong: '0 0 20px rgba(34, 211, 238, 0.4)',
-  gold: '0 0 12px rgba(245, 158, 11, 0.25)',
+  brandSubtle: '0 0 8px rgba(59, 124, 184, 0.15)',
+  brandMedium: '0 0 12px rgba(59, 124, 184, 0.25)',
+  brandStrong: '0 0 20px rgba(59, 124, 184, 0.4)',
+  gold: '0 0 12px rgba(200, 169, 81, 0.25)', // Gold kept for financial highlights
   success: '0 0 10px rgba(34, 197, 94, 0.2)',
   error: '0 0 10px rgba(239, 68, 68, 0.2)',
   warning: '0 0 10px rgba(234, 179, 8, 0.2)',
 } as const
 
 /**
- * Typography values - mirrors tokens.css
+ * Typography values — Founders-OS canonical typography
  */
 export const typography = {
   family: {
-    base: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
+    display: "'Zilla Slab', Georgia, serif",
+    base: "'Hanken Grotesk', 'Helvetica Neue', -apple-system, sans-serif",
     mono: "'JetBrains Mono', 'Roboto Mono', monospace",
   },
   size: {
@@ -391,19 +393,19 @@ export const typography = {
 } as const
 
 /**
- * Shadow values - mirrors tokens.css (dark mode defaults)
+ * Shadow values — mirrors tokens.css (dark mode defaults)
  */
 export const shadows = {
-  sm: '0 1px 2px 0 rgba(0, 0, 0, 0.3)',
-  md: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
-  xl: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
-  glass: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
-  glassLg: '0 12px 40px 0 rgba(0, 0, 0, 0.4)',
+  sm: '0 1px 2px 0 rgba(0, 0, 0, 0.5)',
+  md: '0 4px 6px -1px rgba(0, 0, 0, 0.5)',
+  lg: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
+  xl: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
+  glass: '0 8px 32px 0 rgba(0, 0, 0, 0.5)',
+  glassLg: '0 12px 40px 0 rgba(0, 0, 0, 0.6)',
 } as const
 
 /**
- * Z-index scale - mirrors tokens.css
+ * Z-index scale — mirrors tokens.css
  */
 export const zIndex = {
   dropdown: 1000,

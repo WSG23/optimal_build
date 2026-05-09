@@ -144,7 +144,7 @@ export function AlertBlock({
           sx={{
             color: 'var(--ob-color-text-primary)',
             fontSize: 'var(--ob-font-size-sm)',
-            lineHeight: 1.5,
+            lineHeight: 'var(--ob-line-height-normal)',
             '& a': {
               color: config.text,
               textDecoration: 'underline',

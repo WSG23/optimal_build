@@ -6,7 +6,6 @@
  * and recommended action diffs.
  */
 
-import type React from 'react'
 import { memo } from 'react'
 import type { RefObject } from 'react'
 import type {
@@ -88,9 +87,9 @@ const InspectionCard = memo(function InspectionCard({
       style={{
         border: '1px solid var(--ob-color-border-primary)',
         borderRadius: 'var(--ob-radius-sm)',
-        padding: '1.25rem',
+        padding: 'var(--ob-space-125)',
         display: 'grid',
-        gap: '0.6rem',
+        gap: 'var(--ob-space-065)',
         background: isCurrent
           ? 'var(--ob-color-surface-brand-subtle)'
           : undefined,
@@ -102,14 +101,14 @@ const InspectionCard = memo(function InspectionCard({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-start',
-          gap: '0.5rem',
+          gap: 'var(--ob-space-050)',
           flexWrap: 'wrap',
         }}
       >
         <span
           style={{
             fontSize: 'var(--ob-font-size-xs)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
             color: labelColor,
@@ -128,7 +127,12 @@ const InspectionCard = memo(function InspectionCard({
       </div>
 
       {/* Scenario */}
-      <strong style={{ fontSize: 'var(--ob-font-size-base)', fontWeight: 600 }}>
+      <strong
+        style={{
+          fontSize: 'var(--ob-font-size-base)',
+          fontWeight: 'var(--ob-font-weight-semibold)',
+        }}
+      >
         {formatScenarioLabel(entry.scenario ?? null)}
       </strong>
 
@@ -150,7 +154,7 @@ const InspectionCard = memo(function InspectionCard({
             margin: 0,
             fontSize: 'var(--ob-font-size-sm)',
             color: 'var(--ob-color-text-primary)',
-            lineHeight: 1.5,
+            lineHeight: 'var(--ob-line-height-normal)',
           }}
         >
           {entry.summary}
@@ -162,7 +166,7 @@ const InspectionCard = memo(function InspectionCard({
         style={{
           display: 'flex',
           flexWrap: 'wrap',
-          gap: '0.6rem',
+          gap: 'var(--ob-space-065)',
           fontSize: 'var(--ob-font-size-xs)',
           color: 'var(--ob-color-text-secondary)',
         }}
@@ -175,10 +179,10 @@ const InspectionCard = memo(function InspectionCard({
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.3rem',
+            gap: 'var(--ob-space-035)',
             borderRadius: 'var(--ob-radius-pill)',
-            padding: '0.15rem 0.6rem',
-            fontWeight: 600,
+            padding: 'var(--ob-space-025) var(--ob-space-065)',
+            fontWeight: 'var(--ob-font-weight-semibold)',
             letterSpacing: '0.05em',
             textTransform: 'uppercase',
             background: entry.recordedAt
@@ -199,9 +203,9 @@ const InspectionCard = memo(function InspectionCard({
           <span
             style={{
               display: 'inline-block',
-              marginTop: '0.35rem',
+              marginTop: 'var(--ob-space-035)',
               fontSize: 'var(--ob-font-size-xs)',
-              fontWeight: 600,
+              fontWeight: 'var(--ob-font-weight-semibold)',
               textTransform: 'uppercase',
               color: 'var(--ob-color-text-secondary)',
               letterSpacing: '0.06em',
@@ -209,7 +213,12 @@ const InspectionCard = memo(function InspectionCard({
           >
             Attachments
           </span>
-          <ul style={{ margin: '0.3rem 0 0', paddingLeft: '1.2rem' }}>
+          <ul
+            style={{
+              margin: 'var(--ob-space-035) 0 0',
+              paddingLeft: 'var(--ob-space-120)',
+            }}
+          >
             {entry.attachments.map((attachment, index) => (
               <li
                 key={`${isCurrent ? 'latest' : 'previous'}-attachment-${index}`}
@@ -254,7 +263,13 @@ export function HistoryCompareView({
   formatRecordedTimestamp,
 }: HistoryCompareViewProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--ob-space-150)',
+      }}
+    >
       {/* Scenario comparison table (when visible) */}
       {scenarioComparisonVisible && (
         <ScenarioComparisonTable
@@ -281,7 +296,7 @@ export function HistoryCompareView({
           <div
             style={{
               display: 'grid',
-              gap: '1rem',
+              gap: 'var(--ob-space-100)',
               gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
             }}
           >
@@ -343,10 +358,10 @@ function OverallScoreSummary({
       style={{
         border: '1px solid var(--ob-color-border-primary)',
         borderRadius: 'var(--ob-radius-sm)',
-        padding: '1.5rem',
+        padding: 'var(--ob-space-150)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.75rem',
+        gap: 'var(--ob-space-075)',
         background: 'var(--ob-color-surface-brand-subtle)',
       }}
     >
@@ -356,13 +371,13 @@ function OverallScoreSummary({
           justifyContent: 'space-between',
           alignItems: 'flex-start',
           flexWrap: 'wrap',
-          gap: '0.5rem',
+          gap: 'var(--ob-space-050)',
         }}
       >
         <span
           style={{
             fontSize: 'var(--ob-font-size-xs)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
             color: 'var(--ob-color-brand-500)',
@@ -383,10 +398,15 @@ function OverallScoreSummary({
         style={{
           display: 'flex',
           alignItems: 'baseline',
-          gap: '0.5rem',
+          gap: 'var(--ob-space-050)',
         }}
       >
-        <span style={{ fontSize: '2rem', fontWeight: 700 }}>
+        <span
+          style={{
+            fontSize: 'var(--ob-font-size-3xl)',
+            fontWeight: 'var(--ob-font-weight-bold)',
+          }}
+        >
           {latestAssessmentEntry.overallScore}
         </span>
         <span
@@ -400,7 +420,7 @@ function OverallScoreSummary({
         <span
           style={{
             fontSize: 'var(--ob-font-size-sm)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             color:
               comparisonSummary.scoreDelta > 0
                 ? 'var(--ob-success-700)'

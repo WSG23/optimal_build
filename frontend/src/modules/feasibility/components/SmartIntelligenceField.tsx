@@ -104,8 +104,8 @@ export function SmartIntelligenceField({
                   color: 'var(--ob-info-600)',
                   padding: 'var(--ob-space-25) var(--ob-space-50)',
                   borderRadius: 'var(--ob-radius-xs)',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
+                  fontSize: 'var(--ob-font-size-xs)',
+                  fontWeight: 'var(--ob-font-weight-bold)',
                   border: '1px solid var(--ob-color-border-subtle)',
                   boxShadow: 'var(--ob-shadow-sm)',
                 }}
@@ -119,8 +119,8 @@ export function SmartIntelligenceField({
                   color: 'var(--ob-color-text-secondary)',
                   padding: 'var(--ob-space-25) var(--ob-space-50)',
                   borderRadius: 'var(--ob-radius-xs)',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
+                  fontSize: 'var(--ob-font-size-xs)',
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                   border: '1px solid var(--ob-color-border-subtle)',
                 }}
               >

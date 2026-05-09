@@ -216,6 +216,7 @@ class Settings:
     SEATTLE_SODA_APP_TOKEN: str
     TORONTO_SODA_APP_TOKEN: str
     GOOGLE_MAPS_API_KEY: str
+    URA_ACCESS_KEY: str
 
     BUILDABLE_TYP_FLOOR_TO_FLOOR_M: float
     BUILDABLE_EFFICIENCY_RATIO: float
@@ -225,6 +226,7 @@ class Settings:
     SLOW_QUERY_THRESHOLD_SECONDS: float
     PREVIEW_MAX_VERSIONS: int
     PREVIEW_GEOMETRY_DETAIL_LEVEL: str
+    CAPTURE_LIVE_SOURCE_SCAN_ENABLED: bool
 
     def __init__(self) -> None:
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "Building Compliance Platform")
@@ -317,6 +319,7 @@ class Settings:
         self.SEATTLE_SODA_APP_TOKEN = os.getenv("SEATTLE_SODA_APP_TOKEN", "public")
         self.TORONTO_SODA_APP_TOKEN = os.getenv("TORONTO_SODA_APP_TOKEN", "public")
         self.GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
+        self.URA_ACCESS_KEY = os.getenv("URA_ACCESS_KEY", "")
 
         self.BUILDABLE_TYP_FLOOR_TO_FLOOR_M = _load_positive_float(
             "BUILDABLE_TYP_FLOOR_TO_FLOOR_M", 4.0
@@ -344,6 +347,10 @@ class Settings:
         self.OFFLINE_MODE = _load_bool("OFFLINE_MODE", False)
         self.PREVIEW_MAX_VERSIONS = _load_positive_int("PREVIEW_MAX_VERSIONS", 3)
         self.PREVIEW_GEOMETRY_DETAIL_LEVEL = _load_geometry_detail_level()
+        self.CAPTURE_LIVE_SOURCE_SCAN_ENABLED = _load_bool(
+            "CAPTURE_LIVE_SOURCE_SCAN_ENABLED",
+            False,
+        )
 
     def _load_listing_token_secret(self) -> str:
         raw = os.getenv("LISTING_TOKEN_SECRET")

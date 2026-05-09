@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import re
+from html import unescape
 from dataclasses import dataclass
 from importlib import resources
 from typing import Any, Iterable, Optional
@@ -39,6 +41,50 @@ def _safe_float(value: Any) -> Optional[float]:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _normalize_address_text(value: Any) -> str:
+    """Normalize address fragments for conservative metadata matching."""
+
+    if value is None:
+        return ""
+    text = unescape(str(value)).lower()
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _digits_only(value: Any) -> str:
+    if value is None:
+        return ""
+    return re.sub(r"\D+", "", str(value))
+
+
+def _attribute_value(attributes: dict[str, Any] | None, key: str) -> str:
+    """Extract direct or KML table-backed attribute values."""
+
+    if not attributes:
+        return ""
+
+    for candidate in (key, key.upper(), key.lower()):
+        value = attributes.get(candidate)
+        if value not in (None, ""):
+            return str(value).strip()
+
+    description = str(
+        attributes.get("Description") or attributes.get("description") or ""
+    )
+    if not description:
+        return ""
+
+    pattern = rf"<th>\s*{re.escape(key)}\s*</th>\s*<td>(.*?)</td>"
+    match = re.search(pattern, description, re.IGNORECASE | re.DOTALL)
+    if not match:
+        return ""
+
+    return re.sub(
+        r"\s+", " ", unescape(re.sub(r"<[^>]+>", " ", match.group(1)))
+    ).strip()
 
 
 @dataclass(frozen=True)
@@ -207,6 +253,30 @@ class HeritageOverlayService:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
+    def _payload(self, overlay: HeritageOverlay) -> dict[str, Any]:
+        return {
+            "name": overlay.name,
+            "risk": overlay.risk,
+            "notes": list(overlay.notes),
+            "source": overlay.source,
+            "heritage_premium_pct": overlay.heritage_premium_pct,
+            "centroid": overlay.centroid,
+            "bbox": overlay.bbox,
+            "attributes": overlay.attributes,
+        }
+
+    def _address_payload(self, overlay: HeritageOverlay) -> dict[str, Any]:
+        payload = self._payload(overlay)
+        record_name = _attribute_value(overlay.attributes, "NAME")
+        if record_name and payload["name"] in {
+            "Heritage Site",
+            "National Monument",
+            "Unknown Heritage Overlay",
+        }:
+            payload["name"] = record_name
+        payload["matched_by"] = "address_metadata"
+        return payload
+
     def lookup(self, latitude: float, longitude: float) -> Optional[dict[str, Any]]:
         if not _SHAPELY_AVAILABLE or not self._overlays:
             return None
@@ -225,16 +295,57 @@ class HeritageOverlayService:
         for geom in candidates:
             overlay = self._geom_to_overlay.get(id(geom))
             if overlay and overlay.contains(point):
-                return {
-                    "name": overlay.name,
-                    "risk": overlay.risk,
-                    "notes": list(overlay.notes),
-                    "source": overlay.source,
-                    "heritage_premium_pct": overlay.heritage_premium_pct,
-                    "centroid": overlay.centroid,
-                    "bbox": overlay.bbox,
-                    "attributes": overlay.attributes,
-                }
+                return self._payload(overlay)
+        return None
+
+    def lookup_address(
+        self,
+        full_address: str,
+        *,
+        postal_code: str | None = None,
+        street_name: str | None = None,
+        block_number: str | None = None,
+    ) -> Optional[dict[str, Any]]:
+        """Match heritage markers by address metadata when point lookup misses.
+
+        The processed heritage file includes point markers whose geometry can be
+        offset from a geocoded parcel or building entrance. This fallback only
+        matches exact postal code or street + block metadata to avoid broad
+        neighbourhood-level false positives.
+        """
+
+        if not self._overlays:
+            return None
+
+        normalized_address = _normalize_address_text(full_address)
+        normalized_postal = _digits_only(postal_code)
+        normalized_street = _normalize_address_text(street_name)
+        normalized_block = _digits_only(block_number)
+
+        for overlay in self._overlays:
+            attributes = overlay.attributes or {}
+            overlay_postal = _digits_only(
+                _attribute_value(attributes, "ADDRESSPOSTALCODE")
+            )
+            if normalized_postal and overlay_postal == normalized_postal:
+                return self._address_payload(overlay)
+
+            overlay_street = _normalize_address_text(
+                _attribute_value(attributes, "ADDRESSSTREETNAME")
+            )
+            overlay_block = _digits_only(
+                _attribute_value(attributes, "ADDRESSBLOCKHOUSENUMBER")
+            )
+            if not overlay_street or not overlay_block:
+                continue
+
+            street_matches = overlay_street == normalized_street or (
+                overlay_street in normalized_address
+            )
+            block_matches = overlay_block == normalized_block
+            if street_matches and block_matches:
+                return self._address_payload(overlay)
+
         return None
 
 

@@ -7,21 +7,20 @@
  * - Developer Mode: Full workspace (Property Overview, 3D Preview, etc.)
  */
 
-import { lazy, Suspense } from 'react'
-import ConstructionIcon from '@mui/icons-material/Construction'
-import DomainIcon from '@mui/icons-material/Domain'
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
-import TrendingUpIcon from '@mui/icons-material/TrendingUp'
-import MapsHomeWorkIcon from '@mui/icons-material/MapsHomeWork'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import RadarIcon from '@mui/icons-material/Radar'
 import AddIcon from '@mui/icons-material/Add'
+import MapIcon from '@mui/icons-material/Map'
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
+import CloseIcon from '@mui/icons-material/Close'
+import GpsFixedIcon from '@mui/icons-material/GpsFixed'
 
 import { useDeveloperMode } from '../../../contexts/useDeveloperMode'
 import { useUnifiedCapture } from './hooks/useUnifiedCapture'
 import { AgentResultsPanel } from './components/AgentResultsPanel'
 import { MissionLog } from './components/MissionLog'
 import { VoiceObservationsPanel } from '../site-acquisition/components/VoiceObservationsPanel'
-import type { DevelopmentScenario } from '../../../api/agents'
+import { DEFAULT_SCENARIO_ORDER } from '../../../api/siteAcquisition'
 import { useRouterParams } from '../../../router'
 
 import '../../../styles/gps-capture.css'
@@ -33,35 +32,6 @@ const DeveloperResults = lazy(() =>
   })),
 )
 
-// Scenario configuration
-const SCENARIOS: {
-  value: DevelopmentScenario
-  label: string
-  icon: React.ReactNode
-}[] = [
-  { value: 'raw_land', label: 'Raw Land', icon: <ConstructionIcon /> },
-  {
-    value: 'existing_building',
-    label: 'Existing Building',
-    icon: <DomainIcon />,
-  },
-  {
-    value: 'heritage_property',
-    label: 'Heritage Property',
-    icon: <AccountBalanceIcon />,
-  },
-  {
-    value: 'underused_asset',
-    label: 'Underused Asset',
-    icon: <TrendingUpIcon />,
-  },
-  {
-    value: 'mixed_use_redevelopment',
-    label: 'Mixed-Use',
-    icon: <MapsHomeWorkIcon />,
-  },
-]
-
 export function UnifiedCapturePage() {
   const { isDeveloperMode, toggleDeveloperMode } = useDeveloperMode()
   const { projectId } = useRouterParams()
@@ -71,10 +41,7 @@ export function UnifiedCapturePage() {
     longitude,
     address,
     selectedScenarios,
-    setLatitude,
-    setLongitude,
     setAddress,
-    handleScenarioToggle,
     isCapturing,
     isScanning,
     captureError,
@@ -85,15 +52,52 @@ export function UnifiedCapturePage() {
     capturedSites,
     siteAcquisitionResult,
     geocodeError,
+    isGeocoding,
+    coordinateSourceLabel,
     mapContainerRef,
+    addressInputRef,
     mapError,
+    isMapLoading,
+    targetAcquired,
     handleCapture,
     handleNewCapture,
+    handleCancelCapture,
   } = useUnifiedCapture({ isDeveloperMode, projectId })
 
   const propertyId = isDeveloperMode
     ? (siteAcquisitionResult?.propertyId ?? null)
     : (captureSummary?.propertyId ?? null)
+  const effectiveSelectedScenarios =
+    selectedScenarios.length > 0
+      ? selectedScenarios
+      : [...DEFAULT_SCENARIO_ORDER]
+
+  const formRef = useRef<HTMLFormElement | null>(null)
+  const targetAcquiredRef = useRef<HTMLDivElement | null>(null)
+
+  // Focus the target-acquired confirmation when it appears
+  useEffect(() => {
+    if (targetAcquired && targetAcquiredRef.current) {
+      targetAcquiredRef.current.focus()
+    }
+  }, [targetAcquired])
+
+  // Keyboard shortcuts: Ctrl+Enter to scan, Escape to cancel
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        if (isCapturing) return
+        e.preventDefault()
+        formRef.current?.requestSubmit()
+      }
+      if (e.key === 'Escape' && isCapturing) {
+        e.preventDefault()
+        handleCancelCapture()
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [isCapturing, handleCancelCapture])
 
   return (
     <div className="gps-page">
@@ -101,7 +105,28 @@ export function UnifiedCapturePage() {
       <div
         ref={mapContainerRef}
         className={`gps-background-map ${isScanning ? 'scanning' : ''}`}
-      />
+      >
+        {/* Map loading / error fallback — rendered inside the map container,
+            Google Maps will replace these children when it initializes */}
+        {isMapLoading && !mapError && (
+          <div className="gps-map-fallback">
+            <MapIcon className="gps-map-fallback__icon" />
+            <span className="gps-map-fallback__text">
+              Initializing satellite uplink...
+            </span>
+            <div className="gps-spinner" />
+          </div>
+        )}
+        {mapError && (
+          <div className="gps-map-fallback gps-map-fallback--error">
+            <ErrorOutlineIcon className="gps-map-fallback__icon" />
+            <span className="gps-map-fallback__text">{mapError}</span>
+            <span className="gps-map-fallback__hint">
+              You can still enter coordinates manually in the form.
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Content overlay */}
       <div className="gps-content-overlay">
@@ -126,7 +151,12 @@ export function UnifiedCapturePage() {
               )}
             </div>
 
-            <form className="gps-form" onSubmit={handleCapture}>
+            <form
+              ref={formRef}
+              className="gps-form"
+              onSubmit={handleCapture}
+              noValidate
+            >
               {/* ── Section 1: Location ── */}
               <fieldset className="gps-fieldset">
                 <legend className="gps-fieldset__legend">Location</legend>
@@ -134,16 +164,22 @@ export function UnifiedCapturePage() {
                 {/* Address — primary input, full width */}
                 <div className="gps-form__address-row">
                   <input
+                    ref={addressInputRef}
                     type="text"
                     className="gps-input-ghost gps-input-ghost--lg"
-                    placeholder="Click the map or type an address..."
+                    placeholder="Enter address or click the map..."
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     aria-label="Address"
                   />
+                  {isGeocoding && (
+                    <span className="gps-form__geocoding-indicator" />
+                  )}
                 </div>
                 <p className="gps-form__assistive-copy">
-                  Address updates the map and coordinates automatically.
+                  {isGeocoding
+                    ? 'Resolving address...'
+                    : 'Address updates the map and coordinates automatically.'}
                 </p>
                 {geocodeError && (
                   <p className="gps-error-text">{geocodeError}</p>
@@ -152,56 +188,54 @@ export function UnifiedCapturePage() {
                 {/* Coords — compact row */}
                 <div className="gps-form__coords-row">
                   <div className="gps-form__coord">
-                    <label className="gps-form__inline-label">Lat</label>
+                    <label
+                      className="gps-form__inline-label"
+                      htmlFor="capture-lat"
+                    >
+                      Lat
+                    </label>
                     <input
+                      id="capture-lat"
                       type="text"
                       className="gps-input-ghost gps-input-ghost--sm"
-                      placeholder="1.3000"
+                      placeholder="-36.8485"
                       value={latitude}
-                      onChange={(e) => setLatitude(e.target.value)}
+                      readOnly
                       inputMode="decimal"
                     />
                   </div>
                   <div className="gps-form__coord">
-                    <label className="gps-form__inline-label">Lng</label>
+                    <label
+                      className="gps-form__inline-label"
+                      htmlFor="capture-lng"
+                    >
+                      Lng
+                    </label>
                     <input
+                      id="capture-lng"
                       type="text"
                       className="gps-input-ghost gps-input-ghost--sm"
-                      placeholder="103.8500"
+                      placeholder="174.7633"
                       value={longitude}
-                      onChange={(e) => setLongitude(e.target.value)}
+                      readOnly
                       inputMode="decimal"
                     />
                   </div>
                 </div>
+                {(latitude || longitude || coordinateSourceLabel) && (
+                  <p className="gps-form__coordinate-source">
+                    Coordinate source:{' '}
+                    <span>{coordinateSourceLabel ?? 'Not resolved yet'}</span>
+                  </p>
+                )}
               </fieldset>
 
-              {/* ── Section 2: Scenario Selection ── */}
-              <fieldset className="gps-fieldset">
-                <legend className="gps-fieldset__legend">Scenario</legend>
-                <div className="gps-scenarios-grid">
-                  {SCENARIOS.map((scenario) => (
-                    <button
-                      key={scenario.value}
-                      type="button"
-                      className={`gps-scenario-tile ${
-                        selectedScenarios.includes(scenario.value)
-                          ? 'gps-scenario-tile--selected'
-                          : ''
-                      }`}
-                      onClick={() => handleScenarioToggle(scenario.value)}
-                      aria-pressed={selectedScenarios.includes(scenario.value)}
-                    >
-                      {scenario.icon}
-                      <span>{scenario.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-
-              {/* ── Section 3: Mode + Action ── */}
+              {/* ── Section 2: Mode + Action ── */}
               <div className="gps-form__actions">
-                <label className="gps-developer-mode-toggle">
+                <label
+                  className="gps-developer-mode-toggle"
+                  title="Developer Mode adds 3D previews, feasibility analysis, condition assessment, and multi-scenario comparison"
+                >
                   <input
                     type="checkbox"
                     checked={isDeveloperMode}
@@ -209,54 +243,66 @@ export function UnifiedCapturePage() {
                   />
                   <span>Developer Mode</span>
                   <span className="gps-developer-mode-hint">
-                    {isDeveloperMode ? 'Full workspace' : 'HUD only'}
+                    {isDeveloperMode
+                      ? '3D + feasibility + scenarios'
+                      : 'Quick analysis only'}
                   </span>
                 </label>
 
-                <button
-                  type="submit"
-                  className="gps-scan-button"
-                  disabled={isCapturing || selectedScenarios.length === 0}
-                  title={
-                    selectedScenarios.length === 0
-                      ? 'Select at least one scenario to capture'
-                      : undefined
-                  }
-                >
-                  {isCapturing ? (
-                    <>
-                      <div className="gps-spinner"></div>
-                      <span>Scanning...</span>
-                    </>
-                  ) : selectedScenarios.length === 0 ? (
-                    <>
-                      <RadarIcon />
-                      <span>Select Scenario</span>
-                    </>
-                  ) : (
+                {isCapturing ? (
+                  <button
+                    type="button"
+                    className="gps-scan-button gps-scan-button--cancel"
+                    onClick={handleCancelCapture}
+                    aria-label="Cancel scan (Escape)"
+                  >
+                    <CloseIcon />
+                    <span>Cancel Scan</span>
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className="gps-scan-button"
+                    title="Scan & Analyze (Ctrl+Enter)"
+                  >
                     <>
                       <RadarIcon />
                       <span>Scan &amp; Analyze</span>
+                      <kbd className="gps-kbd">
+                        {navigator.platform?.includes('Mac') ? 'Cmd' : 'Ctrl'}
+                        +Enter
+                      </kbd>
                     </>
-                  )}
-                </button>
+                  </button>
+                )}
               </div>
             </form>
 
             {/* Feedback */}
-            {captureError && <p className="gps-error">{captureError}</p>}
-            {mapError && <p className="gps-warning">{mapError}</p>}
+            {captureError && (
+              <p className="gps-error-text" role="alert">
+                {captureError}
+              </p>
+            )}
 
-            {hasResults && !isDeveloperMode && captureSummary && (
-              <div className="gps-capture-meta">
-                <p>
-                  Target Locked:{' '}
-                  <strong>{captureSummary.address.fullAddress}</strong>
-                </p>
-                <p>
-                  Captured:{' '}
-                  {new Date(captureSummary.timestamp).toLocaleTimeString()}
-                </p>
+            {/* Target Acquired confirmation — auto-dismisses after 3s */}
+            {targetAcquired && (
+              <div
+                ref={targetAcquiredRef}
+                className="gps-target-acquired"
+                role="status"
+                aria-live="polite"
+                tabIndex={-1}
+              >
+                <GpsFixedIcon className="gps-target-acquired__icon" />
+                <div className="gps-target-acquired__content">
+                  <span className="gps-target-acquired__label">
+                    Target Acquired
+                  </span>
+                  <span className="gps-target-acquired__address">
+                    {targetAcquired}
+                  </span>
+                </div>
               </div>
             )}
 
@@ -292,7 +338,7 @@ export function UnifiedCapturePage() {
             >
               <DeveloperResults
                 result={siteAcquisitionResult}
-                selectedScenarios={selectedScenarios}
+                selectedScenarios={effectiveSelectedScenarios}
               />
             </Suspense>
           </section>

@@ -22,8 +22,8 @@
 
 .finance-sensitivity-summary__card {
     background: var(--ob-color-surface-default);
-    border-radius: var(--ob-radius-2xl);
-    box-shadow: 0 12px 24px rgb(var(--ob-color-surface-inverse-rgb) / 0.08);
+    border-radius: var(--ob-radius-sm);
+    box-shadow: var(--ob-shadow-md);
     padding: var(--ob-space-175);
     display: flex;
     flex-direction: column;
@@ -125,8 +125,8 @@
     width: 12px;
     height: 12px;
     border-radius: var(--ob-radius-pill);
-    border: 1px solid rgb(255 255 255 / 0.4);
-    box-shadow: 0 0 0 1px rgb(0 0 0 / 0.08);
+    border: 1px solid var(--ob-overlay-medium);
+    box-shadow: 0 0 0 1px var(--ob-overlay-subtle);
 }
 
 .finance-assets__legend-value {
@@ -160,7 +160,7 @@
 
 .finance-sensitivity-summary__delta-pill {
     border: 1px solid var(--ob-color-border-faint);
-    border-radius: var(--ob-radius-xl);
+    border-radius: var(--ob-radius-sm);
     padding: var(--ob-space-075) var(--ob-space-125);
     background: var(--ob-color-surface-subtle);
     display: flex;
@@ -224,9 +224,9 @@
 .finance-sensitivity-controls {
     margin-top: var(--ob-space-200);
     padding: var(--ob-space-175);
-    border-radius: var(--ob-radius-2xl);
+    border-radius: var(--ob-radius-sm);
     background: var(--ob-color-surface-default);
-    box-shadow: 0 12px 24px rgb(var(--ob-color-surface-inverse-rgb) / 0.08);
+    box-shadow: var(--ob-shadow-md);
     display: flex;
     flex-direction: column;
     gap: var(--ob-space-125);
@@ -253,7 +253,7 @@
 .finance-sensitivity-controls__add {
     align-self: flex-start;
     border: 1px solid var(--ob-color-border-neutral);
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-xs);
     padding: var(--ob-space-050) var(--ob-space-100);
     background: transparent;
     cursor: pointer;
@@ -282,7 +282,7 @@
 
 .finance-sensitivity-controls__row input {
     padding: var(--ob-space-050) var(--ob-space-075);
-    border-radius: var(--ob-radius-md);
+    border-radius: var(--ob-radius-xs);
     border: 1px solid var(--ob-color-border-neutral);
     font-size: var(--ob-font-size-sm);
 }
@@ -303,7 +303,7 @@
 
 .finance-sensitivity-controls__submit {
     border: none;
-    border-radius: var(--ob-radius-lg);
+    border-radius: var(--ob-radius-xs);
     background: var(--ob-color-brand-strong);
     color: var(--ob-color-text-inverse);
     padding: var(--ob-space-075) var(--ob-space-150);

@@ -51,7 +51,7 @@ export function AdvisoryTable({ columns, children }: AdvisoryTableProps) {
                   borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
                   height: 48,
                   width: col.width,
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                   bgcolor: alpha(theme.palette.background.paper, 0.2),
                 }}
               >

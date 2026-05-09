@@ -96,7 +96,7 @@ export function AIInsightPanel({
         <Typography
           sx={{
             fontSize: 'var(--ob-font-size-2xs)',
-            fontWeight: 700,
+            fontWeight: 'var(--ob-font-weight-bold)',
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             color: styles.labelColor,
@@ -113,7 +113,7 @@ export function AIInsightPanel({
             ? 'var(--ob-font-size-xs)'
             : 'var(--ob-font-size-sm)',
           color: 'var(--ob-text-secondary)',
-          lineHeight: 1.5,
+          lineHeight: 'var(--ob-line-height-normal)',
           '& p': {
             margin: 0,
           },
@@ -172,7 +172,7 @@ export function AIInsightCard({
         <Typography
           sx={{
             fontSize: 'var(--ob-font-size-base)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             color: 'var(--ob-color-text-primary)',
             mb: 'var(--ob-space-100)',
           }}

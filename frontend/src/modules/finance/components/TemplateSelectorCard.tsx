@@ -30,14 +30,14 @@ export function TemplateSelectorCard({
 
   return (
     <Card sx={{ p: 'var(--ob-space-100)', mb: 'var(--ob-space-100)' }}>
-      <Stack spacing={1.25}>
+      <Stack spacing="var(--ob-space-125)">
         <Box>
-          <Typography variant="subtitle2" sx={{ mb: 0.75 }}>
+          <Typography variant="subtitle2" sx={{ mb: 'var(--ob-space-075)' }}>
             Singapore deal templates
           </Typography>
           <Stack
             direction={{ xs: 'column', md: 'row' }}
-            spacing={1}
+            spacing="var(--ob-space-100)"
             useFlexGap
             flexWrap="wrap"
           >
@@ -58,14 +58,17 @@ export function TemplateSelectorCard({
                     border: '1px solid',
                     borderColor: active ? 'primary.main' : 'divider',
                     backgroundColor: active
-                      ? 'rgba(0, 243, 255, 0.08)'
+                      ? 'var(--ob-color-brand-muted)'
                       : 'transparent',
                     color: 'inherit',
                     cursor: 'pointer',
                     minWidth: { xs: '100%', md: 180 },
                   }}
                 >
-                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontWeight: 'var(--ob-font-weight-bold)' }}
+                  >
                     {template.label}
                   </Typography>
                   <Typography
@@ -87,7 +90,10 @@ export function TemplateSelectorCard({
             bgcolor: alpha(theme.palette.primary.main, 0.06),
           }}
         >
-          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: 'var(--ob-font-weight-bold)' }}
+          >
             {selectedTemplate.label}
           </Typography>
           <Typography variant="body2" color="text.secondary">

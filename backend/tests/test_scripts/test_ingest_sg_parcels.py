@@ -7,7 +7,7 @@ from backend.scripts import ingest_sg_parcels as sg_parcels
 
 def test_resolve_lot_identifier_prefers_named_fields() -> None:
     props = {"LOT_NO": "MK01-12345A", "OBJECTID": 77, "LOT_ID": "fallback"}
-    assert sg_parcels._resolve_lot_identifier(props) == "MK01-12345A"  # type: ignore[attr-defined]
+    assert sg_parcels._resolve_lot_identifier(props) == "MK01-12345A"
 
 
 def test_normalise_feature_creates_parcel_record() -> None:
@@ -35,7 +35,7 @@ def test_normalise_feature_creates_parcel_record() -> None:
         },
     }
 
-    record = sg_parcels._normalise_feature(  # type: ignore[attr-defined]
+    record = sg_parcels._normalise_feature(
         feature,
         transformer,
         source_label="test",
@@ -44,3 +44,12 @@ def test_normalise_feature_creates_parcel_record() -> None:
     assert record.parcel_ref == "SG:LOT:MK01-99999X"
     assert record.source_label == "test"
     assert record.geometry_feature["properties"]["lot_no"] == "MK01-99999X"
+
+
+def test_parser_defaults_to_data_gov_wgs84_source() -> None:
+    parser = sg_parcels._build_arg_parser()
+    args = parser.parse_args([])
+
+    assert args.source_epsg == 4326
+    assert args.source_label == "sla_data_gov"
+    assert args.download is False

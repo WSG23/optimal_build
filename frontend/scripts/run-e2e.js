@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-/* eslint-disable @typescript-eslint/no-require-imports */
-const { spawnSync } = require('node:child_process')
-const fs = require('node:fs')
-const os = require('node:os')
-const path = require('node:path')
+import { spawnSync } from 'node:child_process'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 const repoRoot = path.resolve(__dirname, '..', '..')
 const frontendDir = path.resolve(repoRoot, 'frontend')
 const defaultCache = path.join(repoRoot, '.playwright-browsers')
@@ -37,18 +39,18 @@ if (
   !env.PLAYWRIGHT_BROWSERS_PATH ||
   env.PLAYWRIGHT_BROWSERS_PATH.trim() === ''
 ) {
-  if (hasBrowserMetadata(defaultCache)) {
-    env.PLAYWRIGHT_BROWSERS_PATH = defaultCache
-  } else if (hasBrowserMetadata(homeCache)) {
+  if (env.CI) {
     env.PLAYWRIGHT_BROWSERS_PATH = homeCache
   } else {
-    env.PLAYWRIGHT_BROWSERS_PATH = defaultCache
+    env.PLAYWRIGHT_BROWSERS_PATH = hasBrowserMetadata(defaultCache)
+      ? defaultCache
+      : homeCache
   }
 }
 
 const cachePath = env.PLAYWRIGHT_BROWSERS_PATH
 
-const pnpmCommand = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 
 function parseBoolean(value, defaultValue = false) {
   if (value === undefined || value === null) {
@@ -87,11 +89,11 @@ if (!shouldSkipInstall) {
     installWithDeps = false
   }
 
-  const installArgs = ['exec', 'playwright', 'install']
+  const installArgs = ['exec', 'playwright', '--', 'install']
   if (installWithDeps) {
     installArgs.push('--with-deps')
   }
-  const installResult = spawnSync(pnpmCommand, installArgs, {
+  const installResult = spawnSync(npmCommand, installArgs, {
     stdio: 'inherit',
     cwd: frontendDir,
     env,
@@ -117,7 +119,7 @@ if (!fs.existsSync(cachePath)) {
     'Populate the directory by running the install command on a machine with internet access:',
   )
   console.error(
-    '  PLAYWRIGHT_BROWSERS_PATH="$(pwd)/.playwright-browsers" pnpm -C frontend exec playwright install',
+    '  PLAYWRIGHT_BROWSERS_PATH="$(pwd)/.playwright-browsers" npm --prefix frontend exec playwright -- install',
   )
   console.error(
     'Then copy the contents of that directory (or ~/.cache/ms-playwright) into the target environment.',
@@ -127,11 +129,9 @@ if (!fs.existsSync(cachePath)) {
 
 const metadataFile = path.join(cachePath, 'browsers.json')
 if (!fs.existsSync(metadataFile)) {
-  console.error(`Playwright metadata missing at ${metadataFile}.`)
-  console.error(
-    'Ensure the cache directory contains the downloaded browser builds expected by Playwright.',
+  console.warn(
+    `Playwright metadata missing at ${metadataFile}; continuing and letting Playwright validate browser executables.`,
   )
-  process.exit(1)
 }
 
 fs.rmSync(sqlitePath, { force: true })

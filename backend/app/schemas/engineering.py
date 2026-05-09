@@ -1,4 +1,5 @@
 from typing import Dict
+
 from pydantic import BaseModel, Field
 
 
@@ -20,4 +21,17 @@ class EngineeringDefaults(BaseModel):
 
 
 class EngineeringDefaultsResponse(BaseModel):
+    """Flat design-assumption defaults consumed by the feasibility wizard."""
+
+    typFloorToFloorM: float = Field(
+        ..., description="Typical floor-to-floor height in metres"
+    )
+    efficiencyRatio: float = Field(
+        ..., description="Building efficiency ratio (NIA / GFA)"
+    )
+
+
+class EngineeringDefaultsDetailResponse(BaseModel):
+    """Full jurisdiction-keyed engineering constants (for future use)."""
+
     defaults: Dict[str, EngineeringDefaults]

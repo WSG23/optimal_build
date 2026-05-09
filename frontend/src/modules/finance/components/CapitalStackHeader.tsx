@@ -28,7 +28,7 @@ export function CapitalStackHeader({
       <Typography
         variant="h4"
         sx={{
-          fontWeight: 700,
+          fontWeight: 'var(--ob-font-weight-bold)',
           color: 'text.primary',
           fontSize: 'var(--ob-font-size-3xl)',
           letterSpacing: 'var(--ob-letter-spacing-tighter)',

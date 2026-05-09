@@ -1,4 +1,3 @@
-import React from 'react'
 import {
   Box,
   Button,
@@ -77,7 +76,7 @@ export function ProposedWorksTab({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          mb: 2,
+          mb: 'var(--ob-space-200)',
         }}
       >
         <Box>
@@ -101,41 +100,47 @@ export function ProposedWorksTab({
       {interventions.length === 0 ? (
         <Paper
           sx={{
-            p: 4,
+            p: 'var(--ob-space-300)',
             textAlign: 'center',
-            bgcolor: 'rgba(255, 255, 255, 0.03)',
+            bgcolor: 'rgba(245, 235, 220, 0.03)',
           }}
         >
-          <DocumentIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+          <DocumentIcon
+            sx={{
+              fontSize: 48,
+              color: 'text.secondary',
+              mb: 'var(--ob-space-100)',
+            }}
+          />
           <Typography color="text.secondary">
             No interventions defined yet. Click &quot;Add Intervention&quot; to
             describe the proposed works.
           </Typography>
         </Paper>
       ) : (
-        <Stack spacing={2}>
+        <Stack spacing="var(--ob-space-200)">
           {interventions.map((intervention, index) => (
             <Paper
               key={index}
               sx={{
-                p: 2,
-                bgcolor: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                p: 'var(--ob-space-200)',
+                bgcolor: 'rgba(245, 235, 220, 0.03)',
+                border: '1px solid rgba(245, 235, 220, 0.1)',
               }}
             >
               <Box
                 sx={{
                   display: 'flex',
-                  gap: 2,
+                  gap: 'var(--ob-space-200)',
                   alignItems: 'flex-start',
                 }}
               >
                 <Chip
                   label={index + 1}
                   size="small"
-                  sx={{ minWidth: 32, mt: 1 }}
+                  sx={{ minWidth: 32, mt: 'var(--ob-space-100)' }}
                 />
-                <Grid container spacing={2} sx={{ flex: 1 }}>
+                <Grid container spacing="var(--ob-space-200)" sx={{ flex: 1 }}>
                   <Grid item xs={12} sm={4}>
                     <FormControl fullWidth size="small">
                       <InputLabel>Type</InputLabel>

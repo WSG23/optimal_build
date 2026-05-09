@@ -353,9 +353,9 @@ export function PropertyLocationMap({
             boxShadow: 'var(--ob-shadow-sm)',
             color: 'var(--ob-color-text-primary)',
             '&:hover': {
-              bgcolor: 'var(--ob-color-neon-cyan-muted)',
-              color: 'var(--ob-color-neon-cyan)',
-              borderColor: 'var(--ob-color-neon-cyan)',
+              bgcolor: 'var(--ob-color-brand-muted)',
+              color: 'var(--ob-color-brand-primary)',
+              borderColor: 'var(--ob-color-brand-primary)',
             },
           }}
         >

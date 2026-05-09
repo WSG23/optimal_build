@@ -179,7 +179,12 @@ export const WorkflowDashboard: React.FC<WorkflowDashboardProps> = ({
           size="sm"
           onClick={() => setCreateOpen(true)}
         >
-          <AddIcon sx={{ fontSize: '1rem', mr: 'var(--ob-space-050)' }} />
+          <AddIcon
+            sx={{
+              fontSize: 'var(--ob-font-size-base)',
+              mr: 'var(--ob-space-050)',
+            }}
+          />
           New Workflow
         </Button>
       </Box>
@@ -294,7 +299,10 @@ const WorkflowCard: React.FC<{
               mb: workflow.description ? 'var(--ob-space-050)' : 0,
             }}
           >
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
+            >
               {workflow.name || workflow.title}
             </Typography>
             <Chip
@@ -392,7 +400,9 @@ const WorkflowCard: React.FC<{
                           })
                         }}
                       >
-                        <CheckIcon sx={{ fontSize: '0.875rem' }} />
+                        <CheckIcon
+                          sx={{ fontSize: 'var(--ob-font-size-sm)' }}
+                        />
                         Approve
                       </Button>
                       <Button
@@ -408,7 +418,9 @@ const WorkflowCard: React.FC<{
                           })
                         }}
                       >
-                        <RejectIcon sx={{ fontSize: '0.875rem' }} />
+                        <RejectIcon
+                          sx={{ fontSize: 'var(--ob-font-size-sm)' }}
+                        />
                         Reject
                       </Button>
                     </Box>

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import {
   Avatar,
   Box,
+  Button,
   Divider,
   IconButton,
   ListItemIcon,
@@ -53,6 +54,7 @@ export function TopUtilityMenu() {
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null)
+  const [snackbarUndo, setSnackbarUndo] = useState<(() => void) | null>(null)
 
   const open = Boolean(anchorEl)
 
@@ -109,19 +111,19 @@ export function TopUtilityMenu() {
   }
 
   const iconButtonSx = {
-    borderRadius: 'var(--ob-radius-sm)',
+    borderRadius: 'var(--ob-radius-xs)',
     border: 'var(--ob-border-fine)',
     width: 'var(--ob-space-250)',
     height: 'var(--ob-space-250)',
-    color: open ? 'var(--ob-color-neon-cyan)' : 'var(--ob-text-dim)',
+    color: open ? 'var(--ob-color-brand-primary)' : 'text.secondary',
     background: open
-      ? 'var(--ob-color-neon-cyan-dim)'
+      ? 'var(--ob-color-brand-muted)'
       : 'var(--ob-overlay-subtle)',
     backdropFilter: 'blur(var(--ob-blur-sm))',
     '&:hover': {
-      color: 'var(--ob-color-neon-cyan)',
-      background: 'var(--ob-color-neon-cyan-dim)',
-      borderColor: 'var(--ob-color-neon-cyan)',
+      color: 'var(--ob-color-brand-primary)',
+      background: 'var(--ob-color-brand-muted)',
+      borderColor: 'var(--ob-color-brand-primary)',
     },
   } as const
 
@@ -142,14 +144,13 @@ export function TopUtilityMenu() {
         open={open}
         onClose={() => setAnchorEl(null)}
         PaperProps={{
-          elevation: 10,
+          elevation: 0,
           sx: {
             mt: 'var(--ob-space-050)',
             borderRadius: 'var(--ob-radius-sm)',
             border: 1,
             borderColor: alpha(theme.palette.divider, 0.12),
-            minWidth:
-              'calc(var(--ob-space-400) + var(--ob-space-400) + var(--ob-space-200))',
+            minWidth: '10rem',
             overflow: 'hidden',
           },
         }}
@@ -176,20 +177,22 @@ export function TopUtilityMenu() {
                 height: 'var(--ob-space-250)',
                 borderRadius: 'var(--ob-radius-pill)',
                 bgcolor: 'primary.main',
-                fontSize: 'var(--ob-font-size-sm)',
+                fontSize: 'var(--ob-font-size-xs)',
+                fontFamily: 'var(--ob-font-family-mono)',
+                fontWeight: 'var(--ob-font-weight-bold)',
               }}
             >
-              US
+              OB
             </Avatar>
             <Box sx={{ minWidth: 0 }}>
               <Typography
                 sx={{
-                  fontWeight: 700,
+                  fontWeight: 'var(--ob-font-weight-bold)',
                   fontSize: 'var(--ob-font-size-sm)',
                   color: 'text.primary',
                 }}
               >
-                Quick menu
+                Settings
               </Typography>
               <Typography
                 sx={{
@@ -209,6 +212,7 @@ export function TopUtilityMenu() {
             setAnchorEl(null)
             toggleMode()
             setSnackbarMessage(mode === 'dark' ? 'Light mode' : 'Dark mode')
+            setSnackbarUndo(() => () => toggleMode())
           }}
         >
           <ListItemIcon>
@@ -250,7 +254,7 @@ export function TopUtilityMenu() {
               setAnchorEl(null)
               void handleLanguageChange(lang.code)
             }}
-            sx={{ pl: 'var(--ob-space-300)' }}
+            sx={{ pl: 'var(--ob-space-200)' }}
           >
             <ListItemText>
               <Box
@@ -270,19 +274,22 @@ export function TopUtilityMenu() {
         <Divider />
 
         <MenuItem
+          role="menuitemcheckbox"
+          aria-checked={isDeveloperMode}
           onClick={() => {
             setAnchorEl(null)
             toggleDeveloperMode()
             setSnackbarMessage(
-              isDeveloperMode ? 'Developer mode off' : 'Developer mode on',
+              isDeveloperMode ? 'Advanced tools off' : 'Advanced tools on',
             )
+            setSnackbarUndo(() => () => toggleDeveloperMode())
           }}
         >
           <ListItemIcon>
             <CodeIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>
-            Developer mode
+            Advanced tools
             <Typography
               component="span"
               sx={{
@@ -300,11 +307,21 @@ export function TopUtilityMenu() {
         {showDeveloperLinks && (
           <>
             <Divider />
-            <MenuItem disabled>
+            <MenuItem disabled sx={{ opacity: 0.6 }}>
               <ListItemIcon>
                 <CodeIcon fontSize="small" />
               </ListItemIcon>
-              <ListItemText>Developer workspace</ListItemText>
+              <ListItemText
+                primaryTypographyProps={{
+                  sx: {
+                    fontSize: 'var(--ob-font-size-2xs)',
+                    textTransform: 'uppercase',
+                    letterSpacing: 'var(--ob-letter-spacing-wider)',
+                  },
+                }}
+              >
+                Advanced workspace
+              </ListItemText>
             </MenuItem>
             {DEVELOPER_LINKS.map(({ to, label }) => (
               <MenuItem
@@ -361,10 +378,32 @@ export function TopUtilityMenu() {
       <Snackbar
         open={Boolean(snackbarMessage)}
         message={snackbarMessage ?? ''}
-        autoHideDuration={2000}
-        onClose={() => setSnackbarMessage(null)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        autoHideDuration={3000}
+        onClose={() => {
+          setSnackbarMessage(null)
+          setSnackbarUndo(null)
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         ContentProps={{ role: 'status', 'aria-live': 'polite' as const }}
+        action={
+          snackbarUndo ? (
+            <Button
+              size="small"
+              sx={{
+                color: 'var(--ob-color-brand-primary)',
+                fontWeight: 'var(--ob-font-weight-bold)',
+                fontSize: 'var(--ob-font-size-xs)',
+              }}
+              onClick={() => {
+                snackbarUndo()
+                setSnackbarMessage(null)
+                setSnackbarUndo(null)
+              }}
+            >
+              Undo
+            </Button>
+          ) : undefined
+        }
       />
     </>
   )

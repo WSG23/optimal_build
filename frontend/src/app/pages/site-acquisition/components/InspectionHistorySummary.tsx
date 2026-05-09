@@ -82,7 +82,7 @@ export function InspectionHistorySummary({
           sx={{
             m: 0,
             fontSize: 'var(--ob-font-size-base)',
-            fontWeight: 600,
+            fontWeight: 'var(--ob-font-weight-semibold)',
             color: 'text.primary',
           }}
         >
@@ -154,7 +154,7 @@ export function InspectionHistorySummary({
           <Typography
             sx={{
               fontSize: 'var(--ob-font-size-2xs)',
-              fontWeight: 600,
+              fontWeight: 'var(--ob-font-weight-semibold)',
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               color: 'text.secondary',
@@ -181,7 +181,7 @@ export function InspectionHistorySummary({
               <Typography
                 sx={{
                   fontSize: 'var(--ob-font-size-sm)',
-                  fontWeight: 600,
+                  fontWeight: 'var(--ob-font-weight-semibold)',
                   color: 'text.primary',
                 }}
               >
@@ -235,7 +235,7 @@ export function InspectionHistorySummary({
               m: 0,
               fontSize: 'var(--ob-font-size-xs)',
               color: 'text.secondary',
-              lineHeight: 1.4,
+              lineHeight: 'var(--ob-line-height-snug)',
             }}
           >
             {latestEntry.summary || 'No summary recorded.'}

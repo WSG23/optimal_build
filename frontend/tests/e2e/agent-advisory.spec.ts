@@ -1,4 +1,7 @@
 import { expect, test } from '@playwright/test'
+import { installE2EDiagnostics } from './support/diagnostics'
+
+installE2EDiagnostics(test)
 
 const PROPERTY_ID = 'prop-123'
 const SUMMARY_RESPONSE = {
@@ -125,16 +128,16 @@ test.describe('Agent advisory critical flows', () => {
     await page.goto(`/legacy/agents/advisory?propertyId=${PROPERTY_ID}`)
 
     await expect(
-      page.getByRole('heading', { name: 'Asset mix strategy' }),
+      page.getByRole('heading', { name: 'Asset Mix Strategy' }),
     ).toBeVisible()
     await expect(page.getByRole('cell', { name: 'office' })).toBeVisible()
-    await expect(page.getByRole('cell', { name: '55' })).toBeVisible()
+    await expect(page.getByRole('cell', { name: '55%' })).toBeVisible()
     await expect(
       page.getByText('Retain flexibility for podium conversion.'),
     ).toBeVisible()
 
     await expect(
-      page.getByRole('heading', { name: 'Market positioning' }),
+      page.getByRole('heading', { name: 'Market Positioning' }),
     ).toBeVisible()
     await expect(page.getByText('Prime fringe')).toBeVisible()
     await expect(page.getByText('Asset-light MNC')).toBeVisible()
@@ -143,11 +146,10 @@ test.describe('Agent advisory critical flows', () => {
     ).toBeVisible()
 
     await expect(
-      page.getByRole('heading', { name: 'Absorption forecast' }),
+      page.getByRole('heading', { name: 'Absorption Forecast' }),
     ).toBeVisible()
-    await expect(
-      page.getByRole('row', { name: 'Sales launch 4 35' }),
-    ).toBeVisible()
+    await expect(page.getByText('11 Months')).toBeVisible()
+    await expect(page.getByText('4 units/mo')).toBeVisible()
 
     await expect(
       page.getByText('Awaiting updated pricing guidance.', { exact: false }),
@@ -159,7 +161,12 @@ test.describe('Agent advisory critical flows', () => {
   }) => {
     await page.goto(`/legacy/agents/advisory?propertyId=${PROPERTY_ID}`)
 
-    await page.getByLabel('Sentiment').selectOption('positive')
+    // Sentiment is a MUI <Select>, which renders as a custom
+    // role="combobox" div rather than a native <select>, so
+    // Playwright's `selectOption` cannot drive it. Use the open +
+    // click-option pattern instead.
+    await page.getByLabel('Sentiment').click()
+    await page.getByRole('option', { name: 'Positive' }).click()
     await page
       .getByLabel('Notes')
       .fill('Site visit confirmed podium activation opportunities.')
@@ -171,6 +178,9 @@ test.describe('Agent advisory critical flows', () => {
     await expect(
       page.getByText('Site visit confirmed podium activation opportunities.'),
     ).toBeVisible()
-    await expect(page.getByText('positive', { exact: false })).toBeVisible()
+    // Use exact match so this only resolves the new lowercase
+    // "positive" caption in the feedback list, not the Sentiment
+    // combobox which still shows the capitalised "Positive" label.
+    await expect(page.getByText('positive', { exact: true })).toBeVisible()
   })
 })

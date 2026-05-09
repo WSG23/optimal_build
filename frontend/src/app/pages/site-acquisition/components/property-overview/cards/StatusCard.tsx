@@ -41,7 +41,7 @@ export function StatusCard({ card }: { card: OverviewCard }) {
                 fontSize: 'var(--ob-font-size-sm)',
                 fontWeight: 'var(--ob-font-weight-bold)',
                 color: 'info.main',
-                lineHeight: 1.4,
+                lineHeight: 'var(--ob-line-height-snug)',
               }}
             >
               {card.subtitle}
@@ -97,7 +97,7 @@ export function StatusCard({ card }: { card: OverviewCard }) {
                 fontSize: 'var(--ob-font-size-sm)',
                 fontWeight: 'var(--ob-font-weight-semibold)',
                 color: 'text.primary',
-                lineHeight: 1.45,
+                lineHeight: 'var(--ob-line-height-snug)',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
               }}

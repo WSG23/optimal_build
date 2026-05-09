@@ -92,25 +92,34 @@ function StatusSummaryCard({
   const percentage = total > 0 ? (count / total) * 100 : 0
 
   return (
-    <Card variant="outlined">
+    <Card
+      variant="outlined"
+      sx={{
+        borderLeft: `3px solid`,
+        borderLeftColor: color,
+      }}
+    >
       <CardContent>
         <Typography variant="overline" color="text.secondary">
           {title}
         </Typography>
-        <Typography variant="h4" sx={{ fontWeight: 600, color }}>
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 'var(--ob-font-weight-semibold)', color }}
+        >
           {count}
         </Typography>
         <LinearProgress
           variant="determinate"
           value={percentage}
           sx={{
-            mt: 1,
+            mt: 'var(--ob-space-100)',
             height: 6,
-            borderRadius: 3,
+            borderRadius: 'var(--ob-radius-xs)',
             backgroundColor: 'action.disabledBackground',
             '& .MuiLinearProgress-bar': {
               backgroundColor: color,
-              borderRadius: 3,
+              borderRadius: 'var(--ob-radius-xs)',
             },
           }}
         />
@@ -137,7 +146,10 @@ function RelocationTable({
 }: RelocationTableProps) {
   if (relocations.length === 0) {
     return (
-      <Paper variant="outlined" sx={{ p: 3, textAlign: 'center' }}>
+      <Paper
+        variant="outlined"
+        sx={{ p: 'var(--ob-space-200)', textAlign: 'center' }}
+      >
         <Typography color="text.secondary">{emptyMessage}</Typography>
       </Paper>
     )
@@ -149,7 +161,10 @@ function RelocationTable({
         <TableHead>
           <TableRow sx={{ backgroundColor: 'background.default' }}>
             <TableCell colSpan={6}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
+              >
                 {title} ({relocations.length})
               </Typography>
             </TableCell>
@@ -177,7 +192,10 @@ function RelocationTable({
                 onClick={() => onRowClick?.(relocation.id)}
               >
                 <TableCell>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontWeight: 'var(--ob-font-weight-medium)' }}
+                  >
                     {relocation.tenantName}
                   </Typography>
                 </TableCell>
@@ -231,15 +249,21 @@ function TimelineEvent({
     ? 'var(--ob-color-status-success, #10b981)'
     : isPending
       ? 'var(--ob-color-status-warning, #f59e0b)'
-      : 'var(--ob-color-status-info, #3b82f6)'
+      : 'var(--ob-color-status-info, #8b5cf6)'
 
   return (
-    <Box sx={{ display: 'flex', mb: isLast ? 0 : 2 }}>
+    <Box sx={{ display: 'flex', mb: isLast ? 0 : 'var(--ob-space-200)' }}>
       {/* Left side - date */}
       <Typography
         variant="caption"
         color="text.secondary"
-        sx={{ width: 80, flexShrink: 0, textAlign: 'right', pr: 2, pt: 0.5 }}
+        sx={{
+          width: 80,
+          flexShrink: 0,
+          textAlign: 'right',
+          pr: 'var(--ob-space-200)',
+          pt: 'var(--ob-space-050)',
+        }}
       >
         {formatDate(date)}
       </Typography>
@@ -250,7 +274,7 @@ function TimelineEvent({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          px: 1,
+          px: 'var(--ob-space-100)',
         }}
       >
         <Box
@@ -258,7 +282,9 @@ function TimelineEvent({
             width: 28,
             height: 28,
             borderRadius: '50%',
-            backgroundColor: isCompleted ? dotColor : 'white',
+            backgroundColor: isCompleted
+              ? dotColor
+              : 'var(--ob-color-bg-surface)',
             border: `2px solid ${dotColor}`,
             display: 'flex',
             alignItems: 'center',
@@ -280,16 +306,26 @@ function TimelineEvent({
               width: 2,
               flex: 1,
               minHeight: 20,
-              backgroundColor: 'action.disabledBackground',
-              mt: 0.5,
+              backgroundColor: dotColor,
+              opacity: 0.25,
+              mt: 'var(--ob-space-050)',
             }}
           />
         )}
       </Box>
 
       {/* Right side - content */}
-      <Box sx={{ flex: 1, pl: 1, pb: isLast ? 0 : 1 }}>
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+      <Box
+        sx={{
+          flex: 1,
+          pl: 'var(--ob-space-100)',
+          pb: isLast ? 0 : 'var(--ob-space-100)',
+        }}
+      >
+        <Typography
+          variant="body2"
+          sx={{ fontWeight: 'var(--ob-font-weight-medium)' }}
+        >
           {tenantName}
         </Typography>
         <Typography variant="caption" color="text.secondary">
@@ -327,7 +363,7 @@ export function TenantRelocationDashboard({
     <Box>
       {/* Warnings */}
       {warnings.length > 0 && (
-        <Stack spacing={1} sx={{ mb: 3 }}>
+        <Stack spacing="var(--ob-space-100)" sx={{ mb: 'var(--ob-space-200)' }}>
           {warnings.map((warning, idx) => (
             <Alert key={idx} severity="warning" icon={<WarningAmberIcon />}>
               {warning}
@@ -337,7 +373,11 @@ export function TenantRelocationDashboard({
       )}
 
       {/* Summary Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid
+        container
+        spacing="var(--ob-space-200)"
+        sx={{ mb: 'var(--ob-space-200)' }}
+      >
         <Grid item xs={6} md={3}>
           <StatusSummaryCard
             title="Total Tenants"
@@ -373,16 +413,20 @@ export function TenantRelocationDashboard({
       </Grid>
 
       {/* Main Content */}
-      <Grid container spacing={3}>
+      <Grid container spacing="var(--ob-space-200)">
         {/* Left Column - Tables */}
         <Grid item xs={12} lg={8}>
-          <Stack spacing={3}>
+          <Stack spacing="var(--ob-space-200)">
             {/* Overdue Notifications */}
             {overdueNotifications.length > 0 && (
               <Box>
                 <Typography
                   variant="subtitle1"
-                  sx={{ mb: 1, fontWeight: 600, color: 'error.main' }}
+                  sx={{
+                    mb: 'var(--ob-space-100)',
+                    fontWeight: 'var(--ob-font-weight-semibold)',
+                    color: 'error.main',
+                  }}
                 >
                   Overdue Notifications
                 </Typography>
@@ -397,7 +441,13 @@ export function TenantRelocationDashboard({
 
             {/* Upcoming Moves */}
             <Box>
-              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  mb: 'var(--ob-space-100)',
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                }}
+              >
                 Upcoming Relocations
               </Typography>
               <RelocationTable
@@ -410,7 +460,13 @@ export function TenantRelocationDashboard({
 
             {/* All Relocations */}
             <Box>
-              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  mb: 'var(--ob-space-100)',
+                  fontWeight: 'var(--ob-font-weight-semibold)',
+                }}
+              >
                 All Tenant Relocations
               </Typography>
               <RelocationTable
@@ -425,15 +481,21 @@ export function TenantRelocationDashboard({
 
         {/* Right Column - Timeline */}
         <Grid item xs={12} lg={4}>
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                mb: 'var(--ob-space-200)',
+                fontWeight: 'var(--ob-font-weight-semibold)',
+              }}
+            >
               Activity Timeline
             </Typography>
 
             {timeline.length === 0 ? (
               <Typography
                 color="text.secondary"
-                sx={{ textAlign: 'center', py: 3 }}
+                sx={{ textAlign: 'center', py: 'var(--ob-space-200)' }}
               >
                 No activity recorded yet
               </Typography>
@@ -453,7 +515,7 @@ export function TenantRelocationDashboard({
             )}
 
             {timeline.length > 10 && (
-              <Divider sx={{ my: 1 }}>
+              <Divider sx={{ my: 'var(--ob-space-100)' }}>
                 <Typography variant="caption" color="text.secondary">
                   +{timeline.length - 10} more events
                 </Typography>
@@ -462,11 +524,20 @@ export function TenantRelocationDashboard({
           </Paper>
 
           {/* Status Breakdown */}
-          <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+          <Paper
+            variant="outlined"
+            sx={{ p: 'var(--ob-space-200)', mt: 'var(--ob-space-200)' }}
+          >
+            <Typography
+              variant="subtitle1"
+              sx={{
+                mb: 'var(--ob-space-200)',
+                fontWeight: 'var(--ob-font-weight-semibold)',
+              }}
+            >
               Status Breakdown
             </Typography>
-            <Stack spacing={1}>
+            <Stack spacing="var(--ob-space-100)">
               {Object.entries(statusBreakdown).map(([status, count]) => {
                 const config = STATUS_CONFIG[status] || {
                   color: 'default' as const,
@@ -487,7 +558,10 @@ export function TenantRelocationDashboard({
                       color={config.color}
                       variant="outlined"
                     />
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 'var(--ob-font-weight-medium)' }}
+                    >
                       {count}
                     </Typography>
                   </Box>

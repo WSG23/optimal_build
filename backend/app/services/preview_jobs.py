@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 from typing import Any, Mapping, Protocol, Sequence, cast
@@ -44,6 +45,24 @@ def _serialise_layers(
     return serialised
 
 
+def _schedule_preview_generation(job_id: UUID) -> None:
+    task = asyncio.create_task(generate_preview_job(str(job_id)))
+
+    def _log_background_error(done_task: asyncio.Task[object]) -> None:
+        try:
+            done_task.result()
+        except Exception as exc:  # pragma: no cover - defensive logging
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "Background preview generation failed for job %s: %s",
+                job_id,
+                exc,
+            )
+
+    task.add_done_callback(_log_background_error)
+
+
 class PreviewJobService:
     """Persist and generate property preview jobs."""
 
@@ -84,6 +103,7 @@ class PreviewJobService:
         geometry_detail_level: str | None = None,
         color_legend: Sequence[Mapping[str, object]] | None = None,
         metadata_extras: Mapping[str, object] | None = None,
+        inline_execution: str = "sync",
     ) -> PreviewJob:
         """Create a preview job and enqueue it for asynchronous rendering."""
 
@@ -179,7 +199,16 @@ class PreviewJobService:
         ).inc()
         await self._record_queue_depth(backend_name)
 
-        if backend_name == "inline":
+        if backend_name == "inline" and inline_execution == "background":
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.info(
+                f"[INLINE QUEUE] Committing session and scheduling background preview job {job.id}"
+            )
+            await self._session.commit()
+            _schedule_preview_generation(job.id)
+        elif backend_name == "inline":
             import logging
 
             logger = logging.getLogger(__name__)
