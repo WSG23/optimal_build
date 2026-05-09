@@ -178,6 +178,9 @@ test.describe('Agent advisory critical flows', () => {
     await expect(
       page.getByText('Site visit confirmed podium activation opportunities.'),
     ).toBeVisible()
-    await expect(page.getByText('positive', { exact: false })).toBeVisible()
+    // Use exact match so this only resolves the new lowercase
+    // "positive" caption in the feedback list, not the Sentiment
+    // combobox which still shows the capitalised "Positive" label.
+    await expect(page.getByText('positive', { exact: true })).toBeVisible()
   })
 })
