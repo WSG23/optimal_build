@@ -16,10 +16,15 @@ on:
       - 'alembic.ini'
       - '.github/workflows/migration-validation.yaml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate-migrations:
     name: Validate Migration Patterns and Schema
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     services:
       postgres:
@@ -83,6 +88,7 @@ jobs:
   smoke-tests:
     name: Run Smoke Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: validate-migrations
 
     services:
@@ -155,6 +161,7 @@ jobs:
   migration-summary:
     name: Migration Validation Summary
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [validate-migrations, smoke-tests]
     if: always()
 

@@ -27,6 +27,10 @@ on:
       - "backend/.env.production"
       - "backend/.env.production.template"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   readiness-gate:
     name: Production Security Validation

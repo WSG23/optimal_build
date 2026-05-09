@@ -29,11 +29,16 @@ env:
   PYTHON_VERSION: '3.11'
   NODE_VERSION: '20'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # Backend infrastructure module tests
   backend-infra-tests:
     name: Backend Infrastructure Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -82,6 +87,7 @@ jobs:
   kubernetes-validation:
     name: Kubernetes Manifest Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -125,6 +131,7 @@ jobs:
   helm-validation:
     name: Helm Chart Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -163,6 +170,7 @@ jobs:
   backup-validation:
     name: Backup Script Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -195,6 +203,7 @@ jobs:
   alerting-validation:
     name: Alerting Rules Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -231,6 +240,7 @@ jobs:
   e2e-setup-validation:
     name: E2E Test Setup Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -256,6 +266,7 @@ jobs:
   load-test-validation:
     name: Load Test Setup Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -281,6 +292,7 @@ jobs:
   infra-tests-summary:
     name: Infrastructure Tests Summary
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs:
       - backend-infra-tests
       - kubernetes-validation

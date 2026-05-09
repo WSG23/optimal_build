@@ -316,11 +316,15 @@ docs/_build/
 
 # Frontend test artifacts
 frontend/.tmp-e2e-*/
+frontend/playwright-report/
+frontend/test-results/
 
-# Playwright offline browsers (tracked cache)
+# Playwright offline browser metadata is tracked; downloaded browsers are not.
+.playwright-browsers/*
 !.playwright-browsers/
-!.playwright-browsers/**
-!.playwright-browsers.tar.gz
+!.playwright-browsers/README.md
+!.playwright-browsers/browsers.json
+.playwright-browsers.tar.gz
 
 # Generated preview assets
 backend/static/dev-previews/
