@@ -49,6 +49,10 @@ export default defineConfig({
         SQLALCHEMY_DATABASE_URI: configuredDbUrl,
         PLAYWRIGHT_E2E_DB_URL: e2eDbUrl,
         BUILDABLE_USE_POSTGIS: buildableUsePostgis,
+        // Allow the preview server's origin (`vite preview` defaults
+        // to 4173) so fetch from the built frontend isn't blocked by
+        // the backend's CORS preflight check.
+        BACKEND_ALLOWED_ORIGINS: `${frontendUrl},http://localhost:${frontendPort}`,
       },
       port: 8000,
       reuseExistingServer: !isCI,
