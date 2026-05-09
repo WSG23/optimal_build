@@ -1,4 +1,7 @@
 import { expect, test } from '@playwright/test'
+import { installE2EDiagnostics } from './support/diagnostics'
+
+installE2EDiagnostics(test)
 
 test('feasibility simulation renders current advisory workspace', async ({
   page,

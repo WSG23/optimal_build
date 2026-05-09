@@ -1,4 +1,7 @@
 import { expect, test } from '@playwright/test'
+import { installE2EDiagnostics } from './support/diagnostics'
+
+installE2EDiagnostics(test)
 
 const SEEDED_ADDRESSES = [
   { address: '123 Example Ave' },
