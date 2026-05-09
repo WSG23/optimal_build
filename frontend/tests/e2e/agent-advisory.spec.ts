@@ -161,7 +161,12 @@ test.describe('Agent advisory critical flows', () => {
   }) => {
     await page.goto(`/legacy/agents/advisory?propertyId=${PROPERTY_ID}`)
 
-    await page.getByLabel('Sentiment').selectOption('positive')
+    // Sentiment is a MUI <Select>, which renders as a custom
+    // role="combobox" div rather than a native <select>, so
+    // Playwright's `selectOption` cannot drive it. Use the open +
+    // click-option pattern instead.
+    await page.getByLabel('Sentiment').click()
+    await page.getByRole('option', { name: 'Positive' }).click()
     await page
       .getByLabel('Notes')
       .fill('Site visit confirmed podium activation opportunities.')
