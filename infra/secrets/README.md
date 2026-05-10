@@ -75,11 +75,30 @@ This directory contains configuration and utilities for managing secrets in prod
 
 Both AWS Secrets Manager and Vault support automatic secret rotation. Configure rotation policies according to your security requirements.
 
+### External Provider Service Accounts
+
+Use dedicated company-controlled service accounts for external data providers.
+Do not use a personal employee account for production integrations.
+
+For Singapore OneMap:
+
+- Register a dedicated OneMap account, for example
+  `capture-onemap@yourcompany.com`.
+- Store `ONEMAP_EMAIL` and `ONEMAP_PASSWORD` in the production secret manager.
+- Let the backend mint and cache OneMap access tokens. OneMap tokens are
+  short-lived and should not be treated as permanent deployment secrets.
+- Keep `ONEMAP_ACCESS_TOKEN` for local debugging or emergency override only.
+- Never expose OneMap credentials or tokens to frontend bundles, browser
+  responses, analytics, or logs.
+- Rotate the OneMap password when operator access changes, after suspected
+  exposure, and on the regular external-provider rotation schedule.
+
 ### Recommended Rotation Periods
 
 | Secret Type | Rotation Period |
 |-------------|-----------------|
 | Database passwords | 30 days |
 | API keys | 90 days |
+| External provider service-account passwords | 90 days |
 | JWT secrets | 180 days |
 | SSL certificates | Before expiry |

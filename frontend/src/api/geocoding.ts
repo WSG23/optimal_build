@@ -11,15 +11,22 @@ export interface GeocodeResult {
   source?: ExternalSourceMetadata | null
 }
 
+export interface ForwardGeocodeOptions {
+  jurisdictionCode?: string | null
+}
+
 export async function forwardGeocodeAddress(
   address: string,
+  options: ForwardGeocodeOptions = {},
 ): Promise<GeocodeResult> {
-  const encoded = encodeURIComponent(address)
-  const url = buildUrl(`/api/v1/geocoding/forward?address=${encoded}`)
+  const params = new URLSearchParams({ address })
+  if (options.jurisdictionCode) {
+    params.set('jurisdictionCode', options.jurisdictionCode)
+  }
+  const url = buildUrl(`/api/v1/geocoding/forward?${params.toString()}`)
   const response = await fetch(url)
   if (!response.ok) {
-    const detail = await response.text()
-    throw new Error(detail || `Geocoding failed with status ${response.status}`)
+    throw new Error(await geocodingErrorMessage(response, 'Geocoding failed'))
   }
   const payload = (await response.json()) as {
     latitude?: number
@@ -50,9 +57,8 @@ export async function reverseGeocodeCoords(
   )
   const response = await fetch(url)
   if (!response.ok) {
-    const detail = await response.text()
     throw new Error(
-      detail || `Reverse geocoding failed with status ${response.status}`,
+      await geocodingErrorMessage(response, 'Reverse geocoding failed'),
     )
   }
   const payload = (await response.json()) as {
@@ -75,4 +81,26 @@ export async function reverseGeocodeCoords(
     formattedAddress: formatted,
     source: mapExternalSourceMetadata(payload.source),
   }
+}
+
+async function geocodingErrorMessage(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  const body = await response.text()
+  if (body) {
+    try {
+      const payload = JSON.parse(body) as { detail?: unknown; title?: unknown }
+      if (typeof payload.detail === 'string' && payload.detail.trim()) {
+        return payload.detail
+      }
+      if (typeof payload.title === 'string' && payload.title.trim()) {
+        return payload.title
+      }
+    } catch {
+      return body
+    }
+    return body
+  }
+  return `${fallback} with status ${response.status}`
 }

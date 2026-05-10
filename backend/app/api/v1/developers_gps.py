@@ -3043,7 +3043,10 @@ async def _resolve_submitted_sg_address_lookup(
 
     try:
         lookup = await asyncio.wait_for(
-            _developer_geocoding.instance.geocode_lookup(request.submitted_address),
+            _developer_geocoding.instance.geocode_lookup(
+                request.submitted_address,
+                jurisdiction_code=request.jurisdiction_code or "SG",
+            ),
             timeout=CAPTURE_ADDRESS_LOOKUP_TIMEOUT_SECONDS,
         )
     except Exception as exc:  # pragma: no cover - non-critical enrichment

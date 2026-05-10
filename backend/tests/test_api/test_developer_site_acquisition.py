@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
@@ -1246,6 +1247,64 @@ async def test_developer_log_property_prefers_onemap_submitted_address_coordinat
     assert payload["address"]["full_address"] == "25 Soon Lee Rd, Singapore 628083"
     assert payload["address"]["postal_code"] == "628083"
     assert payload["geocoding_source"]["provider"] == "onemap_address_search"
+
+
+@pytest.mark.asyncio
+async def test_resolve_submitted_sg_address_lookup_passes_jurisdiction_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[dict[str, Any]] = []
+    lookup = GeocodeLookupResult(
+        latitude=1.3282813,
+        longitude=103.6984406,
+        formatted_address="25 SOON LEE ROAD SINGAPORE 628083",
+        address=Address(
+            full_address="25 SOON LEE ROAD SINGAPORE 628083",
+            street_name="SOON LEE ROAD",
+            block_number="25",
+            postal_code="628083",
+            district="D22 - Boon Lay, Jurong, Tuas",
+        ),
+        source=ExternalSourceMetadata(
+            provider="onemap_address_search",
+            state=ExternalSourceState.LIVE,
+            configured=True,
+            synthetic=False,
+        ),
+    )
+
+    class StubGeocoder:
+        async def geocode_lookup(
+            self,
+            address: str,
+            *,
+            jurisdiction_code: str | None = None,
+        ) -> GeocodeLookupResult:
+            calls.append(
+                {
+                    "address": address,
+                    "jurisdiction_code": jurisdiction_code,
+                },
+            )
+            return lookup
+
+    monkeypatch.setattr(
+        developers_api,
+        "_developer_geocoding",
+        SimpleNamespace(instance=StubGeocoder()),
+    )
+
+    result = await developers_api._resolve_submitted_sg_address_lookup(
+        SimpleNamespace(submitted_address="25 Soon Lee Rd", jurisdiction_code="SG"),
+    )
+
+    assert result is lookup
+    assert calls == [
+        {
+            "address": "25 Soon Lee Rd",
+            "jurisdiction_code": "SG",
+        },
+    ]
 
 
 @pytest.mark.asyncio

@@ -36,6 +36,15 @@ function leadingStreetNumber(value: string): string | null {
   return match?.[1]?.toLowerCase() ?? null
 }
 
+function looksLikeSingaporeAddress(value: string): boolean {
+  const trimmed = value.trim()
+  return /\bsingapore\b/i.test(trimmed) || /\b\d{6}\b/.test(trimmed)
+}
+
+function formatCoordinate(value: number): string {
+  return Number.isFinite(value) ? value.toFixed(6) : ''
+}
+
 function hasConflictingResolvedStreetNumber(
   submittedAddress: string,
   resolvedAddress: string | null | undefined,
@@ -148,6 +157,8 @@ function coordinateSourceLabelFor(
   switch (source.provider) {
     case 'onemap_address_search':
       return 'OneMap address search (Singapore)'
+    case 'onemap_street_interpolation':
+      return 'Approximate OneMap street interpolation (Singapore)'
     case 'google_maps':
       return fallbackLabel ?? 'Google geocoding'
     default:
@@ -169,6 +180,8 @@ export interface UseUnifiedCaptureReturn {
   // Form state
   latitude: string
   longitude: string
+  analysisLatitude: string
+  analysisLongitude: string
   address: string
   currentGfaSqm: string
   currentGfaSource: string
@@ -202,6 +215,7 @@ export interface UseUnifiedCaptureReturn {
   geocodeError: string | null
   isGeocoding: boolean
   coordinateSourceLabel: string | null
+  mapCoordinateSourceLabel: string | null
 
   // Map
   mapContainerRef: React.RefObject<HTMLDivElement>
@@ -223,10 +237,14 @@ export function useUnifiedCapture({
   projectId,
   googleMapsApiKey,
 }: UseUnifiedCaptureOptions): UseUnifiedCaptureReturn {
-  // Form state — start empty; geolocation fills in the user's position
+  // Form state — latitude/longitude is the map preview position; analysis
+  // coordinates are backend-resolved and are the only coordinates used for
+  // zoning lookup once available.
   const [latitude, setLatitude] = useState<string>('')
   const [longitude, setLongitude] = useState<string>('')
-  const [address, setAddress] = useState<string>('')
+  const [analysisLatitude, setAnalysisLatitude] = useState<string>('')
+  const [analysisLongitude, setAnalysisLongitude] = useState<string>('')
+  const [address, setAddressState] = useState<string>('')
   const [currentGfaSqm, setCurrentGfaSqm] = useState<string>('')
   const [currentGfaSource, setCurrentGfaSource] = useState<string>('')
   const [jurisdictionCode, setJurisdictionCode] = useState<string>('')
@@ -268,10 +286,39 @@ export function useUnifiedCapture({
   const [coordinateSourceLabel, setCoordinateSourceLabel] = useState<
     string | null
   >(null)
+  const [mapCoordinateSourceLabel, setMapCoordinateSourceLabel] = useState<
+    string | null
+  >(null)
   // Track the address that was last geocoded to avoid redundant calls
   const lastGeocodedAddressRef = useRef<string>('')
   const lastResolvedGeocodeAddressRef = useRef<string>('')
+  const lastGeocodeErrorRef = useRef<string | null>(null)
   const selectedPlaceMetadataRef = useRef<SelectedPlaceMetadata | null>(null)
+
+  const clearAnalysisCoordinates = useCallback(() => {
+    setAnalysisLatitude('')
+    setAnalysisLongitude('')
+    setCoordinateSourceLabel(null)
+  }, [])
+
+  const clearAddressResolvedCoordinates = useCallback(() => {
+    clearAnalysisCoordinates()
+    if (mapCoordinateSourceLabel !== 'Browser location') {
+      setLatitude('')
+      setLongitude('')
+      setMapCoordinateSourceLabel(null)
+    }
+  }, [clearAnalysisCoordinates, mapCoordinateSourceLabel])
+
+  const setAddress = useCallback(
+    (value: string) => {
+      setAddressState(value)
+      if (value.trim() !== lastGeocodedAddressRef.current) {
+        clearAddressResolvedCoordinates()
+      }
+    },
+    [clearAddressResolvedCoordinates],
+  )
 
   // Map
   const [mapError, setMapError] = useState<string | null>(null)
@@ -322,7 +369,7 @@ export function useUnifiedCapture({
       // Only set if user hasn't already typed something
       setLatitude((prev) => (prev === '' ? pos.latitude.toFixed(6) : prev))
       setLongitude((prev) => (prev === '' ? pos.longitude.toFixed(6) : prev))
-      setCoordinateSourceLabel((prev) => prev ?? 'Browser location')
+      setMapCoordinateSourceLabel((prev) => prev ?? 'Browser location')
 
       // Center map if already initialized
       if (mapInstanceRef.current) {
@@ -357,18 +404,28 @@ export function useUnifiedCapture({
     } | null> => {
       const targetAddress = addressToGeocode ?? address
       if (!targetAddress.trim()) {
-        setGeocodeError('Please enter an address to geocode.')
+        const message = 'Please enter an address to geocode.'
+        lastGeocodeErrorRef.current = message
+        setGeocodeError(message)
         return null
       }
       try {
+        lastGeocodeErrorRef.current = null
         setGeocodeError(null)
         setIsGeocoding(true)
-        const result = await forwardGeocodeAddress(targetAddress.trim())
-        setLatitude(result.latitude.toString())
-        setLongitude(result.longitude.toString())
-        setCoordinateSourceLabel(
-          coordinateSourceLabelFor(result.source, 'Backend geocoder'),
+        const result = await forwardGeocodeAddress(targetAddress.trim(), {
+          jurisdictionCode: jurisdictionCode || 'SG',
+        })
+        const sourceLabel = coordinateSourceLabelFor(
+          result.source,
+          'Backend geocoder',
         )
+        setLatitude(formatCoordinate(result.latitude))
+        setLongitude(formatCoordinate(result.longitude))
+        setMapCoordinateSourceLabel(sourceLabel)
+        setAnalysisLatitude(formatCoordinate(result.latitude))
+        setAnalysisLongitude(formatCoordinate(result.longitude))
+        setCoordinateSourceLabel(sourceLabel)
         lastGeocodedAddressRef.current = targetAddress.trim()
         lastResolvedGeocodeAddressRef.current = result.formattedAddress
         selectedPlaceMetadataRef.current = null
@@ -387,15 +444,27 @@ export function useUnifiedCapture({
         }
       } catch (error) {
         console.error('Forward geocode failed', error)
-        setGeocodeError(
-          error instanceof Error ? error.message : 'Unable to geocode address.',
-        )
+        const message =
+          error instanceof Error ? error.message : 'Unable to geocode address.'
+        lastGeocodeErrorRef.current = message
+        setGeocodeError(message)
+        if (
+          jurisdictionCode.toUpperCase() === 'SG' ||
+          looksLikeSingaporeAddress(targetAddress)
+        ) {
+          clearAddressResolvedCoordinates()
+        }
         return null
       } finally {
         setIsGeocoding(false)
       }
     },
-    [address, updateMarkerPosition],
+    [
+      address,
+      clearAddressResolvedCoordinates,
+      jurisdictionCode,
+      updateMarkerPosition,
+    ],
   )
 
   // Auto-geocode when address changes (debounced)
@@ -468,12 +537,15 @@ export function useUnifiedCapture({
     }
     if (storedResult) {
       setSiteAcquisitionResult(storedResult)
-      setLatitude(storedResult.coordinates.latitude.toString())
-      setLongitude(storedResult.coordinates.longitude.toString())
+      setLatitude(formatCoordinate(storedResult.coordinates.latitude))
+      setLongitude(formatCoordinate(storedResult.coordinates.longitude))
+      setAnalysisLatitude(formatCoordinate(storedResult.coordinates.latitude))
+      setAnalysisLongitude(formatCoordinate(storedResult.coordinates.longitude))
       setCoordinateSourceLabel('Saved capture coordinates')
+      setMapCoordinateSourceLabel('Saved capture coordinates')
       setJurisdictionCode(storedResult.jurisdictionCode ?? 'SG')
       if (storedResult.address?.fullAddress) {
-        setAddress(storedResult.address.fullAddress)
+        setAddressState(storedResult.address.fullAddress)
       }
     }
     hasHydratedRef.current = true
@@ -649,17 +721,18 @@ export function useUnifiedCapture({
           typeof position.lng === 'function' ? position.lng() : position.lng
         setLatitude(Number(lat).toFixed(6))
         setLongitude(Number(lng).toFixed(6))
-        setCoordinateSourceLabel('Google Maps pin')
+        setMapCoordinateSourceLabel('Google Maps pin')
+        clearAnalysisCoordinates()
         reverseGeocodeCoords(Number(lat), Number(lng))
           .then((result) => {
             if (mounted && result?.formattedAddress) {
-              setCoordinateSourceLabel(
+              setMapCoordinateSourceLabel(
                 coordinateSourceLabelFor(
                   result.source,
                   'Google Maps reverse geocoding',
                 ),
               )
-              setAddress(result.formattedAddress)
+              setAddressState(result.formattedAddress)
               lastGeocodedAddressRef.current = result.formattedAddress
               lastResolvedGeocodeAddressRef.current = result.formattedAddress
             }
@@ -683,18 +756,19 @@ export function useUnifiedCapture({
         const lng = event.latLng.lng()
         setLatitude(lat.toFixed(6))
         setLongitude(lng.toFixed(6))
-        setCoordinateSourceLabel('Google Maps pin')
+        setMapCoordinateSourceLabel('Google Maps pin')
+        clearAnalysisCoordinates()
         setMarkerPosition(lat, lng)
         reverseGeocodeCoords(lat, lng)
           .then((result) => {
             if (mounted && result?.formattedAddress) {
-              setCoordinateSourceLabel(
+              setMapCoordinateSourceLabel(
                 coordinateSourceLabelFor(
                   result.source,
                   'Google Maps reverse geocoding',
                 ),
               )
-              setAddress(result.formattedAddress)
+              setAddressState(result.formattedAddress)
               lastGeocodedAddressRef.current = result.formattedAddress
               lastResolvedGeocodeAddressRef.current = result.formattedAddress
             }
@@ -741,7 +815,7 @@ export function useUnifiedCapture({
     autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace()
       if (place.formatted_address) {
-        setAddress(place.formatted_address)
+        setAddressState(place.formatted_address)
         lastGeocodedAddressRef.current = place.formatted_address
         lastResolvedGeocodeAddressRef.current = place.formatted_address
         selectedPlaceMetadataRef.current = {
@@ -756,7 +830,8 @@ export function useUnifiedCapture({
         const lng = place.geometry.location.lng()
         setLatitude(lat.toFixed(6))
         setLongitude(lng.toFixed(6))
-        setCoordinateSourceLabel('Google Places autocomplete')
+        setMapCoordinateSourceLabel('Google Places autocomplete')
+        clearAnalysisCoordinates()
         if (mapInstanceRef.current) {
           mapInstanceRef.current.setCenter({ lat, lng })
           updateMarkerPosition(lat, lng)
@@ -790,14 +865,16 @@ export function useUnifiedCapture({
         // If address is provided and hasn't been geocoded yet, geocode it first
         // This ensures the coordinates match the entered address
         const trimmedAddress = address.trim()
-        let finalLat = Number(latitude)
-        let finalLon = Number(longitude)
+        let finalLat = Number(analysisLatitude || latitude)
+        let finalLon = Number(analysisLongitude || longitude)
         const selectedPlaceMetadata =
           selectedPlaceMetadataRef.current?.formattedAddress === trimmedAddress
             ? selectedPlaceMetadataRef.current
             : null
+        const activeJurisdictionCode = jurisdictionCode || 'SG'
 
         if (
+          activeJurisdictionCode.toUpperCase() !== 'SG' &&
           trimmedAddress &&
           trimmedAddress === lastGeocodedAddressRef.current &&
           hasConflictingResolvedStreetNumber(
@@ -813,15 +890,22 @@ export function useUnifiedCapture({
           return
         }
 
-        if (
+        const shouldResolveThroughBackend =
           trimmedAddress &&
-          trimmedAddress !== lastGeocodedAddressRef.current
-        ) {
+          (trimmedAddress !== lastGeocodedAddressRef.current ||
+            activeJurisdictionCode.toUpperCase() === 'SG' ||
+            looksLikeSingaporeAddress(trimmedAddress) ||
+            mapCoordinateSourceLabel === 'Google Places autocomplete')
+
+        if (shouldResolveThroughBackend) {
           // Address has changed since last geocode - geocode it now
+          // Singapore captures must use the backend resolver because it prefers
+          // OneMap coordinates for parcel-to-zoning lookup.
           const geocodeResult = await handleForwardGeocode(trimmedAddress)
           if (!geocodeResult) {
             setCaptureError(
-              'Unable to geocode the address. Please check the address and try again.',
+              lastGeocodeErrorRef.current ||
+                'Unable to geocode the address. Please check the address and try again.',
             )
             setIsCapturing(false)
             setIsScanning(false)
@@ -1016,6 +1100,8 @@ export function useUnifiedCapture({
     [
       latitude,
       longitude,
+      analysisLatitude,
+      analysisLongitude,
       address,
       currentGfaSqm,
       currentGfaSource,
@@ -1023,6 +1109,7 @@ export function useUnifiedCapture({
       selectedScenarios,
       isDeveloperMode,
       handleForwardGeocode,
+      mapCoordinateSourceLabel,
     ],
   )
 
@@ -1053,9 +1140,11 @@ export function useUnifiedCapture({
     setCaptureError(null)
     setGeocodeError(null)
     setTargetAcquired(null)
+    clearAnalysisCoordinates()
+    setMapCoordinateSourceLabel(null)
 
     // Reset form — clear fields, re-geolocate
-    setAddress('')
+    setAddressState('')
     setCurrentGfaSqm('')
     setCurrentGfaSource('')
     setSelectedScenarios([])
@@ -1074,6 +1163,7 @@ export function useUnifiedCapture({
       if (pos) {
         setLatitude(pos.latitude.toFixed(6))
         setLongitude(pos.longitude.toFixed(6))
+        setMapCoordinateSourceLabel('Browser location')
         if (mapInstanceRef.current) {
           mapInstanceRef.current.setCenter({
             lat: pos.latitude,
@@ -1084,9 +1174,10 @@ export function useUnifiedCapture({
       } else {
         setLatitude('')
         setLongitude('')
+        setMapCoordinateSourceLabel(null)
       }
     })
-  }, [updateMarkerPosition])
+  }, [clearAnalysisCoordinates, updateMarkerPosition])
 
   // Compute hasResults
   const hasResults = isDeveloperMode
@@ -1105,6 +1196,8 @@ export function useUnifiedCapture({
     // Form state
     latitude,
     longitude,
+    analysisLatitude,
+    analysisLongitude,
     address,
     currentGfaSqm,
     currentGfaSource,
@@ -1138,6 +1231,7 @@ export function useUnifiedCapture({
     geocodeError,
     isGeocoding,
     coordinateSourceLabel,
+    mapCoordinateSourceLabel,
 
     // Map
     mapContainerRef,

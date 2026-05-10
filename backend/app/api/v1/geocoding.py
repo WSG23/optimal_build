@@ -26,11 +26,15 @@ class GeocodeResponse(BaseModel):
 @router.get("/forward", response_model=GeocodeResponse)
 async def forward_geocode(
     address: str = Query(..., min_length=3),
+    jurisdiction_code: str | None = Query(default=None, alias="jurisdictionCode"),
 ) -> GeocodeResponse:
     """Translate a free-form address into coordinates."""
 
     try:
-        result = await geocoding_service.geocode_lookup(address)
+        result = await geocoding_service.geocode_lookup(
+            address,
+            jurisdiction_code=jurisdiction_code,
+        )
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 

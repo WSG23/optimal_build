@@ -25,8 +25,26 @@ This runbook provides step-by-step instructions for deploying optimal_build to p
 
 - [ ] AWS/Cloud credentials valid
 - [ ] Secrets updated in Secrets Manager
+- [ ] Singapore OneMap service account configured if Capture SG is enabled
 - [ ] SSL certificates valid (check expiry)
 - [ ] Database backup completed
+
+### Singapore OneMap Credentials
+
+Capture's Singapore address resolver uses OneMap server-side. For any
+third-party or paying-customer deployment, do not use a personal developer
+account and do not ask end users to provide OneMap credentials.
+
+- [ ] Create a dedicated company-controlled OneMap account, for example
+  `capture-onemap@yourcompany.com`.
+- [ ] Store `ONEMAP_EMAIL` and `ONEMAP_PASSWORD` in the production secrets
+  manager.
+- [ ] Do not expose OneMap credentials or access tokens to frontend code.
+- [ ] Treat `ONEMAP_ACCESS_TOKEN` as a temporary local/debug override only.
+- [ ] Confirm the backend can re-authenticate automatically when OneMap's
+  3-day token expires.
+- [ ] Rotate the OneMap account password under the same process as other
+  external-provider credentials.
 
 ### Communication
 
@@ -148,7 +166,14 @@ curl -sf https://optimal-build.example.com/api/v1/test | jq
    - Verify results are returned
    - Check response time < 2s
 
-3. **Monitoring Check**
+3. **Capture SG Test**
+   - Run Capture for a known Singapore address, such as `1 Nassim Rd,
+     Singapore`
+   - Verify the UI shows backend/OneMap-derived analysis coordinates
+   - Verify zoning is resolved from the SG parcel/zoning pipeline
+   - Verify no OneMap token or password appears in browser responses or logs
+
+4. **Monitoring Check**
    - Open Grafana dashboard
    - Verify metrics are flowing
    - Check for error spikes
@@ -158,6 +183,7 @@ curl -sf https://optimal-build.example.com/api/v1/test | jq
 - [ ] Health endpoint returns 200
 - [ ] Login flow works
 - [ ] Core API endpoints respond
+- [ ] Capture SG address geocoding works if Singapore is enabled
 - [ ] No new errors in Sentry
 - [ ] No error spikes in Grafana
 - [ ] SSL certificate valid

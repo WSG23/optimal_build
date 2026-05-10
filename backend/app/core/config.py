@@ -26,6 +26,45 @@ _TEST_RATE_LIMIT = "1000/minute"
 _GEOMETRY_DETAIL_LEVELS = {"simple", "medium"}
 
 
+def _load_dotenv_file(path: str, *, override: bool) -> None:
+    """Load a minimal dotenv file without shell-expanding secret values."""
+
+    if not os.path.exists(path):
+        return
+
+    try:
+        with open(path, encoding="utf-8") as env_file:
+            lines = env_file.readlines()
+    except OSError:
+        return
+
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key or not key.replace("_", "").isalnum() or key[0].isdigit():
+            continue
+        if not override and key in os.environ:
+            continue
+
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        os.environ[key] = value
+
+
+def _load_local_dotenv_files() -> None:
+    """Load local development env files before Settings snapshots os.environ."""
+
+    if _load_bool("OPTIMAL_BUILD_SKIP_DOTENV", False):
+        return
+    _load_dotenv_file(".env", override=False)
+    _load_dotenv_file(".env.local", override=True)
+
+
 def _load_bool(name: str, default: bool) -> bool:
     """Return a boolean configuration flag from the environment."""
 
@@ -216,6 +255,9 @@ class Settings:
     SEATTLE_SODA_APP_TOKEN: str
     TORONTO_SODA_APP_TOKEN: str
     GOOGLE_MAPS_API_KEY: str
+    ONEMAP_ACCESS_TOKEN: str
+    ONEMAP_EMAIL: str
+    ONEMAP_PASSWORD: str
     URA_ACCESS_KEY: str
 
     BUILDABLE_TYP_FLOOR_TO_FLOOR_M: float
@@ -319,6 +361,12 @@ class Settings:
         self.SEATTLE_SODA_APP_TOKEN = os.getenv("SEATTLE_SODA_APP_TOKEN", "public")
         self.TORONTO_SODA_APP_TOKEN = os.getenv("TORONTO_SODA_APP_TOKEN", "public")
         self.GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY", "")
+        self.ONEMAP_ACCESS_TOKEN = os.getenv(
+            "ONEMAP_ACCESS_TOKEN",
+            os.getenv("ONEMAP_TOKEN", ""),
+        )
+        self.ONEMAP_EMAIL = os.getenv("ONEMAP_EMAIL", "")
+        self.ONEMAP_PASSWORD = os.getenv("ONEMAP_PASSWORD", "")
         self.URA_ACCESS_KEY = os.getenv("URA_ACCESS_KEY", "")
 
         self.BUILDABLE_TYP_FLOOR_TO_FLOOR_M = _load_positive_float(
@@ -359,4 +407,5 @@ class Settings:
         return self.SECRET_KEY
 
 
+_load_local_dotenv_files()
 settings = Settings()
