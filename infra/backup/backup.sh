@@ -40,7 +40,6 @@ RETENTION_MONTHLY="${RETENTION_MONTHLY:-12}"
 
 # Timestamp formats
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-DATE=$(date +%Y%m%d)
 WEEK=$(date +%Y_W%V)
 MONTH=$(date +%Y%m)
 
@@ -94,7 +93,8 @@ backup_full() {
         --verbose \
         2>&1 | gzip > "${backup_file}"
 
-    local backup_size=$(du -h "${backup_file}" | cut -f1)
+    local backup_size
+    backup_size=$(du -h "${backup_file}" | cut -f1)
     log "Full backup completed: ${backup_file} (${backup_size})"
 
     # Create weekly backup on Sundays
@@ -131,7 +131,8 @@ backup_custom() {
         -f "${backup_file}" \
         2>&1
 
-    local backup_size=$(du -h "${backup_file}" | cut -f1)
+    local backup_size
+    backup_size=$(du -h "${backup_file}" | cut -f1)
     log "Custom backup completed: ${backup_file} (${backup_size})"
 
     echo "${backup_file}"
@@ -161,7 +162,8 @@ backup_schema() {
 # Upload to S3
 upload_to_s3() {
     local file_path="$1"
-    local filename=$(basename "${file_path}")
+    local filename
+    filename=$(basename "${file_path}")
     local s3_key="${S3_PREFIX}/${filename}"
 
     if [[ -z "${S3_BUCKET}" ]]; then
