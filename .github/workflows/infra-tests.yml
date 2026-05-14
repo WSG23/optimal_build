@@ -149,7 +149,7 @@ jobs:
 
       - name: Run Helm chart structure tests
         run: |
-          python -m pytest tests/infra/test_helm_chart.py -v --tb=short -k "not helm_"
+          python -m pytest tests/infra/test_helm_chart.py -v --tb=short -k "not TestHelmLint"
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
@@ -166,7 +166,7 @@ jobs:
 
       - name: Run Helm CLI tests
         run: |
-          python -m pytest tests/infra/test_helm_chart.py -v --tb=short -k "helm_"
+          python -m pytest tests/infra/test_helm_chart.py -v --tb=short -k "TestHelmLint"
 
   # Backup script validation
   backup-validation:
