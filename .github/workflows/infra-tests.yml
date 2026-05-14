@@ -99,6 +99,7 @@ jobs:
 
       - name: Install test dependencies
         run: |
+          pip install -r backend/requirements.txt
           pip install pytest pytest-asyncio pyyaml
 
       - name: Run Kubernetes manifest tests
@@ -143,6 +144,7 @@ jobs:
 
       - name: Install test dependencies
         run: |
+          pip install -r backend/requirements.txt
           pip install pytest pytest-asyncio pyyaml
 
       - name: Run Helm chart structure tests
@@ -182,6 +184,7 @@ jobs:
 
       - name: Install test dependencies
         run: |
+          pip install -r backend/requirements.txt
           pip install pytest pytest-asyncio pyyaml
 
       - name: Run backup script tests
