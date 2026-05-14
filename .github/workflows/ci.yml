@@ -332,6 +332,7 @@ jobs:
           python -m backend.flows.watch_fetch \
             --once \
             --offline \
+            --seed-offline-sources \
             --storage-path "$REFERENCE_STORAGE" \
             --summary-path "$CI_ARTIFACTS/watch_fetch_summary.json"
 
