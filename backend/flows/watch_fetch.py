@@ -39,6 +39,45 @@ from ._prefect_utils import resolve_flow_callable
 
 SUPPORTED_FETCH_KINDS = {"pdf", "html", "sitemap"}
 
+_OFFLINE_SOURCE_FIXTURES: Sequence[dict[str, str]] = (
+    {
+        "jurisdiction": "SG",
+        "authority": "URA",
+        "topic": "zoning",
+        "doc_title": "URA Master Plan Planning Parameters",
+        "landing_url": "https://www.ura.gov.sg/Corporate/Planning/Master-Plan",
+        "fetch_kind": "html",
+        "update_freq_hint": "biennial",
+    },
+    {
+        "jurisdiction": "SG",
+        "authority": "BCA",
+        "topic": "building",
+        "doc_title": "BCA Building Control Regulations",
+        "landing_url": "https://www1.bca.gov.sg/buildsg/bca-codes/building-control-act",
+        "fetch_kind": "pdf",
+        "update_freq_hint": "annual",
+    },
+    {
+        "jurisdiction": "SG",
+        "authority": "SCDF",
+        "topic": "fire",
+        "doc_title": "SCDF Fire Code 2018",
+        "landing_url": "https://www.scdf.gov.sg/home/fire-safety/fire-code",
+        "fetch_kind": "pdf",
+        "update_freq_hint": "biennial",
+    },
+    {
+        "jurisdiction": "SG",
+        "authority": "PUB",
+        "topic": "drainage",
+        "doc_title": "PUB Code of Practice on Surface Water Drainage",
+        "landing_url": "https://www.pub.gov.sg/Documents/COP_SurfaceWaterDrainage.pdf",
+        "fetch_kind": "pdf",
+        "update_freq_hint": "annual",
+    },
+)
+
 
 @flow(name="watch-reference-sources")
 async def watch_reference_sources(
@@ -342,6 +381,14 @@ def _build_cli_parser() -> argparse.ArgumentParser:
         default=1,
         help="Fail the run if fewer than this number of documents exist after execution.",
     )
+    parser.add_argument(
+        "--seed-offline-sources",
+        action="store_true",
+        help=(
+            "When running with --offline, upsert deterministic reference sources "
+            "before ingestion. Intended for CI smoke runs."
+        ),
+    )
     return parser
 
 
@@ -391,13 +438,51 @@ async def _run_flow(
     *,
     storage: ReferenceStorage,
     fetcher: ReferenceSourceFetcher | None,
+    seed_offline_sources: bool = False,
 ) -> dict[str, Any]:
     """Execute the ingestion flow and derive a summary in one event loop."""
 
     load_model_modules()
     await _ensure_database_schema(AsyncSessionLocal)
+    if seed_offline_sources:
+        await _seed_offline_reference_sources(AsyncSessionLocal)
     results = await _run_once(storage=storage, fetcher=fetcher)
     return await _summarise_ingestion(results)
+
+
+async def _seed_offline_reference_sources(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    """Upsert reference sources needed by deterministic offline smoke runs."""
+
+    async with session_factory() as session:
+        existing_rows = (
+            (
+                await session.execute(
+                    select(RefSource).where(RefSource.jurisdiction == "SG")
+                )
+            )
+            .scalars()
+            .all()
+        )
+        by_authority = {
+            (source.authority or "").upper(): source for source in existing_rows
+        }
+
+        for record in _OFFLINE_SOURCE_FIXTURES:
+            authority = record["authority"].upper()
+            source = by_authority.get(authority)
+            if source is None:
+                session.add(RefSource(**record, is_active=True))
+                continue
+            source.topic = record["topic"]
+            source.doc_title = record["doc_title"]
+            source.landing_url = record["landing_url"]
+            source.fetch_kind = record["fetch_kind"]
+            source.update_freq_hint = record["update_freq_hint"]
+            source.is_active = True
+
+        await session.commit()
 
 
 async def _ensure_database_schema(
@@ -440,7 +525,13 @@ def main(argv: Sequence[str] | None = None) -> dict[str, Any]:
     else:
         fetcher = ReferenceSourceFetcher()
 
-    summary = asyncio.run(_run_flow(storage=storage, fetcher=fetcher))
+    summary = asyncio.run(
+        _run_flow(
+            storage=storage,
+            fetcher=fetcher,
+            seed_offline_sources=args.seed_offline_sources,
+        )
+    )
 
     if summary["document_count"] < args.min_documents:
         raise SystemExit(

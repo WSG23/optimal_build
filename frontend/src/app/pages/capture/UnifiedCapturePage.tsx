@@ -39,6 +39,8 @@ export function UnifiedCapturePage() {
   const {
     latitude,
     longitude,
+    analysisLatitude,
+    analysisLongitude,
     address,
     selectedScenarios,
     setAddress,
@@ -54,6 +56,7 @@ export function UnifiedCapturePage() {
     geocodeError,
     isGeocoding,
     coordinateSourceLabel,
+    mapCoordinateSourceLabel,
     mapContainerRef,
     addressInputRef,
     mapError,
@@ -185,7 +188,9 @@ export function UnifiedCapturePage() {
                   <p className="gps-error-text">{geocodeError}</p>
                 )}
 
-                {/* Coords — compact row */}
+                <p className="gps-form__coordinate-heading">
+                  Analysis coordinates
+                </p>
                 <div className="gps-form__coords-row">
                   <div className="gps-form__coord">
                     <label
@@ -198,8 +203,8 @@ export function UnifiedCapturePage() {
                       id="capture-lat"
                       type="text"
                       className="gps-input-ghost gps-input-ghost--sm"
-                      placeholder="-36.8485"
-                      value={latitude}
+                      placeholder="Pending"
+                      value={analysisLatitude}
                       readOnly
                       inputMode="decimal"
                     />
@@ -215,17 +220,26 @@ export function UnifiedCapturePage() {
                       id="capture-lng"
                       type="text"
                       className="gps-input-ghost gps-input-ghost--sm"
-                      placeholder="174.7633"
-                      value={longitude}
+                      placeholder="Pending"
+                      value={analysisLongitude}
                       readOnly
                       inputMode="decimal"
                     />
                   </div>
                 </div>
-                {(latitude || longitude || coordinateSourceLabel) && (
+                <p className="gps-form__coordinate-source">
+                  Used for zoning:{' '}
+                  <span>{coordinateSourceLabel ?? 'Not resolved yet'}</span>
+                </p>
+                {(latitude || longitude || mapCoordinateSourceLabel) && (
                   <p className="gps-form__coordinate-source">
-                    Coordinate source:{' '}
-                    <span>{coordinateSourceLabel ?? 'Not resolved yet'}</span>
+                    Map preview:{' '}
+                    <span>
+                      {latitude && longitude ? `${latitude}, ${longitude}` : ''}
+                      {mapCoordinateSourceLabel
+                        ? `${latitude && longitude ? ' · ' : ''}${mapCoordinateSourceLabel}`
+                        : ''}
+                    </span>
                   </p>
                 )}
               </fieldset>

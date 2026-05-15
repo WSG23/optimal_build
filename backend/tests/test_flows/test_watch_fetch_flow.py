@@ -359,6 +359,34 @@ async def test_watch_fetch_deduplicates_identical_payloads(
 
 
 @pytest.mark.asyncio
+async def test_run_flow_seeds_offline_sources_for_ci_smoke(
+    async_session_factory,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+) -> None:
+    """The offline CLI smoke should not depend on broad seed-data side effects."""
+
+    storage = ReferenceStorage(base_path=tmp_path, bucket="")
+    monkeypatch.setattr(watch_fetch_module, "AsyncSessionLocal", async_session_factory)
+
+    summary = await watch_fetch_module._run_flow(
+        storage=storage,
+        fetcher=watch_fetch_module.OfflineReferenceFetcher(),
+        seed_offline_sources=True,
+    )
+
+    assert summary["document_count"] >= 1
+    assert summary["source_count"] >= 1
+    assert summary["inserted_unique"] >= 1
+
+    async with async_session_factory() as session:
+        sources = (await session.execute(select(RefSource))).scalars().all()
+        assert {source.authority for source in sources}.issuperset(
+            {"URA", "BCA", "SCDF", "PUB"}
+        )
+
+
+@pytest.mark.asyncio
 async def test_watch_fetch_persists_seeded_html_and_pdf_sources(
     async_session_factory, tmp_path
 ) -> None:

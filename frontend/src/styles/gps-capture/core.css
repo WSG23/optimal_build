@@ -219,6 +219,16 @@
 
 /* ── Coords (compact row) ── */
 
+.gps-form__coordinate-heading {
+    margin: var(--ob-space-050) 0 calc(var(--ob-space-025) * -1);
+    color: var(--ob-color-text-muted);
+    font-size: var(--ob-font-size-2xs);
+    font-weight: var(--ob-font-weight-semibold);
+    letter-spacing: 0.04em;
+    line-height: var(--ob-line-height-snug);
+    text-transform: uppercase;
+}
+
 .gps-form__coords-row {
     display: flex;
     gap: var(--ob-space-100);

@@ -14,6 +14,10 @@ const mockMarkerConstructor = vi.fn()
 const mockMarkerAddListener = vi.fn()
 const mockMarkerSetPosition = vi.fn()
 const mockMarkerSetMap = vi.fn()
+const mockAutocompleteConstructor = vi.fn()
+const mockAutocompleteAddListener = vi.fn()
+let mockAutocompletePlace: Record<string, unknown> | null = null
+let mockAutocompletePlaceChanged: (() => void) | null = null
 
 const installGoogleMapsMocks = () => {
   Object.defineProperty(window, 'google', {
@@ -48,6 +52,22 @@ const installGoogleMapsMocks = () => {
           getPosition() {
             return { lat: () => 1.3, lng: () => 103.85 }
           }
+        },
+        places: {
+          Autocomplete: class {
+            constructor(...args: unknown[]) {
+              mockAutocompleteConstructor(...args)
+            }
+            addListener(eventName: string, callback: () => void) {
+              mockAutocompleteAddListener(eventName, callback)
+              if (eventName === 'place_changed') {
+                mockAutocompletePlaceChanged = callback
+              }
+            }
+            getPlace() {
+              return mockAutocompletePlace ?? {}
+            }
+          },
         },
       },
     },
@@ -87,7 +107,12 @@ function renderHookHarness(
 
   function Harness() {
     ref.current = useUnifiedCapture({ isDeveloperMode, ...options })
-    return <div ref={ref.current.mapContainerRef} />
+    return (
+      <>
+        <input ref={ref.current.addressInputRef} aria-label="Address" />
+        <div ref={ref.current.mapContainerRef} />
+      </>
+    )
   }
 
   render(<Harness />)
@@ -102,6 +127,8 @@ describe('useUnifiedCapture', () => {
     cleanup()
     vi.useRealTimers()
     vi.resetAllMocks()
+    mockAutocompletePlace = null
+    mockAutocompletePlaceChanged = null
     sessionStorage.clear()
     document.body.classList.remove('capture-results-active')
     delete (window as { google?: unknown }).google
@@ -155,11 +182,46 @@ describe('useUnifiedCapture', () => {
       vi.advanceTimersByTime(800)
     })
 
-    expect(mockForwardGeocodeAddress).toHaveBeenCalledWith('123 Main St')
-    expect(hookRef.current!.latitude).toBe('1.2345')
-    expect(hookRef.current!.longitude).toBe('103.9876')
+    expect(mockForwardGeocodeAddress).toHaveBeenCalledWith('123 Main St', {
+      jurisdictionCode: 'SG',
+    })
+    expect(hookRef.current!.latitude).toBe('1.234500')
+    expect(hookRef.current!.longitude).toBe('103.987600')
+    expect(hookRef.current!.analysisLatitude).toBe('1.234500')
+    expect(hookRef.current!.analysisLongitude).toBe('103.987600')
     expect(hookRef.current!.coordinateSourceLabel).toBe(
       'OneMap address search (Singapore)',
+    )
+  })
+
+  it('labels interpolated Singapore coordinates separately from exact OneMap hits', async () => {
+    vi.useFakeTimers()
+    mockForwardGeocodeAddress.mockResolvedValue({
+      latitude: 1.3291483,
+      longitude: 103.6982319,
+      formattedAddress: '25 SOON LEE ROAD SINGAPORE',
+      source: {
+        provider: 'onemap_street_interpolation',
+        state: 'live',
+        configured: true,
+        synthetic: true,
+        reason: 'Exact address was not returned by OneMap',
+      },
+    })
+
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
+
+    await act(async () => {
+      hookRef.current!.setAddress('25 Soon Lee Rd')
+    })
+    await act(async () => {
+      vi.advanceTimersByTime(800)
+    })
+
+    expect(hookRef.current!.analysisLatitude).toBe('1.329148')
+    expect(hookRef.current!.analysisLongitude).toBe('103.698232')
+    expect(hookRef.current!.coordinateSourceLabel).toBe(
+      'Approximate OneMap street interpolation (Singapore)',
     )
   })
 
@@ -177,6 +239,85 @@ describe('useUnifiedCapture', () => {
     })
 
     expect(hookRef.current!.geocodeError).toBe('Geocode down')
+  })
+
+  it('clears stale analysis coordinates when Singapore geocoding fails', async () => {
+    vi.useFakeTimers()
+    mockForwardGeocodeAddress
+      .mockResolvedValueOnce({
+        latitude: 1.2345,
+        longitude: 103.9876,
+        formattedAddress: '123 MAIN ST SINGAPORE 123456',
+        source: {
+          provider: 'onemap_address_search',
+          state: 'live',
+          configured: true,
+          synthetic: false,
+        },
+      })
+      .mockRejectedValueOnce(
+        new Error(
+          'OneMap token request failed (400): Invalid OneMap credentials',
+        ),
+      )
+
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
+
+    await act(async () => {
+      hookRef.current!.setAddress('123 Main St Singapore')
+    })
+    await act(async () => {
+      vi.advanceTimersByTime(800)
+      await Promise.resolve()
+    })
+
+    expect(hookRef.current!.analysisLatitude).toBe('1.234500')
+    expect(hookRef.current!.analysisLongitude).toBe('103.987600')
+
+    await act(async () => {
+      hookRef.current!.setAddress('10 Marina Boulevard singapore')
+    })
+    await act(async () => {
+      vi.advanceTimersByTime(800)
+      await Promise.resolve()
+    })
+
+    expect(hookRef.current!.geocodeError).toBe(
+      'OneMap token request failed (400): Invalid OneMap credentials',
+    )
+    expect(hookRef.current!.latitude).toBe('')
+    expect(hookRef.current!.longitude).toBe('')
+    expect(hookRef.current!.analysisLatitude).toBe('')
+    expect(hookRef.current!.analysisLongitude).toBe('')
+    expect(hookRef.current!.coordinateSourceLabel).toBeNull()
+    expect(hookRef.current!.mapCoordinateSourceLabel).toBeNull()
+  })
+
+  it('uses the backend geocoding failure as the scan error', async () => {
+    vi.useFakeTimers()
+    mockForwardGeocodeAddress.mockRejectedValue(
+      new Error('ONEMAP_ACCESS_TOKEN not configured'),
+    )
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
+
+    await act(async () => {
+      hookRef.current!.setAddress('1 Nassim Rd')
+    })
+
+    await act(async () => {
+      const event = {
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent<HTMLFormElement>
+      const promise = hookRef.current!.handleCapture(event)
+      await Promise.resolve()
+      await vi.runAllTimersAsync()
+      await promise
+    })
+
+    expect(hookRef.current!.captureError).toBe(
+      'ONEMAP_ACCESS_TOKEN not configured',
+    )
+    expect(mockCapturePropertyForDevelopment).not.toHaveBeenCalled()
   })
 
   it('runs the developer capture flow and persists the capture', async () => {
@@ -335,8 +476,10 @@ describe('useUnifiedCapture', () => {
       await Promise.resolve()
     })
 
-    expect(hookRef.current!.latitude).toBe('1.3286413')
+    expect(hookRef.current!.latitude).toBe('1.328641')
     expect(hookRef.current!.longitude).toBe('103.698443')
+    expect(hookRef.current!.analysisLatitude).toBe('1.328641')
+    expect(hookRef.current!.analysisLongitude).toBe('103.698443')
 
     await act(async () => {
       const event = {
@@ -352,6 +495,142 @@ describe('useUnifiedCapture', () => {
     expect(hookRef.current!.captureError).toContain(
       'Geocoding resolved "25 Soon Lee Rd, Singapore 628083" to "20 Soon Lee Rd, Singapore 628086"',
     )
+  })
+
+  it('re-resolves partial Singapore addresses before capture even after auto-geocode', async () => {
+    vi.useFakeTimers()
+    mockForwardGeocodeAddress.mockResolvedValue({
+      latitude: 1.3282813,
+      longitude: 103.6984406,
+      formattedAddress: '20 Soon Lee Rd, Singapore 628086',
+      source: {
+        provider: 'onemap_address_search',
+        state: 'live',
+        configured: true,
+        synthetic: false,
+      },
+    })
+
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
+
+    await act(async () => {
+      hookRef.current!.setAddress('25 Soon Lee Rd')
+    })
+
+    await act(async () => {
+      vi.advanceTimersByTime(800)
+      await Promise.resolve()
+    })
+
+    await act(async () => {
+      const event = {
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent<HTMLFormElement>
+      const promise = hookRef.current!.handleCapture(event)
+      await Promise.resolve()
+      await vi.runAllTimersAsync()
+      await promise
+    })
+
+    expect(mockForwardGeocodeAddress).toHaveBeenCalledTimes(2)
+    expect(mockForwardGeocodeAddress).toHaveBeenLastCalledWith(
+      '25 Soon Lee Rd',
+      { jurisdictionCode: 'SG' },
+    )
+    expect(mockCapturePropertyForDevelopment).not.toHaveBeenCalled()
+    expect(hookRef.current!.captureError).toContain(
+      'Geocoding resolved "25 Soon Lee Rd" to "20 Soon Lee Rd, Singapore 628086"',
+    )
+  })
+
+  it('re-resolves Singapore Google Places selections through backend geocoding before capture', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-01-06T10:00:00.000Z'))
+    installGoogleMapsMocks()
+
+    mockForwardGeocodeAddress.mockResolvedValue({
+      latitude: 1.3071,
+      longitude: 103.8259,
+      formattedAddress: '1 NASSIM ROAD SINGAPORE 258458',
+      source: {
+        provider: 'onemap_address_search',
+        state: 'live',
+        configured: true,
+        synthetic: false,
+      },
+    })
+    mockCapturePropertyForDevelopment.mockResolvedValue({
+      propertyId: 'prop-nassim',
+      currencySymbol: 'S$',
+      address: { fullAddress: '1 NASSIM ROAD SINGAPORE 258458' },
+      quickAnalysis: { generatedAt: '2026-01-06T09:58:00Z', scenarios: [] },
+      previewJob: null,
+    })
+
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: 'test-key' })
+
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    expect(mockAutocompleteConstructor).toHaveBeenCalled()
+
+    mockAutocompletePlace = {
+      formatted_address: '1 Nassim Rd, Singapore 258458',
+      place_id: 'google-place-1',
+      name: '1 Nassim Road',
+      types: ['street_address'],
+      geometry: {
+        location: {
+          lat: () => 1.3065566,
+          lng: () => 103.8262787,
+        },
+      },
+    }
+
+    await act(async () => {
+      mockAutocompletePlaceChanged?.()
+    })
+
+    expect(hookRef.current!.latitude).toBe('1.306557')
+    expect(hookRef.current!.longitude).toBe('103.826279')
+    expect(hookRef.current!.analysisLatitude).toBe('')
+    expect(hookRef.current!.analysisLongitude).toBe('')
+    expect(hookRef.current!.coordinateSourceLabel).toBe(null)
+    expect(hookRef.current!.mapCoordinateSourceLabel).toBe(
+      'Google Places autocomplete',
+    )
+
+    await act(async () => {
+      const event = {
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent<HTMLFormElement>
+      const promise = hookRef.current!.handleCapture(event)
+      await Promise.resolve()
+      await vi.runAllTimersAsync()
+      await promise
+    })
+
+    expect(mockForwardGeocodeAddress).toHaveBeenCalledWith(
+      '1 Nassim Rd, Singapore 258458',
+      { jurisdictionCode: 'SG' },
+    )
+    expect(mockCapturePropertyForDevelopment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        latitude: 1.3071,
+        longitude: 103.8259,
+        submittedAddress: '1 Nassim Rd, Singapore 258458',
+        placeId: 'google-place-1',
+        placeName: '1 Nassim Road',
+        placeTypes: ['street_address'],
+      }),
+      expect.any(AbortSignal),
+    )
+    expect(hookRef.current!.coordinateSourceLabel).toBe(
+      'OneMap address search (Singapore)',
+    )
+    expect(hookRef.current!.analysisLatitude).toBe('1.307100')
+    expect(hookRef.current!.analysisLongitude).toBe('103.825900')
   })
 
   it('omits developmentScenarios when no scenarios are selected (developer flow)', async () => {
@@ -410,6 +689,8 @@ describe('useUnifiedCapture', () => {
 
     expect(hookRef.current!.latitude).toBe('')
     expect(hookRef.current!.longitude).toBe('')
+    expect(hookRef.current!.analysisLatitude).toBe('')
+    expect(hookRef.current!.analysisLongitude).toBe('')
     expect(hookRef.current!.address).toBe('')
     expect(hookRef.current!.currentGfaSqm).toBe('')
     expect(hookRef.current!.currentGfaSource).toBe('')

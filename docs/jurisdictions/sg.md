@@ -15,17 +15,23 @@ Owner: Codex (implementation), PM (data/API keys)
 
 **Option 1: OneMap Theme API (Programmatic Access)**
 
-The OneMap Theme API requires authentication via API token:
+The OneMap Theme API requires authentication. For production, configure the
+backend with server-side OneMap account credentials so it can mint and cache
+short-lived tokens without exposing them to the frontend:
 
-1. **Obtain ONEMAP_TOKEN:**
+1. **Configure OneMap credentials or token:**
    - Register for OneMap API access at https://www.onemap.gov.sg/
-   - Generate an API token from your account dashboard
-   - Export token: `export ONEMAP_TOKEN="your_token_here"`
+   - Preferred: add `ONEMAP_EMAIL="account@example.com"` and
+     `ONEMAP_PASSWORD="account-password"` to deployment secrets or ignored
+     `.env.local`
+   - Optional local override: add `ONEMAP_ACCESS_TOKEN="your_token_here"` to
+     `.env.local`
+   - Shell-only runs can still export `ONEMAP_ACCESS_TOKEN`
 
 2. **Fetch the dataset:**
    ```bash
    # Get theme info (returns GeoJSON download link)
-   curl -H "Authorization: $ONEMAP_TOKEN" \
+   curl -H "Authorization: Bearer $ONEMAP_ACCESS_TOKEN" \
      "https://www.onemap.gov.sg/api/public/themeservice/getThemeInfo?themeName=land_lot_boundary" \
      > data/sg/parcels/theme_info.json
 

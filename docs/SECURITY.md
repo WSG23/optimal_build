@@ -87,6 +87,8 @@ For production deployment, you should:
 | `S3_ACCESS_KEY` | Object storage access | From your S3/MinIO provider |
 | `S3_SECRET_KEY` | Object storage access | From your S3/MinIO provider |
 | `FIRST_SUPERUSER_PASSWORD` | Initial admin account | Strong password (16+ chars) |
+| `ONEMAP_EMAIL` | Singapore OneMap service account for backend geocoding | Dedicated company-controlled OneMap account |
+| `ONEMAP_PASSWORD` | Singapore OneMap service account password | Strong password stored only in secrets manager |
 
 ### Best Practices
 
@@ -105,6 +107,15 @@ For production deployment, you should:
    - AWS Secrets Manager
    - HashiCorp Vault
    - Kubernetes Secrets
+
+5. **Use service accounts for external providers**
+   - Singapore OneMap production deployments should use a dedicated account
+     such as `capture-onemap@yourcompany.com`, not a personal developer email.
+   - The backend may use `ONEMAP_EMAIL` and `ONEMAP_PASSWORD` to mint short-lived
+     OneMap access tokens; do not send those credentials or tokens to the
+     frontend.
+   - `ONEMAP_ACCESS_TOKEN` is allowed only as a local/debug override because
+     OneMap tokens expire and do not auto-renew.
 
 ---
 

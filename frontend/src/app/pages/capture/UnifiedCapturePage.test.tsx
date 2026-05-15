@@ -36,6 +36,8 @@ describe('UnifiedCapturePage', () => {
     return {
       latitude: '1.3',
       longitude: '103.85',
+      analysisLatitude: '',
+      analysisLongitude: '',
       address: '',
       currentGfaSqm: '',
       currentGfaSource: '',
@@ -59,6 +61,7 @@ describe('UnifiedCapturePage', () => {
       geocodeError: null,
       isGeocoding: false,
       coordinateSourceLabel: null,
+      mapCoordinateSourceLabel: null,
       mapContainerRef: { current: null },
       addressInputRef: { current: null },
       mapError: null,
@@ -141,16 +144,56 @@ describe('UnifiedCapturePage', () => {
       buildCaptureHookValue({
         latitude: '1.3065566',
         longitude: '103.8262787',
+        analysisLatitude: '1.3065566',
+        analysisLongitude: '103.8262787',
         coordinateSourceLabel: 'OneMap address search (Singapore)',
+        mapCoordinateSourceLabel: 'OneMap address search (Singapore)',
       }),
     )
 
     render(<UnifiedCapturePage />)
 
-    expect(screen.getByText(/Coordinate source:/i)).toBeInTheDocument()
+    expect(screen.getByText(/Used for zoning:/i)).toBeInTheDocument()
     expect(
       screen.getByText('OneMap address search (Singapore)'),
     ).toBeInTheDocument()
+  })
+
+  it('separates analysis coordinates from the map preview', () => {
+    mockUseDeveloperMode.mockReturnValue({
+      isDeveloperMode: true,
+      toggleDeveloperMode: mockToggleDeveloperMode,
+    })
+
+    mockUseUnifiedCapture.mockReturnValue(
+      buildCaptureHookValue({
+        latitude: '1.3065566',
+        longitude: '103.8262787',
+        analysisLatitude: '',
+        analysisLongitude: '',
+        coordinateSourceLabel: null,
+        mapCoordinateSourceLabel: 'Google Places autocomplete',
+      }),
+    )
+
+    render(<UnifiedCapturePage />)
+
+    expect(screen.getByLabelText('Lat')).toHaveValue('')
+    expect(screen.getByLabelText('Lng')).toHaveValue('')
+    expect(screen.getByLabelText('Lat')).toHaveAttribute(
+      'placeholder',
+      'Pending',
+    )
+    expect(screen.getByLabelText('Lng')).toHaveAttribute(
+      'placeholder',
+      'Pending',
+    )
+    expect(screen.getByText(/Used for zoning:/i)).toHaveTextContent(
+      'Not resolved yet',
+    )
+    expect(screen.getByText(/Map preview:/i)).toHaveTextContent(
+      '1.3065566, 103.8262787 · Google Places autocomplete',
+    )
   })
 
   it('renders the developer workspace when developer mode has results', async () => {

@@ -37,7 +37,7 @@ S3_PREFIX="${S3_PREFIX:-backups/postgresql}"
 
 # Temporary directory for downloads
 TEMP_DIR=$(mktemp -d)
-trap "rm -rf ${TEMP_DIR}" EXIT
+trap 'rm -rf "${TEMP_DIR}"' EXIT
 
 # Logging
 log() {
@@ -90,7 +90,8 @@ list_s3_backups() {
 # Download from S3
 download_from_s3() {
     local s3_key="$1"
-    local filename=$(basename "${s3_key}")
+    local filename
+    filename=$(basename "${s3_key}")
     local local_path="${TEMP_DIR}/${filename}"
 
     if [[ -z "${S3_BUCKET}" ]]; then
@@ -220,7 +221,8 @@ do_restore() {
         error "Backup file not found: ${backup_file}"
     fi
 
-    local file_size=$(du -h "${backup_file}" | cut -f1)
+    local file_size
+    file_size=$(du -h "${backup_file}" | cut -f1)
     log "Backup file: ${backup_file} (${file_size})"
 
     # Confirm restoration
@@ -244,7 +246,8 @@ do_restore() {
 verify_restore() {
     log "Verifying restored database..."
 
-    local table_count=$(psql \
+    local table_count
+    table_count=$(psql \
         -h "${POSTGRES_HOST}" \
         -p "${POSTGRES_PORT}" \
         -U "${POSTGRES_USER}" \
@@ -260,7 +263,8 @@ verify_restore() {
         -U "${POSTGRES_USER}" \
         -d "${POSTGRES_DB}" \
         -tAc "SELECT 1 FROM information_schema.tables WHERE table_name = 'alembic_version'" | grep -q 1; then
-        local migration_version=$(psql \
+        local migration_version
+        migration_version=$(psql \
             -h "${POSTGRES_HOST}" \
             -p "${POSTGRES_PORT}" \
             -U "${POSTGRES_USER}" \
@@ -327,7 +331,8 @@ main() {
             fi
             check_requirements
             verify_connection
-            local backup_file=$(download_from_s3 "$1")
+            local backup_file
+            backup_file=$(download_from_s3 "$1")
             do_restore "${backup_file}"
             verify_restore
             ;;

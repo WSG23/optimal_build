@@ -37,3 +37,27 @@ def test_finance_sensitivity_max_sync_bands_env_override(monkeypatch):
 
     settings = _fresh_settings(monkeypatch, "9")
     assert settings.FINANCE_SENSITIVITY_MAX_SYNC_BANDS == 9
+
+
+def test_local_dotenv_loader_preserves_secret_special_characters(
+    monkeypatch,
+    tmp_path,
+):
+    """Local env files should load secrets literally, without shell expansion."""
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("ONEMAP_EMAIL", raising=False)
+    monkeypatch.setenv("ONEMAP_PASSWORD", "shell-expanded")
+    (tmp_path / ".env").write_text(
+        "ONEMAP_EMAIL=base@example.com\nONEMAP_PASSWORD=base\n",
+        encoding="utf-8",
+    )
+    (tmp_path / ".env.local").write_text(
+        "ONEMAP_EMAIL=capture@example.com\nONEMAP_PASSWORD=pa$$word#literal\n",
+        encoding="utf-8",
+    )
+
+    importlib.reload(config_module)
+
+    assert config_module.settings.ONEMAP_EMAIL == "capture@example.com"
+    assert config_module.settings.ONEMAP_PASSWORD == "pa$$word#literal"
