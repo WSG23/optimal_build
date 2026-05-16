@@ -147,13 +147,17 @@ class DealOutcomeService:
         ``None`` for a nullable field clears it.
         """
 
-        metadata_value = fields.pop("metadata", None)
-        if metadata_value is not None:
-            outcome.metadata_json = metadata_value
+        touched: list[str] = []
+        if "metadata" in fields:
+            metadata_value = fields.pop("metadata")
+            if metadata_value is not None:
+                outcome.metadata_json = metadata_value
+                touched.append("metadata")
 
         for key, value in fields.items():
             if hasattr(outcome, key):
                 setattr(outcome, key, value)
+                touched.append(key)
 
         await self._audit(
             session=session,
@@ -161,7 +165,7 @@ class DealOutcomeService:
             outcome=outcome,
             event_type="deal_outcome.updated",
             actor_id=actor_id,
-            extra={"updated_fields": sorted(fields.keys())},
+            extra={"updated_fields": sorted(touched)},
         )
         await session.commit()
         await session.refresh(outcome)
@@ -279,7 +283,14 @@ class DealOutcomeService:
         outcome is linked to the scenario.
         """
 
-        outcome_stmt = select(DealOutcome).where(DealOutcome.scenario_id == scenario_id)
+        # Scenarios can be referenced by multiple outcomes over time; take the
+        # most recent so the comparison reflects the latest realised data.
+        outcome_stmt = (
+            select(DealOutcome)
+            .where(DealOutcome.scenario_id == scenario_id)
+            .order_by(DealOutcome.created_at.desc())
+            .limit(1)
+        )
         outcome_result = await session.execute(outcome_stmt)
         outcome = outcome_result.scalar_one_or_none()
         if outcome is None:

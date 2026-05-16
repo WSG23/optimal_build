@@ -395,6 +395,134 @@ async def test_get_outcome_returns_404(outcomes_client, async_session_factory):
 
 
 @pytest.mark.asyncio
+async def test_compare_picks_most_recent_outcome_when_scenario_reused(
+    outcomes_client, async_session_factory
+):
+    """If two deals reference the same scenario, comparison uses the latest outcome.
+
+    Without the order_by + limit fix in compare_projected_vs_actual,
+    SQLAlchemy raises MultipleResultsFound when two outcomes share a
+    scenario_id. This test verifies both: that no crash occurs, and that
+    the most-recent outcome is returned.
+    """
+
+    from datetime import datetime, timedelta, timezone
+
+    from app.models.deal_outcome import DealOutcome
+
+    scenario_id, _project_id = await _seed_scenario_with_projections(
+        async_session_factory,
+        total_cost=Decimal("10000000"),
+        asset_noi=Decimal("500000"),
+        asset_yield=Decimal("5.000"),
+        allocation=Decimal("1.0"),
+    )
+
+    _agent_a, deal_a = await _seed_agent_and_deal(async_session_factory)
+    _agent_b, deal_b = await _seed_agent_and_deal(async_session_factory)
+
+    # Create outcomes with explicit timestamps so the "most recent" check is
+    # deterministic on SQLite (which truncates now() to second precision).
+    base = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    async with async_session_factory() as session:
+        session.add(
+            DealOutcome(
+                deal_id=deal_a,
+                scenario_id=scenario_id,
+                resolution="completed",
+                actual_purchase_price=9000000,
+                created_at=base,
+                updated_at=base,
+            )
+        )
+        session.add(
+            DealOutcome(
+                deal_id=deal_b,
+                scenario_id=scenario_id,
+                resolution="completed",
+                actual_purchase_price=11000000,
+                created_at=base + timedelta(hours=1),
+                updated_at=base + timedelta(hours=1),
+            )
+        )
+        await session.commit()
+
+    resp = await outcomes_client.get(f"/api/v1/deals/outcomes/compare/{scenario_id}")
+    assert resp.status_code == 200
+    body = resp.json()
+    # Latest outcome (deal_b, +1h) wins
+    assert body["deltas"]["purchase_price"]["actual"] == 11000000.0
+
+
+@pytest.mark.asyncio
+async def test_create_writes_audit_log_entry(outcomes_client, async_session_factory):
+    """Recording an outcome appends an audit ledger entry for the deal."""
+
+    from app.models.audit import AuditLog
+
+    _agent_id, deal_id = await _seed_agent_and_deal(async_session_factory)
+
+    await outcomes_client.post(
+        f"/api/v1/deals/{deal_id}/outcome",
+        json={"resolution": "completed"},
+    )
+
+    async with async_session_factory() as session:
+        logs = (
+            (
+                await session.execute(
+                    select(AuditLog).where(
+                        AuditLog.event_type == "deal_outcome.created"
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        assert len(logs) == 1
+        ctx = logs[0].context
+        assert ctx["deal_id"] == deal_id
+        assert ctx["resolution"] == "completed"
+
+
+@pytest.mark.asyncio
+async def test_update_audit_log_lists_touched_fields(
+    outcomes_client, async_session_factory
+):
+    """PATCH audit entry should record every key the request touched."""
+
+    from app.models.audit import AuditLog
+
+    _agent_id, deal_id = await _seed_agent_and_deal(async_session_factory)
+    await outcomes_client.post(
+        f"/api/v1/deals/{deal_id}/outcome",
+        json={"resolution": "completed"},
+    )
+
+    await outcomes_client.patch(
+        f"/api/v1/deals/{deal_id}/outcome",
+        json={
+            "resolution_note": "Updated note",
+            "metadata": {"key": "value"},
+        },
+    )
+
+    async with async_session_factory() as session:
+        log = (
+            await session.execute(
+                select(AuditLog)
+                .where(AuditLog.event_type == "deal_outcome.updated")
+                .order_by(AuditLog.recorded_at.desc())
+                .limit(1)
+            )
+        ).scalar_one()
+        assert sorted(log.context["updated_fields"]) == [
+            "metadata",
+            "resolution_note",
+        ]
+
+
+@pytest.mark.asyncio
 async def test_user_deletion_preserves_outcome(outcomes_client, async_session_factory):
     """Deleting the recorder user nulls out recorded_by but keeps the outcome."""
 
