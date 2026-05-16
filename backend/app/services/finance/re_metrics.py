@@ -624,7 +624,7 @@ def value_property_multiple_approaches(
                 replacement_value = _quantize_currency(building_value)
 
     # Determine recommended value (weighted average or selection logic)
-    values = []
+    values: list[Decimal] = []
     if income_value:
         values.append(income_value)
     if comparable_value:
@@ -636,7 +636,7 @@ def value_property_multiple_approaches(
         # Simple average for now - could implement weighted average
         with localcontext() as ctx:
             ctx.prec = precision
-            recommended = sum(values) / len(values)
+            recommended = sum(values, Decimal("0")) / len(values)
             recommended_value = _quantize_currency(recommended)
     else:
         recommended_value = Decimal("0")

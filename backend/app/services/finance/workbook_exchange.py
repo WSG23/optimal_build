@@ -1071,7 +1071,7 @@ def _drop_empty_sections(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def _to_optional_int(value: str | None) -> int | None:
-    if value in (None, ""):
+    if value is None or value == "":
         return None
     try:
         return int(Decimal(value))
@@ -1080,7 +1080,7 @@ def _to_optional_int(value: str | None) -> int | None:
 
 
 def _to_optional_bool(value: str | None) -> bool | None:
-    if value in (None, ""):
+    if value is None or value == "":
         return None
     lowered = value.strip().lower()
     if lowered in {"true", "yes", "1", "y"}:

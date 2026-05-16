@@ -19,14 +19,14 @@ from dataclasses import dataclass
 from backend._compat.datetime import UTC
 
 try:  # pragma: no cover - optional dependency
-    import ezdxf  # type: ignore[import-not-found]
+    import ezdxf
 except ModuleNotFoundError:  # pragma: no cover - available in production environments
-    ezdxf = None  # type: ignore[assignment]
+    ezdxf = None
 
 try:  # pragma: no cover - optional dependency
-    import ifcopenshell  # type: ignore[import-not-found]
+    import ifcopenshell
 except ModuleNotFoundError:  # pragma: no cover - available in production environments
-    ifcopenshell = None  # type: ignore[assignment]
+    ifcopenshell = None
 
 from backend.jobs import job
 
@@ -249,7 +249,7 @@ def _collect_dxf_space_candidates(
             continue
         points: list[dict[str, float]] = []
         try:
-            raw_points = entity.get_points("xy")  # type: ignore[arg-type]
+            raw_points = entity.get_points("xy")
         except Exception:  # pragma: no cover - defensive guard
             raw_points = []
         for point in raw_points:
@@ -431,7 +431,7 @@ def _load_ifc_model(payload: bytes) -> Any:
     if ifcopenshell is None:  # pragma: no cover - optional dependency
         raise RuntimeError("ifcopenshell is required to parse IFC payloads")
     text = payload.decode("utf-8", errors="ignore")
-    return ifcopenshell.file.from_string(text)  # type: ignore[attr-defined]
+    return ifcopenshell.file.from_string(text)
 
 
 def _extract_ifc_layer_metadata(
@@ -586,7 +586,7 @@ def _derive_vector_layers(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
     layer_counts: Counter[str] = Counter()
     paths = payload.get("paths")
     if isinstance(paths, Sequence):
-        for entry in paths:  # type: ignore[assignment]
+        for entry in paths:
             if not isinstance(entry, Mapping):
                 continue
             layer_name = entry.get("layer")
@@ -610,28 +610,32 @@ def _build_graph_from_floorplan(data: Mapping[str, Any]) -> ParsedGeometry:
     if project_name not in (None, ""):
         site_metadata["project"] = project_name
 
-    raw_layers = data.get("layers") if isinstance(data.get("layers"), Sequence) else []
+    raw_layers_value = data.get("layers")
+    raw_layers: Sequence[Any] = (
+        raw_layers_value if isinstance(raw_layers_value, Sequence) else []
+    )
     layer_metadata: list[dict[str, Any]] = []
     floor_layers: list[Mapping[str, Any]] = []
-    for item in raw_layers:  # type: ignore[assignment]
+    for item in raw_layers:
         if not isinstance(item, Mapping):
             continue
         layer_payload = dict(item)
         layer_metadata.append(layer_payload)
         layer_type = str(item.get("type", "")).lower()
         if layer_type in {"site", "reference", "context"}:
-            layer_metadata = item.get("metadata")
-            if isinstance(layer_metadata, Mapping):
-                for key, value in layer_metadata.items():
+            item_metadata = item.get("metadata")
+            if isinstance(item_metadata, Mapping):
+                for key, value in item_metadata.items():
                     site_metadata[key] = value
         if layer_type in {"floor", "level", "storey", "story"}:
             floor_layers.append(item)
 
     entries: list[Mapping[str, Any]] = list(floor_layers)
-    extra_floors = (
-        data.get("floors") if isinstance(data.get("floors"), Sequence) else []
+    extra_floors_value = data.get("floors")
+    extra_floors: Sequence[Any] = (
+        extra_floors_value if isinstance(extra_floors_value, Sequence) else []
     )
-    for item in extra_floors:  # type: ignore[assignment]
+    for item in extra_floors:
         if isinstance(item, Mapping):
             entries.append(item)
 
@@ -811,7 +815,7 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
     seen_walls: dict[str, None] = {}
     walls = payload.get("walls")
     if isinstance(walls, Sequence):
-        for index, entry in enumerate(walls, start=1):  # type: ignore[assignment]
+        for index, entry in enumerate(walls, start=1):
             if not isinstance(entry, Mapping):
                 continue
             start = _coerce_vector_point(entry.get("start"))
@@ -855,14 +859,14 @@ def _parse_vector_payload(payload: Mapping[str, Any]) -> ParsedGeometry:
     seen_spaces: dict[str, None] = {}
     paths = payload.get("paths")
     if isinstance(paths, Sequence):
-        for index, entry in enumerate(paths, start=1):  # type: ignore[assignment]
+        for index, entry in enumerate(paths, start=1):
             if not isinstance(entry, Mapping):
                 continue
             points_raw = entry.get("points")
             if not isinstance(points_raw, Sequence):
                 continue
             boundary: list[dict[str, float]] = []
-            for point in points_raw:  # type: ignore[assignment]
+            for point in points_raw:
                 coerced = _coerce_vector_point(point)
                 if coerced is None:
                     boundary = []
