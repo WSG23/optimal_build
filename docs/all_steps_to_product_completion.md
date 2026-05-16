@@ -356,24 +356,37 @@ Older wins moved to archive for brevity; see git history for prior months.
 
 ### 🧱 Technical Debt Radar
 
-> Source: Former `TECHNICAL_DEBT_SUMMARY.MD` (2025-11-10). Keep the bullets in sync with `docs/architecture_honest.md`.
+> Source: Former `TECHNICAL_DEBT_SUMMARY.MD` (2025-11-10). Last reconciled 2026-05-17. Keep the bullets in sync with `docs/architecture_honest.md`.
 
-**Critical:** _None_ – Market intelligence & agent routers are live, Alembic migrations are versioned, and `RequestMetricsMiddleware` plus `/metrics` expose throughput/latency/error collectors.
+**Status:** Critical / High / Medium / Low all clear as of 2026-05-17. New debt should be added here when surfaced. `make verify` is green end-to-end (all 12 rule checks, 65 unit tests, type checks, lint, format, docs).
 
-**High Priority**
-- Domain naming inconsistent (mixed pluralization / `_api` suffixes) across models + schemas.
+**Deferred (require dedicated work, not blocking gates)**
+- **95 `# type: ignore` comments in production code.** Governed by `production_baseline = 0` in `config/type_safety/guardrails.toml` — count cannot grow; each existing one needs individual triage.
+- **30 entries in `.coding-rules-exceptions.yml`.** Each is documented with rationale and cleanup plan; removing them requires fixing the underlying violations.
+- **6 vendored shim dirs at repo root** (`pydantic/`, `httpx/`, `geoalchemy2/`, `importlib/`, `eval_type_backport/`, `prefect/`). Load-bearing for sandbox / CI environments without the real packages. Removing requires CI environment work. The vendored `pydantic/` stub is what required the `mypy-app.schemas._typing` allowlist entry (its `model_validate` is typed as returning `BaseModel` not `Self`).
+- **3 hard-skipped test files** (`test_compliance.py` × 3 tests, `test_universal_site_pack.py` × 3 tests, `test_developer_condition_report.py` × 1 test). Each carries a written rationale (integration tests cover this better; ReportLab layout limits).
 
-**Medium Priority**
-- Market schema drift: documentation cites `market_transactions`, production uses YieldBenchmark/AbsorptionTracking/MarketCycle tables.
-- Compliance models live inside `singapore_property.py` instead of a dedicated module.
+**Resolved (2026-05-17)**
+- Backend mypy clean: `make typecheck-backend` and `make mypy-baseline` both at 0 errors. Final 3 errors in `backend/app/schemas/_typing.py` (vendored-pydantic stub under-typing) bracketed by a dedicated `[mypy-app.schemas._typing]` ignore section + matching allowlist entry — the file is intentionally the casting-boundary helper.
+- Frontend TypeScript clean: 6 nullability errors in `frontend/src/app/pages/capture/components/useStarterModelMemos.ts` cleared by an early `if (!record) return null` guard.
+- `datetime.utcnow()` deprecation removed: all 16 call sites across 6 files migrated to the codebase's existing `backend._compat.datetime.utcnow` helper. `grep -rn 'datetime.utcnow' backend/app/` now returns nothing.
+- API router naming reconciled: `_api` suffix retired (`projects_api.py` → `projects.py`) and the singular-vs-plural inconsistency resolved by audit. The actual convention is **plural for resource-collection routers** and **singular for sub-area routers**; the only genuine violation, `singapore_property_api.py`, became `singapore_properties.py`. Model module names remain singular by Python convention (module-matches-primary-class).
+- `mypy.ini` per-module section syntax corrected: 14 sections used invalid dot form (`[mypy.foo]`) instead of dash form (`[mypy-foo]`), silently disabling their directives. Fixed and mirrored in `config/type_safety/guardrails.toml` allowlist.
+- `RefParcel.geometry` SQLAlchemy 2.x annotation error: cleared by adding `__allow_unmapped__ = True` on `BaseModel` (the SQLAlchemy-blessed escape hatch for legacy `Column(...)`-style declarations).
+- Broken test references in `unit_tests/test_core_database.py`: called `database._resolve_database_url` after the function had been made public as `resolve_database_url`. Fixed; 6 affected tests now pass.
+- Pytest configuration de-duplicated: removed shadowed `[tool.pytest.ini_options]` block from `pyproject.toml`; canonical config is `pytest.ini`.
+- Dead config in `pyproject.toml`: 7 stale entries in black's `extend-exclude` and ruff's `exclude` (`fastapi*`, `pydantic_shadow_*`, `starlette_shadow_*`, `sqlalchemy*`, `backend/starlette`) pointed at directories that no longer exist. Pruned.
+- Repo-root orphan files removed: `create_demo_via_fixture.py`, `create_test_property.py`, `debug_import.py`, `FLOOR_UNIT_DETECTION_TEST.html`, `coverage.json`, `coverage_new.json`, `coverage_summary.txt`. Coverage paths added to `.gitignore` to prevent regression. `fix_numpy_optimal_build.sh` retained (referenced from `docs/development/debugging/numpy-fix.md`).
+- Black formatting applied to all previously-unformatted scripts: `scripts/check_auth_required.py`, `scripts/check_secrets.py`, `scripts/verify_google_maps_setup.py`, plus 5 files in `unit_tests/`.
+- Market schema drift radar entry retired (false alarm): `market_transactions` (model + migration `20241228_000006` + FK indexes `20251028_000020`) and `YieldBenchmark` / `AbsorptionTracking` / `MarketCycle` (`backend/app/models/market.py`) are both intentional and coexist.
+- Compliance-models radar entry retired (mis-stated): `backend/app/models/singapore_property.py` contains a `ComplianceStatus` enum and Singapore-specific compliance fields on `SingaporeProperty`, not a separate compliance model that needed extracting.
+- Per-jurisdiction property duplication retired after audit: `{singapore,hong_kong,new_zealand,seattle,toronto}_property.py` share only ~5 columns; the bulk is genuinely jurisdiction-specific (sqft vs sqm, ward vs council district vs urban village, MHA vs IZ vs URA/BCA regulatory fields, distinct enums).
+- AI agent catalog radar entry retired: `docs/ai-agents/` already contains 23 per-role agent docs.
 
 **Resolved (2025-11-22)**
 - Rate limiting now enforced via SlowAPI with `RATE_LIMIT_STORAGE_URI` (Redis DB 3 by default).
 - Auth flows consolidated into `app/core/auth/service.py` with legacy wrappers kept for compatibility.
 - MinIO creates imports/exports/documents buckets automatically; `DOCUMENTS_BUCKET_NAME` default added.
-
-**Low Priority**
-- Ten of eleven AI agents exist in code but lack coverage in high-level docs. Update agent catalog when feasible.
 
 ---
 
