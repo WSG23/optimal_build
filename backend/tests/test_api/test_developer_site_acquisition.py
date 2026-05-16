@@ -606,6 +606,9 @@ async def test_developer_log_property_returns_envelope(
     assert visualization["massing_layers"][0][
         "color"
     ], "Top massing layer should include colour token"
+    assert visualization["massing_layers"][0]["footprint_area_sqm"] == pytest.approx(
+        2250.0
+    )
 
     optimizations = payload["optimizations"]
     assert optimizations, "Expected asset optimisation recommendations"
@@ -1033,6 +1036,15 @@ async def test_developer_log_property_surfaces_eva_and_address_asset_evidence(
         "envelope_control_area_requires_site_specific_controls"
     )
     assert plot_ratio_gap["source_value"] == "EVA"
+    automation_dependency = next(
+        dependency
+        for dependency in rule_status["automation_dependencies"]
+        if dependency["field"] == "plot_ratio"
+    )
+    assert automation_dependency["label"] == "GPR / plot ratio"
+    assert automation_dependency["status"] == "site_specific_control_required"
+    assert automation_dependency["source_value"] == "EVA"
+    assert "site-specific envelope controls" in automation_dependency["action"]
     assert rule_status["site_development_status"] == "developed"
     assert rule_status["site_development_lookup_source"] == {
         "kind": "capture_address_evidence",
@@ -2000,13 +2012,17 @@ async def test_create_preview_job_for_scenario(
         "preserve_existing_bulk"
     )
     assert payload["starter_model_assumptions"]["floor_to_floor_m"] == 3.7
-    assert payload["starter_model_assumptions"]["source"] == "rules"
+    assert payload["starter_model_assumptions"]["source"] == "heuristic_fallback"
     assert payload["starter_model_assumptions"]["provenance"]["summary"] == (
-        "rules_only"
+        "common_practice_assumptions"
     )
     assert (
         payload["starter_model_assumptions"]["provenance"]["fields"]["floor_to_floor_m"]
-        == "rules"
+        == "heuristic_fallback"
+    )
+    assert (
+        payload["starter_model_assumptions"]["structural_grid_note"]
+        == "Existing structural grid assumed to be retained until survey."
     )
     assert payload["starter_model_assumptions"]["asset_profiles"]
     assert any(
@@ -2071,7 +2087,9 @@ async def test_create_preview_job_exposes_property_specific_assumption_provenanc
     assert assumptions["retention_strategy"] == "conservation_retention"
     assert assumptions["floor_to_floor_m"] == 3.6
     assert assumptions["efficiency_factor"] == 0.93
-    assert provenance["summary"] == "rules_with_property_adjustments"
+    assert (
+        provenance["summary"] == "common_practice_assumptions_with_property_adjustments"
+    )
     assert set(provenance["adjustments"]) == {
         "heritage_context",
         "older_building_age",
@@ -2080,7 +2098,8 @@ async def test_create_preview_job_exposes_property_specific_assumption_provenanc
     assert provenance["fields"]["retention_strategy"] == "property_specific"
     assert provenance["fields"]["floor_to_floor_m"] == "property_specific"
     assert provenance["fields"]["efficiency_factor"] == "property_specific"
-    assert provenance["fields"]["wall_thickness_mm"] == "rules"
+    assert provenance["fields"]["structural_grid_note"] == "property_specific"
+    assert provenance["fields"]["wall_thickness_mm"] == "heuristic_fallback"
     assert assumptions["asset_profiles"]
     assert any(
         profile["asset_type"] == "office" for profile in assumptions["asset_profiles"]

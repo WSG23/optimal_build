@@ -146,6 +146,7 @@ class DeveloperMassingLayer(BaseModel):
     asset_type: str
     allocation_pct: float
     gfa_sqm: float | None = None
+    footprint_area_sqm: float | None = None
     nia_sqm: float | None = None
     estimated_height_m: float | None = None
     color: str

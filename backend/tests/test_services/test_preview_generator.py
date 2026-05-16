@@ -144,3 +144,24 @@ def test_build_preview_payload_respects_simple_detail(monkeypatch):
     geometry = payload["layers"][0]["geometry"]
     assert geometry["detail_level"] == "simple"
     assert len(geometry["prism"]["vertices"]) == 8
+
+
+def test_build_preview_payload_uses_footprint_area_for_geometry():
+    property_id = UUID("00000000-0000-0000-0000-000000000125")
+    layers = [
+        {
+            "asset_type": "Industrial",
+            "gfa_sqm": 10000.0,
+            "footprint_area_sqm": 100.0,
+            "estimated_height_m": 24.0,
+        }
+    ]
+
+    payload = preview_generator.build_preview_payload(property_id, layers)
+
+    layer = payload["layers"][0]
+    assert layer["metrics"]["gfa_sqm"] == 10000.0
+    assert layer["metrics"]["footprint_area_sqm"] == 100.0
+    footprint = layer["geometry"]["footprint"]["coordinates"][0]
+    max_radius = max(max(abs(x), abs(y)) for x, y in footprint)
+    assert max_radius < 10.0

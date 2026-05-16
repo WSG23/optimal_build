@@ -80,6 +80,7 @@ class GeometryPayload(TypedDict, total=False):
 class LayerMetricsPayload(TypedDict):
     allocation_pct: float | None
     gfa_sqm: float
+    footprint_area_sqm: float
     nia_sqm: float | None
     estimated_height_m: float
     estimated_floors: float | None
@@ -178,6 +179,7 @@ class MassingLayerInput:
     color: str | None
     allocation_pct: float | None
     gfa_sqm: float
+    footprint_area_sqm: float
     nia_sqm: float | None
     estimated_height_m: float
     estimated_floors: float | None
@@ -202,6 +204,14 @@ class MassingLayerInput:
             or 100.0
         )
         gfa = gfa if gfa and gfa > 0 else 100.0
+        footprint_area = (
+            _coerce_float(payload.get("footprint_area_sqm"))
+            or _coerce_float(payload.get("footprintAreaSqm"))
+            or gfa
+        )
+        footprint_area = (
+            footprint_area if footprint_area and footprint_area > 0 else gfa
+        )
 
         estimated_height = _coerce_float(payload.get("estimated_height_m"))
         fallback_height = _coerce_float(payload.get("height"), default=0.0) or 0.0
@@ -216,6 +226,7 @@ class MassingLayerInput:
             color=_coerce_str(payload.get("color")),
             allocation_pct=_coerce_float(payload.get("allocation_pct")),
             gfa_sqm=gfa,
+            footprint_area_sqm=footprint_area,
             nia_sqm=_coerce_float(payload.get("nia_sqm")),
             estimated_height_m=height_value,
             estimated_floors=_coerce_float(payload.get("estimated_floors")),
@@ -483,19 +494,20 @@ def _serialise_layer(
 ) -> tuple[PreviewLayerPayload, list[tuple[float, float, float]], float]:
     requested_height = layer.estimated_height_m
     gfa = layer.gfa_sqm
+    footprint_area = layer.footprint_area_sqm
 
     preview_height = max(requested_height, 0.0)
     normalised_level = normalise_geometry_detail_level(detail_level)
     if normalised_level == "medium":
         geometry, vertices, preview_height = _build_medium_geometry(
-            footprint_area=gfa,
+            footprint_area=footprint_area,
             base_elevation=base_elevation,
             height=requested_height,
         )
     else:
         preview_height = max(requested_height, 0.5)
         geometry, vertices, preview_height = _build_simple_geometry(
-            footprint_area=gfa,
+            footprint_area=footprint_area,
             base_elevation=base_elevation,
             preview_height=preview_height,
         )
@@ -507,6 +519,7 @@ def _serialise_layer(
         "metrics": {
             "allocation_pct": layer.allocation_pct,
             "gfa_sqm": gfa,
+            "footprint_area_sqm": footprint_area,
             "nia_sqm": layer.nia_sqm,
             "estimated_height_m": requested_height,
             "estimated_floors": layer.estimated_floors,

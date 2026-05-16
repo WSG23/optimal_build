@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import math
 import re
 from datetime import datetime
 from decimal import Decimal
@@ -389,6 +390,91 @@ def _mark_envelope_field_source(
         unresolved_fields.remove(field)
 
 
+_CONTROL_AUTOMATION_LABELS = {
+    "plot_ratio": "GPR / plot ratio",
+    "building_height_limit_m": "height limit",
+    "site_coverage_pct": "site coverage",
+    "setbacks": "setbacks",
+    "step_backs": "step-backs",
+    "air_rights_note": "air-rights clearance",
+}
+
+
+_CONTROL_AUTOMATION_ACTIONS = {
+    "plot_ratio": "Map numeric GPR from the URA Master Plan layer, or flag site-specific envelope controls when GPR is non-numeric.",
+    "building_height_limit_m": "Ingest URA height-control values for this zone/site and attach the reviewed value to the rule registry.",
+    "site_coverage_pct": "Ingest URA site-coverage controls for this use class and attach the reviewed value to the rule registry.",
+    "setbacks": "Resolve road category, road buffer, and plot-boundary geometry before computing setback lines.",
+    "step_backs": "Resolve applicable URA building-edge/storey controls before computing step-back geometry.",
+    "air_rights_note": "Run a project-specific URA/CAAS height-clearance workflow before treating air rights as resolved.",
+}
+
+
+def _summarize_candidate_sources(candidate_sources: object) -> list[str]:
+    if not isinstance(candidate_sources, list):
+        return []
+
+    summaries: list[str] = []
+    for source in candidate_sources:
+        if not isinstance(source, dict):
+            continue
+        authority = str(source.get("authority") or "").strip()
+        title = str(source.get("title") or "").strip()
+        summary = " - ".join(part for part in (authority, title) if part)
+        if summary and summary not in summaries:
+            summaries.append(summary)
+    return summaries
+
+
+def _build_control_automation_dependencies(
+    status: dict[str, Any],
+) -> list[dict[str, Any]]:
+    dependencies: list[dict[str, Any]] = []
+    for raw_gap in status.get("official_source_gaps") or []:
+        if not isinstance(raw_gap, dict):
+            continue
+
+        field = str(raw_gap.get("field") or "").strip()
+        if not field:
+            continue
+
+        reason = str(raw_gap.get("reason") or "").strip()
+        if reason == "project_specific_clearance_required":
+            automation_status = "project_clearance_required"
+        elif reason == "envelope_control_area_requires_site_specific_controls":
+            automation_status = "site_specific_control_required"
+        else:
+            automation_status = "source_mapping_required"
+
+        action = _CONTROL_AUTOMATION_ACTIONS.get(
+            field,
+            "Map the official source into Capture's reviewed rule registry.",
+        )
+        if automation_status == "site_specific_control_required":
+            source_value = str(raw_gap.get("source_value") or "").strip()
+            action = (
+                f"Resolve site-specific envelope controls for this parcel"
+                f"{f' because the URA intensity value is {source_value}' if source_value else ''}."
+            )
+
+        dependencies.append(
+            {
+                "field": field,
+                "label": _CONTROL_AUTOMATION_LABELS.get(field, field.replace("_", " ")),
+                "status": automation_status,
+                "reason": reason or "not_resolved_from_current_registry",
+                "source_value": raw_gap.get("source_value"),
+                "review_note": raw_gap.get("review_note"),
+                "candidate_sources": _summarize_candidate_sources(
+                    raw_gap.get("candidate_sources")
+                ),
+                "action": action,
+            }
+        )
+
+    return dependencies
+
+
 def _augment_rule_corpus_status_for_envelope(
     raw_status: dict[str, Any] | None,
     *,
@@ -503,6 +589,8 @@ def _augment_rule_corpus_status_for_envelope(
     else:
         status["coverage_state"] = "approved"
         status["confidence"] = status.get("confidence") or "medium"
+
+    status["automation_dependencies"] = _build_control_automation_dependencies(status)
 
     return status
 
@@ -1275,6 +1363,41 @@ def _promote_site_development_from_capture_address(
     )
 
 
+def _derive_preview_footprint_area(envelope: DeveloperBuildEnvelope) -> float | None:
+    """Approximate the buildable preview footprint from resolved envelope controls."""
+
+    site_area = envelope.site_area_sqm
+    if site_area is None or site_area <= 0:
+        return None
+
+    requested_coverage = envelope.site_coverage_pct
+    if requested_coverage is None or requested_coverage <= 0:
+        requested_ratio = 0.55
+    elif requested_coverage > 1:
+        requested_ratio = requested_coverage / 100.0
+    else:
+        requested_ratio = requested_coverage
+    requested_ratio = max(0.1, min(requested_ratio, 0.95))
+
+    setbacks = (
+        envelope.setback_front_m,
+        envelope.setback_rear_m,
+        envelope.setback_side_m,
+    )
+    if any(value is not None and value > 0 for value in setbacks):
+        front_m = max(envelope.setback_front_m or 0.0, 0.0)
+        rear_m = max(envelope.setback_rear_m or 0.0, 0.0)
+        side_m = max(envelope.setback_side_m or 0.0, 0.0)
+        parcel_width = math.sqrt(site_area * 1.35)
+        parcel_depth = site_area / parcel_width if parcel_width else 0.0
+        buildable_width = max(parcel_width - side_m * 2.0, parcel_width * 0.18)
+        buildable_depth = max(parcel_depth - front_m - rear_m, parcel_depth * 0.18)
+        setback_ratio = (buildable_width * buildable_depth) / site_area
+        requested_ratio = min(requested_ratio, max(0.05, min(setback_ratio, 0.95)))
+
+    return site_area * requested_ratio
+
+
 def _build_visualization_summary(
     quick_analysis: dict[str, Any] | None,
     property_id: UUID,
@@ -1301,7 +1424,7 @@ def _build_visualization_summary(
 
     massing_layers: list[DeveloperMassingLayer] = []
     legend_entries: dict[str, DeveloperColorLegendEntry] = {}
-    site_area = envelope.site_area_sqm or 0.0
+    footprint_area = _derive_preview_footprint_area(envelope)
 
     for opt in optimizations:
         gfa = opt.allocated_gfa_sqm
@@ -1309,15 +1432,18 @@ def _build_visualization_summary(
         if gfa is not None and opt.nia_efficiency:
             nia = gfa * opt.nia_efficiency
         height = None
-        if site_area and site_area > 0 and gfa:
+        if footprint_area and footprint_area > 0 and gfa:
             floor_height = opt.target_floor_height_m or 4.0
-            height = (gfa / site_area) * floor_height
+            height = (gfa / footprint_area) * floor_height
         color = _resolve_asset_color(opt.asset_type)
         massing_layers.append(
             DeveloperMassingLayer(
                 asset_type=opt.asset_type,
                 allocation_pct=opt.allocation_pct,
                 gfa_sqm=round(gfa, 2) if gfa is not None else None,
+                footprint_area_sqm=(
+                    round(footprint_area, 2) if footprint_area is not None else None
+                ),
                 nia_sqm=round(nia, 2) if nia is not None else None,
                 estimated_height_m=round(height, 1) if height is not None else None,
                 color=color,
@@ -1971,6 +2097,7 @@ def _build_preview_engineering_assumptions(
         "electrical_space_ratio_pct",
         "efficiency_factor",
         "retention_strategy",
+        "structural_grid_note",
     )
     scenario_key = scenario.strip().lower()
     year_built = property_info.get("year_built") if property_info else None
@@ -1991,9 +2118,10 @@ def _build_preview_engineering_assumptions(
         "electrical_space_ratio_pct": 4,
         "efficiency_factor": 0.98,
         "retention_strategy": "adaptive_reuse_baseline",
+        "structural_grid_note": "8.4 m typical planning grid assumed until structural survey.",
     }
     field_sources: dict[str, str] = {
-        field_name: "rules" for field_name in assumption_fields
+        field_name: "heuristic_fallback" for field_name in assumption_fields
     }
     adjustments: list[str] = []
 
@@ -2009,6 +2137,7 @@ def _build_preview_engineering_assumptions(
                 "electrical_space_ratio_pct": 3,
                 "efficiency_factor": 1.02,
                 "retention_strategy": "ground_up_envelope",
+                "structural_grid_note": "8.4-9.0 m typical new-build planning grid assumed.",
             }
         )
     elif scenario_key == "existing_building":
@@ -2023,6 +2152,7 @@ def _build_preview_engineering_assumptions(
                 "electrical_space_ratio_pct": 4,
                 "efficiency_factor": 0.96,
                 "retention_strategy": "preserve_existing_bulk",
+                "structural_grid_note": "Existing structural grid assumed to be retained until survey.",
             }
         )
     elif scenario_key == "underused_asset":
@@ -2037,6 +2167,7 @@ def _build_preview_engineering_assumptions(
                 "electrical_space_ratio_pct": 4,
                 "efficiency_factor": 0.99,
                 "retention_strategy": "selective_repositioning",
+                "structural_grid_note": "Existing grid retained with selective strengthening allowance.",
             }
         )
     elif scenario_key == "heritage_property":
@@ -2051,16 +2182,21 @@ def _build_preview_engineering_assumptions(
                 "electrical_space_ratio_pct": 5,
                 "efficiency_factor": 0.92,
                 "retention_strategy": "conservation_retention",
+                "structural_grid_note": "Existing structure retained; intrusive structural changes minimized.",
             }
         )
 
     if conservation:
         assumptions["retention_strategy"] = "conservation_retention"
+        assumptions["structural_grid_note"] = (
+            "Existing structure retained; intrusive structural changes minimized."
+        )
         assumptions["efficiency_factor"] = min(
             float(assumptions["efficiency_factor"]),
             0.93,
         )
         field_sources["retention_strategy"] = "property_specific"
+        field_sources["structural_grid_note"] = "property_specific"
         field_sources["efficiency_factor"] = "property_specific"
         adjustments.append("heritage_context")
 
@@ -2085,13 +2221,13 @@ def _build_preview_engineering_assumptions(
     assumptions["source"] = (
         "hybrid"
         if any(value == "property_specific" for value in field_sources.values())
-        else "rules"
+        else "heuristic_fallback"
     )
     assumptions["provenance"] = {
         "summary": (
-            "rules_with_property_adjustments"
+            "common_practice_assumptions_with_property_adjustments"
             if assumptions["source"] == "hybrid"
-            else "rules_only"
+            else "common_practice_assumptions"
         ),
         "fields": field_sources,
         "adjustments": list(dict.fromkeys(adjustments)),
@@ -2221,7 +2357,9 @@ def _append_visualization_assumption_notes(
         f"floor-to-floor {engineering_assumptions['floor_to_floor_m']:.1f} m, "
         f"clear ceiling {engineering_assumptions['clear_ceiling_m']:.1f} m, "
         f"core {engineering_assumptions['core_ratio_pct']:.0f}%, "
-        f"common area {engineering_assumptions['common_area_ratio_pct']:.0f}%."
+        f"common area {engineering_assumptions['common_area_ratio_pct']:.0f}%, "
+        f"HVAC {engineering_assumptions['hvac_space_ratio_pct']:.0f}%, "
+        f"electrical {engineering_assumptions['electrical_space_ratio_pct']:.0f}%."
     )
     if assumption_note not in visualization.notes:
         visualization.notes.append(assumption_note)
@@ -3607,16 +3745,20 @@ async def create_preview_job(
     if property_record is None:
         raise HTTPException(status_code=404, detail="Property not found")
 
-    _, visualization, massing_payload, legend_payload, engineering_assumptions = (
-        await _build_property_preview_inputs(
-            property_record,
-            session,
-            (
-                payload.scenario.value
-                if isinstance(payload.scenario, CaptureScenario)
-                else str(payload.scenario)
-            ),
-        )
+    (
+        _,
+        visualization,
+        massing_payload,
+        legend_payload,
+        engineering_assumptions,
+    ) = await _build_property_preview_inputs(
+        property_record,
+        session,
+        (
+            payload.scenario.value
+            if isinstance(payload.scenario, CaptureScenario)
+            else str(payload.scenario)
+        ),
     )
     service = PreviewJobService(session)
     preview_job = await service.queue_preview(
