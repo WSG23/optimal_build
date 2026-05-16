@@ -570,7 +570,12 @@ async def run_finance_feasibility(
                 )
                 for entry in payload.scenario.asset_mix
             ]
-            asset_breakdowns = build_asset_financials(asset_inputs)
+            asset_breakdowns_result = build_asset_financials(asset_inputs)
+            asset_breakdowns = (
+                asset_breakdowns_result
+                if isinstance(asset_breakdowns_result, tuple)
+                else (asset_breakdowns_result,)
+            )
             asset_breakdown_schemas = serialise_breakdown(asset_breakdowns)
             asset_mix_summary_schema = summarise_asset_financials(asset_breakdowns)
             asset_financial_metadata = {
