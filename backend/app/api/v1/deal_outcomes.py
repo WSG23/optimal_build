@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -14,11 +13,13 @@ from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.deal_outcome import OutcomeResolution
 from app.schemas.deal_outcome import (
     DealOutcomeBenchmarkResponse,
+    DealOutcomeComparisonResponse,
     DealOutcomeCreate,
     DealOutcomeResponse,
     DealOutcomeUpdate,
 )
 from app.utils.lazy import LazyProxy
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/deals", tags=["Business Performance"])
@@ -40,18 +41,15 @@ deal_service = LazyProxy(_create_deal_service)
 outcome_service = LazyProxy(_create_outcome_service)
 
 
-def _require_actor(token: TokenData | None) -> UUID:
-    """Extract user ID from token or raise 401."""
+def _actor_or_none(token: TokenData | None) -> UUID | None:
+    """Extract user ID from token; return None when not authenticated."""
 
     if token and token.user_id:
         try:
             return UUID(token.user_id)
-        except ValueError as exc:
-            raise HTTPException(status_code=401, detail="Invalid user token") from exc
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Authentication required",
-    )
+        except ValueError:
+            return None
+    return None
 
 
 @router.post(
@@ -68,20 +66,11 @@ async def create_outcome(
 ) -> DealOutcomeResponse:
     """Record the outcome of a closed deal."""
 
-    actor = _require_actor(token)
+    actor = _actor_or_none(token)
 
     deal = await deal_service.get_deal(session=session, deal_id=deal_id)
     if deal is None:
         raise HTTPException(status_code=404, detail="Deal not found")
-
-    existing = await outcome_service.get_outcome_for_deal(
-        session=session, deal_id=deal_id
-    )
-    if existing is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Outcome already recorded for this deal",
-        )
 
     try:
         outcome = await outcome_service.create_outcome(
@@ -134,6 +123,11 @@ async def create_outcome(
             asset_type=payload.asset_type,
             metadata=payload.metadata,
         )
+    except IntegrityError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Outcome already recorded for this deal",
+        ) from exc
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
@@ -171,8 +165,9 @@ async def update_outcome(
     payload: DealOutcomeUpdate,
     _: Role = Depends(require_reviewer),
     session: AsyncSession = Depends(get_session),
+    token: TokenData | None = Depends(get_optional_user),
 ) -> DealOutcomeResponse:
-    """Incrementally update outcome fields as data arrives."""
+    """Update outcome fields. Pass null to clear a field."""
 
     outcome = await outcome_service.get_outcome_for_deal(
         session=session, deal_id=deal_id
@@ -180,9 +175,14 @@ async def update_outcome(
     if outcome is None:
         raise HTTPException(status_code=404, detail="No outcome recorded for this deal")
 
+    deal = await deal_service.get_deal(session=session, deal_id=deal_id)
+    if deal is None:
+        # Outcome exists but deal is gone — shouldn't happen with CASCADE FK,
+        # but guard anyway.
+        raise HTTPException(status_code=404, detail="Deal not found")
+
     update_fields = payload.model_dump(exclude_unset=True)
 
-    # Convert enums to values for storage
     if "resolution" in update_fields and update_fields["resolution"] is not None:
         update_fields["resolution"] = update_fields["resolution"].value
     if (
@@ -191,7 +191,6 @@ async def update_outcome(
     ):
         update_fields["approval_outcome"] = update_fields["approval_outcome"].value
 
-    # Convert Decimals to floats for SQLAlchemy
     decimal_fields = [
         "actual_purchase_price",
         "actual_gfa_approved_sqm",
@@ -205,7 +204,11 @@ async def update_outcome(
             update_fields[field] = float(update_fields[field])
 
     updated = await outcome_service.update_outcome(
-        session=session, outcome=outcome, **update_fields
+        session=session,
+        deal=deal,
+        outcome=outcome,
+        fields=update_fields,
+        actor_id=_actor_or_none(token),
     )
     return DealOutcomeResponse.from_orm_outcome(updated)
 
@@ -235,26 +238,24 @@ async def get_benchmarks(
 
 @router.get(
     "/outcomes/compare/{scenario_id}",
-    response_model=dict[str, Any],
+    response_model=DealOutcomeComparisonResponse,
 )
 async def compare_projected_vs_actual(
     scenario_id: int,
     _: Role = Depends(require_viewer),
     session: AsyncSession = Depends(get_session),
-) -> dict[str, Any]:
+) -> DealOutcomeComparisonResponse:
     """Compare projected scenario results with realised outcome."""
 
-    comparison: dict[str, Any] | None = (
-        await outcome_service.compare_projected_vs_actual(
-            session=session, scenario_id=scenario_id
-        )
+    comparison = await outcome_service.compare_projected_vs_actual(
+        session=session, scenario_id=scenario_id
     )
     if comparison is None:
         raise HTTPException(
             status_code=404,
             detail="No outcome linked to this scenario",
         )
-    return comparison
+    return DealOutcomeComparisonResponse(**comparison)
 
 
 __all__ = ["router"]

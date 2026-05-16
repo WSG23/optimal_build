@@ -7,11 +7,34 @@ from statistics import median
 from typing import Any
 from uuid import UUID
 
+from app.core.audit.ledger import append_event
 from app.models.business_performance import AgentDeal, DealStatus
 from app.models.deal_outcome import DealOutcome
-from app.models.finance import FinResult
-from sqlalchemy import select
+from app.models.finance import FinAssetBreakdown, FinProject, FinScenario
+from app.services.deals.utils import audit_project_key
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+
+# Cap for in-memory benchmark aggregation. Above this we mark the response
+# truncated and let callers narrow filters; SQL-side aggregation can come
+# later if real volumes demand it.
+BENCHMARK_SAMPLE_LIMIT = 10_000
+
+# Resolutions accepted when recording an outcome. CANCELLED is included
+# deliberately — users may want to capture context on why a deal was killed
+# before it reached won/lost.
+_OUTCOME_ELIGIBLE_STATUSES = frozenset(
+    {DealStatus.CLOSED_WON, DealStatus.CLOSED_LOST, DealStatus.CANCELLED}
+)
+
+
+def _delta_pct(projected: float, actual: float) -> float | None:
+    """Return percent change from projected to actual, or None when undefined."""
+
+    if projected == 0:
+        return None
+    return round(((actual - projected) / projected) * 100, 2)
 
 
 class DealOutcomeService:
@@ -22,7 +45,7 @@ class DealOutcomeService:
         *,
         session: AsyncSession,
         deal: AgentDeal,
-        recorded_by: UUID,
+        recorded_by: UUID | None,
         resolution: str,
         resolution_note: str | None = None,
         scenario_id: int | None = None,
@@ -43,19 +66,21 @@ class DealOutcomeService:
         asset_type: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> DealOutcome:
-        """Record a deal outcome. Deal must be CLOSED_WON or CLOSED_LOST."""
+        """Record a deal outcome. Deal must be in a terminal status.
 
-        if deal.status not in (
-            DealStatus.CLOSED_WON,
-            DealStatus.CLOSED_LOST,
-            DealStatus.CANCELLED,
-        ):
+        Eligible deal statuses are CLOSED_WON, CLOSED_LOST, and CANCELLED.
+        Raises ValueError if the deal is still open. Raises IntegrityError
+        if an outcome already exists for the deal (unique constraint on
+        deal_id) — callers should translate that to a 409 response.
+        """
+
+        if deal.status not in _OUTCOME_ELIGIBLE_STATUSES:
             msg = f"Deal must be closed before recording outcome (current: {deal.status.value})"
             raise ValueError(msg)
 
         outcome = DealOutcome(
             deal_id=deal.id,
-            recorded_by=str(recorded_by),
+            recorded_by=str(recorded_by) if recorded_by is not None else None,
             resolution=resolution,
             resolution_note=resolution_note,
             scenario_id=scenario_id,
@@ -77,6 +102,19 @@ class DealOutcomeService:
             metadata_json=metadata or {},
         )
         session.add(outcome)
+        try:
+            await session.flush()
+        except IntegrityError:
+            await session.rollback()
+            raise
+
+        await self._audit(
+            session=session,
+            deal=deal,
+            outcome=outcome,
+            event_type="deal_outcome.created",
+            actor_id=recorded_by,
+        )
         await session.commit()
         await session.refresh(outcome)
         return outcome
@@ -97,19 +135,34 @@ class DealOutcomeService:
         self,
         *,
         session: AsyncSession,
+        deal: AgentDeal,
         outcome: DealOutcome,
-        **fields: Any,
+        fields: dict[str, Any],
+        actor_id: UUID | None = None,
     ) -> DealOutcome:
-        """Incrementally update outcome fields (only set non-None values)."""
+        """Update outcome fields.
+
+        ``fields`` should contain only keys the caller explicitly set in the
+        request (e.g. via ``model_dump(exclude_unset=True)``). Passing
+        ``None`` for a nullable field clears it.
+        """
 
         metadata_value = fields.pop("metadata", None)
         if metadata_value is not None:
             outcome.metadata_json = metadata_value
 
         for key, value in fields.items():
-            if value is not None and hasattr(outcome, key):
+            if hasattr(outcome, key):
                 setattr(outcome, key, value)
 
+        await self._audit(
+            session=session,
+            deal=deal,
+            outcome=outcome,
+            event_type="deal_outcome.updated",
+            actor_id=actor_id,
+            extra={"updated_fields": sorted(fields.keys())},
+        )
         await session.commit()
         await session.refresh(outcome)
         return outcome
@@ -124,7 +177,12 @@ class DealOutcomeService:
         date_from: date | None = None,
         date_to: date | None = None,
     ) -> dict[str, Any]:
-        """Aggregate benchmark statistics across matching outcomes."""
+        """Aggregate benchmark statistics across matching outcomes.
+
+        Caps the sample at BENCHMARK_SAMPLE_LIMIT rows and flags
+        ``truncated`` when the cap is reached. Callers should narrow filters
+        if the sample is truncated.
+        """
 
         stmt = select(DealOutcome)
         if jurisdiction_code:
@@ -138,8 +196,11 @@ class DealOutcomeService:
         if date_to:
             stmt = stmt.where(DealOutcome.created_at <= date_to)
 
+        stmt = stmt.limit(BENCHMARK_SAMPLE_LIMIT + 1)
         result = await session.execute(stmt)
-        outcomes = list(result.scalars().all())
+        rows = list(result.scalars().all())
+        truncated = len(rows) > BENCHMARK_SAMPLE_LIMIT
+        outcomes = rows[:BENCHMARK_SAMPLE_LIMIT]
 
         if not outcomes:
             return {
@@ -149,17 +210,16 @@ class DealOutcomeService:
                 "median_approval_days": None,
                 "median_gfa_amendment_pct": None,
                 "resolution_distribution": {},
+                "truncated": truncated,
             }
 
-        # Yield
         yields = [
             float(o.actual_yield_pct)
             for o in outcomes
             if o.actual_yield_pct is not None
         ]
 
-        # Price per sqm
-        prices_psm = []
+        prices_psm: list[float] = []
         for o in outcomes:
             if (
                 o.actual_purchase_price is not None
@@ -170,15 +230,13 @@ class DealOutcomeService:
                     float(o.actual_purchase_price) / float(o.actual_gfa_approved_sqm)
                 )
 
-        # Approval duration in days
-        approval_days = []
+        approval_days: list[int] = []
         for o in outcomes:
             if o.approval_submitted_date and o.approval_decided_date:
                 delta = o.approval_decided_date - o.approval_submitted_date
                 approval_days.append(delta.days)
 
-        # GFA amendment percentage
-        gfa_amend_pcts = []
+        gfa_amend_pcts: list[float] = []
         for o in outcomes:
             if (
                 o.gfa_amendment_sqm is not None
@@ -190,7 +248,6 @@ class DealOutcomeService:
                 ) * 100
                 gfa_amend_pcts.append(pct)
 
-        # Resolution distribution
         resolution_dist: dict[str, int] = {}
         for o in outcomes:
             resolution_dist[o.resolution] = resolution_dist.get(o.resolution, 0) + 1
@@ -206,6 +263,7 @@ class DealOutcomeService:
                 round(median(gfa_amend_pcts), 2) if gfa_amend_pcts else None
             ),
             "resolution_distribution": resolution_dist,
+            "truncated": truncated,
         }
 
     async def compare_projected_vs_actual(
@@ -214,65 +272,120 @@ class DealOutcomeService:
         session: AsyncSession,
         scenario_id: int,
     ) -> dict[str, Any] | None:
-        """Compare a scenario's projected results with its deal outcome."""
+        """Compare a scenario's projected results with its deal outcome.
 
-        stmt = select(DealOutcome).where(DealOutcome.scenario_id == scenario_id)
-        result = await session.execute(stmt)
-        outcome = result.scalar_one_or_none()
+        Pulls projections from FinProject (cost) and FinAssetBreakdown
+        (yield/NOI aggregated across assets). Returns None when no
+        outcome is linked to the scenario.
+        """
+
+        outcome_stmt = select(DealOutcome).where(DealOutcome.scenario_id == scenario_id)
+        outcome_result = await session.execute(outcome_stmt)
+        outcome = outcome_result.scalar_one_or_none()
         if outcome is None:
             return None
 
-        # Fetch projected results from FinResult
-        results_stmt = select(FinResult).where(FinResult.scenario_id == scenario_id)
-        results_result = await session.execute(results_stmt)
-        fin_results = {
-            r.name: float(r.value)
-            for r in results_result.scalars().all()
-            if r.value is not None
-        }
+        # Scenario → FinProject for project-level totals
+        scenario_stmt = select(FinScenario).where(FinScenario.id == scenario_id)
+        scenario_result = await session.execute(scenario_stmt)
+        scenario = scenario_result.scalar_one_or_none()
 
-        comparison: dict[str, Any] = {"scenario_id": scenario_id, "deltas": {}}
+        fin_project: FinProject | None = None
+        if scenario is not None:
+            fin_project_stmt = select(FinProject).where(
+                FinProject.id == scenario.fin_project_id
+            )
+            fin_project_result = await session.execute(fin_project_stmt)
+            fin_project = fin_project_result.scalar_one_or_none()
+
+        # Aggregate per-asset breakdowns to project-level NOI / weighted yield
+        sum_noi_stmt = select(
+            func.sum(FinAssetBreakdown.annual_noi_sgd),
+            func.sum(
+                FinAssetBreakdown.stabilised_yield_pct
+                * FinAssetBreakdown.allocation_pct
+            ),
+            func.sum(FinAssetBreakdown.allocation_pct),
+        ).where(FinAssetBreakdown.scenario_id == scenario_id)
+        agg_result = await session.execute(sum_noi_stmt)
+        projected_noi_raw, weighted_yield_raw, total_alloc_raw = agg_result.one()
+        projected_noi = (
+            float(projected_noi_raw) if projected_noi_raw is not None else None
+        )
+        projected_yield: float | None = None
+        if (
+            weighted_yield_raw is not None
+            and total_alloc_raw is not None
+            and float(total_alloc_raw) > 0
+        ):
+            projected_yield = float(weighted_yield_raw) / float(total_alloc_raw)
+
+        deltas: dict[str, dict[str, Any]] = {}
 
         if (
             outcome.actual_purchase_price is not None
-            and "total_development_cost" in fin_results
+            and fin_project is not None
+            and fin_project.total_development_cost is not None
         ):
-            projected = fin_results["total_development_cost"]
+            projected = float(fin_project.total_development_cost)
             actual = float(outcome.actual_purchase_price)
-            comparison["deltas"]["purchase_price"] = {
+            deltas["purchase_price"] = {
                 "projected": projected,
                 "actual": actual,
-                "delta_pct": (
-                    round(((actual - projected) / projected) * 100, 2)
-                    if projected
-                    else None
-                ),
+                "delta_pct": _delta_pct(projected, actual),
             }
 
-        if outcome.actual_yield_pct is not None and "stabilised_yield" in fin_results:
-            projected = fin_results["stabilised_yield"]
+        if outcome.actual_yield_pct is not None and projected_yield is not None:
             actual = float(outcome.actual_yield_pct)
-            comparison["deltas"]["yield_pct"] = {
-                "projected": projected,
+            deltas["yield_pct"] = {
+                "projected": projected_yield,
                 "actual": actual,
-                "delta_pct": (
-                    round(((actual - projected) / projected) * 100, 2)
-                    if projected
-                    else None
-                ),
+                "delta_pct": _delta_pct(projected_yield, actual),
             }
 
-        if outcome.actual_noi is not None and "annual_noi" in fin_results:
-            projected = fin_results["annual_noi"]
+        if outcome.actual_noi is not None and projected_noi is not None:
             actual = float(outcome.actual_noi)
-            comparison["deltas"]["noi"] = {
-                "projected": projected,
+            deltas["noi"] = {
+                "projected": projected_noi,
                 "actual": actual,
-                "delta_pct": (
-                    round(((actual - projected) / projected) * 100, 2)
-                    if projected
-                    else None
-                ),
+                "delta_pct": _delta_pct(projected_noi, actual),
             }
 
-        return comparison
+        return {
+            "scenario_id": scenario_id,
+            "deal_id": outcome.deal_id,
+            "deltas": deltas,
+        }
+
+    async def _audit(
+        self,
+        *,
+        session: AsyncSession,
+        deal: AgentDeal,
+        outcome: DealOutcome,
+        event_type: str,
+        actor_id: UUID | None,
+        extra: dict[str, Any] | None = None,
+    ) -> None:
+        """Append an audit ledger entry for an outcome lifecycle event."""
+
+        project_key = audit_project_key(deal)
+        if project_key is None:
+            return
+
+        context: dict[str, Any] = {
+            "outcome_id": str(outcome.id),
+            "deal_id": str(deal.id),
+            "resolution": outcome.resolution,
+            "scenario_id": outcome.scenario_id,
+            "actor_id": str(actor_id) if actor_id else None,
+        }
+        if extra:
+            context.update(extra)
+
+        await append_event(
+            session,
+            project_id=project_key,
+            event_type=event_type,
+            context=context,
+        )

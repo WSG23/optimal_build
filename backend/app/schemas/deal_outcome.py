@@ -85,7 +85,7 @@ class DealOutcomeResponse(BaseModel):
     id: UUID
     deal_id: UUID
     scenario_id: int | None = None
-    recorded_by: UUID
+    recorded_by: UUID | None = None
     resolution: str
     resolution_note: str | None = None
 
@@ -150,12 +150,37 @@ class DealOutcomeBenchmarkResponse(BaseModel):
     median_approval_days: int | None = None
     median_gfa_amendment_pct: Decimal | None = None
     resolution_distribution: dict[str, int] = Field(default_factory=dict)
+    truncated: bool = Field(
+        default=False,
+        description="True if the sample was capped at the query limit.",
+    )
+
+
+class DealOutcomeDelta(BaseModel):
+    """Projected vs actual comparison for a single metric."""
+
+    projected: float
+    actual: float
+    delta_pct: float | None = Field(
+        default=None,
+        description="Percent change from projected to actual; null if projected is zero.",
+    )
+
+
+class DealOutcomeComparisonResponse(BaseModel):
+    """Projected-vs-actual comparison for a scenario's deal outcome."""
+
+    scenario_id: int
+    deal_id: UUID
+    deltas: dict[str, DealOutcomeDelta] = Field(default_factory=dict)
 
 
 __all__ = [
     "DealOutcomeBenchmarkQuery",
     "DealOutcomeBenchmarkResponse",
+    "DealOutcomeComparisonResponse",
     "DealOutcomeCreate",
+    "DealOutcomeDelta",
     "DealOutcomeResponse",
     "DealOutcomeUpdate",
 ]

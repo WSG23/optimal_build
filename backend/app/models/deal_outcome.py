@@ -77,10 +77,10 @@ class DealOutcome(BaseModel):
         nullable=True,
         index=True,
     )
-    recorded_by: Mapped[str] = mapped_column(
+    recorded_by: Mapped[Optional[str]] = mapped_column(
         UUID(),
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
 
@@ -149,7 +149,7 @@ class DealOutcome(BaseModel):
     scenario: Mapped[Optional["FinScenario"]] = relationship(  # noqa: F821
         "FinScenario", back_populates="deal_outcomes"
     )
-    recorder: Mapped["User"] = relationship("User")  # noqa: F821
+    recorder: Mapped[Optional["User"]] = relationship("User")  # noqa: F821
 
     __table_args__ = (
         Index("ix_deal_outcomes_deal_id", "deal_id", unique=True),
