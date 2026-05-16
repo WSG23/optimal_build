@@ -97,9 +97,9 @@ async def test_compliance_check_success(monkeypatch) -> None:
         ),
         updated_at=datetime(2024, 4, 1, 12, 0),
     )
-    app.dependency_overrides[
-        compliance_router.get_compliance_service
-    ] = lambda: _StubService(response_payload)
+    app.dependency_overrides[compliance_router.get_compliance_service] = (
+        lambda: _StubService(response_payload)
+    )
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://testserver"
@@ -124,9 +124,9 @@ async def test_compliance_check_not_found(monkeypatch) -> None:
     app.include_router(compliance_router.router)
     paths = {route.path for route in app.router.routes}
     assert "/compliance/check" in paths
-    app.dependency_overrides[
-        compliance_router.get_compliance_service
-    ] = lambda: _StubService(raises=True)
+    app.dependency_overrides[compliance_router.get_compliance_service] = (
+        lambda: _StubService(raises=True)
+    )
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://testserver"
