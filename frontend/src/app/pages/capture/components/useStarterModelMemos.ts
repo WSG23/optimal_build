@@ -186,12 +186,15 @@ function getOfficialSourceGapSummaries(
   return value
     .map((entry): OfficialSourceGapSummary | null => {
       const record = getObjectRecord(entry)
-      const rawField = typeof record?.field === 'string' ? record.field : null
+      if (!record) {
+        return null
+      }
+      const rawField = typeof record.field === 'string' ? record.field : null
       if (!rawField) {
         return null
       }
 
-      const sources = Array.isArray(record?.candidate_sources)
+      const sources = Array.isArray(record.candidate_sources)
         ? record.candidate_sources
         : []
       const authorities = Array.from(
