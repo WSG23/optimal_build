@@ -909,7 +909,7 @@ export function FeasibilityWizard({
         </DialogTitle>
         <DialogContent
           sx={{
-            minHeight: '400px',
+            minHeight: 'var(--ob-max-height-panel)',
             background: 'var(--ob-color-bg-surface-secondary)',
             display: 'flex',
             alignItems: 'center',
@@ -959,9 +959,9 @@ export function FeasibilityWizard({
               <div
                 style={{
                   marginTop: 'var(--ob-space-100)',
-                  height: '4px',
-                  minWidth: '40px',
-                  width: '40px',
+                  height: 'var(--ob-space-025)',
+                  minWidth: 'var(--ob-space-250)',
+                  width: 'var(--ob-space-250)',
                   background: 'var(--ob-color-brand-primary)',
                   marginInline: 'auto',
                 }}

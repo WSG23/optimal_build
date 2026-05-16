@@ -316,8 +316,8 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
 // Create a small invisible marker element for click detection
 function createMarkerContent(): HTMLElement {
   const div = document.createElement('div')
-  div.style.width = '20px'
-  div.style.height = '20px'
+  div.style.width = 'var(--ob-space-125)'
+  div.style.height = 'var(--ob-space-125)'
   div.style.borderRadius = '50%'
   div.style.cursor = 'pointer'
   div.style.opacity = '0' // Invisible but clickable

@@ -356,12 +356,61 @@
 
     /* Legacy spacing aliases (map spacing-N00 to space-* scale) */
     --ob-spacing-3: var(--ob-space-075);
+    --ob-spacing-50: var(--ob-space-025); /* 4px */
+    --ob-spacing-050: var(--ob-space-025); /* 4px */
     --ob-spacing-100: var(--ob-space-050); /* 8px */
+    --ob-spacing-150: var(--ob-space-075); /* 12px */
     --ob-spacing-200: var(--ob-space-100); /* 16px */
+    --ob-spacing-250: var(--ob-space-125); /* 20px */
     --ob-spacing-300: var(--ob-space-150); /* 24px */
     --ob-spacing-400: var(--ob-space-200); /* 32px */
+    --ob-spacing-450: var(--ob-space-225, 1.875rem); /* 30px */
     --ob-spacing-500: var(--ob-space-250); /* 40px */
     --ob-spacing-600: var(--ob-space-300); /* 48px */
+
+    /* Short status-muted aliases (legacy: code references --ob-success-muted, etc.) */
+    --ob-success-muted: var(--ob-color-success-muted);
+    --ob-warning-muted: var(--ob-color-warning-muted);
+    --ob-error-muted: var(--ob-color-error-muted);
+    --ob-info-muted: var(--ob-color-info-muted);
+
+    /* Status soft/subtle aliases */
+    --ob-success-subtle: var(--ob-color-success-soft);
+    --ob-error-subtle: var(--ob-color-error-subtle);
+    --ob-warning-100: var(--ob-warning-bg);
+
+    /* Color/text/border legacy aliases */
+    --ob-text-muted: var(--ob-color-text-muted);
+    --ob-color-warning: var(--ob-warning-500);
+    --ob-color-surface-secondary: var(--ob-color-bg-surface-elevated);
+    --ob-color-surface-elevated: var(--ob-color-bg-surface-elevated);
+    --ob-color-surface-hover: var(--ob-color-action-hover);
+    --ob-color-border-hover: var(--ob-color-border-strong);
+    --ob-color-border-emphasis: var(--ob-color-border-strong);
+
+    /* Accent-bg aliases */
+    --ob-accent-brand-bg: var(--ob-color-brand-muted);
+    --ob-accent-warning-bg: var(--ob-warning-bg);
+
+    /* RGB triples (legacy refs) */
+    --ob-error-500-rgb: 239 68 68;
+
+    /* Additional spacing aliases */
+    --ob-spacing-350: var(--ob-space-175); /* 28px */
+    --ob-space-225: 1.875rem; /* 30px - intentional non-step value */
+
+    /* Finance-scenario-specific size token */
+    --ob-size-finance-scenario-card-min: 280px;
+
+    /* Tailwind-style numeric spacing aliases (canonical mapping for back-compat) */
+    --ob-space-1: var(--ob-space-025); /* 4px */
+    --ob-space-2: var(--ob-space-050); /* 8px */
+    --ob-space-3: var(--ob-space-075); /* 12px */
+    --ob-space-4: var(--ob-space-100); /* 16px */
+    --ob-space-5: var(--ob-space-125); /* 20px */
+    --ob-space-6: var(--ob-space-150); /* 24px */
+    --ob-space-7: var(--ob-space-175); /* 28px */
+    --ob-space-8: var(--ob-space-200); /* 32px */
 
     /* ===========================================================================
      9. BORDER RADIUS - Square Cyber-Minimalism
@@ -547,6 +596,16 @@
     --ob-max-height-panel: 400px;
     --ob-max-height-table: 500px;
     --ob-max-height-card-group: 600px;
+
+    /* Modal/Window size scale (canonical for Window component) */
+    --ob-size-window-sm: 480px;
+    --ob-size-window-md: 640px;
+    --ob-size-window-lg: 800px;
+    --ob-size-window-xl: 1024px;
+
+    /* Metric tile heights (canonical for MetricTile component) */
+    --ob-size-metric-tile-compact: 72px;
+    --ob-size-metric-tile-default: 88px;
 
     /* ===========================================================================
      AI STUDIO TOKEN ALIASES (for compatibility with reference implementation)

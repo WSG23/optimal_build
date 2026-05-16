@@ -77,7 +77,7 @@ export function ResultsPanel({
           style={{
             position: 'relative',
             height: '100%',
-            minHeight: '600px',
+            minHeight: 'var(--ob-max-height-card-group)',
             overflow: 'hidden',
             borderRadius: 'var(--ob-radius-sm)',
           }}
@@ -95,7 +95,7 @@ export function ResultsPanel({
             {/* Fake Header */}
             <div
               style={{
-                height: '120px',
+                height: 'var(--ob-size-drop-zone)',
                 background: 'var(--ob-color-border-subtle, #e5e7eb)',
                 borderRadius: 'var(--ob-radius-sm)',
               }}
@@ -111,14 +111,14 @@ export function ResultsPanel({
             >
               <div
                 style={{
-                  height: '200px',
+                  height: 'var(--ob-size-drop-zone-lg)',
                   background: 'var(--ob-color-border-subtle, #e5e7eb)',
                   borderRadius: 'var(--ob-radius-sm)',
                 }}
               />
               <div
                 style={{
-                  height: '200px',
+                  height: 'var(--ob-size-drop-zone-lg)',
                   background: 'var(--ob-color-border-subtle, #e5e7eb)',
                   borderRadius: 'var(--ob-radius-sm)',
                 }}
@@ -194,7 +194,7 @@ export function ResultsPanel({
                 style={{
                   background: 'rgba(30, 30, 30, 0.6)', // Glassmorphic dark
                   backdropFilter: 'blur(var(--ob-blur-md))',
-                  border: '1px solid rgba(245, 235, 220, 0.1)',
+                  border: '1px solid var(--ob-overlay-white-subtle)',
                   padding: 'var(--ob-space-150) var(--ob-space-200)',
                   borderRadius: 'var(--ob-radius-sm)',
                   display: 'flex',
@@ -221,8 +221,8 @@ export function ResultsPanel({
                   style={{
                     background: 'white',
                     borderRadius: '50%',
-                    width: '48px',
-                    height: '48px',
+                    width: 'var(--ob-size-icon-lg)',
+                    height: 'var(--ob-size-icon-lg)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -388,7 +388,7 @@ export function ResultsPanel({
                     color: 'white',
                     padding: 'var(--ob-space-5)',
                     borderRadius: 'var(--ob-radius-lg)',
-                    minWidth: '200px',
+                    minWidth: 'var(--ob-size-drop-zone-lg)',
                     boxShadow:
                       '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
                   }}

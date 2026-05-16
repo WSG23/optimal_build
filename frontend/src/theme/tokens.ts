@@ -128,21 +128,21 @@ export const typography = {
 } as const
 
 export const spacing = {
-  0: '0px',
-  1: '4px',
-  2: '8px',
-  3: '12px',
-  4: '16px',
-  6: '24px',
-  8: '32px',
-  12: '48px',
-  16: '64px',
+  0: '0',
+  1: 'var(--ob-space-025)',
+  2: 'var(--ob-space-050)',
+  3: 'var(--ob-space-075)',
+  4: 'var(--ob-space-100)',
+  6: 'var(--ob-space-150)',
+  8: 'var(--ob-space-200)',
+  12: 'var(--ob-space-300)',
+  16: 'var(--ob-space-400)',
 } as const
 
 export const radii = {
-  none: '0px',
-  sm: '2px', // Sharp/Technical feel
-  md: '4px',
-  lg: '8px',
-  full: '9999px',
+  none: 'var(--ob-radius-none)',
+  sm: 'var(--ob-radius-xs)', // Sharp/Technical feel (2px)
+  md: 'var(--ob-radius-sm)', // 4px - cards/panels
+  lg: 'var(--ob-radius-lg)', // 8px - modals/windows
+  full: 'var(--ob-radius-pill)',
 } as const

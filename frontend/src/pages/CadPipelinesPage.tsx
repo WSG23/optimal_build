@@ -370,8 +370,8 @@ export function CadPipelinesPage() {
                 viewBox="0 0 200 200"
                 sx={{
                   position: 'absolute',
-                  width: '400px',
-                  height: '400px',
+                  width: 'var(--ob-max-height-panel)',
+                  height: 'var(--ob-max-height-panel)',
                   opacity: 0.03,
                   fill: 'none',
                   stroke: 'var(--ob-color-text-primary)',
@@ -410,7 +410,7 @@ export function CadPipelinesPage() {
                 variant="body2"
                 sx={{
                   color: 'text.secondary',
-                  maxWidth: '400px',
+                  maxWidth: 'var(--ob-max-height-panel)',
                   textAlign: 'center',
                   mb: 'var(--ob-space-200)',
                   zIndex: 1,
@@ -509,7 +509,7 @@ export function CadPipelinesPage() {
                     sx={{
                       color: 'text.secondary',
                       mb: 'var(--ob-space-200)',
-                      height: '40px',
+                      height: 'var(--ob-space-250)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                     }}

@@ -111,7 +111,7 @@ const MarketIntelligenceDashboard: React.FC = () => {
         display="flex"
         justifyContent="center"
         alignItems="center"
-        height="400px"
+        height="var(--ob-max-height-panel)"
       >
         <CircularProgress />
       </Box>

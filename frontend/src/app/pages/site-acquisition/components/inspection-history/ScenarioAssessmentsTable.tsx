@@ -141,7 +141,7 @@ function VirtualAssessmentRow(
         ...style,
         width: '100%',
         borderCollapse: 'collapse',
-        minWidth: '600px',
+        minWidth: 'var(--ob-max-height-card-group)',
       }}
     >
       <tbody>
@@ -197,7 +197,7 @@ export function ScenarioAssessmentsTable({
           style={{
             width: '100%',
             borderCollapse: 'collapse',
-            minWidth: '600px',
+            minWidth: 'var(--ob-max-height-card-group)',
           }}
         >
           <thead>
@@ -250,7 +250,7 @@ export function ScenarioAssessmentsTable({
             style={{
               width: '100%',
               borderCollapse: 'collapse',
-              minWidth: '600px',
+              minWidth: 'var(--ob-max-height-card-group)',
             }}
           >
             <tbody>

@@ -9,11 +9,12 @@
 :root {
     --ob-depth-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --ob-depth-md:
-        0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        0 4px 6px -1px var(--ob-overlay-subtle),
+        0 2px 4px -1px rgba(0, 0, 0, 0.03);
     --ob-depth-lg:
         0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
     --ob-depth-floating:
-        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 20px 25px -5px var(--ob-overlay-light),
         0 10px 10px -5px rgba(0, 0, 0, 0.04);
     --ob-depth-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
 
@@ -49,7 +50,7 @@
 
 .feasibility-split-layout__controls {
     width: 28%; /* Slender profile */
-    min-width: 280px;
+    min-width: var(--ob-size-input-md);
     max-width: 480px;
     background: rgba(255, 255, 255, 0.85); /* Proper glass */
     backdrop-filter: blur(var(--ob-blur-lg)) saturate(180%);
@@ -666,8 +667,8 @@ html[data-theme='light'] .smart-search {
 }
 
 .smart-search__loader {
-    width: 20px;
-    height: 20px;
+    width: var(--ob-space-125);
+    height: var(--ob-space-125);
     border: 2px solid var(--ob-color-brand-primary);
     border-top-color: transparent;
     border-radius: var(--ob-radius-pill);
@@ -936,7 +937,7 @@ html[data-theme='light'] .smart-search {
 }
 
 .skeleton--heading {
-    height: 24px;
+    height: var(--ob-size-icon-sm);
 }
 
 .skeleton--row {
@@ -1701,7 +1702,9 @@ html[data-theme='light'] .smart-search {
     width: 100%;
     position: relative;
     overflow: hidden;
-    min-height: 48px; /* Ensure button has minimum height for visibility */
+    min-height: var(
+        --ob-size-icon-lg
+    ); /* Ensure button has minimum height for visibility */
 }
 
 .feasibility-actions__compute-btn:hover {
@@ -1714,8 +1717,8 @@ html[data-theme='light'] .smart-search {
 }
 
 .feasibility-actions__spinner {
-    width: 20px;
-    height: 20px;
+    width: var(--ob-space-125);
+    height: var(--ob-space-125);
     border: 2px solid var(--ob-color-text-on-brand, #ffffff);
     border-top-color: transparent;
     border-radius: var(--ob-radius-pill);
@@ -1736,7 +1739,7 @@ html[data-theme='light'] .smart-search {
     background: linear-gradient(
         to right,
         transparent,
-        rgba(255, 255, 255, 0.2),
+        var(--ob-overlay-white-medium),
         transparent
     );
     transform: skewX(-20deg) translateX(-150%);
@@ -1787,8 +1790,8 @@ html[data-theme='light'] .smart-search {
 }
 
 .feasibility-pack__spinner {
-    width: 16px;
-    height: 16px;
+    width: var(--ob-space-100);
+    height: var(--ob-space-100);
     border: 2px solid var(--ob-color-text-on-brand, #ffffff);
     border-top-color: transparent;
     border-radius: var(--ob-radius-pill);
@@ -1804,7 +1807,7 @@ html[data-theme='light'] .smart-search {
 }
 
 .feasibility-preview__content {
-    min-height: 400px;
+    min-height: var(--ob-max-height-panel);
     background: var(--ob-color-bg-surface);
     display: flex;
     align-items: center;
@@ -1816,7 +1819,7 @@ html[data-theme='light'] .smart-search {
     width: 300px;
     height: 420px;
     background: white;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 20px 40px var(--ob-overlay-medium);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1847,8 +1850,8 @@ html[data-theme='light'] .smart-search {
 
 .feasibility-preview__accent-bar {
     margin-top: var(--ob-space-100);
-    height: 4px;
-    width: 40px;
+    height: var(--ob-space-025);
+    width: var(--ob-space-250);
     background: var(--ob-color-brand-primary);
     margin-inline: auto;
 }
@@ -1880,7 +1883,7 @@ html[data-theme='light'] .smart-search {
     border: 1px solid var(--ob-color-border-subtle);
     border-radius: var(--ob-radius-sm);
     padding: var(--ob-space-100);
-    min-width: 200px;
+    min-width: var(--ob-size-input-sm);
     animation: slideInRight 0.4s ease-out;
     will-change: transform, opacity;
     box-shadow: var(--ob-shadow-lg);
@@ -2025,7 +2028,7 @@ html[data-theme='light'] .live-scorecard {
 }
 
 .live-scorecard__progress-track {
-    height: 4px;
+    height: var(--ob-space-025);
     border-radius: var(--ob-radius-xs);
     background: var(--ob-color-border-subtle);
     overflow: hidden;

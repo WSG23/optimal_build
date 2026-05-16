@@ -383,8 +383,8 @@ export function VoiceNoteRecorder({
           >
             <span
               style={{
-                width: '12px',
-                height: '12px',
+                width: 'var(--ob-space-075)',
+                height: 'var(--ob-space-075)',
                 borderRadius: 'var(--ob-radius-pill)',
                 background: 'white',
               }}
@@ -467,7 +467,7 @@ export function VoiceNoteRecorder({
               <div
                 style={{
                   width: '60px',
-                  height: '8px',
+                  height: 'var(--ob-space-050)',
                   background: 'var(--ob-color-border-subtle)',
                   borderRadius: 'var(--ob-radius-sm)',
                   overflow: 'hidden',
@@ -547,7 +547,7 @@ export function VoiceNoteRecorder({
                 <audio
                   controls
                   src={URL.createObjectURL(note.blob)}
-                  style={{ height: '32px', flex: '0 0 200px' }}
+                  style={{ height: 'var(--ob-space-200)', flex: '0 0 200px' }}
                 />
 
                 {/* Title (editable) */}

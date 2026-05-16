@@ -79,7 +79,7 @@ function BucketBar({
       <Typography
         sx={{
           minWidth: '80px',
-          width: '120px',
+          width: 'var(--ob-size-drop-zone)',
           flexShrink: 1,
           fontWeight: 'var(--ob-font-weight-semibold)',
           fontSize: 'var(--ob-font-size-sm)',
@@ -93,7 +93,7 @@ function BucketBar({
           flex: 1,
           background: 'var(--ob-overlay-medium)',
           borderRadius: 'var(--ob-radius-xs)',
-          height: '8px',
+          height: 'var(--ob-space-050)',
           overflow: 'hidden',
         }}
       >
@@ -109,8 +109,8 @@ function BucketBar({
       <NeonText
         variant="caption"
         sx={{
-          minWidth: '32px',
-          width: '40px',
+          minWidth: 'var(--ob-space-200)',
+          width: 'var(--ob-space-250)',
           flexShrink: 0,
           textAlign: 'right',
         }}

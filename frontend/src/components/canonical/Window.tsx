@@ -54,10 +54,10 @@ export interface WindowProps {
 }
 
 const maxWidthMap = {
-  sm: '480px',
-  md: '640px',
-  lg: '800px',
-  xl: '1024px',
+  sm: 'var(--ob-size-window-sm)',
+  md: 'var(--ob-size-window-md)',
+  lg: 'var(--ob-size-window-lg)',
+  xl: 'var(--ob-size-window-xl)',
 }
 
 /**

@@ -252,7 +252,7 @@ export function VoiceNoteList({
               <audio
                 controls
                 src={note.publicUrl}
-                style={{ height: '32px', flex: '0 0 200px' }}
+                style={{ height: 'var(--ob-space-200)', flex: '0 0 200px' }}
                 preload="metadata"
               />
 

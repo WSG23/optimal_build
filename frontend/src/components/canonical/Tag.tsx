@@ -41,27 +41,27 @@ const colorMap = {
   brand: {
     bg: 'var(--ob-color-brand-soft)',
     text: 'var(--ob-color-brand-primary)',
-    border: '1px solid rgba(59, 130, 246, 0.2)',
+    border: '1px solid var(--ob-border-brand-soft)',
   },
   success: {
     bg: 'var(--ob-color-success-soft)',
     text: 'var(--ob-color-status-success-text)',
-    border: '1px solid rgba(34, 197, 94, 0.2)',
+    border: '1px solid var(--ob-border-success-soft)',
   },
   warning: {
     bg: 'var(--ob-color-warning-soft)',
     text: 'var(--ob-color-status-warning-text)',
-    border: '1px solid rgba(234, 179, 8, 0.2)',
+    border: '1px solid var(--ob-border-warning-soft)',
   },
   error: {
     bg: 'var(--ob-color-error-soft)',
     text: 'var(--ob-color-status-error-text)',
-    border: '1px solid rgba(239, 68, 68, 0.2)',
+    border: '1px solid var(--ob-border-error-soft)',
   },
   info: {
     bg: 'var(--ob-color-info-soft)',
     text: 'var(--ob-color-status-info-text)',
-    border: '1px solid rgba(59, 130, 246, 0.2)',
+    border: '1px solid var(--ob-border-brand-soft)',
   },
 }
 
@@ -84,7 +84,7 @@ export function Tag({
   sx = {},
 }: TagProps) {
   const colors = colorMap[color]
-  const height = size === 'sm' ? '20px' : '24px'
+  const height = size === 'sm' ? 'var(--ob-space-125)' : 'var(--ob-space-150)'
   const fontSize =
     size === 'sm' ? 'var(--ob-font-size-xs)' : 'var(--ob-font-size-sm)'
   const px = size === 'sm' ? 'var(--ob-space-050)' : 'var(--ob-space-075)'
@@ -158,7 +158,7 @@ export function Tag({
             transition: 'opacity 0.2s',
             '&:hover': {
               opacity: 1,
-              background: 'rgba(245, 235, 220, 0.1)',
+              background: 'var(--ob-color-action-hover)',
             },
             '&::before': {
               content: '"×"',

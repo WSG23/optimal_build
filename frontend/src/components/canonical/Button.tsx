@@ -35,9 +35,9 @@ const StyledButton = styled(MuiButton, {
 })<StyledButtonProps>(({ obVariant, obSize }) => {
   // Height mapping
   const heightMap = {
-    sm: '32px',
-    md: '40px',
-    lg: '48px',
+    sm: 'var(--ob-space-200)',
+    md: 'var(--ob-space-250)',
+    lg: 'var(--ob-space-300)',
   }
 
   // Padding mapping - size-proportional for visual balance

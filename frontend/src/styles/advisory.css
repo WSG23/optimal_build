@@ -166,7 +166,7 @@
 .advisory__timeline-badge {
     width: 3rem;
     height: 3rem;
-    border-radius: 50%;
+    border-radius: var(--ob-radius-pill);
     background: var(--ob-color-text-primary);
     color: var(--ob-color-bg-root);
     display: flex;
@@ -335,7 +335,7 @@
     height: 3.75rem;
     margin: 0 auto var(--ob-spacing-400);
     background: var(--ob-color-bg-muted);
-    border-radius: 50%;
+    border-radius: var(--ob-radius-pill);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -429,7 +429,7 @@
 .sales-velocity__status-dot {
     width: 6px;
     height: 6px;
-    border-radius: 50%;
+    border-radius: var(--ob-radius-pill);
     background: var(--ob-color-brand-primary);
     animation: pulse-dot 2s ease-in-out infinite;
     will-change: opacity;

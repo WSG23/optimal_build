@@ -148,8 +148,8 @@
 }
 
 .site-acquisition__preview-viewer-thumb-image {
-    width: 64px;
-    height: 64px;
+    width: var(--ob-size-icon-xl);
+    height: var(--ob-size-icon-xl);
     border-radius: var(--ob-radius-sm);
     object-fit: cover;
     border: 1px solid var(--ob-color-border-subtle);

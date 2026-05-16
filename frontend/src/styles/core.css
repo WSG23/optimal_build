@@ -238,7 +238,7 @@ h6 {
         minmax(280px, 1fr)
     ); /* Wider minimum */
     /* padding removed - Shell provides canonical 16px layout padding */
-    max-width: 1400px;
+    max-width: var(--ob-max-width-page);
     margin: 0 auto;
 }
 

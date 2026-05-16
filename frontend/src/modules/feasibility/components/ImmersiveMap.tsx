@@ -122,7 +122,7 @@ export function ImmersiveMap({
               flexDirection: 'column',
               alignItems: 'center',
               gap: 'var(--ob-space-150)',
-              maxWidth: '500px',
+              maxWidth: 'var(--ob-max-height-table)',
               animation:
                 'floatUp 4s ease-in-out infinite, pulseGlow 3s ease-in-out infinite',
               pointerEvents: 'auto',

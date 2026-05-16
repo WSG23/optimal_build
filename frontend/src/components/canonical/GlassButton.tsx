@@ -21,9 +21,9 @@ export interface GlassButtonProps extends Omit<
 }
 
 const heightMap = {
-  small: '32px',
-  medium: '40px',
-  large: '48px',
+  small: 'var(--ob-space-200)',
+  medium: 'var(--ob-space-250)',
+  large: 'var(--ob-space-300)',
 } as const
 
 const radiusMap = {

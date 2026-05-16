@@ -71,9 +71,9 @@ export function MetricTile({
 }: MetricTileProps) {
   // Height based on variant
   const heightMap = {
-    compact: '72px',
-    default: '88px',
-    hero: '120px',
+    compact: 'var(--ob-size-metric-tile-compact)',
+    default: 'var(--ob-size-metric-tile-default)',
+    hero: 'var(--ob-size-drop-zone)',
   }
 
   // Font sizes based on variant

@@ -442,7 +442,9 @@ const tableSx = {
     borderBottom: 'none',
   },
   '& th:nth-of-type(1), & td:nth-of-type(1)': { minWidth: '160px' },
-  '& th:nth-of-type(2), & td:nth-of-type(2)': { minWidth: '120px' },
+  '& th:nth-of-type(2), & td:nth-of-type(2)': {
+    minWidth: 'var(--ob-size-drop-zone)',
+  },
   '& th:nth-of-type(3), & td:nth-of-type(3)': { minWidth: '112px' },
   '& th:nth-of-type(4), & td:nth-of-type(4)': { minWidth: '128px' },
   '& th:nth-of-type(5), & td:nth-of-type(5)': { minWidth: '128px' },

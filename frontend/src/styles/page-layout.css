@@ -9,14 +9,14 @@
 
 .page {
     /* padding removed - Shell provides canonical 16px layout padding */
-    max-width: 1400px;
+    max-width: var(--ob-max-width-page);
     margin: 0 auto;
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);
 }
 
 .page--wide {
-    max-width: 1400px;
+    max-width: var(--ob-max-width-page);
 }
 
 .page--full {
@@ -417,11 +417,11 @@
 }
 
 .page__spinner {
-    width: 24px;
-    height: 24px;
+    width: var(--ob-size-icon-sm);
+    height: var(--ob-size-icon-sm);
     border: 2px solid var(--ob-color-border-subtle);
     border-top-color: var(--ob-color-brand-primary);
-    border-radius: 50%;
+    border-radius: var(--ob-radius-pill);
     animation: page-spin 0.8s linear infinite;
     will-change: transform;
 }
@@ -455,7 +455,7 @@
 
 .page__empty-description {
     font-size: var(--ob-font-size-sm);
-    max-width: 400px;
+    max-width: var(--ob-max-height-panel);
     margin: 0;
 }
 

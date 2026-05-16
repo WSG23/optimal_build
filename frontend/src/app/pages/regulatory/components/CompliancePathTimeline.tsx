@@ -166,7 +166,7 @@ function TimelineBar({
         sx={{
           position: 'absolute',
           left: `${left}px`,
-          top: '8px',
+          top: 'var(--ob-space-050)',
           width: `${width}px`,
           height: `${ROW_HEIGHT - 16}px`,
           borderRadius: 'var(--ob-radius-sm)',

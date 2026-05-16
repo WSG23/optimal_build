@@ -88,8 +88,8 @@
 
 /* Status dot variants */
 .ob-status-dot {
-    width: 8px;
-    height: 8px;
+    width: var(--ob-space-050);
+    height: var(--ob-space-050);
     border-radius: var(--ob-radius-xs);
     background-color: var(--ob-color-brand-primary);
 }
@@ -290,7 +290,7 @@ html[data-theme='light'] .ob-card-module {
     text-transform: uppercase;
     letter-spacing: var(--ob-letter-spacing-wider);
     color: var(--ob-color-text-secondary);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--ob-overlay-white-subtle);
     padding: var(--ob-space-150) var(--ob-space-200);
 }
 
@@ -381,7 +381,7 @@ html[data-theme='light'] .ob-seamless-panel--glass {
 
 /* Edge-to-edge tile */
 .ob-tile {
-    border-radius: 0;
+    border-radius: var(--ob-radius-none);
 }
 
 .ob-tile--soft {

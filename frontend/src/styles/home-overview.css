@@ -19,8 +19,8 @@
 
 /* ── Icon badge (pill circle in card header) ───────────────────── */
 .home-overview__icon-badge {
-    width: 40px;
-    height: 40px;
+    width: var(--ob-space-250);
+    height: var(--ob-space-250);
     border-radius: var(--ob-radius-pill);
     display: flex;
     align-items: center;

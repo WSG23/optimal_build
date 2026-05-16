@@ -104,7 +104,7 @@
 
 /* Framed label for project display */
 .finance-project-selector__label-frame {
-    height: 40px;
+    height: var(--ob-space-250);
     display: flex;
     align-items: center;
     padding: 0 var(--ob-space-100);
@@ -122,7 +122,7 @@
 }
 
 .finance-project-selector__dropdown {
-    height: 40px;
+    height: var(--ob-space-250);
     background: var(--ob-surface-glass-1);
     border: var(--ob-border-fine-strong);
     border-radius: var(--ob-radius-xs);
@@ -361,7 +361,7 @@
     padding: var(--ob-space-050) var(--ob-space-100);
     width: 100%;
     font-size: var(--ob-font-size-sm);
-    height: 32px;
+    height: var(--ob-size-icon-md);
 }
 
 .finance-scenario-creator__main-input {
@@ -373,7 +373,7 @@
     padding: var(--ob-space-100) var(--ob-space-150);
     font-size: var(--ob-font-size-md);
     width: 100%;
-    max-width: 400px;
+    max-width: var(--ob-max-height-panel);
     transition: all 0.2s ease;
 }
 
@@ -421,7 +421,7 @@
     appearance: none;
     -webkit-appearance: none;
     width: 100%;
-    height: 4px;
+    height: var(--ob-space-025);
     border-radius: var(--ob-radius-full);
     background: var(--ob-color-surface-tertiary);
     /* Darker track */
@@ -439,11 +439,11 @@
     appearance: none;
     width: 14px;
     height: 14px;
-    border-radius: 50%;
+    border-radius: var(--ob-radius-pill);
     background: var(--ob-color-surface-default);
     border: 2px solid var(--ob-color-brand-primary);
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 1px 3px var(--ob-overlay-strong);
     transition: transform 0.1s;
     margin-top: -5px;
     /* Alignment fix */

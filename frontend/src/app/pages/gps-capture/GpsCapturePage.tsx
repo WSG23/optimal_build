@@ -258,8 +258,8 @@ export function GpsCapturePage() {
 
     // Create custom marker pin element
     const pinElement = document.createElement('div')
-    pinElement.style.width = '24px'
-    pinElement.style.height = '24px'
+    pinElement.style.width = 'var(--ob-space-150)'
+    pinElement.style.height = 'var(--ob-space-150)'
     pinElement.style.borderRadius = '50%'
     pinElement.style.backgroundColor = 'var(--ob-color-status-info, #8b5cf6)'
     pinElement.style.border = '3px solid white'

@@ -7,7 +7,7 @@
     flex-direction: column;
     gap: var(--ob-spacing-500);
     /* padding removed - Shell provides canonical 16px layout padding */
-    max-width: 1400px;
+    max-width: var(--ob-max-width-page);
     margin: 0 auto;
     font-family: var(--ob-font-family-base);
     color: var(--ob-color-text-primary);

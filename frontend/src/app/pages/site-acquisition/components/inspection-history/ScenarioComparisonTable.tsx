@@ -184,7 +184,7 @@ function renderComparisonRowContent(
           borderBottom: '1px solid var(--ob-color-border-primary)',
           color: 'var(--ob-color-text-primary)',
           fontSize: 'var(--ob-font-size-sm)',
-          maxWidth: '200px',
+          maxWidth: 'var(--ob-size-drop-zone-lg)',
         }}
       >
         {row.recommendedAction ?? '\u2014'}

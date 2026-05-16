@@ -77,7 +77,7 @@ export function SmartIntelligenceField({
             disabled={loading}
             data-testid="address-input"
             style={{
-              paddingRight: hasAutoData ? '200px' : '0', // Make space for badges
+              paddingRight: hasAutoData ? 'var(--ob-size-drop-zone-lg)' : '0', // Make space for badges
             }}
           />
 

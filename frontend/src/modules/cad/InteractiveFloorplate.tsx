@@ -311,7 +311,7 @@ export function InteractiveFloorplate({
           position: 'absolute',
           top: 0,
           bottom: 0,
-          width: '4px',
+          width: 'var(--ob-space-025)',
           background:
             'linear-gradient(to bottom, transparent, var(--ob-success-500), transparent)', // Green
           boxShadow: '0 0 15px var(--ob-success-500)',
