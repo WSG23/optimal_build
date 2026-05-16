@@ -793,8 +793,9 @@ export function useUnifiedCapture({
         }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMapLoaded]) // Only run once when map is loaded
+    // mapInstanceRef.current guard prevents re-init; coord deps only affect
+    // the initial map center on the first run after isMapLoaded flips true.
+  }, [isMapLoaded, latitude, longitude, clearAnalysisCoordinates])
 
   // Initialize Google Places Autocomplete on address input
   useEffect(() => {
@@ -843,8 +844,9 @@ export function useUnifiedCapture({
     })
 
     autocompleteRef.current = autocomplete
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMapLoaded]) // Only run once when map + places are loaded
+    // autocompleteRef.current guard prevents re-binding; listed deps are all
+    // stable useCallbacks so the effect re-runs only when isMapLoaded flips.
+  }, [isMapLoaded, clearAnalysisCoordinates, updateMarkerPosition])
 
   // Capture handler - routes to appropriate API based on mode
   const handleCapture = useCallback(

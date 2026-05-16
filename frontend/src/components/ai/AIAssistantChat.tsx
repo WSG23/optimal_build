@@ -50,6 +50,7 @@ export function AIAssistantChat({
   const [conversationId, setConversationId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const hasSentInitialMessageRef = useRef(false)
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -65,62 +66,65 @@ export function AIAssistantChat({
     }
   }, [open])
 
+  const handleSendMessage = useCallback(
+    async (messageText?: string) => {
+      const text = messageText || input.trim()
+      if (!text || isLoading) return
+
+      const userMessage: Message = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: text,
+        timestamp: new Date(),
+      }
+
+      setMessages((prev) => [...prev, userMessage])
+      setInput('')
+      setIsLoading(true)
+
+      try {
+        const response: ChatMessageResponse = await sendChatMessage({
+          message: text,
+          conversation_id: conversationId || undefined,
+          user_id: userId,
+        })
+
+        if (response.conversation_id) {
+          setConversationId(response.conversation_id)
+        }
+
+        const assistantMessage: Message = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: response.message,
+          timestamp: new Date(),
+          suggestions: response.suggestions,
+        }
+
+        setMessages((prev) => [...prev, assistantMessage])
+      } catch (error) {
+        const errorMessage: Message = {
+          id: `error-${Date.now()}`,
+          role: 'assistant',
+          content:
+            'I apologize, but I encountered an error processing your request. Please try again.',
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, errorMessage])
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [input, isLoading, conversationId, userId],
+  )
+
   useEffect(() => {
-    if (open && initialMessage && messages.length === 0) {
-      handleSendMessage(initialMessage)
+    if (!open || !initialMessage || hasSentInitialMessageRef.current) {
+      return
     }
-    // Only run on initial open with initialMessage
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initialMessage])
-
-  const handleSendMessage = async (messageText?: string) => {
-    const text = messageText || input.trim()
-    if (!text || isLoading) return
-
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: text,
-      timestamp: new Date(),
-    }
-
-    setMessages((prev) => [...prev, userMessage])
-    setInput('')
-    setIsLoading(true)
-
-    try {
-      const response: ChatMessageResponse = await sendChatMessage({
-        message: text,
-        conversation_id: conversationId || undefined,
-        user_id: userId,
-      })
-
-      if (response.conversation_id) {
-        setConversationId(response.conversation_id)
-      }
-
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: response.message,
-        timestamp: new Date(),
-        suggestions: response.suggestions,
-      }
-
-      setMessages((prev) => [...prev, assistantMessage])
-    } catch (error) {
-      const errorMessage: Message = {
-        id: `error-${Date.now()}`,
-        role: 'assistant',
-        content:
-          'I apologize, but I encountered an error processing your request. Please try again.',
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, errorMessage])
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    hasSentInitialMessageRef.current = true
+    void handleSendMessage(initialMessage)
+  }, [open, initialMessage, handleSendMessage])
 
   const handleKeyPress = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {

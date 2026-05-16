@@ -97,6 +97,7 @@ export function SiteAcquisitionPage() {
   const [capturedProperty, setCapturedProperty] =
     useState<SiteAcquisitionResult | null>(null)
   const [isGeocoding, setIsGeocoding] = useState(false)
+  const hasRestoredCapturedPropertyRef = useRef(false)
 
   // Auto-geocode address to coordinates when address field loses focus
   const handleAddressBlur = useCallback(async () => {
@@ -163,8 +164,8 @@ export function SiteAcquisitionPage() {
   // Restore captured property from sessionStorage on mount
   // This enables navigation persistence - data survives page changes
   useEffect(() => {
-    // Only restore if we don't already have a captured property
-    if (capturedProperty) return
+    if (hasRestoredCapturedPropertyRef.current) return
+    hasRestoredCapturedPropertyRef.current = true
 
     const storedProperty = getStoredCapturedProperty()
     if (storedProperty) {
@@ -178,8 +179,7 @@ export function SiteAcquisitionPage() {
         setPreviewJob(storedProperty.previewJobs[0])
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Only run on mount
+  }, [setPreviewJob])
 
   const scenarioLookup = useMemo(
     () => new Map(SCENARIO_OPTIONS.map((option) => [option.value, option])),
