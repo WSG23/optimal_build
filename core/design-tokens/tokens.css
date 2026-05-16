@@ -402,6 +402,22 @@
     /* Finance-scenario-specific size token */
     --ob-size-finance-scenario-card-min: 280px;
 
+    /* Additional missing aliases (auto-discovered by check_design_tokens.py) */
+    --ob-space-350: 3.5rem; /* 56px */
+    --ob-spacing-075: var(--ob-space-075); /* 12px */
+    --ob-spacing-800: var(--ob-space-400); /* 64px */
+    --ob-warning-subtle: var(--ob-color-warning-soft);
+    --ob-info-subtle: var(--ob-color-info-soft);
+    --ob-color-text-on-brand: var(--ob-color-text-inverse);
+    --ob-color-surface-primary: var(--ob-color-bg-surface);
+    --ob-color-bg-elevated: var(--ob-color-bg-surface-elevated);
+    --ob-surface-base: var(--ob-color-bg-root);
+    --ob-surface-muted: var(--ob-color-bg-muted);
+    --ob-surface-elevated: var(--ob-color-bg-surface-elevated);
+    --ob-error-800: var(--ob-error-700);
+    --ob-brand-50: var(--ob-brand-100);
+    --ob-border-fine-subtle: var(--ob-border-fine);
+
     /* Tailwind-style numeric spacing aliases (canonical mapping for back-compat) */
     --ob-space-1: var(--ob-space-025); /* 4px */
     --ob-space-2: var(--ob-space-050); /* 8px */
