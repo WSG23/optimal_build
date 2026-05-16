@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 
 from backend._compat.datetime import utcnow
 
-from app.api.deps import Role, get_request_role
+from app.api.deps import RequestIdentity, Role, get_request_role, require_viewer
 from app.api.v1.agents import _load_optional_class
 from app.core.database import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -125,6 +125,7 @@ async def generate_professional_pack(
 async def download_generated_file(
     property_id: str,
     filename: str,
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> FileResponse:
     """Download a generated PDF file from local storage."""
 

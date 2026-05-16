@@ -8,6 +8,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.api.deps import RequestIdentity, require_viewer
+
 from app.core.database import get_session
 from app.core.metrics import MetricsCollector
 from app.models.property import PropertyType
@@ -86,6 +88,7 @@ async def generate_market_report(
         None, description="Optional competitive set"
     ),
     session: AsyncSession = Depends(get_session),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> MarketReportResponse:
     """Return a comprehensive market intelligence report for the requested segment."""
 
@@ -132,7 +135,7 @@ async def generate_market_report(
     return MarketReportResponse(report=payload, generated_at=report.generated_at)
 
 
-@router.get("/health")
+@router.get("/health")  # public-endpoint: liveness probe for CI smoke tests
 async def market_intelligence_health() -> dict[str, object]:
     """Expose dependency readiness for CI smoke tests."""
 

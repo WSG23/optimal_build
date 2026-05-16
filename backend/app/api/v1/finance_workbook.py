@@ -103,6 +103,7 @@ async def preview_import_finance_workbook(
     file: UploadFile = File(...),
     project_id: str | None = Form(default=None),
     project_name: str | None = Form(default=None),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> FinanceWorkbookPreviewResponse:
     """Preview an uploaded finance workbook before importing it."""
 

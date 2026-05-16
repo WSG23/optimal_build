@@ -46,7 +46,7 @@ from app.api.v1.developers_common import (
 from app.core.config import settings
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
-from app.api.deps import RequestIdentity, require_reviewer
+from app.api.deps import RequestIdentity, require_reviewer, require_viewer
 from app.models.property import Property
 from app.models.projects import Project, ProjectPhase, ProjectType
 from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
@@ -3272,6 +3272,7 @@ async def developer_log_property_by_gps(
     request: DeveloperGPSLogRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> DeveloperGPSLogResponse:
     """Log a property for developer workflows using GPS coordinates."""
 
@@ -3722,6 +3723,7 @@ async def link_capture_to_project(
 async def list_preview_jobs(
     property_id: UUID,
     session: AsyncSession = Depends(get_session),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> list[PreviewJobSchema]:
     """Return preview jobs associated with the property."""
 
@@ -3738,6 +3740,7 @@ async def create_preview_job(
     property_id: UUID,
     payload: PreviewJobCreateRequest,
     session: AsyncSession = Depends(get_session),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> PreviewJobSchema:
     """Queue a starter-model preview job for the requested scenario."""
 
@@ -3796,6 +3799,7 @@ async def create_preview_job(
 async def get_preview_job(
     job_id: UUID,
     session: AsyncSession = Depends(get_session),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> PreviewJobSchema:
     """Fetch a preview job by id."""
 
@@ -3814,6 +3818,7 @@ async def refresh_preview_job(
     job_id: UUID,
     refresh_request: PreviewJobRefreshRequest | None = None,
     session: AsyncSession = Depends(get_session),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> PreviewJobSchema:
     """Re-render a preview job using stored metadata."""
 

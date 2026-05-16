@@ -29,13 +29,15 @@ class UserResponse(BaseModel):
     message: str
 
 
-@router.get("/test")
+@router.get("/test")  # public-endpoint: smoke test for API availability
 def test_endpoint() -> dict[str, str]:
     """Super simple test to make sure API works."""
     return {"message": "Users API is working!", "status": "success"}
 
 
-@router.post("/signup", response_model=UserResponse)
+@router.post(
+    "/signup", response_model=UserResponse
+)  # public-endpoint: unauthenticated user registration
 def signup(user: UserSignup) -> UserResponse:
     """Register a new user (fake - just stores in memory)."""
 
@@ -59,7 +61,7 @@ def signup(user: UserSignup) -> UserResponse:
     )
 
 
-@router.get("/list")
+@router.get("/list")  # public-endpoint: dev-only fake DB lister (not production)
 def list_users() -> dict[str, Any]:
     """List all registered users (for testing)."""
     # Remove passwords from response
