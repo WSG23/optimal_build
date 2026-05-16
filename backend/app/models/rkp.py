@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import Any
 
 from app.core.config import settings
 from app.models.base import BaseModel
@@ -23,13 +24,18 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-try:  # pragma: no cover - geometry support is optional in test environments
-    if settings.BUILDABLE_USE_POSTGIS:
-        from geoalchemy2 import Geometry  # type: ignore[import-not-found]
-    else:  # pragma: no cover - simple guard
-        Geometry = None  # type: ignore[assignment]
-except ModuleNotFoundError:  # pragma: no cover - geoalchemy2 not installed
-    Geometry = None  # type: ignore[assignment]
+# Geometry is optional — PostGIS may be disabled, or geoalchemy2 may be absent
+# from the environment (e.g. SQLite test sandbox). Annotated as Any so mypy
+# accepts both the real class and the None sentinel without suppressions.
+Geometry: Any = None
+if settings.BUILDABLE_USE_POSTGIS:
+    try:  # pragma: no cover - geometry support is optional in test environments
+        # type-ignore-meta: owner=platform expires=2026-12-31 reason=optional geoalchemy2 import; absent in SQLite test sandbox
+        from geoalchemy2 import Geometry as _Geometry  # type: ignore[import-not-found]
+
+        Geometry = _Geometry
+    except ModuleNotFoundError:  # pragma: no cover - geoalchemy2 not installed
+        pass
 
 
 JSONType = FlexibleJSONB
@@ -188,10 +194,11 @@ class RefParcel(BaseModel):
 
     # Simplified geometry as JSON for now (will upgrade to PostGIS later)
     bounds_json = Column(JSONType)  # {"type": "Polygon", "coordinates": [...]}
-    if Geometry is not None:
-        geometry = Column(Geometry(geometry_type="MULTIPOLYGON", srid=4326))
-    else:  # pragma: no cover - exercised when PostGIS is disabled
-        geometry = None  # type: ignore[assignment]
+    geometry: Any = (
+        Column(Geometry(geometry_type="MULTIPOLYGON", srid=4326))
+        if Geometry is not None
+        else None
+    )
     centroid_lat = Column(Numeric(10, 7))
     centroid_lon = Column(Numeric(10, 7))
     area_m2 = Column(Numeric(12, 2))
@@ -221,10 +228,11 @@ class RefZoningLayer(BaseModel):
 
     # Simplified geometry as JSON for now
     bounds_json = Column(JSONType)  # GeoJSON MultiPolygon
-    if Geometry is not None:
-        geometry = Column(Geometry(geometry_type="MULTIPOLYGON", srid=4326))
-    else:  # pragma: no cover - exercised when PostGIS is disabled
-        geometry = None  # type: ignore[assignment]
+    geometry: Any = (
+        Column(Geometry(geometry_type="MULTIPOLYGON", srid=4326))
+        if Geometry is not None
+        else None
+    )
 
     effective_date = Column(DateTime(timezone=True))
     expiry_date = Column(DateTime(timezone=True))
@@ -246,8 +254,11 @@ class RefBuildingFootprint(BaseModel):
     footprint_ref = Column(String(100), index=True)
 
     bounds_json = Column(JSONType)
-    if Geometry is not None:
-        geometry = Column(Geometry(geometry_type="MULTIPOLYGON", srid=4326))
+    geometry: Any = (
+        Column(Geometry(geometry_type="MULTIPOLYGON", srid=4326))
+        if Geometry is not None
+        else None
+    )
 
     centroid_lat = Column(Numeric(10, 7))
     centroid_lon = Column(Numeric(10, 7))

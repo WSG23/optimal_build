@@ -21,9 +21,7 @@ dev = ["pytest>=7.4", "ruff>=0.4"]
 [tool.setuptools]
 packages = ["core", "jurisdictions", "scripts", "db"]
 
-[tool.pytest.ini_options]
-pythonpath = ["."]
-addopts = "-q"
+# pytest configuration lives in pytest.ini (takes precedence over pyproject.toml).
 
 [tool.black]
 line-length = 88
@@ -33,18 +31,11 @@ extend-exclude = """
 (
   ^/frontend
  | ^/ui-admin
- | ^/fastapi
- | ^/fastapi_shadow_.*
- | ^/starlette_shadow_.*
- | ^/pydantic_shadow_.*
  | ^/httpx
- | ^/sqlalchemy
- | ^/sqlalchemy_pkg_backup
  | ^/importlib
  | ^/uvicorn_app
  | ^/backend/_vendor
  | ^/backend/migrations
- | ^/backend/starlette
  | ^/backend/aiosqlite
 )
 """
@@ -59,18 +50,11 @@ exclude = [
     "dist",
     "frontend",
     "ui-admin",
-    "fastapi",
-    "fastapi_shadow_*",
-    "starlette_shadow_*",
-    "pydantic_shadow_*",
     "httpx",
-    "sqlalchemy",
-    "sqlalchemy_pkg_backup",
     "importlib",
     "uvicorn_app",
     "backend/_vendor",
     "backend/migrations",
-    "backend/starlette",
     "backend/aiosqlite",
 ]
 

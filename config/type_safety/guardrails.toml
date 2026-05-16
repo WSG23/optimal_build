@@ -85,22 +85,22 @@ owner = "platform"
 rationale = "Alembic migrations are intentionally excluded from strict type checking."
 
 [[mypy_ini_ignore_errors]]
-section = "mypy.fastapi"
+section = "mypy-fastapi"
 owner = "platform"
 rationale = "Third-party FastAPI stubs are incomplete in the current strict configuration."
 
 [[mypy_ini_ignore_errors]]
-section = "mypy.fastapi.*"
+section = "mypy-fastapi.*"
 owner = "platform"
 rationale = "Third-party FastAPI stubs are incomplete in the current strict configuration."
 
 [[mypy_ini_ignore_errors]]
-section = "mypy.sqlalchemy"
+section = "mypy-sqlalchemy"
 owner = "platform"
 rationale = "SQLAlchemy typing remains partially vendor-driven under the current mypy scope."
 
 [[mypy_ini_ignore_errors]]
-section = "mypy.sqlalchemy.*"
+section = "mypy-sqlalchemy.*"
 owner = "platform"
 rationale = "SQLAlchemy typing remains partially vendor-driven under the current mypy scope."
 
@@ -125,11 +125,11 @@ owner = "platform"
 rationale = "Third-party Pydantic internals are followed for BaseModel typing but should not fail repo checks."
 
 [[mypy_ini_ignore_errors]]
-section = "mypy.httpx"
+section = "mypy-httpx"
 owner = "platform"
 rationale = "Vendored httpx compatibility shims are outside the current strict cleanup pass."
 
 [[mypy_ini_ignore_errors]]
-section = "mypy.httpx.*"
+section = "mypy-httpx.*"
 owner = "platform"
 rationale = "Vendored httpx compatibility shims are outside the current strict cleanup pass."
