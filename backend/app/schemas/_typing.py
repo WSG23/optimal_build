@@ -13,7 +13,7 @@ ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
 def typed_import_module(name: str) -> ModuleType:
-    return import_module(name)
+    return cast(ModuleType, import_module(name))
 
 
 def validate_model(
@@ -23,8 +23,8 @@ def validate_model(
     from_attributes: bool = False,
 ) -> ModelT:
     if from_attributes:
-        return model_cls.model_validate(value, from_attributes=True)
-    return model_cls.model_validate(value)
+        return cast(ModelT, model_cls.model_validate(value, from_attributes=True))
+    return cast(ModelT, model_cls.model_validate(value))
 
 
 def dump_model(

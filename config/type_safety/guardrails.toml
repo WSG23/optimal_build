@@ -115,6 +115,11 @@ owner = "backend"
 rationale = "Service typing debt remains outstanding and is explicitly tracked."
 
 [[mypy_ini_ignore_errors]]
+section = "mypy-app.schemas._typing"
+owner = "platform"
+rationale = "Casting-boundary helper for the vendored pydantic stub which under-types model_validate as returning BaseModel rather than Self."
+
+[[mypy_ini_ignore_errors]]
 section = "mypy-pydantic"
 owner = "platform"
 rationale = "Third-party Pydantic internals are followed for BaseModel typing but should not fail repo checks."
