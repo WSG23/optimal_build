@@ -281,11 +281,11 @@ class PortfolioOptimizerService:
             return []
 
         # Group by asset type
-        by_type = {}
+        by_type: dict[str, float] = {}
         for deal in deals:
             asset_type = deal.asset_type.value
             if asset_type not in by_type:
-                by_type[asset_type] = 0
+                by_type[asset_type] = 0.0
             by_type[asset_type] += float(deal.estimated_value_amount or 0)
 
         # Create allocation list
