@@ -89,6 +89,26 @@ repos:
         files: ^backend/app/(api|schemas)/
         exclude: ^backend/app/(api/v1/test_users\.py|schemas/buildable\.py|api/v1/users_secure\.py)$
 
+      - id: design-tokens
+        name: Design token enforcement (undefined refs + new hardcodes)
+        entry: python3 scripts/check_design_tokens.py
+        language: system
+        pass_filenames: false
+        files: ^(frontend/src/.*\.(tsx|ts|css)|core/design-tokens/.*\.css)$
+
+      - id: auth-required
+        name: Auth-required scanner (FastAPI endpoints)
+        entry: python3 scripts/check_auth_required.py
+        language: system
+        pass_filenames: false
+        files: ^backend/app/api/v1/.*\.py$
+
+      - id: secrets-scan
+        name: Secrets detection (credentials in staged files)
+        entry: python3 scripts/check_secrets.py
+        language: system
+        pass_filenames: false
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
