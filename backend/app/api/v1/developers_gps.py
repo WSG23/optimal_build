@@ -487,7 +487,7 @@ def _augment_rule_corpus_status_for_envelope(
     setback_front: float | None,
     setback_rear: float | None,
     setback_side: float | None,
-    step_backs: list[object],
+    step_backs: Sequence[object],
     air_rights_note: str | None,
 ) -> dict[str, Any] | None:
     if not raw_status:
@@ -3832,7 +3832,11 @@ async def refresh_preview_job(
             geometry_detail_level=(
                 refresh_request.geometry_detail_level if refresh_request else None
             ),
-            color_legend=(refresh_request.color_legend if refresh_request else None),
+            color_legend=(
+                [entry.model_dump() for entry in refresh_request.color_legend]
+                if refresh_request and refresh_request.color_legend
+                else None
+            ),
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

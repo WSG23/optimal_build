@@ -126,6 +126,9 @@ class DevelopmentPotentialScanner:
             Development analysis results
         """
         try:
+            analysis: (
+                RawLandAnalysis | ExistingBuildingAnalysis | HistoricalPropertyAnalysis
+            )
             if property_type == "raw_land":
                 analysis = await self._analyze_raw_land(property_data, session)
             elif property_type == "existing_building":
@@ -306,8 +309,8 @@ class DevelopmentPotentialScanner:
         }
 
         # Get base template
-        zone_description = getattr(zoning_info, "zone_description", None)
-        base_mix = use_mix_templates.get(zone_description, {"mixed": 1.0})
+        zone_description = getattr(zoning_info, "zone_description", None) or ""
+        base_mix = use_mix_templates.get(str(zone_description), {"mixed": 1.0})
 
         # Adjust based on market conditions and location factors
         adjusted_mix = self._apply_market_adjustments(base_mix, zoning_info, location)
