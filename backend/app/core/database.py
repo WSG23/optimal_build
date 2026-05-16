@@ -28,18 +28,34 @@ def _sqlite_fallback_url() -> str:
     return f"sqlite+aiosqlite:///{repo_root / '.devstack' / 'app.db'}"
 
 
-def _resolve_database_url() -> str:
+def resolve_database_url() -> str:
     url = settings.SQLALCHEMY_DATABASE_URI
     if url.startswith("postgresql+asyncpg") and find_spec("asyncpg") is None:
         return _sqlite_fallback_url()
     return url
 
 
-engine: AsyncEngine = create_async_engine(
-    _resolve_database_url(),
-    echo=True,
-    future=True,
-)
+_DB_URL = resolve_database_url()
+_IS_SQLITE = _DB_URL.startswith("sqlite")
+
+# Pool tuning is per-process. Total Postgres connections =
+#   (DB_POOL_SIZE + DB_MAX_OVERFLOW) * (uvicorn + celery + rq workers).
+# pool_pre_ping adds a cheap SELECT 1 before checkout to avoid first-request
+# 500s when Postgres / network middleboxes silently drop idle connections.
+# SQLite (dev fallback) rejects pool_size / max_overflow, so we only pass them
+# for Postgres.
+_engine_kwargs: dict[str, Any] = {
+    "echo": settings.ENVIRONMENT == "development",
+    "future": True,
+}
+if not _IS_SQLITE:
+    _engine_kwargs.update(
+        pool_pre_ping=True,
+        pool_size=settings.DB_POOL_SIZE,
+        max_overflow=settings.DB_MAX_OVERFLOW,
+    )
+
+engine: AsyncEngine = create_async_engine(_DB_URL, **_engine_kwargs)
 
 logger = logging.getLogger("app.database")
 _SLOW_QUERY_THRESHOLD = settings.SLOW_QUERY_THRESHOLD_SECONDS

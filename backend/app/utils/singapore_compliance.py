@@ -12,7 +12,7 @@ from typing import Any, Awaitable, Callable, Dict, Iterable, TypeVar
 
 from backend._compat.datetime import utcnow
 
-from app.core.database import _resolve_database_url
+from app.core.database import resolve_database_url
 from app.models.rkp import RefRule
 from app.models.singapore_property import ComplianceStatus, SingaporeProperty
 from sqlalchemy import select
@@ -34,7 +34,7 @@ async def _run_with_temporary_async_session(
 ) -> _T:
     """Execute ``callback`` with an isolated async session for sync callers."""
 
-    engine = create_async_engine(_resolve_database_url(), future=True, echo=False)
+    engine = create_async_engine(resolve_database_url(), future=True, echo=False)
     session_factory = async_sessionmaker(bind=engine, expire_on_commit=False)
     try:
         async with session_factory() as session:

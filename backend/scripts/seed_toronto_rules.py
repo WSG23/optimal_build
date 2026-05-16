@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.core.database import _resolve_database_url
+from app.core.database import resolve_database_url
 from app.models.rkp import RefRule, RefSource
 
 # Toronto Zoning By-law 569-2013 Rules
@@ -428,7 +428,7 @@ async def main() -> None:
     print("Seeding Toronto Zoning By-law 569-2013 and OBC rules...")
     print("-" * 50)
 
-    engine = create_async_engine(_resolve_database_url(), future=True, echo=False)
+    engine = create_async_engine(resolve_database_url(), future=True, echo=False)
     session_factory = async_sessionmaker(bind=engine, expire_on_commit=False)
 
     try:

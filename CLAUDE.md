@@ -64,6 +64,21 @@ Run `/simplify` before presenting code to the user.
 
 ---
 
+## Scope Handling - Fix Errors You Come Across
+
+If you encounter a coding error, bug, or code smell outside the current task's scope, **fix it anyway** rather than just flagging it. This includes:
+- Wrong driver/library names in docs or comments
+- Imports of private (`_`-prefixed) members from other modules
+- Dead code, unused imports, dead branches
+- Typos, broken doc links, stale references
+- Obvious bugs (missing `await`, swallowed exceptions, off-by-one)
+
+**Always mention what you fixed in your summary** so the user sees the scope expansion.
+
+**Exception:** if the fix is large, risky, or would change behavior in ways the user might object to (architectural refactors, dependency changes, API contract changes), surface it first instead of silently expanding scope.
+
+---
+
 ## Before Starting Any Task
 
 | Question | Where to Check |

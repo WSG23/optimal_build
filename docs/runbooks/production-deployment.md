@@ -322,6 +322,36 @@ print(engine.pool.status())
 - Scale up pods
 - Check for resource exhaustion
 
+### Connection Pooling (PgBouncer)
+
+The backend uses SQLAlchemy's in-process async pool (see
+[backend/app/core/database.py](../../backend/app/core/database.py)), sized via
+`DB_POOL_SIZE` (default `10`) and `DB_MAX_OVERFLOW` (default `20`). Total
+Postgres connections per deployment ≈
+`(DB_POOL_SIZE + DB_MAX_OVERFLOW) × (backend workers + celery workers + rq workers)`.
+
+**Add PgBouncer in front of Postgres when any of the following is true:**
+- Running more than 2 backend workers in production **and** Celery/RQ workers are
+  also active (combined connection count approaches Postgres `max_connections`).
+- Migrating to managed Postgres with a connection cap below ~200 (e.g. Supabase,
+  small RDS/Aurora tiers, Neon free/pro).
+- Observing `FATAL: sorry, too many clients already` or asyncpg
+  `TooManyConnectionsError` / `remaining connection slots are reserved` in
+  backend logs.
+- Cold-start latency spikes correlate with connection storms (new pods opening
+  fresh pools against an already-saturated Postgres).
+
+**When configuring PgBouncer:**
+- Use `transaction` pooling mode (best for short-lived FastAPI requests).
+- Disable asyncpg's prepared statement cache — transaction pooling reuses
+  backends across clients, which breaks prepared statement caching. In
+  [backend/app/core/database.py](../../backend/app/core/database.py), pass
+  `connect_args={"statement_cache_size": 0}` to `create_async_engine`.
+- Avoid `LISTEN/NOTIFY` and session-scoped `SET` statements; they don't survive
+  transaction pooling.
+- Set the app's `DB_POOL_SIZE` low (e.g. 2–5) once PgBouncer fronts the DB; the
+  bouncer becomes the real pool. No code change needed — env var only.
+
 ### Issue: SSL Certificate Errors
 
 **Symptoms:**

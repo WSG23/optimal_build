@@ -266,6 +266,8 @@ class Settings:
     ALLOW_VIEWER_MUTATIONS: bool
     LISTING_TOKEN_SECRET: str
     SLOW_QUERY_THRESHOLD_SECONDS: float
+    DB_POOL_SIZE: int
+    DB_MAX_OVERFLOW: int
     PREVIEW_MAX_VERSIONS: int
     PREVIEW_GEOMETRY_DETAIL_LEVEL: str
     CAPTURE_LIVE_SOURCE_SCAN_ENABLED: bool
@@ -392,6 +394,11 @@ class Settings:
             "SLOW_QUERY_THRESHOLD_SECONDS",
             default_threshold,
         )
+        # Per-process SQLAlchemy pool sizing. Total Postgres connections =
+        # (DB_POOL_SIZE + DB_MAX_OVERFLOW) * (uvicorn + celery + rq workers).
+        # Drop DB_POOL_SIZE to 2-5 if a PgBouncer fronts Postgres (see runbook).
+        self.DB_POOL_SIZE = _load_positive_int("DB_POOL_SIZE", 10)
+        self.DB_MAX_OVERFLOW = _load_positive_int("DB_MAX_OVERFLOW", 20)
         self.OFFLINE_MODE = _load_bool("OFFLINE_MODE", False)
         self.PREVIEW_MAX_VERSIONS = _load_positive_int("PREVIEW_MAX_VERSIONS", 3)
         self.PREVIEW_GEOMETRY_DETAIL_LEVEL = _load_geometry_detail_level()
