@@ -269,7 +269,9 @@ async def create_property(
     return PropertyResponse.from_orm(new_property)
 
 
-@router.get("/list", response_model=list[PropertyResponse])
+@router.get(
+    "/list", response_model=list[PropertyResponse]
+)  # public-endpoint: viewable property catalog
 async def list_properties(
     db: AsyncSession = Depends(get_session),
     acquisition_status: AcquisitionStatus | None = Query(None),

@@ -118,10 +118,10 @@ import json
 import sys
 
 helper_modules = {json.dumps(helper_modules)}
-for name in helper_modules + ["app.api.v1.projects_api"]:
+for name in helper_modules + ["app.api.v1.projects"]:
     sys.modules.pop(name, None)
 
-projects_module = importlib.import_module("app.api.v1.projects_api")
+projects_module = importlib.import_module("app.api.v1.projects")
 print(
     json.dumps(
         {{
