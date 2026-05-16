@@ -1234,7 +1234,7 @@ async def export_argus_scenario(
         "id": f"PROP-{scenario.id}",
         "name": scenario.name,
         "gfa_sqft": 0,  # Should fetch from project
-        "year_built": datetime.utcnow().year,
+        "year_built": datetime.now(timezone.utc).year,
     }
 
     service = get_argus_export_service()
