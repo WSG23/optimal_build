@@ -32,6 +32,8 @@ describe('requestStarterModelForScenario', () => {
             clear_ceiling_m: 2.7,
             hvac_space_ratio_pct: 7,
             electrical_space_ratio_pct: 4,
+            structural_grid_note:
+              'Existing structural grid assumed to be retained until survey.',
             retention_strategy: 'preserve_existing_bulk',
             efficiency_factor: 0.96,
             source: 'hybrid',
@@ -113,6 +115,8 @@ describe('requestStarterModelForScenario', () => {
       starterModelAssumptions: {
         floorToFloorM: 3.7,
         source: 'hybrid',
+        structuralGridNote:
+          'Existing structural grid assumed to be retained until survey.',
         retentionStrategy: 'preserve_existing_bulk',
         efficiencyFactor: 0.96,
         provenance: {

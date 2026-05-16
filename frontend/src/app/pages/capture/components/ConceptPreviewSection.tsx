@@ -14,6 +14,7 @@ import { Card } from '../../../../components/canonical/Card'
 import { Button } from '../../../../components/canonical/Button'
 
 import type { CaptureResultV2StarterModel } from './useStarterModelMemos'
+import type { PreviewFallbackMassingInput } from '../../../components/site-acquisition/previewFallbackMassing'
 
 const Preview3DViewer = lazy(async () => {
   const module =
@@ -37,6 +38,7 @@ export interface ConceptPreviewSectionProps {
   supportsFullCompliance: boolean
   previewMetadataError: string | null
   previewGenerationError: string | null
+  fallbackMassing: PreviewFallbackMassingInput | null
 }
 
 export function ConceptPreviewSection({
@@ -53,6 +55,7 @@ export function ConceptPreviewSection({
   supportsFullCompliance,
   previewMetadataError,
   previewGenerationError,
+  fallbackMassing,
 }: ConceptPreviewSectionProps) {
   return (
     <section className="site-acquisition__preview">
@@ -145,6 +148,7 @@ export function ConceptPreviewSection({
             metadataUrl={effectiveStarterModel.metadataUrl}
             status={effectiveStarterModel.status}
             thumbnailUrl={effectiveStarterModel.thumbnailUrl}
+            fallbackMassing={fallbackMassing}
           />
         </Suspense>
 

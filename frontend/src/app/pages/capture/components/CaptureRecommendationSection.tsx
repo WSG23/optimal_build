@@ -45,6 +45,7 @@ export interface CaptureRecommendationSectionProps {
     heritageSummary: string
     zoningSummary: string
   }
+  technicalBriefRows?: Array<[string, string]>
   captureDataBasis: CaptureDataBasisItem[]
   reasonCodes: string[]
   handleSaveProjectOverride: () => void
@@ -244,6 +245,7 @@ export function CaptureRecommendationSection({
   currentProject,
   confidence,
   scenarioFitSummary,
+  technicalBriefRows = [],
   captureDataBasis,
   reasonCodes,
   handleSaveProjectOverride,
@@ -312,6 +314,7 @@ export function CaptureRecommendationSection({
     ['GPR', scenarioFitSummary.gprSummary],
     ['GFA envelope', scenarioFitSummary.headroomSummary],
     ['Code fit', scenarioFitSummary.comparisonSummary],
+    ...technicalBriefRows,
   ]
 
   return (

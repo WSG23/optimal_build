@@ -1,7 +1,18 @@
-import { useEffect, useRef, useState } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MutableRefObject,
+} from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import {
+  buildPreviewFallbackMassing,
+  type PreviewFallbackMassingInput,
+  type PreviewFallbackMassingSpec,
+} from './previewFallbackMassing'
 
 interface Preview3DViewerProps {
   previewUrl: string | null
@@ -10,6 +21,7 @@ interface Preview3DViewerProps {
   thumbnailUrl?: string | null
   layerVisibility?: Record<string, boolean>
   focusLayerId?: string | null
+  fallbackMassing?: PreviewFallbackMassingInput | null
 }
 
 type PreviewMetadata = {
@@ -51,6 +63,7 @@ export function Preview3DViewer({
   thumbnailUrl,
   layerVisibility,
   focusLayerId = null,
+  fallbackMassing = null,
 }: Preview3DViewerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
@@ -69,6 +82,10 @@ export function Preview3DViewer({
   const [isLoading, setIsLoading] = useState(false)
   const [metadataWarning, setMetadataWarning] = useState<string | null>(null)
   const normalizedStatus = normalizePreviewStatus(status)
+  const fallbackMassingSpec = useMemo(
+    () => buildPreviewFallbackMassing(fallbackMassing),
+    [fallbackMassing],
+  )
 
   layerVisibilityRef.current = layerVisibility
   focusLayerIdRef.current = focusLayerId
@@ -346,6 +363,62 @@ export function Preview3DViewer({
   }, [previewUrl, metadataUrl])
 
   useEffect(() => {
+    if (previewUrl || !fallbackMassingSpec) {
+      return undefined
+    }
+
+    const container = containerRef.current
+    if (!container) {
+      return undefined
+    }
+
+    setIsLoading(false)
+    setError(null)
+    setMetadataWarning(null)
+
+    if (animationRef.current !== null) {
+      cancelAnimationFrame(animationRef.current)
+      animationRef.current = null
+    }
+    if (controlsRef.current) {
+      controlsRef.current.dispose()
+      controlsRef.current = null
+    }
+    if (rendererRef.current) {
+      rendererRef.current.dispose()
+      rendererRef.current = null
+    }
+    if (sceneRef.current) {
+      disposeScene(sceneRef.current)
+      sceneRef.current = null
+    }
+    container.innerHTML = ''
+
+    try {
+      const cleanup = renderFallbackMassingScene({
+        container,
+        fallbackMassingSpec,
+        rendererRef,
+        sceneRef,
+        cameraRef,
+        controlsRef,
+        animationRef,
+        defaultCameraStateRef,
+        layerObjectsRef,
+        layerVisibility,
+      })
+      return cleanup
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to render envelope starter model.',
+      )
+      return undefined
+    }
+  }, [fallbackMassingSpec, layerVisibility, previewUrl])
+
+  useEffect(() => {
     updateMeshVisibility(layerObjectsRef.current, layerVisibility)
     // Re-render scene after visibility changes
     if (rendererRef.current && sceneRef.current && cameraRef.current) {
@@ -368,7 +441,7 @@ export function Preview3DViewer({
     }
   }, [focusLayerId])
 
-  if (!previewUrl) {
+  if (!previewUrl && !fallbackMassingSpec) {
     const statusState = getPreviewStatusState(normalizedStatus)
 
     return (
@@ -418,6 +491,11 @@ export function Preview3DViewer({
         className="site-acquisition__preview-viewer-canvas"
         style={{ height: `${FALLBACK_HEIGHT}px` }}
       />
+      {!previewUrl && fallbackMassingSpec && !error && (
+        <p className="site-acquisition__preview-viewer-note">
+          Envelope starter model from resolved zoning and parcel controls.
+        </p>
+      )}
       {isLoading && (
         <p className="site-acquisition__preview-viewer-note">
           Loading starter model assets…
@@ -449,6 +527,164 @@ export function Preview3DViewer({
       )}
     </div>
   )
+}
+
+function renderFallbackMassingScene({
+  container,
+  fallbackMassingSpec,
+  rendererRef,
+  sceneRef,
+  cameraRef,
+  controlsRef,
+  animationRef,
+  defaultCameraStateRef,
+  layerObjectsRef,
+  layerVisibility,
+}: {
+  container: HTMLDivElement
+  fallbackMassingSpec: PreviewFallbackMassingSpec
+  rendererRef: MutableRefObject<THREE.WebGLRenderer | null>
+  sceneRef: MutableRefObject<THREE.Scene | null>
+  cameraRef: MutableRefObject<THREE.PerspectiveCamera | null>
+  controlsRef: MutableRefObject<OrbitControls | null>
+  animationRef: MutableRefObject<number | null>
+  defaultCameraStateRef: MutableRefObject<{
+    position: THREE.Vector3
+    target: THREE.Vector3
+  } | null>
+  layerObjectsRef: MutableRefObject<LayerObjectMap>
+  layerVisibility?: Record<string, boolean>
+}) {
+  const width = container.clientWidth || 640
+  const height = container.clientHeight || FALLBACK_HEIGHT
+  const scene = new THREE.Scene()
+  scene.background = new THREE.Color('#0f1115')
+  sceneRef.current = scene
+
+  const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 5000)
+  cameraRef.current = camera
+
+  const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true,
+  })
+  renderer.shadowMap.enabled = true
+  renderer.setPixelRatio(window.devicePixelRatio)
+  renderer.setSize(width, height)
+  rendererRef.current = renderer
+  container.appendChild(renderer.domElement)
+
+  const controls = new OrbitControls(camera, renderer.domElement)
+  controls.enableDamping = true
+  controls.dampingFactor = 0.05
+  controlsRef.current = controls
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.82)
+  scene.add(ambient)
+
+  const directional = new THREE.DirectionalLight(0xffffff, 0.92)
+  directional.position.set(120, 220, 160)
+  directional.castShadow = true
+  scene.add(directional)
+
+  const root = new THREE.Group()
+  root.name = 'envelope_fallback_massing'
+  layerObjectsRef.current = new Map()
+
+  fallbackMassingSpec.layers.forEach((layer) => {
+    const geometry = new THREE.BoxGeometry(
+      layer.widthM,
+      layer.heightM,
+      layer.depthM,
+    )
+    const material = new THREE.MeshStandardMaterial({
+      color: layer.color,
+      roughness: 0.62,
+      metalness: 0.04,
+      transparent: true,
+      opacity: 0.92,
+    })
+    const mesh = new THREE.Mesh(geometry, material)
+    mesh.name = layer.id
+    mesh.userData = { layer_id: layer.id, label: layer.label }
+    mesh.position.set(0, layer.yOffsetM + layer.heightM / 2, 0)
+    mesh.castShadow = true
+    mesh.receiveShadow = true
+    root.add(mesh)
+    layerObjectsRef.current.set(layer.id, [mesh])
+  })
+
+  scene.add(root)
+  updateMeshVisibility(layerObjectsRef.current, layerVisibility)
+
+  const groundSpan =
+    Math.max(
+      fallbackMassingSpec.footprintWidthM,
+      fallbackMassingSpec.footprintDepthM,
+      20,
+    ) * 1.75
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(groundSpan, groundSpan),
+    new THREE.MeshStandardMaterial({
+      color: '#1f2937',
+      roughness: 0.95,
+      metalness: 0.02,
+    }),
+  )
+  ground.rotation.x = -Math.PI / 2
+  ground.position.y = -0.05
+  ground.receiveShadow = true
+  scene.add(ground)
+
+  const bounds = new THREE.Box3().setFromObject(root)
+  const size = bounds.getSize(new THREE.Vector3())
+  const center = bounds.getCenter(new THREE.Vector3())
+  const radius = Math.max(size.x, size.y, size.z, 30) * 1.55
+  const target = new THREE.Vector3(center.x, center.y * 0.65, center.z)
+  camera.position.set(
+    target.x + radius,
+    target.y + radius * 0.8,
+    target.z + radius,
+  )
+  camera.lookAt(target)
+  controls.target.copy(target)
+  controls.update()
+  defaultCameraStateRef.current = {
+    position: camera.position.clone(),
+    target: controls.target.clone(),
+  }
+
+  const animate = () => {
+    animationRef.current = requestAnimationFrame(animate)
+    controls.update()
+    renderer.render(scene, camera)
+  }
+  animate()
+
+  const handleResize = () => {
+    const newWidth = container.clientWidth || width
+    const newHeight = container.clientHeight || height
+    camera.aspect = newWidth / newHeight
+    camera.updateProjectionMatrix()
+    renderer.setSize(newWidth, newHeight)
+  }
+
+  window.addEventListener('resize', handleResize)
+
+  return () => {
+    window.removeEventListener('resize', handleResize)
+    if (animationRef.current !== null) {
+      cancelAnimationFrame(animationRef.current)
+      animationRef.current = null
+    }
+    controls.dispose()
+    renderer.dispose()
+    disposeScene(scene)
+    sceneRef.current = null
+    rendererRef.current = null
+    controlsRef.current = null
+    layerObjectsRef.current = new Map()
+  }
 }
 
 function normalizePreviewStatus(status: string): NormalizedPreviewStatus {

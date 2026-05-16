@@ -170,6 +170,9 @@ interface OfficialSourceGapSummary {
   field: string
   label: string
   workflow: string | null
+  reason: string | null
+  sourceValue: string | null
+  reviewNote: string | null
 }
 
 function getOfficialSourceGapSummaries(
@@ -223,6 +226,11 @@ function getOfficialSourceGapSummaries(
           ? `${label} (${authorities.join(', ')})`
           : label,
         workflow: workflows[0] ?? null,
+        reason: typeof record.reason === 'string' ? record.reason : null,
+        sourceValue:
+          typeof record.source_value === 'string' ? record.source_value : null,
+        reviewNote:
+          typeof record.review_note === 'string' ? record.review_note : null,
       }
     })
     .filter((entry): entry is OfficialSourceGapSummary => Boolean(entry))
@@ -337,6 +345,73 @@ function getLiveSourceScanSummary(
     tone: hasPendingWork || failed ? 'warning' : 'success',
     statusLabel: hasPendingWork || failed ? 'Review required' : 'Resolved',
   }
+}
+
+interface ControlAutomationDependencySummary {
+  label: string
+  status: string
+  action: string
+}
+
+function getControlAutomationDependencies(
+  value: unknown,
+): ControlAutomationDependencySummary[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return value
+    .map((entry): ControlAutomationDependencySummary | null => {
+      const record = getObjectRecord(entry)
+      const label = typeof record?.label === 'string' ? record.label : null
+      const status = typeof record?.status === 'string' ? record.status : null
+      const action = typeof record?.action === 'string' ? record.action : null
+      if (!label || !status || !action) {
+        return null
+      }
+      return { label, status, action }
+    })
+    .filter((entry): entry is ControlAutomationDependencySummary =>
+      Boolean(entry),
+    )
+}
+
+function formatControlAutomationStatus(status: string): string {
+  return status
+    .replace(/^source_mapping_required$/, 'source mapping required')
+    .replace(
+      /^site_specific_control_required$/,
+      'site-specific control required',
+    )
+    .replace(/^project_clearance_required$/, 'project clearance required')
+    .replace(/_/g, ' ')
+}
+
+function formatControlAutomationDependencies(
+  dependencies: ControlAutomationDependencySummary[],
+): string {
+  return `${dependencies
+    .slice(0, 4)
+    .map(
+      (dependency) =>
+        `${dependency.label}: ${formatControlAutomationStatus(dependency.status)}`,
+    )
+    .join('; ')}${dependencies.length > 4 ? '; ...' : ''}.`
+}
+
+function getSiteSpecificGprSummary(
+  gaps: OfficialSourceGapSummary[],
+): string | null {
+  const gap = gaps.find(
+    (entry) =>
+      entry.field === 'plot_ratio' &&
+      entry.reason === 'envelope_control_area_requires_site_specific_controls',
+  )
+  if (!gap) {
+    return null
+  }
+  return gap.sourceValue
+    ? `Site-specific envelope control required (${gap.sourceValue})`
+    : 'Site-specific envelope control required'
 }
 
 function formatRuleFieldSummary(fields: string[]): string {
@@ -515,6 +590,13 @@ export function useStarterModelMemos({
 
   const scenarioFitSummary = useMemo(() => {
     const codeConstraints = captureResultV2.codeConstraints
+    const ruleCorpusStatus = getObjectRecord(
+      captureResultV2.sourceCapture.buildEnvelope.ruleCorpusStatus,
+    )
+    const officialSourceGapSummaries = getOfficialSourceGapSummaries(
+      ruleCorpusStatus?.official_source_gaps,
+      codeConstraints,
+    )
     const comparisonSummary =
       codeConstraints.currentVsCodeStatus === 'above'
         ? 'Current GFA exceeds today\u2019s code envelope and may reflect a grandfathered condition.'
@@ -557,7 +639,8 @@ export function useStarterModelMemos({
         ? formatNumber(codeConstraints.grossPlotRatio, {
             maximumFractionDigits: 2,
           })
-        : 'GPR unresolved'
+        : (getSiteSpecificGprSummary(officialSourceGapSummaries) ??
+          'GPR unresolved')
 
     const heritageSummary = captureResultV2.siteContext.heritageOverlay
       ? `Context: ${captureResultV2.siteContext.heritageOverlay}.`
@@ -572,6 +655,7 @@ export function useStarterModelMemos({
     }
   }, [
     captureResultV2.codeConstraints,
+    captureResultV2.sourceCapture.buildEnvelope.ruleCorpusStatus,
     captureResultV2.siteContext,
     formatNumber,
   ])
@@ -608,6 +692,9 @@ export function useStarterModelMemos({
       .map((gap) => gap.label)
     const liveSourceScanSummary = getLiveSourceScanSummary(
       ruleCorpusStatus?.official_source_ingestion,
+    )
+    const controlAutomationDependencies = getControlAutomationDependencies(
+      ruleCorpusStatus?.automation_dependencies,
     )
 
     const items: CaptureDataBasisItem[] = [
@@ -737,10 +824,21 @@ export function useStarterModelMemos({
     if (sourceIngestionGaps.length > 0) {
       const sourceList = `${sourceIngestionGaps.slice(0, 4).join(', ')}${sourceIngestionGaps.length > 4 ? ', ...' : ''}`
       items.push({
-        label: 'Control source status',
+        label: 'Control automation path',
         value: `${sourceList} ${sourceIngestionGaps.length === 1 ? 'has' : 'have'} official source categories identified, but Capture has not mapped reviewed values for this zone yet.`,
         tone: 'warning',
         statusLabel: 'Control source not mapped',
+      })
+    }
+
+    if (controlAutomationDependencies.length > 0) {
+      items.push({
+        label: 'Next automation dependencies',
+        value: formatControlAutomationDependencies(
+          controlAutomationDependencies,
+        ),
+        tone: 'warning',
+        statusLabel: 'Automation dependencies',
       })
     }
 
@@ -982,15 +1080,19 @@ export function useStarterModelMemos({
         ? 'Rule defaults with property-specific adjustments'
         : summary === 'rules_only'
           ? 'Starter model defaults'
-          : summary === 'frontend_fallback_defaults'
-            ? 'Frontend fallback defaults'
-            : assumptions.source === 'hybrid'
-              ? 'Mixed-source assumptions'
-              : assumptions.source === 'heuristic_fallback'
-                ? 'Heuristic fallback defaults'
-                : assumptions.source === 'rules'
-                  ? 'Starter model defaults'
-                  : assumptions.source.replace(/_/g, ' ')
+          : summary === 'common_practice_assumptions_with_property_adjustments'
+            ? 'Common-practice assumptions with property-specific adjustments'
+            : summary === 'common_practice_assumptions'
+              ? 'Common-practice assumptions'
+              : summary === 'frontend_fallback_defaults'
+                ? 'Frontend fallback defaults'
+                : assumptions.source === 'hybrid'
+                  ? 'Mixed-source assumptions'
+                  : assumptions.source === 'heuristic_fallback'
+                    ? 'Common-practice assumptions'
+                    : assumptions.source === 'rules'
+                      ? 'Starter model defaults'
+                      : assumptions.source.replace(/_/g, ' ')
 
     if (!adjustments.length) {
       return `Assumption source: ${summaryLabel}.`

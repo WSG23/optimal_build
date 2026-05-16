@@ -313,6 +313,9 @@ export function useUnifiedCapture({
   const setAddress = useCallback(
     (value: string) => {
       setAddressState(value)
+      setCaptureError(null)
+      setGeocodeError(null)
+      lastGeocodeErrorRef.current = null
       if (value.trim() !== lastGeocodedAddressRef.current) {
         clearAddressResolvedCoordinates()
       }

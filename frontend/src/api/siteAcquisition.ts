@@ -93,6 +93,7 @@ export interface DeveloperMassingLayer {
   assetType: string
   allocationPct: number
   gfaSqm: number | null
+  footprintAreaSqm?: number | null
   niaSqm: number | null
   estimatedHeightM: number | null
   color: string
@@ -883,6 +884,10 @@ function mapDeveloperVisualization(
             coerceNumeric(item.allocationPct)
           const gfaSqm =
             coerceNumeric(item.gfa_sqm) ?? coerceNumeric(item.gfaSqm) ?? null
+          const footprintAreaSqm =
+            coerceNumeric(item.footprint_area_sqm) ??
+            coerceNumeric(item.footprintAreaSqm) ??
+            null
           const niaSqm =
             coerceNumeric(item.nia_sqm) ?? coerceNumeric(item.niaSqm) ?? null
           const estimatedHeight =
@@ -897,12 +902,13 @@ function mapDeveloperVisualization(
             assetType,
             allocationPct,
             gfaSqm,
+            footprintAreaSqm,
             niaSqm,
             estimatedHeightM: estimatedHeight,
             color,
           }
         })
-        .filter((layer): layer is DeveloperMassingLayer => layer !== null)
+        .filter((layer): layer is NonNullable<typeof layer> => layer !== null)
     : []
 
   const rawLegend = Array.isArray(payload?.color_legend)
@@ -1228,9 +1234,10 @@ function mapCaptureEngineeringAssumptions(
       coerceNumeric(item.electrical_space_ratio_pct) ??
       coerceNumeric(item.electricalSpaceRatioPct) ??
       null,
-    structuralGridNote: retentionStrategy
-      ? retentionStrategy.replace(/_/g, ' ')
-      : null,
+    structuralGridNote:
+      coerceString(item.structural_grid_note) ??
+      coerceString(item.structuralGridNote) ??
+      null,
     source,
     retentionStrategy,
     efficiencyFactor,

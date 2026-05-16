@@ -529,7 +529,7 @@ describe('DeveloperResults', () => {
       'Capture currently recommends Adaptive Reuse first.',
     )
     expect(screen.getByTestId('ai-insight-text').textContent).toContain(
-      'with no setback or floor-by-floor compliance modelling',
+      'with resolved setback controls where available, but no floor-by-floor compliance modelling',
     )
     expect(screen.getByTestId('ai-is-generating').textContent).toBe('idle')
     expect(
@@ -728,6 +728,28 @@ describe('DeveloperResults', () => {
     expect(screen.getByText('Starter Model Assumptions')).toBeInTheDocument()
     expect(screen.getByText('Decision Brief')).toBeInTheDocument()
     expect(screen.getByText("Today's zoning program")).toBeInTheDocument()
+    expect(screen.getByText('Height / coverage')).toBeInTheDocument()
+    expect(
+      screen.getByText('height 120 m / site coverage 80%'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Setbacks')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Requires road category, road buffer, and plot-boundary geometry before setback lines can be computed.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Terrain / slope')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Requires terrain/elevation data; this is not a building-code value.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Solar exposure')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Requires parcel/building orientation and solar-obstruction analysis; this is not a zoning-code value.',
+      ),
+    ).toBeInTheDocument()
     expect(screen.getByText('Office-led renovation mix')).toBeInTheDocument()
     expect(screen.queryByText('Use basis')).not.toBeInTheDocument()
     expect(
@@ -846,6 +868,20 @@ describe('DeveloperResults', () => {
       metadataUrl: '/static/dev-previews/example/preview.json',
       status: 'ready',
       thumbnailUrl: '/static/dev-previews/example/thumb.png',
+      fallbackMassing: {
+        siteAreaSqm: 5000,
+        maxBuildableGfaSqm: 18000,
+        buildingHeightLimitM: 120,
+        siteCoveragePct: 80,
+        grossPlotRatio: 4.2,
+        massingLayers: expect.arrayContaining([
+          expect.objectContaining({
+            assetType: 'office',
+            allocationPct: 100,
+            estimatedHeightM: 24,
+          }),
+        ]),
+      },
     })
     expect(lastUsePreviewJobOptions).toMatchObject({
       preferredScenario: 'existing_building',
@@ -1109,7 +1145,9 @@ describe('DeveloperResults', () => {
       ),
     ).toBeInTheDocument()
     expect(screen.queryByText('Capture completeness')).not.toBeInTheDocument()
-    expect(screen.queryByText('Control source status')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Control automation path'),
+    ).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /show data details/i }))
     expect(screen.getByText('Capture completeness')).toBeInTheDocument()
@@ -1118,7 +1156,7 @@ describe('DeveloperResults', () => {
         '2 official controls still need source review (setbacks, step-backs).',
       ),
     ).toBeInTheDocument()
-    expect(screen.getByText('Control source status')).toBeInTheDocument()
+    expect(screen.getByText('Control automation path')).toBeInTheDocument()
     expect(
       screen.getByText(
         'setbacks (URA), step-backs (URA) have official source categories identified, but Capture has not mapped reviewed values for this zone yet.',
@@ -1293,7 +1331,7 @@ describe('DeveloperResults', () => {
     result.optimizations = []
     result.uraZoning = {
       zoneCode: 'SG:mixed_use',
-      zoneDescription: null,
+      zoneDescription: 'White',
       plotRatio: null,
       buildingHeightLimit: null,
       siteCoverage: null,
@@ -1304,9 +1342,10 @@ describe('DeveloperResults', () => {
     result.buildEnvelope = {
       ...result.buildEnvelope,
       zoneCode: 'SG:mixed_use',
-      zoneDescription: null,
+      zoneDescription: 'White',
       siteAreaSqm: null,
       allowablePlotRatio: null,
+      grossPlotRatio: null,
       maxBuildableGfaSqm: null,
       currentGfaSqm: null,
       additionalPotentialGfaSqm: null,
@@ -1328,6 +1367,30 @@ describe('DeveloperResults', () => {
           'setbacks',
           'step_backs',
           'air_rights_note',
+        ],
+        official_source_gaps: [
+          {
+            field: 'plot_ratio',
+            reason: 'envelope_control_area_requires_site_specific_controls',
+            source_value: 'EVA',
+            review_note:
+              'URA Master Plan records this site with envelope controls instead of a numeric GPR.',
+            candidate_sources: [
+              {
+                authority: 'URA',
+                title: 'Master Plan GPR / intensity controls',
+              },
+            ],
+          },
+        ],
+        automation_dependencies: [
+          {
+            field: 'plot_ratio',
+            label: 'GPR / plot ratio',
+            status: 'site_specific_control_required',
+            action:
+              'Resolve site-specific envelope controls for this parcel because the URA intensity value is EVA.',
+          },
         ],
         project_clearance_required: [
           {
@@ -1363,7 +1426,15 @@ describe('DeveloperResults', () => {
     expect(
       screen.queryByText('Mixed-use primary / Retail support'),
     ).not.toBeInTheDocument()
-    expect(screen.getByText('SG:mixed_use')).toBeInTheDocument()
+    expect(screen.getByText('White (SG:mixed_use)')).toBeInTheDocument()
+    expect(
+      screen.getByText('Site-specific envelope control required (EVA)'),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /show data details/i }))
+    expect(screen.getByText('Next automation dependencies')).toBeInTheDocument()
+    expect(
+      screen.getByText('GPR / plot ratio: site-specific control required.'),
+    ).toBeInTheDocument()
     expect(
       screen.queryByText('Residential-led renovation mix'),
     ).not.toBeInTheDocument()
@@ -1484,7 +1555,7 @@ describe('DeveloperResults', () => {
         'Envelope-based starter model is generated from the preview pipeline while scenario selection remains pending.',
       ),
     ).toBeInTheDocument()
-    expect(screen.getByText('Control source status')).toBeInTheDocument()
+    expect(screen.getByText('Control automation path')).toBeInTheDocument()
     expect(screen.getByText('Control source not mapped')).toBeInTheDocument()
     expect(
       screen.queryByText('Source ingestion status'),
@@ -1873,6 +1944,22 @@ describe('DeveloperResults', () => {
         failed_count: 0,
         candidates: [],
       },
+      automation_dependencies: [
+        {
+          field: 'building_height_limit_m',
+          label: 'height limit',
+          status: 'source_mapping_required',
+          action:
+            'Ingest URA height-control values for this zone/site and attach the reviewed value to the rule registry.',
+        },
+        {
+          field: 'step_backs',
+          label: 'step-backs',
+          status: 'source_mapping_required',
+          action:
+            'Resolve applicable URA building-edge/storey controls before computing step-back geometry.',
+        },
+      ],
     }
 
     render(
@@ -1885,7 +1972,9 @@ describe('DeveloperResults', () => {
     expect(screen.getByText('Official controls pending')).toBeInTheDocument()
     expect(screen.queryByText('Resolved controls')).not.toBeInTheDocument()
     expect(screen.queryByText('Unresolved controls')).not.toBeInTheDocument()
-    expect(screen.queryByText('Control source status')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Control automation path'),
+    ).not.toBeInTheDocument()
     expect(screen.queryByText('Mixed source')).not.toBeInTheDocument()
     expect(screen.getByText('Site / captured')).toBeInTheDocument()
     expect(screen.getByText('plot ratio.')).toBeInTheDocument()
@@ -1928,11 +2017,18 @@ describe('DeveloperResults', () => {
     expect(
       screen.getAllByText('Official controls pending').length,
     ).toBeGreaterThan(0)
-    expect(screen.getByText('Control source status')).toBeInTheDocument()
+    expect(screen.getByText('Control automation path')).toBeInTheDocument()
     expect(screen.getByText('Control source not mapped')).toBeInTheDocument()
     expect(
       screen.getByText(
         'height limit - separate official control (URA), step-backs (URA) have official source categories identified, but Capture has not mapped reviewed values for this zone yet.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Next automation dependencies')).toBeInTheDocument()
+    expect(screen.getByText('Automation dependencies')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'height limit: source mapping required; step-backs: source mapping required.',
       ),
     ).toBeInTheDocument()
     expect(

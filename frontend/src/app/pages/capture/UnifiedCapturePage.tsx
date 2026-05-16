@@ -77,6 +77,11 @@ export function UnifiedCapturePage() {
 
   const formRef = useRef<HTMLFormElement | null>(null)
   const targetAcquiredRef = useRef<HTMLDivElement | null>(null)
+  const shouldShowMapPreview =
+    Boolean(latitude || longitude || mapCoordinateSourceLabel) &&
+    mapCoordinateSourceLabel !== 'Browser location'
+  const visibleCaptureError =
+    captureError && captureError !== geocodeError ? captureError : null
 
   // Focus the target-acquired confirmation when it appears
   useEffect(() => {
@@ -231,7 +236,7 @@ export function UnifiedCapturePage() {
                   Used for zoning:{' '}
                   <span>{coordinateSourceLabel ?? 'Not resolved yet'}</span>
                 </p>
-                {(latitude || longitude || mapCoordinateSourceLabel) && (
+                {shouldShowMapPreview && (
                   <p className="gps-form__coordinate-source">
                     Map preview:{' '}
                     <span>
@@ -293,9 +298,9 @@ export function UnifiedCapturePage() {
             </form>
 
             {/* Feedback */}
-            {captureError && (
+            {visibleCaptureError && (
               <p className="gps-error-text" role="alert">
-                {captureError}
+                {visibleCaptureError}
               </p>
             )}
 

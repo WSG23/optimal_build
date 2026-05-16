@@ -196,6 +196,51 @@ describe('UnifiedCapturePage', () => {
     )
   })
 
+  it('does not show browser location as a zoning preview after geocoding fails', () => {
+    mockUseDeveloperMode.mockReturnValue({
+      isDeveloperMode: true,
+      toggleDeveloperMode: mockToggleDeveloperMode,
+    })
+
+    mockUseUnifiedCapture.mockReturnValue(
+      buildCaptureHookValue({
+        latitude: '35.679407',
+        longitude: '139.741131',
+        analysisLatitude: '',
+        analysisLongitude: '',
+        geocodeError: 'No results for this address',
+        coordinateSourceLabel: null,
+        mapCoordinateSourceLabel: 'Browser location',
+      }),
+    )
+
+    render(<UnifiedCapturePage />)
+
+    expect(screen.getByText(/Used for zoning:/i)).toHaveTextContent(
+      'Not resolved yet',
+    )
+    expect(screen.queryByText(/Map preview:/i)).not.toBeInTheDocument()
+    expect(screen.getByText('No results for this address')).toBeInTheDocument()
+  })
+
+  it('deduplicates matching geocode and capture errors', () => {
+    mockUseDeveloperMode.mockReturnValue({
+      isDeveloperMode: true,
+      toggleDeveloperMode: mockToggleDeveloperMode,
+    })
+
+    mockUseUnifiedCapture.mockReturnValue(
+      buildCaptureHookValue({
+        geocodeError: 'No results for this address',
+        captureError: 'No results for this address',
+      }),
+    )
+
+    render(<UnifiedCapturePage />)
+
+    expect(screen.getAllByText('No results for this address')).toHaveLength(1)
+  })
+
   it('renders the developer workspace when developer mode has results', async () => {
     mockUseDeveloperMode.mockReturnValue({
       isDeveloperMode: true,

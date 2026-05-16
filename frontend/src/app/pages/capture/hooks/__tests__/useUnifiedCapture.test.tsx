@@ -320,6 +320,38 @@ describe('useUnifiedCapture', () => {
     expect(mockCapturePropertyForDevelopment).not.toHaveBeenCalled()
   })
 
+  it('clears stale geocoding and scan errors when the address is edited', async () => {
+    vi.useFakeTimers()
+    mockForwardGeocodeAddress.mockRejectedValue(
+      new Error('No results for this address'),
+    )
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: '' })
+
+    await act(async () => {
+      hookRef.current!.setAddress('45 Burghley Dr, Singapor')
+    })
+
+    await act(async () => {
+      const event = {
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent<HTMLFormElement>
+      const promise = hookRef.current!.handleCapture(event)
+      await Promise.resolve()
+      await vi.runAllTimersAsync()
+      await promise
+    })
+
+    expect(hookRef.current!.geocodeError).toBe('No results for this address')
+    expect(hookRef.current!.captureError).toBe('No results for this address')
+
+    await act(async () => {
+      hookRef.current!.setAddress('45 Burghley Dr, Singapore')
+    })
+
+    expect(hookRef.current!.geocodeError).toBeNull()
+    expect(hookRef.current!.captureError).toBeNull()
+  })
+
   it('runs the developer capture flow and persists the capture', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-01-06T10:00:00.000Z'))

@@ -26,6 +26,7 @@ import {
 import { Box, Typography } from '@mui/material'
 
 import type {
+  CaptureResultV2,
   CaptureRecommendationScenario,
   SiteAcquisitionResult,
 } from '../../../../api/siteAcquisition'
@@ -57,6 +58,7 @@ import { SCENARIO_OPTIONS } from '../../site-acquisition/constants'
 // Import card builder utility
 import { buildPropertyOverviewCards } from '../../site-acquisition/utils/cardBuilders'
 import { mapSiteAcquisitionResultToCaptureResultV2 } from '../utils/captureResultV2'
+import type { PreviewFallbackMassingInput } from '../../../components/site-acquisition/previewFallbackMassing'
 
 // Import extracted sub-components
 import { ConceptPreviewSection } from './ConceptPreviewSection'
@@ -92,6 +94,126 @@ const OptimalIntelligenceCard = lazy(async () => {
 export interface DeveloperResultsProps {
   result: SiteAcquisitionResult
   selectedScenarios: DevelopmentScenario[]
+}
+
+function formatResolvedMeters(
+  value: number | null | undefined,
+  formatNumber: (value: number, options?: Intl.NumberFormatOptions) => string,
+) {
+  return value != null
+    ? `${formatNumber(value, { maximumFractionDigits: 1 })} m`
+    : null
+}
+
+function buildTechnicalBriefRows(
+  captureResultV2: CaptureResultV2,
+  formatNumber: (value: number, options?: Intl.NumberFormatOptions) => string,
+): Array<[string, string]> {
+  const { codeConstraints, engineeringAssumptions, siteContext } =
+    captureResultV2
+  const setbacks = [
+    formatResolvedMeters(codeConstraints.setbacks.frontM, formatNumber)
+      ? `front ${formatResolvedMeters(codeConstraints.setbacks.frontM, formatNumber)}`
+      : null,
+    formatResolvedMeters(codeConstraints.setbacks.rearM, formatNumber)
+      ? `rear ${formatResolvedMeters(codeConstraints.setbacks.rearM, formatNumber)}`
+      : null,
+    formatResolvedMeters(codeConstraints.setbacks.sideM, formatNumber)
+      ? `side ${formatResolvedMeters(codeConstraints.setbacks.sideM, formatNumber)}`
+      : null,
+  ].filter(Boolean)
+  const stepBacks = codeConstraints.stepBacks
+    .map((stepBack) => {
+      const level = formatResolvedMeters(stepBack.level, formatNumber)
+      const depth = formatResolvedMeters(stepBack.depthM, formatNumber)
+      return level && depth ? `${depth} after level ${level}` : null
+    })
+    .filter(Boolean)
+  const heightCoverage = [
+    formatResolvedMeters(codeConstraints.buildingHeightLimitM, formatNumber)
+      ? `height ${formatResolvedMeters(codeConstraints.buildingHeightLimitM, formatNumber)}`
+      : null,
+    codeConstraints.siteCoveragePct != null
+      ? `site coverage ${formatNumber(codeConstraints.siteCoveragePct, {
+          maximumFractionDigits: 0,
+        })}%`
+      : null,
+  ].filter(Boolean)
+  const engineering = [
+    engineeringAssumptions.floorToFloorM != null
+      ? `floor-to-floor ${formatNumber(engineeringAssumptions.floorToFloorM, {
+          maximumFractionDigits: 1,
+        })} m`
+      : null,
+    engineeringAssumptions.clearCeilingM != null
+      ? `clear ceiling ${formatNumber(engineeringAssumptions.clearCeilingM, {
+          maximumFractionDigits: 1,
+        })} m`
+      : null,
+    engineeringAssumptions.coreRatioPct != null
+      ? `core ${formatNumber(engineeringAssumptions.coreRatioPct, {
+          maximumFractionDigits: 0,
+        })}%`
+      : null,
+    engineeringAssumptions.hvacSpaceRatioPct != null
+      ? `HVAC ${formatNumber(engineeringAssumptions.hvacSpaceRatioPct, {
+          maximumFractionDigits: 0,
+        })}%`
+      : null,
+    engineeringAssumptions.electricalSpaceRatioPct != null
+      ? `electrical ${formatNumber(
+          engineeringAssumptions.electricalSpaceRatioPct,
+          {
+            maximumFractionDigits: 0,
+          },
+        )}%`
+      : null,
+    engineeringAssumptions.structuralGridNote,
+  ].filter(Boolean)
+
+  return [
+    [
+      'Height / coverage',
+      heightCoverage.length
+        ? heightCoverage.join(' / ')
+        : 'Requires mapped URA height/site-coverage controls; not derivable from land use alone.',
+    ],
+    [
+      'Setbacks',
+      setbacks.length
+        ? setbacks.join(' / ')
+        : 'Requires road category, road buffer, and plot-boundary geometry before setback lines can be computed.',
+    ],
+    [
+      'Step-backs',
+      stepBacks.length
+        ? stepBacks.join(' / ')
+        : 'Requires applicable URA building-edge/storey controls before step-back geometry can be computed.',
+    ],
+    [
+      'Air-rights clearance',
+      codeConstraints.airRightsNote ||
+        'Project-specific clearance is not resolved by Capture yet; CAAS/URA review may be required.',
+    ],
+    [
+      'Terrain / slope',
+      siteContext.slopeClass === 'unknown'
+        ? 'Requires terrain/elevation data; this is not a building-code value.'
+        : siteContext.slopeClass.replace(/_/g, ' '),
+    ],
+    [
+      'Solar exposure',
+      siteContext.solarOrientation === 'unknown'
+        ? 'Requires parcel/building orientation and solar-obstruction analysis; this is not a zoning-code value.'
+        : siteContext.solarOrientation.replace(/_/g, ' '),
+    ],
+    [
+      'Engineering assumptions',
+      engineering.length
+        ? `${engineering.join(' / ')} (${engineeringAssumptions.source.replace(/_/g, ' ')})`
+        : 'Common-practice engineering allowances are pending.',
+    ],
+  ]
 }
 
 export function DeveloperResults({
@@ -171,15 +293,14 @@ export function DeveloperResults({
     'Capture Project'
 
   // Number formatter for card values
-  function formatNumber(
-    value: number,
-    options?: Intl.NumberFormatOptions,
-  ): string {
-    return new Intl.NumberFormat('en-SG', {
-      maximumFractionDigits: 1,
-      ...options,
-    }).format(value)
-  }
+  const formatNumber = useCallback(
+    (value: number, options?: Intl.NumberFormatOptions): string =>
+      new Intl.NumberFormat('en-SG', {
+        maximumFractionDigits: 1,
+        ...options,
+      }).format(value),
+    [],
+  )
 
   // Format timestamp helper
   const formatRecordedTimestamp = useCallback(
@@ -415,7 +536,13 @@ export function DeveloperResults({
         risks: signals.risks,
       }
     })
-  }, [quickAnalysisScenarios, scenarioLookup, formatScenarioLabel, result])
+  }, [
+    quickAnalysisScenarios,
+    scenarioLookup,
+    formatScenarioLabel,
+    result,
+    formatNumber,
+  ])
 
   // Build overview cards from result using the official card builder
   const overviewCards = useMemo(() => {
@@ -429,7 +556,13 @@ export function DeveloperResults({
         formatTimestamp: formatRecordedTimestamp,
       },
     })
-  }, [colorLegendEntries, formatRecordedTimestamp, previewJob, result])
+  }, [
+    colorLegendEntries,
+    formatRecordedTimestamp,
+    previewJob,
+    result,
+    formatNumber,
+  ])
 
   // Instant capture insight based on captured property data
   const aiInsight = useMemo(() => {
@@ -466,8 +599,8 @@ export function DeveloperResults({
         ? analysisPoints.slice(0, 3).join(', ')
         : 'zoning and envelope controls are still resolving'
     const scopeNote = isFallbackCapture
-      ? 'This is a preliminary capture: scalar controls only, with no setback or floor-by-floor compliance modelling.'
-      : 'Capture reflects the currently resolved scalar controls for this site, without setback or floor-by-floor compliance modelling.'
+      ? 'This is a preliminary capture: scalar controls with resolved setback controls where available, but no floor-by-floor compliance modelling.'
+      : 'Capture reflects the currently resolved scalar and setback controls for this site, without floor-by-floor compliance modelling.'
     const scenarioNote = recommendation.userOverride
       ? recommendation.overrideIntent === 'exploratory'
         ? `Exploratory override active: ${formatCaptureScenarioLabel(recommendation.recommended)} is selected temporarily and does not change learned defaults.`
@@ -483,8 +616,14 @@ export function DeveloperResults({
     effectiveStarterModel,
     formatCaptureScenarioLabel,
     formatScenarioLabel,
+    formatNumber,
     result,
   ])
+
+  const technicalBriefRows = useMemo(
+    () => buildTechnicalBriefRows(captureResultV2, formatNumber),
+    [captureResultV2, formatNumber],
+  )
 
   // Hydrate saved override from project
   useEffect(() => {
@@ -560,6 +699,27 @@ export function DeveloperResults({
     setSaveError(null)
   }, [])
 
+  const fallbackMassing = useMemo<PreviewFallbackMassingInput | null>(() => {
+    const envelope = result.buildEnvelope
+    if (!envelope?.siteAreaSqm) {
+      return null
+    }
+
+    return {
+      siteAreaSqm: envelope.siteAreaSqm,
+      maxBuildableGfaSqm: envelope.maxBuildableGfaSqm,
+      buildingHeightLimitM: envelope.buildingHeightLimitM,
+      siteCoveragePct: envelope.siteCoveragePct,
+      grossPlotRatio: envelope.grossPlotRatio ?? envelope.allowablePlotRatio,
+      setbacks: {
+        frontM: envelope.setbackFrontM,
+        rearM: envelope.setbackRearM,
+        sideM: envelope.setbackSideM,
+      },
+      massingLayers: result.visualization?.massingLayers ?? [],
+    }
+  }, [result.buildEnvelope, result.visualization?.massingLayers])
+
   return (
     <div className="site-acquisition__developer-results">
       <ConceptPreviewSection
@@ -578,6 +738,7 @@ export function DeveloperResults({
         }
         previewMetadataError={previewMetadataError}
         previewGenerationError={previewGenerationError}
+        fallbackMassing={fallbackMassing}
       />
 
       <CaptureRecommendationSection
@@ -600,6 +761,7 @@ export function DeveloperResults({
         currentProject={currentProject}
         confidence={captureResultV2.scenarioRecommendation.confidence}
         scenarioFitSummary={scenarioFitSummary}
+        technicalBriefRows={technicalBriefRows}
         captureDataBasis={captureDataBasis}
         reasonCodes={captureResultV2.scenarioRecommendation.reasonCodes}
         handleSaveProjectOverride={handleSaveProjectOverride}

@@ -93,7 +93,16 @@ describe('capturePropertyForDevelopment', () => {
             camera_orbit_hint: null,
             preview_seed: null,
             preview_job_id: null,
-            massing_layers: [],
+            massing_layers: [
+              {
+                asset_type: 'industrial',
+                allocation_pct: 70,
+                gfa_sqm: 9800,
+                footprint_area_sqm: 3920,
+                estimated_height_m: 25,
+                color: '#2563eb',
+              },
+            ],
             color_legend: [],
           },
           optimizations: [],
@@ -168,6 +177,10 @@ describe('capturePropertyForDevelopment', () => {
       developmentControlStatus: 'non_standard_or_non_developable',
       source: 'ref_zoning_layer',
       sourceReason: 'parcel_dominant_zoning',
+    })
+    expect(result.visualization.massingLayers[0]).toMatchObject({
+      assetType: 'industrial',
+      footprintAreaSqm: 3920,
     })
     expect(result.propertyInfo?.currentUse).toBe('Hotel / lodging')
     expect(result.propertyInfo?.currentUseEvidence?.[0]).toMatchObject({
