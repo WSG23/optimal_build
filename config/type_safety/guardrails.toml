@@ -50,16 +50,6 @@ owner = "platform"
 rationale = "Legacy uvicorn app shim remains excluded from strict type checking."
 
 [[pyproject_ignore_errors]]
-module = "httpx"
-owner = "platform"
-rationale = "Vendored httpx compatibility shims remain excluded from strict type checking."
-
-[[pyproject_ignore_errors]]
-module = "httpx.*"
-owner = "platform"
-rationale = "Vendored httpx compatibility shims remain excluded from strict type checking."
-
-[[pyproject_ignore_errors]]
 module = "backend.sqlalchemy_pkg_backup"
 owner = "platform"
 rationale = "Legacy compatibility backup package remains excluded from strict type checking."
@@ -120,11 +110,6 @@ owner = "backend"
 rationale = "Service typing debt remains outstanding and is explicitly tracked."
 
 [[mypy_ini_ignore_errors]]
-section = "mypy-app.schemas._typing"
-owner = "platform"
-rationale = "Casting-boundary helper for the vendored pydantic stub which under-types model_validate as returning BaseModel rather than Self."
-
-[[mypy_ini_ignore_errors]]
 section = "mypy-pydantic"
 owner = "platform"
 rationale = "Third-party Pydantic internals are followed for BaseModel typing but should not fail repo checks."
@@ -133,13 +118,3 @@ rationale = "Third-party Pydantic internals are followed for BaseModel typing bu
 section = "mypy-pydantic.*"
 owner = "platform"
 rationale = "Third-party Pydantic internals are followed for BaseModel typing but should not fail repo checks."
-
-[[mypy_ini_ignore_errors]]
-section = "mypy-httpx"
-owner = "platform"
-rationale = "Vendored httpx compatibility shims are outside the current strict cleanup pass."
-
-[[mypy_ini_ignore_errors]]
-section = "mypy-httpx.*"
-owner = "platform"
-rationale = "Vendored httpx compatibility shims are outside the current strict cleanup pass."

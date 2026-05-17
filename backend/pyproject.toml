@@ -72,8 +72,6 @@ module = [
     "sqlalchemy.*",
     "uvicorn_app",
     "uvicorn_app.*",
-    "httpx",
-    "httpx.*",
     "backend.sqlalchemy_pkg_backup",
     "backend.sqlalchemy_pkg_backup.*",
     "backend._vendor",
