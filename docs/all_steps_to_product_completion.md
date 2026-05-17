@@ -437,13 +437,8 @@ This replaces `docs/all_steps_to_product_completion.md#-known-testing-issues`. T
   ```
   Restart uvicorn and reuse the printed property UUID.
 
-##### Backend: Mypy Type Checking Errors (511 remaining)
-- **Documented by:** Claude on 2025-11-16
-- **Status:** 511 errors total (284 SQLAlchemy stub gaps, 227 real/complex issues).
-- **Key Categories:** SQLAlchemy stub gaps, weakly typed JSON, missing type narrowing, Pydantic validator mismatches, import conflicts, stub override mismatches.
-- **Strategy:** Focus on Tier 1 preventive steps (TypedDicts/Pydantic schemas, pre-commit type checks) and Tier 2 plugin enablement. Do not attempt to fix all errors blindly—target high leverage areas (preview generator, developer checklist service, mypy plugins).
-
 #### Resolved Issues (Historical Reference)
+- **Backend mypy backlog "511 remaining" (2026-05-17):** Project-gated mypy is at 0 errors — `make typecheck-backend` (covers `backend/app/api/`, `backend/app/schemas/`) and `make mypy-baseline` (covers `backend/app/utils/`, `backend/app/services/reference_parsers.py` per `files =` in `mypy.ini`) both pass clean. The Tier 1 / Tier 2 strategy (TypedDicts, Pydantic schemas, `pydantic.mypy` + `sqlalchemy.ext.mypy.plugin`, baseline regression script) replaced the original "fix all 511" framing. A wider sweep of `backend/app/` still surfaces ~321 errors in Tier 2 modules (top offenders: `regulatory_service.py`, `rules/zone_rules.py`, `deals/performance.py`, `agents/marketing_materials.py`); these are intentionally out-of-gate via `mypy.ini`'s `files =` scope and are not a regression. Reopen as a Tier 2 expansion item if/when those modules need to be added to the gate.
 - **Frontend JSDOM runner instability (2025-11-11):** Migrated to Vitest + thread pool (Codex + Claude). `npm --prefix frontend run test` now stable.
 - **Migration audit downgrade guards (2025-10-18):** Verified guards existed, added entries to `.coding-rules-exceptions.yml`.
 - **Backend API tests skipped on Python 3.9 (2025-10-11):** Upgraded to Python 3.13, added FastAPI dependency overrides; tests now run.
