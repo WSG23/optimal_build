@@ -23,6 +23,8 @@ allowed_files:
   - docs/ai-agents/next_steps.md
   - docs/ai-agents/README.md
   - docs/ai-agents/_TEMPLATE.md
+  # Single-writer lock + handoff rules for concurrent AI agents
+  - docs/ai-agents/multi_agent_coordination.md
   - docs/ai-agents/data_scientist.md
   - docs/ai-agents/documentation_specialist.md
   - docs/ai-agents/domain_expert.md
