@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react'
 import {
   Box,
-  Paper,
   Typography,
   Grid,
   Card,
@@ -25,6 +24,7 @@ import ScheduleIcon from '@mui/icons-material/Schedule'
 import { format } from 'date-fns'
 import { SupplyDynamics, MajorDevelopment } from '../../../types/market'
 import { PropertyType } from '../../../types/property'
+import { GlassCard } from '../../canonical/GlassCard'
 
 interface PipelineTimelineWidgetProps {
   supplyDynamics?: SupplyDynamics | null
@@ -117,7 +117,7 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
   }
 
   return (
-    <Box>
+    <Box component="section" role="region" aria-label="Pipeline timeline">
       <Box
         display="flex"
         justifyContent="space-between"
@@ -176,14 +176,14 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
             ))}
         </Grid>
       ) : (
-        <Paper sx={{ p: 'var(--ob-space-200)', mb: 'var(--ob-space-200)' }}>
+        <GlassCard sx={{ p: 'var(--ob-space-200)', mb: 'var(--ob-space-200)' }}>
           <Typography color="textSecondary">
             No pipeline summary is available for the selected filters.
           </Typography>
-        </Paper>
+        </GlassCard>
       )}
 
-      <Paper sx={{ p: 'var(--ob-space-200)' }}>
+      <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
         <Typography variant="h6" gutterBottom>
           Major Developments
         </Typography>
@@ -257,7 +257,7 @@ const PipelineTimelineWidget: React.FC<PipelineTimelineWidgetProps> = ({
             })}
           </Timeline>
         )}
-      </Paper>
+      </GlassCard>
     </Box>
   )
 }

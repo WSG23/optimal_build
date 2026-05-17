@@ -4,7 +4,6 @@ import type { ChangeEvent, FormEvent } from 'react'
 import {
   Box,
   IconButton,
-  Paper,
   Tooltip,
   Chip,
   Typography,
@@ -25,6 +24,7 @@ import { DetectedUnit, DetectionStatus } from './types'
 import { useFeasibilityLoop } from './useFeasibilityLoop'
 import { RoiSummary } from './RoiSummary'
 import { InteractiveFloorplate } from './InteractiveFloorplate'
+import { GlassCard } from '../../components/canonical/GlassCard'
 
 type OverlaySummary = {
   key: string
@@ -289,7 +289,7 @@ export function CadDetectionPreview({
               zIndex: 30,
             }}
           >
-            <Paper
+            <GlassCard
               elevation={10}
               sx={{
                 display: 'flex',
@@ -454,7 +454,7 @@ export function CadDetectionPreview({
                   </IconButton>
                 </span>
               </Tooltip>
-            </Paper>
+            </GlassCard>
           </Box>
         </Box>
       </Box>
@@ -468,8 +468,7 @@ export function CadDetectionPreview({
         }}
       >
         {/* Unit Table */}
-        <Paper
-          variant="outlined"
+        <GlassCard
           sx={{
             p: 0,
             overflow: 'hidden',
@@ -718,11 +717,10 @@ export function CadDetectionPreview({
               )}
             </tbody>
           </table>
-        </Paper>
+        </GlassCard>
 
         {/* Advisory / Hints Panel */}
-        <Paper
-          variant="outlined"
+        <GlassCard
           sx={{
             p: 'var(--ob-space-200)',
             borderRadius: 'var(--ob-radius-sm)',
@@ -752,7 +750,7 @@ export function CadDetectionPreview({
               ))}
             </ul>
           )}
-        </Paper>
+        </GlassCard>
       </Box>
 
       {/* Legacy Lock Indicator (if relevant) */}

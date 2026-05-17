@@ -5,7 +5,6 @@ import {
   ButtonBase,
   Chip,
   LinearProgress,
-  Paper,
   Stack,
   Tooltip,
   Typography,
@@ -16,6 +15,7 @@ import type {
   PipelineDealCard,
   PipelineStageKey,
 } from '../types'
+import { GlassCard } from '../../../../components/canonical/GlassCard'
 
 interface DealCardProps {
   deal: PipelineDealCard
@@ -59,7 +59,7 @@ const DealCard = React.memo(function DealCard({
         aria-grabbed={isDragged}
         focusRipple
       >
-        <Paper
+        <GlassCard
           elevation={isSelected ? 6 : 1}
           className="bp-pipeline__deal-surface"
         >
@@ -129,7 +129,7 @@ const DealCard = React.memo(function DealCard({
               Updating stage…
             </Typography>
           )}
-        </Paper>
+        </GlassCard>
       </ButtonBase>
     </li>
   )
@@ -209,7 +209,7 @@ export function PipelineBoard({
     const isDropTarget = activeDropStage === column.key
 
     return (
-      <Paper
+      <GlassCard
         key={column.key}
         component="article"
         className={`bp-pipeline__column ${
@@ -289,7 +289,7 @@ export function PipelineBoard({
             })
           )}
         </ul>
-      </Paper>
+      </GlassCard>
     )
   }
 

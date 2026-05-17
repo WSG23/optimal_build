@@ -25,6 +25,7 @@ import type {
   TenantCoordinationSummary,
   TenantRelocation,
 } from '../../../../api/development'
+import { GlassCard } from '../../../../components/canonical/GlassCard'
 
 interface TenantRelocationDashboardProps {
   data: TenantCoordinationSummary
@@ -146,17 +147,16 @@ function RelocationTable({
 }: RelocationTableProps) {
   if (relocations.length === 0) {
     return (
-      <Paper
-        variant="outlined"
+      <GlassCard
         sx={{ p: 'var(--ob-space-200)', textAlign: 'center' }}
       >
         <Typography color="text.secondary">{emptyMessage}</Typography>
-      </Paper>
+      </GlassCard>
     )
   }
 
   return (
-    <TableContainer component={Paper} variant="outlined">
+    <TableContainer component={Paper} variant="outlined"> // canon-ok: MUI TableContainer needs Paper as component
       <Table size="small">
         <TableHead>
           <TableRow sx={{ backgroundColor: 'background.default' }}>
@@ -481,7 +481,7 @@ export function TenantRelocationDashboard({
 
         {/* Right Column - Timeline */}
         <Grid item xs={12} lg={4}>
-          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
             <Typography
               variant="subtitle1"
               sx={{
@@ -521,11 +521,10 @@ export function TenantRelocationDashboard({
                 </Typography>
               </Divider>
             )}
-          </Paper>
+          </GlassCard>
 
           {/* Status Breakdown */}
-          <Paper
-            variant="outlined"
+          <GlassCard
             sx={{ p: 'var(--ob-space-200)', mt: 'var(--ob-space-200)' }}
           >
             <Typography
@@ -568,7 +567,7 @@ export function TenantRelocationDashboard({
                 )
               })}
             </Stack>
-          </Paper>
+          </GlassCard>
         </Grid>
       </Grid>
     </Box>

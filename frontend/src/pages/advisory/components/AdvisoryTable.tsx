@@ -28,7 +28,7 @@ export function AdvisoryTable({ columns, children }: AdvisoryTableProps) {
 
   return (
     <TableContainer
-      component={Paper}
+      component={Paper} // canon-ok: MUI TableContainer needs Paper as component
       sx={{
         background: 'transparent',
         boxShadow: 'none',

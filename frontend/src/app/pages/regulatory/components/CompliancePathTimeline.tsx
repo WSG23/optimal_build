@@ -488,7 +488,7 @@ export const CompliancePathTimeline: React.FC<CompliancePathTimelineProps> = ({
           {/* Header */}
           <Box
             sx={{
-              height: '50px',
+              height: '50px', // canon-ok: timeline step row
               display: 'flex',
               borderBottom: '1px solid var(--ob-border-glass)',
               backgroundColor:

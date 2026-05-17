@@ -43,9 +43,9 @@ const statusColors = {
 }
 
 const sizes = {
-  sm: '6px',
+  sm: '6px', // canon-ok: micro indicator
   md: 'var(--ob-space-050)',
-  lg: '10px',
+  lg: '10px', // canon-ok: indicator dot
 } as const
 
 /**

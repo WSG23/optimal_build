@@ -8,7 +8,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Paper,
   Typography,
 } from '@mui/material'
 import InfoIcon from '@mui/icons-material/Info'
@@ -23,6 +22,7 @@ import {
   YieldBenchmarks,
   AbsorptionTrends,
 } from '../../../types/market'
+import { GlassCard } from '../../canonical/GlassCard'
 
 interface QuickInsightsProps {
   marketReport: MarketReport
@@ -144,7 +144,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
         sx={{ mb: 'var(--ob-space-200)' }}
       >
         <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 'var(--ob-space-200)' }}>
+          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
             <Typography variant="body2" color="textSecondary" gutterBottom>
               Transactions (period)
             </Typography>
@@ -154,10 +154,10 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
             <Typography variant="caption" color="textSecondary">
               Total volume {formatCurrency(comparablesData?.total_volume)}
             </Typography>
-          </Paper>
+          </GlassCard>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 'var(--ob-space-200)' }}>
+          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
             <Typography variant="body2" color="textSecondary" gutterBottom>
               Average PSF
             </Typography>
@@ -167,10 +167,10 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
             <Typography variant="caption" color="textSecondary">
               Median ${formatNumber(comparablesData?.median_psf)}
             </Typography>
-          </Paper>
+          </GlassCard>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 'var(--ob-space-200)' }}>
+          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
             <Typography variant="body2" color="textSecondary" gutterBottom>
               Cap Rate (median)
             </Typography>
@@ -192,10 +192,10 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
                 2,
               )}
             </Typography>
-          </Paper>
+          </GlassCard>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 'var(--ob-space-200)' }}>
+          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
             <Typography variant="body2" color="textSecondary" gutterBottom>
               Supply Pressure
             </Typography>
@@ -222,7 +222,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
             >
               Upcoming GFA {formatNumber(supplyData?.total_upcoming_gfa)} sqm
             </Typography>
-          </Paper>
+          </GlassCard>
         </Grid>
       </Grid>
 
@@ -232,7 +232,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
         sx={{ mb: 'var(--ob-space-200)' }}
       >
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 'var(--ob-space-200)', height: '100%' }}>
+          <GlassCard sx={{ p: 'var(--ob-space-200)', height: '100%' }}>
             <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
               Absorption Snapshot
             </Typography>
@@ -257,10 +257,10 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
               Velocity trend:{' '}
               {absorptionData?.velocity_trend?.replace('_', ' ') ?? 'N/A'}
             </Typography>
-          </Paper>
+          </GlassCard>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 'var(--ob-space-200)', height: '100%' }}>
+          <GlassCard sx={{ p: 'var(--ob-space-200)', height: '100%' }}>
             <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
               Yield Outlook
             </Typography>
@@ -284,10 +284,10 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
               {yieldData?.market_position?.replace('_', ' ') ??
                 'No yield position available'}
             </Typography>
-          </Paper>
+          </GlassCard>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 'var(--ob-space-200)', height: '100%' }}>
+          <GlassCard sx={{ p: 'var(--ob-space-200)', height: '100%' }}>
             <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
               Supply Impact
             </Typography>
@@ -295,12 +295,12 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
               {supplyData?.market_impact ??
                 'No supply impact assessment available'}
             </Typography>
-          </Paper>
+          </GlassCard>
         </Grid>
       </Grid>
 
       {marketReport.recommendations.length > 0 && (
-        <Paper sx={{ p: 'var(--ob-space-200)' }}>
+        <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
           <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
             Recommendations
           </Typography>
@@ -316,7 +316,7 @@ const QuickInsights: React.FC<QuickInsightsProps> = ({
                 </ListItem>
               ))}
           </List>
-        </Paper>
+        </GlassCard>
       )}
     </Box>
   )

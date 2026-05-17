@@ -161,10 +161,10 @@ export function OverridesTab({
         >
           {[
             ['DILIGENCE GAUGE', getGaugeLabel(scenarioComparisonTableRows)],
-            ['RISK_VECTOR', getRiskVector(scenarioComparisonTableRows)],
-            ['AVG_CONDITION', getAverageCondition(scenarioComparisonTableRows)],
+            ['RISK VECTOR', getRiskVector(scenarioComparisonTableRows)],
+            ['AVG CONDITION', getAverageCondition(scenarioComparisonTableRows)],
             [
-              'AVG_CONDITION',
+              'PATH COVERAGE',
               `${scenarioComparisonEntries.length} comparison paths`,
             ],
           ].map(([label, value]) => (

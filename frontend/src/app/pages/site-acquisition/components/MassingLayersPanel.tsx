@@ -90,7 +90,12 @@ export function MassingLayersPanel({
       </Box>
 
       {/* Layer List */}
-      <Stack spacing={0} sx={{ maxHeight: '18.75rem', overflowY: 'auto' }}>
+      <Stack
+        spacing="var(--ob-space-025)"
+        sx={{ maxHeight: '18.75rem', overflowY: 'auto' }}
+        role="list"
+        aria-label="Massing layers"
+      >
         {layers.map((layer) => {
           const layerId = layer.id
           const isVisible = visibility[layerId] !== false

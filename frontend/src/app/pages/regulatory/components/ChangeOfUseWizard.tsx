@@ -23,7 +23,6 @@ import {
   Grid,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
   SelectChangeEvent,
   Step,
@@ -41,6 +40,7 @@ import {
   ChangeOfUseApplication,
   AssetType,
 } from '../../../../api/regulatory'
+import { GlassCard } from '../../../../components/canonical/GlassCard'
 
 interface ChangeOfUseWizardProps {
   open: boolean
@@ -544,7 +544,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
             >
               {requirements.map((req, index) => (
                 <Grid item xs={12} sm={6} key={index}>
-                  <Paper
+                  <GlassCard
                     sx={{
                       p: 'var(--ob-space-200)',
                       height: '100%',
@@ -576,7 +576,7 @@ export const ChangeOfUseWizard: React.FC<ChangeOfUseWizardProps> = ({
                       color={req.required ? 'success' : 'default'}
                       variant="outlined"
                     />
-                  </Paper>
+                  </GlassCard>
                 </Grid>
               ))}
             </Grid>

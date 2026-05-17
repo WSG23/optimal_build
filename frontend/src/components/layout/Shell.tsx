@@ -125,7 +125,7 @@ export function AppShell({
                 mt:
                   inBaseLayout && topOffset === 0
                     ? 'var(--ob-space-050)'
-                    : '0px',
+                    : 0,
                 mb: 'var(--ob-space-100)', // 16px - tight spacing to content
                 animation:
                   'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',

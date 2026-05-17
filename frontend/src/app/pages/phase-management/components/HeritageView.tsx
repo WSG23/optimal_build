@@ -3,11 +3,11 @@ import {
   Box,
   Divider,
   Grid,
-  Paper,
   Stack,
   Typography,
 } from '@mui/material'
 import type { HeritageTracker } from '../../../../api/development'
+import { GlassCard } from '../../../../components/canonical/GlassCard'
 
 interface HeritageViewProps {
   data: HeritageTracker
@@ -16,7 +16,7 @@ interface HeritageViewProps {
 export function HeritageView({ data }: HeritageViewProps) {
   return (
     <Stack spacing="var(--ob-space-200)">
-      <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+      <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
         <Stack
           direction="row"
           justifyContent="space-between"
@@ -45,11 +45,11 @@ export function HeritageView({ data }: HeritageViewProps) {
           Classification:{' '}
           <strong>{data.heritageClassification.replace(/_/g, ' ')}</strong>
         </Typography>
-      </Paper>
+      </GlassCard>
 
       <Grid container spacing="var(--ob-space-200)">
         <Grid item xs={12} md={4}>
-          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
             <Typography
               variant="subtitle2"
               sx={{
@@ -66,10 +66,10 @@ export function HeritageView({ data }: HeritageViewProps) {
                 </Typography>
               ))}
             </Stack>
-          </Paper>
+          </GlassCard>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
             <Typography
               variant="subtitle2"
               sx={{
@@ -87,10 +87,10 @@ export function HeritageView({ data }: HeritageViewProps) {
                 </Typography>
               ))}
             </Stack>
-          </Paper>
+          </GlassCard>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
             <Typography
               variant="subtitle2"
               sx={{
@@ -108,11 +108,11 @@ export function HeritageView({ data }: HeritageViewProps) {
                 </Typography>
               ))}
             </Stack>
-          </Paper>
+          </GlassCard>
         </Grid>
       </Grid>
 
-      <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+      <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
         <Typography
           variant="subtitle1"
           sx={{
@@ -171,7 +171,7 @@ export function HeritageView({ data }: HeritageViewProps) {
             </Box>
           ))}
         </Stack>
-      </Paper>
+      </GlassCard>
     </Stack>
   )
 }

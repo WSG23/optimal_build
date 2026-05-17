@@ -70,7 +70,7 @@ export function Tabs({
   fullWidth = false,
   sx = {},
 }: TabsProps) {
-  const height = size === 'sm' ? '36px' : 'var(--ob-space-250)'
+  const height = size === 'sm' ? '36px' : 'var(--ob-space-250)' // canon-ok: small tab height
   const fontSize =
     size === 'sm' ? 'var(--ob-font-size-xs)' : 'var(--ob-font-size-sm)'
   const resolvedSx = Array.isArray(sx) ? sx : [sx]

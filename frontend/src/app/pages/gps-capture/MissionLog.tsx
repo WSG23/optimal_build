@@ -20,14 +20,17 @@ interface MissionLogProps {
   capturedSites: CapturedSite[]
 }
 
+const SCENARIO_COLORS: Record<DevelopmentScenario, string> = {
+  raw_land: 'var(--ob-accent-500)',
+  existing_building: 'var(--ob-brand-500)',
+  underused_asset: 'var(--ob-info-500)',
+  mixed_use_redevelopment: 'var(--ob-success-500)',
+  heritage_property: 'var(--ob-warning-500)',
+}
+
 function getScenarioColor(scenario: DevelopmentScenario | null): string {
   if (!scenario) return 'var(--ob-color-text-muted)'
-  const s = scenario.toLowerCase()
-  if (s.includes('residential')) return 'var(--ob-accent-500)'
-  if (s.includes('commercial')) return 'var(--ob-brand-500)'
-  if (s.includes('mixed')) return 'var(--ob-info-500)'
-  if (s.includes('heritage')) return 'var(--ob-warning-500)'
-  return 'var(--ob-color-text-secondary)'
+  return SCENARIO_COLORS[scenario] ?? 'var(--ob-color-text-secondary)'
 }
 
 export function MissionLog({ capturedSites }: MissionLogProps) {

@@ -1,7 +1,6 @@
 import React from 'react'
 import {
   Box,
-  Paper,
   Typography,
   Grid,
   Card,
@@ -13,6 +12,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import TrendingDownIcon from '@mui/icons-material/TrendingDown'
 import { AbsorptionTrends } from '../../../types/market'
 import { PropertyType } from '../../../types/property'
+import { GlassCard } from '../../canonical/GlassCard'
 
 interface AbsorptionTrendsChartProps {
   absorptionTrends?: AbsorptionTrends | null
@@ -97,11 +97,11 @@ const AbsorptionTrendsChart: React.FC<AbsorptionTrendsChartProps> = ({
       </Box>
 
       {!absorptionTrends ? (
-        <Paper sx={{ p: 'var(--ob-space-200)' }}>
+        <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
           <Typography color="textSecondary">
             No absorption analytics available.
           </Typography>
-        </Paper>
+        </GlassCard>
       ) : (
         <Grid container spacing="var(--ob-space-200)">
           <Grid item xs={12} md={6} lg={3}>
@@ -186,7 +186,7 @@ const AbsorptionTrendsChart: React.FC<AbsorptionTrendsChartProps> = ({
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <Paper sx={{ p: 'var(--ob-space-200)' }}>
+            <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
               <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                 Forecast (6 months)
               </Typography>
@@ -223,11 +223,11 @@ const AbsorptionTrendsChart: React.FC<AbsorptionTrendsChartProps> = ({
                   </Typography>
                 </>
               )}
-            </Paper>
+            </GlassCard>
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <Paper sx={{ p: 'var(--ob-space-200)' }}>
+            <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
               <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                 Seasonality Snapshot
               </Typography>
@@ -256,7 +256,7 @@ const AbsorptionTrendsChart: React.FC<AbsorptionTrendsChartProps> = ({
                   No seasonal patterns detected.
                 </Typography>
               )}
-            </Paper>
+            </GlassCard>
           </Grid>
         </Grid>
       )}

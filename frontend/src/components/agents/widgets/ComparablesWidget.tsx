@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import {
   Box,
-  Paper,
   Typography,
   Table,
   TableBody,
@@ -25,6 +24,7 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown'
 import { format, parseISO } from 'date-fns'
 import { MarketTransaction, ComparablesAnalysis } from '../../../types/market'
 import { PropertyType } from '../../../types/property'
+import { GlassCard } from '../../canonical/GlassCard'
 
 interface ComparablesWidgetProps {
   comparables: MarketTransaction[]
@@ -222,7 +222,7 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
         </Grid>
       )}
 
-      <Paper sx={{ width: '100%', mb: 'var(--ob-space-200)' }}>
+      <GlassCard sx={{ width: '100%', mb: 'var(--ob-space-200)' }}>
         <Box sx={{ p: 'var(--ob-space-200)' }}>
           <TextField
             fullWidth
@@ -327,7 +327,7 @@ const ComparablesWidget: React.FC<ComparablesWidgetProps> = ({
           onRowsPerPageChange={handleChangeRowsPerPage}
           rowsPerPageOptions={[5, 10, 25, 50]}
         />
-      </Paper>
+      </GlassCard>
     </Box>
   )
 }

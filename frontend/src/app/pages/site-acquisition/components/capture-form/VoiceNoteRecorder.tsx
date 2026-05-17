@@ -443,8 +443,8 @@ export function VoiceNoteRecorder({
             >
               <div
                 style={{
-                  width: '10px',
-                  height: '10px',
+                  width: '10px', // canon-ok: VU-meter indicator
+                  height: '10px', // canon-ok: VU-meter indicator
                   borderRadius: 'var(--ob-radius-pill)',
                   background: isPaused
                     ? 'var(--ob-color-status-warning, #f59e0b)'

@@ -19,7 +19,6 @@ import {
   Typography,
   CircularProgress,
   Alert,
-  Paper,
   InputAdornment,
   IconButton,
 } from '@mui/material'
@@ -29,6 +28,7 @@ import SearchIcon from '@mui/icons-material/Search'
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import CloudOffIcon from '@mui/icons-material/CloudOff'
 import '../styles/cad.css'
+import { GlassCard } from '../components/canonical/GlassCard'
 
 const DEFAULT_PROJECT_ID = 1
 const OVERLAY_RUN_POLL_INTERVAL_MS = 2500
@@ -156,7 +156,7 @@ export function CadPipelinesPage() {
         sx={{ maxWidth: '1200px', margin: '0 auto', p: 'var(--ob-space-200)' }}
       >
         {/* Header Toolbar */}
-        <Paper
+        <GlassCard
           elevation={0}
           sx={{
             p: 'var(--ob-space-150)',
@@ -301,7 +301,7 @@ export function CadPipelinesPage() {
               </Box>
             </Box>
           )}
-        </Paper>
+        </GlassCard>
 
         {/* Error Handling - Status Indicator */}
         {error && (
@@ -348,7 +348,7 @@ export function CadPipelinesPage() {
             */}
 
           {!loading && suggestions.length === 0 && !error && (
-            <Paper
+            <GlassCard
               elevation={0}
               sx={{
                 p: 'var(--ob-space-400)',
@@ -439,7 +439,7 @@ export function CadPipelinesPage() {
               >
                 Check for Updates
               </Button>
-            </Paper>
+            </GlassCard>
           )}
 
           {!loading && suggestions.length > 0 && (
@@ -451,7 +451,7 @@ export function CadPipelinesPage() {
               }}
             >
               {suggestions.map((suggestion) => (
-                <Paper
+                <GlassCard
                   key={suggestion.id}
                   sx={{
                     p: 'var(--ob-space-200)',
@@ -551,7 +551,7 @@ export function CadPipelinesPage() {
                       </Typography>
                     </Box>
                   </Box>
-                </Paper>
+                </GlassCard>
               ))}
             </Box>
           )}

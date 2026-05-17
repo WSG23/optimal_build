@@ -7,7 +7,6 @@ import {
   IconButton,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
   Stack,
   TextField,
@@ -16,6 +15,7 @@ import {
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DocumentIcon from '@mui/icons-material/Description'
+import { GlassCard } from '../../../../../components/canonical/GlassCard'
 
 const INTERVENTION_TYPES = [
   {
@@ -98,7 +98,7 @@ export function ProposedWorksTab({
       </Box>
 
       {interventions.length === 0 ? (
-        <Paper
+        <GlassCard
           sx={{
             p: 'var(--ob-space-300)',
             textAlign: 'center',
@@ -116,11 +116,11 @@ export function ProposedWorksTab({
             No interventions defined yet. Click &quot;Add Intervention&quot; to
             describe the proposed works.
           </Typography>
-        </Paper>
+        </GlassCard>
       ) : (
         <Stack spacing="var(--ob-space-200)">
           {interventions.map((intervention, index) => (
-            <Paper
+            <GlassCard
               key={index}
               sx={{
                 p: 'var(--ob-space-200)',
@@ -202,7 +202,7 @@ export function ProposedWorksTab({
                   </IconButton>
                 )}
               </Box>
-            </Paper>
+            </GlassCard>
           ))}
         </Stack>
       )}

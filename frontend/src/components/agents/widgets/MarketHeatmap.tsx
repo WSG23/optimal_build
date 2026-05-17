@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Box, Paper, Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { MarketTransaction } from '../../../types/market'
 import { PropertyType } from '../../../types/property'
+import { GlassCard } from '../../canonical/GlassCard'
 
 const GOOGLE_MAPS_API_KEY = import.meta.env?.VITE_GOOGLE_MAPS_API_KEY ?? ''
 
@@ -276,28 +277,28 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
 
   if (loadError) {
     return (
-      <Paper sx={{ p: 'var(--ob-space-200)', height: 500 }}>
+      <GlassCard sx={{ p: 'var(--ob-space-200)', height: 500 }}>
         <Typography variant="body1" color="textSecondary" align="center">
           {loadError === 'Google Maps API key not configured'
             ? 'Map requires Google Maps API key. Set VITE_GOOGLE_MAPS_API_KEY in environment.'
             : `Failed to load map: ${loadError}`}
         </Typography>
-      </Paper>
+      </GlassCard>
     )
   }
 
   if (!isLoaded) {
     return (
-      <Paper sx={{ p: 'var(--ob-space-200)', height: 500 }}>
+      <GlassCard sx={{ p: 'var(--ob-space-200)', height: 500 }}>
         <Typography variant="body1" color="textSecondary" align="center">
           Loading map...
         </Typography>
-      </Paper>
+      </GlassCard>
     )
   }
 
   return (
-    <Paper sx={{ p: 'var(--ob-space-200)', height: 500 }}>
+    <GlassCard sx={{ p: 'var(--ob-space-200)', height: 500 }}>
       <Typography variant="h6" gutterBottom>
         Transaction Heatmap
       </Typography>
@@ -309,7 +310,7 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
           overflow: 'hidden',
         }}
       />
-    </Paper>
+    </GlassCard>
   )
 }
 

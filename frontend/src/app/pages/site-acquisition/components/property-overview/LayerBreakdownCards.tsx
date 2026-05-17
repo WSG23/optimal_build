@@ -97,8 +97,8 @@ export function LayerBreakdownCards({ layers }: LayerBreakdownCardsProps) {
               <span
                 aria-hidden="true"
                 style={{
-                  width: '14px',
-                  height: '14px',
+                  width: '14px', // canon-ok: color swatch
+                  height: '14px', // canon-ok: color swatch
                   borderRadius: 'var(--ob-radius-pill)',
                   background: layer.color,
                   boxShadow: '0 0 0 1px rgb(255 255 255 / 0.8)',

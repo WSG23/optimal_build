@@ -1,4 +1,5 @@
-import { Box, Checkbox, Grid, Paper, Typography } from '@mui/material'
+import { Box, Checkbox, Grid, Typography } from '@mui/material'
+import { GlassCard } from '../../../../../components/canonical/GlassCard'
 
 const HERITAGE_ELEMENTS_OPTIONS = [
   { id: 'facade', label: 'Original Facade', category: 'Exterior' },
@@ -54,7 +55,7 @@ export function HeritageElementsTab({
               (el) => el.category === category,
             ).map((element) => (
               <Grid item xs={6} sm={4} md={3} key={element.id}>
-                <Paper
+                <GlassCard
                   onClick={() => {
                     if (!isSubmitted) onElementToggle(element.id)
                   }}
@@ -87,7 +88,7 @@ export function HeritageElementsTab({
                     sx={{ p: 0 }}
                   />
                   <Typography variant="body2">{element.label}</Typography>
-                </Paper>
+                </GlassCard>
               </Grid>
             ))}
           </Grid>

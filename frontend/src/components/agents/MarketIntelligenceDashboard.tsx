@@ -11,7 +11,6 @@ import {
   Alert,
   Tab,
   Tabs,
-  Paper,
   IconButton,
   Tooltip,
   LinearProgress,
@@ -28,6 +27,7 @@ import AbsorptionTrendsChart from './widgets/AbsorptionTrendsChart'
 import MarketHeatmap from './widgets/MarketHeatmap'
 import MarketCycleIndicator from './widgets/MarketCycleIndicator'
 import QuickInsights from './widgets/QuickInsights'
+import { GlassCard } from '../canonical/GlassCard'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -157,7 +157,7 @@ const MarketIntelligenceDashboard: React.FC = () => {
       </Box>
 
       {/* Filters */}
-      <Paper sx={{ p: 'var(--ob-space-200)', mb: 'var(--ob-space-200)' }}>
+      <GlassCard sx={{ p: 'var(--ob-space-200)', mb: 'var(--ob-space-200)' }}>
         <Grid container spacing="var(--ob-space-200)" alignItems="center">
           <Grid item>
             <FilterListIcon color="action" />
@@ -225,7 +225,7 @@ const MarketIntelligenceDashboard: React.FC = () => {
             </Typography>
           </Grid>
         </Grid>
-      </Paper>
+      </GlassCard>
 
       {/* Quick Insights */}
       {marketReport && (
@@ -239,7 +239,7 @@ const MarketIntelligenceDashboard: React.FC = () => {
       )}
 
       {/* Main Content Tabs */}
-      <Paper sx={{ width: '100%' }}>
+      <GlassCard sx={{ width: '100%' }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs
             value={tabValue}
@@ -300,7 +300,7 @@ const MarketIntelligenceDashboard: React.FC = () => {
             propertyType={propertyType}
           />
         </TabPanel>
-      </Paper>
+      </GlassCard>
     </Box>
   )
 }

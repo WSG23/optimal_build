@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Box, Paper, Tooltip, Typography, Chip, Stack } from '@mui/material'
+import { Box, Tooltip, Typography, Chip, Stack } from '@mui/material'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance'
 import PeopleIcon from '@mui/icons-material/People'
@@ -7,6 +7,7 @@ import type {
   GanttChart as GanttChartData,
   GanttTask,
 } from '../../../../api/development'
+import { GlassCard } from '../../../../components/canonical/GlassCard'
 
 interface GanttChartProps {
   data: GanttChartData
@@ -367,16 +368,16 @@ export function GanttChart({
 
   if (tasks.length === 0) {
     return (
-      <Paper sx={{ p: 'var(--ob-space-300)', textAlign: 'center' }}>
+      <GlassCard sx={{ p: 'var(--ob-space-300)', textAlign: 'center' }}>
         <Typography variant="body1" color="text.secondary">
           No phases defined for this project. Add phases to see the Gantt chart.
         </Typography>
-      </Paper>
+      </GlassCard>
     )
   }
 
   return (
-    <Paper
+    <GlassCard
       elevation={1}
       sx={{
         overflow: 'auto',
@@ -661,6 +662,6 @@ export function GanttChart({
           ))}
         </Box>
       </Box>
-    </Paper>
+    </GlassCard>
   )
 }

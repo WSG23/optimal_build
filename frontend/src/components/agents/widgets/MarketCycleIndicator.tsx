@@ -1,7 +1,6 @@
 import React from 'react'
 import {
   Box,
-  Paper,
   Typography,
   Grid,
   Chip,
@@ -13,6 +12,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat'
 import { MarketCyclePosition } from '../../../types/market'
 import { PropertyType } from '../../../types/property'
+import { GlassCard } from '../../canonical/GlassCard'
 
 interface MarketCycleIndicatorProps {
   cycleData?: MarketCyclePosition | null
@@ -55,7 +55,7 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
 }) => {
   if (!cycleData) {
     return (
-      <Paper sx={{ p: 'var(--ob-space-200)', height: 500 }}>
+      <GlassCard sx={{ p: 'var(--ob-space-200)', height: 500 }}>
         <Typography variant="h6" gutterBottom>
           Market Cycle Position
         </Typography>
@@ -67,7 +67,7 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
         >
           <Typography color="textSecondary">No cycle data available</Typography>
         </Box>
-      </Paper>
+      </GlassCard>
     )
   }
 
@@ -87,7 +87,7 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
   }
 
   return (
-    <Paper sx={{ p: 'var(--ob-space-200)', height: 500 }}>
+    <GlassCard sx={{ p: 'var(--ob-space-200)', height: 500 }}>
       <Box
         display="flex"
         justifyContent="space-between"
@@ -257,7 +257,7 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
 
         {cycleData.index_trends && (
           <Grid item xs={12}>
-            <Paper sx={{ p: 'var(--ob-space-200)' }}>
+            <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
               <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                 Index Trends
               </Typography>
@@ -273,13 +273,13 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
               <Typography variant="caption" color="textSecondary">
                 Trend: {cycleData.index_trends.trend ?? 'n/a'}
               </Typography>
-            </Paper>
+            </GlassCard>
           </Grid>
         )}
 
         {cycleData.outlook && (
           <Grid item xs={12}>
-            <Paper sx={{ p: 'var(--ob-space-200)' }}>
+            <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
               <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                 Outlook Drivers
               </Typography>
@@ -291,11 +291,11 @@ const MarketCycleIndicator: React.FC<MarketCycleIndicatorProps> = ({
                 Demand forecast:{' '}
                 {formatPercent(cycleData.outlook.demand_forecast, 1)}
               </Typography>
-            </Paper>
+            </GlassCard>
           </Grid>
         )}
       </Grid>
-    </Paper>
+    </GlassCard>
   )
 }
 

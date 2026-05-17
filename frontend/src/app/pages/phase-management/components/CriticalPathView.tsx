@@ -1,5 +1,6 @@
-import { alpha, Box, Grid, Paper, Stack, Typography } from '@mui/material'
+import { alpha, Box, Grid, Stack, Typography } from '@mui/material'
 import type { CriticalPathResult } from '../../../../api/development'
+import { GlassCard } from '../../../../components/canonical/GlassCard'
 
 interface CriticalPathViewProps {
   data: CriticalPathResult
@@ -8,7 +9,7 @@ interface CriticalPathViewProps {
 export function CriticalPathView({ data }: CriticalPathViewProps) {
   return (
     <Stack spacing="var(--ob-space-200)">
-      <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+      <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
         <Typography variant="h6" sx={{ mb: 'var(--ob-space-200)' }}>
           Critical Path Analysis
         </Typography>
@@ -20,11 +21,11 @@ export function CriticalPathView({ data }: CriticalPathViewProps) {
           that determines the minimum project duration. Any delay in critical
           phases will delay the entire project.
         </Typography>
-      </Paper>
+      </GlassCard>
 
       <Grid container spacing="var(--ob-space-200)">
         <Grid item xs={12} md={6}>
-          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
             <Typography
               variant="subtitle1"
               sx={{
@@ -54,10 +55,10 @@ export function CriticalPathView({ data }: CriticalPathViewProps) {
                 </Box>
               ))}
             </Stack>
-          </Paper>
+          </GlassCard>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Paper variant="outlined" sx={{ p: 'var(--ob-space-200)' }}>
+          <GlassCard sx={{ p: 'var(--ob-space-200)' }}>
             <Typography
               variant="subtitle1"
               sx={{
@@ -87,7 +88,7 @@ export function CriticalPathView({ data }: CriticalPathViewProps) {
                 </Box>
               ))}
             </Stack>
-          </Paper>
+          </GlassCard>
         </Grid>
       </Grid>
     </Stack>

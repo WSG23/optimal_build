@@ -165,7 +165,7 @@ export function AIAssistantSidebar({
                     display: 'flex',
                     gap: 'var(--ob-space-25)',
                     alignItems: 'center',
-                    height: '14px',
+                    height: '14px', // canon-ok: micro-icon
                   }}
                 >
                   <span
