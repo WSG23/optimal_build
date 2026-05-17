@@ -61,7 +61,7 @@ jobs:
         run: python scripts/check_warning_allowlist.py --fail-on-expired
 
       - name: Set up Node.js for pre-commit hooks
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -131,7 +131,7 @@ jobs:
 
       - name: Set up Node.js
         if: needs.changes.outputs.frontend == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -173,7 +173,7 @@ jobs:
 
       - name: Set up Node.js
         if: needs.changes.outputs.frontend == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -240,7 +240,7 @@ jobs:
 
       - name: Set up Node.js
         if: needs.changes.outputs.frontend == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
