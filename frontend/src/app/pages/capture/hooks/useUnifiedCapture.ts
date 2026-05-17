@@ -80,6 +80,21 @@ async function loadGoogleMaps(apiKey: string): Promise<void> {
   ])
 }
 
+// PlaceAutocompleteElement web-component surface that @types/google.maps
+// doesn't yet model. Centralised here so the unsafe cast lives in one place
+// and the contract is documented.
+type PlaceAutocompleteEl = google.maps.places.PlaceAutocompleteElement & {
+  value: string
+}
+interface GmpSelectEvent extends Event {
+  placePrediction?: { toPlace: () => google.maps.places.Place }
+}
+function asPlaceAutocomplete(
+  el: google.maps.places.PlaceAutocompleteElement,
+): PlaceAutocompleteEl {
+  return el as unknown as PlaceAutocompleteEl
+}
+
 function dismissPlacesAutocompleteDropdown() {
   addressInputBlur()
   document.body.classList.add(CAPTURE_RESULTS_ACTIVE_CLASS)
@@ -662,10 +677,25 @@ export function useUnifiedCapture({
         .trim() || '#00f3ff'
 
     // Create draggable AdvancedMarkerElement (classic Marker deprecated Feb 2024).
+    // SVG is built with createElementNS + setAttribute (not innerHTML) so the
+    // brandColor value — read from a CSS custom property at runtime — cannot
+    // escape the attribute and inject markup if the CSS variable is tampered
+    // with by an upstream injection.
+    const SVG_NS = 'http://www.w3.org/2000/svg'
+    const pinSvgEl = document.createElementNS(SVG_NS, 'svg')
+    pinSvgEl.setAttribute('width', '24')
+    pinSvgEl.setAttribute('height', '24')
+    pinSvgEl.setAttribute('viewBox', '0 0 24 24')
+    const pinCircle = document.createElementNS(SVG_NS, 'circle')
+    pinCircle.setAttribute('cx', '12')
+    pinCircle.setAttribute('cy', '12')
+    pinCircle.setAttribute('r', '10')
+    pinCircle.setAttribute('fill', '#ffffff')
+    pinCircle.setAttribute('stroke', brandColor)
+    pinCircle.setAttribute('stroke-width', '3')
+    pinSvgEl.appendChild(pinCircle)
     const pinSvg = document.createElement('div')
-    pinSvg.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="12" cy="12" r="10" fill="#ffffff" stroke="${brandColor}" stroke-width="3"/>
-    </svg>`
+    pinSvg.appendChild(pinSvgEl)
     pinSvg.style.cursor = 'grab'
     pinSvg.title = 'Drag to reposition or click the map'
 
@@ -757,6 +787,15 @@ export function useUnifiedCapture({
     // the initial map center on the first run after isMapLoaded flips true.
   }, [isMapLoaded, latitude, longitude, clearAnalysisCoordinates])
 
+  // `address` is mirrored into a ref so the autocomplete-init effect can
+  // seed the web component once on mount without re-running on every
+  // keystroke (which would re-create the element). The `input` listener
+  // below keeps state in sync afterwards.
+  const addressSeedRef = useRef(address)
+  useEffect(() => {
+    addressSeedRef.current = address
+  }, [address])
+
   // Initialize Places API (New) PlaceAutocompleteElement.
   // Renders its own <gmp-place-autocomplete> web component into the host div.
   useEffect(() => {
@@ -769,29 +808,24 @@ export function useUnifiedCapture({
       return
     }
 
-    const autocomplete = new google.maps.places.PlaceAutocompleteElement({
-      types: ['address'],
-    })
+    const autocomplete = asPlaceAutocomplete(
+      new google.maps.places.PlaceAutocompleteElement({ types: ['address'] }),
+    )
     // Mirror existing state into the autocomplete input on mount.
-    if (address) {
-      ;(autocomplete as unknown as { value: string }).value = address
+    if (addressSeedRef.current) {
+      autocomplete.value = addressSeedRef.current
     }
     autocompleteHostRef.current.appendChild(autocomplete)
 
     // Keep `address` state in sync with the user's typing so the
     // debounced backend geocode (separate effect) continues to fire.
     autocomplete.addEventListener('input', (event: Event) => {
-      const value =
-        (event.target as unknown as { value?: string } | null)?.value ?? ''
-      setAddressState(value)
+      const target = event.target as PlaceAutocompleteEl | null
+      setAddressState(target?.value ?? '')
     })
 
     autocomplete.addEventListener('gmp-select', async (event: Event) => {
-      const detail = (
-        event as unknown as {
-          placePrediction?: { toPlace: () => google.maps.places.Place }
-        }
-      ).placePrediction
+      const detail = (event as GmpSelectEvent).placePrediction
       if (!detail) return
       const place = detail.toPlace()
       await place.fetchFields({
@@ -836,9 +870,6 @@ export function useUnifiedCapture({
       autocomplete.remove()
       autocompleteElementRef.current = null
     }
-    // `address` is read only to seed the initial value on first mount; the
-    // input event listener keeps it in sync afterwards.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMapLoaded, clearAnalysisCoordinates, updateMarkerPosition])
 
   // Capture handler - routes to appropriate API based on mode

@@ -211,6 +211,22 @@
     min-width: 0;
 }
 
+/* Visually-hidden legacy input kept as the controlled surface for tests.
+   Positioned off-flow with zero footprint; aria-hidden in markup ensures
+   it doesn't double-up the accessible name of the autocomplete host. */
+.gps-form__hidden-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+    padding: 0;
+    margin: -1px;
+}
+
 /* ── Places API (New) — PlaceAutocompleteElement host ──
    The web component renders its own input inside a shadow DOM. Style its
    exposed parts to match the existing .gps-input-ghost--lg aesthetic. */

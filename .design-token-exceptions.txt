@@ -15,12 +15,9 @@
 # for the dark grey map style array.
 
 # --- Google Maps dark grey MapTypeStyle (JS API, not CSS-consumable) ---
-frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:562
-frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:564
-frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:565
-frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:569
-frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:574
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:577
 frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:579
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:580
 frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:584
 frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:589
 frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:594
@@ -30,16 +27,26 @@ frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:609
 frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:614
 frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:619
 frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:624
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:629
 frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:634
 frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:639
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:649
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:654
 
 # --- Brand-colour fallback for getComputedStyle() result ---
-frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:662
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:677
 
-# --- SVG marker pin fill (passed via innerHTML, not a CSS surface) ---
-frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:667
+# --- SVG marker pin fill (XSS-safe via setAttribute; literal '#ffffff'
+#     for the centre disc, brandColor variable for the stroke) ---
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:693
 
 # --- Pre-existing capture page CSS dimensions (TODO: migrate to tokens) ---
 frontend/src/styles/gps-capture/core.css:108
-frontend/src/styles/gps-capture/core.css:810
-frontend/src/styles/gps-capture/core.css:811
+frontend/src/styles/gps-capture/core.css:826
+frontend/src/styles/gps-capture/core.css:827
+
+# --- Visually-hidden helper for legacy input. The 1px footprint is the
+#     long-established a11y pattern (sr-only); there's no design-token
+#     semantic for "imperceptible-but-not-display:none". ---
+frontend/src/styles/gps-capture/core.css:219
+frontend/src/styles/gps-capture/core.css:220

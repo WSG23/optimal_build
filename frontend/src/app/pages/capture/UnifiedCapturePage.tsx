@@ -176,24 +176,25 @@ export function UnifiedCapturePage() {
                     The hidden legacy input remains for tests / a11y label-for
                     associations and is kept in sync via the hook. */}
                 <div className="gps-form__address-row">
+                  {/* Hidden legacy input retained as the canonical
+                      controlled-input surface for tests; the visible
+                      address field is the web component below, which
+                      carries its own accessible name via aria-label on
+                      the host. aria-hidden here prevents AT from seeing
+                      a duplicate "Address" label. */}
                   <input
                     ref={addressInputRef}
                     type="text"
-                    aria-label="Address"
                     aria-hidden="true"
                     tabIndex={-1}
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    style={{
-                      position: 'absolute',
-                      width: 1,
-                      height: 1,
-                      overflow: 'hidden',
-                      clip: 'rect(0 0 0 0)',
-                    }}
+                    className="gps-form__hidden-input"
                   />
                   <div
                     ref={autocompleteHostRef}
+                    role="group"
+                    aria-label="Address"
                     className="gps-form__autocomplete-host gps-input-ghost gps-input-ghost--lg"
                     data-testid="address-autocomplete-host"
                   />
