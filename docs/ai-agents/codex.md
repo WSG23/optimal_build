@@ -268,6 +268,40 @@ When you finish implementing a feature:
 
 If you skip tests or run the wrong tests, Claude might commit broken code.
 
+### 7.1 Single-Writer Rule (MANDATORY)
+
+This repo is regularly worked on by both Codex and Claude at the same time. Concurrent writes to the same branch silently overwrite each other — we've watched it happen, and the recovery is expensive. **Only one AI agent edits a given branch at a time. The other reads, reviews, or runs tests but does not write.**
+
+Before you open any write tool on a session:
+
+```bash
+python3 scripts/agent_session.py start codex --intent "<short description of what you're about to do>"
+```
+
+If it exits non-zero, another agent owns the branch. **Stop. Do not edit any file.** Surface the lock contents to the user (the script prints them) and wait for an explicit handoff. Do not `clear --force` to take a lock you didn't earn — the visible handoff is the entire point.
+
+When you're done editing for the session:
+
+```bash
+python3 scripts/agent_session.py stop
+```
+
+For Codex → Claude handoffs after a feature is implemented, the recommended sequence is:
+
+1. Codex: `agent_session.py start codex --intent "<feature>"` → edit → tests → `agent_session.py stop`. Codex reports the file list and test output to the user.
+2. Claude: `agent_session.py start claude --intent "review and commit <feature>"` → review → commit → `agent_session.py stop`.
+
+Single-writer invariant is preserved across the handoff.
+
+For genuinely parallel streams of work (Codex feature A on one branch, Claude refactor B on another), use git worktrees so each agent has its own filesystem and its own `.agent-active`:
+
+```bash
+git worktree add ../optimal_build-codex codex/my-branch
+git worktree add ../optimal_build-claude claude/my-branch
+```
+
+Full rules, failure modes, and the worktree-per-agent pattern are documented in [multi_agent_coordination.md](multi_agent_coordination.md). This rule is also Core Directive 6 in [MCP.md](../../MCP.md).
+
 ---
 
 ## 8. Quick Reference
