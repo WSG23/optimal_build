@@ -197,9 +197,7 @@ def test_histogram_percentile_uses_observations_and_metric_map():
         _name = "fake_hist"
 
     histogram = _Histogram()
-    result = metrics.histogram_percentile(
-        histogram, 0.5, labels={"endpoint": "x"}
-    )
+    result = metrics.histogram_percentile(histogram, 0.5, labels={"endpoint": "x"})
     assert result.value == 2.0
     assert result.buckets == ((1.0, 1.0), (2.0, 2.0))
 
@@ -218,9 +216,7 @@ def test_histogram_percentile_uses_bucket_fallback_when_no_observations():
         _name = "fake_hist"
 
     histogram = _Histogram()
-    result = metrics.histogram_percentile(
-        histogram, 0.5, labels={"endpoint": "x"}
-    )
+    result = metrics.histogram_percentile(histogram, 0.5, labels={"endpoint": "x"})
     assert result.value == 1.25
 
 
@@ -292,9 +288,15 @@ def test_collect_histogram_data_metric_map_then_registry(monkeypatch):
         def __init__(self):
             self.name = "hybrid_histogram"
             self.samples = [
-                _RegSample("hybrid_histogram_bucket", {"le": "1.0", "endpoint": "y"}, 1.0),
-                _RegSample("hybrid_histogram_bucket", {"le": "+Inf", "endpoint": "y"}, 2.0),
-                _RegSample("hybrid_histogram_bucket", {"le": "bad", "endpoint": "y"}, 0.0),
+                _RegSample(
+                    "hybrid_histogram_bucket", {"le": "1.0", "endpoint": "y"}, 1.0
+                ),
+                _RegSample(
+                    "hybrid_histogram_bucket", {"le": "+Inf", "endpoint": "y"}, 2.0
+                ),
+                _RegSample(
+                    "hybrid_histogram_bucket", {"le": "bad", "endpoint": "y"}, 0.0
+                ),
             ]
 
     class _Registry:
@@ -377,10 +379,26 @@ def test_collect_histogram_data_registry_path(monkeypatch):
                 _Metric(
                     "registry_histogram",
                     [
-                        _Sample("registry_histogram_bucket", {"le": "1.0", "endpoint": "a"}, 1.0),
-                        _Sample("registry_histogram_bucket", {"le": "+Inf", "endpoint": "a"}, 2.0),
-                        _Sample("registry_histogram_bucket", {"le": "bad", "endpoint": "a"}, 0.0),
-                        _Sample("registry_histogram_bucket", {"le": "3.0", "endpoint": "b"}, 3.0),
+                        _Sample(
+                            "registry_histogram_bucket",
+                            {"le": "1.0", "endpoint": "a"},
+                            1.0,
+                        ),
+                        _Sample(
+                            "registry_histogram_bucket",
+                            {"le": "+Inf", "endpoint": "a"},
+                            2.0,
+                        ),
+                        _Sample(
+                            "registry_histogram_bucket",
+                            {"le": "bad", "endpoint": "a"},
+                            0.0,
+                        ),
+                        _Sample(
+                            "registry_histogram_bucket",
+                            {"le": "3.0", "endpoint": "b"},
+                            3.0,
+                        ),
                     ],
                 ),
             ]
@@ -414,9 +432,7 @@ def test_collect_histogram_data_non_dict_metrics_map(monkeypatch):
             return []
 
     monkeypatch.setattr(metrics, "REGISTRY", _Registry())
-    buckets, observations = metrics._collect_histogram_data(
-        _Histogram(), {}
-    )
+    buckets, observations = metrics._collect_histogram_data(_Histogram(), {})
     assert buckets == []
     assert observations == []
 
@@ -464,9 +480,7 @@ def test_collect_histogram_data_and_label_matching():
     hist = metrics.REQUEST_LATENCY_MS
     hist.labels(endpoint="first").observe(5.0)
 
-    buckets, observations = metrics._collect_histogram_data(
-        hist, {"endpoint": "first"}
-    )
+    buckets, observations = metrics._collect_histogram_data(hist, {"endpoint": "first"})
     assert buckets
     if observations:
         assert observations == [5.0]

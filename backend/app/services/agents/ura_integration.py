@@ -56,8 +56,8 @@ class URAIntegrationService(AsyncClientService):
         self.token_url = "https://eservice.ura.gov.sg/uraDataService/insertNewToken/v1"
         self.data_url = "https://eservice.ura.gov.sg/uraDataService/invokeUraDS/v1"
         self.access_key = getattr(settings, "URA_ACCESS_KEY", None)
-        self.token = None
-        self.token_expiry = None
+        self.token: str | None = None
+        self.token_expiry: datetime | None = None
         try:
             self.client = httpx.AsyncClient(timeout=30.0)
         except (

@@ -1,5 +1,6 @@
-from datetime import datetime
 import inspect
+
+from backend._compat.datetime import utcnow
 from typing import List, Optional
 from uuid import UUID
 
@@ -148,9 +149,7 @@ class RegulatoryService:
                 else SubmissionStatus.DRAFT
             ),
             submitted_at=(
-                datetime.utcnow()
-                if submission.submission_mode == "live_submit"
-                else None
+                utcnow() if submission.submission_mode == "live_submit" else None
             ),
             # submitted_by_id=submitted_by_id # User tracking if available
         )
@@ -170,7 +169,7 @@ class RegulatoryService:
         if external_response.get("success"):
             db_submission.submission_no = external_response.get("transaction_id")
             if submission.submission_mode == "live_submit":
-                db_submission.submitted_at = datetime.utcnow()
+                db_submission.submitted_at = utcnow()
             await self._maybe_await(self.db.commit())
             await self._maybe_await(self.db.refresh(db_submission))
         if submission.submission_mode != "live_submit":
@@ -261,7 +260,7 @@ class RegulatoryService:
         if mapped_status and mapped_status != submission.status:
             submission.status = mapped_status
             if mapped_status == SubmissionStatus.APPROVED:
-                submission.approved_at = datetime.utcnow()
+                submission.approved_at = utcnow()
 
             if remarks:
                 existing_desc = submission.description or ""

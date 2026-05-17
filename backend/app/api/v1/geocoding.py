@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.api.deps import RequestIdentity, require_viewer
 from app.schemas.external_sources import ExternalSourceMetadata
 from app.services.geocoding import GeocodingService
 
@@ -27,6 +28,7 @@ class GeocodeResponse(BaseModel):
 async def forward_geocode(
     address: str = Query(..., min_length=3),
     jurisdiction_code: str | None = Query(default=None, alias="jurisdictionCode"),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> GeocodeResponse:
     """Translate a free-form address into coordinates."""
 
@@ -53,6 +55,7 @@ async def forward_geocode(
 async def reverse_geocode(
     latitude: float = Query(...),
     longitude: float = Query(...),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> GeocodeResponse:
     """Translate coordinates into a formatted address."""
 

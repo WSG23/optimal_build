@@ -11,13 +11,27 @@ const mockMapConstructor = vi.fn()
 const mockMapAddListener = vi.fn()
 const mockMapSetCenter = vi.fn()
 const mockMarkerConstructor = vi.fn()
-const mockMarkerAddListener = vi.fn()
-const mockMarkerSetPosition = vi.fn()
-const mockMarkerSetMap = vi.fn()
+const mockMarkerAddEventListener = vi.fn()
 const mockAutocompleteConstructor = vi.fn()
-const mockAutocompleteAddListener = vi.fn()
-let mockAutocompletePlace: Record<string, unknown> | null = null
-let mockAutocompletePlaceChanged: (() => void) | null = null
+let mockAutocompletePlace: {
+  formattedAddress?: string
+  id?: string
+  displayName?: string
+  types?: string[]
+  location?: { lat: () => number; lng: () => number }
+} | null = null
+let mockGmpSelectHandler: ((event: Event) => void | Promise<void>) | null = null
+
+// Mock @googlemaps/js-api-loader (functional API in v2).
+// Each importLibrary call resolves with the already-installed window.google
+// mock so the hook proceeds as if Maps had loaded.
+vi.mock('@googlemaps/js-api-loader', () => ({
+  setOptions: () => {},
+  importLibrary: () =>
+    Promise.resolve(
+      (window as unknown as { google?: { maps?: unknown } }).google?.maps,
+    ),
+}))
 
 const installGoogleMapsMocks = () => {
   Object.defineProperty(window, 'google', {
@@ -36,37 +50,40 @@ const installGoogleMapsMocks = () => {
             mockMapSetCenter(...args)
           }
         },
-        Marker: class {
-          constructor(...args: unknown[]) {
-            mockMarkerConstructor(...args)
-          }
-          addListener(...args: unknown[]) {
-            mockMarkerAddListener(...args)
-          }
-          setPosition(...args: unknown[]) {
-            mockMarkerSetPosition(...args)
-          }
-          setMap(...args: unknown[]) {
-            mockMarkerSetMap(...args)
-          }
-          getPosition() {
-            return { lat: () => 1.3, lng: () => 103.85 }
-          }
+        marker: {
+          AdvancedMarkerElement: class {
+            position: { lat: number; lng: number } | null = null
+            map: unknown = null
+            constructor(opts: { position: { lat: number; lng: number } }) {
+              this.position = opts.position
+              mockMarkerConstructor(opts)
+            }
+            addEventListener(name: string, cb: (e: Event) => void) {
+              mockMarkerAddEventListener(name, cb)
+            }
+          },
         },
         places: {
-          Autocomplete: class {
-            constructor(...args: unknown[]) {
-              mockAutocompleteConstructor(...args)
+          // Factory returns a real DOM node so React's appendChild works.
+          // JSDOM rejects `new` on bare HTMLElement subclasses without an
+          // active customElements registration, so this sidesteps that.
+          PlaceAutocompleteElement: function (opts: unknown) {
+            mockAutocompleteConstructor(opts)
+            const el = document.createElement('span') as HTMLSpanElement & {
+              value: string
             }
-            addListener(eventName: string, callback: () => void) {
-              mockAutocompleteAddListener(eventName, callback)
-              if (eventName === 'place_changed') {
-                mockAutocompletePlaceChanged = callback
+            el.value = ''
+            const originalAdd = el.addEventListener.bind(el)
+            el.addEventListener = ((
+              name: string,
+              cb: EventListenerOrEventListenerObject,
+            ) => {
+              if (name === 'gmp-select') {
+                mockGmpSelectHandler = cb as (e: Event) => void | Promise<void>
               }
-            }
-            getPlace() {
-              return mockAutocompletePlace ?? {}
-            }
+              originalAdd(name, cb)
+            }) as typeof el.addEventListener
+            return el
           },
         },
       },
@@ -110,6 +127,7 @@ function renderHookHarness(
     return (
       <>
         <input ref={ref.current.addressInputRef} aria-label="Address" />
+        <div ref={ref.current.autocompleteHostRef} />
         <div ref={ref.current.mapContainerRef} />
       </>
     )
@@ -128,7 +146,7 @@ describe('useUnifiedCapture', () => {
     vi.useRealTimers()
     vi.resetAllMocks()
     mockAutocompletePlace = null
-    mockAutocompletePlaceChanged = null
+    mockGmpSelectHandler = null
     sessionStorage.clear()
     document.body.classList.remove('capture-results-active')
     delete (window as { google?: unknown }).google
@@ -608,20 +626,31 @@ describe('useUnifiedCapture', () => {
     expect(mockAutocompleteConstructor).toHaveBeenCalled()
 
     mockAutocompletePlace = {
-      formatted_address: '1 Nassim Rd, Singapore 258458',
-      place_id: 'google-place-1',
-      name: '1 Nassim Road',
+      formattedAddress: '1 Nassim Rd, Singapore 258458',
+      id: 'google-place-1',
+      displayName: '1 Nassim Road',
       types: ['street_address'],
-      geometry: {
-        location: {
-          lat: () => 1.3065566,
-          lng: () => 103.8262787,
-        },
+      location: {
+        lat: () => 1.3065566,
+        lng: () => 103.8262787,
       },
     }
 
+    // Simulate user selecting an autocomplete suggestion — Places API (New)
+    // emits gmp-select with detail.placePrediction.toPlace() returning a
+    // Place that exposes fetchFields() then the populated fields.
+    const fakePlace = mockAutocompletePlace
+    const fakeEvent = {
+      placePrediction: {
+        toPlace: () => ({
+          ...fakePlace,
+          fetchFields: () => Promise.resolve(),
+        }),
+      },
+    } as unknown as Event
+
     await act(async () => {
-      mockAutocompletePlaceChanged?.()
+      await mockGmpSelectHandler?.(fakeEvent)
     })
 
     expect(hookRef.current!.latitude).toBe('1.306557')

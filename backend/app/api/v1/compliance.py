@@ -7,6 +7,7 @@ from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from app.api.deps import RequestIdentity, require_viewer
 from app.core.database import AsyncSessionLocal
 from app.schemas.compliance import ComplianceCheckRequest, ComplianceCheckResponse
 from app.services.compliance import ComplianceService
@@ -27,6 +28,7 @@ async def get_compliance_service() -> ComplianceService:
 async def check_property_compliance(
     payload: ComplianceCheckRequest,
     service: ComplianceService = Depends(get_compliance_service),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> ComplianceCheckResponse:
     try:
         result = await service.run_for_property(payload.property_id)

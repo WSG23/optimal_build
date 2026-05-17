@@ -124,8 +124,8 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "test_users",  # Simple user API for learning
     "users_secure",  # Secure user API with validation
     "users_db",  # Database-backed user API
-    "projects_api",  # Projects CRUD API
-    "singapore_property_api",  # Singapore property with BCA/URA compliance
+    "projects",  # Projects CRUD API
+    "singapore_properties",  # Singapore property with BCA/URA compliance
     "market_intelligence",  # Market intelligence analytics API
     "agents",  # Commercial property advisor agent endpoints
     "commercial_property_packs",  # PDF pack generation/download endpoints

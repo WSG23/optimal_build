@@ -60,6 +60,7 @@ class BaseModel(DeclarativeBase):
     """Declarative base class for SQLAlchemy models."""
 
     __abstract__ = True
+    __allow_unmapped__ = True
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """Ensure subclasses always set extend_existing and avoid double-registration."""

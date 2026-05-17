@@ -9,9 +9,11 @@ Phase 2D: Multi-Phase Development Management
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from enum import Enum
 from typing import TYPE_CHECKING, List
+
+from backend._compat.datetime import utcnow
 
 from sqlalchemy import (
     Boolean,
@@ -202,8 +204,8 @@ class DevelopmentPhase(Base):
 
     # Metadata
     notes = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     # Relationships
     project: Mapped["Project"] = relationship(
@@ -276,7 +278,7 @@ class PhaseDependency(Base):
     lag_days = Column(Integer, default=0)  # Days of lag (+) or lead (-)
 
     notes = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
 
     # Relationships
     predecessor_phase: Mapped["DevelopmentPhase"] = relationship(
@@ -331,8 +333,8 @@ class PhaseMilestone(Base):
     notification_sent = Column(Boolean, default=False)
 
     notes = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     # Relationships
     phase: Mapped["DevelopmentPhase"] = relationship(
@@ -403,8 +405,8 @@ class TenantRelocation(Base):
     contact_phone = Column(String(50))
     notes = Column(Text)
 
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow, nullable=False)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     def __repr__(self) -> str:
         return f"<TenantRelocation {self.tenant_name} ({self.status})>"

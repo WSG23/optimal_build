@@ -84,7 +84,9 @@ class LoginResponse(BaseModel):
     tokens: TokenResponse
 
 
-@router.post("/signup", response_model=UserResponse)
+@router.post(
+    "/signup", response_model=UserResponse
+)  # public-endpoint: unauthenticated user registration
 def signup(user_data: UserSignup) -> UserResponse:
     """Register a new user with validation and password hashing."""
 
@@ -92,7 +94,9 @@ def signup(user_data: UserSignup) -> UserResponse:
     return UserResponse.from_auth_user(user)
 
 
-@router.post("/login", response_model=LoginResponse)
+@router.post(
+    "/login", response_model=LoginResponse
+)  # public-endpoint: credential exchange for JWT
 def login(credentials: UserLogin) -> LoginResponse:
     """Login with email and password, returns JWT tokens."""
 
@@ -108,7 +112,7 @@ def login(credentials: UserLogin) -> LoginResponse:
     )
 
 
-@router.get("/test")
+@router.get("/test")  # public-endpoint: smoke test for API availability
 def test() -> Dict[str, Any]:
     """Test endpoint to verify API is working."""
     return {
@@ -124,7 +128,7 @@ def test() -> Dict[str, Any]:
     }
 
 
-@router.get("/list")
+@router.get("/list")  # public-endpoint: dev-only user lister (remove in production)
 def list_users() -> Dict[str, Any]:
     """List all users (for testing - remove in production!)."""
     safe_users = [

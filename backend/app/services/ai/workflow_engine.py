@@ -5,6 +5,7 @@ AI-powered workflow orchestration and automation.
 
 from __future__ import annotations
 
+import ast
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -449,17 +450,16 @@ class WorkflowEngineService:
         event_data: dict[str, Any],
     ) -> bool:
         """Evaluate a condition expression."""
-        # Simple condition evaluation
-        # In production, use a proper expression evaluator
         try:
-            # Very basic evaluation for demo
             if " in " in condition:
                 parts = condition.split(" in ")
                 key = parts[0].strip()
-                values = eval(parts[1].strip())  # noqa: S307
+                # Safe literal parsing — only accepts Python literals
+                # (lists, tuples, strings, numbers, dicts, sets, booleans, None).
+                values = ast.literal_eval(parts[1].strip())
                 return event_data.get(key) in values
             return True
-        except Exception:
+        except (ValueError, SyntaxError, TypeError):
             return True
 
     async def _execute_action(

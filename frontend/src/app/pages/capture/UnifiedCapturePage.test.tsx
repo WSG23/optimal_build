@@ -64,6 +64,7 @@ describe('UnifiedCapturePage', () => {
       mapCoordinateSourceLabel: null,
       mapContainerRef: { current: null },
       addressInputRef: { current: null },
+      autocompleteHostRef: { current: null },
       mapError: null,
       isMapLoading: false,
       targetAcquired: null,

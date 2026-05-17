@@ -914,10 +914,14 @@ async def update_construction_loan(
                 }
             )
         if schedule_inputs:
+            currency = (
+                assumptions.get("currency")
+                or getattr(scenario.fin_project, "currency", None)
+                or "SGD"
+            )
             schedule_summary = calculator.drawdown_schedule(
                 schedule_inputs,
-                currency=assumptions.get("currency")
-                or getattr(scenario.fin_project, "currency", "SGD"),
+                currency=str(currency),
             )
 
     construction_interest_schema = None
@@ -1234,7 +1238,7 @@ async def export_argus_scenario(
         "id": f"PROP-{scenario.id}",
         "name": scenario.name,
         "gfa_sqft": 0,  # Should fetch from project
-        "year_built": datetime.utcnow().year,
+        "year_built": datetime.now(timezone.utc).year,
     }
 
     service = get_argus_export_service()

@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.api.deps import get_db
+from app.api.deps import RequestIdentity, get_db, require_reviewer, require_viewer
 from app.models.notification import NotificationType
 from app.schemas.notification import (
     NotificationCountResponse,
@@ -52,6 +52,7 @@ async def list_notifications(
     notification_type: NotificationType | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> NotificationListResponse:
     """List notifications for a user.
 
@@ -96,6 +97,7 @@ async def list_notifications(
 async def get_notification_counts(
     db: AsyncSession = Depends(get_db),
     user_id: str | None = Query(None, alias="user_id"),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> NotificationCountResponse:
     """Get notification counts for a user.
 
@@ -121,6 +123,7 @@ async def get_notification(
     notification_id: UUID,
     db: AsyncSession = Depends(get_db),
     user_id: str | None = Query(None, alias="user_id"),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> NotificationResponse:
     """Get a specific notification by ID."""
     if not user_id:
@@ -145,6 +148,7 @@ async def mark_notifications_read(
     request: NotificationMarkReadRequest,
     db: AsyncSession = Depends(get_db),
     user_id: str | None = Query(None, alias="user_id"),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> NotificationMarkReadResponse:
     """Mark notifications as read.
 
@@ -177,6 +181,7 @@ async def dismiss_notifications(
     request: NotificationDismissRequest,
     db: AsyncSession = Depends(get_db),
     user_id: str | None = Query(None, alias="user_id"),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> NotificationDismissResponse:
     """Dismiss notifications.
 
@@ -209,6 +214,7 @@ async def delete_notification(
     notification_id: UUID,
     db: AsyncSession = Depends(get_db),
     user_id: str | None = Query(None, alias="user_id"),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> dict[str, bool | str]:
     """Delete a notification permanently."""
     if not user_id:

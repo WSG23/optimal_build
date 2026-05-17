@@ -12,6 +12,8 @@ from uuid import UUID
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+
+from app.api.deps import RequestIdentity, require_viewer
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -269,6 +271,7 @@ async def get_project_tenant_relocations(
 async def get_gantt_chart(
     project_id: UUID,
     db: AsyncSession = Depends(get_session),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> GanttChartResponse:
     """Generate Gantt chart data for a project.
 
@@ -377,6 +380,7 @@ async def get_gantt_chart(
 async def get_critical_path(
     project_id: UUID,
     db: AsyncSession = Depends(get_session),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> CriticalPathResponse:
     """Calculate critical path for a project.
 
@@ -465,6 +469,7 @@ async def get_critical_path(
 async def get_heritage_tracker(
     project_id: UUID,
     db: AsyncSession = Depends(get_session),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> HeritageTrackerResponse:
     """Get heritage preservation tracking for a project.
 
@@ -552,6 +557,7 @@ async def get_heritage_tracker(
 async def get_tenant_coordination(
     project_id: UUID,
     db: AsyncSession = Depends(get_session),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> TenantCoordinationResponse:
     """Get tenant coordination summary for a project.
 

@@ -343,3 +343,6 @@ data/toronto/*
 !data/toronto/README.md
 data/nz/*.geojson
 backend/coverage.json
+/coverage.json
+/coverage_new.json
+/coverage_summary.txt

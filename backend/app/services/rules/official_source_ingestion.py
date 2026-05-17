@@ -539,8 +539,8 @@ class OfficialSourceIngestionService:
                 )
             return rules
 
-        parameter_key = RESOLVED_PARAMETER_KEYS.get(field_name)
-        if not parameter_key or not isinstance(normalized_value, float):
+        resolved_parameter_key = RESOLVED_PARAMETER_KEYS.get(field_name)
+        if not resolved_parameter_key or not isinstance(normalized_value, float):
             return []
 
         return [
@@ -551,7 +551,7 @@ class OfficialSourceIngestionService:
                 authority=authority,
                 title=title,
                 url=url,
-                parameter_key=parameter_key,
+                parameter_key=resolved_parameter_key,
                 operator="<=",
                 normalized_value=normalized_value,
                 source_detail={},

@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
+from app.api.deps import RequestIdentity, require_reviewer, require_viewer
 from app.api.v1.finance_common import normalise_project_id
 from app.models.regulatory import (
     AssetCompliancePath,
@@ -57,6 +58,7 @@ class AgencyRead(BaseModel):
 @router.get("/agencies", response_model=List[AgencyRead])
 async def list_agencies(
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> Any:
     """
     List all Singapore regulatory agencies (URA, BCA, SCDF, STB, JTC, etc.).
@@ -70,6 +72,7 @@ async def list_agencies(
 async def create_submission(
     submission: AuthoritySubmissionCreate,
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> Any:
     """
     Submit a regulatory application to a Singapore authority (Mock CORENET).
@@ -99,6 +102,7 @@ async def create_submission(
 @router.get("/corenet-capability", response_model=CorenetCapabilityRead)
 async def get_corenet_capability(
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> CorenetCapabilityRead:
     """Return the effective CORENET integration mode and delivery gates."""
 
@@ -120,6 +124,7 @@ async def get_corenet_capability(
 async def list_project_submissions(
     project_id: str,
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> Any:
     """
     List all regulatory submissions for a given project.
@@ -135,6 +140,7 @@ async def list_project_submissions(
 async def get_submission_status(
     submission_id: UUID,
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> Any:
     """
     Get the latest status of a submission. Triggers a poll to the external agency.
@@ -161,6 +167,7 @@ async def get_submission_status(
 async def get_compliance_path_for_asset(
     asset_type: AssetType,
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> Any:
     """
     Get the regulatory compliance path for a specific asset type.
@@ -181,6 +188,7 @@ async def get_compliance_path_for_asset(
 @router.get("/compliance-paths", response_model=List[AssetCompliancePathRead])
 async def list_all_compliance_paths(
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> Any:
     """
     List all asset-specific compliance paths.
@@ -203,6 +211,7 @@ async def list_all_compliance_paths(
 async def create_change_of_use_application(
     data: ChangeOfUseCreate,
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> Any:
     """
     Create a change of use application for adaptive reuse projects.
@@ -250,6 +259,7 @@ async def create_change_of_use_application(
 async def list_change_of_use_applications(
     project_id: str,
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> Any:
     """
     List all change of use applications for a project.
@@ -271,6 +281,7 @@ async def update_change_of_use_application(
     application_id: UUID,
     data: ChangeOfUseUpdate,
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> Any:
     """
     Update a change of use application.
@@ -325,6 +336,7 @@ async def update_change_of_use_application(
 async def create_heritage_submission(
     data: HeritageSubmissionCreate,
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> Any:
     """
     Create a heritage submission for STB coordination.
@@ -367,6 +379,7 @@ async def create_heritage_submission(
 async def list_heritage_submissions(
     project_id: str,
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> Any:
     """
     List all heritage submissions for a project.
@@ -387,6 +400,7 @@ async def list_heritage_submissions(
 async def get_heritage_submission(
     submission_id: UUID,
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> Any:
     """
     Get a specific heritage submission.
@@ -408,6 +422,7 @@ async def update_heritage_submission(
     submission_id: UUID,
     data: HeritageSubmissionUpdate,
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> Any:
     """
     Update a heritage submission.
@@ -434,6 +449,7 @@ async def update_heritage_submission(
 async def submit_to_stb(
     submission_id: UUID,
     db: AsyncSession = Depends(deps.get_db),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> Any:
     """
     Submit a heritage application to STB (Singapore Tourism Board).

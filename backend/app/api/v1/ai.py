@@ -1694,7 +1694,7 @@ async def extract_document(
 # ============================================================================
 
 
-@router.get("/health")
+@router.get("/health")  # public-endpoint: liveness probe for AI services
 async def ai_health_check() -> dict[str, Any]:
     """Check health status of AI services."""
     return {

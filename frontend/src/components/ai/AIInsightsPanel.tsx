@@ -4,7 +4,7 @@
  * A sidebar panel showing AI-generated insights, alerts, and recommendations.
  */
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   Box,
   Typography,
@@ -288,7 +288,7 @@ export function AIInsightsPanel({
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
-  const loadInsights = async () => {
+  const loadInsights = useCallback(async () => {
     setLoading(true)
     try {
       const promises: Promise<unknown>[] = []
@@ -319,12 +319,18 @@ export function AIInsightsPanel({
     } finally {
       setLoading(false)
     }
-  }
+  }, [
+    dealId,
+    propertyId,
+    projectId,
+    district,
+    showAnomalies,
+    showMarketInsights,
+  ])
 
   useEffect(() => {
     loadInsights()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dealId, propertyId, projectId, district])
+  }, [loadInsights])
 
   const handleRefresh = async () => {
     setRefreshing(true)

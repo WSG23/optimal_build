@@ -62,7 +62,7 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
 
   // Generate heatmap data points
   const heatmapData = useMemo(() => {
-    if (!window.google?.maps) return []
+    if (!isLoaded || !window.google?.maps) return []
 
     const singaporeBounds = {
       minLng: 103.6,
@@ -85,7 +85,7 @@ const MarketHeatmap: React.FC<MarketHeatmapProps> = ({
         transaction,
       }
     })
-  }, [filteredTransactions, isLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filteredTransactions, isLoaded])
 
   // Load Google Maps script
   useEffect(() => {

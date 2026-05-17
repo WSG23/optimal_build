@@ -59,6 +59,7 @@ export function UnifiedCapturePage() {
     mapCoordinateSourceLabel,
     mapContainerRef,
     addressInputRef,
+    autocompleteHostRef,
     mapError,
     isMapLoading,
     targetAcquired,
@@ -169,16 +170,33 @@ export function UnifiedCapturePage() {
               <fieldset className="gps-fieldset">
                 <legend className="gps-fieldset__legend">Location</legend>
 
-                {/* Address — primary input, full width */}
+                {/* Address — Places API (New) PlaceAutocompleteElement.
+                    Renders its own input via Web Component; we host it here
+                    and style it via `::part(input)` in gps-capture.css.
+                    The hidden legacy input remains for tests / a11y label-for
+                    associations and is kept in sync via the hook. */}
                 <div className="gps-form__address-row">
+                  {/* Hidden legacy input retained as the canonical
+                      controlled-input surface for tests; the visible
+                      address field is the web component below, which
+                      carries its own accessible name via aria-label on
+                      the host. aria-hidden here prevents AT from seeing
+                      a duplicate "Address" label. */}
                   <input
                     ref={addressInputRef}
                     type="text"
-                    className="gps-input-ghost gps-input-ghost--lg"
-                    placeholder="Enter address or click the map..."
+                    aria-hidden="true"
+                    tabIndex={-1}
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
+                    className="gps-form__hidden-input"
+                  />
+                  <div
+                    ref={autocompleteHostRef}
+                    role="group"
                     aria-label="Address"
+                    className="gps-form__autocomplete-host gps-input-ghost gps-input-ghost--lg"
+                    data-testid="address-autocomplete-host"
                   />
                   {isGeocoding && (
                     <span className="gps-form__geocoding-indicator" />

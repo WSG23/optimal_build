@@ -4,6 +4,8 @@ import random
 from datetime import datetime
 from typing import Dict, Any
 
+from backend._compat.datetime import utcnow
+
 from app.models.regulatory import AgencyCode, SubmissionStatus
 from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 
@@ -52,7 +54,7 @@ class MockCorenetService:
             "success": True,
             "transaction_id": ref_no,
             "status": "received",  # External system status
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": utcnow().isoformat(),
             "message": f"Submission received by {agency_code}. Reference: {ref_no}",
             "integration_status": self.source_metadata().model_dump(mode="json"),
         }
@@ -96,7 +98,7 @@ class MockCorenetService:
             "external_status": s,
             "mapped_status": self._map_external_status(s),
             "remarks": m,
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": utcnow().isoformat(),
             "integration_status": self.source_metadata().model_dump(mode="json"),
         }
 

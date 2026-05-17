@@ -292,7 +292,7 @@ async def list_projects(
     """List all active projects (filtered by user access in future)."""
     result = await db.execute(
         select(Project)
-        .where(Project.is_active == True)  # noqa: E712
+        .where(Project.is_active.is_(True))
         .offset(skip)
         .limit(limit)
         .order_by(Project.created_at.desc())
@@ -320,7 +320,7 @@ async def get_project(
     result = await db.execute(
         select(Project).where(
             Project.id == project_uuid,
-            Project.is_active == True,  # noqa: E712
+            Project.is_active.is_(True),
         )
     )
     project = result.scalar_one_or_none()
@@ -352,7 +352,7 @@ async def update_project(
     result = await db.execute(
         select(Project).where(
             Project.id == project_uuid,
-            Project.is_active == True,  # noqa: E712
+            Project.is_active.is_(True),
         )
     )
     project = result.scalar_one_or_none()
@@ -410,7 +410,7 @@ async def delete_project(
     result = await db.execute(
         select(Project).where(
             Project.id == project_uuid,
-            Project.is_active == True,  # noqa: E712
+            Project.is_active.is_(True),
         )
     )
     project = result.scalar_one_or_none()
@@ -507,7 +507,7 @@ async def get_project_progress(
     result = await db.execute(
         select(Project).where(
             Project.id == project_uuid,
-            Project.is_active == True,  # noqa: E712
+            Project.is_active.is_(True),
         )
     )
     project = result.scalar_one_or_none()

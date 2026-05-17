@@ -261,7 +261,7 @@ class GPSLogResponse(BaseModel):
     currency_symbol: str
 
 
-@router.get("/health")
+@router.get("/health")  # public-endpoint: liveness probe for CI smoke tests
 async def agents_health() -> dict[str, object]:
     """Expose agent router readiness for CI smoke tests."""
 

@@ -545,11 +545,11 @@ The deal aligns with our strategic objectives for {deal.asset_type.value.replace
 
     def _generate_pipeline_analysis(self, open_deals: list[AgentDeal]) -> str:
         """Generate pipeline analysis for portfolio report."""
-        by_stage = {}
+        by_stage: dict[str, dict[str, float]] = {}
         for deal in open_deals:
             stage = deal.pipeline_stage.value
             if stage not in by_stage:
-                by_stage[stage] = {"count": 0, "value": 0}
+                by_stage[stage] = {"count": 0.0, "value": 0.0}
             by_stage[stage]["count"] += 1
             by_stage[stage]["value"] += float(deal.estimated_value_amount or 0)
 

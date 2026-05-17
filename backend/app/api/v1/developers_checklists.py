@@ -10,6 +10,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import RequestIdentity, require_reviewer, require_viewer
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.developer_checklists import ChecklistStatus, DeveloperChecklistTemplate
@@ -212,6 +213,7 @@ async def list_checklist_templates(
     ),
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> List[ChecklistTemplateResponse]:
     """Return checklist templates, optionally filtered by development scenario."""
 
@@ -231,6 +233,7 @@ async def create_checklist_template(
     request: ChecklistTemplateCreateRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> ChecklistTemplateResponse:
     """Create a new checklist template definition."""
 
@@ -254,6 +257,7 @@ async def update_checklist_template(
     request: ChecklistTemplateUpdateRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> ChecklistTemplateResponse:
     """Update an existing checklist template definition."""
 
@@ -281,6 +285,7 @@ async def delete_checklist_template(
     template_id: UUID,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> Response:
     """Delete a checklist template."""
 
@@ -300,6 +305,7 @@ async def bulk_import_checklist_templates(
     request: ChecklistTemplateBulkImportRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> ChecklistTemplateBulkImportResponse:
     """Bulk import checklist templates from a JSON payload."""
 
@@ -330,6 +336,7 @@ async def get_property_checklists(
     status: Optional[str] = None,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> ChecklistItemsResponse:
     """
     Get due diligence checklist items for a property.
@@ -373,6 +380,7 @@ async def get_checklist_summary(
     property_id: UUID,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> ChecklistSummaryResponse:
     """Get a summary of checklist completion status for a property."""
     summary = await DeveloperChecklistService.get_checklist_summary(
@@ -390,6 +398,7 @@ async def update_checklist_item(
     request: UpdateChecklistStatusRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> ChecklistItemResponse:
     """Update a checklist item's status and notes."""
     try:

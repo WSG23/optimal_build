@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime, timedelta
+
+from backend._compat.datetime import utcnow
 from typing import (
     Any,
     Dict,
@@ -800,8 +802,7 @@ class DeveloperChecklistService:
                 due_date = None
                 if template.typical_duration_days:
                     due_date = (
-                        datetime.utcnow()
-                        + timedelta(days=template.typical_duration_days)
+                        utcnow() + timedelta(days=template.typical_duration_days)
                     ).date()
 
                 checklist_item = DeveloperPropertyChecklist(
@@ -965,7 +966,7 @@ class DeveloperChecklistService:
         checklist_item.status = status
 
         if status == ChecklistStatus.COMPLETED:
-            checklist_item.completed_date = datetime.utcnow().date()
+            checklist_item.completed_date = utcnow().date()
             if completed_by:
                 checklist_item.completed_by = completed_by
 

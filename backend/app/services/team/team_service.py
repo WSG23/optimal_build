@@ -284,16 +284,14 @@ class TeamService:
         def normalise_role(value: str | None) -> str:
             if not value:
                 return ""
-            if hasattr(value, "value"):
-                value = value.value  # type: ignore[assignment]
-            return str(value).strip().lower()
+            raw = getattr(value, "value", value)
+            return str(raw).strip().lower()
 
         def role_display(value: str | None) -> str:
             if not value:
                 return "Unassigned"
-            if hasattr(value, "value"):
-                value = value.value  # type: ignore[assignment]
-            return str(value).replace("_", " ").title()
+            raw = getattr(value, "value", value)
+            return str(raw).replace("_", " ").title()
 
         def get_user_entry(user_id: UUID, role_hint: str | None) -> dict:
             if user_id in member_entries:

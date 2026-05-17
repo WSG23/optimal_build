@@ -343,10 +343,10 @@ def _iter_geojson_geometries(payload: Any) -> list[dict[str, Any]]:
                 geometries.extend(_iter_geojson_geometries(feature))
         return geometries
     if geo_type == "GeometryCollection":
-        geometries = payload.get("geometries")
+        raw_geometries = payload.get("geometries")
         return (
-            [entry for entry in geometries if isinstance(entry, dict)]
-            if isinstance(geometries, list)
+            [entry for entry in raw_geometries if isinstance(entry, dict)]
+            if isinstance(raw_geometries, list)
             else []
         )
     if geo_type in {"Polygon", "MultiPolygon"}:
@@ -1190,10 +1190,11 @@ def _coerce_attr_float(
     lowered = {str(key).lower(): value for key, value in attributes.items()}
     for key in keys:
         value = lowered.get(key.lower())
-        if value in (None, ""):
+        if value is None or value == "":
             continue
         try:
-            return float(value)
+            # type-ignore-meta: owner=platform expires=2026-12-31 reason=value is JSON-sourced object; float() handles str|int|float at runtime
+            return float(value)  # type: ignore[arg-type]
         except (TypeError, ValueError):
             continue
     return None
@@ -1394,10 +1395,11 @@ def _coerce_attr_step_backs(
 
 
 def _coerce_registry_float(value: object) -> Optional[float]:
-    if value in (None, ""):
+    if value is None or value == "":
         return None
     try:
-        return float(value)
+        # type-ignore-meta: owner=platform expires=2026-12-31 reason=registry value is object; float() handles str|int|float at runtime
+        return float(value)  # type: ignore[arg-type]
     except (TypeError, ValueError):
         return None
 
@@ -1710,12 +1712,12 @@ async def get_zoning_rules_for_zone(
                 )
                 if depth_m is None:
                     continue
-                level = _coerce_registry_float(
+                level_float = _coerce_registry_float(
                     entry.get("level") or entry.get("storey")
                 )
                 parsed_step_backs.append(
                     {
-                        "level": level or float(len(parsed_step_backs) + 1),
+                        "level": level_float or float(len(parsed_step_backs) + 1),
                         "depth_m": depth_m,
                     }
                 )

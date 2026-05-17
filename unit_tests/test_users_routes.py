@@ -70,6 +70,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for test environments
 import pydantic as _pydantic  # noqa: E402
 
 if not hasattr(_pydantic, "field_serializer"):
+
     def _field_serializer_stub(*_args, **_kwargs):
         def decorator(func):
             return func
@@ -81,6 +82,7 @@ if not hasattr(_pydantic, "field_serializer"):
     if isinstance(all_attr, list) and "field_serializer" not in all_attr:
         all_attr.append("field_serializer")
 if not hasattr(_pydantic, "computed_field"):
+
     def _computed_field_stub(*_args, **_kwargs):
         def decorator(func):
             return property(func)
@@ -120,9 +122,13 @@ users_secure = importlib.import_module("app.api.v1.users_secure")
 
 @pytest.fixture(autouse=True)
 def patch_password_hashing(monkeypatch):
-    monkeypatch.setattr(auth_service_module, "hash_password", lambda pwd: f"hashed-{pwd}")
     monkeypatch.setattr(
-        auth_service_module, "verify_password", lambda plain, hashed: hashed == f"hashed-{plain}"
+        auth_service_module, "hash_password", lambda pwd: f"hashed-{pwd}"
+    )
+    monkeypatch.setattr(
+        auth_service_module,
+        "verify_password",
+        lambda plain, hashed: hashed == f"hashed-{plain}",
     )
 
 

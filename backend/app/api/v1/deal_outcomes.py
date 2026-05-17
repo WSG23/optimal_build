@@ -11,6 +11,7 @@ from app.api.deps import Role, require_reviewer, require_viewer
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.deal_outcome import OutcomeResolution
+from app.schemas._typing import dump_model
 from app.schemas.deal_outcome import (
     DealOutcomeBenchmarkResponse,
     DealOutcomeComparisonResponse,
@@ -181,7 +182,7 @@ async def update_outcome(
         # but guard anyway.
         raise HTTPException(status_code=404, detail="Deal not found")
 
-    update_fields = payload.model_dump(exclude_unset=True)
+    update_fields = dump_model(payload, exclude_unset=True)
 
     if "resolution" in update_fields and update_fields["resolution"] is not None:
         update_fields["resolution"] = update_fields["resolution"].value

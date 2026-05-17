@@ -418,6 +418,99 @@
     --ob-brand-50: var(--ob-brand-100);
     --ob-border-fine-subtle: var(--ob-border-fine);
 
+    /* Final pass: aliases discovered by check_design_tokens.py */
+    --ob-color-text-on-dark: var(--ob-color-text-primary);
+    --ob-color-text-on-light: var(--ob-color-text-strong);
+    --ob-color-surface-tertiary: var(--ob-color-bg-muted);
+    --ob-color-brand-secondary: var(--ob-color-brand-strong);
+    --ob-color-brand-primary-alpha: var(--ob-color-brand-soft);
+    --ob-color-status-info: var(--ob-info-500);
+    --ob-color-status-success: var(--ob-success-500);
+    --ob-color-status-warning: var(--ob-warning-500);
+    --ob-color-warning-500: var(--ob-warning-500);
+    --ob-color-success-400: var(--ob-success-400);
+    --ob-color-error-400: var(--ob-error-400);
+    --ob-overlay-dark-heavy: var(--ob-overlay-strong);
+    --ob-radius-full: var(--ob-radius-pill);
+    --ob-font-weight-light: 300;
+    --ob-space-012: 0.12rem; /* ~2px */
+    --ob-space-037: 0.375rem; /* 6px */
+    --ob-space-450: 4.5rem; /* 72px */
+    --ob-size-600: 600px;
+
+    /* Brand color aliases (semantic prefix variants) */
+    --ob-color-brand-500: var(--ob-brand-500);
+    --ob-color-brand-600: var(--ob-brand-600);
+    --ob-color-status-error: var(--ob-error-500);
+    --ob-color-surface-brand-subtle: var(--ob-color-brand-soft);
+    --ob-color-surface-error: var(--ob-color-error-soft);
+    --ob-color-border-primary: var(--ob-color-border-subtle);
+
+    /* Status color depth aliases */
+    --ob-success-50: var(--ob-success-bg);
+    --ob-success-100: var(--ob-success-bg);
+    --ob-success-800: var(--ob-success-700);
+    --ob-error-100: var(--ob-error-bg);
+    --ob-space-25: var(--ob-space-025); /* 4px */
+
+    /* Background / surface aliases */
+    --ob-color-bg-primary: var(--ob-color-bg-root);
+    --ob-color-surface-info: var(--ob-color-info-soft);
+    --ob-color-surface-warning: var(--ob-color-warning-soft);
+    --ob-surface-glass: var(--ob-surface-glass-1);
+    --ob-surface-glass-subtle: var(--ob-surface-glass-1);
+
+    /* Status color/bg/text aliases (long names) */
+    --ob-color-success-bg: var(--ob-success-bg);
+    --ob-color-success-text: var(--ob-success-text);
+    --ob-color-error-bg: var(--ob-error-bg);
+    --ob-color-error-text: var(--ob-error-text);
+
+    /* Text dim alias */
+    --ob-text-dim: var(--ob-color-text-muted);
+
+    /* Brand gradient / motion / glow aliases */
+    --ob-gradient-brand: linear-gradient(135deg, var(--ob-brand-500), var(--ob-brand-700));
+    --ob-gradient-brand-hover: linear-gradient(135deg, var(--ob-brand-400), var(--ob-brand-600));
+    --ob-shadow-glow-brand: var(--ob-glow-brand-medium);
+    --ob-motion-duration-moderate: 300ms;
+    --ob-color-neon-magenta: #e879f9; /* Accent only — not part of primary palette */
+
+    /* Semantic status aliases (long names) */
+    --ob-color-semantic-success: var(--ob-success-500);
+    --ob-color-semantic-warning: var(--ob-warning-500);
+    --ob-color-semantic-error: var(--ob-error-500);
+
+    /* Background long-name aliases */
+    --ob-color-bg-base: var(--ob-color-bg-root);
+    --ob-color-bg-dark: var(--ob-color-bg-root);
+    --ob-color-surface-muted: var(--ob-color-bg-muted);
+    --ob-color-text-disabled: var(--ob-text-disabled);
+    --ob-color-neon-blue: var(--ob-color-neon-cyan);
+    --ob-shadow-glow-brand-strong: var(--ob-glow-brand-strong);
+    --ob-space-50: var(--ob-space-050); /* 8px */
+    --ob-space-75: var(--ob-space-075); /* 12px */
+
+    /* Status 300 variants (light status colors for backgrounds) */
+    --ob-success-300: var(--ob-success-400);
+    --ob-warning-300: var(--ob-warning-400);
+    --ob-error-300: var(--ob-error-400);
+    --ob-info-300: var(--ob-info-400);
+    --ob-info-100: var(--ob-info-bg);
+    --ob-error-icon: var(--ob-error-500);
+
+    /* Long-form color status aliases */
+    --ob-color-success: var(--ob-success-500);
+    --ob-color-error: var(--ob-error-500);
+    --ob-color-border-light: var(--ob-color-border-subtle);
+    --ob-color-border-info: var(--ob-info-500);
+
+    /* Background surface long-name aliases */
+    --ob-color-bg-surface-secondary: var(--ob-color-bg-surface-elevated);
+    --ob-color-bg-surface-main: var(--ob-color-bg-surface);
+    --ob-background-surface-0: var(--ob-color-bg-root);
+    --ob-background-surface-1: var(--ob-color-bg-surface);
+
     /* Tailwind-style numeric spacing aliases (canonical mapping for back-compat) */
     --ob-space-1: var(--ob-space-025); /* 4px */
     --ob-space-2: var(--ob-space-050); /* 8px */

@@ -91,10 +91,11 @@ class AuditService:
         signing_key: str | None = None,
     ) -> None:
         self.db = db
-        self.signing_key: str = signing_key or os.getenv("AUDIT_SIGNING_KEY", "")
-        if not self.signing_key:
+        resolved_key = signing_key or os.getenv("AUDIT_SIGNING_KEY") or ""
+        if not resolved_key:
             logger.warning("AUDIT_SIGNING_KEY not set, using SECRET_KEY")
-            self.signing_key = os.getenv("SECRET_KEY") or "default-key"
+            resolved_key = os.getenv("SECRET_KEY") or "default-key"
+        self.signing_key: str = resolved_key
 
     async def log(
         self,

@@ -7,7 +7,10 @@ from datetime import datetime
 from typing import Any, Iterable, List, Optional
 from uuid import UUID
 
+from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, Query
+
+from app.api.deps import RequestIdentity, require_reviewer, require_viewer
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -485,6 +488,7 @@ async def get_condition_assessment(
     scenario: Optional[str] = None,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> ConditionAssessmentResponse:
     """
     Generate a developer property condition assessment.
@@ -517,6 +521,7 @@ async def upsert_condition_assessment(
     request: ConditionAssessmentUpsertRequest,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
+    _identity: RequestIdentity = Depends(require_reviewer),
 ) -> ConditionAssessmentResponse:
     """Persist a developer inspection assessment for a property."""
 
@@ -581,6 +586,7 @@ async def get_condition_assessment_history(
     limit: int = Query(20, ge=1, le=200),
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> List[ConditionAssessmentResponse]:
     """Return stored inspection assessments ordered by most recent first."""
 
@@ -602,6 +608,7 @@ async def get_condition_assessment_scenarios(
     property_id: UUID,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> List[ConditionAssessmentResponse]:
     """Return the latest stored inspection assessment for each scenario."""
 
@@ -621,6 +628,7 @@ async def export_condition_report(
     report_format: str = Query("json", alias="format", pattern="^(json|pdf)$"),
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
+    _identity: RequestIdentity = Depends(require_viewer),
 ) -> Response:
     """Return a structured condition report in JSON (default) or PDF format."""
 
@@ -660,7 +668,7 @@ async def export_condition_report(
         property_id=str(property_id),
         property_name=property_record.name,
         address=property_record.address,
-        generated_at=datetime.utcnow().isoformat(),
+        generated_at=utcnow().isoformat(),
         scenario_assessments=[
             _serialize_condition_assessment(assessment)
             for assessment in scenario_assessments
