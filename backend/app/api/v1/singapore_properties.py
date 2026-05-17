@@ -747,9 +747,19 @@ async def check_compliance(
             },
         }
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Compliance check failed: {str(e)}"
-        ) from e
+        # Log the real cause for ops; return a generic message so we don't
+        # leak internal exception text (paths, stack hints, library internals)
+        # to clients.
+        from app.utils.logging import get_logger, log_event
+
+        log_event(
+            get_logger(__name__),
+            "compliance_check_unhandled_exception",
+            zoning=zoning,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(status_code=500, detail="Compliance check failed") from e
 
 
 @router.delete("/{property_id}")

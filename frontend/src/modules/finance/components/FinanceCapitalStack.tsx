@@ -198,6 +198,7 @@ export function FinanceCapitalStack({
             <Card sx={{ p: 'var(--ob-space-100)', height: '100%' }}>
               <Typography
                 variant="h6"
+                component="h3"
                 sx={{
                   mb: 'var(--ob-space-100)',
                   fontWeight: 'var(--ob-font-weight-semibold)',

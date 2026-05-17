@@ -97,7 +97,9 @@ export function SubmissionsTabContent({
           spacing="var(--ob-space-100)"
         >
           <Box>
-            <Typography variant="h6">Authority submissions</Typography>
+            <Typography variant="h6" component="h2">
+              Authority submissions
+            </Typography>
             <Typography variant="body2" color="text.secondary">
               Integration state: {integrationState} • Mode:{' '}
               {integrationModeLabel}
@@ -146,7 +148,9 @@ export function SubmissionsTabContent({
 
       <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
         <Stack spacing="var(--ob-space-100)">
-          <Typography variant="h6">Change of use</Typography>
+          <Typography variant="h6" component="h3">
+            Change of use
+          </Typography>
           {changeOfUseApps.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
               No change-of-use applications yet.
@@ -178,7 +182,9 @@ export function SubmissionsTabContent({
 
       <Card variant="default" sx={{ p: 'var(--ob-space-200)' }}>
         <Stack spacing="var(--ob-space-100)">
-          <Typography variant="h6">Heritage submissions</Typography>
+          <Typography variant="h6" component="h3">
+            Heritage submissions
+          </Typography>
           {heritageSubmissions.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
               No heritage submissions yet.

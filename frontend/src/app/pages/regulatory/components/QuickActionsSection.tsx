@@ -26,7 +26,9 @@ export function QuickActionsSection({
       sx={{ mb: 'var(--ob-space-200)', p: 'var(--ob-space-200)' }}
     >
       <Stack spacing="var(--ob-space-150)">
-        <Typography variant="h6">Quick actions</Typography>
+        <Typography variant="h6" component="h2">
+          Quick actions
+        </Typography>
         <Stack
           direction={{ xs: 'column', md: 'row' }}
           spacing="var(--ob-space-100)"

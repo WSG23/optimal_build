@@ -50,3 +50,25 @@ frontend/src/styles/gps-capture/core.css:827
 #     semantic for "imperceptible-but-not-display:none". ---
 frontend/src/styles/gps-capture/core.css:219
 frontend/src/styles/gps-capture/core.css:220
+
+# --- Pre-existing TopNav hairlines (1-2px borders, 6px status dot). ---
+frontend/src/components/layout/TopNav.tsx:162
+frontend/src/components/layout/TopNav.tsx:351
+frontend/src/components/layout/TopNav.tsx:364
+frontend/src/components/layout/TopNav.tsx:365
+
+# --- Pre-existing AssetMixTable column widths. The table renders an
+#     editable financial grid where each column maps to a fixed input
+#     width (NIA / rent / vacancy / capex); these are tuned to the
+#     numeric content and the underlying MUI <TextField size="small">,
+#     not to a spacing scale. Migrating to size tokens would require a
+#     new "table-column" token family. ---
+frontend/src/modules/finance/components/AssetMixTable.tsx:435
+frontend/src/modules/finance/components/AssetMixTable.tsx:461
+frontend/src/modules/finance/components/AssetMixTable.tsx:465
+frontend/src/modules/finance/components/AssetMixTable.tsx:466
+frontend/src/modules/finance/components/AssetMixTable.tsx:467
+frontend/src/modules/finance/components/AssetMixTable.tsx:468
+frontend/src/modules/finance/components/AssetMixTable.tsx:469
+frontend/src/modules/finance/components/AssetMixTable.tsx:471
+frontend/src/modules/finance/components/AssetMixTable.tsx:472

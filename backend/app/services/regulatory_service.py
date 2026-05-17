@@ -12,6 +12,7 @@ from app.models.regulatory import (
     AuthoritySubmission,
     RegulatoryAgency,
     SubmissionStatus,
+    SubmissionType,
 )
 from app.models.projects import Project
 from app.services.deals.utils import audit_key_from_value
@@ -109,6 +110,18 @@ class RegulatoryService:
                 "Live CORENET submission is unavailable; create a submission-ready package instead"
             )
 
+        # 0. Validate submission_type before any DB writes — SQLAlchemy enum
+        # lookup would otherwise raise LookupError deep in flush, masking the
+        # user-facing 400.
+        try:
+            submission_type_enum = SubmissionType(submission.submission_type)
+        except ValueError as exc:
+            allowed = ", ".join(member.value for member in SubmissionType)
+            raise ValueError(
+                f"Unsupported submission_type '{submission.submission_type}'. "
+                f"Allowed values: {allowed}"
+            ) from exc
+
         # 1. Validate Project
         result = await self._maybe_await(
             self.db.execute(select(Project).filter(Project.id == project_id))
@@ -141,7 +154,7 @@ class RegulatoryService:
         db_submission = AuthoritySubmission(
             project_id=project_id,
             agency_id=agency.id,
-            submission_type=submission.submission_type,
+            submission_type=submission_type_enum,
             title=f"{submission.agency} Submission for {project.project_code}",
             status=(
                 SubmissionStatus.SUBMITTED
@@ -303,10 +316,16 @@ class RegulatoryService:
     async def get_project_submissions(
         self, project_id: UUID
     ) -> List[AuthoritySubmission]:
+        # Filter at the SQL level so legacy / hand-edited rows that contain a
+        # submission_type outside the SubmissionType enum can't poison the
+        # entire result set — SQLAlchemy would otherwise raise LookupError
+        # while materialising, returning a 500 to the user.
+        valid_types = [member.value for member in SubmissionType]
         result = await self._maybe_await(
             self.db.execute(
                 select(AuthoritySubmission)
                 .where(AuthoritySubmission.project_id == project_id)
+                .where(AuthoritySubmission.submission_type.in_(valid_types))
                 .order_by(AuthoritySubmission.created_at.desc())
             )
         )

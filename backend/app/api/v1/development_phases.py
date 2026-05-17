@@ -219,7 +219,10 @@ async def get_project_phases(
         select(DevelopmentPhase)
         .where(DevelopmentPhase.project_id == project_id)
         .options(selectinload(DevelopmentPhase.dependencies))
-        .order_by(DevelopmentPhase.sequence_order)
+        .order_by(
+            DevelopmentPhase.planned_start_date.asc().nulls_last(),
+            DevelopmentPhase.id,
+        )
     )
     return list(result.scalars().all())
 

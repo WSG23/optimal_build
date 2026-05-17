@@ -89,6 +89,8 @@ async def test_generate_professional_pack_503_when_generator_missing(
 
 @pytest.mark.asyncio
 async def test_generate_professional_pack_invalid_type_direct(monkeypatch):
+    from app.api.deps import RequestIdentity
+
     property_id = uuid4()
     session = _StubSession(SimpleNamespace(id=property_id))
     with pytest.raises(HTTPException) as exc:
@@ -96,7 +98,7 @@ async def test_generate_professional_pack_invalid_type_direct(monkeypatch):
             property_id=str(property_id),
             pack_type="unknown",
             db=session,
-            role="viewer",
+            _identity=RequestIdentity(role="reviewer"),
         )
     assert exc.value.status_code == 400
 

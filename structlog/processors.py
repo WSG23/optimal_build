@@ -71,10 +71,43 @@ def format_exc_info(
     return event_dict
 
 
+def _json_default(value: Any) -> Any:
+    """Best-effort conversion for JSON-incompatible values in log records.
+
+    Why: Application code passes UUIDs, datetimes, Decimals, Paths, and Pydantic
+    models as structured log fields. Without this fallback, a single such field
+    causes ``json.dumps`` to raise, which crashes the request the logger is
+    serving (the renderer runs inside the request path).
+    """
+
+    try:
+        from datetime import date, datetime
+        from decimal import Decimal
+        from pathlib import PurePath
+        from uuid import UUID
+    except Exception:  # pragma: no cover - imports always succeed
+        return str(value)
+
+    if isinstance(value, (UUID, PurePath)):
+        return str(value)
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, (set, frozenset, tuple)):
+        return list(value)
+    if isinstance(value, bytes):
+        try:
+            return value.decode("utf-8")
+        except UnicodeDecodeError:
+            return value.hex()
+    return str(value)
+
+
 class JSONRenderer:
     """Render an event dictionary as a JSON string."""
 
     def __call__(
         self, _: logging.Logger, __: str, event_dict: MutableMapping[str, Any]
     ) -> str:
-        return json.dumps(event_dict)
+        return json.dumps(event_dict, default=_json_default)

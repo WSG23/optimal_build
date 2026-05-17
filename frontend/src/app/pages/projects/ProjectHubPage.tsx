@@ -198,11 +198,20 @@ export function ProjectHubPage() {
                   >
                     {moduleIcons[key] || <Construction fontSize="large" />}
                   </Box>
-                  <IconButton size="small">
+                  <IconButton
+                    size="small"
+                    aria-label={`Open ${item.label}`}
+                    tabIndex={-1}
+                  >
                     <ArrowForward />
                   </IconButton>
                 </Stack>
-                <Typography variant="h6" fontWeight={600} gutterBottom>
+                <Typography
+                  variant="h6"
+                  component="h5"
+                  fontWeight={600}
+                  gutterBottom
+                >
                   {item.label}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -256,11 +265,12 @@ export function ProjectHubPage() {
         }}
       >
         <Stack
-          direction="row"
+          direction={{ xs: 'column', md: 'row' }}
           justifyContent="space-between"
-          alignItems="flex-start"
+          alignItems={{ xs: 'stretch', md: 'flex-start' }}
+          spacing="var(--ob-space-150)"
         >
-          <Stack spacing="var(--ob-space-050)">
+          <Stack spacing="var(--ob-space-050)" sx={{ minWidth: 0 }}>
             <Typography variant="h3" fontWeight={700}>
               {currentProject.name}
             </Typography>
@@ -268,6 +278,8 @@ export function ProjectHubPage() {
               direction="row"
               spacing="var(--ob-space-050)"
               alignItems="center"
+              flexWrap="wrap"
+              useFlexGap
             >
               <Chip
                 label={currentProject.status}
@@ -275,16 +287,36 @@ export function ProjectHubPage() {
                 size="small"
                 variant="outlined"
               />
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  fontFamily: 'var(--ob-font-family-mono)',
+                  fontSize: 'var(--ob-font-size-xs)',
+                  wordBreak: 'break-all',
+                }}
+              >
                 Project ID: {currentProject.id}
               </Typography>
             </Stack>
           </Stack>
-          <Stack direction="row" spacing="var(--ob-space-100)">
-            <Button variant="outlined" startIcon={<MoreVert />}>
+          <Stack
+            direction="row"
+            spacing="var(--ob-space-100)"
+            sx={{ flexShrink: 0 }}
+          >
+            <Button
+              variant="outlined"
+              startIcon={<MoreVert />}
+              sx={{ whiteSpace: 'nowrap' }}
+            >
               Options
             </Button>
-            <Button variant="contained" startIcon={<Settings />}>
+            <Button
+              variant="contained"
+              startIcon={<Settings />}
+              sx={{ whiteSpace: 'nowrap' }}
+            >
               Edit Settings
             </Button>
           </Stack>
@@ -320,6 +352,7 @@ export function ProjectHubPage() {
       {/* Module Navigation Grid */}
       <Typography
         variant="h5"
+        component="h4"
         fontWeight={600}
         gutterBottom
         sx={{ mb: 'var(--ob-space-150)' }}

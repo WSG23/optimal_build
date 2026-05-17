@@ -32,7 +32,11 @@ export function TemplateSelectorCard({
     <Card sx={{ p: 'var(--ob-space-100)', mb: 'var(--ob-space-100)' }}>
       <Stack spacing="var(--ob-space-125)">
         <Box>
-          <Typography variant="subtitle2" sx={{ mb: 'var(--ob-space-075)' }}>
+          <Typography
+            variant="subtitle2"
+            component="h2"
+            sx={{ mb: 'var(--ob-space-075)' }}
+          >
             Singapore deal templates
           </Typography>
           <Stack

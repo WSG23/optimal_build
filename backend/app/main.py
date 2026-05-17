@@ -562,9 +562,18 @@ async def database_status(
 
     ref_rule_model = _load_ref_rule_model()
     try:
-        tables_result = await session.execute(
-            text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
-        )
+        dialect = session.bind.dialect.name if session.bind else ""
+        if dialect == "sqlite":
+            tables_query = text(
+                "SELECT name FROM sqlite_master "
+                "WHERE type = 'table' AND name NOT LIKE 'sqlite_%' "
+                "ORDER BY name"
+            )
+        else:
+            tables_query = text(
+                "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+            )
+        tables_result = await session.execute(tables_query)
         tables = [row[0] for row in tables_result.fetchall()]
 
         rules_by_topic_result = await session.execute(

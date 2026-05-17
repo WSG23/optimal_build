@@ -38,6 +38,7 @@ export function AllocationSummaryPanel({
       >
         <Typography
           variant="h6"
+          component="h3"
           sx={{
             fontWeight: 'var(--ob-font-weight-semibold)',
             mb: 'var(--ob-space-150)',

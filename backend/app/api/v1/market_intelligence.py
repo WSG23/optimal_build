@@ -117,7 +117,7 @@ async def generate_market_report(
         )
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate market report: {exc}",
+            detail="Failed to generate market report",
         ) from exc
 
     payload = MarketReportPayload(
