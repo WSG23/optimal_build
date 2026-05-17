@@ -4,6 +4,7 @@ import { ErrorBoundary } from '../ErrorBoundary'
 import { NavErrorFallback } from './NavErrorFallback'
 import { useBaseLayoutContext } from '../../app/layout/useBaseLayout'
 import { useRouterController } from '../../router'
+import { usePageViewTelemetry } from '../../hooks/usePageViewTelemetry'
 import { ProjectBreadcrumbs } from './Breadcrumbs'
 
 const Sidebar = lazy(async () => {
@@ -42,6 +43,7 @@ export function AppShell({
 }: AppShellProps) {
   const { inBaseLayout, topOffset } = useBaseLayoutContext()
   const { path } = useRouterController()
+  usePageViewTelemetry()
 
   // Default to hiding sidebar if inside BaseLayout, unless explicitly forced.
   const shouldHideSidebar =
@@ -122,10 +124,7 @@ export function AppShell({
                 justifyContent: 'space-between',
                 gap: 'var(--ob-space-150)',
                 // When top ribbon is unpinned, minimal breathing room
-                mt:
-                  inBaseLayout && topOffset === 0
-                    ? 'var(--ob-space-050)'
-                    : 0,
+                mt: inBaseLayout && topOffset === 0 ? 'var(--ob-space-050)' : 0,
                 mb: 'var(--ob-space-100)', // 16px - tight spacing to content
                 animation:
                   'ob-slide-down-fade var(--ob-motion-header-duration) var(--ob-motion-header-ease) both',

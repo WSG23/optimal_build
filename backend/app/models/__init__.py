@@ -43,6 +43,7 @@ _MODEL_MODULES: Final[tuple[str, ...]] = (
     "development_phase",
     "entitlements",
     "entity_history",
+    "events",
     "finance",
     "hong_kong_property",
     "imports",
