@@ -12,6 +12,8 @@
 
 **5. After finishing a feature, give the user runnable test commands** — backend pytest path, frontend test path (if applicable), and numbered manual UI steps. Don't just say "done."
 
+**6. Single-writer per branch — acquire the agent lock before editing.** This repo is also worked on by Codex and IDE-side linters; concurrent writes silently overwrite each other. Before opening any write tool, run `python3 scripts/agent_session.py start claude --intent "<short description>"`. If it exits non-zero, another agent owns the branch — stop, surface the lock contents to the user, and wait for an explicit handoff. Run `stop` when done. Full rules and patterns in [docs/ai-agents/multi_agent_coordination.md](docs/ai-agents/multi_agent_coordination.md).
+
 The full ruleset is in [CODING_RULES.md](CODING_RULES.md) (12 rules). Pre-commit hooks enforce most of them; read it when a hook fails or before non-trivial work.
 
 ## Project orientation
