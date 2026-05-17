@@ -1,6 +1,19 @@
 repos:
   - repo: local
     hooks:
+      - id: agent-session-check
+        name: Agent session ownership (multi-agent guardrail)
+        entry: python3 scripts/agent_session.py check
+        language: system
+        pass_filenames: false
+        # No `files:` filter — runs on every commit. The script no-ops when
+        # no .agent-active lock exists or the lock is stale, so this is free
+        # outside of multi-agent sessions. When a lock exists and the
+        # committer isn't the owner (AGENT_SESSION_NAME env var), the hook
+        # blocks; bypass with `SKIP=agent-session-check git commit` after
+        # coordinating with the lock-holder. See
+        # docs/ai-agents/multi_agent_coordination.md.
+
       - id: audit-migrations
         name: audit-migrations
         entry: python3 scripts/audit_migrations.py
