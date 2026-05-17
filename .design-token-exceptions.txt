@@ -1,0 +1,45 @@
+# Grandfathered design-token violations
+#
+# Format: one `path:line` per line. Comments start with #.
+# Loaded by scripts/check_design_tokens.py — see that file for behavior.
+#
+# Only NEW hardcoded px/hex values are blocked at commit. Each entry below
+# is a pre-existing violation that was introduced before the design-token
+# gate existed. Removing entries requires either (a) replacing the value
+# with a `var(--ob-*)` token, or (b) documenting why the value cannot use
+# a token (e.g. it's an argument to a non-CSS consumer).
+#
+# Google Maps MapTypeStyle hex colors are passed directly to the JS API,
+# which does not read CSS custom properties — these cannot be tokenized
+# without a brittle getComputedStyle() round-trip. See useUnifiedCapture
+# for the dark grey map style array.
+
+# --- Google Maps dark grey MapTypeStyle (JS API, not CSS-consumable) ---
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:562
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:564
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:565
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:569
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:574
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:579
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:584
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:589
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:594
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:599
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:604
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:609
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:614
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:619
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:624
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:634
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:639
+
+# --- Brand-colour fallback for getComputedStyle() result ---
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:662
+
+# --- SVG marker pin fill (passed via innerHTML, not a CSS surface) ---
+frontend/src/app/pages/capture/hooks/useUnifiedCapture.ts:667
+
+# --- Pre-existing capture page CSS dimensions (TODO: migrate to tokens) ---
+frontend/src/styles/gps-capture/core.css:108
+frontend/src/styles/gps-capture/core.css:810
+frontend/src/styles/gps-capture/core.css:811

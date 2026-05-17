@@ -11,6 +11,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import type { FormEvent } from 'react'
 
+import { importLibrary, setOptions } from '@googlemaps/js-api-loader'
+
 import {
   fetchPropertyMarketIntelligence,
   logPropertyByGpsWithFeatures,
@@ -59,36 +61,23 @@ function hasConflictingResolvedStreetNumber(
   )
 }
 
-// Track if Google Maps script is loading/loaded
-let googleMapsPromise: Promise<void> | null = null
+// @googlemaps/js-api-loader v2: functional API. setOptions() is idempotent
+// per page; importLibrary() resolves with the requested library and
+// transparently deduplicates concurrent calls.
+let optionsApplied = false
 
-function loadGoogleMapsScript(apiKey: string): Promise<void> {
-  if (googleMapsPromise) {
-    return googleMapsPromise
+async function loadGoogleMaps(apiKey: string): Promise<void> {
+  if (!optionsApplied) {
+    setOptions({ key: apiKey, v: 'weekly' })
+    optionsApplied = true
   }
-
-  googleMapsPromise = (async () => {
-    // Load Maps JS API with marker library via URL params (not loading=async
-    // which requires importLibrary and fails in some environments)
-    if (!window.google?.maps?.Map) {
-      await new Promise<void>((resolve, reject) => {
-        const script = document.createElement('script')
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=marker,places`
-        script.async = true
-        script.defer = true
-        script.onload = () => resolve()
-        script.onerror = () =>
-          reject(
-            new Error(
-              'Failed to load Google Maps. Check your API key and network connection.',
-            ),
-          )
-        document.head.appendChild(script)
-      })
-    }
-  })()
-
-  return googleMapsPromise
+  // Load required libraries in parallel; results are attached to
+  // `window.google.maps.*` for downstream code that references the globals.
+  await Promise.all([
+    importLibrary('maps'),
+    importLibrary('marker'),
+    importLibrary('places'),
+  ])
 }
 
 function dismissPlacesAutocompleteDropdown() {
@@ -219,7 +208,14 @@ export interface UseUnifiedCaptureReturn {
 
   // Map
   mapContainerRef: React.RefObject<HTMLDivElement>
+  /**
+   * Legacy address input ref (kept for tests / label associations). The
+   * Places API (New) PlaceAutocompleteElement renders its own input into
+   * `autocompleteHostRef` instead — that's the visible address field.
+   */
   addressInputRef: React.RefObject<HTMLInputElement>
+  /** Host element for the <gmp-place-autocomplete> web component. */
+  autocompleteHostRef: React.RefObject<HTMLDivElement>
   mapError: string | null
   isMapLoading: boolean
 
@@ -329,23 +325,24 @@ export function useUnifiedCapture({
   const [isMapLoading, setIsMapLoading] = useState(true)
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
-  const mapMarkerRef = useRef<
-    google.maps.marker.AdvancedMarkerElement | google.maps.Marker | null
-  >(null)
+  const mapMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
+    null,
+  )
   const hasHydratedRef = useRef(false)
   const geolocatedRef = useRef(false)
   const addressInputRef = useRef<HTMLInputElement | null>(null)
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
+  // PlaceAutocompleteElement renders its own input element; we host it in a
+  // wrapper div so consumers can still pass an HTMLInputElement ref for
+  // backward-compatible API (used by tests and label-for associations).
+  const autocompleteHostRef = useRef<HTMLDivElement | null>(null)
+  const autocompleteElementRef =
+    useRef<google.maps.places.PlaceAutocompleteElement | null>(null)
 
-  /** Update marker position — handles both AdvancedMarkerElement and classic Marker */
+  /** Update AdvancedMarkerElement position. */
   const updateMarkerPosition = useCallback((lat: number, lng: number) => {
     const m = mapMarkerRef.current
     if (!m) return
-    if (m instanceof google.maps.Marker) {
-      m.setPosition({ lat, lng })
-    } else {
-      m.position = { lat, lng }
-    }
+    m.position = { lat, lng }
   }, [])
 
   useEffect(() => {
@@ -504,12 +501,12 @@ export function useUnifiedCapture({
     }
 
     setIsMapLoading(true)
-    loadGoogleMapsScript(apiKey)
+    loadGoogleMaps(apiKey)
       .then(() => {
         setIsMapLoaded(true)
         setIsMapLoading(false)
       })
-      .catch((err) => {
+      .catch((err: Error) => {
         setMapError(
           `Map failed to load: ${err.message}. Check your API key and network connection.`,
         )
@@ -664,59 +661,31 @@ export function useUnifiedCapture({
         .getPropertyValue('--ob-color-brand-primary')
         .trim() || '#00f3ff'
 
-    // Create draggable marker — try AdvancedMarkerElement, fall back to classic Marker
-    let marker: google.maps.marker.AdvancedMarkerElement | google.maps.Marker
+    // Create draggable AdvancedMarkerElement (classic Marker deprecated Feb 2024).
+    const pinSvg = document.createElement('div')
+    pinSvg.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="10" fill="#ffffff" stroke="${brandColor}" stroke-width="3"/>
+    </svg>`
+    pinSvg.style.cursor = 'grab'
+    pinSvg.title = 'Drag to reposition or click the map'
 
-    if (google.maps.marker?.AdvancedMarkerElement) {
-      const pinSvg = document.createElement('div')
-      pinSvg.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="12" r="10" fill="#ffffff" stroke="${brandColor}" stroke-width="3"/>
-      </svg>`
-      pinSvg.style.cursor = 'grab'
-      pinSvg.title = 'Drag to reposition or click the map'
-
-      marker = new google.maps.marker.AdvancedMarkerElement({
-        position: { lat: initialLat, lng: initialLng },
-        map,
-        gmpDraggable: true,
-        content: pinSvg,
-      })
-    } else {
-      // Fallback to classic Marker when AdvancedMarkerElement is unavailable
-      marker = new google.maps.Marker({
-        position: { lat: initialLat, lng: initialLng },
-        map,
-        draggable: true,
-        icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 10,
-          fillColor: '#ffffff',
-          fillOpacity: 1,
-          strokeColor: brandColor,
-          strokeWeight: 3,
-        },
-      })
-    }
+    const marker = new google.maps.marker.AdvancedMarkerElement({
+      position: { lat: initialLat, lng: initialLng },
+      map,
+      gmpDraggable: true,
+      content: pinSvg,
+    })
 
     // Guard against setState after unmount
     let mounted = true
 
-    // Helper to update marker position (works for both marker types)
     const setMarkerPosition = (lat: number, lng: number) => {
-      if (marker instanceof google.maps.Marker) {
-        marker.setPosition({ lat, lng })
-      } else {
-        marker.position = { lat, lng }
-      }
+      marker.position = { lat, lng }
     }
 
-    // Helper to handle drag end for both marker types
     const handleDragEnd = () => {
       if (!mounted) return
-      const position =
-        marker instanceof google.maps.Marker
-          ? marker.getPosition()
-          : marker.position
+      const position = marker.position
       if (position) {
         const lat =
           typeof position.lat === 'function' ? position.lat() : position.lat
@@ -744,12 +713,7 @@ export function useUnifiedCapture({
       }
     }
 
-    // Bind drag event — different API for each marker type
-    if (marker instanceof google.maps.Marker) {
-      marker.addListener('dragend', handleDragEnd)
-    } else {
-      marker.addEventListener('gmp-dragend', handleDragEnd)
-    }
+    marker.addEventListener('gmp-dragend', handleDragEnd)
 
     // Handle map click — set pin and reverse-geocode for address
     map.addListener('click', (event: google.maps.MapMouseEvent) => {
@@ -786,66 +750,95 @@ export function useUnifiedCapture({
     return () => {
       mounted = false
       if (mapMarkerRef.current) {
-        if (mapMarkerRef.current instanceof google.maps.Marker) {
-          mapMarkerRef.current.setMap(null)
-        } else {
-          mapMarkerRef.current.map = null
-        }
+        mapMarkerRef.current.map = null
       }
     }
     // mapInstanceRef.current guard prevents re-init; coord deps only affect
     // the initial map center on the first run after isMapLoaded flips true.
   }, [isMapLoaded, latitude, longitude, clearAnalysisCoordinates])
 
-  // Initialize Google Places Autocomplete on address input
+  // Initialize Places API (New) PlaceAutocompleteElement.
+  // Renders its own <gmp-place-autocomplete> web component into the host div.
   useEffect(() => {
     if (
       !isMapLoaded ||
-      !addressInputRef.current ||
-      autocompleteRef.current ||
-      !google.maps.places
+      !autocompleteHostRef.current ||
+      autocompleteElementRef.current ||
+      !google.maps.places?.PlaceAutocompleteElement
     ) {
       return
     }
 
-    const autocomplete = new google.maps.places.Autocomplete(
-      addressInputRef.current,
-      {
-        types: ['address'],
-        fields: ['formatted_address', 'geometry', 'place_id', 'name', 'types'],
-      },
-    )
+    const autocomplete = new google.maps.places.PlaceAutocompleteElement({
+      types: ['address'],
+    })
+    // Mirror existing state into the autocomplete input on mount.
+    if (address) {
+      ;(autocomplete as unknown as { value: string }).value = address
+    }
+    autocompleteHostRef.current.appendChild(autocomplete)
 
-    autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace()
-      if (place.formatted_address) {
-        setAddressState(place.formatted_address)
-        lastGeocodedAddressRef.current = place.formatted_address
-        lastResolvedGeocodeAddressRef.current = place.formatted_address
+    // Keep `address` state in sync with the user's typing so the
+    // debounced backend geocode (separate effect) continues to fire.
+    autocomplete.addEventListener('input', (event: Event) => {
+      const value =
+        (event.target as unknown as { value?: string } | null)?.value ?? ''
+      setAddressState(value)
+    })
+
+    autocomplete.addEventListener('gmp-select', async (event: Event) => {
+      const detail = (
+        event as unknown as {
+          placePrediction?: { toPlace: () => google.maps.places.Place }
+        }
+      ).placePrediction
+      if (!detail) return
+      const place = detail.toPlace()
+      await place.fetchFields({
+        fields: ['displayName', 'formattedAddress', 'location', 'types', 'id'],
+      })
+
+      const formattedAddress = place.formattedAddress ?? null
+      if (formattedAddress) {
+        setAddressState(formattedAddress)
+        lastGeocodedAddressRef.current = formattedAddress
+        lastResolvedGeocodeAddressRef.current = formattedAddress
         selectedPlaceMetadataRef.current = {
-          formattedAddress: place.formatted_address,
-          placeId: place.place_id ?? null,
-          placeName: place.name ?? null,
+          formattedAddress,
+          placeId: place.id ?? null,
+          placeName: place.displayName ?? null,
           placeTypes: place.types ?? [],
         }
       }
-      if (place.geometry?.location) {
-        const lat = place.geometry.location.lat()
-        const lng = place.geometry.location.lng()
-        setLatitude(lat.toFixed(6))
-        setLongitude(lng.toFixed(6))
+
+      const location = place.location
+      if (location) {
+        const lat =
+          typeof location.lat === 'function' ? location.lat() : location.lat
+        const lng =
+          typeof location.lng === 'function' ? location.lng() : location.lng
+        setLatitude(Number(lat).toFixed(6))
+        setLongitude(Number(lng).toFixed(6))
         setMapCoordinateSourceLabel('Google Places autocomplete')
         clearAnalysisCoordinates()
         if (mapInstanceRef.current) {
-          mapInstanceRef.current.setCenter({ lat, lng })
-          updateMarkerPosition(lat, lng)
+          mapInstanceRef.current.setCenter({
+            lat: Number(lat),
+            lng: Number(lng),
+          })
+          updateMarkerPosition(Number(lat), Number(lng))
         }
       }
     })
 
-    autocompleteRef.current = autocomplete
-    // autocompleteRef.current guard prevents re-binding; listed deps are all
-    // stable useCallbacks so the effect re-runs only when isMapLoaded flips.
+    autocompleteElementRef.current = autocomplete
+    return () => {
+      autocomplete.remove()
+      autocompleteElementRef.current = null
+    }
+    // `address` is read only to seed the initial value on first mount; the
+    // input event listener keeps it in sync afterwards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMapLoaded, clearAnalysisCoordinates, updateMarkerPosition])
 
   // Capture handler - routes to appropriate API based on mode
@@ -1241,6 +1234,7 @@ export function useUnifiedCapture({
     // Map
     mapContainerRef,
     addressInputRef,
+    autocompleteHostRef,
     mapError,
     isMapLoading,
 

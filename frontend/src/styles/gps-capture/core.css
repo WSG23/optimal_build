@@ -203,11 +203,68 @@
 .gps-form__address-row {
     display: flex;
     align-items: flex-end;
+    position: relative;
 }
 
 .gps-form__address-row .gps-input-ghost {
     flex: 1;
     min-width: 0;
+}
+
+/* ── Places API (New) — PlaceAutocompleteElement host ──
+   The web component renders its own input inside a shadow DOM. Style its
+   exposed parts to match the existing .gps-input-ghost--lg aesthetic. */
+.gps-form__autocomplete-host {
+    flex: 1;
+    min-width: 0;
+    display: block;
+}
+
+.gps-form__autocomplete-host gmp-place-autocomplete {
+    width: 100%;
+    display: block;
+    background: transparent;
+    --gmpx-color-surface: transparent;
+    --gmpx-color-on-surface: var(--ob-color-text-primary);
+    --gmpx-color-on-surface-variant: var(--ob-color-text-muted);
+    --gmpx-color-primary: var(--ob-color-brand-primary);
+    --gmpx-font-family-base: inherit;
+    --gmpx-font-size-base: var(--ob-font-size-md);
+}
+
+.gps-form__autocomplete-host gmp-place-autocomplete::part(input) {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: var(--ob-border-fine);
+    border-radius: var(--ob-radius-none);
+    padding: var(--ob-space-075) 0;
+    color: var(--ob-color-text-primary);
+    font-size: var(--ob-font-size-md);
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.gps-form__autocomplete-host gmp-place-autocomplete::part(input):focus {
+    border-bottom-color: var(--ob-color-brand-primary);
+}
+
+.gps-form__autocomplete-host gmp-place-autocomplete::part(input):focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
+}
+
+.gps-form__autocomplete-host gmp-place-autocomplete::part(prediction-item) {
+    background: var(--ob-color-bg-surface);
+    color: var(--ob-color-text-primary);
+    padding: var(--ob-space-075) var(--ob-space-100);
+}
+
+.gps-form__autocomplete-host
+    gmp-place-autocomplete::part(prediction-item-selected) {
+    background: var(--ob-color-action-selected);
 }
 
 .gps-form__assistive-copy {

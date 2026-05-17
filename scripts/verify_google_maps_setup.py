@@ -21,17 +21,34 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
-def load_api_key() -> str | None:
-    """Read GOOGLE_MAPS_API_KEY from .env (no python-dotenv dependency)."""
-    env_path = REPO_ROOT / ".env"
-    if not env_path.exists():
-        return os.environ.get("GOOGLE_MAPS_API_KEY")
-    for line in env_path.read_text().splitlines():
+def _scan_env_file(path: Path, *keys: str) -> str | None:
+    if not path.exists():
+        return None
+    for line in path.read_text().splitlines():
         line = line.strip()
-        if line.startswith("GOOGLE_MAPS_API_KEY="):
-            value = line.split("=", 1)[1].strip().strip("'\"")
-            return value or None
-    return os.environ.get("GOOGLE_MAPS_API_KEY")
+        for key in keys:
+            if line.startswith(f"{key}="):
+                value = line.split("=", 1)[1].strip().strip("'\"")
+                return value or None
+    return None
+
+
+def load_api_key() -> str | None:
+    """Read the Maps key from any of the typical locations.
+
+    Order: root .env (backend), then frontend/.env (Vite), then env var.
+    Vite reads VITE_GOOGLE_MAPS_API_KEY; the backend reads GOOGLE_MAPS_API_KEY.
+    Either is fine for verification purposes — same key, same restrictions.
+    """
+    return (
+        _scan_env_file(REPO_ROOT / ".env", "GOOGLE_MAPS_API_KEY")
+        or _scan_env_file(
+            REPO_ROOT / "frontend" / ".env",
+            "VITE_GOOGLE_MAPS_API_KEY",
+            "GOOGLE_MAPS_API_KEY",
+        )
+        or os.environ.get("GOOGLE_MAPS_API_KEY")
+    )
 
 
 def fetch(url: str) -> dict:
@@ -77,14 +94,45 @@ def test_geocoding(key: str) -> tuple[bool, str]:
 
 
 def test_places(key: str) -> tuple[bool, str]:
-    # Places Autocomplete (the actual API the frontend uses)
-    url = (
-        "https://maps.googleapis.com/maps/api/place/autocomplete/json?"
-        + urllib.parse.urlencode(
-            {"input": "Marina Bay", "components": "country:sg", "key": key}
-        )
+    """Test Places API (New) — the autocomplete:places endpoint.
+
+    The frontend uses PlaceAutocompleteElement which hits this v1 endpoint.
+    Returns OK if the response is 200 with a `suggestions` array (even an
+    empty one); otherwise extracts the error for diagnosis.
+    """
+    url = "https://places.googleapis.com/v1/places:autocomplete"
+    body = json.dumps({"input": "Marina Bay", "regionCode": "SG"}).encode()
+    req = urllib.request.Request(
+        url,
+        data=body,
+        method="POST",
+        headers={
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": key,
+        },
     )
-    return diagnose("Places API", fetch(url))
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read())
+            if "suggestions" in data:
+                return True, "OK (Places API New)"
+            return False, f"unexpected response: {str(data)[:200]}"
+    except urllib.error.HTTPError as e:
+        try:
+            err = json.loads(e.read())
+            msg = err.get("error", {}).get("message", "(no message)")
+            status = err.get("error", {}).get("status", "ERROR")
+        except Exception:
+            msg, status = "(no body)", str(e.code)
+        hint = (
+            "  → If 'API has not been used': enable 'Places API (New)' in GCP\n"
+            "  → If 'API_KEY_INVALID': check key in .env\n"
+            "  → If 'API restriction': add 'Places API (New)' to key restrictions\n"
+            "  → If billing: link billing account"
+        )
+        return False, f"{status}: {msg}\n{hint}"
+    except Exception as e:
+        return False, f"network error: {e}"
 
 
 def test_maps_js(key: str) -> tuple[bool, str]:
