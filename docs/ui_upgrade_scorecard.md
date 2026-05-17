@@ -12,12 +12,22 @@ H1 Visibility · H2 Match real-world · H3 User control · H4 Consistency & stan
 
 ## Final roll-up (post-fix)
 
+<!-- ui-scorecard:auto:begin -->
+
+## Roll-up (auto-generated)
+
 | Metric | Count |
 |---|---|
 | Surfaces scanned | **269** |
 | At target (≥36/40) | **269** |
 | Below target (<36/40) | **0** |
 | % canonized | **100.0%** |
+
+## Surfaces below 36 (fix targets, auto-generated)
+
+_None — goal met._ 🎯
+
+<!-- ui-scorecard:auto:end -->
 
 🎯 Goal met.
 

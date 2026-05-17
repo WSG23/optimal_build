@@ -196,6 +196,45 @@ def score(rec: dict) -> int:
     return max(0, s)
 
 
+AUTO_BEGIN = "<!-- ui-scorecard:auto:begin -->"
+AUTO_END = "<!-- ui-scorecard:auto:end -->"
+
+
+def _auto_block(rows: list[dict]) -> str:
+    """Render only the auto-managed portion (roll-up + below-36 list).
+
+    Everything outside the AUTO_BEGIN/AUTO_END markers is hand-maintained
+    (per-surface Nielsen tables, iteration history, fix log) and preserved
+    untouched across re-runs.
+    """
+    at = sum(1 for r in rows if r["score"] >= 36)
+    below = len(rows) - at
+    lines: list[str] = [AUTO_BEGIN, "", "## Roll-up (auto-generated)", ""]
+    lines.append("| Metric | Count |")
+    lines.append("|---|---|")
+    lines.append(f"| Surfaces scanned | **{len(rows)}** |")
+    lines.append(f"| At target (≥36/40) | **{at}** |")
+    lines.append(f"| Below target (<36/40) | **{below}** |")
+    lines.append(f"| % canonized | **{100 * at / len(rows):.1f}%** |")
+    lines.append("")
+    lines.append("## Surfaces below 36 (fix targets, auto-generated)")
+    lines.append("")
+    if below == 0:
+        lines.append("_None — goal met._ 🎯")
+    else:
+        lines.append("| Score | dev | Lines | Surface |")
+        lines.append("|---|---|---|---|")
+        for r in rows:
+            if r["score"] >= 36:
+                continue
+            lines.append(
+                f"| **{r['score']}** | {r['deviations']} | {r['lines']} | `{r['file']}` |"
+            )
+    lines.append("")
+    lines.append(AUTO_END)
+    return "\n".join(lines)
+
+
 def main() -> int:
     rows: list[dict] = []
     for d in SCAN_DIRS:
@@ -217,45 +256,42 @@ def main() -> int:
 
     at = sum(1 for r in rows if r["score"] >= 36)
     below = len(rows) - at
+    auto = _auto_block(rows)
 
-    out: list[str] = []
-    out.append("# UI Upgrade Scorecard")
-    out.append("")
-    out.append(
-        "**Branch:** `UI_Upgrade` &nbsp;·&nbsp; **Goal:** every UI page, section, widget ≥ 36/40 and canonized to brand"
-    )
-    out.append("")
-    out.append("**Rubric:** Nielsen 10 × 0–4 = 40 max.")
-    out.append("")
-    out.append("## Roll-up")
-    out.append("")
-    out.append("| Metric | Count |")
-    out.append("|---|---|")
-    out.append(f"| Surfaces scanned | **{len(rows)}** |")
-    out.append(f"| At target (≥36/40) | **{at}** |")
-    out.append(f"| Below target (<36/40) | **{below}** |")
-    out.append(f"| % canonized | **{100 * at / len(rows):.1f}%** |")
-    out.append("")
-    out.append("## Surfaces below 36 (fix targets)")
-    out.append("")
-    if below == 0:
-        out.append("_None — goal met._ 🎯")
-    else:
-        out.append("| Score | dev | Lines | Surface |")
-        out.append("|---|---|---|---|")
-        for r in rows:
-            if r["score"] >= 36:
-                continue
-            out.append(
-                f"| **{r['score']}** | {r['deviations']} | {r['lines']} | `{r['file']}` |"
-            )
-    out.append("")
     target = Path(__file__).resolve().parents[1] / "docs" / "ui_upgrade_scorecard.md"
-    target.write_text("\n".join(out))
+    if target.exists():
+        existing = target.read_text()
+        if AUTO_BEGIN in existing and AUTO_END in existing:
+            # Preserve hand-written sections: replace only the marked block.
+            import re as _re
+
+            new = _re.sub(
+                _re.escape(AUTO_BEGIN) + r".*?" + _re.escape(AUTO_END),
+                auto,
+                existing,
+                flags=_re.DOTALL,
+                count=1,
+            )
+            target.write_text(new)
+        else:
+            # Existing file has no marker — append the auto block so hand-written
+            # content above is never destroyed.
+            target.write_text(existing.rstrip() + "\n\n" + auto + "\n")
+    else:
+        # First run: emit a minimal scaffold containing only the auto block.
+        target.write_text(
+            "# UI Upgrade Scorecard\n\n"
+            "_Hand-written sections (rubric, per-surface scores, iteration history) "
+            "go above the auto-managed block below. The block between the "
+            "`ui-scorecard:auto:begin/end` HTML comments is rewritten by "
+            "`python3 scripts/ui_scorecard.py` — everything else is preserved._\n\n"
+            + auto
+            + "\n"
+        )
     print(
         f"Scorecard: {len(rows)} surfaces · {at} at ≥36 · {below} below ({100 * at / len(rows):.1f}% canonized)"
     )
-    print(f"Written: {target}")
+    print(f"Updated auto-block in: {target}")
     return 0 if below == 0 else 1
 
 
