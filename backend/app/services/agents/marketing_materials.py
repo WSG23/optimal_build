@@ -6,15 +6,15 @@ import io
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from reportlab.graphics.barcode import qr  # type: ignore[import-untyped]
-from reportlab.graphics.shapes import Drawing  # type: ignore[import-untyped]
-from reportlab.lib import colors  # type: ignore[import-untyped]
-from reportlab.lib.enums import TA_CENTER  # type: ignore[import-untyped]
-from reportlab.lib.pagesizes import A4  # type: ignore[import-untyped]
-from reportlab.lib.styles import ParagraphStyle  # type: ignore[import-untyped]
-from reportlab.lib.units import inch  # type: ignore[import-untyped]
-from reportlab.pdfgen import canvas  # type: ignore[import-untyped]
-from reportlab.platypus import (  # type: ignore[import-untyped]
+from reportlab.graphics.barcode import qr
+from reportlab.graphics.shapes import Drawing
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.pdfgen import canvas
+from reportlab.platypus import (
     Flowable,
     ListFlowable,
     ListItem,

@@ -50,7 +50,7 @@ async def test_calculate_financial_metrics_handles_errors(client, monkeypatch):
     )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "bad input"
+    assert response.json()["detail"] == "Request could not be processed"
 
 
 @pytest.mark.asyncio

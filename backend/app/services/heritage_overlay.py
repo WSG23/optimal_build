@@ -7,20 +7,30 @@ import re
 from html import unescape
 from dataclasses import dataclass
 from importlib import resources
-from typing import Any, Iterable, Optional
+from typing import TYPE_CHECKING, Any, Iterable, Optional
 
-try:  # pragma: no cover - shapely is optional in lightweight environments
-    from shapely.geometry import Point, shape  # type: ignore
-    from shapely.strtree import STRtree  # type: ignore
+if TYPE_CHECKING:
+    # Treat shapely entry-points as Any so we don't need a stub package and so
+    # the runtime fallback below stays invisible to mypy.
+    Point: Any = Any
+    STRtree: Any = Any
+
+    def shape(_geometry: Any) -> Any: ...
 
     _SHAPELY_AVAILABLE = True
-except ModuleNotFoundError:  # pragma: no cover - fall back when shapely missing
-    Point = Any
-    STRtree: Any = None
-    _SHAPELY_AVAILABLE = False
+else:
+    try:  # pragma: no cover - shapely is optional in lightweight environments
+        from shapely.geometry import Point, shape
+        from shapely.strtree import STRtree
 
-    def shape(_geometry: Any) -> None:
-        return None
+        _SHAPELY_AVAILABLE = True
+    except ModuleNotFoundError:  # pragma: no cover - fall back when shapely missing
+        Point = Any
+        STRtree = None
+        _SHAPELY_AVAILABLE = False
+
+        def shape(_geometry):
+            return None
 
 
 def _resource_text(path: str) -> Optional[str]:

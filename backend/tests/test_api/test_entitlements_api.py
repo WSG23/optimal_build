@@ -264,9 +264,7 @@ async def test_create_and_update_study_paths(monkeypatch):
     updated = await ent_api.update_study(
         project_id=42,
         study_id=7,
-        payload=SimpleNamespace(
-            model_dump=lambda exclude_unset=True: {"summary": "done"}
-        ),
+        payload=SimpleNamespace(model_dump=lambda **_kw: {"summary": "done"}),
         session=session,
         _="reviewer",
     )
@@ -346,9 +344,7 @@ async def test_update_and_delete_engagement(monkeypatch):
     updated = await ent_api.update_engagement(
         project_id=42,
         engagement_id=5,
-        payload=SimpleNamespace(
-            model_dump=lambda exclude_unset=True: {"notes": "sync"}
-        ),
+        payload=SimpleNamespace(model_dump=lambda **_kw: {"notes": "sync"}),
         session=session,
         _="reviewer",
     )

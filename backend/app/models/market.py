@@ -16,28 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.types import Numeric as SQLDecimal
 
-try:
-    from geoalchemy2 import Geometry as _Geometry
-
-    class Geometry(_Geometry):
-        cache_ok = True
-
-except ModuleNotFoundError:  # pragma: no cover - optional dependency fallback
-    from sqlalchemy.types import UserDefinedType
-
-    class Geometry(UserDefinedType):  # type: ignore[misc]
-        """Minimal stub emulating geoalchemy2.Geometry when unavailable."""
-
-        cache_ok = True
-
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            self.args = args
-            self.kwargs = kwargs
-
-        def get_col_spec(self, **_: object) -> str:
-            return "GEOMETRY"
-
-
+from app.models._geometry import Geometry
 from app.models.base import UUID, BaseModel
 from app.models.property import PropertyType
 

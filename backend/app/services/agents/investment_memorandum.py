@@ -7,10 +7,10 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from reportlab.lib import colors  # type: ignore[import-untyped]
-from reportlab.lib.pagesizes import A4  # type: ignore[import-untyped]
-from reportlab.lib.units import inch  # type: ignore[import-untyped]
-from reportlab.platypus import (  # type: ignore[import-untyped]
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import inch
+from reportlab.platypus import (
     Flowable,
     ListFlowable,
     ListItem,

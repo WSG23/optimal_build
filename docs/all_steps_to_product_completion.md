@@ -356,17 +356,27 @@ Older wins moved to archive for brevity; see git history for prior months.
 
 ### 🧱 Technical Debt Radar
 
-> Source: Former `TECHNICAL_DEBT_SUMMARY.MD` (2025-11-10). Last reconciled 2026-05-17. Keep the bullets in sync with `docs/architecture_honest.md`.
+> Source: Former `TECHNICAL_DEBT_SUMMARY.MD` (2025-11-10). Last reconciled 2026-05-17 (twice — same day, see audit below). Keep the bullets in sync with `docs/architecture_honest.md`.
 
 **Status:** Critical / High / Medium / Low all clear as of 2026-05-17. New debt should be added here when surfaced. `make verify` is green end-to-end (all 12 rule checks, 65 unit tests, type checks, lint, format, docs).
 
 **Deferred (require dedicated work, not blocking gates)**
-- **95 `# type: ignore` comments in production code.** Governed by `production_baseline = 0` in `config/type_safety/guardrails.toml` — count cannot grow; each existing one needs individual triage.
-- **30 entries in `.coding-rules-exceptions.yml`.** Each is documented with rationale and cleanup plan; removing them requires fixing the underlying violations.
+- **65 `# type: ignore` / `# mypy:` suppressions in production code** (`backend/`, excluding `backend/tests/`). Now actually gated by [scripts/check_type_ignore_budget.py](scripts/check_type_ignore_budget.py) — `production` is in the `scopes` tuple, baseline is the live count, goal is 0. Cannot grow without `--allow-increase`. Was 85 before the 2026-05-17 PM sweep (Geometry shim consolidation + redundant ReportLab ignore removal). Last reduced 2026-05-17.
+- **29 entries in `.coding-rules-exceptions.yml`.** Of those, **26 are frozen by Rule 1** (immutable migration files — 15 in `rule_1_migrations`, 11 in `rule_1_2_enum_pattern`). Only **3 are real code debt**: `users_db.py` (rule_2_async, legacy dev endpoint with its own SQLite DB), `singapore_property.py` (rule_5_singapore, test fixture issue), `scripts/smoke_test_pdfs.py` (rule_7_code_quality, long URL in docstring).
 - **6 vendored shim dirs at repo root** (`pydantic/`, `httpx/`, `geoalchemy2/`, `importlib/`, `eval_type_backport/`, `prefect/`). Load-bearing for sandbox / CI environments without the real packages. Removing requires CI environment work. The vendored `pydantic/` stub is what required the `mypy-app.schemas._typing` allowlist entry (its `model_validate` is typed as returning `BaseModel` not `Self`).
 - **3 hard-skipped test files** (`test_compliance.py` × 3 tests, `test_universal_site_pack.py` × 3 tests, `test_developer_condition_report.py` × 1 test). Each carries a written rationale (integration tests cover this better; ReportLab layout limits).
 
-**Resolved (2026-05-17)**
+**Guardrail audit (2026-05-17 PM):** The `production_baseline = 0` in `config/type_safety/guardrails.toml` was previously **aspirational, not enforced** — [scripts/check_type_ignore_budget.py](scripts/check_type_ignore_budget.py)'s `evaluate_budgets()` only gated `backend/tests` and `tests` scopes; the production count was printed but never failed the check. New production type:ignores were partly stopped by [scripts/check_type_guardrails.py](scripts/check_type_guardrails.py) (requires owner/expires/reason metadata on newly diffed lines), but the budget itself was not a ratchet. **Fixed**: production is now in the gated scopes; baseline acts as a ceiling; new ignores fail the check unless `--allow-increase` is explicitly passed.
+
+**Resolved (2026-05-17 PM)**
+- `check_type_ignore_budget.py` now actually enforces the production ratchet: `production` was added to the gated `scopes` tuple, and the spurious `if baselines.production != 0: raise` guard was removed so the baseline can act as a real ceiling. `production_baseline = 65` documents both the current state and (via the new `production_goal = 0` key) the target.
+- Production type:ignore budget reduced **85 → 65** (-23%) in one pass:
+  - **−7** by consolidating the 7 duplicated `Geometry(UserDefinedType)` shim blocks across the jurisdiction property models (`property.py`, `singapore_property.py`, `hong_kong_property.py`, `new_zealand_property.py`, `seattle_property.py`, `toronto_property.py`, `market.py`) into one [backend/app/models/_geometry.py](backend/app/models/_geometry.py) — uses a `TYPE_CHECKING` alias to hide the runtime swap from mypy, so the central shim itself has zero ignores.
+  - **−13** by removing redundant `# type: ignore[import-untyped]` on every reportlab import in [marketing_materials.py](backend/app/services/agents/marketing_materials.py) and [investment_memorandum.py](backend/app/services/agents/investment_memorandum.py) — `[mypy-reportlab.*] ignore_missing_imports = True` in `mypy.ini` already covers them; the ignores predated that config and were never cleaned up. The 5 `[misc]` ignores on `Flowable` / `PDFGenerator` subclasses remain — they require `types-reportlab` (or a local `.pyi` stub) to remove cleanly.
+  - **−2 bare** `# type: ignore` in [heritage_overlay.py](backend/app/services/heritage_overlay.py) shapely imports, replaced with a `TYPE_CHECKING` block (below the budget pattern threshold but caught by [check_type_guardrails.py](scripts/check_type_guardrails.py) on any new line).
+- `.coding-rules-exceptions.yml` cleaned: stale `projects_api.py` entry removed (the file was renamed to `projects.py` and is fully async). Comment block for `rule_2_async` updated to reflect that only `users_db.py` (legacy dev endpoint, low priority) remains.
+
+**Resolved (2026-05-17 AM)**
 - Backend mypy clean: `make typecheck-backend` and `make mypy-baseline` both at 0 errors. Final 3 errors in `backend/app/schemas/_typing.py` (vendored-pydantic stub under-typing) bracketed by a dedicated `[mypy-app.schemas._typing]` ignore section + matching allowlist entry — the file is intentionally the casting-boundary helper.
 - Frontend TypeScript clean: 6 nullability errors in `frontend/src/app/pages/capture/components/useStarterModelMemos.ts` cleared by an early `if (!record) return null` guard.
 - `datetime.utcnow()` deprecation removed: all 16 call sites across 6 files migrated to the codebase's existing `backend._compat.datetime.utcnow` helper. `grep -rn 'datetime.utcnow' backend/app/` now returns nothing.

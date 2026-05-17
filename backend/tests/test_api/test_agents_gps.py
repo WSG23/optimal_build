@@ -86,6 +86,21 @@ async def test_log_property_by_gps_fallback(client, monkeypatch):
         "log_property_from_gps",
         AsyncMock(side_effect=RuntimeError("gps offline")),
     )
+    # Force the URA integration into "unavailable" state regardless of any
+    # access key the host env may have set. The fallback path asks the
+    # singleton for its metadata and otherwise reports whatever the live
+    # configuration says.
+    monkeypatch.setattr(
+        agents_api.ura_service.instance,
+        "source_metadata",
+        lambda: ExternalSourceMetadata(
+            provider="ura",
+            state=ExternalSourceState.UNAVAILABLE,
+            configured=False,
+            synthetic=False,
+            reason="URA_ACCESS_KEY not configured",
+        ),
+    )
     ensure_seeded = AsyncMock(return_value=None)
     auto_populate = AsyncMock(return_value=None)
     monkeypatch.setattr(
