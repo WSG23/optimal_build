@@ -415,6 +415,7 @@ def test_create_photo_gallery_empty():
 def test_floor_plan_diagram_draw_basic():
     """Test FloorPlanDiagram draws correctly."""
     from io import BytesIO
+
     from reportlab.pdfgen import canvas
 
     floor_data = {"floor": "10"}
@@ -431,6 +432,7 @@ def test_floor_plan_diagram_draw_basic():
 def test_floor_plan_diagram_draw_with_units():
     """Test FloorPlanDiagram draws with units."""
     from io import BytesIO
+
     from reportlab.pdfgen import canvas
 
     floor_data = {
@@ -453,6 +455,7 @@ def test_floor_plan_diagram_draw_with_units():
 def test_floor_plan_diagram_draw_no_units_key():
     """Test FloorPlanDiagram draws when units key is absent."""
     from io import BytesIO
+
     from reportlab.pdfgen import canvas
 
     # No units key at all - just floor
@@ -475,6 +478,7 @@ def test_floor_plan_diagram_draw_no_units_key():
 def test_amenity_icons_draw():
     """Test AmenityIcons draws correctly."""
     from io import BytesIO
+
     from reportlab.pdfgen import canvas
 
     amenities = ["parking", "gym", "cafe", "wifi"]
@@ -490,6 +494,7 @@ def test_amenity_icons_draw():
 def test_amenity_icons_draw_many_amenities():
     """Test AmenityIcons draws with many amenities (max 8)."""
     from io import BytesIO
+
     from reportlab.pdfgen import canvas
 
     amenities = [
@@ -516,6 +521,7 @@ def test_amenity_icons_draw_many_amenities():
 def test_amenity_icons_draw_unknown_amenities():
     """Test AmenityIcons draws with unknown amenities."""
     from io import BytesIO
+
     from reportlab.pdfgen import canvas
 
     amenities = ["pool", "lounge", "terrace"]

@@ -21,11 +21,11 @@ project_root = backend_dir.parent
 sys.path.insert(0, str(backend_dir))
 sys.path.insert(0, str(project_root))
 
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
-from app.models.regulatory import RegulatoryAgency, AssetCompliancePath
+from app.models.regulatory import AssetCompliancePath, RegulatoryAgency
 
 # Singapore Regulatory Agencies
 AGENCIES = [

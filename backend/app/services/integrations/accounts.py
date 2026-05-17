@@ -6,6 +6,9 @@ from datetime import datetime, timedelta, timezone
 from typing import Iterable, Optional
 from uuid import UUID
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
 from app.models.listing_integration import (
     ListingAccountStatus,
@@ -13,8 +16,6 @@ from app.models.listing_integration import (
     ListingProvider,
 )
 from app.utils.encryption import TokenCipher
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class ListingIntegrationAccountService:

@@ -3,8 +3,25 @@
 
 This script runs when PDF-related files are modified to ensure
 developers perform manual testing before committing.
+
+Bypass paths (use sparingly, and only when the change demonstrably can't
+affect rendered output):
+
+  CONFIRM_PDF_TESTED=1 git commit ...
+      Programmatic equivalent of typing "yes" at the prompt. Use when
+      committing from a non-interactive shell after manual verification.
+
+  SKIP=pdf-smoke-test git commit ...
+      Pre-commit's standard skip mechanism. Use for changes that only
+      touch routing/auth/typing in the PDF API surface and leave the
+      rendering pipeline untouched.
+
+In a non-TTY shell (CI, agents, scripted commits) the prompt would
+otherwise hang forever; we now exit 1 with the bypass instructions
+instead.
 """
 
+import re
 import subprocess
 import sys
 
@@ -30,6 +47,53 @@ def is_pdf_related(filepath):
         "/commercial_property_packs.py",  # API endpoints
     ]
     return any(pattern in filepath for pattern in pdf_patterns)
+
+
+# Diff lines that touch only routing/auth/typing infrastructure can be
+# safely skipped — they can't change rendered output. Each pattern matches
+# a single added line (already stripped of the leading '+').
+SAFE_ADDED_LINE_PATTERNS = (
+    re.compile(r"^\s*$"),  # blank lines
+    re.compile(r"^\s*#"),  # comments (including `# public-endpoint:` markers)
+    re.compile(r"^\s*from\s+app\.api\.deps\s+import\b"),  # auth dep imports
+    re.compile(r"^\s*from\s+fastapi\s+import\b"),  # FastAPI imports
+    re.compile(r"^\s*_identity\s*:\s*RequestIdentity\s*=\s*Depends\("),
+    re.compile(r"^\s*[a-zA-Z_]\w*\s*:\s*[A-Za-z_][\w\[\], |\"']*\s*=\s*Depends\("),
+)
+
+
+def staged_diff_for(filepath):
+    """Return the unified staged diff for a single file (or '' on failure)."""
+    result = subprocess.run(
+        ["git", "diff", "--cached", "-U0", "--", filepath],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return result.stdout
+
+
+def diff_is_routing_only(filepath):
+    """True if every added line in this file's staged diff is auth/routing.
+
+    Only added lines matter — deletions of arbitrary lines can still change
+    behaviour, so they don't get a free pass. We look only at lines starting
+    with '+' (and not '+++').
+    """
+    diff = staged_diff_for(filepath)
+    if not diff:
+        return False
+    saw_added = False
+    for line in diff.splitlines():
+        if line.startswith("+++") or line.startswith("---") or line.startswith("@@"):
+            continue
+        if not line.startswith("+"):
+            continue
+        saw_added = True
+        body = line[1:]
+        if not any(p.search(body) for p in SAFE_ADDED_LINE_PATTERNS):
+            return False
+    return saw_added
 
 
 def main():

@@ -6,14 +6,13 @@ from datetime import timedelta
 from uuid import UUID
 
 from backend._compat.datetime import utcnow
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.models.team import InvitationStatus, TeamInvitation, TeamMember
 from app.models.users import UserRole
 from app.services.notification.email_service import EmailService
-
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
 logger = logging.getLogger(__name__)
 

@@ -110,22 +110,6 @@ export function RoiPanel({ summary }: RoiPanelProps) {
               label="No Projects Tracked"
               subLabel="Connect your project data to the overlay engine to start tracking hours saved and efficiency gains."
             />
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                mt: -6,
-                position: 'relative',
-                zIndex: 2,
-                pointerEvents: 'none',
-              }}
-            >
-              {/* Optional: if we want a real button we can put it here,
-                     but ChartPlaceholder is visual. Let's stick to the prompt's request for "Connect Data" button overlay.
-                     The placeholder has a "Connect data" sublabel, but maybe we want a real button.
-                     Let's add the button below the placeholder or overlay it.
-                 */}
-            </Box>
             <Box sx={{ textAlign: 'center', mt: 'var(--ob-space-200)' }}>
               <Button
                 variant="contained"

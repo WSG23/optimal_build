@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from app.core.config import Settings
-
 from backend.scripts import ingest_seattle_parcels as sea_parcels
 from backend.scripts import ingest_seattle_zones as sea_zones
+
+from app.core.config import Settings
 
 
 def test_seattle_token_default(monkeypatch):

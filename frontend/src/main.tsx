@@ -25,6 +25,20 @@ if (hash.startsWith('#/')) {
   window.history.replaceState(null, '', targetPath)
 }
 
+// Google Maps SDK injects a centered "This page can't load Google Maps
+// correctly" modal whenever the API key is missing, restricted, or quota-
+// exhausted. Defining gm_authFailure suppresses that modal and lets our own
+// in-page fallback render instead.
+;(window as typeof window & { gm_authFailure?: () => void }).gm_authFailure =
+  () => {
+    if (import.meta.env?.DEV) {
+      console.warn(
+        '[maps] Google Maps auth failed — falling back to in-page placeholder. ' +
+          'Set a valid VITE_GOOGLE_MAPS_API_KEY to enable maps.',
+      )
+    }
+  }
+
 function suspense(element: React.ReactNode) {
   return <React.Suspense fallback={<RouteProgress />}>{element}</React.Suspense>
 }

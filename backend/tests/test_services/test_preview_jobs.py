@@ -6,15 +6,15 @@ from uuid import UUID
 
 import backend.jobs as job_queue_module
 import pytest
-from backend._compat.datetime import utcnow
-
 import pytest_asyncio
+from backend._compat.datetime import utcnow
+from sqlalchemy import select
+
 from app.core.config import settings
 from app.models.preview import PreviewJob, PreviewJobStatus
 from app.models.property import Property
 from app.services import preview_jobs
 from app.services.preview_jobs import PreviewJobService
-from sqlalchemy import select
 
 # Skip marker removed - market_demo_data fixture now properly cleans up test data
 

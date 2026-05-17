@@ -10,13 +10,13 @@ from typing import Iterable
 from uuid import UUID
 
 import structlog
+from backend._compat.datetime import utcnow
+from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.models.preview import PreviewJob, PreviewJobStatus
 from app.services.preview_generator import PREVIEW_STORAGE_DIR
-from backend._compat.datetime import utcnow
-from sqlalchemy import select
 
 logger = structlog.get_logger(__name__)
 

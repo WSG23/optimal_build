@@ -5,7 +5,6 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-
 from fastapi import HTTPException
 
 from app.api.deps import RequestIdentity

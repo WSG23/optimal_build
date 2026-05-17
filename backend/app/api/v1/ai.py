@@ -13,93 +13,117 @@ from importlib import import_module
 from typing import Any, cast
 from uuid import uuid4
 
+from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend._compat.datetime import utcnow
-
-from app.api.deps import Role, require_reviewer, require_viewer, get_db
+from app.api.deps import Role, get_db, require_reviewer, require_viewer
 from app.schemas.ai import (
-    # Natural Language Query
-    NLQueryRequest,
-    NLQueryResponse,
-    # Knowledge Base
-    KnowledgeSearchRequest,
-    KnowledgeSearchResponse,
-    SearchResultItem,
-    IngestPropertyRequest,
-    IngestDealRequest,
-    IngestDocumentRequest,
-    IngestionResponse,
-    # Deal Scoring
-    DealScoreRequest,
-    DealScoreResponse,
-    FactorScoreItem,
-    # Scenario Optimizer
-    ScenarioOptimizeRequest,
-    ScenarioOptimizeResponse,
-    FinancingScenario,
-    FinancingType,
-    # Market Predictor
-    MarketPredictionRequest,
-    MarketPredictionResponse,
-    PredictionItem,
-    PredictionType,
-    # Compliance Predictor
-    CompliancePredictionRequest,
-    CompliancePredictionResponse,
-    RegulatoryMilestone,
-    # Due Diligence
-    DDGenerateRequest,
-    DDChecklistResponse,
-    DDItemResponse,
-    DDRecommendationResponse,
-    # Reports
-    ICMemoRequest,
-    PortfolioReportRequest,
-    ReportResponse,
-    ReportSectionResponse,
-    # Communication
-    DraftCommunicationRequest,
-    CommunicationDraftResponse,
-    ChatMessageRequest,
-    ChatMessageResponse,
-    ConversationListItem,
-    # Portfolio
-    PortfolioOptimizeRequest,
-    PortfolioOptimizeResponse,
-    AssetAllocationItem,
-    RebalancingRecommendation,
-    PortfolioMetricsResponse,
-    # Multi-Modal
-    ImageAnalysisRequest,
-    ImageAnalysisResponse,
-    SpaceMetricsResponse,
-    ConditionAssessmentResponse,
-    # Competitive Intelligence
-    CompetitorTrackRequest,
-    CompetitorResponse,
-    CompetitiveIntelligenceRequest,
-    CompetitiveIntelligenceResponse,
-    CompetitorActivityResponse,
-    CompetitiveAlertResponse,
-    # Workflow
-    TriggerWorkflowRequest,
-    WorkflowResultResponse,
-    WorkflowStepResponse,
-    WorkflowDefinitionResponse,
+    AIServiceStatsResponse,
+    AnomalyAlert,
     # Anomaly Detection
     AnomalyDetectionRequest,
     AnomalyDetectionResponse,
-    AnomalyAlert,
+    AssetAllocationItem,
+    ChatMessageRequest,
+    ChatMessageResponse,
+    CommunicationDraftResponse,
+    CompetitiveAlertResponse,
+    CompetitiveIntelligenceRequest,
+    CompetitiveIntelligenceResponse,
+    CompetitorActivityResponse,
+    CompetitorResponse,
+    # Competitive Intelligence
+    CompetitorTrackRequest,
+    # Compliance Predictor
+    CompliancePredictionRequest,
+    CompliancePredictionResponse,
+    ConditionAssessmentResponse,
+    ConversationListItem,
+    DDChecklistResponse,
+    # Due Diligence
+    DDGenerateRequest,
+    DDItemResponse,
+    DDRecommendationResponse,
+    # Deal Scoring
+    DealScoreRequest,
+    DealScoreResponse,
     # Document Extraction
     DocumentExtractionRequest,
     DocumentExtractionResponse,
-    AIServiceStatsResponse,
+    # Communication
+    DraftCommunicationRequest,
+    FactorScoreItem,
+    FinancingScenario,
+    FinancingType,
+    # Reports
+    ICMemoRequest,
+    # Multi-Modal
+    ImageAnalysisRequest,
+    ImageAnalysisResponse,
+    IngestDealRequest,
+    IngestDocumentRequest,
+    IngestionResponse,
+    IngestPropertyRequest,
+    # Knowledge Base
+    KnowledgeSearchRequest,
+    KnowledgeSearchResponse,
+    # Market Predictor
+    MarketPredictionRequest,
+    MarketPredictionResponse,
+    # Natural Language Query
+    NLQueryRequest,
+    NLQueryResponse,
+    PortfolioMetricsResponse,
+    # Portfolio
+    PortfolioOptimizeRequest,
+    PortfolioOptimizeResponse,
+    PortfolioReportRequest,
+    PredictionItem,
+    PredictionType,
+    RebalancingRecommendation,
+    RegulatoryMilestone,
+    ReportResponse,
+    ReportSectionResponse,
+    # Scenario Optimizer
+    ScenarioOptimizeRequest,
+    ScenarioOptimizeResponse,
+    SearchResultItem,
+    SpaceMetricsResponse,
+    # Workflow
+    TriggerWorkflowRequest,
+    WorkflowDefinitionResponse,
+    WorkflowResultResponse,
+    WorkflowStepResponse,
 )
+from app.utils.logging import get_logger, log_event
 
 router = APIRouter(prefix="/ai", tags=["AI Services"])
+
+_logger = get_logger(__name__)
+
+
+def _internal_error(exc: Exception, where: str) -> HTTPException:
+    """Wrap an unexpected exception as a generic 500 without leaking exc text.
+
+    The raw ``str(exc)`` can carry stack hints, file paths, library internals,
+    or — in worst cases — secrets that were in the values being processed.
+    Log the real cause server-side, return a generic message to the client.
+    """
+
+    log_event(
+        _logger,
+        "ai_endpoint_unhandled_exception",
+        endpoint=where,
+        error=str(exc),
+        error_type=type(exc).__name__,
+    )
+    return HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="Internal server error",
+    )
+
 
 _AI_SERVICE_REGISTRY: dict[str, tuple[str, str, bool]] = {
     "natural_language_query": (
@@ -179,6 +203,36 @@ _AI_SERVICE_REGISTRY: dict[str, tuple[str, str, bool]] = {
         False,
     ),
 }
+
+
+def _classify_service_failure(error_text: str | None, default: str) -> HTTPException:
+    """Translate an AI service-layer error string into the right HTTPException.
+
+    AI service results carry a free-text ``error`` field. Raising a blanket 500
+    for every non-success makes "project not found" indistinguishable from a
+    crash. Bucket the text into 404 / 422 / 500 so the client gets the right
+    code and message.
+    """
+
+    detail = error_text or default
+    lowered = detail.lower()
+    if "not found" in lowered or "does not exist" in lowered:
+        code = status.HTTP_404_NOT_FOUND
+    elif (
+        "required" in lowered
+        or "must be" in lowered
+        or "invalid" in lowered
+        or "unsupported" in lowered
+        or "no cost data" in lowered
+        or "no historical" in lowered
+        or "missing" in lowered
+    ):
+        code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    elif "unavailable" in lowered or "not configured" in lowered:
+        code = status.HTTP_503_SERVICE_UNAVAILABLE
+    else:
+        code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    return HTTPException(status_code=code, detail=detail)
 
 
 @lru_cache(maxsize=None)
@@ -521,10 +575,7 @@ async def score_deal(
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
-        ) from exc
+        raise _internal_error(exc, __name__) from exc
 
 
 # ============================================================================
@@ -566,9 +617,8 @@ async def optimize_scenarios(
             db=db,
         )
         if not result.success:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=result.error or "Failed to optimize scenarios",
+            raise _classify_service_failure(
+                result.error, "Failed to optimize scenarios"
             )
 
         recommended_id = None
@@ -627,10 +677,7 @@ async def optimize_scenarios(
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
-        ) from exc
+        raise _internal_error(exc, __name__) from exc
 
 
 # ============================================================================
@@ -668,7 +715,7 @@ async def predict_market(
 
         if not property_type or not location:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Market prediction requires a district and property_type",
             )
 
@@ -678,7 +725,7 @@ async def predict_market(
             )
         except StopIteration as exc:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=f"Unsupported property type: {property_type}",
             ) from exc
 
@@ -688,9 +735,8 @@ async def predict_market(
             db=db,
         )
         if not result.success or result.forecast is None:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=result.error or "Failed to generate market prediction",
+            raise _classify_service_failure(
+                result.error, "Failed to generate market prediction"
             )
 
         forecast = result.forecast
@@ -761,10 +807,7 @@ async def predict_market(
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
-        ) from exc
+        raise _internal_error(exc, __name__) from exc
 
 
 # ============================================================================
@@ -799,9 +842,8 @@ async def predict_compliance(
             context={},
         )
         if not result.success or result.assessment is None:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=result.error or "Failed to predict compliance risk",
+            raise _classify_service_failure(
+                result.error, "Failed to predict compliance risk"
             )
 
         assessment = result.assessment
@@ -831,10 +873,7 @@ async def predict_compliance(
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
-        ) from exc
+        raise _internal_error(exc, __name__) from exc
 
 
 # ============================================================================
@@ -955,9 +994,8 @@ async def generate_portfolio_report(
         db=db,
     )
     if not result.success or result.report is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=result.error or "Failed to generate portfolio report",
+        raise _classify_service_failure(
+            result.error, "Failed to generate portfolio report"
         )
     report = result.report
     return ReportResponse(
@@ -996,9 +1034,15 @@ async def draft_communication(
     Supports emails, letters, proposals, and memos with various tones.
     """
     from app.services.ai.communication_drafter import (
-        CommunicationType as ServiceCommunicationType,
-        CommunicationTone as ServiceCommunicationTone,
         CommunicationPurpose as ServiceCommunicationPurpose,
+    )
+    from app.services.ai.communication_drafter import (
+        CommunicationTone as ServiceCommunicationTone,
+    )
+    from app.services.ai.communication_drafter import (
+        CommunicationType as ServiceCommunicationType,
+    )
+    from app.services.ai.communication_drafter import (
         DraftRequest,
     )
 
@@ -1047,10 +1091,7 @@ async def draft_communication(
     )
 
     if not result.success or result.draft is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=result.error or "Failed to generate draft",
-        )
+        raise _classify_service_failure(result.error, "Failed to generate draft")
 
     draft = result.draft
     return CommunicationDraftResponse(
@@ -1091,10 +1132,7 @@ async def chat_message(
             db=db,
         )
         if not result.success or result.response is None:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=result.error or "Failed to process message",
-            )
+            raise _classify_service_failure(result.error, "Failed to process message")
 
         conversation_id = request.conversation_id or ""
         if not conversation_id:
@@ -1115,10 +1153,7 @@ async def chat_message(
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
-        ) from exc
+        raise _internal_error(exc, __name__) from exc
 
 
 @router.get("/chat/conversations", response_model=list[ConversationListItem])
@@ -1166,9 +1201,13 @@ async def optimize_portfolio(
     Analyzes current allocation and suggests rebalancing actions.
     """
     from app.services.ai.portfolio_optimizer import (
-        OptimizationStrategy as ServiceStrategy,
-        RiskProfile as ServiceRiskProfile,
         OptimizationRequest,
+    )
+    from app.services.ai.portfolio_optimizer import (
+        OptimizationStrategy as ServiceStrategy,
+    )
+    from app.services.ai.portfolio_optimizer import (
+        RiskProfile as ServiceRiskProfile,
     )
 
     strategy_map = {
@@ -1254,7 +1293,11 @@ async def analyze_image(
     try:
         from app.services.ai.multi_modal_analyzer import (
             AnalysisRequest,
+        )
+        from app.services.ai.multi_modal_analyzer import (
             AnalysisType as ServiceAnalysisType,
+        )
+        from app.services.ai.multi_modal_analyzer import (
             ImageType as ServiceImageType,
         )
 
@@ -1316,10 +1359,7 @@ async def analyze_image(
             processing_time_ms=result.processing_time_ms,
         )
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
-        ) from exc
+        raise _internal_error(exc, __name__) from exc
 
 
 # ============================================================================
@@ -1363,10 +1403,7 @@ async def track_competitor(
             tracked_since=_tracked_since(competitor),
         )
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
-        ) from exc
+        raise _internal_error(exc, __name__) from exc
 
 
 @router.get("/competitors", response_model=list[CompetitorResponse])
@@ -1445,10 +1482,7 @@ async def gather_intelligence(
             summary=dashboard.summary,
         )
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
-        ) from exc
+        raise _internal_error(exc, __name__) from exc
 
 
 # ============================================================================
@@ -1490,10 +1524,7 @@ async def trigger_workflow(
             if response is not None
         ]
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
-        ) from exc
+        raise _internal_error(exc, __name__) from exc
 
 
 @router.get("/workflows", response_model=list[WorkflowDefinitionResponse])
@@ -1529,10 +1560,7 @@ async def check_deadlines(
             if response is not None
         ]
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
-        ) from exc
+        raise _internal_error(exc, __name__) from exc
 
 
 # ============================================================================
@@ -1594,10 +1622,7 @@ async def detect_anomalies(
             scan_time_ms=0.0,
         )
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
-        ) from exc
+        raise _internal_error(exc, __name__) from exc
 
 
 # ============================================================================
@@ -1639,20 +1664,17 @@ async def extract_document(
                     result = await service.extract_from_text(text, document_type)
         elif request.document_url:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Remote document fetching is unavailable in this environment",
             )
         else:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Document source is required",
             )
 
         if not result.success:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=result.error or "Failed to extract document",
-            )
+            raise _classify_service_failure(result.error, "Failed to extract document")
 
         extracted_data = result.extracted_data or {}
         parties = [
@@ -1683,10 +1705,7 @@ async def extract_document(
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
-        ) from exc
+        raise _internal_error(exc, __name__) from exc
 
 
 # ============================================================================

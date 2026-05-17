@@ -17,12 +17,13 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import RequestIdentity, require_reviewer, require_viewer
 from app.api.v1.agents import CoordinatePair, QuickAnalysisEnvelope
 from app.api.v1.developers_common import (
     DeveloperAssetOptimization,
     DeveloperBuildEnvelope,
-    DeveloperCashFlowMilestone,
     DeveloperCapitalStructureScenario,
+    DeveloperCashFlowMilestone,
     DeveloperColorLegendEntry,
     DeveloperConstraintViolation,
     DeveloperDebtFacility,
@@ -46,27 +47,28 @@ from app.api.v1.developers_common import (
 from app.core.config import settings
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
-from app.api.deps import RequestIdentity, require_reviewer, require_viewer
-from app.models.property import Property
 from app.models.projects import Project, ProjectPhase, ProjectType
+from app.models.property import Property
+from app.schemas._typing import copy_model
 from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 from app.schemas.finance import FinanceAssetMixInput
-from app.services.finance_project_creation import (
-    create_finance_project_from_capture,
-)
+from app.services import preview_generator
 from app.services.agents.gps_property_logger import (
     DevelopmentScenario as CaptureScenario,
+)
+from app.services.agents.gps_property_logger import (
     GPSPropertyLogger,
     PropertyLogResult,
 )
-from app.services.developer_checklist_service import DeveloperChecklistService
 from app.services.asset_mix import AssetOptimizationOutcome, build_asset_mix
-from app.services import preview_generator
+from app.services.developer_checklist_service import DeveloperChecklistService
+from app.services.finance_project_creation import (
+    create_finance_project_from_capture,
+)
 from app.services.geocoding import Address, GeocodeLookupResult
 from app.services.jurisdictions import get_jurisdiction_config
 from app.services.preview_jobs import PreviewJobService, PreviewJobStatus
 from app.utils.lazy import LazyProxy
-from app.schemas._typing import copy_model
 
 router = APIRouter(prefix="/developers", tags=["developers"])
 logger = structlog.get_logger()
@@ -634,6 +636,7 @@ async def _derive_build_envelope(
     Queries the RefRule database for zoning parameters (plot ratio, height limits,
     site coverage) instead of using hardcoded mock values from URAIntegrationService.
     """
+    from app.services.postgis import parcel_area as get_parcel_area
     from app.services.rules.zone_rules import (
         classify_site_development_for_parcel,
         find_dominant_zoning_layer_for_parcel,
@@ -642,7 +645,6 @@ async def _derive_build_envelope(
         find_zoning_layer_for_point,
         get_zoning_rules_for_zone,
     )
-    from app.services.postgis import parcel_area as get_parcel_area
 
     ura_data = result.ura_zoning or {}
     property_info = result.property_info or {}

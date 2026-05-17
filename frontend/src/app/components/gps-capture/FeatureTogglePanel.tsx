@@ -76,14 +76,17 @@ export function FeatureTogglePanel({
           <span className="feature-toggle-panel__icon">
             {isExpanded ? '▼' : '▶'}
           </span>
-          Developer Features
+          <span>Developer Features</span>
           {enabledCount > 0 && (
             <span className="feature-toggle-panel__badge">
               {enabledCount} enabled
             </span>
           )}
         </span>
-        <span className="feature-toggle-panel__hint">
+        <span
+          className="feature-toggle-panel__hint"
+          style={{ marginLeft: 'var(--ob-space-150)' }}
+        >
           {isExpanded ? 'Click to collapse' : 'Click to expand'}
         </span>
       </button>

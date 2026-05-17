@@ -7,11 +7,11 @@ source registry; broader live-source findings remain review-only until approved.
 
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from hashlib import sha256
-import json
-import re
 from typing import Any, Protocol
 
 import structlog

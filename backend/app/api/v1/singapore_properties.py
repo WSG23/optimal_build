@@ -13,6 +13,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any, Dict, cast
 
+from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
@@ -29,13 +30,12 @@ from app.models.singapore_property import (
     PropertyZoning,
     SingaporeProperty,
 )
+from app.schemas._typing import dump_model
 from app.utils.singapore_compliance import (
     calculate_gfa_utilization,
     run_full_compliance_check,
     update_property_compliance,
 )
-from app.schemas._typing import dump_model
-from backend._compat.datetime import utcnow
 
 router = APIRouter(prefix="/singapore-property", tags=["Singapore Property"])
 
@@ -747,9 +747,19 @@ async def check_compliance(
             },
         }
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Compliance check failed: {str(e)}"
-        ) from e
+        # Log the real cause for ops; return a generic message so we don't
+        # leak internal exception text (paths, stack hints, library internals)
+        # to clients.
+        from app.utils.logging import get_logger, log_event
+
+        log_event(
+            get_logger(__name__),
+            "compliance_check_unhandled_exception",
+            zoning=zoning,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(status_code=500, detail="Compliance check failed") from e
 
 
 @router.delete("/{property_id}")

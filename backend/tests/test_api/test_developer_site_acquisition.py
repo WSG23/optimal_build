@@ -8,6 +8,8 @@ from uuid import UUID, uuid4
 
 import pytest
 from backend._compat.datetime import utcnow
+from httpx import AsyncClient
+from sqlalchemy import select
 
 from app.api.v1 import developers_gps as developers_api
 from app.models.finance import FinCapitalStack, FinProject, FinScenario
@@ -19,8 +21,6 @@ from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceS
 from app.services.agents.gps_property_logger import PropertyLogResult
 from app.services.geocoding import Address, GeocodeLookupResult
 from app.services.rules.zone_rules import SiteDevelopmentResult
-from httpx import AsyncClient
-from sqlalchemy import select
 
 # Skip marker removed - market_demo_data fixture now properly cleans up test data
 

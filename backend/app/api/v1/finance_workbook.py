@@ -12,6 +12,7 @@ from app.api.deps import RequestIdentity, require_reviewer
 from app.core.audit.ledger import append_event
 from app.core.database import get_session
 from app.models.finance import FinScenario
+from app.schemas._typing import validate_model
 from app.schemas.finance import FinanceFeasibilityRequest, FinanceFeasibilityResponse
 from app.schemas.finance_workbook import FinanceWorkbookPreviewResponse
 from app.services.deals.utils import audit_key_from_value
@@ -20,7 +21,6 @@ from app.services.finance.workbook_exchange import (
     build_finance_workbook,
     preview_finance_workbook,
 )
-from app.schemas._typing import validate_model
 
 from .finance_feasibility import run_finance_feasibility
 from .finance_scenarios import _ensure_project_owner, summarise_persisted_scenario

@@ -9,6 +9,8 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.developer_checklists import ChecklistPriority, ChecklistStatus
 from app.models.developer_condition import DeveloperConditionAssessmentRecord
 from app.models.property import Property, PropertyStatus, PropertyType
@@ -37,7 +39,6 @@ from app.services.developer_condition_service import (
     _system_specialist_hint,
     _years_until_lease_expiry,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 
 # ============================================================================
 # HELPER FUNCTIONS

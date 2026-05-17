@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
-
 import json
 from collections.abc import Iterable
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import pytest
 from backend._compat.datetime import UTC
 
 pytest.importorskip("fastapi")
@@ -16,6 +15,7 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
 from backend.jobs.overlay_run import run_overlay_for_project
+from sqlalchemy import select
 
 from app.api.v1.imports import _build_parse_summary
 from app.core.export import (
@@ -32,7 +32,6 @@ from app.models.audit import AuditLog
 from app.models.imports import ImportRecord
 from app.models.overlay import OverlaySourceGeometry, OverlaySuggestion
 from app.models.rkp import RefRule, RefZoningLayer
-from sqlalchemy import select
 
 SAMPLE_PATH = Path(__file__).resolve().parents[1] / "samples" / "sample_floorplan.json"
 GOLDEN_MANIFEST_PATH = (

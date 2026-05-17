@@ -6,6 +6,8 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
+from sqlalchemy import func, select
+
 from app.models.developer_checklists import (
     ChecklistStatus,
     DeveloperChecklistTemplate,
@@ -15,7 +17,6 @@ from app.services.developer_checklist_service import (
     DEFAULT_TEMPLATE_DEFINITIONS,
     DeveloperChecklistService,
 )
-from sqlalchemy import func, select
 
 
 def _count_templates_for_scenario(scenario: str) -> int:

@@ -8,17 +8,17 @@ Phase 2D: Multi-Phase Development Management
 """
 
 from datetime import date
-from uuid import UUID
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-
-from app.api.deps import RequestIdentity, require_viewer
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.api.deps import RequestIdentity, require_viewer
+from app.core.database import get_session
 from app.models.development_phase import (
     DevelopmentPhase,
     PhaseMilestone,
@@ -28,7 +28,6 @@ from app.models.projects import Project
 from app.services.development.phase_manager import (
     get_phase_manager_service,
 )
-from app.core.database import get_session
 
 router = APIRouter(prefix="/projects", tags=["Development Phases"])
 
@@ -219,7 +218,10 @@ async def get_project_phases(
         select(DevelopmentPhase)
         .where(DevelopmentPhase.project_id == project_id)
         .options(selectinload(DevelopmentPhase.dependencies))
-        .order_by(DevelopmentPhase.sequence_order)
+        .order_by(
+            DevelopmentPhase.planned_start_date.asc().nulls_last(),
+            DevelopmentPhase.id,
+        )
     )
     return list(result.scalars().all())
 

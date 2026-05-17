@@ -11,12 +11,12 @@ from __future__ import annotations
 import csv
 import io
 import json
-from types import ModuleType
 import zipfile
 from collections.abc import Iterator, Mapping, Sequence
 from datetime import datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from time import perf_counter
+from types import ModuleType
 from typing import Any, Callable, Protocol, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -29,6 +29,7 @@ from app.api.deps import RequestIdentity, require_reviewer
 from app.core.config import settings
 from app.core.database import get_session
 from app.models.finance import FinResult, FinScenario
+from app.schemas._typing import typed_import_module, validate_model
 from app.schemas.finance import (
     CapitalStackSummarySchema,
     ConstructionLoanInput,
@@ -40,7 +41,6 @@ from app.schemas.finance import (
 from app.services.finance import calculator
 from app.services.finance.argus_export import get_argus_export_service
 from app.utils import metrics
-from app.schemas._typing import typed_import_module, validate_model
 from app.utils.logging import get_logger, log_event
 
 from .finance_common import (

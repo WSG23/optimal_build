@@ -3,6 +3,7 @@
 import uuid
 from enum import Enum
 
+from backend._compat.datetime import utcnow
 from sqlalchemy import (
     DECIMAL,
     JSON,
@@ -10,39 +11,18 @@ from sqlalchemy import (
     Column,
     Date,
     DateTime,
-    Enum as SQLEnum,
     Float,
     ForeignKey,
     Integer,
     String,
     Text,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import relationship
 
-try:
-    from geoalchemy2 import Geometry as _Geometry
-
-    class Geometry(_Geometry):
-        cache_ok = True
-
-except ModuleNotFoundError:  # pragma: no cover - optional dependency fallback
-    from sqlalchemy.types import UserDefinedType
-
-    class Geometry(UserDefinedType):  # type: ignore[misc]
-        """Minimal stub emulating geoalchemy2.Geometry for test environments."""
-
-        cache_ok = True
-
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            self.args = args
-            self.kwargs = kwargs
-
-        def get_col_spec(self, **_: object) -> str:  # pragma: no cover - simple stub
-            return "GEOMETRY"
-
-
-from backend._compat.datetime import utcnow
-
+from app.models._geometry import Geometry
 from app.models.base import UUID, BaseModel
 
 

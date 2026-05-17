@@ -47,7 +47,7 @@ async def test_generate_market_report_handles_error(client, monkeypatch):
     )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "unsupported type"
+    assert response.json()["detail"] == "Request could not be processed"
 
 
 @pytest.mark.asyncio
@@ -83,7 +83,7 @@ async def test_sync_market_data_handles_error(client, monkeypatch):
     )
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "provider down"
+    assert response.json()["detail"] == "Request could not be processed"
 
 
 @pytest.mark.asyncio

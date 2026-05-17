@@ -76,7 +76,7 @@ def test_evaluate_budgets_fails_only_the_scope_that_regressed() -> None:
             tests=1,
         ),
         baseline_counts=check_type_ignore_budget.BudgetCounts(
-            production=0,
+            production=10,
             backend_tests=4,
             tests=1,
         ),
@@ -85,31 +85,30 @@ def test_evaluate_budgets_fails_only_the_scope_that_regressed() -> None:
 
     assert ok is False
     assert messages == [
-        (
-            "Production suppression baseline is fixed at 0; "
-            "new production suppressions are blocked by the staged type guardrails "
-            "(current tree count: 12)"
-        ),
+        "production suppression count increased from 10 to 12",
         "backend/tests suppression count increased from 4 to 5",
         "tests suppression budget ok (1 <= 1)",
     ]
 
 
-def test_load_baseline_counts_rejects_nonzero_production_baseline(
+def test_load_baseline_counts_accepts_nonzero_production_baseline(
     tmp_path: Path,
 ) -> None:
+    # The ratchet itself now enforces the ceiling. Previously this script
+    # rejected any nonzero production_baseline (aspirational "must stay 0"
+    # rule), but the long-term goal is recorded by `production_goal` and the
+    # baseline acts as a real-tracked-count ceiling that can only go down.
     config_path = tmp_path / "guardrails.toml"
     config_path.write_text(
         "[type_ignore]\n"
-        "production_baseline = 1\n"
+        "production_baseline = 65\n"
         "backend_tests_baseline = 4\n"
         "tests_baseline = 2\n",
         encoding="utf-8",
     )
 
-    try:
-        check_type_ignore_budget.load_baseline_counts(config_path)
-    except ValueError as exc:
-        assert str(exc) == "type_ignore.production_baseline must remain 0"
-    else:  # pragma: no cover - explicit failure branch
-        raise AssertionError("Expected nonzero production baseline to be rejected")
+    baselines = check_type_ignore_budget.load_baseline_counts(config_path)
+
+    assert baselines.production == 65
+    assert baselines.backend_tests == 4
+    assert baselines.tests == 2

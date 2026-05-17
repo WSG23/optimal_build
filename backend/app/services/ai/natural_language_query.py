@@ -13,7 +13,7 @@ from enum import Enum
 from typing import Any, Optional
 
 from langchain_openai import ChatOpenAI
-from sqlalchemy import select, func, and_, or_
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.business_performance import (
@@ -23,8 +23,8 @@ from app.models.business_performance import (
     DealType,
     PipelineStage,
 )
-from app.models.property import Property, PropertyType, MarketTransaction
 from app.models.finance import FinScenario
+from app.models.property import MarketTransaction, Property, PropertyType
 
 logger = logging.getLogger(__name__)
 

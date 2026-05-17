@@ -533,15 +533,20 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
                 },
               }}
             >
+              {/*
+                First-use hint vs. hover hint render as two distinct Tooltips
+                because MUI rejects switching between controlled and
+                uncontrolled `open`.
+              */}
               <Tooltip
+                key={cmdkTooltipOpen ? 'first-use' : 'hover'}
                 title={
                   cmdkTooltipOpen
                     ? 'Search anything with \u2318K'
                     : 'Search commands (\u2318K)'
                 }
-                open={cmdkTooltipOpen || undefined}
+                {...(cmdkTooltipOpen ? { open: true, arrow: true } : {})}
                 placement="bottom"
-                arrow={cmdkTooltipOpen}
               >
                 <Button
                   aria-label="Open command palette"
@@ -605,7 +610,12 @@ export function TopNav({ isPinned, onTogglePinned }: TopNavProps) {
                     />
                   }
                 >
-                  {projectContext ? <ProjectSelector /> : null}
+                  {/*
+                    Hide project selector on xs; it's already in the mobile
+                    drawer, and showing it in the bar forces the nav to wrap
+                    onto multiple lines and shoves content under the header.
+                  */}
+                  {projectContext && !isMobile ? <ProjectSelector /> : null}
                   <TopUtilityMenu />
                 </Suspense>
               </ErrorBoundary>

@@ -384,7 +384,6 @@ export function PhaseManagementPage() {
             icon={<TimelineIcon sx={{ fontSize: 28 }} />}
             value={stats.totalPhases}
             label="Total Phases"
-            progress={75}
             compact
             sx={{ minWidth: 160, flex: 1 }}
           />
@@ -392,6 +391,11 @@ export function PhaseManagementPage() {
             icon={<BarChartIcon sx={{ fontSize: 28 }} />}
             value={stats.criticalPhases}
             label="Critical Path"
+            progress={
+              stats.totalPhases > 0
+                ? Math.round((stats.criticalPhases / stats.totalPhases) * 100)
+                : undefined
+            }
             status={stats.criticalPhases > 0 ? 'error' : 'success'}
             compact
             sx={{ minWidth: 160, flex: 1 }}
@@ -400,7 +404,11 @@ export function PhaseManagementPage() {
             icon={<AccountBalanceIcon sx={{ fontSize: 28 }} />}
             value={stats.heritagePhases}
             label="Heritage Phases"
-            progress={45}
+            progress={
+              stats.totalPhases > 0
+                ? Math.round((stats.heritagePhases / stats.totalPhases) * 100)
+                : undefined
+            }
             compact
             sx={{ minWidth: 160, flex: 1 }}
           />
@@ -408,20 +416,30 @@ export function PhaseManagementPage() {
             icon={<PeopleIcon sx={{ fontSize: 28 }} />}
             value={stats.tenantPhases}
             label="Tenant Coord"
-            progress={60}
+            progress={
+              stats.totalPhases > 0
+                ? Math.round((stats.tenantPhases / stats.totalPhases) * 100)
+                : undefined
+            }
             compact
             sx={{ minWidth: 160, flex: 1 }}
           />
           <PremiumMetricCard
             value={`${stats.totalDuration}d`}
             label="Total Days"
-            progress={35}
             compact
             sx={{ minWidth: 160, flex: 1 }}
           />
           <PremiumMetricCard
             value={`${stats.criticalDuration}d`}
             label="Critical Days"
+            progress={
+              stats.totalDuration > 0
+                ? Math.round(
+                    (stats.criticalDuration / stats.totalDuration) * 100,
+                  )
+                : undefined
+            }
             status="error"
             compact
             sx={{ minWidth: 160, flex: 1 }}

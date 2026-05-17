@@ -4,6 +4,8 @@ import logging
 from uuid import UUID
 
 from backend._compat.datetime import utcnow
+from sqlalchemy import and_, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.notification import (
     EmailLog,
@@ -11,8 +13,6 @@ from app.models.notification import (
     NotificationPriority,
     NotificationType,
 )
-from sqlalchemy import and_, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

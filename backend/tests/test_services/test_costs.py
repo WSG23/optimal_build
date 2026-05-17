@@ -8,8 +8,9 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from app.services import costs
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.services import costs
 
 
 class TestUpsertCostIndex:

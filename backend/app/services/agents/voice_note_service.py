@@ -5,10 +5,9 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 import structlog
+from backend._compat.datetime import utcnow
 from sqlalchemy import delete, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from backend._compat.datetime import utcnow
 
 from app.core.config import settings
 from app.models.property import VoiceNote

@@ -1,8 +1,9 @@
 import pytest
 from httpx import AsyncClient
-from app.main import app
-from app.models.regulatory import RegulatoryAgency, AgencyCode
+
 from app.api import deps
+from app.main import app
+from app.models.regulatory import AgencyCode, RegulatoryAgency
 
 # Use pytest-asyncio for async tests
 pytestmark = pytest.mark.asyncio

@@ -11,6 +11,8 @@ from typing import Literal, cast
 from backend._compat.datetime import UTC
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_reviewer, require_viewer
 from app.core.database import get_session
@@ -18,8 +20,6 @@ from app.models.rkp import RefRule, RefZoningLayer
 from app.services.normalize import NormalizedRule, RuleNormalizer
 from app.utils.cache import TTLCache
 from app.utils.logging import get_logger
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 logger = get_logger(__name__)

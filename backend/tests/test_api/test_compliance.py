@@ -3,9 +3,10 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from backend._compat.datetime import utcnow
-
 import pytest_asyncio
+from backend._compat.datetime import utcnow
+from httpx import ASGITransport, AsyncClient
+
 from app.api.v1 import compliance as compliance_api
 from app.main import app
 from app.models.singapore_property import (
@@ -15,7 +16,6 @@ from app.models.singapore_property import (
     SingaporeProperty,
 )
 from app.services import compliance as compliance_service
-from httpx import ASGITransport, AsyncClient
 
 
 async def _create_property(async_session_factory, **overrides):

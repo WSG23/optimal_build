@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Mapping, MutableMapping
+from dataclasses import dataclass
 from typing import Final
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-
-from dataclasses import dataclass
 
 from app.models.rkp import RefDocument, RefSource
 

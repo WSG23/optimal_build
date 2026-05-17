@@ -2,20 +2,25 @@
 
 from __future__ import annotations
 
-from importlib import import_module
 import importlib.util
 import sys
 from datetime import date, datetime, timedelta
 from enum import Enum
+from importlib import import_module
 from typing import Any, Dict, Optional, cast
 from uuid import UUID, uuid4
 
 import structlog
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 
+from app.utils.logging import get_logger, log_event
+
 from backend._compat.datetime import utcnow  # isort: skip (backend._compat ordering)
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api import deps
 from app.api.deps import Role, get_request_role, require_reviewer
 from app.core.config import settings
 from app.core.database import get_session
@@ -23,15 +28,12 @@ from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.property import Property, PropertyType
 from app.schemas.external_sources import ExternalSourceMetadata
 from app.services.agents.gps_property_logger import DevelopmentScenario
-from app.services.geocoding import Address
-from app.utils.lazy import LazyProxy
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.services.finance import (
     calculate_comprehensive_metrics,
     value_property_multiple_approaches,
 )
+from app.services.geocoding import Address
+from app.utils.lazy import LazyProxy
 
 
 class ScenarioType(str, Enum):
@@ -47,6 +49,8 @@ router = APIRouter(
     prefix="/agents/commercial-property", tags=["Commercial Property Agent"]
 )
 
+
+_logger = get_logger(__name__)
 logger = structlog.get_logger()
 
 _UNRESOLVED = object()
@@ -510,7 +514,7 @@ class PropertyValuationRequest(BaseModel):
 async def log_property_by_gps(
     request: GPSLogRequest,
     db: AsyncSession = Depends(get_session),
-    role: Role = Depends(get_request_role),
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
     current_user: TokenData | None = Depends(get_optional_user),
 ) -> GPSLogResponse:
     """
@@ -848,7 +852,7 @@ async def submit_property_advisory_feedback(
     property_id: UUID,
     payload: AdvisoryFeedbackRequest,
     db: AsyncSession = Depends(get_session),
-    role: Role = Depends(get_request_role),
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
     token: TokenData | None = Depends(get_optional_user),
 ) -> AdvisoryFeedbackItem:
     """Record market feedback from agents for developers to review."""
@@ -875,7 +879,7 @@ async def submit_property_advisory_feedback(
 )
 async def compute_sales_velocity(
     payload: SalesVelocityRequest,
-    role: Role = Depends(get_request_role),
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> SalesVelocityResponse:
     """Return a lightweight sales velocity forecast using market defaults and optional overrides."""
 
@@ -970,7 +974,7 @@ async def analyze_development_potential(
     property_id: str,
     request: PropertyAnalysisRequest,
     db: AsyncSession = Depends(get_session),
-    role: Role = Depends(get_request_role),
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> dict[str, Any]:
     """
     Analyze development potential for a property.
@@ -997,8 +1001,9 @@ async def analyze_development_potential(
     scanner = scanner_cls(buildable_service, finance_calc, ura_service)
 
     # Get property data
-    from app.models.property import Property
     from sqlalchemy import select
+
+    from app.models.property import Property
 
     stmt = select(Property).where(Property.id == UUID(property_id))
     result = await db.execute(stmt)
@@ -1023,7 +1028,16 @@ async def analyze_development_potential(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e
 
 
 @router.post("/properties/{property_id}/photos")
@@ -1034,7 +1048,7 @@ async def upload_property_photo(
     tags: str | None = None,
     phase: str | None = None,
     db: AsyncSession = Depends(get_session),
-    role: Role = Depends(get_request_role),
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> PhotoUploadResponse:
     """
     Upload and analyze a property photo.
@@ -1091,7 +1105,16 @@ async def upload_property_photo(
         )
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e
 
 
 @router.get("/properties/{property_id}/photos")
@@ -1111,7 +1134,16 @@ async def get_property_photos(
         return cast(list[dict[str, Any]], photos)
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e
 
 
 @router.delete("/properties/{property_id}/photos/{photo_id}")
@@ -1119,7 +1151,7 @@ async def delete_property_photo(
     property_id: str,
     photo_id: str,
     db: AsyncSession = Depends(get_session),
-    role: Role = Depends(get_request_role),
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> dict[str, bool]:
     """Delete a property photo and all its versions from storage."""
     photo_manager = _new_photo_manager()
@@ -1135,7 +1167,16 @@ async def delete_property_photo(
         raise
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e
 
 
 # ============================================================================
@@ -1154,7 +1195,7 @@ async def upload_voice_note(
     tags: str | None = None,
     photo_id: str | None = None,
     db: AsyncSession = Depends(get_session),
-    role: Role = Depends(get_request_role),
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> VoiceNoteResponse:
     """
     Upload a voice note recording for a property.
@@ -1208,7 +1249,16 @@ async def upload_voice_note(
         )
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e
 
 
 @router.get("/properties/{property_id}/voice-notes")
@@ -1228,7 +1278,16 @@ async def get_property_voice_notes(
         return cast(list[dict[str, Any]], voice_notes)
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e
 
 
 @router.get("/properties/{property_id}/voice-notes/{voice_note_id}")
@@ -1258,7 +1317,16 @@ async def get_voice_note(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e
 
 
 @router.patch("/properties/{property_id}/voice-notes/{voice_note_id}")
@@ -1267,7 +1335,7 @@ async def update_voice_note(
     voice_note_id: str,
     request: VoiceNoteUpdateRequest,
     db: AsyncSession = Depends(get_session),
-    role: Role = Depends(get_request_role),
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> dict[str, Any]:
     """Update voice note metadata (title, tags, or transcript)."""
     voice_note_service = _new_voice_note_service()
@@ -1300,7 +1368,16 @@ async def update_voice_note(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e
 
 
 @router.delete("/properties/{property_id}/voice-notes/{voice_note_id}")
@@ -1308,7 +1385,7 @@ async def delete_voice_note(
     property_id: str,
     voice_note_id: str,
     db: AsyncSession = Depends(get_session),
-    role: Role = Depends(get_request_role),
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> dict[str, str]:
     """Delete a voice note and its audio file."""
     voice_note_service = _new_voice_note_service()
@@ -1337,7 +1414,16 @@ async def delete_voice_note(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e
 
 
 @router.post("/properties/{property_id}/scenarios/3d")
@@ -1345,7 +1431,7 @@ async def generate_3d_scenarios(
     property_id: str,
     request: ScenarioGenerationRequest,
     db: AsyncSession = Depends(get_session),
-    role: Role = Depends(get_request_role),
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> list[dict[str, Any]]:
     """
     Generate 3D massing scenarios for property development.
@@ -1375,8 +1461,9 @@ async def generate_3d_scenarios(
     scenario_builder = builder_cls(postgis_service)
 
     # Get property data
-    from app.models.property import Property
     from sqlalchemy import select
+
+    from app.models.property import Property
 
     stmt = select(Property).where(Property.id == UUID(property_id))
     result = await db.execute(stmt)
@@ -1401,7 +1488,16 @@ async def generate_3d_scenarios(
         return [scenario.to_dict() for scenario in scenarios]
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e
 
 
 @router.get("/properties/{property_id}/scenarios/3d/{scenario_index}/export")
@@ -1423,7 +1519,7 @@ async def export_3d_scenario(
 async def generate_market_report(
     request: MarketReportRequest,
     db: AsyncSession = Depends(get_session),
-    role: Role = Depends(get_request_role),
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> dict[str, Any]:
     """
     Generate comprehensive market intelligence report.
@@ -1450,7 +1546,16 @@ async def generate_market_report(
         return cast(dict[str, Any], report.to_dict())
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e
 
 
 @router.post("/market-intelligence/sync", dependencies=[Depends(require_reviewer)])
@@ -1474,7 +1579,16 @@ async def sync_market_data(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e
 
 
 @router.get("/market-intelligence/transactions")
@@ -1514,7 +1628,8 @@ async def get_market_transactions(
 
 @router.post("/financial/metrics")
 async def calculate_financial_metrics(
-    request: FinancialMetricsRequest, role: Role = Depends(get_request_role)
+    request: FinancialMetricsRequest,
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> dict[str, Any]:
     """
     Calculate comprehensive real estate financial metrics.
@@ -1582,12 +1697,22 @@ async def calculate_financial_metrics(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e
 
 
 @router.post("/financial/valuation")
 async def value_property(
-    request: PropertyValuationRequest, role: Role = Depends(get_request_role)
+    request: PropertyValuationRequest,
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> dict[str, Any]:
     """
     Value property using multiple approaches.
@@ -1637,7 +1762,16 @@ async def value_property(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e
 
 
 @router.post("/properties/{property_id}/generate-flyer")
@@ -1645,7 +1779,7 @@ async def generate_email_flyer(
     property_id: str,
     material_type: str = Query("lease", pattern="^(sale|lease)$"),
     db: AsyncSession = Depends(get_session),
-    role: Role = Depends(get_request_role),
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> dict[str, Any]:
     """Generate single-page email flyer."""
     try:
@@ -1683,4 +1817,13 @@ async def generate_email_flyer(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from e

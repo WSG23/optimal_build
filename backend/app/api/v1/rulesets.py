@@ -5,10 +5,13 @@ from __future__ import annotations
 import json
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import Select, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.models.rulesets import RulePack
+from app.schemas._typing import validate_model
 from app.schemas.rulesets import (
     RuleEvaluationResult,
     RulePackSchema,
@@ -18,9 +21,6 @@ from app.schemas.rulesets import (
     RulesetValidationRequest,
     RulesetValidationResponse,
 )
-from app.schemas._typing import validate_model
-from sqlalchemy import Select, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 

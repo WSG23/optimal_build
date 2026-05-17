@@ -41,8 +41,8 @@ import httpx
 import structlog
 from pyproj import Transformer
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, shape
-from shapely.geometry.base import BaseGeometry
 from shapely.geometry import mapping as shapely_mapping
+from shapely.geometry.base import BaseGeometry
 from shapely.ops import transform
 from shapely.validation import make_valid
 from sqlalchemy import delete, insert

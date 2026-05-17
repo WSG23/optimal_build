@@ -14,10 +14,10 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.ai_config import (
+    DEFAULT_AI_CONFIGS,
     AIConfig,
     AIConfigAudit,
     AIConfigCategory,
-    DEFAULT_AI_CONFIGS,
 )
 
 logger = logging.getLogger(__name__)

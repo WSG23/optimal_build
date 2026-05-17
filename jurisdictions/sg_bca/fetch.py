@@ -17,6 +17,7 @@ from collections.abc import Iterable, MutableMapping, Sequence
 from datetime import date, datetime, time
 
 import httpx
+
 import structlog
 from backend._compat import compat_dataclass
 from backend._compat.datetime import UTC

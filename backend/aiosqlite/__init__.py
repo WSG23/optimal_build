@@ -72,6 +72,14 @@ class Connection:
     def __init__(self, connection: sqlite3.Connection) -> None:
         self._connection = connection
 
+    @property
+    def _conn(self) -> sqlite3.Connection:
+        # SQLAlchemy's aiosqlite dialect (>= 2.0) reaches into
+        # ``Connection._conn`` to invoke synchronous sqlite3 APIs (notably
+        # ``set_iso``). Real aiosqlite exposes the underlying sqlite3
+        # connection under that name; we mirror it for compatibility.
+        return self._connection
+
     async def __aenter__(self) -> Connection:
         return self
 

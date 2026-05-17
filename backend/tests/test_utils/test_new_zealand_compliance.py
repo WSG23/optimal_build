@@ -11,10 +11,10 @@ import pytest
 os.environ.setdefault("SECRET_KEY", "test-secret")
 
 from app.models.new_zealand_property import (
+    NewZealandProperty,
     NZComplianceStatus,
     NZPropertyTenure,
     NZPropertyZoning,
-    NewZealandProperty,
 )
 from app.utils import new_zealand_compliance as compliance
 

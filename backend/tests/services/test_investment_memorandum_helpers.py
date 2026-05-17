@@ -521,6 +521,7 @@ def test_create_investment_cover():
 def test_investment_highlight_draw():
     """Test InvestmentHighlight draws correctly."""
     from io import BytesIO
+
     from reportlab.pdfgen import canvas
 
     highlights = [
@@ -542,6 +543,7 @@ def test_investment_highlight_draw():
 def test_investment_highlight_draw_single_highlight():
     """Test InvestmentHighlight draws with single highlight."""
     from io import BytesIO
+
     from reportlab.pdfgen import canvas
 
     highlights = [{"label": "Yield", "value": "5.2%"}]

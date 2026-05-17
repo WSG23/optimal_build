@@ -10,13 +10,13 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 
-from sqlalchemy import select, func, and_
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.property import (
-    PropertyType,
-    MarketTransaction,
     DevelopmentPipeline,
+    MarketTransaction,
+    PropertyType,
 )
 
 logger = logging.getLogger(__name__)

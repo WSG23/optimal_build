@@ -6,9 +6,9 @@ SQLAlchemy model registry is required for metadata or mapper configuration.
 
 from __future__ import annotations
 
+import sys
 from functools import lru_cache
 from importlib import import_module
-import sys
 from types import ModuleType
 from typing import Final
 

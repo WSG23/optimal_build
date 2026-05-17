@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-import structlog
-from structlog.stdlib import BoundLogger
-
-import json
 import importlib
+import json
 import logging
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Protocol, cast
 from uuid import UUID
+
+import structlog
+from structlog.stdlib import BoundLogger
 
 from app.core.config import settings
 

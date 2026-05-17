@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
 from app.core.audit.ledger import (
@@ -13,7 +14,6 @@ from app.core.audit.ledger import (
 )
 from app.core.database import get_session
 from app.services.deals.utils import audit_key_from_value
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/audit", tags=["audit"])
 

@@ -6,19 +6,23 @@ import os
 from pathlib import Path as PathLib
 from uuid import UUID
 
+from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import FileResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend._compat.datetime import utcnow
-
-from app.api.deps import RequestIdentity, Role, get_request_role, require_viewer
+from app.api import deps
+from app.api.deps import RequestIdentity, require_viewer
 from app.api.v1.agents import _load_optional_class
 from app.core.database import get_session
-from sqlalchemy.ext.asyncio import AsyncSession
+from app.utils.logging import get_logger, log_event
 
 router = APIRouter(
     prefix="/agents/commercial-property", tags=["Commercial Property Agent"]
 )
+
+
+_logger = get_logger(__name__)
 
 
 def _report_storage_path(property_id: str, filename: str) -> PathLib:
@@ -32,7 +36,7 @@ async def generate_professional_pack(
     property_id: str,
     pack_type: str = Path(..., pattern="^(universal|investment|sales|lease)$"),
     db: AsyncSession = Depends(get_session),
-    role: Role = Depends(get_request_role),
+    _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> dict[str, object]:
     """
     Generate professional PDF packs.
@@ -43,8 +47,6 @@ async def generate_professional_pack(
     - sales: Sales marketing brochure
     - lease: Leasing marketing brochure
     """
-    del role
-
     try:
         property_uuid = UUID(property_id)
 
@@ -118,7 +120,16 @@ async def generate_professional_pack(
         }
 
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        log_event(
+            _logger,
+            "agents_endpoint_unhandled_exception",
+            endpoint=__name__,
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
+        raise HTTPException(
+            status_code=400, detail="Request could not be processed"
+        ) from exc
 
 
 @router.get("/files/{property_id}/{filename}")

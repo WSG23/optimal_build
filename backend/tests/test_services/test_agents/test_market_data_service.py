@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.market import MarketIndex
 from app.models.property import (
@@ -21,7 +22,6 @@ from app.services.agents.market_data_service import (
     MarketDataService,
     MockMarketDataProvider,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 
 # ============================================================================
 # HELPER FACTORIES

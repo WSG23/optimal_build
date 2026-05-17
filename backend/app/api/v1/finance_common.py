@@ -18,6 +18,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from pydantic import BaseModel, field_validator
 
+from app.api.deps import RequestIdentity
 from app.models.finance import FinAssetBreakdown, FinResult, FinScenario
 from app.models.rkp import RefCostIndex
 from app.schemas.finance import (
@@ -35,8 +36,6 @@ from app.schemas.finance import (
 from app.services.finance import calculator
 from app.utils import metrics
 from app.utils.logging import get_logger, log_event
-
-from app.api.deps import RequestIdentity
 
 logger = get_logger(__name__)
 

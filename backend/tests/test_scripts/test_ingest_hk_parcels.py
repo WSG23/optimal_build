@@ -1,8 +1,7 @@
 from pathlib import Path
 
-from pyproj import Transformer
-
 from backend.scripts import ingest_hk_parcels as hk_parcels
+from pyproj import Transformer
 
 FIXTURE_PATH = (
     Path(__file__).resolve().parents[1] / "fixtures" / "hk" / "lots_sample.geojson"

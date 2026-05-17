@@ -1,7 +1,6 @@
 from decimal import Decimal
 
-from app.core.config import Settings
-from app.services.jurisdictions import get_jurisdiction_config
+from backend.scripts import ingest_hk_zones as hk_ingest
 
 from app.api.v1.developers import (
     DeveloperAssetOptimization,
@@ -10,7 +9,8 @@ from app.api.v1.developers import (
 from app.api.v1.developers_gps import (
     _build_finance_asset_mix_inputs,
 )
-from backend.scripts import ingest_hk_zones as hk_ingest
+from app.core.config import Settings
+from app.services.jurisdictions import get_jurisdiction_config
 
 
 def test_hk_config_defaults(monkeypatch):

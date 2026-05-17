@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import collections.abc
 import hashlib
-import inspect
 import importlib
+import inspect
 from collections.abc import Mapping, Sequence
 
 import pytest
 
 pytest.importorskip("sqlalchemy")
+
+from sqlalchemy import select
 
 from app.models.rkp import RefDocument, RefSource
 from app.services.reference_sources import (
@@ -21,7 +23,6 @@ from app.services.reference_sources import (
 from app.services.reference_storage import ReferenceStorage
 from flows.watch_fetch import watch_reference_sources
 from scripts.seed_screening import seed_screening_sample_data
-from sqlalchemy import select
 
 watch_fetch_module = importlib.import_module("flows.watch_fetch")
 

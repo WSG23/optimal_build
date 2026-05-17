@@ -3,8 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.utils import metrics
-from app.utils import cache as cache_module
+from app.utils import cache as cache_module, metrics
 from app.utils.cache import TTLCache
 
 

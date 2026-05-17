@@ -10,6 +10,8 @@ import pytest
 pytest.importorskip("sqlalchemy")
 
 import pytest_asyncio
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.property import (
     DevelopmentAnalysis,
     MarketTransaction,
@@ -17,7 +19,6 @@ from app.models.property import (
     PropertyType,
 )
 from app.services.agents.universal_site_pack import UniversalSitePackGenerator
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest_asyncio.fixture

@@ -4,22 +4,28 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from pydantic import ValidationError
 
 from app.api.deps import require_viewer
-
+from app.schemas.engineering import EngineeringDefaultsResponse
 from app.schemas.feasibility import (
     FeasibilityAssessmentRequest,
     FeasibilityAssessmentResponse,
     FeasibilityRulesResponse,
     NewFeasibilityProjectInput,
 )
-from app.schemas.engineering import EngineeringDefaultsResponse
 from app.services.feasibility import (
     generate_feasibility_rules,
-    run_feasibility_assessment,
     get_engineering_defaults,
+    run_feasibility_assessment,
 )
 from app.services.feasibility.normalization import (
     normalise_assessment_payload,
@@ -84,7 +90,13 @@ async def fetch_feasibility_rules(
 ) -> FeasibilityRulesResponse:
     """Fetch applicable feasibility rules for the project."""
     normalised = normalise_project_payload(payload)
-    project = NewFeasibilityProjectInput(**normalised)
+    try:
+        project = NewFeasibilityProjectInput(**normalised)
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=exc.errors(),
+        ) from exc
     return cast(FeasibilityRulesResponse, generate_feasibility_rules(project))
 
 
@@ -94,8 +106,13 @@ async def submit_assessment(
     _: str = Depends(require_viewer),
 ) -> FeasibilityAssessmentResponse:
     """Evaluate the feasibility assessment for the selected rules."""
-    # Request model validation happens here via normaliser
-    request = FeasibilityAssessmentRequest(**normalise_assessment_payload(payload))
+    try:
+        request = FeasibilityAssessmentRequest(**normalise_assessment_payload(payload))
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=exc.errors(),
+        ) from exc
     return cast(FeasibilityAssessmentResponse, run_feasibility_assessment(request))
 
 

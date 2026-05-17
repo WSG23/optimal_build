@@ -3,7 +3,8 @@ from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr
-from app.models.team import UserRole, InvitationStatus
+
+from app.models.team import InvitationStatus, UserRole
 
 
 class TeamMemberBase(BaseModel):

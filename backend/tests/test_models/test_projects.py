@@ -5,10 +5,10 @@ from __future__ import annotations
 from datetime import date, datetime
 
 import pytest
-
-from app.models.projects import ApprovalStatus, Project, ProjectPhase, ProjectType
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.projects import ApprovalStatus, Project, ProjectPhase, ProjectType
 
 pytestmark = pytest.mark.asyncio
 

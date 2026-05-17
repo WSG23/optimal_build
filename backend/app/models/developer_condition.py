@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from app.models.base import UUID, Base
 from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String, Text, func
+
+from app.models.base import UUID, Base
 
 
 class DeveloperConditionAssessmentRecord(Base):

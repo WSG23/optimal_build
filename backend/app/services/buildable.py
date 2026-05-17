@@ -10,6 +10,9 @@ from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
 from app.models.rkp import RefParcel, RefRule, RefZoningLayer
 from app.schemas.buildable import (
@@ -22,8 +25,6 @@ from app.schemas.buildable import (
     RuleCorpusStatus,
     ZoneSource,
 )
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @dataclass

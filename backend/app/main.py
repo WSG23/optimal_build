@@ -15,9 +15,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 try:  # pragma: no cover - prefer real slowapi when available
     from slowapi import Limiter
@@ -63,6 +63,9 @@ except Exception:  # pragma: no cover - fallback for stubbed environments
         return getattr(client, "host", "127.0.0.1")
 
 
+from sqlalchemy import func, select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api.deps import require_viewer
 from app.api.error_handlers import (
     http_exception_handler,
@@ -83,8 +86,6 @@ from app.middleware.request_guards import (
 from app.middleware.security import SecurityHeadersConfig, SecurityHeadersMiddleware
 from app.utils import metrics
 from app.utils.logging import configure_logging, get_logger, log_event
-from sqlalchemy import func, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 configure_logging()
 logger = get_logger(__name__)
@@ -217,8 +218,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # For SQLite dev mode, create all tables on startup
     if "sqlite" in str(engine.url):
-        from app.models.base import BaseModel
         from app.models import load_model_modules
+        from app.models.base import BaseModel
 
         load_model_modules()
         async with engine.begin() as conn:
@@ -562,9 +563,18 @@ async def database_status(
 
     ref_rule_model = _load_ref_rule_model()
     try:
-        tables_result = await session.execute(
-            text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
-        )
+        dialect = session.bind.dialect.name if session.bind else ""
+        if dialect == "sqlite":
+            tables_query = text(
+                "SELECT name FROM sqlite_master "
+                "WHERE type = 'table' AND name NOT LIKE 'sqlite_%' "
+                "ORDER BY name"
+            )
+        else:
+            tables_query = text(
+                "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+            )
+        tables_result = await session.execute(tables_query)
         tables = [row[0] for row in tables_result.fetchall()]
 
         rules_by_topic_result = await session.execute(

@@ -34,10 +34,9 @@ export function WhyNotExcelPage() {
           <Typography variant="h3">Why not Excel?</Typography>
           <Typography variant="body1" color="text.secondary">
             Excel is still the incumbent. The case for Optimal Build in{' '}
-            {PRIMARY_MARKET}
-            is not “spreadsheets are bad.” It is that underwriting becomes more
-            defensible when provenance, audit, workbook intake, and regulatory
-            linkage live in the same workflow.
+            {PRIMARY_MARKET} is not “spreadsheets are bad.” It is that
+            underwriting becomes more defensible when provenance, audit,
+            workbook intake, and regulatory linkage live in the same workflow.
           </Typography>
           <Box>
             <Button
@@ -59,7 +58,9 @@ export function WhyNotExcelPage() {
               sx={{ p: 'var(--ob-space-200)', height: '100%' }}
             >
               <Stack spacing="var(--ob-space-100)">
-                <Typography variant="h6">{item.title}</Typography>
+                <Typography variant="h6" component="h4">
+                  {item.title}
+                </Typography>
                 <Typography variant="body2" color="text.secondary">
                   {item.body}
                 </Typography>

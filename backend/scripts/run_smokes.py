@@ -16,34 +16,42 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, Mapping, Sequence
 from uuid import uuid4
 
-import structlog
-
 import httpx
+import structlog
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal, engine
 from flows import parse_segment, watch_fetch
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from .seed_entitlements_sg import (
     EntitlementsSeedSummary,
+)
+from .seed_entitlements_sg import (
     _run_async as seed_entitlements_async,
 )
 from .seed_finance_demo import (
     DEMO_CURRENCY,
     DEMO_PROJECT_NAME,
     FinanceDemoSummary,
-    ensure_schema as ensure_finance_schema,
     seed_finance_demo,
+)
+from .seed_finance_demo import (
+    ensure_schema as ensure_finance_schema,
 )
 from .seed_nonreg import (
     NonRegSeedSummary,
-    ensure_schema as ensure_nonreg_schema,
     seed_nonregulated_reference_data,
+)
+from .seed_nonreg import (
+    ensure_schema as ensure_nonreg_schema,
 )
 from .seed_screening import (
     SeedSummary,
-    ensure_schema as ensure_screening_schema,
     seed_screening_sample_data,
+)
+from .seed_screening import (
+    ensure_schema as ensure_screening_schema,
 )
 
 DEFAULT_ARTIFACT_DIR = Path("artifacts")

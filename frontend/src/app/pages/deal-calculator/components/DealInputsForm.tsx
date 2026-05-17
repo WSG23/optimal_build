@@ -4,7 +4,6 @@ import {
   ButtonBase,
   Collapse,
   Grid,
-  IconButton,
   MenuItem,
   Select,
   Stack,
@@ -142,6 +141,7 @@ export function DealInputsForm({
       </Typography>
       <Typography
         variant="h5"
+        component="h3"
         sx={{
           fontWeight: 'var(--ob-font-weight-bold)',
           mt: 'var(--ob-space-050)',
@@ -333,19 +333,23 @@ export function DealInputsForm({
             >
               <Typography
                 variant="subtitle2"
+                component="h4"
                 sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
               >
                 Finance assumptions
               </Typography>
-              <IconButton
-                size="small"
-                tabIndex={-1}
+              <Box
+                component="span"
                 aria-hidden
-                disableRipple
-                sx={{ pointerEvents: 'none' }}
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'text.secondary',
+                }}
               >
                 {financeOpen ? <ExpandLess /> : <ExpandMore />}
-              </IconButton>
+              </Box>
             </ButtonBase>
             <Collapse in={financeOpen} id="finance-assumptions">
               <Grid

@@ -346,3 +346,7 @@ backend/coverage.json
 /coverage.json
 /coverage_new.json
 /coverage_summary.txt
+
+# Local agent coordination lock (see scripts/agent_session.py).
+# Records which AI agent is actively editing the repo; never committed.
+/.agent-active

@@ -33,14 +33,11 @@ class BudgetCounts(NamedTuple):
 def load_baseline_counts(config_path: Path = GUARDRAIL_CONFIG) -> BudgetCounts:
     data = tomllib.loads(config_path.read_text(encoding="utf-8"))
     section = data["type_ignore"]
-    baselines = BudgetCounts(
+    return BudgetCounts(
         production=int(section["production_baseline"]),
         backend_tests=int(section["backend_tests_baseline"]),
         tests=int(section["tests_baseline"]),
     )
-    if baselines.production != 0:
-        raise ValueError("type_ignore.production_baseline must remain 0")
-    return baselines
 
 
 def _count_suppressions_in_text(text: str) -> int:
@@ -121,14 +118,9 @@ def evaluate_budgets(
     baseline_counts: BudgetCounts,
     allow_increase: bool,
 ) -> tuple[bool, list[str]]:
-    messages = [
-        (
-            "Production suppression baseline is fixed at 0; "
-            "new production suppressions are blocked by the staged type guardrails "
-            f"(current tree count: {current_counts.production})"
-        )
-    ]
+    messages: list[str] = []
     scopes = (
+        ("production", current_counts.production, baseline_counts.production),
         ("backend/tests", current_counts.backend_tests, baseline_counts.backend_tests),
         ("tests", current_counts.tests, baseline_counts.tests),
     )

@@ -6,8 +6,8 @@ the entire Pydantic graph into startup or route registration.
 
 from __future__ import annotations
 
-from functools import lru_cache
 import sys
+from functools import lru_cache
 from types import ModuleType
 from typing import Final
 

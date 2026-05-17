@@ -14,6 +14,7 @@
 3.  **Single Source of Truth**: Do not duplicate logic. Reference existing documentation (`docs/`) before asking humans.
 4.  **Security First**: Assume hostile inputs. Sanitize everything. Validate schemas strictly.
 5.  **User-Centric**: The ultimate goal is a professional, high-performance tool for Real Estate professionals.
+6.  **Single-Writer Per Branch**: Only one AI agent edits a given branch at a time. The other reads, reviews, or runs tests but does not write. Before opening write tools, acquire the lock with `python3 scripts/agent_session.py start <agent>` and verify ownership with `check`. If another agent owns the lock, surface to the user before proceeding — silently overwriting another agent's work is the single most common multi-agent failure mode, and the `.agent-active` lock exists to prevent it. See [docs/ai-agents/multi_agent_coordination.md](docs/ai-agents/multi_agent_coordination.md).
 
 ---
 

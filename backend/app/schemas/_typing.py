@@ -13,7 +13,7 @@ ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
 def typed_import_module(name: str) -> ModuleType:
-    return cast(ModuleType, import_module(name))
+    return import_module(name)
 
 
 def validate_model(
@@ -22,9 +22,12 @@ def validate_model(
     *,
     from_attributes: bool = False,
 ) -> ModelT:
+    # Real pydantic 2.12 types ``model_validate`` as ``-> Self`` so the
+    # previous outer cast was redundant. The vendored pydantic stub used
+    # to widen the return to ``BaseModel``, but that shim is gone.
     if from_attributes:
-        return cast(ModelT, model_cls.model_validate(value, from_attributes=True))
-    return cast(ModelT, model_cls.model_validate(value))
+        return model_cls.model_validate(value, from_attributes=True)
+    return model_cls.model_validate(value)
 
 
 def dump_model(

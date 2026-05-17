@@ -46,6 +46,7 @@ export function NotFoundPage() {
       </Typography>
       <Typography
         variant="h5"
+        component="h2"
         sx={{
           fontSize: 'var(--ob-font-size-xl)',
           color: 'var(--ob-color-text-secondary)',

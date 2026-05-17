@@ -7,10 +7,10 @@ from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from reportlab.lib import colors  # type: ignore[import-untyped]
-from reportlab.lib.pagesizes import A4  # type: ignore[import-untyped]
-from reportlab.lib.units import inch  # type: ignore[import-untyped]
-from reportlab.platypus import (  # type: ignore[import-untyped]
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import inch
+from reportlab.platypus import (
     Flowable,
     ListFlowable,
     ListItem,
@@ -21,6 +21,8 @@ from reportlab.platypus import (  # type: ignore[import-untyped]
     Table,
     TableStyle,
 )
+from sqlalchemy import String, cast, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.market import MarketCycle, YieldBenchmark
 from app.models.property import MarketTransaction, Property, RentalListing
@@ -29,8 +31,6 @@ from app.services.finance import (
     calculate_comprehensive_metrics,
     value_property_multiple_approaches,
 )
-from sqlalchemy import String, cast, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class InvestmentHighlight(Flowable):  # type: ignore[misc]

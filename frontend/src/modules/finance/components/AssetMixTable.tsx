@@ -51,6 +51,7 @@ export function AssetMixTable({
       >
         <Typography
           variant="h6"
+          component="h3"
           sx={{ fontWeight: 'var(--ob-font-weight-semibold)' }}
         >
           {t('finance.scenarioCreator.title')}
@@ -312,6 +313,7 @@ const AssetTableRow = memo(function AssetTableRow({
   assetsLength,
   removeLabel,
 }: AssetTableRowProps) {
+  const { t } = useTranslation()
   return (
     <tr key={asset.id}>
       <td>
@@ -333,6 +335,9 @@ const AssetTableRow = memo(function AssetTableRow({
           type="number"
           size="small"
           endAdornment="%"
+          inputProps={{
+            'aria-label': `${asset.assetType || 'asset'} ${t('finance.scenarioCreator.fields.allocation')}`,
+          }}
         />
       </td>
       <td>
@@ -343,6 +348,9 @@ const AssetTableRow = memo(function AssetTableRow({
           }}
           type="number"
           size="small"
+          inputProps={{
+            'aria-label': `${asset.assetType || 'asset'} ${t('finance.scenarioCreator.assets.headers.nia')}`,
+          }}
         />
       </td>
       <td>
@@ -354,6 +362,9 @@ const AssetTableRow = memo(function AssetTableRow({
           type="number"
           size="small"
           startAdornment="$"
+          inputProps={{
+            'aria-label': `${asset.assetType || 'asset'} ${t('finance.scenarioCreator.assets.headers.rent')}`,
+          }}
         />
       </td>
       <td>
@@ -365,6 +376,9 @@ const AssetTableRow = memo(function AssetTableRow({
           type="number"
           size="small"
           endAdornment="%"
+          inputProps={{
+            'aria-label': `${asset.assetType || 'asset'} ${t('finance.scenarioCreator.assets.headers.vacancy')}`,
+          }}
         />
       </td>
       <td>
@@ -387,6 +401,9 @@ const AssetTableRow = memo(function AssetTableRow({
           type="number"
           size="small"
           startAdornment="$"
+          inputProps={{
+            'aria-label': `${asset.assetType || 'asset'} ${t('finance.scenarioCreator.assets.headers.capex')}`,
+          }}
         />
       </td>
       <td>

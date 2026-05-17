@@ -5,10 +5,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.regulatory import (
-    RegulatoryAgency,
-    AuthoritySubmission,
-    SubmissionStatus,
     AgencyCode,
+    AuthoritySubmission,
+    RegulatoryAgency,
+    SubmissionStatus,
 )
 from app.schemas.regulatory import SubmissionCreate, SubmissionUpdate
 

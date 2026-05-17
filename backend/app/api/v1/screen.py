@@ -8,6 +8,8 @@ from typing import Any, Literal, cast
 
 import structlog
 from fastapi import APIRouter, Body, Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
@@ -20,6 +22,8 @@ from app.schemas.buildable import (
     BuildableResponse,
     BuildableRule,
     BuildableRuleProvenance,
+    RuleCorpusCounts,
+    RuleCorpusStatus,
     ZoneSource,
 )
 from app.services.buildable import (
@@ -28,8 +32,6 @@ from app.services.buildable import (
     load_layers_for_zone,
 )
 from app.utils import metrics
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/screen")
 logger = structlog.get_logger()
@@ -231,20 +233,20 @@ def _build_mock_buildable_response(payload: BuildableRequest) -> BuildableRespon
         advisory_hints=hints,
         metrics=metrics,
         zone_source=zone_source,
-        rule_corpus_status={
-            "zone_code": zone_code,
-            "coverage_state": "mock",
-            "confidence": "low",
-            "counts": {
-                "applicable": len(rules),
-                "approved": len(rules),
-                "published": len(rules),
-                "traceable": len(rules),
-                "needs_review": 0,
-                "rejected": 0,
-            },
-            "applied_rule_ids": [rule.id for rule in rules],
-        },
+        rule_corpus_status=RuleCorpusStatus(
+            zone_code=zone_code,
+            coverage_state="mock",
+            confidence="low",
+            counts=RuleCorpusCounts(
+                applicable=len(rules),
+                approved=len(rules),
+                published=len(rules),
+                traceable=len(rules),
+                needs_review=0,
+                rejected=0,
+            ),
+            applied_rule_ids=[rule.id for rule in rules],
+        ),
         rules=rules,
     )
 

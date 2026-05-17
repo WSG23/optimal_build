@@ -12,13 +12,13 @@ pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
 from backend._compat.datetime import utcnow
+from httpx import AsyncClient
 
 from app.api import deps
 from app.main import app
 from app.models.projects import Project, ProjectPhase, ProjectType
 from app.models.team import InvitationStatus, TeamInvitation, TeamMember
 from app.models.users import User, UserRole
-from httpx import AsyncClient
 
 pytestmark = pytest.mark.asyncio
 

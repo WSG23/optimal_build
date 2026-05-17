@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 else:
     try:  # pragma: no cover - optional email validation dependency
         import email_validator  # noqa: F401
-
         from pydantic import EmailStr
     except ImportError:  # pragma: no cover - fallback when validator missing
         EmailStr = str  # type: ignore[misc]

@@ -12,9 +12,9 @@ os.environ.setdefault("SECRET_KEY", "test-secret")
 
 from app.models.seattle_property import (
     SeattleComplianceStatus,
+    SeattleProperty,
     SeattlePropertyTenure,
     SeattleZoning,
-    SeattleProperty,
 )
 from app.utils import seattle_compliance as compliance
 

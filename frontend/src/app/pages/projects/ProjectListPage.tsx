@@ -149,7 +149,7 @@ export function ProjectListPage() {
                     label={`Primary UX: ${PUBLIC_JURISDICTIONS.join(', ')}`}
                   />
                 </Stack>
-                <Typography variant="h4">
+                <Typography variant="h4" component="h3">
                   Singapore developer workspace
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
@@ -182,7 +182,9 @@ export function ProjectListPage() {
                       <CalculateOutlined
                         sx={{ color: 'var(--ob-brand-500)' }}
                       />
-                      <Typography variant="h6">Model a deal</Typography>
+                      <Typography variant="h6" component="h4">
+                        Model a deal
+                      </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Paste an address or enter assumptions to get Singapore
                         feasibility and finance in one screen.
@@ -215,7 +217,9 @@ export function ProjectListPage() {
                       <UploadFileOutlined
                         sx={{ color: 'var(--ob-accent-500)' }}
                       />
-                      <Typography variant="h6">Import workbook</Typography>
+                      <Typography variant="h6" component="h4">
+                        Import workbook
+                      </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Upload an existing Excel model and structure it into the
                         finance workspace without building a project manually.
@@ -251,7 +255,9 @@ export function ProjectListPage() {
                       <AutoStoriesOutlined
                         sx={{ color: 'var(--ob-info-500)' }}
                       />
-                      <Typography variant="h6">Open sample project</Typography>
+                      <Typography variant="h6" component="h4">
+                        Open sample project
+                      </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Walk through a seeded Singapore mixed-use example with
                         template guidance, audit context, and next-step prompts.
@@ -275,7 +281,9 @@ export function ProjectListPage() {
             </Grid>
 
             <Stack spacing="var(--ob-space-100)">
-              <Typography variant="subtitle2">What to do next</Typography>
+              <Typography variant="subtitle2" component="h4">
+                What to do next
+              </Typography>
               <Typography variant="body2" color="text.secondary">
                 1. Run a quick deal screen or import a workbook.
               </Typography>
@@ -300,7 +308,9 @@ export function ProjectListPage() {
         sx={{ mb: 'var(--ob-space-300)' }}
       >
         <Box>
-          <Typography variant="h4">Projects</Typography>
+          <Typography variant="h4" component="h3">
+            Projects
+          </Typography>
           <Typography variant="body2" color="text.secondary">
             Select an existing Singapore development workflow or create a new
             project.
@@ -392,7 +402,9 @@ export function ProjectListPage() {
                     alignItems="flex-start"
                     spacing="var(--ob-space-100)"
                   >
-                    <Typography variant="h6">{project.name}</Typography>
+                    <Typography variant="h6" component="h4">
+                      {project.name}
+                    </Typography>
                     <Chip
                       size="small"
                       label={status.replace('_', ' ')}

@@ -12,6 +12,9 @@ import pytest
 pytest.importorskip("sqlalchemy")
 
 import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select
+
 from app.models.business_performance import (
     AgentDeal,
     DealAssetType,
@@ -22,8 +25,6 @@ from app.models.business_performance import (
 from app.models.finance import FinAssetBreakdown, FinProject, FinScenario
 from app.models.projects import Project, ProjectType
 from app.models.users import User
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select
 
 
 def _load_router(filename: str):

@@ -6,9 +6,10 @@ from datetime import date
 from typing import Iterable
 from uuid import UUID
 
+from prefect import flow
+
 from app.core.database import AsyncSessionLocal
 from app.services.deals.performance import AgentPerformanceService
-from prefect import flow
 
 
 def _parse_agent_ids(agent_ids: Iterable[str] | None) -> list[UUID] | None:

@@ -11,14 +11,14 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
 
-from sqlalchemy import select, func, and_
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.business_performance import (
     AgentDeal,
     DealStatus,
 )
-from app.models.property import Property, MarketTransaction
+from app.models.property import MarketTransaction, Property
 
 logger = logging.getLogger(__name__)
 

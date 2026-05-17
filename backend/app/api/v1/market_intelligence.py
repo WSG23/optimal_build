@@ -7,16 +7,15 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import RequestIdentity, require_viewer
-
 from app.core.database import get_session
 from app.core.metrics import MetricsCollector
 from app.models.property import PropertyType
 from app.schemas.market import MarketPeriod, MarketReportPayload, MarketReportResponse
 from app.utils.lazy import LazyProxy
 from app.utils.logging import get_logger, log_event
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/market-intelligence", tags=["market-intelligence"])
 logger = get_logger(__name__)
@@ -117,7 +116,7 @@ async def generate_market_report(
         )
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate market report: {exc}",
+            detail="Failed to generate market report",
         ) from exc
 
     payload = MarketReportPayload(

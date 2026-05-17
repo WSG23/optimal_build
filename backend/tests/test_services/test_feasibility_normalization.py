@@ -1,8 +1,9 @@
 import pytest
 from pydantic import ValidationError
+
 from app.services.feasibility import (
-    normalise_project_payload,
     normalise_assessment_payload,
+    normalise_project_payload,
 )
 
 

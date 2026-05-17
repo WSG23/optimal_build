@@ -6,11 +6,11 @@ import uuid
 from enum import Enum
 
 from backend._compat.datetime import utcnow
-
-from app.models.base import UUID, BaseModel, MetadataProxy
 from sqlalchemy import JSON, Column, DateTime, ForeignKey, Index, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum as SQLEnum
+
+from app.models.base import UUID, BaseModel, MetadataProxy
 
 
 def _enum_values(enum_cls: type[Enum]) -> list[str]:

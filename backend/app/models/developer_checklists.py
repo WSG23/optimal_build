@@ -6,7 +6,6 @@ import enum
 from typing import Dict
 from uuid import uuid4
 
-from app.models.base import UUID, Base, MetadataProxy
 from sqlalchemy import (
     Boolean,
     Column,
@@ -19,8 +18,10 @@ from sqlalchemy import (
     Text,
     func,
 )
-from app.models.types import FlexibleJSONB
 from sqlalchemy.orm import relationship
+
+from app.models.base import UUID, Base, MetadataProxy
+from app.models.types import FlexibleJSONB
 
 
 class ChecklistCategory(str, enum.Enum):

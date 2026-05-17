@@ -177,7 +177,7 @@ export function MarketingPage() {
 
                     <Stack direction="row" spacing="var(--ob-space-100)">
                       <Typography variant="caption" color="text.secondary">
-                        \u23F1\uFE0F {pack.estimatedTime}
+                        {'\u23F1\uFE0F'} {pack.estimatedTime}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {'\u{1F4E6}'} {pack.estimatedSize}

@@ -6,6 +6,7 @@ from typing import Iterable
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import Role, require_reviewer, require_viewer
 from app.core.database import get_session
@@ -25,7 +26,6 @@ from app.schemas.deals import (
     DealWithTimelineSchema,
 )
 from app.utils.lazy import LazyProxy
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/deals", tags=["Business Performance"])
 

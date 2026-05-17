@@ -36,8 +36,8 @@ import httpx
 import structlog
 from pyproj import Transformer
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, shape
-from shapely.geometry.base import BaseGeometry
 from shapely.geometry import mapping as shapely_mapping
+from shapely.geometry.base import BaseGeometry
 from shapely.validation import make_valid
 
 import app.utils.logging  # noqa: F401  pylint: disable=unused-import

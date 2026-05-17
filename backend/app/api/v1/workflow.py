@@ -85,7 +85,7 @@ async def approve_step(
     step_id: UUID,
     approval_in: ApprovalStepUpdate,
     db: AsyncSession = Depends(deps.get_db),
-    identity: deps.RequestIdentity = Depends(deps.get_identity),
+    identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> ApprovalWorkflowRead:
     """
     Approve (or reject) a specific step in the workflow.

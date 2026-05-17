@@ -8,13 +8,13 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, AsyncIterator, Mapping, Sequence
 
 from backend.jobs import job
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_session
 from app.models.finance import FinResult, FinScenario
 from app.services.finance import calculator
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 
 def _resolve_session_dependency() -> Any:

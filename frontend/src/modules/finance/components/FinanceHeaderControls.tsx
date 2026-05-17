@@ -298,6 +298,7 @@ export function FinanceHeaderControls({
         title={t('finance.actions.importWorkbook', {
           defaultValue: 'Import workbook',
         })}
+        sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}
       >
         {importingWorkbook ? (
           <CircularProgress size={16} sx={{ color: 'inherit' }} />
@@ -325,6 +326,7 @@ export function FinanceHeaderControls({
         title={t('finance.actions.exportWorkbook', {
           defaultValue: 'Export workbook',
         })}
+        sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}
       >
         {exportingWorkbook ? (
           <CircularProgress size={16} sx={{ color: 'inherit' }} />
@@ -348,6 +350,7 @@ export function FinanceHeaderControls({
         disabled={exportDisabled || exportingCsv}
         aria-label={t('finance.actions.exportCsv')}
         title={t('finance.actions.exportCsv')}
+        sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}
       >
         {exportingCsv ? (
           <CircularProgress size={16} sx={{ color: 'inherit' }} />

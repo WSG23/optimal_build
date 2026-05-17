@@ -5,13 +5,14 @@ from __future__ import annotations
 from collections.abc import Iterable, Sequence
 from typing import Any
 
+from prefect import flow
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from app.models.property import PropertyType
 from app.services.agents.market_data_service import MarketDataService
 from app.services.agents.market_intelligence_analytics import (
     MarketIntelligenceAnalytics,
 )
-from prefect import flow
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 DEFAULT_LOCATIONS = ("all",)
 DEFAULT_PROPERTY_TYPES = (

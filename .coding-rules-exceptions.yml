@@ -28,10 +28,15 @@ exceptions:
     - db/versions/20250216000000_init_regstack.py
     - db/versions/20250217000100_add_provenance_checksum.py
   rule_2_async:
-    # ✅ PARTIALLY RESOLVED 2025-11-23: singapore_property_api.py converted to async
-    # ⚠️ PENDING: users_db.py and projects_api.py still use sync patterns (low priority)
+    # ✅ RESOLVED 2025-11-23: singapore_property_api.py converted to async
+    # ✅ RESOLVED 2026-05-17: projects_api.py was renamed to projects.py and is async
+    # ⚠️ PENDING: users_db.py — legacy dev-only endpoint using its own private
+    #    SQLite DB (./users.db); converting requires async versions of
+    #    SqlAlchemyAuthRepository + AuthService.{register_user, login,
+    #    ensure_user_exists}. Marked low priority; production user flows live in
+    #    users_secure.py and the app/core/auth/ async service.
     - backend/app/api/v1/users_db.py
-    - backend/app/api/v1/projects_api.py
+    # - backend/app/api/v1/projects_api.py - ✅ RENAMED to projects.py (already async)
     # - backend/app/api/v1/singapore_property_api.py - ✅ CONVERTED (764 lines)
     #
     # All 9 routes in singapore_property_api.py converted to async:

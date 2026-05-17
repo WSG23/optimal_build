@@ -6,9 +6,8 @@ import asyncio
 import inspect
 import os
 from collections.abc import Awaitable, Callable, Mapping
-from typing import Any, Union
-
 from dataclasses import dataclass
+from typing import Any, Union
 
 try:  # pragma: no cover - optional dependency, available in some deployments
     from celery import Celery  # type: ignore[import-untyped]

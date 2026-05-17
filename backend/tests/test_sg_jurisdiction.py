@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from backend.scripts import ingest_sg_zones as sg_zones
 
 

@@ -10,11 +10,11 @@ from decimal import Decimal
 from typing import Any, Dict
 
 from backend._compat.datetime import utcnow
-
-from app.models.new_zealand_property import NZComplianceStatus, NewZealandProperty
-from app.models.rkp import RefRule
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.new_zealand_property import NewZealandProperty, NZComplianceStatus
+from app.models.rkp import RefRule
 
 # NOTE: New Zealand RMA and Building Act rules are stored in the RefRule database table
 # This allows jurisdiction-agnostic calculations via services/buildable.py

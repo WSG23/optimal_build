@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from backend.scripts import ingest_hk_zones as hk_zones
 
 FIXTURE_PATH = (

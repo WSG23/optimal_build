@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from backend.jobs import job_queue
+
 from app.core.config import settings
 
 

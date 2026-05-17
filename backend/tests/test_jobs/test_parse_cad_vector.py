@@ -9,10 +9,10 @@ pytest.importorskip("sqlalchemy")
 
 from backend.app.services.storage import reset_storage_service
 from backend.jobs.parse_cad import parse_import_job
+from sqlalchemy import select
 
 from app.models.imports import ImportRecord
 from app.models.overlay import OverlaySourceGeometry
-from sqlalchemy import select
 
 
 @pytest.mark.asyncio

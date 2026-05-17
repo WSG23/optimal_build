@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from backend._compat.datetime import utcnow
-
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -414,9 +413,11 @@ class PhotoDocumentationManager:
             Dictionary of version name to BytesIO buffer
         """
         from app.services.agents.image_watermark import (
-            apply_watermark as add_watermark,
             apply_diagonal_watermark,
             get_watermark_text_for_phase,
+        )
+        from app.services.agents.image_watermark import (
+            apply_watermark as add_watermark,
         )
 
         # Get phase-specific watermark text
