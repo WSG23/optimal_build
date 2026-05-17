@@ -25,9 +25,9 @@ Brand-aware false-positive exclusions:
 Usage:
     python3 scripts/ui_scorecard.py
 """
+
 import re
 import sys
-from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1] / "frontend" / "src"
@@ -288,8 +288,10 @@ def main() -> int:
             + auto
             + "\n"
         )
+    pct = 100 * at / len(rows)
     print(
-        f"Scorecard: {len(rows)} surfaces · {at} at ≥36 · {below} below ({100 * at / len(rows):.1f}% canonized)"
+        f"Scorecard: {len(rows)} surfaces · {at} at ≥36 · "
+        f"{below} below ({pct:.1f}% canonized)"
     )
     print(f"Updated auto-block in: {target}")
     return 0 if below == 0 else 1

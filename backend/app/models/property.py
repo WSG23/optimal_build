@@ -20,7 +20,9 @@ from sqlalchemy.types import Enum as SQLEnum
 from sqlalchemy.types import Numeric as SQLDecimal
 
 from app.models._geometry import Geometry
+from app.models._vector import Vector
 from app.models.base import UUID, BaseModel
+from app.models.mixins import OrgScopedMixin, SoftDeleteMixin
 
 
 class PropertyType(str, Enum):
@@ -63,7 +65,7 @@ def _enum_values(enum_cls: type[Enum]) -> list[str]:
     return [member.value for member in enum_cls]
 
 
-class Property(BaseModel):
+class Property(SoftDeleteMixin, OrgScopedMixin, BaseModel):
     """Core property entity for market intelligence."""
 
     __tablename__ = "properties"
@@ -161,6 +163,17 @@ class Property(BaseModel):
         Index("idx_property_type_status", "property_type", "status"),
         Index("idx_property_district", "district"),
         Index("idx_property_planning_area", "planning_area"),
+        Index(
+            "idx_property_jurisdiction_type_year",
+            "jurisdiction_code",
+            "property_type",
+            "year_built",
+        ),
+        Index(
+            "idx_property_org_jurisdiction",
+            "organization_id",
+            "jurisdiction_code",
+        ),
     )
 
 
@@ -205,6 +218,12 @@ class MarketTransaction(BaseModel):
     __table_args__ = (
         Index("idx_transaction_date", "transaction_date"),
         Index("idx_transaction_property_date", "property_id", "transaction_date"),
+        Index(
+            "idx_transaction_segment_type_date",
+            "market_segment",
+            "transaction_type",
+            "transaction_date",
+        ),
     )
 
 
@@ -340,6 +359,10 @@ class PropertyPhoto(BaseModel):
     auto_tags = Column(JSON)  # AI-generated tags
     manual_tags = Column(JSON)  # User-added tags
     site_conditions = Column(JSON)  # Detected conditions
+
+    # Embedding (pgvector when available, TEXT fallback on SQLite)
+    embedding = Column(Vector(1536), nullable=True)
+    embedding_model = Column(String(120))
 
     # EXIF Data
     exif_data = Column(JSON)
