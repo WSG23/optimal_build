@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 import re
-from html import unescape
 from dataclasses import dataclass
+from html import unescape
 from importlib import resources
 from typing import TYPE_CHECKING, Any, Iterable, Optional
 

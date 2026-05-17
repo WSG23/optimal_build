@@ -3,13 +3,13 @@ from uuid import UUID
 
 import pytest
 
+from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 from backend.app.services.agents.gps_property_logger import (
     DevelopmentScenario,
     GPSPropertyLogger,
 )
 from backend.app.services.agents.ura_integration import URAPropertyInfo, URAZoningInfo
 from backend.app.services.geocoding import Address
-from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 
 
 class StubGeocodingService:

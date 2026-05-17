@@ -7,13 +7,13 @@ import importlib
 import importlib.util
 import sys
 import uuid
-from unittest import mock
 from collections.abc import AsyncGenerator, Callable, Iterator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from importlib import import_module
 from pathlib import Path
 from types import ModuleType, TracebackType
 from typing import Any
+from unittest import mock
 
 import pytest
 import pytest_asyncio
@@ -239,7 +239,11 @@ if _SQLALCHEMY_AVAILABLE:
 
         from sqlalchemy.ext.asyncio import (
             engine as _async_engine,
+        )
+        from sqlalchemy.ext.asyncio import (
             result as _async_result,
+        )
+        from sqlalchemy.ext.asyncio import (
             session as _async_session,
         )
 
@@ -487,8 +491,9 @@ if _SQLALCHEMY_AVAILABLE:
     ) -> AsyncGenerator[list[Any], None]:
         """Seed a minimal set of Singapore URA/BCA rules for compliance tests."""
 
-        from app.models.rkp import RefRule, RefSource
         from sqlalchemy import select
+
+        from app.models.rkp import RefRule, RefSource
 
         existing = await db_session.scalar(
             select(RefRule.id).where(RefRule.jurisdiction == "SG")
@@ -708,8 +713,9 @@ if _SQLALCHEMY_AVAILABLE:
     def _force_inline_job_queue(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
         """Ensure background jobs run inline so tests avoid external brokers."""
 
-        from app.jobs_registry import enlist_default_jobs
         import backend.jobs as jobs_module
+
+        from app.jobs_registry import enlist_default_jobs
 
         original_backend = jobs_module.job_queue._backend
         inline_backend = jobs_module._InlineBackend()

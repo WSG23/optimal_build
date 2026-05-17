@@ -9,7 +9,7 @@ import pytest
 from fastapi import HTTPException
 
 from app.api.deps import RequestIdentity
-from app.api.v1 import finance_common, finance_scenarios, finance_export
+from app.api.v1 import finance_common, finance_export, finance_scenarios
 from app.schemas.finance import SensitivityBandInput
 from app.services.finance import calculator
 

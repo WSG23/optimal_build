@@ -9,7 +9,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.services.agents.advisory import AgentAdvisoryService, AdvisorySummary
+from app.services.agents.advisory import AdvisorySummary, AgentAdvisoryService
 
 # ============================================================================
 # HELPER CLASSES FOR STUBBING

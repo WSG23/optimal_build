@@ -8,6 +8,8 @@ from typing import Any, Literal, cast
 
 import structlog
 from fastapi import APIRouter, Body, Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
 from app.core.database import get_session
@@ -28,8 +30,6 @@ from app.services.buildable import (
     load_layers_for_zone,
 )
 from app.utils import metrics
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/screen")
 logger = structlog.get_logger()

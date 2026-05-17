@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, AsyncGenerator, Literal, cast
 
-from dataclasses import dataclass
 from fastapi import Depends, Header, HTTPException, status
 
 from app.core.config import settings

@@ -41,16 +41,16 @@ from pathlib import Path
 from typing import Any, Iterator, Optional, Sequence, Tuple
 
 import structlog
+from jurisdictions.base_fetchers import SodaConfig, SODAFetcher
 from pyproj import Transformer
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, shape
-from shapely.geometry.base import BaseGeometry
 from shapely.geometry import mapping as shapely_mapping
+from shapely.geometry.base import BaseGeometry
 from shapely.validation import make_valid
 
 import app.utils.logging  # noqa: F401  pylint: disable=unused-import
 from app.core.database import AsyncSessionLocal
 from app.models.rkp import RefZoningLayer
-from jurisdictions.base_fetchers import SODAFetcher, SodaConfig
 
 try:  # pragma: no cover - optional PostGIS column
     from geoalchemy2.shape import from_shape

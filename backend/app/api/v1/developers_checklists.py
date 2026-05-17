@@ -14,8 +14,8 @@ from app.api.deps import RequestIdentity, require_reviewer, require_viewer
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.developer_checklists import ChecklistStatus, DeveloperChecklistTemplate
-from app.services.developer_checklist_service import DeveloperChecklistService
 from app.schemas._typing import dump_model
+from app.services.developer_checklist_service import DeveloperChecklistService
 
 router = APIRouter(prefix="/developers", tags=["developers"])
 

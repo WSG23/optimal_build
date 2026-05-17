@@ -11,11 +11,11 @@ from decimal import Decimal
 from typing import Any, Dict
 
 from backend._compat.datetime import utcnow
-
-from app.models.toronto_property import TorontoComplianceStatus, TorontoProperty
-from app.models.rkp import RefRule
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.rkp import RefRule
+from app.models.toronto_property import TorontoComplianceStatus, TorontoProperty
 
 # NOTE: Toronto zoning and OBC rules are stored in the RefRule database table
 # This allows jurisdiction-agnostic calculations via services/buildable.py

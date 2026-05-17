@@ -14,24 +14,26 @@ from enum import Enum
 from typing import TYPE_CHECKING, List
 
 from backend._compat.datetime import utcnow
-
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
     Date,
     DateTime,
-    Enum as SQLEnum,
     ForeignKey,
     Integer,
-    JSON,
     Numeric,
     String,
     Text,
     UniqueConstraint,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import Mapped, relationship
 
-from app.models.base import BaseModel as Base, UUID
+from app.models.base import UUID
+from app.models.base import BaseModel as Base
 
 if TYPE_CHECKING:
     from app.models.projects import Project

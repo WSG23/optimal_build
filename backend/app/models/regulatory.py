@@ -3,12 +3,13 @@ from __future__ import annotations
 import enum
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, List, Optional
-from uuid import UUID as UUIDValue, uuid4
+from uuid import UUID as UUIDValue
+from uuid import uuid4
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import Base, UUID
+from app.models.base import UUID, Base
 
 if TYPE_CHECKING:
     from app.models.projects import Project

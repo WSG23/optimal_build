@@ -4,13 +4,15 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
-from uuid import UUID as UUIDType, uuid4
+from uuid import UUID as UUIDType
+from uuid import uuid4
 
-from app.models.base import BaseModel, UUID
-from app.models.types import FlexibleJSONB
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
+
+from app.models.base import UUID, BaseModel
+from app.models.types import FlexibleJSONB
 
 
 class AgentAdvisoryFeedback(BaseModel):

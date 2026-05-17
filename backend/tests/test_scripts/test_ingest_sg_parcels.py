@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from pyproj import Transformer
-
 from backend.scripts import ingest_sg_parcels as sg_parcels
+from pyproj import Transformer
 
 
 def test_resolve_lot_identifier_prefers_named_fields() -> None:

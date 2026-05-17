@@ -21,20 +21,20 @@ from app.models.regulatory import (
     RegulatoryAgency,
     SubmissionStatus,
 )
+from app.schemas._typing import dump_model
 from app.schemas.regulatory import (
     AssetCompliancePathRead,
     AuthoritySubmissionCreate,
     AuthoritySubmissionRead,
-    CorenetCapabilityRead,
     ChangeOfUseCreate,
     ChangeOfUseRead,
     ChangeOfUseUpdate,
+    CorenetCapabilityRead,
     HeritageSubmissionCreate,
     HeritageSubmissionRead,
     HeritageSubmissionUpdate,
 )
 from app.services.regulatory_service import RegulatoryService
-from app.schemas._typing import dump_model
 
 router = APIRouter(prefix="/regulatory", tags=["regulatory"])
 

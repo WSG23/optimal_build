@@ -15,14 +15,15 @@ import pytest
 pytest.importorskip("sqlalchemy")
 
 import pytest_asyncio
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.property import (
     DevelopmentAnalysis,
     MarketTransaction,
     Property,
     PropertyType,
 )
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest_asyncio.fixture

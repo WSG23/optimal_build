@@ -1,15 +1,16 @@
-import pytest
 from uuid import uuid4
 
-from app.services.regulatory.service import RegulatoryService
+import pytest
+
 from app.models.regulatory import (
-    RegulatoryAgency,
-    AuthoritySubmission,
     AgencyCode,
-    SubmissionType,
+    AuthoritySubmission,
+    RegulatoryAgency,
     SubmissionStatus,
+    SubmissionType,
 )
 from app.schemas.regulatory import SubmissionCreate
+from app.services.regulatory.service import RegulatoryService
 
 # Use pytest-asyncio for async tests
 pytestmark = pytest.mark.asyncio

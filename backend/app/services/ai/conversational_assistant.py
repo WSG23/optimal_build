@@ -15,8 +15,8 @@ from uuid import uuid4
 from langchain_openai import ChatOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.ai.natural_language_query import NaturalLanguageQueryService
 from app.services.ai.deal_scoring import DealScoringService
+from app.services.ai.natural_language_query import NaturalLanguageQueryService
 from app.services.ai.rag_knowledge_base import RAGKnowledgeBaseService
 
 logger = logging.getLogger(__name__)

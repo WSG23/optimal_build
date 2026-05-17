@@ -10,7 +10,6 @@ from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
-from app.core.config import settings
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -18,6 +17,8 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+
+from app.core.config import settings
 
 
 def _sqlite_fallback_url() -> str:

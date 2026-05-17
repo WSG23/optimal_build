@@ -9,6 +9,8 @@ from uuid import UUID
 
 from backend._compat.datetime import UTC, utcnow
 from backend.jobs import job
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.models.preview import PreviewJob, PreviewJobStatus
@@ -18,8 +20,6 @@ from app.services.preview_generator import (
     normalise_geometry_detail_level,
 )
 from app.utils import metrics
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _resolve_session_dependency() -> Any:

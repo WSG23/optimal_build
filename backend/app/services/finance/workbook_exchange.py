@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import io
+import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
-import io
-import re
 from typing import Any
 from xml.etree import (
     ElementTree as ET,

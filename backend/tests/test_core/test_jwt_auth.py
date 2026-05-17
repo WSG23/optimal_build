@@ -7,7 +7,6 @@ from backend._compat.datetime import utcnow
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 
-from app.core.jwt_codec import JWTError, jwt
 from app.core.jwt_auth import (
     ALGORITHM,
     SECRET_KEY,
@@ -19,6 +18,7 @@ from app.core.jwt_auth import (
     get_optional_user,
     verify_token,
 )
+from app.core.jwt_codec import JWTError, jwt
 
 
 class TestTokenModels:

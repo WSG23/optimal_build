@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime, timedelta
-
-from backend._compat.datetime import utcnow
 from typing import (
     Any,
     Dict,
@@ -22,6 +20,11 @@ from typing import (
 )
 from uuid import UUID
 
+from backend._compat.datetime import utcnow
+from sqlalchemy import func, select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 from app.models.developer_checklists import (
     ChecklistCategory,
     ChecklistPriority,
@@ -29,9 +32,6 @@ from app.models.developer_checklists import (
     DeveloperChecklistTemplate,
     DeveloperPropertyChecklist,
 )
-from sqlalchemy import func, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 
 class ChecklistTemplateDefinition(TypedDict):

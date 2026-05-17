@@ -11,11 +11,11 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
 
-from sqlalchemy import select, and_
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.regulatory import AuthoritySubmission
 from app.models.property import Property
+from app.models.regulatory import AuthoritySubmission
 
 logger = logging.getLogger(__name__)
 

@@ -12,8 +12,8 @@ pytest.importorskip("starlette.middleware.base")
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.testclient import TestClient
-from starlette.requests import Request
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.requests import Request
 
 from app.api.error_handlers import (
     http_exception_handler,

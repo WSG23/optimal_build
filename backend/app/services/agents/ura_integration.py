@@ -1,15 +1,15 @@
 """URA (Urban Redevelopment Authority) integration service for Singapore property data."""
 
-from datetime import date, datetime, timedelta
-from functools import lru_cache
 import json
 import re
+from datetime import date, datetime, timedelta
+from functools import lru_cache
 from typing import Any, Dict, Iterable, List, Optional
 
+import httpx
 import structlog
 from pydantic import BaseModel
 
-import httpx
 from app.core.config import settings
 from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 from app.services.base import AsyncClientService

@@ -11,8 +11,9 @@ import pytest
 pytest.importorskip("sqlalchemy")
 
 import pytest_asyncio
-from app.models.users import User
 from httpx import ASGITransport, AsyncClient
+
+from app.models.users import User
 
 
 @pytest_asyncio.fixture

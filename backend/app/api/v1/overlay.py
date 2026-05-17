@@ -9,20 +9,22 @@ from typing import Any, Awaitable, Callable, Protocol, cast
 
 from backend._compat.datetime import UTC
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.api.deps import require_reviewer, require_viewer
 from app.core.audit.ledger import append_event
 from app.core.database import get_session
 from app.core.metrics import DECISION_REVIEW_BASELINE_SECONDS
 from app.models.overlay import OverlayDecision, OverlaySuggestion
+from app.schemas._typing import dump_model, typed_import_module, validate_model
 from app.schemas.overlay import (
     OverlayDecisionPayload,
+)
+from app.schemas.overlay import (
     OverlaySuggestion as OverlaySuggestionSchema,
 )
-from app.schemas._typing import dump_model, typed_import_module, validate_model
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/overlay")
 

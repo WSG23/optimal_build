@@ -10,11 +10,11 @@ from decimal import Decimal
 from typing import Any, Dict, Iterable
 
 from backend._compat.datetime import utcnow
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.rkp import RefRule
 from app.models.singapore_property import ComplianceStatus, SingaporeProperty
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 # NOTE: Singapore URA and BCA rules are now stored in the RefRule database table
 # This allows jurisdiction-agnostic calculations via services/buildable.py

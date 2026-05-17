@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from math import ceil
 from typing import Any, Literal, cast
 
+from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend._compat.datetime import utcnow
 from app.api.deps import require_viewer
 from app.core.database import get_session
 from app.schemas.deal_calculator import (
@@ -25,7 +25,11 @@ from app.schemas.feasibility import (
     NewFeasibilityProjectInput,
 )
 from app.services.agents.ura_integration import URAIntegrationService
-from app.services.buildable import BuildableService, BuildableInput
+from app.services.buildable import BuildableInput, BuildableService
+from app.services.feasibility import (
+    generate_feasibility_rules,
+    run_feasibility_assessment,
+)
 from app.services.finance import (
     AssetFinanceInput,
     build_asset_financials,
@@ -34,10 +38,6 @@ from app.services.finance import (
     npv,
     serialise_breakdown,
     summarise_asset_financials,
-)
-from app.services.feasibility import (
-    generate_feasibility_rules,
-    run_feasibility_assessment,
 )
 from app.services.geocoding import Address, GeocodingService
 

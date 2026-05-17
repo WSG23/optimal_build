@@ -17,8 +17,8 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.property import Property
 from app.models.business_performance import AgentDeal
+from app.models.property import Property
 
 logger = logging.getLogger(__name__)
 

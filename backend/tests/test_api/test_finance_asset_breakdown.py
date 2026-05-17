@@ -18,13 +18,13 @@ pytest.importorskip("sqlalchemy")
 from uuid import uuid4
 
 from backend.jobs import JobDispatch, job_queue
+from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import settings
 from app.models.finance import FinAssetBreakdown
 from app.models.projects import Project, ProjectPhase, ProjectType
-from httpx import AsyncClient
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 ADMIN_HEADERS = {"X-Role": "admin"}
 

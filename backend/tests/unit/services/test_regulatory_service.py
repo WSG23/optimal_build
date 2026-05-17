@@ -1,16 +1,17 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
-from app.services import regulatory_service as regulatory_service_module
+import pytest
+
+from app.models.projects import Project
 from app.models.regulatory import (
     AuthoritySubmission,
     RegulatoryAgency,
     SubmissionStatus,
 )
-from app.models.projects import Project
-from app.services.regulatory_service import RegulatoryService
 from app.schemas.regulatory import AuthoritySubmissionCreate
+from app.services import regulatory_service as regulatory_service_module
+from app.services.regulatory_service import RegulatoryService
 
 
 @pytest.fixture

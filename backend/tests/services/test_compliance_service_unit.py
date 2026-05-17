@@ -6,8 +6,9 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
-
 import pytest_asyncio
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 from app.models.singapore_property import (
     ComplianceStatus,
     PropertyTenure,
@@ -16,7 +17,6 @@ from app.models.singapore_property import (
 )
 from app.services import compliance as compliance_service
 from app.services.compliance import ComplianceService
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
 async def _persist_property(

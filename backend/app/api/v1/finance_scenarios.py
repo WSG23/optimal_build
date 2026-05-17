@@ -28,6 +28,7 @@ from app.models.finance import (
 )
 from app.models.projects import Project
 from app.models.rkp import RefCostIndex
+from app.schemas._typing import validate_model
 from app.schemas.finance import (
     AssetFinancialSummarySchema,
     ConstructionLoanInput,
@@ -43,7 +44,6 @@ from app.schemas.finance import (
 from app.services.finance import (
     calculator,
 )
-from app.schemas._typing import validate_model
 from app.utils.logging import get_logger, log_event
 
 from .finance_common import (

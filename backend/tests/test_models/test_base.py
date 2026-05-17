@@ -6,9 +6,9 @@ from decimal import Decimal
 from unittest.mock import Mock
 
 from backend._compat.datetime import UTC
+from sqlalchemy.dialects import postgresql, sqlite
 
 from app.models.base import UUID, BaseModel, MetadataProxy
-from sqlalchemy.dialects import postgresql, sqlite
 
 
 class TestUUIDTypeDecorator:

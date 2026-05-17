@@ -8,6 +8,8 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
+from sqlalchemy import select
+
 from app.models.developer_checklists import (
     ChecklistCategory,
     ChecklistPriority,
@@ -15,7 +17,6 @@ from app.models.developer_checklists import (
     DeveloperChecklistTemplate,
     DeveloperPropertyChecklist,
 )
-from sqlalchemy import select
 
 
 @pytest.mark.asyncio

@@ -4,11 +4,12 @@ import uuid
 from enum import Enum
 
 from backend._compat.datetime import utcnow
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import relationship
 
 from app.models.base import UUID, BaseModel
 from app.models.users import UserRole
-from sqlalchemy import Boolean, Column, DateTime, Enum as SQLEnum, ForeignKey, String
-from sqlalchemy.orm import relationship
 
 
 class InvitationStatus(str, Enum):

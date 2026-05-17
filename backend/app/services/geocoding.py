@@ -4,10 +4,10 @@ import re
 import time
 from typing import Any, Dict, Optional, Tuple
 
+import httpx
 import structlog
 from pydantic import BaseModel
 
-import httpx
 from app.core.config import settings
 from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
 from app.services.base import AsyncClientService

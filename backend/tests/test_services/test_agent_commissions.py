@@ -8,6 +8,8 @@ import pytest
 pytest.importorskip("sqlalchemy")
 
 import pytest_asyncio
+from sqlalchemy import select
+
 from app.models.audit import AuditLog
 from app.models.business_performance import (
     CommissionAdjustmentType,
@@ -18,7 +20,6 @@ from app.models.business_performance import (
 )
 from app.models.users import User
 from app.services.deals import AgentCommissionService, AgentDealService
-from sqlalchemy import select
 
 
 @pytest_asyncio.fixture(autouse=True)

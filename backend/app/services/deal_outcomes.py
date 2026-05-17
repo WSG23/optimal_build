@@ -7,14 +7,15 @@ from statistics import median
 from typing import Any
 from uuid import UUID
 
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.audit.ledger import append_event
 from app.models.business_performance import AgentDeal, DealStatus
 from app.models.deal_outcome import DealOutcome
 from app.models.finance import FinAssetBreakdown, FinProject, FinScenario
 from app.services.deals.utils import audit_project_key
-from sqlalchemy import func, select
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 # Cap for in-memory benchmark aggregation. Above this we mark the response
 # truncated and let callers narrow filters; SQL-side aggregation can come

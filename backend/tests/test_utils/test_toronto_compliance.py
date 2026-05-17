@@ -12,9 +12,9 @@ os.environ.setdefault("SECRET_KEY", "test-secret")
 
 from app.models.toronto_property import (
     TorontoComplianceStatus,
+    TorontoProperty,
     TorontoPropertyTenure,
     TorontoZoning,
-    TorontoProperty,
 )
 from app.utils import toronto_compliance as compliance
 

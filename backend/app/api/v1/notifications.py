@@ -3,9 +3,11 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import RequestIdentity, get_db, require_reviewer, require_viewer
 from app.models.notification import NotificationType
+from app.schemas._typing import validate_model
 from app.schemas.notification import (
     NotificationCountResponse,
     NotificationDismissRequest,
@@ -16,8 +18,6 @@ from app.schemas.notification import (
     NotificationResponse,
 )
 from app.services.notification import NotificationService
-from app.schemas._typing import validate_model
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 

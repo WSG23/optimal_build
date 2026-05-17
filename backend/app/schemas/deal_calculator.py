@@ -13,8 +13,8 @@ from app.schemas.buildable import RuleCorpusStatus
 from app.schemas.external_sources import ExternalSourceMetadata
 from app.schemas.feasibility import (
     AssetOptimizationRecommendation,
-    BuildEnvelopeSnapshot,
     BuildableAreaSummary,
+    BuildEnvelopeSnapshot,
     RuleAssessmentResult,
 )
 from app.schemas.finance import AssetFinancialSummarySchema, FinanceAssetBreakdownSchema

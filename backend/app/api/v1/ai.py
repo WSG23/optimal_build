@@ -13,92 +13,91 @@ from importlib import import_module
 from typing import Any, cast
 from uuid import uuid4
 
+from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend._compat.datetime import utcnow
-
-from app.api.deps import Role, require_reviewer, require_viewer, get_db
-from app.utils.logging import get_logger, log_event
+from app.api.deps import Role, get_db, require_reviewer, require_viewer
 from app.schemas.ai import (
-    # Natural Language Query
-    NLQueryRequest,
-    NLQueryResponse,
-    # Knowledge Base
-    KnowledgeSearchRequest,
-    KnowledgeSearchResponse,
-    SearchResultItem,
-    IngestPropertyRequest,
-    IngestDealRequest,
-    IngestDocumentRequest,
-    IngestionResponse,
-    # Deal Scoring
-    DealScoreRequest,
-    DealScoreResponse,
-    FactorScoreItem,
-    # Scenario Optimizer
-    ScenarioOptimizeRequest,
-    ScenarioOptimizeResponse,
-    FinancingScenario,
-    FinancingType,
-    # Market Predictor
-    MarketPredictionRequest,
-    MarketPredictionResponse,
-    PredictionItem,
-    PredictionType,
-    # Compliance Predictor
-    CompliancePredictionRequest,
-    CompliancePredictionResponse,
-    RegulatoryMilestone,
-    # Due Diligence
-    DDGenerateRequest,
-    DDChecklistResponse,
-    DDItemResponse,
-    DDRecommendationResponse,
-    # Reports
-    ICMemoRequest,
-    PortfolioReportRequest,
-    ReportResponse,
-    ReportSectionResponse,
-    # Communication
-    DraftCommunicationRequest,
-    CommunicationDraftResponse,
-    ChatMessageRequest,
-    ChatMessageResponse,
-    ConversationListItem,
-    # Portfolio
-    PortfolioOptimizeRequest,
-    PortfolioOptimizeResponse,
-    AssetAllocationItem,
-    RebalancingRecommendation,
-    PortfolioMetricsResponse,
-    # Multi-Modal
-    ImageAnalysisRequest,
-    ImageAnalysisResponse,
-    SpaceMetricsResponse,
-    ConditionAssessmentResponse,
-    # Competitive Intelligence
-    CompetitorTrackRequest,
-    CompetitorResponse,
-    CompetitiveIntelligenceRequest,
-    CompetitiveIntelligenceResponse,
-    CompetitorActivityResponse,
-    CompetitiveAlertResponse,
-    # Workflow
-    TriggerWorkflowRequest,
-    WorkflowResultResponse,
-    WorkflowStepResponse,
-    WorkflowDefinitionResponse,
+    AIServiceStatsResponse,
+    AnomalyAlert,
     # Anomaly Detection
     AnomalyDetectionRequest,
     AnomalyDetectionResponse,
-    AnomalyAlert,
+    AssetAllocationItem,
+    ChatMessageRequest,
+    ChatMessageResponse,
+    CommunicationDraftResponse,
+    CompetitiveAlertResponse,
+    CompetitiveIntelligenceRequest,
+    CompetitiveIntelligenceResponse,
+    CompetitorActivityResponse,
+    CompetitorResponse,
+    # Competitive Intelligence
+    CompetitorTrackRequest,
+    # Compliance Predictor
+    CompliancePredictionRequest,
+    CompliancePredictionResponse,
+    ConditionAssessmentResponse,
+    ConversationListItem,
+    DDChecklistResponse,
+    # Due Diligence
+    DDGenerateRequest,
+    DDItemResponse,
+    DDRecommendationResponse,
+    # Deal Scoring
+    DealScoreRequest,
+    DealScoreResponse,
     # Document Extraction
     DocumentExtractionRequest,
     DocumentExtractionResponse,
-    AIServiceStatsResponse,
+    # Communication
+    DraftCommunicationRequest,
+    FactorScoreItem,
+    FinancingScenario,
+    FinancingType,
+    # Reports
+    ICMemoRequest,
+    # Multi-Modal
+    ImageAnalysisRequest,
+    ImageAnalysisResponse,
+    IngestDealRequest,
+    IngestDocumentRequest,
+    IngestionResponse,
+    IngestPropertyRequest,
+    # Knowledge Base
+    KnowledgeSearchRequest,
+    KnowledgeSearchResponse,
+    # Market Predictor
+    MarketPredictionRequest,
+    MarketPredictionResponse,
+    # Natural Language Query
+    NLQueryRequest,
+    NLQueryResponse,
+    PortfolioMetricsResponse,
+    # Portfolio
+    PortfolioOptimizeRequest,
+    PortfolioOptimizeResponse,
+    PortfolioReportRequest,
+    PredictionItem,
+    PredictionType,
+    RebalancingRecommendation,
+    RegulatoryMilestone,
+    ReportResponse,
+    ReportSectionResponse,
+    # Scenario Optimizer
+    ScenarioOptimizeRequest,
+    ScenarioOptimizeResponse,
+    SearchResultItem,
+    SpaceMetricsResponse,
+    # Workflow
+    TriggerWorkflowRequest,
+    WorkflowDefinitionResponse,
+    WorkflowResultResponse,
+    WorkflowStepResponse,
 )
+from app.utils.logging import get_logger, log_event
 
 router = APIRouter(prefix="/ai", tags=["AI Services"])
 
@@ -1035,9 +1034,15 @@ async def draft_communication(
     Supports emails, letters, proposals, and memos with various tones.
     """
     from app.services.ai.communication_drafter import (
-        CommunicationType as ServiceCommunicationType,
-        CommunicationTone as ServiceCommunicationTone,
         CommunicationPurpose as ServiceCommunicationPurpose,
+    )
+    from app.services.ai.communication_drafter import (
+        CommunicationTone as ServiceCommunicationTone,
+    )
+    from app.services.ai.communication_drafter import (
+        CommunicationType as ServiceCommunicationType,
+    )
+    from app.services.ai.communication_drafter import (
         DraftRequest,
     )
 
@@ -1196,9 +1201,13 @@ async def optimize_portfolio(
     Analyzes current allocation and suggests rebalancing actions.
     """
     from app.services.ai.portfolio_optimizer import (
-        OptimizationStrategy as ServiceStrategy,
-        RiskProfile as ServiceRiskProfile,
         OptimizationRequest,
+    )
+    from app.services.ai.portfolio_optimizer import (
+        OptimizationStrategy as ServiceStrategy,
+    )
+    from app.services.ai.portfolio_optimizer import (
+        RiskProfile as ServiceRiskProfile,
     )
 
     strategy_map = {
@@ -1284,7 +1293,11 @@ async def analyze_image(
     try:
         from app.services.ai.multi_modal_analyzer import (
             AnalysisRequest,
+        )
+        from app.services.ai.multi_modal_analyzer import (
             AnalysisType as ServiceAnalysisType,
+        )
+        from app.services.ai.multi_modal_analyzer import (
             ImageType as ServiceImageType,
         )
 

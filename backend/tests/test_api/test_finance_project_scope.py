@@ -10,8 +10,9 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from app.models.finance import FinProject
 from httpx import AsyncClient
+
+from app.models.finance import FinProject
 
 ADMIN_HEADERS = {"X-Role": "admin"}
 

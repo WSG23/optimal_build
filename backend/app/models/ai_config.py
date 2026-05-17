@@ -9,8 +9,6 @@ import uuid
 from enum import Enum
 
 from backend._compat.datetime import utcnow
-
-from app.models.base import UUID, BaseModel
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -23,6 +21,8 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
+
+from app.models.base import UUID, BaseModel
 
 
 class AIConfigCategory(str, Enum):

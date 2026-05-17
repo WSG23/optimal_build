@@ -9,12 +9,11 @@ import os
 import tempfile
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
-
-from dataclasses import dataclass
 
 from backend._compat.datetime import UTC
 

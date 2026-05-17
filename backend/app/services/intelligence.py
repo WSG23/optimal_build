@@ -1,9 +1,9 @@
 import logging
 
 from langchain.chains import RetrievalQA
-from langchain_openai import ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
+from langchain_openai import ChatOpenAI
 
 from app.core.rag import get_rag_engine
 

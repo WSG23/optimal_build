@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-
-from collections.abc import Iterable, Sequence
-
-from pathlib import Path
 import json
+from collections.abc import Iterable, Sequence
 from decimal import ROUND_HALF_UP, Decimal
+from pathlib import Path
 
 from fastapi import HTTPException
 
+from app.schemas.engineering import EngineeringDefaultsResponse
 from app.schemas.feasibility import (
     AssetConstraintViolation,
     AssetOptimizationRecommendation,
@@ -24,16 +23,15 @@ from app.schemas.feasibility import (
     NewFeasibilityProjectInput,
     RuleAssessmentResult,
 )
-from app.services.feasibility.normalization import (
-    normalise_assessment_payload,
-    normalise_project_payload,
-)
-from app.schemas.engineering import EngineeringDefaultsResponse
 from app.schemas.finance import AssetFinancialSummarySchema
 from app.services.asset_mix import (
     AssetOptimizationOutcome,
     build_asset_mix,
     format_asset_mix_summary,
+)
+from app.services.feasibility.normalization import (
+    normalise_assessment_payload,
+    normalise_project_payload,
 )
 
 ENGINEERING_DEFAULTS_PATH = (

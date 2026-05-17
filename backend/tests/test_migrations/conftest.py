@@ -8,7 +8,6 @@ import pytest
 try:  # pragma: no cover - executed only when Alembic dependencies are present
     from alembic import command
     from alembic.config import Config
-
     from sqlalchemy import create_engine, inspect
 except Exception:  # pragma: no cover - test suite uses lightweight SQLAlchemy stub
     command = None  # type: ignore[assignment]

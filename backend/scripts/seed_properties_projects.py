@@ -11,6 +11,8 @@ from typing import Sequence
 from uuid import UUID, uuid4
 
 import structlog
+from sqlalchemy import String, cast, delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal, engine
 from app.models import load_model_modules
@@ -26,8 +28,6 @@ from app.models.property import (
     TenureType,
 )
 from app.services.developer_checklist_service import DeveloperChecklistService
-from sqlalchemy import String, cast, delete, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = structlog.get_logger(__name__)
 

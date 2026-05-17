@@ -15,18 +15,17 @@ from fastapi import (
 from pydantic import ValidationError
 
 from app.api.deps import require_viewer
-
+from app.schemas.engineering import EngineeringDefaultsResponse
 from app.schemas.feasibility import (
     FeasibilityAssessmentRequest,
     FeasibilityAssessmentResponse,
     FeasibilityRulesResponse,
     NewFeasibilityProjectInput,
 )
-from app.schemas.engineering import EngineeringDefaultsResponse
 from app.services.feasibility import (
     generate_feasibility_rules,
-    run_feasibility_assessment,
     get_engineering_defaults,
+    run_feasibility_assessment,
 )
 from app.services.feasibility.normalization import (
     normalise_assessment_payload,

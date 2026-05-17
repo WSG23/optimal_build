@@ -14,11 +14,12 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
+from httpx import AsyncClient
+
 from app.api import deps
 from app.api.v1 import ai as ai_api
 from app.main import app
 from app.services.ai.natural_language_query import QueryResult, QueryType
-from httpx import AsyncClient
 
 pytestmark = pytest.mark.asyncio
 

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
-
 from urllib.error import URLError
+
+import pytest
 
 from app.models.rkp import RefDocument, RefSource
 from app.services import reference_sources

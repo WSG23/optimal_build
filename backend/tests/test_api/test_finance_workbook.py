@@ -9,12 +9,14 @@ pytest.importorskip("fastapi")
 pytest.importorskip("pydantic")
 pytest.importorskip("sqlalchemy")
 
-from app.api.v1 import finance_workbook as finance_workbook_api
-from app.api.v1 import finance_feasibility as finance_feasibility_api
-from app.models.projects import Project, ProjectPhase, ProjectType
+from unittest.mock import AsyncMock
+
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from unittest.mock import AsyncMock
+
+from app.api.v1 import finance_feasibility as finance_feasibility_api
+from app.api.v1 import finance_workbook as finance_workbook_api
+from app.models.projects import Project, ProjectPhase, ProjectType
 
 
 def _build_asset_mix() -> list[dict[str, object]]:

@@ -11,9 +11,9 @@ WFS Endpoint: https://www.ozp.tpb.gov.hk/arcgis/services/DATA/RA_PLAN_CSDI/MapSe
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import os
-import asyncio
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional, Sequence, Tuple
@@ -22,8 +22,8 @@ from xml.etree import ElementTree
 import httpx
 import structlog
 from shapely.geometry import GeometryCollection, MultiPolygon, Polygon, shape
-from shapely.geometry.base import BaseGeometry
 from shapely.geometry import mapping as shapely_mapping
+from shapely.geometry.base import BaseGeometry
 from shapely.validation import make_valid
 
 from app.core.config import settings

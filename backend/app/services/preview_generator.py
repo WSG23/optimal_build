@@ -8,12 +8,20 @@ import struct
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence, TypedDict, cast
+from typing import (
+    Any,
+    Iterable,
+    Literal,
+    Mapping,
+    NotRequired,
+    Sequence,
+    TypedDict,
+    cast,
+)
 from uuid import UUID
 
 from backend._compat.datetime import utcnow
 from PIL import Image, ImageDraw
-from typing import Literal, NotRequired
 
 _BASE_DIR = Path(__file__).resolve().parents[2]
 _PREVIEW_DIR = _BASE_DIR / "static" / "dev-previews"

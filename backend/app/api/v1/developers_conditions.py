@@ -9,21 +9,21 @@ from uuid import UUID
 
 from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, Query
-
-from app.api.deps import RequestIdentity, require_reviewer, require_viewer
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import RequestIdentity, require_reviewer, require_viewer
 from app.api.v1.developers_checklists import ChecklistProgressResponse
 from app.api.v1.developers_common import (
-    _normalise_scenario_param,
     _format_scenario_label,
+    _normalise_scenario_param,
 )
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.developer_checklists import ChecklistStatus
 from app.models.property import Property
+from app.schemas._typing import dump_model
 from app.services.developer_checklist_service import DeveloperChecklistService
 from app.services.developer_condition_service import (
     ConditionAssessment,
@@ -32,7 +32,6 @@ from app.services.developer_condition_service import (
     DeveloperConditionService,
 )
 from app.utils.render import render_html_to_pdf
-from app.schemas._typing import dump_model
 
 router = APIRouter(prefix="/developers", tags=["developers"])
 

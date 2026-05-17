@@ -4,18 +4,20 @@ import uuid
 from enum import Enum
 
 from backend._compat.datetime import utcnow
-
-from app.models.base import UUID, BaseModel
 from sqlalchemy import (
     Column,
     DateTime,
-    Enum as SQLEnum,
     ForeignKey,
     Integer,
     String,
     Text,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import relationship
+
+from app.models.base import UUID, BaseModel
 
 
 class WorkflowStatus(str, Enum):

@@ -8,6 +8,7 @@ from decimal import Decimal
 
 import pytest
 from reportlab.lib.units import inch
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.market import MarketCycle, YieldBenchmark
 from app.models.property import (
@@ -21,7 +22,6 @@ from app.services.agents.investment_memorandum import (
     InvestmentHighlight,
     InvestmentMemorandumGenerator,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 
 # ============================================================================
 # HELPER FUNCTIONS

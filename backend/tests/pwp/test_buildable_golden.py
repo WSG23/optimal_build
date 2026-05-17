@@ -10,11 +10,12 @@ pytest.importorskip("sqlalchemy")
 pytest.importorskip("pytest_asyncio")
 
 import pytest_asyncio
+from httpx import AsyncClient
+from sqlalchemy import select
+
 from app.core.config import settings
 from app.models.rkp import RefClause, RefDocument, RefRule, RefSource
-from httpx import AsyncClient
 from scripts.seed_screening import seed_screening_sample_data
-from sqlalchemy import select
 
 DEFAULT_REQUEST_DEFAULTS = {
     "plot_ratio": 3.5,

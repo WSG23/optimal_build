@@ -31,7 +31,7 @@ from app.models.finance import (
     FinScenario,
 )
 from app.models.rkp import RefCostIndex
-from app.services.deals.utils import audit_key_from_value
+from app.schemas._typing import typed_import_module
 from app.schemas.finance import (
     AssetFinancialSummarySchema,
     CapitalStackSummarySchema,
@@ -46,6 +46,7 @@ from app.schemas.finance import (
     FinanceSensitivityOutcomeSchema,
     FinancingDrawdownScheduleSchema,
 )
+from app.services.deals.utils import audit_key_from_value
 from app.services.finance import (
     AssetFinanceInput,
     build_asset_financials,
@@ -55,7 +56,6 @@ from app.services.finance import (
 )
 from app.services.jurisdictions import get_jurisdiction_config
 from app.utils import metrics
-from app.schemas._typing import typed_import_module
 from app.utils.logging import get_logger, log_event
 
 from .finance_common import (

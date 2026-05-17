@@ -10,10 +10,21 @@ Original file: 2,509 lines → split into 4 files (~600 lines each)
 
 from fastapi import APIRouter
 
-from app.api.v1.developers_gps import router as gps_router
-from app.api.v1.developers_deal_calculator import router as deal_calculator_router
+# Re-export checklist models
+from app.api.v1.developers_checklists import (
+    ChecklistItemResponse,
+    ChecklistItemsResponse,
+    ChecklistProgressResponse,
+    ChecklistSummaryResponse,
+    ChecklistTemplateBaseRequest,
+    ChecklistTemplateBulkImportRequest,
+    ChecklistTemplateBulkImportResponse,
+    ChecklistTemplateCreateRequest,
+    ChecklistTemplateResponse,
+    ChecklistTemplateUpdateRequest,
+    UpdateChecklistStatusRequest,
+)
 from app.api.v1.developers_checklists import router as checklists_router
-from app.api.v1.developers_conditions import router as conditions_router
 
 # Re-export shared models for backward compatibility
 from app.api.v1.developers_common import (
@@ -35,28 +46,6 @@ from app.api.v1.developers_common import (
     PreviewJobSchema,
 )
 
-# Re-export GPS-specific models
-from app.api.v1.developers_gps import (
-    DeveloperGPSLogRequest,
-    DeveloperGPSLogResponse,
-    PreviewJobRefreshRequest,
-)
-
-# Re-export checklist models
-from app.api.v1.developers_checklists import (
-    ChecklistItemResponse,
-    ChecklistItemsResponse,
-    ChecklistProgressResponse,
-    ChecklistSummaryResponse,
-    ChecklistTemplateBulkImportRequest,
-    ChecklistTemplateBulkImportResponse,
-    ChecklistTemplateBaseRequest,
-    ChecklistTemplateCreateRequest,
-    ChecklistTemplateResponse,
-    ChecklistTemplateUpdateRequest,
-    UpdateChecklistStatusRequest,
-)
-
 # Re-export condition models
 from app.api.v1.developers_conditions import (
     ConditionAssessmentResponse,
@@ -67,6 +56,16 @@ from app.api.v1.developers_conditions import (
     ConditionSystemResponse,
     ScenarioComparisonEntryResponse,
 )
+from app.api.v1.developers_conditions import router as conditions_router
+from app.api.v1.developers_deal_calculator import router as deal_calculator_router
+
+# Re-export GPS-specific models
+from app.api.v1.developers_gps import (
+    DeveloperGPSLogRequest,
+    DeveloperGPSLogResponse,
+    PreviewJobRefreshRequest,
+)
+from app.api.v1.developers_gps import router as gps_router
 
 # Create unified router
 router = APIRouter()

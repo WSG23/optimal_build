@@ -5,9 +5,6 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any
 
-from app.core.config import settings
-from app.models.base import BaseModel
-from app.models.types import FlexibleJSONB
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -23,6 +20,10 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
+from app.core.config import settings
+from app.models.base import BaseModel
+from app.models.types import FlexibleJSONB
 
 # Geometry is optional — PostGIS may be disabled, or geoalchemy2 may be absent
 # from the environment (e.g. SQLite test sandbox). Annotated as Any so mypy

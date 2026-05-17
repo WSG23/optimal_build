@@ -4,7 +4,6 @@ import argparse
 from pathlib import Path
 
 import pytest
-
 from backend.scripts import smoke_ura_data_service
 
 

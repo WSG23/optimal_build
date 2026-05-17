@@ -11,11 +11,11 @@ import asyncio
 from uuid import UUID, uuid4
 
 import pytest
+from httpx import AsyncClient
+from sqlalchemy import select
 
 from app.models.preview import PreviewJob, PreviewJobStatus
 from app.services.preview_jobs import PreviewJobService
-from httpx import AsyncClient
-from sqlalchemy import select
 
 
 async def _wait_for_job_to_leave_queued(

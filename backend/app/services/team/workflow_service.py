@@ -3,6 +3,9 @@
 from uuid import UUID
 
 from backend._compat.datetime import utcnow
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.models.team import TeamMember
 from app.models.workflow import (
@@ -11,10 +14,6 @@ from app.models.workflow import (
     StepStatus,
     WorkflowStatus,
 )
-
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
 
 class WorkflowService:

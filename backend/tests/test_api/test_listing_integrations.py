@@ -6,12 +6,13 @@ import pytest
 
 pytest.importorskip("sqlalchemy")
 
-from app.core.jwt_auth import create_tokens
-from app.models.property import Property
-from app.models.users import User
 from httpx import AsyncClient
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.jwt_auth import create_tokens
+from app.models.property import Property
+from app.models.users import User
 
 
 @pytest.mark.parametrize("provider", ["propertyguru", "edgeprop", "zoho_crm"])

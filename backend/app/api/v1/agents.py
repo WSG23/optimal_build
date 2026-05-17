@@ -2,38 +2,38 @@
 
 from __future__ import annotations
 
-from importlib import import_module
 import importlib.util
 import sys
 from datetime import date, datetime, timedelta
 from enum import Enum
+from importlib import import_module
 from typing import Any, Dict, Optional, cast
 from uuid import UUID, uuid4
 
 import structlog
-from app.utils.logging import get_logger, log_event
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+
+from app.utils.logging import get_logger, log_event
 
 from backend._compat.datetime import utcnow  # isort: skip (backend._compat ordering)
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import Role, get_request_role, require_reviewer
 from app.api import deps
+from app.api.deps import Role, get_request_role, require_reviewer
 from app.core.config import settings
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.property import Property, PropertyType
 from app.schemas.external_sources import ExternalSourceMetadata
 from app.services.agents.gps_property_logger import DevelopmentScenario
-from app.services.geocoding import Address
-from app.utils.lazy import LazyProxy
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.services.finance import (
     calculate_comprehensive_metrics,
     value_property_multiple_approaches,
 )
+from app.services.geocoding import Address
+from app.utils.lazy import LazyProxy
 
 
 class ScenarioType(str, Enum):
@@ -1001,8 +1001,9 @@ async def analyze_development_potential(
     scanner = scanner_cls(buildable_service, finance_calc, ura_service)
 
     # Get property data
-    from app.models.property import Property
     from sqlalchemy import select
+
+    from app.models.property import Property
 
     stmt = select(Property).where(Property.id == UUID(property_id))
     result = await db.execute(stmt)
@@ -1460,8 +1461,9 @@ async def generate_3d_scenarios(
     scenario_builder = builder_cls(postgis_service)
 
     # Get property data
-    from app.models.property import Property
     from sqlalchemy import select
+
+    from app.models.property import Property
 
     stmt = select(Property).where(Property.id == UUID(property_id))
     result = await db.execute(stmt)

@@ -1,9 +1,9 @@
 import os
 from functools import lru_cache
 
+import chromadb
 from langchain_community.vectorstores import Chroma
 from langchain_openai import OpenAIEmbeddings
-import chromadb
 
 
 class RagEngine:

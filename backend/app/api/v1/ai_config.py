@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import RequestIdentity, get_db, require_reviewer, require_viewer
 from app.models.ai_config import AIConfigCategory
+from app.schemas._typing import validate_model
 from app.schemas.ai_config import (
     AIConfigAuditResponse,
     AIConfigCreate,
@@ -19,7 +20,6 @@ from app.schemas.ai_config import (
     AIConfigUpdate,
 )
 from app.services.ai.config_service import ai_config_service
-from app.schemas._typing import validate_model
 
 router = APIRouter()
 
@@ -110,6 +110,7 @@ async def get_ai_config(
 ) -> AIConfigResponse:
     """Get a specific AI configuration by ID."""
     from sqlalchemy import select
+
     from app.models.ai_config import AIConfig
 
     stmt = select(AIConfig).where(AIConfig.id == config_id)

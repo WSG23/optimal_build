@@ -1,22 +1,21 @@
 import inspect
-
-from backend._compat.datetime import utcnow
 from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from backend._compat.datetime import utcnow
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit.ledger import append_event
+from app.models.projects import Project
 from app.models.regulatory import (
     AuthoritySubmission,
     RegulatoryAgency,
     SubmissionStatus,
     SubmissionType,
 )
-from app.models.projects import Project
-from app.services.deals.utils import audit_key_from_value
 from app.schemas.regulatory import AuthoritySubmissionCreate
+from app.services.deals.utils import audit_key_from_value
 from app.services.regulatory.corenet_adapter import (
     CorenetAdapter,
     get_corenet_adapter,

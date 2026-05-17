@@ -3,6 +3,7 @@
 import uuid
 from enum import Enum
 
+from backend._compat.datetime import utcnow
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -15,9 +16,8 @@ from sqlalchemy import (
     String,
 )
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import Enum as SQLEnum, Numeric as SQLDecimal
-
-from backend._compat.datetime import utcnow
+from sqlalchemy.types import Enum as SQLEnum
+from sqlalchemy.types import Numeric as SQLDecimal
 
 from app.models._geometry import Geometry
 from app.models.base import UUID, BaseModel

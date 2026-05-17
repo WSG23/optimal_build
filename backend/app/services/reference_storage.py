@@ -5,10 +5,10 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import os
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from dataclasses import dataclass
 from backend._compat.datetime import UTC
 
 from app.core.config import settings

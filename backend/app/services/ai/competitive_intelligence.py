@@ -16,8 +16,8 @@ from langchain_openai import ChatOpenAI
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.property import MarketTransaction, DevelopmentPipeline
 from app.models.business_performance import AgentDeal
+from app.models.property import DevelopmentPipeline, MarketTransaction
 
 logger = logging.getLogger(__name__)
 

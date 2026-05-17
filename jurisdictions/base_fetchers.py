@@ -15,6 +15,7 @@ from datetime import date, datetime, time as time_module
 from typing import Any
 
 import httpx
+
 import structlog
 from structlog.stdlib import BoundLogger
 

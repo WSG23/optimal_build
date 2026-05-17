@@ -8,6 +8,9 @@ from decimal import Decimal
 from typing import Sequence
 from uuid import UUID, uuid4
 
+from sqlalchemy import delete
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.market import (
     AbsorptionTracking,
     MarketCycle,
@@ -22,8 +25,6 @@ from app.models.property import (
     RentalListing,
     TenureType,
 )
-from sqlalchemy import delete
-from sqlalchemy.ext.asyncio import AsyncSession
 
 _DEMO_TAG = "market_demo"
 

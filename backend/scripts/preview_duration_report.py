@@ -11,10 +11,10 @@ from typing import Iterable, Sequence
 from uuid import UUID
 
 from backend._compat.datetime import UTC
+from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
 from app.models.preview import PreviewJob, PreviewJobStatus
-from sqlalchemy import select
 
 
 @dataclass(slots=True)

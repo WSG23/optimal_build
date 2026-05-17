@@ -7,6 +7,7 @@ from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import Role, get_request_role
 from app.core.database import get_session
@@ -16,7 +17,6 @@ from app.services.integrations.accounts import ListingIntegrationAccountService
 from app.services.integrations.edgeprop import EdgePropClient
 from app.services.integrations.propertyguru import PropertyGuruClient
 from app.services.integrations.zoho import ZohoClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/integrations/listings", tags=["Commercial Property Agent"])
 

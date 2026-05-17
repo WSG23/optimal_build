@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any, Dict
 
-from dataclasses import dataclass
 from backend._compat.datetime import UTC
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.entitlements import (
     EntApprovalCategory,
@@ -20,9 +23,6 @@ from app.models.entitlements import (
     EntRoadmapStatus,
     EntStudy,
 )
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 200

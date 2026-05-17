@@ -11,6 +11,8 @@ import pytest
 pytest.importorskip("sqlalchemy")
 
 import pytest_asyncio
+from sqlalchemy import select
+
 from app.models.audit import AuditLog
 from app.models.business_performance import (
     AgentDealContact,
@@ -24,7 +26,6 @@ from app.models.users import User
 from app.schemas.deals import DealWithTimelineSchema
 from app.services.deals import AgentDealService
 from app.services.deals.utils import audit_project_key
-from sqlalchemy import select
 
 
 @pytest_asyncio.fixture(autouse=True)

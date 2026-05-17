@@ -6,11 +6,10 @@ import os
 from pathlib import Path as PathLib
 from uuid import UUID
 
+from backend._compat.datetime import utcnow
 from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from backend._compat.datetime import utcnow
 
 from app.api import deps
 from app.api.deps import RequestIdentity, require_viewer

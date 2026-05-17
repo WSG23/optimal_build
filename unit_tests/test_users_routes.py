@@ -1,8 +1,8 @@
 import importlib
 import os
+import sys
 import types
 from pathlib import Path
-import sys
 
 import pytest
 
@@ -147,8 +147,8 @@ def reset_user_state():
 def users_db_module(monkeypatch):
     """Reload the users_db module using an in-memory SQLite database."""
 
-    from sqlalchemy import create_engine as real_create_engine
     import sqlalchemy
+    from sqlalchemy import create_engine as real_create_engine
 
     def _in_memory_engine(*_args, **_kwargs):
         return real_create_engine(

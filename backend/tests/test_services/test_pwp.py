@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
-
 from decimal import Decimal
+
+import pytest
 
 pytest.importorskip("sqlalchemy")
 

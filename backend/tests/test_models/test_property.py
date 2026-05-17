@@ -7,6 +7,8 @@ from datetime import date, datetime
 from decimal import Decimal
 
 import pytest
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.property import (
     DevelopmentAnalysis,
@@ -19,8 +21,6 @@ from app.models.property import (
     RentalListing,
     TenureType,
 )
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 pytestmark = pytest.mark.asyncio
 

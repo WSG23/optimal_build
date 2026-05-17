@@ -6,9 +6,11 @@ from typing import TYPE_CHECKING, Any, Awaitable, Callable, Literal, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_reviewer, require_viewer
 from app.core.database import get_session
+from app.schemas._typing import dump_model, validate_model
 from app.schemas.entitlements import (
     EntEngagementCollection,
     EntEngagementCreate,
@@ -28,9 +30,7 @@ from app.schemas.entitlements import (
     EntStudyUpdate,
 )
 from app.services.entitlements import EntitlementsService
-from app.schemas._typing import dump_model, validate_model
 from app.utils import metrics
-from sqlalchemy.ext.asyncio import AsyncSession
 
 if TYPE_CHECKING:
     from app.core.export.entitlements import EntitlementsExportFormat

@@ -11,8 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from httpx import ASGITransport, AsyncClient
 import structlog
+from httpx import ASGITransport, AsyncClient
 
 # Configure runtime directories before importing the application settings.
 _DEFAULT_RUNTIME_DIR = (
@@ -33,13 +33,14 @@ os.environ.setdefault(
     "JOB_QUEUE_BACKEND", os.environ.get("JOB_QUEUE_BACKEND", "inline")
 )
 
+from sqlalchemy import select
+
 from app.core.database import AsyncSessionLocal, engine
 from app.core.geometry.builder import GraphBuilder
 from app.core.models.geometry import CanonicalGeometry, GeometryNode
 from app.main import app
 from app.models.base import BaseModel
 from app.models.overlay import OverlaySourceGeometry
-from sqlalchemy import select
 
 logger = structlog.get_logger(__name__)
 

@@ -114,13 +114,14 @@ async def _run(args: argparse.Namespace) -> dict[str, Any]:
     _load_dotenv(REPO_ROOT / ".env")
     _load_dotenv(REPO_ROOT / ".env.local", override=True)
 
-    from app.core.database import AsyncSessionLocal
-    from app.services.capture_data_readiness import get_capture_data_readiness
     from backend.scripts import (
         ingest_sg_building_footprints,
         ingest_sg_parcels,
         ingest_sg_zones,
     )
+
+    from app.core.database import AsyncSessionLocal
+    from app.services.capture_data_readiness import get_capture_data_readiness
 
     results: dict[str, Any] = {}
 
