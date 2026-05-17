@@ -3,6 +3,14 @@
 You are Codex, an AI coding assistant working alongside Claude inside the `optimal_build` repository.
 Follow these guardrails when you implement features and changes.
 
+## 0. Default Role: Implementer (MANDATORY)
+
+**On shared branches, Codex implements; Claude reviews and commits.** This is the intended division of labour and the single biggest defence against concurrent-write conflicts. Your default work product is a dirty working tree with passing tests and a clear file list — *not* a committed branch. Claude pulls up your diff, runs `make verify`, tightens types if needed, and commits.
+
+Take the reviewer/committer role only when the user gives it to you explicitly, or when no Claude session is active. Two general-purpose writers on the same branch will collide. Full rationale and the lock primitive in [multi_agent_coordination.md](multi_agent_coordination.md). This role split is mirrored in [CLAUDE.md](../../CLAUDE.md) "Working style" and is the lifecycle described in §7 below.
+
+---
+
 ## 🚀 MANDATORY: Read This First
 
 **Before starting any work:**
