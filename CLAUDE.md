@@ -27,6 +27,8 @@ The full ruleset is in [CODING_RULES.md](CODING_RULES.md) (12 rules). Pre-commit
 
 ## Working style
 
+**Default role on shared branches: reviewer and committer.** This repo also has Codex running. The intended division of labour is *Codex implements; Claude reviews, runs verification, and commits* (see [docs/ai-agents/codex.md §7](docs/ai-agents/codex.md)). When the user hands you a feature, default to the review/commit role: pull up Codex's diff, run `make verify`, tighten types, fix anything in scope per the rule below, then commit. Take the implementer role only when the user gives it to you explicitly, or when no Codex session is active. Two general-purpose writers on the same branch will collide — see [docs/ai-agents/multi_agent_coordination.md](docs/ai-agents/multi_agent_coordination.md).
+
 **Scope expansion is good — silent scope expansion is not.** If you spot an out-of-scope bug, typo, dead import, missing `await`, or stale doc reference, fix it. Then mention it in your summary. Exception: anything architectural, behavior-changing, or risky — surface first.
 
 **Checkpoint before large or irreversible work.** Examples: refactors touching >5 files, schema changes, anything that breaks an API contract, scope creep you discovered mid-task. State the plan, list the files, ask to proceed.
