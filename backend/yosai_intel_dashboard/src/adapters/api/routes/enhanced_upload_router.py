@@ -23,13 +23,7 @@ except ModuleNotFoundError:  # pragma: no cover
     load_package_stub("fastapi", "fastapi_stub_1758768319", "FastAPI")
     from fastapi import APIRouter, Depends
 
-try:  # pragma: no cover - fallback for environments without Pydantic installed
-    from pydantic import BaseModel, Field
-except ModuleNotFoundError:  # pragma: no cover
-    from backend._stub_loader import load_package_stub
-
-    load_package_stub("pydantic", "pydantic", "Pydantic")
-    from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field
 
 __all__ = [
     "AUDIT_DB_ENV_VAR",

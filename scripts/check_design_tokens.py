@@ -142,13 +142,72 @@ def get_staged_files() -> list[Path]:
     return files
 
 
+# Hunk header: @@ -old,oldlen +newstart,newlen @@ ; newlen is optional (=1)
+HUNK_HEADER_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
+
+
+def get_added_line_numbers(path: Path) -> set[int] | None:
+    """Return the set of line numbers added by the staged diff for ``path``.
+
+    Returns None if the diff can't be obtained (no git, error). An empty set
+    means the file is staged but only deletions were made (no new lines added).
+    Only lines whose first character in the diff is '+' (and not '+++') count.
+    """
+    try:
+        rel = path.relative_to(REPO_ROOT)
+    except ValueError:
+        return None
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--cached", "-U0", "--", str(rel)],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+    added: set[int] = set()
+    current_new_line = 0
+    for line in result.stdout.splitlines():
+        m = HUNK_HEADER_RE.match(line)
+        if m:
+            current_new_line = int(m.group(1))
+            continue
+        if not current_new_line:
+            continue
+        # File header lines start with +++ / --- — ignore.
+        if line.startswith("+++") or line.startswith("---"):
+            continue
+        if line.startswith("+"):
+            added.add(current_new_line)
+            current_new_line += 1
+        elif line.startswith(" "):
+            current_new_line += 1
+        # Lines starting with '-' don't advance the new-file counter.
+    return added
+
+
 def should_skip_hardcode(path: Path) -> bool:
     s = str(path)
     return any(skip in s for skip in SKIP_HARDCODE)
 
 
-def check_new_hardcodes(files: list[Path], exceptions: set[str]) -> list[str]:
-    """Block new hardcoded px/hex values, allowing grandfathered exceptions."""
+def check_new_hardcodes(
+    files: list[Path],
+    exceptions: set[str],
+    *,
+    diff_aware: bool,
+) -> list[str]:
+    """Block new hardcoded px/hex values, allowing grandfathered exceptions.
+
+    When ``diff_aware`` is True, only flag matches on lines that the staged
+    diff actually added — this stops the scanner from re-flagging pre-existing
+    hardcodes (e.g., Google Maps style configuration) every time an unrelated
+    edit touches the same file. ``--full-audit`` keeps the legacy whole-file
+    behaviour for the periodic sweep.
+    """
     violations: list[str] = []
     for path in files:
         if should_skip_hardcode(path):
@@ -159,9 +218,21 @@ def check_new_hardcodes(files: list[Path], exceptions: set[str]) -> list[str]:
             continue
         rel = path.relative_to(REPO_ROOT)
 
+        added_lines: set[int] | None
+        if diff_aware:
+            added_lines = get_added_line_numbers(path)
+            # If git diff fails, fall back to whole-file scan rather than skipping.
+        else:
+            added_lines = None
+
+        def _is_new(line_no: int, _added: set[int] | None = added_lines) -> bool:
+            return _added is None or line_no in _added
+
         if path.suffix in (".tsx", ".ts"):
             for match in HARDCODED_PX_TSX_RE.finditer(text):
                 line_no = text.count("\n", 0, match.start()) + 1
+                if not _is_new(line_no):
+                    continue
                 key = f"{rel}:{line_no}"
                 if key in exceptions:
                     continue
@@ -172,6 +243,8 @@ def check_new_hardcodes(files: list[Path], exceptions: set[str]) -> list[str]:
                 )
             for match in HARDCODED_HEX_TSX_RE.finditer(text):
                 line_no = text.count("\n", 0, match.start()) + 1
+                if not _is_new(line_no):
+                    continue
                 key = f"{rel}:{line_no}"
                 if key in exceptions:
                     continue
@@ -184,6 +257,8 @@ def check_new_hardcodes(files: list[Path], exceptions: set[str]) -> list[str]:
         elif path.suffix == ".css":
             for match in HARDCODED_PX_CSS_RE.finditer(text):
                 line_no = text.count("\n", 0, match.start()) + 1
+                if not _is_new(line_no):
+                    continue
                 key = f"{rel}:{line_no}"
                 if key in exceptions:
                     continue
@@ -199,7 +274,8 @@ def check_new_hardcodes(files: list[Path], exceptions: set[str]) -> list[str]:
 
 
 def main() -> int:
-    if "--full-audit" in sys.argv:
+    full_audit = "--full-audit" in sys.argv
+    if full_audit:
         # Scan ALL files (used in CI / one-time audits)
         files_to_check = []
         for ext in (".tsx", ".ts", ".css"):
@@ -212,7 +288,9 @@ def main() -> int:
     exceptions = load_exceptions()
 
     undefined = check_undefined_references(defined)
-    hardcodes = check_new_hardcodes(files_to_check, exceptions)
+    hardcodes = check_new_hardcodes(
+        files_to_check, exceptions, diff_aware=not full_audit
+    )
 
     if not undefined and not hardcodes:
         print(f"✓ Design tokens OK ({len(defined)} tokens defined)")

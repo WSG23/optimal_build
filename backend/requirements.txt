@@ -31,6 +31,9 @@ slowapi==0.1.8
 
 # Data processing
 pydantic[email,mypy]==2.12.5
+# Optional pydantic backport — enables PEP 604 union evaluation in forward refs.
+# Pinned so the previously vendored shim's behaviour is preserved without the in-repo dir.
+eval-type-backport==0.3.1
 
 # Agents & market intelligence routers (keep pinned to avoid ImportError regressions)
 numpy==1.26.4
@@ -55,7 +58,9 @@ pytest==7.4.3
 pytest-asyncio==0.21.1
 # Updated for security: GHSA-4v9f-r55g-g6hc (min: 2.20.17), GHSA-4hh5-2678-83fx (min: 2.16.5)
 # Upgraded 2025-11-23: CVE-2024-8183 CORS misconfiguration fix
-prefect==2.20.17
+# Bumped 2026-05-17 to 2.20.25 — required for pydantic 2.12 compatibility
+# (2.20.17 crashes in create_model when @flow inspects pydantic-typed signatures).
+prefect==2.20.25
 structlog==23.2.0
 prometheus-client==0.19.0
 black==26.3.1

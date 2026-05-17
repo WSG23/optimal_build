@@ -31,8 +31,6 @@ extend-exclude = """
 (
   ^/frontend
  | ^/ui-admin
- | ^/httpx
- | ^/importlib
  | ^/uvicorn_app
  | ^/backend/_vendor
  | ^/backend/migrations
@@ -50,8 +48,6 @@ exclude = [
     "dist",
     "frontend",
     "ui-admin",
-    "httpx",
-    "importlib",
     "uvicorn_app",
     "backend/_vendor",
     "backend/migrations",

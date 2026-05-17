@@ -60,7 +60,7 @@ ignore_missing_imports = true
 no_implicit_optional = true
 strict_optional = true
 explicit_package_bases = true
-exclude = "frontend|ui-admin|tests|(^|/)fastapi/|(^|/)httpx/|(^|/)sqlalchemy/|(^|/)uvicorn_app/|(^|/)backend/sqlalchemy_pkg_backup/|(^|/)backend/_vendor/|(^|/)backend/(fastapi_shadow_|starlette_shadow_).*|(^|/)backend/migrations/"
+exclude = "frontend|ui-admin|tests|(^|/)fastapi/|(^|/)sqlalchemy/|(^|/)uvicorn_app/|(^|/)backend/sqlalchemy_pkg_backup/|(^|/)backend/_vendor/|(^|/)backend/(fastapi_shadow_|starlette_shadow_).*|(^|/)backend/migrations/"
 
 [[tool.mypy.overrides]]
 module = [
