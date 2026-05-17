@@ -25,12 +25,13 @@ if _PYDANTIC_MAJOR < 2:
     pytest.skip("Finance API tests require Pydantic v2", allow_module_level=True)
 
 
+from httpx import AsyncClient
+
 from backend.app.models.projects import Project, ProjectPhase, ProjectType
 from backend.app.models.rkp import RefCostIndex
 from backend.app.schemas.finance import DscrInputs
 from backend.app.services.finance import calculator
 from backend.scripts.seed_finance_demo import seed_finance_demo
-from httpx import AsyncClient
 
 OWNER_EMAIL = "qa@example.com"
 REVIEWER_HEADERS = {"X-Role": "reviewer", "X-User-Email": OWNER_EMAIL}
