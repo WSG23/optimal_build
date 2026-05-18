@@ -221,8 +221,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     from app.services.entity_history_recorder import (
         register_entity_history_recorder,
     )
+    from app.services.soft_delete_filter import register_soft_delete_filter
 
     register_entity_history_recorder()
+    register_soft_delete_filter()
 
     # For SQLite dev mode, create all tables on startup
     if "sqlite" in str(engine.url):
