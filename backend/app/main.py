@@ -216,6 +216,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     log_event(logger, "app_starting", environment=settings.ENVIRONMENT)
 
+    # Attach the entity_history recorder so every mutation on tracked tables
+    # lands in the audit log. Idempotent — safe across reloads.
+    from app.services.entity_history_recorder import (
+        register_entity_history_recorder,
+    )
+
+    register_entity_history_recorder()
+
     # For SQLite dev mode, create all tables on startup
     if "sqlite" in str(engine.url):
         from app.models import load_model_modules
@@ -295,6 +303,10 @@ _ALLOWED_HEADERS = [
     "X-User-Id",  # Development user ID header
     "X-User-Email",  # Development email header
     "X-Correlation-ID",  # Request tracing
+    "x-role",
+    "x-user-id",
+    "x-user-email",
+    "x-correlation-id",
 ]
 
 app.add_middleware(
