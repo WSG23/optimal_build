@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 from typing import Any, Mapping, Protocol, Sequence, cast
 
 
@@ -29,6 +30,8 @@ from app.models.preview import PreviewJob, PreviewJobStatus
 from app.models.property import Property
 from app.services import preview_generator
 from app.utils import metrics
+
+logger = logging.getLogger(__name__)
 
 
 def _serialise_layers(
@@ -106,29 +109,18 @@ class PreviewJobService:
     ) -> PreviewJob:
         """Create a preview job and enqueue it for asynchronous rendering."""
 
-        import logging
-
-        logger = logging.getLogger(__name__)
-        logger.info(
-            f"[QUEUE_PREVIEW_START] Entered queue_preview for property {property_id}, scenario {scenario}"
-        )
-
         try:
             detail_level = preview_generator.normalise_geometry_detail_level(
                 geometry_detail_level or settings.PREVIEW_GEOMETRY_DETAIL_LEVEL
             )
             serialised_layers = _serialise_layers(massing_layers)
             legend_payload = _serialise_layers(color_legend) if color_legend else []
-            logger.info(
-                f"[QUEUE_PREVIEW_START] Serialised {len(serialised_layers)} layers"
-            )
 
             checksum_source = json.dumps(
                 {"layers": serialised_layers, "legend": legend_payload},
                 sort_keys=True,
             ).encode("utf-8")
             checksum = hashlib.sha256(checksum_source).hexdigest()
-            logger.info(f"[QUEUE_PREVIEW_START] Computed checksum: {checksum[:16]}...")
 
             property_record = await self._session.get(Property, property_id)
             jurisdiction_code = (
@@ -154,43 +146,28 @@ class PreviewJobService:
                 metadata=job_metadata,
             )
             self._session.add(job)
-            logger.info("[QUEUE_PREVIEW_START] Added job to session, about to flush")
             await self._session.flush()
-            logger.info(f"[QUEUE_PREVIEW_START] Flushed job {job.id}")
 
-            logger.info(
-                "[QUEUE_PREVIEW_START] About to access job_queue._backend._registry"
-            )
             registry = getattr(job_queue._backend, "_registry", {})
-            logger.info(
-                f"[QUEUE_PREVIEW_START] Got registry with {len(registry)} entries"
-            )
-
             if "preview.generate" not in registry:
-                logger.info("[QUEUE_PREVIEW_START] Registering preview.generate job")
                 job_queue.register(
                     generate_preview_job, "preview.generate", queue="preview"
                 )
-                logger.info("[QUEUE_PREVIEW_START] Registered preview.generate job")
 
-            logger.info("[QUEUE_PREVIEW_START] About to get backend_name")
             backend_name = getattr(job_queue._backend, "name", "inline")
             logger.info(
-                f"[QUEUE_PREVIEW] Detected backend_name: '{backend_name}' for job {job.id}"
-            )
-            logger.info(
-                f"[QUEUE_PREVIEW] job_queue._backend type: {type(job_queue._backend)}"
+                "Preview job queued: job_id=%s property_id=%s scenario=%s backend=%s layers=%s",
+                job.id,
+                property_id,
+                scenario,
+                backend_name,
+                len(serialised_layers),
             )
 
-            logger.info("[QUEUE_PREVIEW_START] About to update job.metadata")
             job.metadata["job_backend"] = backend_name
-            logger.info("[QUEUE_PREVIEW_START] Updated metadata, about to flush")
             await self._session.flush()
-            logger.info("[QUEUE_PREVIEW_START] Flushed metadata update")
-        except Exception as e:
-            logger.error(
-                f"[QUEUE_PREVIEW_ERROR] Exception in queue_preview setup: {type(e).__name__}: {e}"
-            )
+        except Exception:
+            logger.exception("Preview job queue setup failed")
             raise
         metrics.PREVIEW_JOBS_CREATED_TOTAL.labels(
             scenario=scenario,
@@ -199,27 +176,20 @@ class PreviewJobService:
         await self._record_queue_depth(backend_name)
 
         if backend_name == "inline" and inline_execution == "background":
-            import logging
-
-            logger = logging.getLogger(__name__)
             logger.info(
-                f"[INLINE QUEUE] Committing session and scheduling background preview job {job.id}"
+                "Scheduling inline preview job in background: job_id=%s",
+                job.id,
             )
             await self._session.commit()
             _schedule_preview_generation(job.id)
         elif backend_name == "inline":
-            import logging
-
-            logger = logging.getLogger(__name__)
             logger.info(
-                f"[INLINE QUEUE] About to commit session and execute preview job {job.id}"
+                "Generating inline preview job: job_id=%s",
+                job.id,
             )
             await self._session.commit()
-            logger.info(
-                f"[INLINE QUEUE] Session committed, now calling generate_preview_job for {job.id}"
-            )
             await generate_preview_job(str(job.id))
-            logger.info(f"[INLINE QUEUE] generate_preview_job completed for {job.id}")
+            logger.info("Inline preview job generated: job_id=%s", job.id)
         else:
             try:
                 await job_queue.enqueue(
