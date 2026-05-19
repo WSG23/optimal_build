@@ -7,8 +7,8 @@
  * in either is silent, telemetry must never break the product.
  */
 
-import { config } from '../../config'
 import { ensureIdentityHeaders } from '../../api/identity'
+import { buildUrl } from '../../api/shared'
 
 function safeRandomUUID(): string {
   if (
@@ -50,7 +50,7 @@ export interface ResolveChoiceSetInput {
 }
 
 function endpointFor(path: string): string {
-  return `${config.apiBaseUrl.replace(/\/$/, '')}/api/v1/decisions${path}`
+  return buildUrl(`/api/v1/decisions${path}`)
 }
 
 async function postJson(url: string, body: unknown): Promise<void> {

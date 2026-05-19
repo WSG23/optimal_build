@@ -9,8 +9,8 @@
  * Failure is silent — telemetry must never break the product.
  */
 
-import { config } from '../../config'
 import { ensureIdentityHeaders } from '../../api/identity'
+import { buildUrl } from '../../api/shared'
 
 const STORAGE_KEYS = {
   anonymousId: 'ob.telemetry.anonymousId',
@@ -92,7 +92,7 @@ let timer: ReturnType<typeof setTimeout> | null = null
 let flushing = false
 
 function endpoint(): string {
-  return `${config.apiBaseUrl.replace(/\/$/, '')}/api/v1/events/batch`
+  return buildUrl('/api/v1/events/batch')
 }
 
 function scheduleFlush(): void {
