@@ -5,6 +5,7 @@ import {
   buildUrl,
   apiBaseUrl,
 } from './shared'
+import { applyIdentityHeaders } from './identity'
 
 const API_PREFIX = 'api/v1/agents/commercial-property/properties/log-gps'
 
@@ -657,7 +658,10 @@ async function postLogProperty(
 ): Promise<RawGpsResponse> {
   const response = await fetch(buildUrl(API_PREFIX, baseUrl), {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: applyIdentityHeaders({
+      'content-type': 'application/json',
+      'X-Role': 'reviewer',
+    }),
     body: JSON.stringify({
       latitude: payload.latitude,
       longitude: payload.longitude,
@@ -929,7 +933,10 @@ export async function logPropertyByGpsWithFeatures(
   try {
     const response = await fetch(buildUrl(DEVELOPER_GPS_ENDPOINT), {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: applyIdentityHeaders({
+        'content-type': 'application/json',
+        'X-Role': 'reviewer',
+      }),
       body: JSON.stringify({
         latitude: baseRequest.latitude,
         longitude: baseRequest.longitude,

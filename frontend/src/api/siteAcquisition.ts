@@ -1835,7 +1835,10 @@ export async function capturePropertyForDevelopment(
 
       const response = await fetch(buildUrl(DEVELOPER_GPS_ENDPOINT), {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: applyIdentityHeaders({
+          'content-type': 'application/json',
+          'X-Role': 'reviewer',
+        }),
         body: JSON.stringify(requestBody),
         signal: options.signal,
       })
@@ -1975,6 +1978,7 @@ export async function fetchPreviewJob(
     buildUrl(`api/v1/developers/preview-jobs/${jobId}`),
     {
       method: 'GET',
+      headers: applyIdentityHeaders({ 'X-Role': 'viewer' }),
       signal,
     },
   )
@@ -2005,8 +2009,13 @@ export async function refreshPreviewJob(
   }
   const requestInit: RequestInit = { method: 'POST' }
   if (Object.keys(requestPayload).length > 0) {
-    requestInit.headers = { 'Content-Type': 'application/json' }
+    requestInit.headers = applyIdentityHeaders({
+      'Content-Type': 'application/json',
+      'X-Role': 'reviewer',
+    })
     requestInit.body = JSON.stringify(requestPayload)
+  } else {
+    requestInit.headers = applyIdentityHeaders({ 'X-Role': 'reviewer' })
   }
   const response = await fetch(
     buildUrl(`api/v1/developers/preview-jobs/${jobId}/refresh`),
@@ -2025,7 +2034,10 @@ export async function listPreviewJobs(
 ): Promise<DeveloperPreviewJob[]> {
   const response = await fetch(
     buildUrl(`api/v1/developers/properties/${propertyId}/preview-jobs`),
-    { method: 'GET' },
+    {
+      method: 'GET',
+      headers: applyIdentityHeaders({ 'X-Role': 'viewer' }),
+    },
   )
   if (!response.ok) {
     return []
@@ -2056,7 +2068,10 @@ export async function requestStarterModelForScenario(
     buildUrl(`api/v1/developers/properties/${request.propertyId}/preview-jobs`),
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: applyIdentityHeaders({
+        'Content-Type': 'application/json',
+        'X-Role': 'reviewer',
+      }),
       body: JSON.stringify(requestPayload),
     },
   )
