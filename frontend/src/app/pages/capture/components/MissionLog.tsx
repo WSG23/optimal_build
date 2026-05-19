@@ -1,11 +1,8 @@
 /**
- * MissionLog - Capture history table for unified capture page
+ * MissionLog — recent-captures history table for the unified capture page.
  *
- * Displays a table of previously captured properties with:
- * - Target address
- * - District
- * - Scenario type
- * - Capture timestamp
+ * Renders nothing pre-capture; once at least one site has been captured,
+ * shows address, district, scenario, and capture time.
  */
 
 import { formatScenarioLabel } from '../utils/formatScenario'
@@ -16,43 +13,41 @@ export interface MissionLogProps {
 }
 
 export function MissionLog({ capturedSites }: MissionLogProps) {
+  if (capturedSites.length === 0) {
+    return null
+  }
+
   return (
     <section className="gps-page__captures">
       <div className="gps-panel">
-        <h3>Mission Log</h3>
-        {capturedSites.length === 0 ? (
-          <p className="gps-panel__empty">No prior missions.</p>
-        ) : (
-          <table aria-label="Captured properties log">
-            <thead>
-              <tr>
-                <th>Target</th>
-                <th>District</th>
-                <th>Scenario</th>
-                <th>Time</th>
+        <h3>Recent captures</h3>
+        <table aria-label="Recent captures">
+          <thead>
+            <tr>
+              <th>Address</th>
+              <th>District</th>
+              <th>Scenario</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {capturedSites.map((site) => (
+              <tr key={`${site.propertyId}-${site.capturedAt}`}>
+                <td>{site.address}</td>
+                <td>{site.district ?? '—'}</td>
+                <td>
+                  {site.scenario ? formatScenarioLabel(site.scenario) : '—'}
+                </td>
+                <td>
+                  {new Date(site.capturedAt).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {capturedSites.map((site) => (
-                <tr key={`${site.propertyId}-${site.capturedAt}`}>
-                  <td>{site.address}</td>
-                  <td>{site.district ?? '\u2014'}</td>
-                  <td>
-                    {site.scenario
-                      ? formatScenarioLabel(site.scenario)
-                      : '\u2014'}
-                  </td>
-                  <td>
-                    {new Date(site.capturedAt).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+            ))}
+          </tbody>
+        </table>
       </div>
     </section>
   )

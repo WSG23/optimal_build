@@ -7,6 +7,7 @@ import {
   type UseUnifiedCaptureReturn,
 } from '../useUnifiedCapture'
 
+const mockSetOptions = vi.hoisted(() => vi.fn())
 const mockMapConstructor = vi.fn()
 const mockMapAddListener = vi.fn()
 const mockMapSetCenter = vi.fn()
@@ -26,7 +27,7 @@ let mockGmpSelectHandler: ((event: Event) => void | Promise<void>) | null = null
 // Each importLibrary call resolves with the already-installed window.google
 // mock so the hook proceeds as if Maps had loaded.
 vi.mock('@googlemaps/js-api-loader', () => ({
-  setOptions: () => {},
+  setOptions: mockSetOptions,
   importLibrary: () =>
     Promise.resolve(
       (window as unknown as { google?: { maps?: unknown } }).google?.maps,
@@ -150,6 +151,11 @@ describe('useUnifiedCapture', () => {
     sessionStorage.clear()
     document.body.classList.remove('capture-results-active')
     delete (window as { google?: unknown }).google
+    delete (
+      globalThis as typeof globalThis & {
+        __optimalBuildGoogleMapsLoader?: unknown
+      }
+    ).__optimalBuildGoogleMapsLoader
   })
 
   it('sets a map error when the Google Maps API key is missing', async () => {
@@ -174,6 +180,18 @@ describe('useUnifiedCapture', () => {
 
     expect(mockMapConstructor).toHaveBeenCalled()
     expect(mockMarkerConstructor).toHaveBeenCalled()
+  })
+
+  it('configures the Google Maps loader once across repeated hook mounts', async () => {
+    installGoogleMapsMocks()
+    renderHookHarness(true, { googleMapsApiKey: 'test-key' })
+    renderHookHarness(true, { googleMapsApiKey: 'test-key' })
+
+    await act(async () => {
+      // allow effects to run
+    })
+
+    expect(mockSetOptions).toHaveBeenCalledTimes(1)
   })
 
   it('auto-geocodes address changes and updates coordinates', async () => {
@@ -366,6 +384,51 @@ describe('useUnifiedCapture', () => {
       hookRef.current!.setAddress('45 Burghley Dr, Singapore')
     })
 
+    expect(hookRef.current!.geocodeError).toBeNull()
+    expect(hookRef.current!.captureError).toBeNull()
+  })
+
+  it('clears stale errors when the visible autocomplete input is edited', async () => {
+    vi.useFakeTimers()
+    installGoogleMapsMocks()
+    mockForwardGeocodeAddress.mockRejectedValue(
+      new Error('No results for this address'),
+    )
+    const hookRef = renderHookHarness(true, { googleMapsApiKey: 'test-key' })
+
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    await act(async () => {
+      hookRef.current!.setAddress('45 Burghley Dr, Singapor')
+    })
+
+    await act(async () => {
+      const event = {
+        preventDefault: vi.fn(),
+      } as unknown as React.FormEvent<HTMLFormElement>
+      const promise = hookRef.current!.handleCapture(event)
+      await Promise.resolve()
+      await vi.runAllTimersAsync()
+      await promise
+    })
+
+    expect(hookRef.current!.geocodeError).toBe('No results for this address')
+    expect(hookRef.current!.captureError).toBe('No results for this address')
+
+    const autocomplete = document.querySelector('span') as
+      | (HTMLSpanElement & { value: string })
+      | null
+    expect(autocomplete).not.toBeNull()
+
+    await act(async () => {
+      autocomplete!.value = '45 Burghley Dr, Singapore'
+      autocomplete!.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+
+    expect(hookRef.current!.address).toBe('45 Burghley Dr, Singapore')
     expect(hookRef.current!.geocodeError).toBeNull()
     expect(hookRef.current!.captureError).toBeNull()
   })

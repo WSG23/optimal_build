@@ -61,23 +61,48 @@ function hasConflictingResolvedStreetNumber(
   )
 }
 
-// @googlemaps/js-api-loader v2: functional API. setOptions() is idempotent
-// per page; importLibrary() resolves with the requested library and
-// transparently deduplicates concurrent calls.
-let optionsApplied = false
+type GoogleMapsLoaderState = {
+  optionsApplied: boolean
+  apiKey: string | null
+  loadPromise: Promise<void> | null
+}
+
+type GlobalWithGoogleMapsLoader = typeof globalThis & {
+  __optimalBuildGoogleMapsLoader?: GoogleMapsLoaderState
+}
+
+function getGoogleMapsLoaderState(): GoogleMapsLoaderState {
+  const globalRecord = globalThis as GlobalWithGoogleMapsLoader
+  globalRecord.__optimalBuildGoogleMapsLoader ??= {
+    optionsApplied: false,
+    apiKey: null,
+    loadPromise: null,
+  }
+  return globalRecord.__optimalBuildGoogleMapsLoader
+}
 
 async function loadGoogleMaps(apiKey: string): Promise<void> {
-  if (!optionsApplied) {
+  const loaderState = getGoogleMapsLoaderState()
+  if (!loaderState.optionsApplied) {
     setOptions({ key: apiKey, v: 'weekly' })
-    optionsApplied = true
+    loaderState.optionsApplied = true
+    loaderState.apiKey = apiKey
   }
-  // Load required libraries in parallel; results are attached to
-  // `window.google.maps.*` for downstream code that references the globals.
-  await Promise.all([
-    importLibrary('maps'),
-    importLibrary('marker'),
-    importLibrary('places'),
-  ])
+  if (!loaderState.loadPromise) {
+    // Load required libraries in parallel; results are attached to
+    // `window.google.maps.*` for downstream code that references the globals.
+    loaderState.loadPromise = Promise.all([
+      importLibrary('maps'),
+      importLibrary('marker'),
+      importLibrary('places'),
+    ])
+      .then(() => undefined)
+      .catch((error) => {
+        loaderState.loadPromise = null
+        throw error
+      })
+  }
+  await loaderState.loadPromise
 }
 
 // PlaceAutocompleteElement web-component surface that @types/google.maps
@@ -572,96 +597,14 @@ export function useUnifiedCapture({
       return
     }
 
-    // Dark grey map style — monochrome, no colorful markers
-    const darkGreyMapStyle: google.maps.MapTypeStyle[] = [
-      { elementType: 'geometry', stylers: [{ color: '#212121' }] },
-      { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
-      { elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
-      { elementType: 'labels.text.stroke', stylers: [{ color: '#212121' }] },
-      {
-        featureType: 'administrative',
-        elementType: 'geometry',
-        stylers: [{ color: '#757575' }],
-      },
-      {
-        featureType: 'poi',
-        elementType: 'geometry',
-        stylers: [{ color: '#2a2a2a' }],
-      },
-      {
-        featureType: 'poi',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#616161' }],
-      },
-      {
-        featureType: 'poi.park',
-        elementType: 'geometry',
-        stylers: [{ color: '#1c3a1c' }],
-      },
-      {
-        featureType: 'road',
-        elementType: 'geometry.fill',
-        stylers: [{ color: '#2c2c2c' }],
-      },
-      {
-        featureType: 'road',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#8a8a8a' }],
-      },
-      {
-        featureType: 'road.arterial',
-        elementType: 'geometry',
-        stylers: [{ color: '#373737' }],
-      },
-      {
-        featureType: 'road.highway',
-        elementType: 'geometry',
-        stylers: [{ color: '#3c3c3c' }],
-      },
-      {
-        featureType: 'road.highway.controlled_access',
-        elementType: 'geometry',
-        stylers: [{ color: '#4e4e4e' }],
-      },
-      {
-        featureType: 'road.local',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#616161' }],
-      },
-      {
-        featureType: 'transit',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#616161' }],
-      },
-      {
-        featureType: 'transit.line',
-        elementType: 'geometry',
-        stylers: [{ color: '#2a2a2a' }],
-      },
-      {
-        featureType: 'transit.station',
-        elementType: 'labels.icon',
-        stylers: [{ visibility: 'off' }],
-      },
-      {
-        featureType: 'water',
-        elementType: 'geometry',
-        stylers: [{ color: '#181818' }],
-      },
-      {
-        featureType: 'water',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#3d3d3d' }],
-      },
-    ]
-
     const initialLat = Number(latitude) || 1.3
     const initialLng = Number(longitude) || 103.85
 
     const map = new google.maps.Map(mapContainerRef.current, {
       center: { lat: initialLat, lng: initialLng },
       zoom: 16,
-      styles: darkGreyMapStyle,
+      // Google vector maps ignore inline styles when a mapId is present and
+      // emit a console warning. Keep styling attached to the configured mapId.
       mapId: 'capture_map',
       mapTypeControl: false,
       streetViewControl: false,
@@ -819,9 +762,11 @@ export function useUnifiedCapture({
 
     // Keep `address` state in sync with the user's typing so the
     // debounced backend geocode (separate effect) continues to fire.
+    // Route through the public setter so visible Places input edits clear
+    // stale geocoding/capture errors and old analysis coordinates.
     autocomplete.addEventListener('input', (event: Event) => {
       const target = event.target as PlaceAutocompleteEl | null
-      setAddressState(target?.value ?? '')
+      setAddress(target?.value ?? '')
     })
 
     autocomplete.addEventListener('gmp-select', async (event: Event) => {
@@ -834,6 +779,9 @@ export function useUnifiedCapture({
 
       const formattedAddress = place.formattedAddress ?? null
       if (formattedAddress) {
+        setCaptureError(null)
+        setGeocodeError(null)
+        lastGeocodeErrorRef.current = null
         setAddressState(formattedAddress)
         lastGeocodedAddressRef.current = formattedAddress
         lastResolvedGeocodeAddressRef.current = formattedAddress
@@ -870,7 +818,7 @@ export function useUnifiedCapture({
       autocomplete.remove()
       autocompleteElementRef.current = null
     }
-  }, [isMapLoaded, clearAnalysisCoordinates, updateMarkerPosition])
+  }, [isMapLoaded, clearAnalysisCoordinates, setAddress, updateMarkerPosition])
 
   // Capture handler - routes to appropriate API based on mode
   const handleCapture = useCallback(
