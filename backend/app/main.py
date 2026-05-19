@@ -63,8 +63,9 @@ except Exception:  # pragma: no cover - fallback for stubbed environments
         return getattr(client, "host", "127.0.0.1")
 
 
-from sqlalchemy import func, select, text
+from sqlalchemy import MetaData, func, inspect, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.schema import CreateColumn
 
 from app.api.deps import require_viewer
 from app.api.error_handlers import (
@@ -195,6 +196,44 @@ def _ensure_api_router_loaded() -> None:
         _api_router_loaded = True
 
 
+def _repair_sqlite_schema_from_metadata(
+    sync_conn: Any, metadata: MetaData
+) -> list[str]:
+    """Add missing nullable model columns to existing SQLite dev tables.
+
+    ``metadata.create_all`` deliberately does not alter existing tables. Local
+    dev uses SQLite, so an older ``.devstack/app.db`` can otherwise keep running
+    with a stale schema after model columns are added.
+    """
+
+    inspector = inspect(sync_conn)
+    table_names = set(inspector.get_table_names())
+    preparer = sync_conn.dialect.identifier_preparer
+    repaired_columns: list[str] = []
+
+    for table in metadata.sorted_tables:
+        if table.name not in table_names:
+            continue
+
+        existing_columns = {
+            column["name"] for column in inspector.get_columns(table.name)
+        }
+        for column in table.columns:
+            if column.name in existing_columns:
+                continue
+            if column.primary_key:
+                continue
+            if not column.nullable:
+                continue
+
+            column_ddl = str(CreateColumn(column).compile(dialect=sync_conn.dialect))
+            table_name = preparer.quote(table.name)
+            sync_conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_ddl}"))
+            repaired_columns.append(f"{table.name}.{column.name}")
+
+    return repaired_columns
+
+
 class ApiRouterLoaderMiddleware:
     """Load API routes lazily so importing ``app.main`` stays cheap."""
 
@@ -234,6 +273,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         load_model_modules()
         async with engine.begin() as conn:
             await conn.run_sync(BaseModel.metadata.create_all)
+            repaired_columns = await conn.run_sync(
+                _repair_sqlite_schema_from_metadata, BaseModel.metadata
+            )
+        if repaired_columns:
+            log_event(
+                logger,
+                "sqlite_schema_repaired",
+                columns=repaired_columns,
+            )
         log_event(logger, "sqlite_tables_created")
 
         # Seed regulatory compliance paths if empty
