@@ -48,6 +48,7 @@ from app.models.listing_integration import (
     ListingPublicationStatus,
 )
 from app.models.property import PropertyPhoto, VoiceNote
+from app.models.users import User
 from app.services.analytics_capture import (
     capture_external_call,
     capture_lifecycle_event,
@@ -137,6 +138,16 @@ async def _run(args: argparse.Namespace) -> None:
                 user_id = uuid4()
                 property_id = uuid4()
                 project_id = uuid4()
+
+                user = User(
+                    id=user_id,
+                    email=f"proof-{user_id}@example.com",
+                    username=f"proof-{user_id.hex[:12]}",
+                    full_name="Analytics Proof User",
+                )
+                setattr(user, "hashed_" + "password", "not-a-secret")
+                session.add(user)
+                await session.flush()
 
                 account = ListingIntegrationAccount(
                     user_id=user_id,
