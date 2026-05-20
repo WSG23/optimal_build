@@ -47,7 +47,7 @@ from app.models.listing_integration import (
     ListingPublication,
     ListingPublicationStatus,
 )
-from app.models.property import PropertyPhoto, VoiceNote
+from app.models.property import Property, PropertyPhoto, PropertyType, VoiceNote
 from app.models.users import User
 from app.services.analytics_capture import (
     capture_external_call,
@@ -147,6 +147,16 @@ async def _run(args: argparse.Namespace) -> None:
                 )
                 setattr(user, "hashed_" + "password", "not-a-secret")
                 session.add(user)
+                await session.flush()
+
+                property_record = Property(
+                    id=property_id,
+                    name="Analytics Proof Property",
+                    address="1 Proof Street",
+                    property_type=PropertyType.OFFICE,
+                    location="POINT(103.8535 1.2830)",
+                )
+                session.add(property_record)
                 await session.flush()
 
                 account = ListingIntegrationAccount(
