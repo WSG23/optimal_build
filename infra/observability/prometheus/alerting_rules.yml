@@ -44,6 +44,19 @@ groups:
           description: "{{ $value }} database connection errors in the last 5 minutes"
           runbook_url: "https://docs.optimal-build.com/runbooks/database-connection"
 
+      # Analytics Capture Failures
+      - alert: AnalyticsCaptureFailures
+        expr: |
+          sum(increase(analytics_capture_failures_total{job="optimal-build-backend"}[10m])) > 0
+        for: 2m
+        labels:
+          severity: critical
+          team: data
+        annotations:
+          summary: "Analytics capture writes are failing"
+          description: "{{ $value }} analytics capture write failures were recorded in the last 10 minutes"
+          runbook_url: "https://docs.optimal-build.com/runbooks/analytics-capture-failures"
+
       # High Memory Usage
       - alert: HighMemoryUsage
         expr: |

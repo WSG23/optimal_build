@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from app.core.config import settings
 from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
+from app.services.analytics_capture import ExternalCallTimer, capture_external_call
 from app.services.base import AsyncClientService
 
 logger = structlog.get_logger()
@@ -20,6 +21,11 @@ URA_REQUEST_HEADERS = {
     "Accept": "application/json",
     "User-Agent": "OptimalBuildCapture/1.0",
 }
+
+
+def _response_headers(response: Any) -> dict[str, Any]:
+    headers = getattr(response, "headers", None)
+    return dict(headers) if headers is not None else {}
 
 
 class URAZoningInfo(BaseModel):
@@ -102,17 +108,34 @@ class URAIntegrationService(AsyncClientService):
             return None
 
         try:
+            timer = ExternalCallTimer()
             response = await self.client.get(
                 self.token_url,
                 headers={**URA_REQUEST_HEADERS, "AccessKey": self.access_key},
             )
+            decoded_payload = self._decode_json_response(response)
+            await capture_external_call(
+                provider="ura",
+                api_name="token",
+                api_version="v1",
+                endpoint="insertNewToken",
+                method="GET",
+                request_url=self.token_url,
+                request_headers={**URA_REQUEST_HEADERS, "AccessKey": self.access_key},
+                response_headers=_response_headers(response),
+                response_payload=decoded_payload,
+                status_code=response.status_code,
+                latency_ms=timer.elapsed_ms,
+                independent=True,
+                raise_on_error=False,
+            )
 
             if response.status_code == 200:
-                data = self._decode_json_response(response)
+                data = decoded_payload
                 if data is None:
                     logger.error(
                         "URA token endpoint returned non-JSON response",
-                        content_type=response.headers.get("content-type"),
+                        content_type=_response_headers(response).get("content-type"),
                     )
                     return None
                 self.token = data.get("Result")
@@ -126,6 +149,18 @@ class URAIntegrationService(AsyncClientService):
                 return None
 
         except Exception as e:
+            await capture_external_call(
+                provider="ura",
+                api_name="token",
+                api_version="v1",
+                endpoint="insertNewToken",
+                method="GET",
+                request_url=self.token_url,
+                request_headers={**URA_REQUEST_HEADERS, "AccessKey": self.access_key},
+                error=e,
+                independent=True,
+                raise_on_error=False,
+            )
             logger.error(f"Error getting URA token: {str(e)}")
             return None
 
@@ -300,6 +335,7 @@ class URAIntegrationService(AsyncClientService):
             query.update({key: value for key, value in params.items() if value})
 
         try:
+            timer = ExternalCallTimer()
             response = await self.client.get(
                 self.data_url,
                 params=query,
@@ -309,6 +345,27 @@ class URAIntegrationService(AsyncClientService):
                     "Token": token,
                 },
             )
+            payload = self._decode_json_response(response)
+            await capture_external_call(
+                provider="ura",
+                api_name=service,
+                api_version="v1",
+                endpoint="invokeUraDS",
+                method="GET",
+                request_url=self.data_url,
+                request_headers={
+                    **URA_REQUEST_HEADERS,
+                    "AccessKey": self.access_key,
+                    "Token": token,
+                },
+                request_payload=query,
+                response_headers=_response_headers(response),
+                response_payload=payload,
+                status_code=response.status_code,
+                latency_ms=timer.elapsed_ms,
+                independent=True,
+                raise_on_error=False,
+            )
             if response.status_code != 200:
                 logger.warning(
                     "URA data service request failed",
@@ -316,12 +373,11 @@ class URAIntegrationService(AsyncClientService):
                     status_code=response.status_code,
                 )
                 return None
-            payload = self._decode_json_response(response)
             if payload is None:
                 logger.warning(
                     "URA data service returned non-JSON response",
                     service=service,
-                    content_type=response.headers.get("content-type"),
+                    content_type=_response_headers(response).get("content-type"),
                 )
                 return None
             status = str(payload.get("Status") or payload.get("status") or "").lower()
@@ -335,6 +391,18 @@ class URAIntegrationService(AsyncClientService):
                 return None
             return payload
         except Exception as exc:
+            await capture_external_call(
+                provider="ura",
+                api_name=service,
+                api_version="v1",
+                endpoint="invokeUraDS",
+                method="GET",
+                request_url=self.data_url,
+                request_payload=query,
+                error=exc,
+                independent=True,
+                raise_on_error=False,
+            )
             logger.warning(
                 "URA data service request errored",
                 service=service,

@@ -353,10 +353,14 @@ _ALLOWED_HEADERS = [
     "X-User-Id",  # Development user ID header
     "X-User-Email",  # Development email header
     "X-Correlation-ID",  # Request tracing
+    "X-Request-ID",  # Request tracing
+    "X-Organization-ID",  # Analytics tenant context
     "x-role",
     "x-user-id",
     "x-user-email",
     "x-correlation-id",
+    "x-request-id",
+    "x-organization-id",
 ]
 
 app.add_middleware(

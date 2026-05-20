@@ -93,7 +93,10 @@ async def require_reviewer(
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency for getting async database session."""
+    from app.models import load_model_modules
     from app.core.database import AsyncSessionLocal
+
+    load_model_modules()
 
     async with AsyncSessionLocal() as session:
         yield session
@@ -113,6 +116,9 @@ async def get_attributed_db(
     """
 
     from app.core.database import AsyncSessionLocal
+    from app.models import load_model_modules
+
+    load_model_modules()
 
     async with AsyncSessionLocal() as session:
         session.info["changed_by"] = identity.user_id

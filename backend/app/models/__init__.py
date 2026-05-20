@@ -35,6 +35,7 @@ _MODEL_MODULES: Final[tuple[str, ...]] = (
     "agent_advisory",
     "ai_agents",
     "ai_config",
+    "analytics_capture",
     "audit",
     "business_performance",
     "deal_outcome",

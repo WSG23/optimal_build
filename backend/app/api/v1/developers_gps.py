@@ -12,7 +12,7 @@ from uuid import UUID, uuid4
 
 import structlog
 from backend._compat.datetime import utcnow
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,6 +46,12 @@ from app.api.v1.developers_common import (
 )
 from app.core.config import settings
 from app.core.database import get_session
+from app.services.analytics_capture import (
+    capture_failure,
+    capture_rejection,
+    capture_status_transition,
+    capture_success,
+)
 from app.core.jwt_auth import TokenData, get_optional_user
 from app.models.projects import Project, ProjectPhase, ProjectType
 from app.models.property import Property
@@ -3272,6 +3278,7 @@ def _remove_untrusted_current_gfa_metadata(
 )
 async def developer_log_property_by_gps(
     request: DeveloperGPSLogRequest,
+    http_request: Request,
     session: AsyncSession = Depends(get_session),
     token: TokenData | None = Depends(get_optional_user),
     _identity: RequestIdentity = Depends(require_reviewer),
@@ -3320,6 +3327,15 @@ async def developer_log_property_by_gps(
             ),
         )
     except (RuntimeError, ValueError) as exc:
+        await capture_failure(
+            source="developers_gps.log_property",
+            error=exc,
+            request=http_request,
+            identity=_identity,
+            request_payload=request.model_dump(mode="json", by_alias=True),
+            operation="log_property_from_gps",
+            status_code=503,
+        )
         raise HTTPException(
             status_code=503,
             detail="GPS capture unavailable: geocoding failed",
@@ -3331,6 +3347,23 @@ async def developer_log_property_by_gps(
         selected_place_id=request.place_id,
     ):
         await session.rollback()
+        await capture_rejection(
+            source="developers_gps.log_property",
+            reason="Submitted address does not match resolved map point",
+            request=http_request,
+            identity=_identity,
+            request_payload=request.model_dump(mode="json", by_alias=True),
+            raw_payload={
+                "resolved_address": (
+                    result.address.model_dump(mode="json")
+                    if hasattr(result.address, "model_dump")
+                    else str(result.address)
+                ),
+                "selected_place_id": request.place_id,
+            },
+            status_code=409,
+            operation="address_conflict_guard",
+        )
         raise HTTPException(
             status_code=409,
             detail=(
@@ -3475,6 +3508,19 @@ async def developer_log_property_by_gps(
         },
     )
     preview_jobs_payload = [_serialise_preview_job(preview_job)]
+    await capture_status_transition(
+        session,
+        entity_type="preview_job",
+        entity_id=str(preview_job.id),
+        status_field="status",
+        from_status=None,
+        to_status=preview_status,
+        reason="gps_capture_preview_queued",
+        identity=_identity,
+        request_id=http_request.headers.get("x-request-id"),
+        correlation_id=http_request.scope.get("correlation_id"),
+        metadata={"property_id": str(result.property_id)},
+    )
     constraint_log = [
         DeveloperConstraintViolation(
             constraint_type=violation.constraint_type,
@@ -3502,9 +3548,7 @@ async def developer_log_property_by_gps(
     elif heritage_risk == "medium" and not financial_summary.dominant_risk_profile:
         financial_summary.dominant_risk_profile = "balanced"
 
-    await session.commit()
-
-    return DeveloperGPSLogResponse(
+    response_payload = DeveloperGPSLogResponse(
         property_id=result.property_id,
         address=result.address,
         coordinates=CoordinatePair(
@@ -3528,6 +3572,40 @@ async def developer_log_property_by_gps(
         property_info=property_info_dict or None,
         timestamp=result.timestamp,
     )
+    await capture_success(
+        session,
+        source="developers_gps.log_property",
+        capture_type="ingestion",
+        operation="log_property_by_gps",
+        request=http_request,
+        identity=_identity,
+        request_payload=request.model_dump(mode="json", by_alias=True),
+        response_payload={
+            "property_id": str(result.property_id),
+            "preview_job_id": str(preview_job.id),
+            "geocoding_source": (
+                result.geocoding_source.model_dump(mode="json")
+                if hasattr(result.geocoding_source, "model_dump")
+                else result.geocoding_source
+            ),
+            "amenities_source": (
+                result.amenities_source.model_dump(mode="json")
+                if hasattr(result.amenities_source, "model_dump")
+                else result.amenities_source
+            ),
+            "ura_source": (
+                result.ura_source.model_dump(mode="json")
+                if hasattr(result.ura_source, "model_dump")
+                else result.ura_source
+            ),
+        },
+        raw_payload=response_payload.model_dump(mode="json"),
+        entity_type="property",
+        entity_id=str(result.property_id),
+    )
+    await session.commit()
+
+    return response_payload
 
 
 @router.post(

@@ -10,9 +10,15 @@ from pydantic import BaseModel
 
 from app.core.config import settings
 from app.schemas.external_sources import ExternalSourceMetadata, ExternalSourceState
+from app.services.analytics_capture import ExternalCallTimer, capture_external_call
 from app.services.base import AsyncClientService
 
 logger = structlog.get_logger()
+
+
+def _response_headers(response: Any) -> dict[str, Any]:
+    headers = getattr(response, "headers", None)
+    return dict(headers) if headers is not None else {}
 
 
 class Address(BaseModel):
@@ -409,13 +415,32 @@ class GeocodingService(AsyncClientService):
         if self.offline_mode or not self.google_maps_api_key or self.client is None:
             return None
 
+        timer = ExternalCallTimer()
+        params = {
+            "place_id": trimmed_place_id,
+            "fields": "place_id,name,types,business_status,formatted_address",
+            "key": self.google_maps_api_key,
+        }
         response = await self.client.get(
             self.google_places_details_url,
-            params={
-                "place_id": trimmed_place_id,
-                "fields": "place_id,name,types,business_status,formatted_address",
-                "key": self.google_maps_api_key,
-            },
+            params=params,
+        )
+        payload = self._safe_json_response(response)
+        await capture_external_call(
+            provider="google_maps",
+            api_name="place_details",
+            endpoint="place/details",
+            method="GET",
+            request_url=self.google_places_details_url,
+            request_payload=params,
+            response_headers=_response_headers(response),
+            response_payload=payload,
+            status_code=response.status_code,
+            latency_ms=timer.elapsed_ms,
+            entity_type="google_place",
+            entity_id=trimmed_place_id,
+            independent=True,
+            raise_on_error=False,
         )
         if response.status_code != 200:
             logger.warning(
@@ -425,7 +450,6 @@ class GeocodingService(AsyncClientService):
             )
             return None
 
-        payload = response.json()
         if payload.get("status") != "OK" or not isinstance(payload.get("result"), dict):
             logger.info(
                 "google_place_details_no_result",
@@ -476,9 +500,29 @@ class GeocodingService(AsyncClientService):
                         "extents": f"{longitude-0.01},{latitude-0.01},{longitude+0.01},{latitude+0.01}",
                     },
                 )
+                payload = self._safe_json_response(response)
+                await capture_external_call(
+                    provider="onemap",
+                    api_name="nearby_amenities",
+                    endpoint="themesvc/retrieveTheme",
+                    method="GET",
+                    request_url=(
+                        f"{self.onemap_base_url}/privateapi/themesvc/retrieveTheme"
+                    ),
+                    request_payload={
+                        "queryName": theme,
+                        "extents": f"{longitude-0.01},{latitude-0.01},{longitude+0.01},{latitude+0.01}",
+                    },
+                    response_headers=_response_headers(response),
+                    response_payload=payload,
+                    status_code=response.status_code,
+                    metadata={"amenity_type": amenity_type},
+                    independent=True,
+                    raise_on_error=False,
+                )
 
                 if response.status_code == 200:
-                    data = response.json()
+                    data = payload
                     if "SrchResults" in data and data["SrchResults"]:
                         for result in data["SrchResults"][1:]:  # Skip header row
                             latlng = result.get("LatLng", "0,0").split(",")
@@ -497,6 +541,16 @@ class GeocodingService(AsyncClientService):
                                     }
                                 )
             except Exception as e:
+                await capture_external_call(
+                    provider="onemap",
+                    api_name="nearby_amenities",
+                    endpoint="themesvc/retrieveTheme",
+                    method="GET",
+                    error=e,
+                    metadata={"amenity_type": amenity_type},
+                    independent=True,
+                    raise_on_error=False,
+                )
                 logger.error(f"Error fetching {amenity_type}: {str(e)}")
 
         return amenities
@@ -567,24 +621,51 @@ class GeocodingService(AsyncClientService):
 
         return R * c
 
+    @staticmethod
+    def _safe_json_response(response: Any) -> dict[str, Any]:
+        try:
+            payload = response.json()
+        except Exception:
+            return {
+                "non_json": True,
+                "text": getattr(response, "text", None),
+            }
+        return payload if isinstance(payload, dict) else {"value": payload}
+
     async def _google_reverse_geocode(
         self, latitude: float, longitude: float
     ) -> Optional[Address]:
         """Lookup an address using Google Maps reverse geocoding."""
         client = self._require_google_client()
+        timer = ExternalCallTimer()
+        params = {
+            "latlng": f"{latitude},{longitude}",
+            "key": self.google_maps_api_key,
+        }
         response = await client.get(
             self.google_maps_base_url,
-            params={
-                "latlng": f"{latitude},{longitude}",
-                "key": self.google_maps_api_key,
-            },
+            params=params,
+        )
+        payload = self._safe_json_response(response)
+        await capture_external_call(
+            provider="google_maps",
+            api_name="reverse_geocode",
+            endpoint="geocode/json",
+            method="GET",
+            request_url=self.google_maps_base_url,
+            request_payload=params,
+            response_headers=_response_headers(response),
+            response_payload=payload,
+            status_code=response.status_code,
+            latency_ms=timer.elapsed_ms,
+            independent=True,
+            raise_on_error=False,
         )
         if response.status_code != 200:
             raise RuntimeError(
                 f"Google Maps reverse geocoding failed with status {response.status_code}"
             )
 
-        payload = response.json()
         if payload.get("status") != "OK" or not payload.get("results"):
             return None
 
@@ -593,19 +674,35 @@ class GeocodingService(AsyncClientService):
     async def _google_geocode(self, address: str) -> Optional[Tuple[float, float, str]]:
         """Lookup coordinates using Google Maps geocoding."""
         client = self._require_google_client()
+        timer = ExternalCallTimer()
+        params = {
+            "address": address,
+            "key": self.google_maps_api_key,
+        }
         response = await client.get(
             self.google_maps_base_url,
-            params={
-                "address": address,
-                "key": self.google_maps_api_key,
-            },
+            params=params,
+        )
+        payload = self._safe_json_response(response)
+        await capture_external_call(
+            provider="google_maps",
+            api_name="geocode",
+            endpoint="geocode/json",
+            method="GET",
+            request_url=self.google_maps_base_url,
+            request_payload=params,
+            response_headers=_response_headers(response),
+            response_payload=payload,
+            status_code=response.status_code,
+            latency_ms=timer.elapsed_ms,
+            independent=True,
+            raise_on_error=False,
         )
         if response.status_code != 200:
             raise RuntimeError(
                 f"Google Maps geocoding failed with status {response.status_code}"
             )
 
-        payload = response.json()
         if payload.get("status") != "OK" or not payload.get("results"):
             return None
 
@@ -650,15 +747,34 @@ class GeocodingService(AsyncClientService):
         client = self.client
         access_token = await self._get_onemap_access_token()
         headers = {"Authorization": f"Bearer {access_token}"}
+        timer = ExternalCallTimer()
+        params = {
+            "searchVal": address,
+            "returnGeom": "Y",
+            "getAddrDetails": "Y",
+            "pageNum": 1,
+        }
         response = await client.get(
             f"{self.onemap_base_url}/common/elastic/search",
-            params={
-                "searchVal": address,
-                "returnGeom": "Y",
-                "getAddrDetails": "Y",
-                "pageNum": 1,
-            },
+            params=params,
             headers=headers,
+        )
+        payload = self._safe_json_response(response)
+        await capture_external_call(
+            provider="onemap",
+            api_name="address_search",
+            endpoint="common/elastic/search",
+            method="GET",
+            request_url=f"{self.onemap_base_url}/common/elastic/search",
+            request_headers=headers,
+            request_payload=params,
+            response_headers=_response_headers(response),
+            response_payload=payload,
+            status_code=response.status_code,
+            latency_ms=timer.elapsed_ms,
+            metadata={"submitted_address": submitted_address},
+            independent=True,
+            raise_on_error=False,
         )
         if response.status_code != 200:
             logger.warning(
@@ -668,7 +784,6 @@ class GeocodingService(AsyncClientService):
             )
             return None
 
-        payload = response.json()
         error = payload.get("error")
         if isinstance(error, str) and "token" in error.lower():
             raise OneMapAuthError(error)
@@ -838,12 +953,29 @@ class GeocodingService(AsyncClientService):
         if self.client is None:
             raise RuntimeError("Geocoding client unavailable")
 
+        timer = ExternalCallTimer()
+        request_payload = {
+            "email": self.onemap_email,
+            "password": self.onemap_password,
+        }
         response = await self.client.post(
             f"{self.onemap_base_url}/auth/post/getToken",
-            json={
-                "email": self.onemap_email,
-                "password": self.onemap_password,
-            },
+            json=request_payload,
+        )
+        payload = self._safe_json_response(response)
+        await capture_external_call(
+            provider="onemap",
+            api_name="auth_token",
+            endpoint="auth/post/getToken",
+            method="POST",
+            request_url=f"{self.onemap_base_url}/auth/post/getToken",
+            request_payload=request_payload,
+            response_headers=_response_headers(response),
+            response_payload=payload,
+            status_code=response.status_code,
+            latency_ms=timer.elapsed_ms,
+            independent=True,
+            raise_on_error=False,
         )
         if response.status_code != 200:
             logger.warning(
@@ -856,7 +988,6 @@ class GeocodingService(AsyncClientService):
                 f"OneMap token request failed ({response.status_code}){detail}"
             )
 
-        payload = response.json()
         token = self._extract_onemap_token(payload)
         if not token:
             raise OneMapAuthError(

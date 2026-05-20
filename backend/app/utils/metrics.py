@@ -55,6 +55,7 @@ PREVIEW_JOBS_CREATED_TOTAL: Counter
 PREVIEW_JOBS_COMPLETED_TOTAL: Counter
 PREVIEW_JOB_DURATION_MS: Histogram
 PREVIEW_QUEUE_DEPTH: Gauge
+ANALYTICS_CAPTURE_FAILURES_TOTAL: Counter
 
 
 def _initialize_metrics() -> None:
@@ -86,6 +87,7 @@ def _initialize_metrics() -> None:
     global PREVIEW_JOBS_COMPLETED_TOTAL
     global PREVIEW_JOB_DURATION_MS
     global PREVIEW_QUEUE_DEPTH
+    global ANALYTICS_CAPTURE_FAILURES_TOTAL
 
     REGISTRY = CollectorRegistry(auto_describe=True)
 
@@ -261,6 +263,13 @@ def _initialize_metrics() -> None:
         "preview_generation_queue_depth",
         "Current queued preview jobs awaiting processing.",
         labelnames=("backend",),
+        registry=REGISTRY,
+    )
+
+    ANALYTICS_CAPTURE_FAILURES_TOTAL = Counter(
+        "analytics_capture_failures_total",
+        "Analytics capture writes that failed before persistence.",
+        labelnames=("source", "table", "mode"),
         registry=REGISTRY,
     )
 

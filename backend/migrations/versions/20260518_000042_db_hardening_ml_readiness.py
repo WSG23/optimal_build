@@ -74,6 +74,26 @@ def _add_nullable_uuid(table: str, name: str) -> None:
     op.add_column(table, sa.Column(name, _uuid_type(), nullable=True))
 
 
+def _table_exists(table: str) -> bool:
+    return bool(sa.inspect(op.get_bind()).has_table(table))
+
+
+def _column_exists(table: str, column: str) -> bool:
+    if not _table_exists(table):
+        return False
+    return column in {
+        col["name"] for col in sa.inspect(op.get_bind()).get_columns(table)
+    }
+
+
+def _index_exists(table: str, index: str) -> bool:
+    if not _table_exists(table):
+        return False
+    return index in {
+        idx["name"] for idx in sa.inspect(op.get_bind()).get_indexes(table)
+    }
+
+
 def upgrade() -> None:
     # --- organizations ---------------------------------------------------
     op.create_table(
@@ -103,7 +123,11 @@ def upgrade() -> None:
         sa.text(
             "INSERT INTO organizations (id, slug, name, is_active) "
             "VALUES (:id, :slug, :name, TRUE)"
-        ).bindparams(id=DEFAULT_ORG_ID, slug="default", name="Default Organization")
+        ).bindparams(
+            sa.bindparam("id", DEFAULT_ORG_ID, type_=_uuid_type()),
+            slug="default",
+            name="Default Organization",
+        )
     )
 
     # --- entity_history --------------------------------------------------
@@ -225,7 +249,7 @@ def upgrade() -> None:
             sa.text(
                 f"UPDATE {table} SET organization_id = :org "
                 "WHERE organization_id IS NULL"
-            ).bindparams(org=DEFAULT_ORG_ID)
+            ).bindparams(sa.bindparam("org", DEFAULT_ORG_ID, type_=_uuid_type()))
         )
 
     # --- composite indexes for ML pulls ----------------------------------
@@ -245,65 +269,100 @@ def upgrade() -> None:
         ["market_segment", "transaction_type", "transaction_date"],
     )
 
-    # fin_results.created_at + composite (project, scenario, created)
-    op.add_column(
-        "fin_results",
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.func.now(),
-            nullable=False,
-        ),
-    )
-    op.create_index("ix_fin_results_created_at", "fin_results", ["created_at"])
-    op.create_index(
-        "idx_fin_results_project_scenario_created",
-        "fin_results",
-        ["project_id", "scenario_id", "created_at"],
-    )
+    # fin_results was present in the ORM but missing from older migration chains.
+    if not _table_exists("fin_results"):
+        op.create_table(
+            "fin_results",
+            sa.Column("id", sa.Integer(), primary_key=True),
+            sa.Column(
+                "project_id",
+                _uuid_type(),
+                sa.ForeignKey("projects.id", ondelete="CASCADE"),
+                nullable=False,
+            ),
+            sa.Column(
+                "scenario_id",
+                sa.Integer(),
+                sa.ForeignKey("fin_scenarios.id", ondelete="CASCADE"),
+                nullable=False,
+            ),
+            sa.Column("name", sa.String(120), nullable=False),
+            sa.Column("value", sa.Numeric(16, 4), nullable=True),
+            sa.Column("unit", sa.String(20), nullable=True),
+            sa.Column(
+                "metadata",
+                _json_type(),
+                nullable=False,
+                server_default=sa.text("'{}'"),
+            ),
+            sa.Column(
+                "created_at",
+                sa.DateTime(timezone=True),
+                server_default=sa.func.now(),
+                nullable=False,
+            ),
+        )
+        op.create_index("ix_fin_results_project_id", "fin_results", ["project_id"])
+        op.create_index("ix_fin_results_scenario_id", "fin_results", ["scenario_id"])
+    elif not _column_exists("fin_results", "created_at"):
+        op.add_column(
+            "fin_results",
+            sa.Column(
+                "created_at",
+                sa.DateTime(timezone=True),
+                server_default=sa.func.now(),
+                nullable=False,
+            ),
+        )
+    if not _index_exists("fin_results", "ix_fin_results_created_at"):
+        op.create_index("ix_fin_results_created_at", "fin_results", ["created_at"])
+    if not _index_exists("fin_results", "idx_fin_results_project_name"):
+        op.create_index(
+            "idx_fin_results_project_name",
+            "fin_results",
+            ["project_id", "name"],
+        )
+    if not _index_exists("fin_results", "idx_fin_results_project_scenario_created"):
+        op.create_index(
+            "idx_fin_results_project_scenario_created",
+            "fin_results",
+            ["project_id", "scenario_id", "created_at"],
+        )
 
     # --- Float → NUMERIC ------------------------------------------------
     if _is_postgres():
-        op.alter_column(
-            "ai_agents",
-            "temperature",
-            type_=sa.Numeric(4, 3),
-            existing_type=sa.Float(),
-            existing_nullable=True,
-            postgresql_using="temperature::numeric",
-        )
-        op.alter_column(
-            "ai_agent_sessions",
-            "cost_estimate",
-            type_=sa.Numeric(12, 6),
-            existing_type=sa.Float(),
-            existing_nullable=True,
-            postgresql_using="cost_estimate::numeric",
-        )
-        op.alter_column(
-            "ai_agent_sessions",
-            "processing_time",
-            type_=sa.Numeric(10, 3),
-            existing_type=sa.Float(),
-            existing_nullable=True,
-            postgresql_using="processing_time::numeric",
-        )
-        op.alter_column(
-            "ai_agent_sessions",
-            "singapore_compliance_score",
-            type_=sa.Numeric(6, 3),
-            existing_type=sa.Float(),
-            existing_nullable=True,
-            postgresql_using="singapore_compliance_score::numeric",
-        )
-        op.alter_column(
-            "overlay_suggestions",
-            "score",
-            type_=sa.Numeric(8, 4),
-            existing_type=sa.Float(),
-            existing_nullable=True,
-            postgresql_using="score::numeric",
-        )
+        numeric_targets = [
+            ("ai_agents", "temperature", sa.Numeric(4, 3), "temperature::numeric"),
+            (
+                "ai_agent_sessions",
+                "cost_estimate",
+                sa.Numeric(12, 6),
+                "cost_estimate::numeric",
+            ),
+            (
+                "ai_agent_sessions",
+                "processing_time",
+                sa.Numeric(10, 3),
+                "processing_time::numeric",
+            ),
+            (
+                "ai_agent_sessions",
+                "singapore_compliance_score",
+                sa.Numeric(6, 3),
+                "singapore_compliance_score::numeric",
+            ),
+            ("overlay_suggestions", "score", sa.Numeric(8, 4), "score::numeric"),
+        ]
+        for table, column, column_type, using in numeric_targets:
+            if _column_exists(table, column):
+                op.alter_column(
+                    table,
+                    column,
+                    type_=column_type,
+                    existing_type=sa.Float(),
+                    existing_nullable=True,
+                    postgresql_using=using,
+                )
 
     # --- Timezone-aware timestamps on touched models ---------------------
     if _is_postgres():
@@ -318,38 +377,47 @@ def upgrade() -> None:
             ("ai_agent_sessions", "last_activity", True),
         ]
         for table, column, nullable in tz_targets:
-            op.alter_column(
-                table,
-                column,
-                type_=sa.DateTime(timezone=True),
-                existing_type=sa.DateTime(),
-                existing_nullable=nullable,
-                postgresql_using=f"{column} AT TIME ZONE 'UTC'",
-            )
+            if _column_exists(table, column):
+                op.alter_column(
+                    table,
+                    column,
+                    type_=sa.DateTime(timezone=True),
+                    existing_type=sa.DateTime(),
+                    existing_nullable=nullable,
+                    postgresql_using=f"{column} AT TIME ZONE 'UTC'",
+                )
 
     # --- pgvector columns + HNSW indexes (opt-in, Postgres only) ---------
     if _pgvector_enabled():
         op.execute("CREATE EXTENSION IF NOT EXISTS vector")
 
-    op.add_column("imports", _vector_column("embedding"))
-    op.add_column(
-        "imports", sa.Column("embedding_model", sa.String(120), nullable=True)
-    )
-    op.add_column("property_photos", _vector_column("embedding"))
-    op.add_column(
-        "property_photos",
-        sa.Column("embedding_model", sa.String(120), nullable=True),
-    )
+    if _table_exists("imports"):
+        if not _column_exists("imports", "embedding"):
+            op.add_column("imports", _vector_column("embedding"))
+        if not _column_exists("imports", "embedding_model"):
+            op.add_column(
+                "imports", sa.Column("embedding_model", sa.String(120), nullable=True)
+            )
+    if _table_exists("property_photos"):
+        if not _column_exists("property_photos", "embedding"):
+            op.add_column("property_photos", _vector_column("embedding"))
+        if not _column_exists("property_photos", "embedding_model"):
+            op.add_column(
+                "property_photos",
+                sa.Column("embedding_model", sa.String(120), nullable=True),
+            )
 
     if _pgvector_enabled():
-        op.execute(
-            "CREATE INDEX IF NOT EXISTS idx_imports_embedding_hnsw "
-            "ON imports USING hnsw (embedding vector_cosine_ops)"
-        )
-        op.execute(
-            "CREATE INDEX IF NOT EXISTS idx_property_photos_embedding_hnsw "
-            "ON property_photos USING hnsw (embedding vector_cosine_ops)"
-        )
+        if _column_exists("imports", "embedding"):
+            op.execute(
+                "CREATE INDEX IF NOT EXISTS idx_imports_embedding_hnsw "
+                "ON imports USING hnsw (embedding vector_cosine_ops)"
+            )
+        if _column_exists("property_photos", "embedding"):
+            op.execute(
+                "CREATE INDEX IF NOT EXISTS idx_property_photos_embedding_hnsw "
+                "ON property_photos USING hnsw (embedding vector_cosine_ops)"
+            )
 
 
 def _drop_idx(name: str) -> None:
@@ -361,9 +429,12 @@ def _drop_table(name: str) -> None:
 
 
 def _drop_columns(table: str, columns: tuple[str, ...]) -> None:
+    if not _table_exists(table):
+        return
     with op.batch_alter_table(table) as batch_op:
         for column in columns:
-            batch_op.drop_column(column)
+            if _column_exists(table, column):
+                batch_op.drop_column(column)
 
 
 def downgrade() -> None:

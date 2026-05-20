@@ -21,6 +21,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.predictions import Prediction
+from app.services.analytics_capture import capture_failure, should_raise_capture_errors
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,27 @@ async def record_prediction(
             await db.flush()
         return pred.id
     except Exception as exc:  # pragma: no cover - defensive
+        await capture_failure(
+            source="prediction_recorder",
+            error=exc,
+            request_payload={
+                "model_name": model_name,
+                "model_version": model_version,
+                "input_entity_type": input_entity_type,
+                "input_entity_id": input_entity_id,
+                "input_payload": input_payload,
+            },
+            raw_payload={"output": output},
+            metadata={
+                "model_provider": model_provider,
+                "organization_id": organization_id,
+                "created_by": created_by,
+            },
+            operation="record_prediction",
+            raise_on_error=False,
+        )
+        if should_raise_capture_errors():
+            raise
         logger.warning("record_prediction failed (%s): %s", model_name, exc)
         return None
 

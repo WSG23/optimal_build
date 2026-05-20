@@ -333,7 +333,7 @@ class DevelopmentPipeline(BaseModel):
     )
 
 
-class PropertyPhoto(BaseModel):
+class PropertyPhoto(SoftDeleteMixin, BaseModel):
     """Site photos and documentation."""
 
     __tablename__ = "property_photos"
@@ -427,7 +427,7 @@ class DevelopmentAnalysis(BaseModel):
     )
 
 
-class VoiceNote(BaseModel):
+class VoiceNote(SoftDeleteMixin, BaseModel):
     """Voice notes recorded during site visits for property documentation."""
 
     __tablename__ = "property_voice_notes"

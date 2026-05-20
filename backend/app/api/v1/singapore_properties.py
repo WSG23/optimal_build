@@ -11,10 +11,11 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from types import ModuleType
 from typing import Any, Dict, cast
 
 from backend._compat.datetime import utcnow
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,6 +32,11 @@ from app.models.singapore_property import (
     SingaporeProperty,
 )
 from app.schemas._typing import dump_model
+from app.services.analytics_capture import (
+    capture_lifecycle_event,
+    capture_status_transition,
+    capture_success,
+)
 from app.utils.singapore_compliance import (
     calculate_gfa_utilization,
     run_full_compliance_check,
@@ -44,6 +50,53 @@ def _enum_value(value: object) -> object:
     if hasattr(value, "value"):
         return value.value
     return value
+
+
+def _enum_text(value: object) -> str | None:
+    normalized = _enum_value(value)
+    return str(normalized) if normalized is not None else None
+
+
+def _active_property_owner_stmt(property_uuid: uuid.UUID, owner_email: str) -> Any:
+    return select(SingaporeProperty).where(
+        SingaporeProperty.id == property_uuid,
+        SingaporeProperty.owner_email == owner_email,
+        SingaporeProperty.deleted_at.is_(None),
+    )
+
+
+def _request_id(request: Request) -> str | None:
+    scope_request_id = request.scope.get("request_id")
+    return request.headers.get("x-request-id") or (
+        str(scope_request_id) if scope_request_id is not None else None
+    )
+
+
+def _correlation_id(request: Request) -> str | None:
+    scope_correlation_id = request.scope.get("correlation_id")
+    return (
+        str(scope_correlation_id)
+        if scope_correlation_id is not None
+        else request.headers.get("x-correlation-id")
+    )
+
+
+def _resolve_buildable_service_module() -> ModuleType:
+    """Return the buildable service module across app/backend import aliases."""
+
+    from importlib import import_module
+
+    module_names = ("app.services.buildable", "backend.app.services.buildable")
+    modules = [import_module(name) for name in module_names]
+    canonical_modules = set(module_names)
+    for module in modules:
+        calculate = getattr(module, "calculate_buildable", None)
+        if (
+            calculate is not None
+            and getattr(calculate, "__module__", None) not in canonical_modules
+        ):
+            return module
+    return modules[0]
 
 
 # Pydantic Request/Response Models
@@ -161,29 +214,21 @@ class PropertyResponse(BaseModel):
             "property_name": obj.property_name,
             "address": obj.address,
             "postal_code": obj.postal_code,
-            "zoning": obj.zoning.value if obj.zoning else None,
-            "tenure": obj.tenure.value if obj.tenure else None,
+            "zoning": _enum_text(obj.zoning),
+            "tenure": _enum_text(obj.tenure),
             "land_area_sqm": obj.land_area_sqm,
             "gross_plot_ratio": obj.gross_plot_ratio,
             "gross_floor_area_sqm": obj.gross_floor_area_sqm,
             "building_height_m": obj.building_height_m,
             "num_storeys": obj.num_storeys,
-            "acquisition_status": (
-                obj.acquisition_status.value if obj.acquisition_status else None
-            ),
-            "feasibility_status": (
-                obj.feasibility_status.value if obj.feasibility_status else None
-            ),
+            "acquisition_status": _enum_text(obj.acquisition_status),
+            "feasibility_status": _enum_text(obj.feasibility_status),
             "estimated_acquisition_cost": obj.estimated_acquisition_cost,
             "actual_acquisition_cost": obj.actual_acquisition_cost,
             "estimated_development_cost": obj.estimated_development_cost,
             "expected_revenue": obj.expected_revenue,
-            "bca_compliance_status": (
-                obj.bca_compliance_status.value if obj.bca_compliance_status else None
-            ),
-            "ura_compliance_status": (
-                obj.ura_compliance_status.value if obj.ura_compliance_status else None
-            ),
+            "bca_compliance_status": _enum_text(obj.bca_compliance_status),
+            "ura_compliance_status": _enum_text(obj.ura_compliance_status),
             "compliance_notes": obj.compliance_notes,
             "compliance_last_checked": obj.compliance_last_checked,
             "max_developable_gfa_sqm": obj.max_developable_gfa_sqm,
@@ -216,6 +261,7 @@ class ComplianceCheckResponse(BaseModel):
 @router.post("/create", response_model=PropertyResponse)
 async def create_property(
     property_data: PropertyCreate,
+    request: Request,
     current_user: TokenData = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ) -> PropertyResponse:
@@ -263,6 +309,47 @@ async def create_property(
 
     # Save to database
     db.add(new_property)
+    await db.flush()
+    await capture_lifecycle_event(
+        db,
+        action="create",
+        entity_type="singapore_property",
+        entity_id=str(new_property.id),
+        identity=current_user,
+        request_id=_request_id(request),
+        correlation_id=_correlation_id(request),
+        after_payload=PropertyResponse.from_orm(new_property).model_dump(mode="json"),
+        metadata={"owner_email": current_user.email},
+    )
+    for field_name in ("acquisition_status", "feasibility_status"):
+        status_value = getattr(new_property, field_name)
+        if status_value is not None:
+            await capture_status_transition(
+                db,
+                entity_type="singapore_property",
+                entity_id=str(new_property.id),
+                status_field=field_name,
+                from_status=None,
+                to_status=str(_enum_value(status_value)),
+                identity=current_user,
+                request_id=_request_id(request),
+                correlation_id=_correlation_id(request),
+                metadata={"owner_email": current_user.email},
+            )
+    await capture_success(
+        db,
+        source="singapore_property.create",
+        operation="create",
+        request=request,
+        identity=current_user,
+        request_payload=dump_model(property_data, mode="json"),
+        response_payload=PropertyResponse.from_orm(new_property).model_dump(
+            mode="json"
+        ),
+        entity_type="singapore_property",
+        entity_id=str(new_property.id),
+        metadata={"owner_email": current_user.email},
+    )
     await db.commit()
     await db.refresh(new_property)
 
@@ -286,7 +373,7 @@ async def list_properties(
 
     Public endpoint - no authentication required for viewing.
     """
-    stmt = select(SingaporeProperty)
+    stmt = select(SingaporeProperty).where(SingaporeProperty.deleted_at.is_(None))
 
     if acquisition_status:
         stmt = stmt.where(SingaporeProperty.acquisition_status == acquisition_status)
@@ -318,10 +405,7 @@ async def get_property(
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
-    stmt = select(SingaporeProperty).where(
-        SingaporeProperty.id == property_uuid,
-        SingaporeProperty.owner_email == current_user.email,
-    )
+    stmt = _active_property_owner_stmt(property_uuid, current_user.email)
     result = await db.execute(stmt)
     property_obj = result.scalar_one_or_none()
 
@@ -335,6 +419,7 @@ async def get_property(
 async def update_property(
     property_id: str,
     property_update: PropertyUpdate,
+    request: Request,
     current_user: TokenData = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ) -> PropertyResponse:
@@ -348,15 +433,18 @@ async def update_property(
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
-    stmt = select(SingaporeProperty).where(
-        SingaporeProperty.id == property_uuid,
-        SingaporeProperty.owner_email == current_user.email,
-    )
+    stmt = _active_property_owner_stmt(property_uuid, current_user.email)
     result = await db.execute(stmt)
     property_obj = result.scalar_one_or_none()
 
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
+
+    before_state = PropertyResponse.from_orm(property_obj).model_dump(mode="json")
+    previous_statuses = {
+        "acquisition_status": _enum_value(property_obj.acquisition_status),
+        "feasibility_status": _enum_value(property_obj.feasibility_status),
+    }
 
     # Update fields
     update_data = dump_model(property_update, exclude_unset=True)
@@ -366,6 +454,47 @@ async def update_property(
     # Re-run compliance checks
     await update_property_compliance(property_obj, db)
     property_obj.updated_at = utcnow()
+
+    after_state = PropertyResponse.from_orm(property_obj).model_dump(mode="json")
+    await capture_lifecycle_event(
+        db,
+        action="update",
+        entity_type="singapore_property",
+        entity_id=str(property_obj.id),
+        identity=current_user,
+        request_id=_request_id(request),
+        correlation_id=_correlation_id(request),
+        before_payload=before_state,
+        after_payload=after_state,
+        metadata={"updated_fields": sorted(update_data.keys())},
+    )
+    for field_name, previous in previous_statuses.items():
+        current = _enum_value(getattr(property_obj, field_name))
+        if current != previous:
+            await capture_status_transition(
+                db,
+                entity_type="singapore_property",
+                entity_id=str(property_obj.id),
+                status_field=field_name,
+                from_status=str(previous) if previous is not None else None,
+                to_status=str(current),
+                identity=current_user,
+                request_id=_request_id(request),
+                correlation_id=_correlation_id(request),
+                metadata={"owner_email": current_user.email},
+            )
+    await capture_success(
+        db,
+        source="singapore_property.update",
+        operation="update",
+        request=request,
+        identity=current_user,
+        request_payload=update_data,
+        response_payload=after_state,
+        entity_type="singapore_property",
+        entity_id=str(property_obj.id),
+        metadata={"owner_email": current_user.email},
+    )
 
     await db.commit()
     await db.refresh(property_obj)
@@ -390,10 +519,7 @@ async def check_property_compliance(
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
-    stmt = select(SingaporeProperty).where(
-        SingaporeProperty.id == property_uuid,
-        SingaporeProperty.owner_email == current_user.email,
-    )
+    stmt = _active_property_owner_stmt(property_uuid, current_user.email)
     result_query = await db.execute(stmt)
     property_obj = result_query.scalar_one_or_none()
 
@@ -431,10 +557,7 @@ async def calculate_property_gfa(
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
-    stmt = select(SingaporeProperty).where(
-        SingaporeProperty.id == property_uuid,
-        SingaporeProperty.owner_email == current_user.email,
-    )
+    stmt = _active_property_owner_stmt(property_uuid, current_user.email)
     result_query = await db.execute(stmt)
     property_obj = result_query.scalar_one_or_none()
 
@@ -475,7 +598,10 @@ async def calculate_buildable_metrics(
         Buildable metrics including plot ratio, max height, GFA, NSA, etc.
     """
     from app.schemas.buildable import BuildableDefaults
-    from app.services.buildable import ResolvedZone, calculate_buildable
+
+    buildable_service = _resolve_buildable_service_module()
+    ResolvedZone = buildable_service.ResolvedZone
+    calculate_buildable = buildable_service.calculate_buildable
 
     land_area = request.get("land_area_sqm")
     zoning = request.get("zoning")
@@ -765,27 +891,63 @@ async def check_compliance(
 @router.delete("/{property_id}")
 async def delete_property(
     property_id: str,
+    request: Request,
     current_user: TokenData = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ) -> Dict[str, str]:
-    """Soft delete a property (marks as inactive)."""
+    """Soft delete a property with an analytics tombstone."""
     try:
         property_uuid = uuid.UUID(property_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid property ID format") from e
 
-    stmt = select(SingaporeProperty).where(
-        SingaporeProperty.id == property_uuid,
-        SingaporeProperty.owner_email == current_user.email,
-    )
+    stmt = _active_property_owner_stmt(property_uuid, current_user.email)
     result = await db.execute(stmt)
     property_obj = result.scalar_one_or_none()
 
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
 
-    # Soft delete
-    await db.delete(property_obj)
+    before_state = PropertyResponse.from_orm(property_obj).model_dump(mode="json")
+    property_obj.mark_deleted()
+    property_obj.updated_at = utcnow()
+    await capture_status_transition(
+        db,
+        entity_type="singapore_property",
+        entity_id=str(property_obj.id),
+        status_field="deleted_at",
+        from_status=None,
+        to_status=property_obj.deleted_at.isoformat(),
+        identity=current_user,
+        request_id=_request_id(request),
+        correlation_id=_correlation_id(request),
+        metadata={"owner_email": current_user.email},
+    )
+    await capture_lifecycle_event(
+        db,
+        action="delete",
+        entity_type="singapore_property",
+        entity_id=str(property_obj.id),
+        identity=current_user,
+        request_id=_request_id(request),
+        correlation_id=_correlation_id(request),
+        before_payload=before_state,
+        after_payload={
+            **before_state,
+            "deleted_at": property_obj.deleted_at.isoformat(),
+        },
+        metadata={"owner_email": current_user.email},
+    )
+    await capture_success(
+        db,
+        source="singapore_property.delete",
+        operation="delete",
+        request=request,
+        identity=current_user,
+        entity_type="singapore_property",
+        entity_id=str(property_obj.id),
+        metadata={"owner_email": current_user.email},
+    )
     await db.commit()
 
     return {"message": "Property deleted successfully", "property_id": property_id}

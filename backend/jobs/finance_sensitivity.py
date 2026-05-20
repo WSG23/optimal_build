@@ -14,6 +14,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import get_session
 from app.models.finance import FinResult, FinScenario
+from app.services.analytics_capture import capture_failure, capture_success
 from app.services.finance import calculator
 
 
@@ -120,17 +121,46 @@ async def process_finance_sensitivity_job(
         )
         scenario = (await sess.execute(stmt)).scalars().first()
         if scenario is None:
+            await capture_failure(
+                source="finance.sensitivity",
+                error=f"Scenario {scenario_id} not found",
+                operation="process_sensitivity",
+                raw_payload={
+                    "scenario_id": scenario_id,
+                    "context": _json_safe(context),
+                },
+                raise_on_error=False,
+            )
             return {"status": "missing", "scenario_id": scenario_id}
 
         try:
             band_inputs = [SensitivityBandInput.model_validate(band) for band in bands]
         except Exception as exc:  # pragma: no cover - defensive guard
+            await capture_failure(
+                source="finance.sensitivity",
+                error=exc,
+                operation="validate_bands",
+                raw_payload={
+                    "scenario_id": scenario_id,
+                    "bands": _json_safe(list(bands)),
+                    "context": _json_safe(context),
+                },
+                raise_on_error=False,
+            )
             return {
                 "status": "invalid_bands",
                 "scenario_id": scenario_id,
                 "error": str(exc),
             }
         if not band_inputs:
+            await capture_success(
+                sess,
+                source="finance.sensitivity",
+                operation="noop",
+                entity_type="fin_scenario",
+                entity_id=str(scenario_id),
+                raw_payload={"bands": [], "context": _json_safe(context)},
+            )
             return {"status": "noop", "scenario_id": scenario_id}
 
         task_id = context.get("task_id")
@@ -287,6 +317,33 @@ async def process_finance_sensitivity_job(
             else:
                 assumptions.pop("async_jobs", None)
             scenario.assumptions = assumptions
+
+        await capture_success(
+            sess,
+            source="finance.sensitivity",
+            operation="process_sensitivity",
+            entity_type="fin_result",
+            entity_id=str(existing_result.id),
+            raw_payload={
+                "scenario_id": scenario_id,
+                "project_id": str(scenario.project_id),
+                "result_name": existing_result.name,
+                "bands": [
+                    (
+                        band.model_dump(mode="json")
+                        if isinstance(band, FinanceSensitivityOutcomeSchema)
+                        else band
+                    )
+                    for band in sensitivity_results
+                ],
+                "metadata": _json_safe(cleaned_bands),
+            },
+            metadata={
+                "task_id": task_id,
+                "queued_at": queued_at,
+                "band_count": len(sensitivity_results),
+            },
+        )
 
         # In test mode (external session), flush instead of commit so changes are visible
         # within the test transaction. In production, commit to persist changes.

@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.property import Property, PropertyPhoto, PropertyStatus, PropertyType
@@ -926,7 +927,7 @@ async def test_get_property_photos_excludes_urls(db_session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_delete_photo_success(db_session: AsyncSession):
-    """Test delete_photo removes photo and versions from storage."""
+    """Test delete_photo soft-deletes photo and removes versions from storage."""
     prop = _make_property()
     db_session.add(prop)
     await db_session.flush()
@@ -941,8 +942,16 @@ async def test_delete_photo_success(db_session: AsyncSession):
     result = await manager.delete_photo(str(photo.id), db_session)
 
     assert result is True
+    await db_session.refresh(photo)
+    visible_photos = await manager.get_property_photos(str(prop.id), db_session)
+    persisted_photo = await db_session.scalar(
+        select(PropertyPhoto).where(PropertyPhoto.id == photo.id)
+    )
     # Verify storage calls
     assert mock_storage.remove_object.call_count == 6
+    assert persisted_photo is not None
+    assert persisted_photo.deleted_at is not None
+    assert visible_photos == []
 
 
 @pytest.mark.asyncio
@@ -974,6 +983,8 @@ async def test_delete_photo_storage_error(db_session: AsyncSession):
     result = await manager.delete_photo(str(photo.id), db_session)
 
     assert result is True  # Still returns True even with storage errors
+    await db_session.refresh(photo)
+    assert photo.deleted_at is not None
 
 
 # ============================================================================

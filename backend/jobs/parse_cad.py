@@ -33,6 +33,11 @@ from app.core import database as app_database
 from app.core.geometry import GeometrySerializer, GraphBuilder, derive_setback_overrides
 from app.core.models.geometry import GeometryGraph
 from app.models.imports import ImportRecord
+from app.services.analytics_capture import (
+    capture_failure,
+    capture_status_transition,
+    capture_success,
+)
 from app.services.overlay_ingest import ingest_parsed_import_geometry
 from app.services.storage import get_storage_service
 
@@ -1142,7 +1147,18 @@ async def parse_import_job(import_id: str) -> dict[str, Any]:
         record = await session.get(ImportRecord, import_id)
         if record is None:
             raise RuntimeError(f"Import '{import_id}' not found")
+        previous_status = record.parse_status
         record.parse_status = "running"
+        await capture_status_transition(
+            session,
+            entity_type="import_record",
+            entity_id=str(record.id),
+            status_field="parse_status",
+            from_status=previous_status,
+            to_status="running",
+            reason="parse_import_started",
+            metadata={"filename": record.filename, "content_type": record.content_type},
+        )
         await session.commit()
 
         try:
@@ -1183,13 +1199,63 @@ async def parse_import_job(import_id: str) -> dict[str, Any]:
                     enriched["metadata"] = metadata_section
                     record.parse_result = enriched
                     result = enriched
+            await capture_status_transition(
+                session,
+                entity_type="import_record",
+                entity_id=str(record.id),
+                status_field="parse_status",
+                from_status="running",
+                to_status="completed",
+                reason="parse_import_completed",
+                metadata={
+                    "filename": record.filename,
+                    "content_type": record.content_type,
+                    "layer_count": len(record.layer_metadata or []),
+                    "floor_count": len(record.detected_floors or []),
+                    "unit_count": len(record.detected_units or []),
+                },
+            )
+            await capture_success(
+                session,
+                source="imports.parse_job",
+                operation="parse_import",
+                entity_type="import_record",
+                entity_id=str(record.id),
+                raw_payload=result,
+                metadata={
+                    "filename": record.filename,
+                    "content_type": record.content_type,
+                },
+            )
             await session.commit()
             await session.refresh(record)
             return result
         except Exception as exc:  # pragma: no cover - defensive logging surface
+            previous_status = record.parse_status
             record.parse_status = "failed"
             record.parse_error = str(exc)
             record.parse_completed_at = datetime.now(UTC)
+            await capture_status_transition(
+                session,
+                entity_type="import_record",
+                entity_id=str(record.id),
+                status_field="parse_status",
+                from_status=previous_status,
+                to_status="failed",
+                reason="parse_import_failed",
+                metadata={
+                    "filename": record.filename,
+                    "content_type": record.content_type,
+                },
+            )
+            await capture_failure(
+                source="imports.parse_job",
+                error=exc,
+                operation="parse_import",
+                raw_payload={"import_id": str(record.id), "filename": record.filename},
+                metadata={"content_type": record.content_type},
+                raise_on_error=False,
+            )
             await session.commit()
             raise
 

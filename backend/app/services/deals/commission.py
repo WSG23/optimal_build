@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from types import SimpleNamespace
 from typing import Iterable, Optional
 from uuid import UUID
 
@@ -21,6 +22,11 @@ from app.models.business_performance import (
     CommissionStatus,
     CommissionType,
 )
+from app.services.analytics_capture import (
+    capture_lifecycle_event,
+    capture_status_transition,
+    capture_success,
+)
 
 from .utils import audit_project_key
 
@@ -36,6 +42,44 @@ class AgentCommissionService:
         CommissionStatus.DISPUTED: "disputed_at",
         CommissionStatus.WRITTEN_OFF: "resolved_at",
     }
+
+    @staticmethod
+    def _actor_identity(actor_id: UUID | None) -> object | None:
+        if actor_id is None:
+            return None
+        return SimpleNamespace(user_id=str(actor_id))
+
+    @staticmethod
+    def _enum_value(value: object) -> object:
+        return value.value if hasattr(value, "value") else value
+
+    def _commission_payload(self, record: AgentCommissionRecord) -> dict[str, object]:
+        return {
+            "id": str(record.id),
+            "deal_id": str(record.deal_id),
+            "agent_id": str(record.agent_id),
+            "commission_type": self._enum_value(record.commission_type),
+            "status": self._enum_value(record.status),
+            "basis_amount": (
+                float(record.basis_amount) if record.basis_amount is not None else None
+            ),
+            "basis_currency": record.basis_currency,
+            "commission_rate": (
+                float(record.commission_rate)
+                if record.commission_rate is not None
+                else None
+            ),
+            "commission_amount": (
+                float(record.commission_amount)
+                if record.commission_amount is not None
+                else None
+            ),
+            "introduced_at": (
+                record.introduced_at.isoformat() if record.introduced_at else None
+            ),
+            "audit_log_id": record.audit_log_id,
+            "metadata": getattr(record, "metadata", None),
+        }
 
     async def list_commissions(
         self,
@@ -99,6 +143,36 @@ class AgentCommissionService:
         )
         if audit_log is not None:
             record.audit_log_id = audit_log.id
+        actor = self._actor_identity(actor_id)
+        await capture_lifecycle_event(
+            session,
+            entity_type="agent_commission",
+            entity_id=str(record.id),
+            action="create",
+            identity=actor,
+            after_payload=self._commission_payload(record),
+            metadata={"deal_id": str(deal.id), "audit_log_id": record.audit_log_id},
+        )
+        await capture_status_transition(
+            session,
+            entity_type="agent_commission",
+            entity_id=str(record.id),
+            status_field="status",
+            from_status=None,
+            to_status=str(self._enum_value(status)),
+            reason="commission_created",
+            identity=actor,
+            metadata={"deal_id": str(deal.id)},
+        )
+        await capture_success(
+            session,
+            source="deal_commission.create",
+            operation="create",
+            entity_type="agent_commission",
+            entity_id=str(record.id),
+            raw_payload=self._commission_payload(record),
+            metadata={"deal_id": str(deal.id)},
+        )
 
         await session.commit()
         await session.refresh(record)
@@ -115,6 +189,8 @@ class AgentCommissionService:
         metadata: Optional[dict] = None,
         actor_id: UUID | None = None,
     ) -> AgentCommissionRecord:
+        previous_status = record.status
+        before_payload = self._commission_payload(record)
         record.status = status
         timestamp_field = self._STATUS_TIMESTAMPS.get(status)
         if timestamp_field:
@@ -132,6 +208,37 @@ class AgentCommissionService:
         )
         if audit_log is not None:
             record.audit_log_id = audit_log.id
+        actor = self._actor_identity(actor_id)
+        await capture_status_transition(
+            session,
+            entity_type="agent_commission",
+            entity_id=str(record.id),
+            status_field="status",
+            from_status=str(self._enum_value(previous_status)),
+            to_status=str(self._enum_value(status)),
+            reason="commission_status_change",
+            identity=actor,
+            metadata={"deal_id": str(deal.id), "audit_log_id": record.audit_log_id},
+        )
+        await capture_lifecycle_event(
+            session,
+            entity_type="agent_commission",
+            entity_id=str(record.id),
+            action="update",
+            identity=actor,
+            before_payload=before_payload,
+            after_payload=self._commission_payload(record),
+            metadata={"updated_fields": ["status"], "deal_id": str(deal.id)},
+        )
+        await capture_success(
+            session,
+            source="deal_commission.update_status",
+            operation="status_transition",
+            entity_type="agent_commission",
+            entity_id=str(record.id),
+            raw_payload=self._commission_payload(record),
+            metadata={"deal_id": str(deal.id)},
+        )
 
         await session.commit()
         await session.refresh(record)
@@ -179,6 +286,43 @@ class AgentCommissionService:
         )
         if audit_log is not None:
             adjustment.audit_log_id = audit_log.id
+        actor = self._actor_identity(actor_id)
+        await capture_lifecycle_event(
+            session,
+            entity_type="agent_commission_adjustment",
+            entity_id=str(adjustment.id),
+            action="create",
+            identity=actor,
+            after_payload={
+                "id": str(adjustment.id),
+                "commission_id": str(adjustment.commission_id),
+                "adjustment_type": self._enum_value(adjustment.adjustment_type),
+                "amount": (
+                    float(adjustment.amount) if adjustment.amount is not None else None
+                ),
+                "currency": adjustment.currency,
+                "note": adjustment.note,
+                "recorded_by": (
+                    str(adjustment.recorded_by) if adjustment.recorded_by else None
+                ),
+                "recorded_at": (
+                    adjustment.recorded_at.isoformat()
+                    if adjustment.recorded_at
+                    else None
+                ),
+                "audit_log_id": adjustment.audit_log_id,
+                "metadata": getattr(adjustment, "metadata", None),
+            },
+            metadata={"deal_id": str(deal.id), "commission_id": str(record.id)},
+        )
+        await capture_success(
+            session,
+            source="deal_commission.adjustment",
+            operation="create_adjustment",
+            entity_type="agent_commission_adjustment",
+            entity_id=str(adjustment.id),
+            metadata={"deal_id": str(deal.id), "commission_id": str(record.id)},
+        )
 
         await session.commit()
         await session.refresh(adjustment)

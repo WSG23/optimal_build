@@ -19,7 +19,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,6 +27,11 @@ from sqlalchemy.orm import selectinload
 
 from app.api.deps import RequestIdentity, get_db, get_identity, require_reviewer
 from app.models.documents import Document, DocumentExtraction
+from app.services.analytics_capture import (
+    capture_raw_artifact,
+    capture_status_transition,
+    capture_success,
+)
 
 router = APIRouter(prefix="/documents", tags=["telemetry"])
 
@@ -125,6 +130,7 @@ def _serialize_document(row: Document) -> DocumentOut:
 )
 async def register_document(
     body: DocumentIn,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     identity: RequestIdentity = Depends(get_identity),
 ) -> DocumentOut:
@@ -148,14 +154,59 @@ async def register_document(
     await db.flush()
 
     if body.extractor_name:
-        db.add(
-            DocumentExtraction(
-                document_id=doc.id,
-                extractor_name=body.extractor_name,
-                extractor_version=body.extractor_version or "v0",
-                status="pending",
-            )
+        extraction = DocumentExtraction(
+            document_id=doc.id,
+            extractor_name=body.extractor_name,
+            extractor_version=body.extractor_version or "v0",
+            status="pending",
         )
+        db.add(extraction)
+        await db.flush()
+        await capture_status_transition(
+            db,
+            entity_type="document_extraction",
+            entity_id=str(extraction.id),
+            status_field="status",
+            from_status=None,
+            to_status="pending",
+            reason="document_registered",
+            identity=identity,
+            request_id=request.headers.get("x-request-id"),
+            correlation_id=request.scope.get("correlation_id"),
+            metadata={"document_id": doc.id},
+        )
+
+    await capture_raw_artifact(
+        db,
+        artifact_type="document_upload",
+        source="documents.register",
+        storage_key=body.storage_key,
+        sha256=body.sha256,
+        size_bytes=body.size_bytes,
+        mime_type=body.mime_type,
+        entity_type="document",
+        entity_id=str(doc.id),
+        request_id=request.headers.get("x-request-id"),
+        metadata={
+            "filename": body.filename,
+            "source": body.source,
+            "classification": body.classification,
+            "language": body.language,
+            "page_count": body.page_count,
+        },
+    )
+    await capture_success(
+        db,
+        source="documents.register",
+        capture_type="ingestion",
+        operation="register_document",
+        request=request,
+        identity=identity,
+        request_payload=body.model_dump(mode="json"),
+        entity_type="document",
+        entity_id=str(doc.id),
+        status_code=status.HTTP_201_CREATED,
+    )
 
     await db.commit()
     fetched = await db.execute(
@@ -195,8 +246,9 @@ async def update_extraction(
     document_id: int,
     extraction_id: int,
     body: ExtractionPatch,
+    request: Request,
     db: AsyncSession = Depends(get_db),
-    _: RequestIdentity = Depends(require_reviewer),
+    identity: RequestIdentity = Depends(require_reviewer),
 ) -> ExtractionOut:
     """Update an extraction row; intended for worker callbacks."""
 
@@ -213,6 +265,7 @@ async def update_extraction(
             detail="Extraction not found",
         )
 
+    previous_status = extraction.status
     extraction.status = body.status
     if body.text is not None:
         extraction.text = body.text
@@ -229,6 +282,42 @@ async def update_extraction(
     if body.completed_at is not None:
         extraction.completed_at = body.completed_at
 
+    if previous_status != body.status:
+        await capture_status_transition(
+            db,
+            entity_type="document_extraction",
+            entity_id=str(extraction.id),
+            status_field="status",
+            from_status=previous_status,
+            to_status=body.status,
+            reason="extraction_patch",
+            identity=identity,
+            request_id=request.headers.get("x-request-id"),
+            correlation_id=request.scope.get("correlation_id"),
+            metadata={"document_id": document_id},
+        )
+    await capture_success(
+        db,
+        source="documents.extraction",
+        capture_type="computation",
+        operation="update_extraction",
+        request=request,
+        identity=identity,
+        request_payload=body.model_dump(mode="json"),
+        response_payload={
+            "document_id": document_id,
+            "extraction_id": extraction_id,
+            "status": body.status,
+        },
+        raw_payload={
+            "text": body.text,
+            "structured": body.structured,
+            "entities": body.entities,
+            "error": body.error,
+        },
+        entity_type="document_extraction",
+        entity_id=str(extraction.id),
+    )
     await db.commit()
     await db.refresh(extraction)
     return _serialize_extraction(extraction)

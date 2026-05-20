@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import RequestIdentity, get_db, get_identity
 from app.models.events import SearchQuery, UserEvent
+from app.services.analytics_capture import capture_rejection, capture_success
 
 router = APIRouter(prefix="/events", tags=["telemetry"])
 
@@ -101,8 +102,29 @@ async def ingest_event_batch(
     """Persist a batch of behavioral events."""
 
     if not body.events:
+        await capture_success(
+            db,
+            source="telemetry.events.batch",
+            capture_type="ingestion",
+            operation="batch_empty",
+            request=request,
+            identity=identity,
+            request_payload={"event_count": 0},
+            response_payload={"accepted": 0},
+            status_code=status.HTTP_202_ACCEPTED,
+        )
+        await db.commit()
         return EventBatchResult(accepted=0)
     if len(body.events) > MAX_BATCH:
+        await capture_rejection(
+            source="telemetry.events.batch",
+            reason=f"Batch exceeds maximum of {MAX_BATCH} events",
+            request=request,
+            identity=identity,
+            request_payload={"event_count": len(body.events)},
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            operation="batch_size_guard",
+        )
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"Batch exceeds maximum of {MAX_BATCH} events",
@@ -122,6 +144,18 @@ async def ingest_event_batch(
             import json
 
             if len(json.dumps(payload, default=str)) > PAYLOAD_MAX_BYTES:
+                await capture_rejection(
+                    source="telemetry.events.batch",
+                    reason="Event payload exceeds 16KB",
+                    request=request,
+                    identity=identity,
+                    request_payload=event.model_dump(mode="json"),
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    operation="payload_size_guard",
+                    session_id=event.session_id,
+                    anonymous_id=event.anonymous_id,
+                    client_event_id=event.client_event_id,
+                )
                 raise HTTPException(
                     status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                     detail="Event payload exceeds 16KB",
@@ -146,6 +180,24 @@ async def ingest_event_batch(
         )
 
     db.add_all(rows)
+    await capture_success(
+        db,
+        source="telemetry.events.batch",
+        capture_type="ingestion",
+        operation="batch_ingest",
+        request=request,
+        identity=identity,
+        request_payload={"event_count": len(body.events)},
+        response_payload={"accepted": len(rows)},
+        raw_payload={
+            "events": [event.model_dump(mode="json") for event in body.events]
+        },
+        status_code=status.HTTP_202_ACCEPTED,
+        metadata={"client_host_hash": ip_hash},
+        session_id=body.events[0].session_id,
+        anonymous_id=body.events[0].anonymous_id,
+        client_event_id=body.events[0].client_event_id,
+    )
     await db.commit()
     return EventBatchResult(accepted=len(rows))
 
@@ -157,6 +209,7 @@ async def ingest_event_batch(
 )
 async def log_search_query(
     body: SearchIn,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     identity: RequestIdentity = Depends(get_identity),
 ) -> SearchResult:
@@ -179,6 +232,18 @@ async def log_search_query(
         clicked_at=body.clicked_at,
     )
     db.add(row)
+    await capture_success(
+        db,
+        source="telemetry.events.search",
+        capture_type="ingestion",
+        operation="search_log",
+        request=request,
+        identity=identity,
+        request_payload=body.model_dump(mode="json"),
+        status_code=status.HTTP_201_CREATED,
+        session_id=body.session_id,
+        anonymous_id=body.anonymous_id,
+    )
     await db.commit()
     await db.refresh(row)
     return SearchResult(id=row.id)

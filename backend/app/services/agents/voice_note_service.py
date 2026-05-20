@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 
 import structlog
 from backend._compat.datetime import utcnow
-from sqlalchemy import delete, insert, select
+from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -248,7 +248,10 @@ class VoiceNoteService:
         """Get all voice notes for a property."""
         stmt = (
             select(VoiceNote)
-            .where(VoiceNote.property_id == UUID(property_id))
+            .where(
+                VoiceNote.property_id == UUID(property_id),
+                VoiceNote.deleted_at.is_(None),
+            )
             .order_by(VoiceNote.capture_date.desc())
         )
 
@@ -307,7 +310,10 @@ class VoiceNoteService:
         session: AsyncSession,
     ) -> Optional[Dict[str, Any]]:
         """Get a single voice note by ID."""
-        stmt = select(VoiceNote).where(VoiceNote.id == UUID(voice_note_id))
+        stmt = select(VoiceNote).where(
+            VoiceNote.id == UUID(voice_note_id),
+            VoiceNote.deleted_at.is_(None),
+        )
         result = await session.execute(stmt)
         note = result.scalar_one_or_none()
 
@@ -342,7 +348,10 @@ class VoiceNoteService:
     ) -> bool:
         """Delete a voice note and its audio file from storage."""
         # Get voice note record
-        stmt = select(VoiceNote).where(VoiceNote.id == UUID(voice_note_id))
+        stmt = select(VoiceNote).where(
+            VoiceNote.id == UUID(voice_note_id),
+            VoiceNote.deleted_at.is_(None),
+        )
         result = await session.execute(stmt)
         note = result.scalar_one_or_none()
 
@@ -355,12 +364,10 @@ class VoiceNoteService:
         except Exception as e:
             logger.warning(f"Could not delete {note.storage_key}: {str(e)}")
 
-        # Delete from database
-        stmt = delete(VoiceNote).where(VoiceNote.id == UUID(voice_note_id))
-        await session.execute(stmt)
+        note.mark_deleted()
         await session.commit()
 
-        logger.info(f"Deleted voice note {voice_note_id}")
+        logger.info(f"Soft deleted voice note {voice_note_id}")
         return True
 
     async def update_voice_note(
@@ -372,7 +379,10 @@ class VoiceNoteService:
         transcript: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """Update voice note metadata."""
-        stmt = select(VoiceNote).where(VoiceNote.id == UUID(voice_note_id))
+        stmt = select(VoiceNote).where(
+            VoiceNote.id == UUID(voice_note_id),
+            VoiceNote.deleted_at.is_(None),
+        )
         result = await session.execute(stmt)
         note = result.scalar_one_or_none()
 

@@ -2,17 +2,49 @@
 
 from __future__ import annotations
 
+import importlib
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
+from sqlalchemy import select
 
 from app.core.jwt_auth import TokenData, get_current_user
 from app.main import app
+from app.models.analytics_capture import EntityLifecycleEvent, StatusTransition
+from app.models.singapore_property import SingaporeProperty
 
 if TYPE_CHECKING:
     from httpx import AsyncClient
+
+
+def _setattr_app_aliases(monkeypatch: pytest.MonkeyPatch, path: str, value) -> None:
+    """Patch both app.* and backend.app.* import aliases used by full-suite order."""
+
+    monkeypatch.setattr(path, value, raising=False)
+    if path.startswith("app."):
+        backend_path = f"backend.{path}"
+        module_name, attr_name = backend_path.rsplit(".", 1)
+        try:
+            module = importlib.import_module(module_name)
+        except ModuleNotFoundError:
+            pass
+        else:
+            monkeypatch.setattr(module, attr_name, value, raising=False)
+    if "singapore_properties." in path:
+        attr_name = path.rsplit(".", 1)[-1]
+        for route in app.router.routes:
+            endpoint = getattr(route, "endpoint", None)
+            endpoint_globals = getattr(endpoint, "__globals__", None)
+            if (
+                endpoint_globals is not None
+                and endpoint_globals.get("__name__", "").endswith(
+                    "singapore_properties"
+                )
+                and attr_name in endpoint_globals
+            ):
+                monkeypatch.setitem(endpoint_globals, attr_name, value)
 
 
 def _mock_token_data() -> TokenData:
@@ -59,7 +91,9 @@ async def test_calculate_buildable_metrics_fallback(client: "AsyncClient", monke
     async def _boom(*args, **kwargs):
         raise RuntimeError("boom")
 
-    monkeypatch.setattr("app.services.buildable.calculate_buildable", _boom)
+    _setattr_app_aliases(
+        monkeypatch, "app.services.buildable.calculate_buildable", _boom
+    )
 
     payload = {"land_area_sqm": 1200, "zoning": "residential", "jurisdiction": "SG"}
     response = await client.post(
@@ -116,8 +150,12 @@ async def test_general_compliance_endpoint(client: "AsyncClient", monkeypatch):
     async def _bca(*_, **__):
         return bca_result
 
-    monkeypatch.setattr("app.utils.singapore_compliance.check_ura_compliance", _ura)
-    monkeypatch.setattr("app.utils.singapore_compliance.check_bca_compliance", _bca)
+    _setattr_app_aliases(
+        monkeypatch, "app.utils.singapore_compliance.check_ura_compliance", _ura
+    )
+    _setattr_app_aliases(
+        monkeypatch, "app.utils.singapore_compliance.check_bca_compliance", _bca
+    )
 
     request = {
         "land_area_sqm": 1500,
@@ -157,8 +195,15 @@ async def test_create_property_endpoint(
     async def _noop_compliance(*args, **kwargs):
         pass
 
-    monkeypatch.setattr(
-        "app.utils.singapore_compliance.update_property_compliance", _noop_compliance
+    _setattr_app_aliases(
+        monkeypatch,
+        "app.utils.singapore_compliance.update_property_compliance",
+        _noop_compliance,
+    )
+    _setattr_app_aliases(
+        monkeypatch,
+        "app.api.v1.singapore_properties.update_property_compliance",
+        _noop_compliance,
     )
 
     response = await client.post(
@@ -181,8 +226,15 @@ async def test_create_and_get_property(
     async def _noop_compliance(*args, **kwargs):
         pass
 
-    monkeypatch.setattr(
-        "app.utils.singapore_compliance.update_property_compliance", _noop_compliance
+    _setattr_app_aliases(
+        monkeypatch,
+        "app.utils.singapore_compliance.update_property_compliance",
+        _noop_compliance,
+    )
+    _setattr_app_aliases(
+        monkeypatch,
+        "app.api.v1.singapore_properties.update_property_compliance",
+        _noop_compliance,
     )
 
     # Create property
@@ -211,8 +263,15 @@ async def test_update_property_endpoint(
     async def _noop_compliance(*args, **kwargs):
         pass
 
-    monkeypatch.setattr(
-        "app.utils.singapore_compliance.update_property_compliance", _noop_compliance
+    _setattr_app_aliases(
+        monkeypatch,
+        "app.utils.singapore_compliance.update_property_compliance",
+        _noop_compliance,
+    )
+    _setattr_app_aliases(
+        monkeypatch,
+        "app.api.v1.singapore_properties.update_property_compliance",
+        _noop_compliance,
     )
 
     # Create property first
@@ -236,15 +295,25 @@ async def test_update_property_endpoint(
 
 @pytest.mark.asyncio
 async def test_delete_property_endpoint(
-    client: "AsyncClient", property_create_payload: dict, monkeypatch
+    client: "AsyncClient",
+    async_session_factory,
+    property_create_payload: dict,
+    monkeypatch,
 ):
     """Test deleting a property via API."""
 
     async def _noop_compliance(*args, **kwargs):
         pass
 
-    monkeypatch.setattr(
-        "app.utils.singapore_compliance.update_property_compliance", _noop_compliance
+    _setattr_app_aliases(
+        monkeypatch,
+        "app.utils.singapore_compliance.update_property_compliance",
+        _noop_compliance,
+    )
+    _setattr_app_aliases(
+        monkeypatch,
+        "app.api.v1.singapore_properties.update_property_compliance",
+        _noop_compliance,
     )
 
     # Create property first
@@ -266,6 +335,40 @@ async def test_delete_property_endpoint(
     # Verify property is gone
     get_response = await client.get(f"/api/v1/singapore-property/{property_id}")
     assert get_response.status_code == 404
+
+    async with async_session_factory() as session:
+        property_row = await session.get(SingaporeProperty, UUID(property_id))
+        lifecycle = (
+            (
+                await session.execute(
+                    select(EntityLifecycleEvent).where(
+                        EntityLifecycleEvent.entity_type == "singapore_property",
+                        EntityLifecycleEvent.entity_id == property_id,
+                        EntityLifecycleEvent.action == "delete",
+                    )
+                )
+            )
+            .scalars()
+            .first()
+        )
+        transition = (
+            (
+                await session.execute(
+                    select(StatusTransition).where(
+                        StatusTransition.entity_type == "singapore_property",
+                        StatusTransition.entity_id == property_id,
+                        StatusTransition.status_field == "deleted_at",
+                    )
+                )
+            )
+            .scalars()
+            .first()
+        )
+
+    assert property_row is not None
+    assert property_row.deleted_at is not None
+    assert lifecycle is not None
+    assert transition is not None
 
 
 @pytest.mark.asyncio
@@ -304,19 +407,24 @@ async def test_check_property_compliance_endpoint(
         return compliance_result
 
     # Mock both update_property_compliance and run_full_compliance_check
-    monkeypatch.setattr(
-        "app.utils.singapore_compliance.run_full_compliance_check", _mock_compliance
+    _setattr_app_aliases(
+        monkeypatch,
+        "app.utils.singapore_compliance.run_full_compliance_check",
+        _mock_compliance,
     )
-    monkeypatch.setattr(
+    _setattr_app_aliases(
+        monkeypatch,
         "app.utils.singapore_compliance.update_property_compliance",
         lambda *args, **kwargs: None,  # sync noop for the monkeypatch
     )
     # Also patch the import location used by the API module
-    monkeypatch.setattr(
+    _setattr_app_aliases(
+        monkeypatch,
         "app.api.v1.singapore_properties.update_property_compliance",
         _mock_compliance,
     )
-    monkeypatch.setattr(
+    _setattr_app_aliases(
+        monkeypatch,
         "app.api.v1.singapore_properties.run_full_compliance_check",
         _mock_compliance,
     )
@@ -347,8 +455,15 @@ async def test_calculate_gfa_utilization_endpoint(
     async def _noop_compliance(*args, **kwargs):
         pass
 
-    monkeypatch.setattr(
-        "app.utils.singapore_compliance.update_property_compliance", _noop_compliance
+    _setattr_app_aliases(
+        monkeypatch,
+        "app.utils.singapore_compliance.update_property_compliance",
+        _noop_compliance,
+    )
+    _setattr_app_aliases(
+        monkeypatch,
+        "app.api.v1.singapore_properties.update_property_compliance",
+        _noop_compliance,
     )
 
     # Create property first

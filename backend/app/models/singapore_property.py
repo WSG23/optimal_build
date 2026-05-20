@@ -24,6 +24,7 @@ from sqlalchemy.orm import relationship
 
 from app.models._geometry import Geometry
 from app.models.base import UUID, BaseModel
+from app.models.mixins import SoftDeleteMixin
 
 
 class PropertyZoning(str, Enum):
@@ -91,7 +92,7 @@ class ComplianceStatus(str, Enum):
     FAILED = "failed"  # Major violations detected
 
 
-class SingaporeProperty(BaseModel):
+class SingaporeProperty(SoftDeleteMixin, BaseModel):
     """Singapore property with local regulatory compliance."""
 
     __tablename__ = "singapore_properties"

@@ -5,9 +5,16 @@ from __future__ import annotations
 from typing import Any, cast
 
 from backend._compat.datetime import utcnow  # noqa: I001
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_viewer
+from app.core.database import get_session
+from app.services.analytics_capture import (
+    capture_failure,
+    capture_raw_artifact,
+    capture_success,
+)
 
 router = APIRouter(prefix="/analytics/intelligence", tags=["advanced-intelligence"])
 
@@ -189,14 +196,57 @@ async def graph_intelligence(
 
 @router.post("/ingest")
 async def ingest_knowledge(
+    request: Request,
     text: str = Query(..., description="Text content to ingest"),
     source: str = Query(..., description="Source identifier"),
+    session: AsyncSession = Depends(get_session),
     _: str = Depends(require_viewer),
 ) -> dict[str, Any]:
     """Ingest new knowledge into the RAG engine."""
     from app.services.intelligence import intelligence_service
 
     success = intelligence_service.ingest_text(text, source)
+    if success:
+        await capture_raw_artifact(
+            session,
+            artifact_type="rag_text",
+            source="advanced_intelligence.ingest",
+            size_bytes=len(text.encode("utf-8")),
+            mime_type="text/plain",
+            encoding="utf-8",
+            entity_type="rag_source",
+            entity_id=source,
+            request_id=request.headers.get("x-request-id"),
+            preview_payload={"text": text[:2000]},
+        )
+        await capture_success(
+            session,
+            source="advanced_intelligence.ingest",
+            capture_type="ingestion",
+            operation="ingest_knowledge",
+            request=request,
+            request_payload={
+                "source": source,
+                "text_size_bytes": len(text.encode("utf-8")),
+            },
+            raw_payload={"text": text},
+            entity_type="rag_source",
+            entity_id=source,
+        )
+        await session.commit()
+    else:
+        await capture_failure(
+            source="advanced_intelligence.ingest",
+            error="Failed to ingest text into intelligence service",
+            request=request,
+            request_payload={
+                "source": source,
+                "text_size_bytes": len(text.encode("utf-8")),
+            },
+            raw_payload={"text": text},
+            operation="ingest_knowledge",
+            status_code=500,
+        )
     return {
         "status": "ok" if success else "error",
         "message": (

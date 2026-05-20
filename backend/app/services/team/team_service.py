@@ -3,6 +3,7 @@
 import logging
 import secrets
 from datetime import timedelta
+from types import SimpleNamespace
 from uuid import UUID
 
 from backend._compat.datetime import utcnow
@@ -12,6 +13,12 @@ from sqlalchemy.orm import joinedload
 
 from app.models.team import InvitationStatus, TeamInvitation, TeamMember
 from app.models.users import UserRole
+from app.services.analytics_capture import (
+    capture_failure,
+    capture_lifecycle_event,
+    capture_status_transition,
+    capture_success,
+)
 from app.services.notification.email_service import EmailService
 
 logger = logging.getLogger(__name__)
@@ -25,6 +32,46 @@ class TeamService:
     ) -> None:
         self.db = db_session
         self.email_service = email_service or EmailService()
+
+    @staticmethod
+    def _actor_identity(actor_id: UUID | None) -> object | None:
+        if actor_id is None:
+            return None
+        return SimpleNamespace(user_id=str(actor_id))
+
+    @staticmethod
+    def _enum_value(value: object) -> object:
+        return value.value if hasattr(value, "value") else value
+
+    def _invitation_payload(self, invitation: TeamInvitation) -> dict[str, object]:
+        return {
+            "id": str(invitation.id),
+            "project_id": str(invitation.project_id),
+            "email": invitation.email,
+            "role": self._enum_value(invitation.role),
+            "status": self._enum_value(invitation.status),
+            "invited_by_id": str(invitation.invited_by_id),
+            "expires_at": (
+                invitation.expires_at.isoformat() if invitation.expires_at else None
+            ),
+            "accepted_at": (
+                invitation.accepted_at.isoformat() if invitation.accepted_at else None
+            ),
+            "token_hash_only": True,
+        }
+
+    def _member_payload(self, member: TeamMember) -> dict[str, object]:
+        return {
+            "id": str(member.id),
+            "project_id": str(member.project_id),
+            "user_id": str(member.user_id),
+            "role": self._enum_value(member.role),
+            "is_active": bool(member.is_active),
+            "joined_at": member.joined_at.isoformat() if member.joined_at else None,
+            "last_active_at": (
+                member.last_active_at.isoformat() if member.last_active_at else None
+            ),
+        }
 
     async def get_team_members(self, project_id: UUID) -> list[TeamMember]:
         """List all members of a project team."""
@@ -66,6 +113,37 @@ class TeamService:
         )
 
         self.db.add(invitation)
+        await self.db.flush()
+        actor = self._actor_identity(invited_by_id)
+        await capture_lifecycle_event(
+            self.db,
+            entity_type="team_invitation",
+            entity_id=str(invitation.id),
+            action="create",
+            identity=actor,
+            after_payload=self._invitation_payload(invitation),
+            metadata={"project_id": str(project_id), "email": email},
+        )
+        await capture_status_transition(
+            self.db,
+            entity_type="team_invitation",
+            entity_id=str(invitation.id),
+            status_field="status",
+            from_status=None,
+            to_status=InvitationStatus.PENDING.value,
+            reason="invite_member",
+            identity=actor,
+            metadata={"project_id": str(project_id)},
+        )
+        await capture_success(
+            self.db,
+            source="team.invite_member",
+            operation="create_invitation",
+            entity_type="team_invitation",
+            entity_id=str(invitation.id),
+            raw_payload=self._invitation_payload(invitation),
+            metadata={"project_id": str(project_id)},
+        )
         await self.db.commit()
         await self.db.refresh(invitation)
 
@@ -99,6 +177,18 @@ class TeamService:
         except Exception as e:
             # Log but don't fail the invitation if email fails
             logger.warning(f"Failed to send invitation email to {email}: {e}")
+            await capture_failure(
+                source="team.invite_member.email",
+                error=e,
+                operation="send_invitation_email",
+                raw_payload={
+                    "project_id": str(project_id),
+                    "email": email,
+                    "invitation_id": str(invitation.id),
+                },
+                metadata={"swallowed": True},
+                raise_on_error=False,
+            )
 
         return invitation
 
@@ -111,8 +201,28 @@ class TeamService:
         if not invitation or invitation.status != InvitationStatus.PENDING:
             return False
 
+        before = self._invitation_payload(invitation)
         invitation.status = InvitationStatus.REVOKED
         self.db.add(invitation)
+        await capture_status_transition(
+            self.db,
+            entity_type="team_invitation",
+            entity_id=str(invitation.id),
+            status_field="status",
+            from_status=InvitationStatus.PENDING.value,
+            to_status=InvitationStatus.REVOKED.value,
+            reason="revoke_invitation",
+            metadata={"project_id": str(invitation.project_id)},
+        )
+        await capture_lifecycle_event(
+            self.db,
+            entity_type="team_invitation",
+            entity_id=str(invitation.id),
+            action="update",
+            before_payload=before,
+            after_payload=self._invitation_payload(invitation),
+            metadata={"updated_fields": ["status"]},
+        )
         await self.db.commit()
         return True
 
@@ -129,8 +239,29 @@ class TeamService:
 
         # Revoke old invitation if still pending
         if old_invitation.status == InvitationStatus.PENDING:
+            before = self._invitation_payload(old_invitation)
             old_invitation.status = InvitationStatus.REVOKED
             self.db.add(old_invitation)
+            await capture_status_transition(
+                self.db,
+                entity_type="team_invitation",
+                entity_id=str(old_invitation.id),
+                status_field="status",
+                from_status=InvitationStatus.PENDING.value,
+                to_status=InvitationStatus.REVOKED.value,
+                reason="resend_invitation_revoke_old",
+                identity=self._actor_identity(invited_by_id),
+            )
+            await capture_lifecycle_event(
+                self.db,
+                entity_type="team_invitation",
+                entity_id=str(old_invitation.id),
+                action="update",
+                identity=self._actor_identity(invited_by_id),
+                before_payload=before,
+                after_payload=self._invitation_payload(old_invitation),
+                metadata={"updated_fields": ["status"], "resend": True},
+            )
 
         # Create fresh invitation
         return await self.invite_member(
@@ -176,9 +307,41 @@ class TeamService:
         self.db.add(member)
 
         # Update invitation
+        invitation_before = self._invitation_payload(invitation)
         invitation.status = InvitationStatus.ACCEPTED
         invitation.accepted_at = utcnow()
         self.db.add(invitation)
+        await self.db.flush()
+        actor = self._actor_identity(user_id)
+        await capture_lifecycle_event(
+            self.db,
+            entity_type="team_member",
+            entity_id=str(member.id),
+            action="create",
+            identity=actor,
+            after_payload=self._member_payload(member),
+            metadata={"invitation_id": str(invitation.id)},
+        )
+        await capture_status_transition(
+            self.db,
+            entity_type="team_invitation",
+            entity_id=str(invitation.id),
+            status_field="status",
+            from_status=InvitationStatus.PENDING.value,
+            to_status=InvitationStatus.ACCEPTED.value,
+            reason="accept_invitation",
+            identity=actor,
+        )
+        await capture_lifecycle_event(
+            self.db,
+            entity_type="team_invitation",
+            entity_id=str(invitation.id),
+            action="update",
+            identity=actor,
+            before_payload=invitation_before,
+            after_payload=self._invitation_payload(invitation),
+            metadata={"updated_fields": ["status", "accepted_at"]},
+        )
 
         await self.db.commit()
         await self.db.refresh(member)
@@ -193,8 +356,27 @@ class TeamService:
         member = result.scalar_one_or_none()
 
         if member:
+            before = self._member_payload(member)
             member.is_active = False  # Soft delete/deactivate
             self.db.add(member)
+            await capture_status_transition(
+                self.db,
+                entity_type="team_member",
+                entity_id=str(member.id),
+                status_field="is_active",
+                from_status="true",
+                to_status="false",
+                reason="remove_member",
+                metadata={"project_id": str(project_id), "user_id": str(user_id)},
+            )
+            await capture_lifecycle_event(
+                self.db,
+                entity_type="team_member",
+                entity_id=str(member.id),
+                action="deactivate",
+                before_payload=before,
+                after_payload=self._member_payload(member),
+            )
             await self.db.commit()
             return True
         return False
