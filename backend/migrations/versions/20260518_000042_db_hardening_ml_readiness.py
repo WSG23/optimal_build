@@ -245,11 +245,11 @@ def upgrade() -> None:
 
     # Back-fill organization_id on existing rows to the default tenant.
     for table in ("properties", "projects", "fin_scenarios", "users"):
+        target = sa.table(table, sa.column("organization_id", _uuid_type()))
         op.execute(
-            sa.text(
-                f"UPDATE {table} SET organization_id = :org "
-                "WHERE organization_id IS NULL"
-            ).bindparams(sa.bindparam("org", DEFAULT_ORG_ID, type_=_uuid_type()))
+            target.update()
+            .where(target.c.organization_id.is_(None))
+            .values(organization_id=DEFAULT_ORG_ID)
         )
 
     # --- composite indexes for ML pulls ----------------------------------

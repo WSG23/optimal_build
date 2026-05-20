@@ -228,7 +228,9 @@ def _repair_sqlite_schema_from_metadata(
 
             column_ddl = str(CreateColumn(column).compile(dialect=sync_conn.dialect))
             table_name = preparer.quote(table.name)
-            sync_conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_ddl}"))
+            sync_conn.exec_driver_sql(
+                f"ALTER TABLE {table_name} ADD COLUMN {column_ddl}"
+            )
             repaired_columns.append(f"{table.name}.{column.name}")
 
     return repaired_columns

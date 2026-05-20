@@ -20,7 +20,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from uuid import uuid4
 
-from sqlalchemy import text
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -56,25 +56,25 @@ from app.services.analytics_capture import (
     capture_success,
 )
 
-COUNT_TABLES = (
-    DataCaptureEvent.__tablename__,
-    ExternalAPICall.__tablename__,
-    StatusTransition.__tablename__,
-    EntityLifecycleEvent.__tablename__,
-    RawArtifact.__tablename__,
-    ListingPublication.__tablename__,
-    FinScenario.__tablename__,
-    PropertyPhoto.__tablename__,
-    VoiceNote.__tablename__,
-    ImportRecord.__tablename__,
+COUNT_MODELS = (
+    DataCaptureEvent,
+    ExternalAPICall,
+    StatusTransition,
+    EntityLifecycleEvent,
+    RawArtifact,
+    ListingPublication,
+    FinScenario,
+    PropertyPhoto,
+    VoiceNote,
+    ImportRecord,
 )
 
 
 async def _counts(session) -> dict[str, int]:
     output: dict[str, int] = {}
-    for table in COUNT_TABLES:
-        output[table] = (
-            await session.execute(text(f"SELECT COUNT(*) FROM {table}"))
+    for model in COUNT_MODELS:
+        output[model.__tablename__] = (
+            await session.execute(select(func.count()).select_from(model))
         ).scalar_one()
     return output
 
@@ -299,11 +299,21 @@ async def _run(args: argparse.Namespace) -> None:
 
             async with factory() as session:
                 after = await _counts(session)
-                capture_rows = (await session.execute(text("""
-                            SELECT capture_type, source, outcome, operation, entity_type
-                            FROM data_capture_events
-                            ORDER BY id
-                            """))).mappings().all()
+                capture_rows = (
+                    (
+                        await session.execute(
+                            select(
+                                DataCaptureEvent.capture_type,
+                                DataCaptureEvent.source,
+                                DataCaptureEvent.outcome,
+                                DataCaptureEvent.operation,
+                                DataCaptureEvent.entity_type,
+                            ).order_by(DataCaptureEvent.id)
+                        )
+                    )
+                    .mappings()
+                    .all()
+                )
 
             print(
                 json.dumps(
