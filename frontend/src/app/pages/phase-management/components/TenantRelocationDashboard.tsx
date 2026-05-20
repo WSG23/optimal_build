@@ -147,16 +147,16 @@ function RelocationTable({
 }: RelocationTableProps) {
   if (relocations.length === 0) {
     return (
-      <GlassCard
-        sx={{ p: 'var(--ob-space-200)', textAlign: 'center' }}
-      >
+      <GlassCard sx={{ p: 'var(--ob-space-200)', textAlign: 'center' }}>
         <Typography color="text.secondary">{emptyMessage}</Typography>
       </GlassCard>
     )
   }
 
   return (
-    <TableContainer component={Paper} variant="outlined"> // canon-ok: MUI TableContainer needs Paper as component
+    <TableContainer component={Paper} variant="outlined">
+      {' '}
+      // canon-ok: MUI TableContainer needs Paper as component
       <Table size="small">
         <TableHead>
           <TableRow sx={{ backgroundColor: 'background.default' }}>

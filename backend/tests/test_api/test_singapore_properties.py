@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import sys
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
@@ -32,6 +33,11 @@ def _setattr_app_aliases(monkeypatch: pytest.MonkeyPatch, path: str, value) -> N
             pass
         else:
             monkeypatch.setattr(module, attr_name, value, raising=False)
+    module_name, attr_name = path.rsplit(".", 1)
+    if module_name.endswith("singapore_compliance"):
+        for loaded_name, loaded_module in tuple(sys.modules.items()):
+            if loaded_name.endswith("singapore_compliance"):
+                monkeypatch.setattr(loaded_module, attr_name, value, raising=False)
     if "singapore_properties." in path:
         attr_name = path.rsplit(".", 1)[-1]
         for route in app.router.routes:

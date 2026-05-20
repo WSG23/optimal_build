@@ -7,7 +7,6 @@ from datetime import date, datetime
 from typing import Any
 
 import sqlalchemy as sa
-from pydantic import BaseModel, Field
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -24,6 +23,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from backend._compat.datetime import utcnow
+from pydantic import BaseModel, Field
 
 
 def _ensure_sqlalchemy_dialects() -> None:

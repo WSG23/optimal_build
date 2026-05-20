@@ -1,12 +1,5 @@
 import React from 'react'
-import {
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Chip,
-} from '@mui/material'
+import { Box, Typography, Grid, Card, CardContent, Chip } from '@mui/material'
 import SpeedIcon from '@mui/icons-material/Speed'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import TrendingDownIcon from '@mui/icons-material/TrendingDown'

@@ -1,11 +1,4 @@
-import {
-  alpha,
-  Box,
-  Divider,
-  Grid,
-  Stack,
-  Typography,
-} from '@mui/material'
+import { alpha, Box, Divider, Grid, Stack, Typography } from '@mui/material'
 import type { HeritageTracker } from '../../../../api/development'
 import { GlassCard } from '../../../../components/canonical/GlassCard'
 

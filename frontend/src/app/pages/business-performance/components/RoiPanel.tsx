@@ -122,7 +122,9 @@ export function RoiPanel({ summary }: RoiPanelProps) {
             </Box>
           </Box>
         ) : (
-          <TableContainer component={Paper} variant="outlined"> // canon-ok: MUI TableContainer needs Paper as component
+          <TableContainer component={Paper} variant="outlined">
+            {' '}
+            // canon-ok: MUI TableContainer needs Paper as component
             <Table size="small">
               <TableHead>
                 <TableRow>

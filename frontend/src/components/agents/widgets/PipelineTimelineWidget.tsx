@@ -1,12 +1,5 @@
 import React, { useMemo } from 'react'
-import {
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Chip,
-} from '@mui/material'
+import { Box, Typography, Grid, Card, CardContent, Chip } from '@mui/material'
 import {
   Timeline,
   TimelineItem,
