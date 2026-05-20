@@ -48,6 +48,7 @@ from app.models.listing_integration import (
     ListingPublicationStatus,
 )
 from app.models.property import Property, PropertyPhoto, PropertyType, VoiceNote
+from app.models.projects import Project, ProjectPhase, ProjectType
 from app.models.users import User
 from app.services.analytics_capture import (
     capture_external_call,
@@ -225,6 +226,16 @@ async def _run(args: argparse.Namespace) -> None:
                         "resolved": "Proof Address",
                     },
                 )
+
+                project = Project(
+                    id=project_id,
+                    project_name="Analytics Proof Project",
+                    project_code=f"PROOF-{project_id.hex[:12]}",
+                    project_type=ProjectType.NEW_DEVELOPMENT,
+                    current_phase=ProjectPhase.CONCEPT,
+                )
+                session.add(project)
+                await session.flush()
 
                 fin_project = FinProject(project_id=project_id, name="Proof Project")
                 session.add(fin_project)
