@@ -1,10 +1,11 @@
 import Layers from '@mui/icons-material/Layers'
 import GridOn from '@mui/icons-material/GridOn'
 import Plumbing from '@mui/icons-material/Plumbing'
-import { ToggleButton, ToggleButtonGroup, Paper } from '@mui/material'
+import { ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { useState } from 'react'
 
 import type { ReactNode } from 'react'
+import { GlassCard } from '../../../components/canonical/GlassCard'
 
 interface FeasibilityLayoutProps {
   /** Output content to render in the main panel. Receives active layer IDs. */
@@ -49,7 +50,7 @@ export function FeasibilityLayout({
         <section className="feasibility-workspace__main">
           {renderOutput(layers)}
           <div className="feasibility-workspace__layer-controls">
-            <Paper
+            <GlassCard
               elevation={0}
               sx={{
                 borderRadius: 'var(--ob-radius-sm)',
@@ -118,7 +119,7 @@ export function FeasibilityLayout({
                   <Plumbing fontSize="small" />
                 </ToggleButton>
               </ToggleButtonGroup>
-            </Paper>
+            </GlassCard>
           </div>
         </section>
       </div>

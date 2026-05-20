@@ -3,6 +3,7 @@ import { assert, describe, it } from 'vitest'
 import {
   type DevelopmentScenario,
   logPropertyByGps,
+  logPropertyByGpsWithFeatures,
   fetchPropertyMarketIntelligence,
   generateProfessionalPack,
 } from '../agents'
@@ -114,6 +115,107 @@ describe('agents API mapping', () => {
     )
 
     assert.deepEqual(captured[0], selection)
+  })
+
+  it('sends reviewer identity headers for standard GPS capture writes', async () => {
+    const originalFetch = globalThis.fetch
+    window.localStorage.setItem('app:api-role', 'developer')
+    let requestHeaders: HeadersInit | undefined
+
+    globalThis.fetch = (async (_input: RequestInfo, init?: RequestInit) => {
+      requestHeaders = init?.headers
+      return {
+        ok: true,
+        status: 200,
+        headers: {
+          get: () => 'application/json',
+        },
+        async json() {
+          return {
+            property_id: 'id',
+            address: { full_address: 'Mock', country: 'Singapore' },
+            coordinates: { latitude: 1.0, longitude: 103.0 },
+            ura_zoning: null,
+            existing_use: 'Unknown',
+            property_info: null,
+            nearby_amenities: null,
+            quick_analysis: {
+              generated_at: '2025-01-01T00:00:00Z',
+              scenarios: [],
+            },
+            timestamp: '2025-01-01T00:00:00Z',
+          }
+        },
+      }
+    }) as typeof globalThis.fetch
+
+    try {
+      await logPropertyByGps({ latitude: 1.0, longitude: 103.0 })
+      assert.equal(
+        (requestHeaders as Record<string, string>)['X-Role'],
+        'reviewer',
+      )
+    } finally {
+      window.localStorage.clear()
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  it('sends reviewer identity headers for enhanced developer GPS writes', async () => {
+    const originalFetch = globalThis.fetch
+    window.localStorage.setItem('app:api-role', 'developer')
+    let requestHeaders: HeadersInit | undefined
+
+    globalThis.fetch = (async (_input: RequestInfo, init?: RequestInit) => {
+      requestHeaders = init?.headers
+      return {
+        ok: true,
+        status: 200,
+        headers: {
+          get: () => 'application/json',
+        },
+        async json() {
+          return {
+            property_id: 'id',
+            address: { full_address: 'Mock', country: 'Singapore' },
+            coordinates: { latitude: 1.0, longitude: 103.0 },
+            ura_zoning: null,
+            existing_use: 'Unknown',
+            property_info: null,
+            nearby_amenities: null,
+            quick_analysis: {
+              generated_at: '2025-01-01T00:00:00Z',
+              scenarios: [],
+            },
+            timestamp: '2025-01-01T00:00:00Z',
+            visualization: null,
+            optimizations: [],
+            financial_summary: null,
+            heritage_context: null,
+          }
+        },
+      }
+    }) as typeof globalThis.fetch
+
+    try {
+      await logPropertyByGpsWithFeatures({
+        latitude: 1.0,
+        longitude: 103.0,
+        enabledFeatures: {
+          preview3D: true,
+          assetOptimization: false,
+          financialSummary: false,
+          heritageContext: false,
+        },
+      })
+      assert.equal(
+        (requestHeaders as Record<string, string>)['X-Role'],
+        'reviewer',
+      )
+    } finally {
+      window.localStorage.clear()
+      globalThis.fetch = originalFetch
+    }
   })
 
   it('fetches market intelligence and returns the report payload', async () => {

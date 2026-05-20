@@ -14,6 +14,11 @@ from app.models.workflow import (
     StepStatus,
     WorkflowStatus,
 )
+from app.services.analytics_capture import (
+    capture_lifecycle_event,
+    capture_status_transition,
+    capture_success,
+)
 
 
 class WorkflowService:
@@ -21,6 +26,40 @@ class WorkflowService:
 
     def __init__(self, db_session: AsyncSession) -> None:
         self.db = db_session
+
+    @staticmethod
+    def _enum_value(value: object) -> object:
+        return value.value if hasattr(value, "value") else value
+
+    def _workflow_payload(self, workflow: ApprovalWorkflow) -> dict[str, object]:
+        return {
+            "id": str(workflow.id),
+            "project_id": str(workflow.project_id),
+            "title": workflow.title,
+            "description": workflow.description,
+            "workflow_type": workflow.workflow_type,
+            "created_by_id": str(workflow.created_by_id),
+            "status": self._enum_value(workflow.status),
+            "completed_at": (
+                workflow.completed_at.isoformat() if workflow.completed_at else None
+            ),
+        }
+
+    def _step_payload(self, step: ApprovalStep) -> dict[str, object]:
+        return {
+            "id": str(step.id),
+            "workflow_id": str(step.workflow_id),
+            "name": step.name,
+            "sequence_order": step.sequence_order,
+            "required_role": self._enum_value(step.required_role),
+            "required_user_id": (
+                str(step.required_user_id) if step.required_user_id else None
+            ),
+            "status": self._enum_value(step.status),
+            "approved_by_id": str(step.approved_by_id) if step.approved_by_id else None,
+            "decision_at": step.decision_at.isoformat() if step.decision_at else None,
+            "comments": step.comments,
+        }
 
     async def _check_step_permission(self, step: ApprovalStep, user_id: UUID) -> bool:
         """Check if user has permission to approve/reject a step.
@@ -97,6 +136,7 @@ class WorkflowService:
         self.db.add(workflow)
         await self.db.flush()  # Get ID
 
+        created_steps: list[ApprovalStep] = []
         for idx, step_data in enumerate(steps_data):
             step = ApprovalStep(
                 workflow_id=workflow.id,
@@ -109,6 +149,52 @@ class WorkflowService:
                 ),  # Activate first step
             )
             self.db.add(step)
+            created_steps.append(step)
+
+        await self.db.flush()
+        await capture_lifecycle_event(
+            self.db,
+            entity_type="approval_workflow",
+            entity_id=str(workflow.id),
+            action="create",
+            after_payload={
+                **self._workflow_payload(workflow),
+                "steps": [self._step_payload(step) for step in created_steps],
+            },
+            metadata={"project_id": str(project_id)},
+        )
+        await capture_status_transition(
+            self.db,
+            entity_type="approval_workflow",
+            entity_id=str(workflow.id),
+            status_field="status",
+            from_status=None,
+            to_status=WorkflowStatus.IN_PROGRESS.value,
+            reason="workflow_created",
+            metadata={"project_id": str(project_id)},
+        )
+        for step in created_steps:
+            await capture_status_transition(
+                self.db,
+                entity_type="approval_step",
+                entity_id=str(step.id),
+                status_field="status",
+                from_status=None,
+                to_status=str(self._enum_value(step.status)),
+                reason="workflow_created",
+                metadata={"workflow_id": str(workflow.id)},
+            )
+        await capture_success(
+            self.db,
+            source="workflow.create",
+            operation="create",
+            entity_type="approval_workflow",
+            entity_id=str(workflow.id),
+            raw_payload={
+                **self._workflow_payload(workflow),
+                "steps": [self._step_payload(step) for step in created_steps],
+            },
+        )
 
         await self.db.commit()
         await self.db.refresh(workflow)
@@ -171,6 +257,24 @@ class WorkflowService:
         step.comments = comments
 
         self.db.add(step)
+        await capture_status_transition(
+            self.db,
+            entity_type="approval_step",
+            entity_id=str(step.id),
+            status_field="status",
+            from_status=StepStatus.IN_REVIEW.value,
+            to_status=StepStatus.APPROVED.value,
+            reason="approve_step",
+            metadata={"workflow_id": str(step.workflow_id), "user_id": str(user_id)},
+        )
+        await capture_lifecycle_event(
+            self.db,
+            entity_type="approval_step",
+            entity_id=str(step.id),
+            action="update",
+            after_payload=self._step_payload(step),
+            metadata={"updated_fields": ["status", "approved_by_id", "decision_at"]},
+        )
 
         # Advance workflow
         await self._advance_workflow(step.workflow_id)
@@ -207,13 +311,50 @@ class WorkflowService:
         step.comments = comments
 
         self.db.add(step)
+        await capture_status_transition(
+            self.db,
+            entity_type="approval_step",
+            entity_id=str(step.id),
+            status_field="status",
+            from_status=StepStatus.IN_REVIEW.value,
+            to_status=StepStatus.REJECTED.value,
+            reason="reject_step",
+            metadata={"workflow_id": str(step.workflow_id), "user_id": str(user_id)},
+        )
+        await capture_lifecycle_event(
+            self.db,
+            entity_type="approval_step",
+            entity_id=str(step.id),
+            action="update",
+            after_payload=self._step_payload(step),
+            metadata={"updated_fields": ["status", "approved_by_id", "decision_at"]},
+        )
 
         # Mark workflow as rejected
         workflow = await self.get_workflow(step.workflow_id)
         if workflow:
+            previous_status = workflow.status
             workflow.status = WorkflowStatus.REJECTED
             workflow.completed_at = utcnow()
             self.db.add(workflow)
+            await capture_status_transition(
+                self.db,
+                entity_type="approval_workflow",
+                entity_id=str(workflow.id),
+                status_field="status",
+                from_status=str(self._enum_value(previous_status)),
+                to_status=WorkflowStatus.REJECTED.value,
+                reason="reject_step",
+                metadata={"step_id": str(step.id), "user_id": str(user_id)},
+            )
+            await capture_lifecycle_event(
+                self.db,
+                entity_type="approval_workflow",
+                entity_id=str(workflow.id),
+                action="update",
+                after_payload=self._workflow_payload(workflow),
+                metadata={"updated_fields": ["status", "completed_at"]},
+            )
 
         await self.db.commit()
         await self.db.refresh(step)
@@ -233,8 +374,19 @@ class WorkflowService:
                 continue
             elif step.status == StepStatus.PENDING:
                 if not next_step_found:
+                    previous_status = step.status
                     step.status = StepStatus.IN_REVIEW
                     self.db.add(step)
+                    await capture_status_transition(
+                        self.db,
+                        entity_type="approval_step",
+                        entity_id=str(step.id),
+                        status_field="status",
+                        from_status=str(self._enum_value(previous_status)),
+                        to_status=StepStatus.IN_REVIEW.value,
+                        reason="advance_workflow",
+                        metadata={"workflow_id": str(workflow_id)},
+                    )
                     next_step_found = True
                     all_steps_approved = False
                 else:
@@ -244,6 +396,24 @@ class WorkflowService:
                 next_step_found = True  # Current active step
 
         if all_steps_approved:
+            previous_status = workflow.status
             workflow.status = WorkflowStatus.APPROVED
             workflow.completed_at = utcnow()
             self.db.add(workflow)
+            await capture_status_transition(
+                self.db,
+                entity_type="approval_workflow",
+                entity_id=str(workflow.id),
+                status_field="status",
+                from_status=str(self._enum_value(previous_status)),
+                to_status=WorkflowStatus.APPROVED.value,
+                reason="advance_workflow_complete",
+            )
+            await capture_lifecycle_event(
+                self.db,
+                entity_type="approval_workflow",
+                entity_id=str(workflow.id),
+                action="update",
+                after_payload=self._workflow_payload(workflow),
+                metadata={"updated_fields": ["status", "completed_at"]},
+            )

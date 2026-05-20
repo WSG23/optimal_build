@@ -1,19 +1,18 @@
 /**
- * AgentResultsPanel - HUD widgets for Agent mode post-capture results
+ * AgentResultsPanel — Agent-mode results column.
  *
- * Displays three floating cards on the right panel:
- * - Quick Analysis: First scenario metrics
- * - Market Intelligence: Property type, zone, transactions
- * - Marketing Packs: PDF/document download buttons
- *
- * Also shows an upsell card to encourage Developer mode upgrade.
+ * Pre-capture: a single instructive empty state describing what will appear.
+ * Post-capture: a denser layout that emphasises Quick analysis (primary card),
+ * with Market intelligence collapsed into an inline stat row, and Marketing
+ * packs rendered as an inline action row. The Developer-mode upsell is a
+ * quiet footer rather than another card.
  */
 
 import React, { useState, useCallback } from 'react'
-import LockIcon from '@mui/icons-material/Lock'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import DescriptionIcon from '@mui/icons-material/Description'
-import RocketLaunchIcon from '@mui/icons-material/RocketLaunch'
+import RequestQuoteIcon from '@mui/icons-material/RequestQuote'
+import HomeWorkIcon from '@mui/icons-material/HomeWork'
 
 import {
   generateProfessionalPack,
@@ -22,13 +21,24 @@ import {
   type ProfessionalPackType,
 } from '../../../../api/agents'
 import { formatScenarioLabel } from '../utils/formatScenario'
-import { Button } from '../../../../components/canonical/Button'
 
 interface PackButtonProps {
   packType: ProfessionalPackType
   isLoading: boolean
   disabled: boolean
   onGenerate: (packType: ProfessionalPackType) => void
+}
+const PACK_META: Record<
+  ProfessionalPackType,
+  {
+    label: string
+    icon: React.ComponentType<{ fontSize?: 'inherit' | 'small' }>
+  }
+> = {
+  universal: { label: 'Universal pack', icon: DescriptionIcon },
+  investment: { label: 'Investment memo', icon: RequestQuoteIcon },
+  sales: { label: 'Sales brief', icon: PictureAsPdfIcon },
+  lease: { label: 'Lease brochure', icon: HomeWorkIcon },
 }
 
 const PackButton = React.memo(function PackButton({
@@ -37,6 +47,11 @@ const PackButton = React.memo(function PackButton({
   disabled,
   onGenerate,
 }: PackButtonProps) {
+  const meta = PACK_META[packType] ?? {
+    label: packType,
+    icon: DescriptionIcon,
+  }
+  const Icon = meta.icon
   return (
     <button
       type="button"
@@ -45,13 +60,11 @@ const PackButton = React.memo(function PackButton({
       onClick={() => onGenerate(packType)}
     >
       {isLoading ? (
-        <div className="gps-spinner gps-spinner--xs"></div>
-      ) : packType === 'investment' || packType === 'sales' ? (
-        <PictureAsPdfIcon />
+        <div className="gps-spinner gps-spinner--xs" />
       ) : (
-        <DescriptionIcon />
+        <Icon fontSize="small" />
       )}
-      <span>{formatPackLabel(packType).split(' ')[0]}</span>
+      <span>{meta.label}</span>
     </button>
   )
 })
@@ -103,17 +116,47 @@ export function AgentResultsPanel({
     [captureSummary],
   )
 
-  return (
-    <div className="gps-hud-group">
-      {/* Widget 1: Quick Analysis */}
-      <div className={`gps-hud-card ${!quickAnalysis ? 'locked' : ''}`}>
-        <h3>
-          Quick Analysis
-          {!quickAnalysis && <LockIcon fontSize="small" />}
-        </h3>
+  // Pre-capture: one quiet, instructive empty state.
+  if (!captureSummary) {
+    return (
+      <aside className="gps-results gps-results--empty" aria-label="Results">
+        <p className="gps-results__empty-eyebrow">Results</p>
+        <p className="gps-results__empty-headline">
+          Run a capture to see analysis here.
+        </p>
+        <ul className="gps-results__empty-list">
+          <li>Quick analysis — first-scenario metrics</li>
+          <li>Market intelligence — type, zone, recent transactions</li>
+          <li>
+            Marketing packs — investment memo, sales brief, lease brochure
+          </li>
+        </ul>
+        {onEnableDeveloperMode && (
+          <p className="gps-results__upsell">
+            Need 3D preview, feasibility, condition assessment, and
+            multi-scenario comparison?{' '}
+            <button
+              type="button"
+              className="gps-results__upsell-link"
+              onClick={onEnableDeveloperMode}
+            >
+              Enable Developer mode
+            </button>
+          </p>
+        )}
+      </aside>
+    )
+  }
 
-        {quickAnalysis ? (
-          <div className="gps-hud-content">
+  return (
+    <aside className="gps-results" aria-label="Results">
+      {/* Primary card — Quick analysis */}
+      <section className="gps-results__primary" aria-label="Quick analysis">
+        <header className="gps-results__primary-header">
+          <h3>Quick analysis</h3>
+        </header>
+        {quickAnalysis && quickAnalysis.scenarios.length > 0 ? (
+          <>
             <ul className="gps-panel__list">
               {quickAnalysis.scenarios.slice(0, 1).map((scenario) => {
                 const displayMetrics = Object.entries(scenario.metrics)
@@ -133,7 +176,7 @@ export function AgentResultsPanel({
                               {formatMetricValue(
                                 v,
                                 k,
-                                captureSummary?.currencySymbol,
+                                captureSummary.currencySymbol,
                               )}
                             </dd>
                           </div>
@@ -143,70 +186,67 @@ export function AgentResultsPanel({
                   </li>
                 )
               })}
-              {quickAnalysis.scenarios.length > 1 && (
-                <p className="gps-hud-more-scenarios">
-                  + {quickAnalysis.scenarios.length - 1} more scenarios
-                </p>
-              )}
             </ul>
-          </div>
+            {quickAnalysis.scenarios.length > 1 && (
+              <p className="gps-results__more">
+                +{quickAnalysis.scenarios.length - 1} more scenarios available
+                in Developer mode
+              </p>
+            )}
+          </>
         ) : (
-          <div className="gps-hud-locked-overlay">
-            <span>Awaiting Scan</span>
-          </div>
+          <p className="gps-results__inline-empty">
+            No quick analysis available for this capture.
+          </p>
         )}
-      </div>
+      </section>
 
-      {/* Widget 2: Market Intelligence */}
-      <div className={`gps-hud-card ${!marketSummary ? 'locked' : ''}`}>
-        <h3>
-          Market Intelligence
-          {!marketSummary && <LockIcon fontSize="small" />}
-        </h3>
+      {/* Secondary — Market intelligence as a thin stat row */}
+      <section className="gps-results__row" aria-label="Market intelligence">
+        <p className="gps-results__row-eyebrow">Market intelligence</p>
         {marketLoading ? (
-          <div className="gps-hud-loading" role="status" aria-live="polite">
-            <div className="gps-spinner gps-spinner--sm"></div>
-            Decrypting market data...
+          <div
+            className="gps-results__row-loading"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="gps-spinner gps-spinner--sm" />
+            <span>Loading market data…</span>
           </div>
         ) : marketSummary ? (
-          <div className="gps-hud-content">
-            <dl className="gps-panel__metrics">
-              <div>
-                <dt>Type</dt>
-                <dd>
-                  {extractReportValue(marketSummary.report, 'property_type')}
-                </dd>
-              </div>
-              <div>
-                <dt>Zone</dt>
-                <dd>{extractReportValue(marketSummary.report, 'location')}</dd>
-              </div>
-              <div>
-                <dt>Trans</dt>
-                <dd>{extractTransactions(marketSummary.report)} recent</dd>
-              </div>
-            </dl>
-          </div>
+          <dl className="gps-results__row-metrics">
+            <div>
+              <dt>Type</dt>
+              <dd>
+                {extractReportValue(marketSummary.report, 'property_type')}
+              </dd>
+            </div>
+            <div>
+              <dt>Zone</dt>
+              <dd>{extractReportValue(marketSummary.report, 'location')}</dd>
+            </div>
+            <div>
+              <dt>Recent transactions</dt>
+              <dd>{extractTransactions(marketSummary.report)}</dd>
+            </div>
+          </dl>
         ) : (
-          <div className="gps-hud-locked-overlay">
-            <span>Scan to receive market data</span>
-          </div>
+          <p className="gps-results__row-empty">
+            Market data unavailable for this property.
+          </p>
         )}
-      </div>
+      </section>
 
-      {/* Widget 3: Marketing Packs */}
-      <div className={`gps-hud-card ${!captureSummary ? 'locked' : ''}`}>
-        <h3>
-          Marketing Packs
-          {!captureSummary && <LockIcon fontSize="small" />}
-        </h3>
-        <div className="gps-pack-grid gps-hud-content">
+      {/* Tertiary — Marketing packs as an action row */}
+      <section className="gps-results__row" aria-label="Marketing packs">
+        <p className="gps-results__row-eyebrow">Marketing packs</p>
+        <div className="gps-pack-grid">
           {PACK_TYPES.map((packType) => (
             <PackButton
               key={packType}
               packType={packType}
               isLoading={packLoadingType === packType}
-              disabled={!captureSummary}
+              disabled={false}
               onGenerate={handleGeneratePack}
             />
           ))}
@@ -216,48 +256,27 @@ export function AgentResultsPanel({
             {packError}
           </p>
         )}
-      </div>
+      </section>
 
-      {/* Upsell Card */}
+      {/* Footer — Developer-mode invitation, not a card */}
       {onEnableDeveloperMode && (
-        <div className="gps-hud-card gps-hud-card--upsell">
-          <h3>
-            <RocketLaunchIcon fontSize="small" /> Unlock More
-          </h3>
-          <p className="gps-hud-upsell-text">
-            Get 3D previews, due diligence checklists, condition assessments,
-            and multi-scenario analysis with Developer Mode.
-          </p>
-          <Button
-            variant="primary"
-            size="sm"
-            className="gps-hud-upsell-btn"
+        <p className="gps-results__upsell">
+          Need 3D preview, feasibility, condition assessment, and multi-scenario
+          comparison?{' '}
+          <button
+            type="button"
+            className="gps-results__upsell-link"
             onClick={onEnableDeveloperMode}
           >
-            Enable Developer Mode
-          </Button>
-        </div>
+            Enable Developer mode
+          </button>
+        </p>
       )}
-    </div>
+    </aside>
   )
 }
 
 // Helper functions
-
-function formatPackLabel(value: ProfessionalPackType) {
-  switch (value) {
-    case 'universal':
-      return 'Universal pack'
-    case 'investment':
-      return 'Investment memo'
-    case 'sales':
-      return 'Sales brief'
-    case 'lease':
-      return 'Lease brochure'
-    default:
-      return value
-  }
-}
 
 function humanizeMetricKey(key: string) {
   return key.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())

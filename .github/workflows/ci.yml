@@ -313,6 +313,28 @@ jobs:
           done
           make db.upgrade
 
+      - name: Prove analytics capture persistence on Postgres
+        run: |
+          python backend/scripts/prove_analytics_capture_paths.py \
+            --database-url "$SQLALCHEMY_DATABASE_URI" \
+            > "$CI_ARTIFACTS/analytics-capture-proof.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          proof = json.loads(
+              (Path(os.environ["CI_ARTIFACTS"]) / "analytics-capture-proof.json").read_text()
+          )
+          deltas = {
+              table: proof["after"][table] - proof["before"][table]
+              for table in proof["after"]
+          }
+          missing = {table: delta for table, delta in deltas.items() if delta <= 0}
+          if missing:
+              raise SystemExit(f"analytics capture proof did not persist rows: {missing}")
+          PY
+
       - name: Seed reference data
         # Docker Compose is available, but only postgres/redis/minio are
         # running — there is no `backend` service container, so force the

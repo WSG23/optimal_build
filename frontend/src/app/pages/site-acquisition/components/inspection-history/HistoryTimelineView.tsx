@@ -36,8 +36,28 @@ export function HistoryTimelineView({
   formatScenarioLabel,
   formatRecordedTimestamp,
 }: HistoryTimelineViewProps) {
+  if (assessmentHistory.length === 0) {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        style={{
+          padding: 'var(--ob-space-200)',
+          color: 'var(--ob-color-text-tertiary)',
+          textAlign: 'center',
+          fontSize: 'var(--ob-font-size-sm)',
+        }}
+      >
+        No inspection history available yet.
+      </div>
+    )
+  }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+    <div
+      role="list"
+      aria-label="Inspection history timeline"
+      style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}
+    >
       {assessmentHistory.map((entry, index) => {
         const key = `${entry.recordedAt ?? 'draft'}-${entry.scenario ?? 'all'}-${entry.overallScore}`
         const matchesScenario =

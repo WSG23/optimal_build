@@ -20,6 +20,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.models.base import UUID, BaseModel, MetadataProxy
+from app.models.mixins import OrgScopedMixin, SoftDeleteMixin
 from app.models.types import FlexibleJSONB
 
 JSONType = FlexibleJSONB
@@ -65,7 +66,7 @@ class FinProject(BaseModel):
     __table_args__ = (Index("idx_fin_projects_project_name", "project_id", "name"),)
 
 
-class FinScenario(BaseModel):
+class FinScenario(SoftDeleteMixin, OrgScopedMixin, BaseModel):
     """Scenario-specific underwriting assumptions."""
 
     __tablename__ = "fin_scenarios"
@@ -266,12 +267,27 @@ class FinResult(BaseModel):
         "metadata", JSONType, default=dict, nullable=False
     )
 
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+        index=True,
+    )
+
     scenario: Mapped[FinScenario] = relationship(
         "FinScenario", back_populates="results", uselist=False
     )
     metadata = MetadataProxy()
 
-    __table_args__ = (Index("idx_fin_results_project_name", "project_id", "name"),)
+    __table_args__ = (
+        Index("idx_fin_results_project_name", "project_id", "name"),
+        Index(
+            "idx_fin_results_project_scenario_created",
+            "project_id",
+            "scenario_id",
+            "created_at",
+        ),
+    )
 
 
 class FinAssetBreakdown(BaseModel):

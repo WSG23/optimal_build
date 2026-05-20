@@ -17,6 +17,7 @@ import {
 import PlayArrow from '@mui/icons-material/PlayArrow'
 import { ChartPlaceholder } from '../../../../components/common/ChartPlaceholder'
 import type { RoiSummary } from '../types'
+import { GlassCard } from '../../../../components/canonical/GlassCard'
 
 interface RoiPanelProps {
   summary: RoiSummary
@@ -33,7 +34,7 @@ export function RoiPanel({ summary }: RoiPanelProps) {
     summary.projectCount === 0 && summary.totalReviewHoursSaved === null
 
   return (
-    <Paper elevation={0} className="bp-roi">
+    <GlassCard elevation={0} className="bp-roi">
       <Box className="bp-roi__header">
         <Typography variant="h6">Automation ROI</Typography>
         <Typography variant="body2" color="text.secondary">
@@ -122,6 +123,8 @@ export function RoiPanel({ summary }: RoiPanelProps) {
           </Box>
         ) : (
           <TableContainer component={Paper} variant="outlined">
+            {' '}
+            // canon-ok: MUI TableContainer needs Paper as component
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -157,7 +160,7 @@ export function RoiPanel({ summary }: RoiPanelProps) {
           </TableContainer>
         )}
       </Box>
-    </Paper>
+    </GlassCard>
   )
 }
 

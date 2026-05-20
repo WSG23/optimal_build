@@ -1,19 +1,30 @@
 /**
  * UnifiedCapturePage - Consolidated capture page for Agents and Developers
  *
- * PRE-CAPTURE: Dark map with capture form panel
- * POST-CAPTURE (role-based):
- * - Agent Mode: HUD widgets + Mission Log
- * - Developer Mode: Full workspace (Property Overview, 3D Preview, etc.)
+ * Pre-capture: map background with capture form panel.
+ * Post-capture (role-based):
+ *   Agent mode    — Quick analysis + market intelligence + marketing packs.
+ *   Developer mode — Full workspace (Property Overview, 3D Preview, etc.).
  */
 
-import { lazy, Suspense, useEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef } from 'react'
 import RadarIcon from '@mui/icons-material/Radar'
 import AddIcon from '@mui/icons-material/Add'
 import MapIcon from '@mui/icons-material/Map'
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
 import CloseIcon from '@mui/icons-material/Close'
-import GpsFixedIcon from '@mui/icons-material/GpsFixed'
+import CheckIcon from '@mui/icons-material/Check'
+
+function detectShortcutKeyLabel(): 'Cmd' | 'Ctrl' {
+  if (typeof navigator === 'undefined') {
+    return 'Ctrl'
+  }
+  const nav = navigator as Navigator & {
+    userAgentData?: { platform?: string }
+  }
+  const ua = nav.userAgentData?.platform ?? nav.platform ?? ''
+  return /mac|iphone|ipad|ipod/i.test(ua) ? 'Cmd' : 'Ctrl'
+}
 
 import { useDeveloperMode } from '../../../contexts/useDeveloperMode'
 import { useUnifiedCapture } from './hooks/useUnifiedCapture'
@@ -78,6 +89,7 @@ export function UnifiedCapturePage() {
 
   const formRef = useRef<HTMLFormElement | null>(null)
   const targetAcquiredRef = useRef<HTMLDivElement | null>(null)
+  const shortcutKey = useMemo(detectShortcutKeyLabel, [])
   const shouldShowMapPreview =
     Boolean(latitude || longitude || mapCoordinateSourceLabel) &&
     mapCoordinateSourceLabel !== 'Browser location'
@@ -120,9 +132,7 @@ export function UnifiedCapturePage() {
         {isMapLoading && !mapError && (
           <div className="gps-map-fallback">
             <MapIcon className="gps-map-fallback__icon" />
-            <span className="gps-map-fallback__text">
-              Initializing satellite uplink...
-            </span>
+            <span className="gps-map-fallback__text">Loading map…</span>
             <div className="gps-spinner" />
           </div>
         )}
@@ -142,7 +152,7 @@ export function UnifiedCapturePage() {
         {/* Main capture section */}
         <section className="gps-page__summary">
           {/* LEFT PANEL: Capture form */}
-          <div className="capture-card-glass">
+          <div className="gps-capture-card">
             {/* Header */}
             <div className="gps-form__header">
               <h2 className="gps-form__title">
@@ -269,20 +279,21 @@ export function UnifiedCapturePage() {
 
               {/* ── Section 2: Mode + Action ── */}
               <div className="gps-form__actions">
-                <label
-                  className="gps-developer-mode-toggle"
-                  title="Developer Mode adds 3D previews, feasibility analysis, condition assessment, and multi-scenario comparison"
-                >
+                <label className="gps-developer-mode-toggle">
                   <input
                     type="checkbox"
                     checked={isDeveloperMode}
                     onChange={toggleDeveloperMode}
                   />
-                  <span>Developer Mode</span>
-                  <span className="gps-developer-mode-hint">
-                    {isDeveloperMode
-                      ? '3D + feasibility + scenarios'
-                      : 'Quick analysis only'}
+                  <span className="gps-developer-mode-toggle__label">
+                    <span className="gps-developer-mode-toggle__title">
+                      Developer mode
+                    </span>
+                    <span className="gps-developer-mode-toggle__desc">
+                      {isDeveloperMode
+                        ? 'On — 3D preview, feasibility, condition assessment, multi-scenario comparison.'
+                        : 'Off — runs quick analysis only. Enable for 3D preview, feasibility, condition assessment, multi-scenario comparison.'}
+                    </span>
                   </span>
                 </label>
 
@@ -291,25 +302,20 @@ export function UnifiedCapturePage() {
                     type="button"
                     className="gps-scan-button gps-scan-button--cancel"
                     onClick={handleCancelCapture}
-                    aria-label="Cancel scan (Escape)"
+                    aria-label={`Cancel capture (${shortcutKey === 'Cmd' ? 'Esc' : 'Escape'})`}
                   >
                     <CloseIcon />
-                    <span>Cancel Scan</span>
+                    <span>Cancel</span>
                   </button>
                 ) : (
                   <button
                     type="submit"
                     className="gps-scan-button"
-                    title="Scan & Analyze (Ctrl+Enter)"
+                    aria-keyshortcuts={`${shortcutKey === 'Cmd' ? 'Meta' : 'Control'}+Enter`}
                   >
-                    <>
-                      <RadarIcon />
-                      <span>Scan &amp; Analyze</span>
-                      <kbd className="gps-kbd">
-                        {navigator.platform?.includes('Mac') ? 'Cmd' : 'Ctrl'}
-                        +Enter
-                      </kbd>
-                    </>
+                    <RadarIcon />
+                    <span>Scan &amp; Analyze</span>
+                    <kbd className="gps-kbd">{shortcutKey}+Enter</kbd>
                   </button>
                 )}
               </div>
@@ -322,21 +328,19 @@ export function UnifiedCapturePage() {
               </p>
             )}
 
-            {/* Target Acquired confirmation — auto-dismisses after 3s */}
+            {/* Capture confirmation — auto-dismisses after 3s */}
             {targetAcquired && (
               <div
                 ref={targetAcquiredRef}
-                className="gps-target-acquired"
+                className="gps-capture-confirm"
                 role="status"
                 aria-live="polite"
                 tabIndex={-1}
               >
-                <GpsFixedIcon className="gps-target-acquired__icon" />
-                <div className="gps-target-acquired__content">
-                  <span className="gps-target-acquired__label">
-                    Target Acquired
-                  </span>
-                  <span className="gps-target-acquired__address">
+                <CheckIcon className="gps-capture-confirm__icon" />
+                <div className="gps-capture-confirm__content">
+                  <span className="gps-capture-confirm__label">Captured</span>
+                  <span className="gps-capture-confirm__address">
                     {targetAcquired}
                   </span>
                 </div>
@@ -381,7 +385,6 @@ export function UnifiedCapturePage() {
           </section>
         )}
 
-        {/* Mission Log (both modes) */}
         <MissionLog capturedSites={capturedSites} />
       </div>
     </div>

@@ -92,7 +92,10 @@ describe('requestStarterModelForScenario', () => {
       ),
       expect.objectContaining({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          'X-Role': 'reviewer',
+        }),
         body: JSON.stringify({
           scenario: 'existing_building',
           geometry_detail_level: 'medium',

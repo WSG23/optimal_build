@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 from statistics import median
+from types import SimpleNamespace
 from typing import Any
 from uuid import UUID
 
@@ -15,6 +16,7 @@ from app.core.audit.ledger import append_event
 from app.models.business_performance import AgentDeal, DealStatus
 from app.models.deal_outcome import DealOutcome
 from app.models.finance import FinAssetBreakdown, FinProject, FinScenario
+from app.services.analytics_capture import capture_lifecycle_event, capture_success
 from app.services.deals.utils import audit_project_key
 
 # Cap for in-memory benchmark aggregation. Above this we mark the response
@@ -40,6 +42,73 @@ def _delta_pct(projected: float, actual: float) -> float | None:
 
 class DealOutcomeService:
     """Create, update, query, and benchmark deal outcomes."""
+
+    @staticmethod
+    def _actor_identity(actor_id: UUID | None) -> object | None:
+        if actor_id is None:
+            return None
+        return SimpleNamespace(user_id=str(actor_id))
+
+    @staticmethod
+    def _outcome_payload(outcome: DealOutcome) -> dict[str, Any]:
+        return {
+            "id": str(outcome.id),
+            "deal_id": str(outcome.deal_id),
+            "recorded_by": str(outcome.recorded_by) if outcome.recorded_by else None,
+            "resolution": outcome.resolution,
+            "resolution_note": outcome.resolution_note,
+            "scenario_id": outcome.scenario_id,
+            "actual_purchase_price": (
+                float(outcome.actual_purchase_price)
+                if outcome.actual_purchase_price is not None
+                else None
+            ),
+            "actual_price_currency": outcome.actual_price_currency,
+            "actual_gfa_approved_sqm": (
+                float(outcome.actual_gfa_approved_sqm)
+                if outcome.actual_gfa_approved_sqm is not None
+                else None
+            ),
+            "actual_construction_cost": (
+                float(outcome.actual_construction_cost)
+                if outcome.actual_construction_cost is not None
+                else None
+            ),
+            "actual_noi": (
+                float(outcome.actual_noi) if outcome.actual_noi is not None else None
+            ),
+            "actual_yield_pct": (
+                float(outcome.actual_yield_pct)
+                if outcome.actual_yield_pct is not None
+                else None
+            ),
+            "actual_completion_date": (
+                outcome.actual_completion_date.isoformat()
+                if outcome.actual_completion_date
+                else None
+            ),
+            "approval_submitted_date": (
+                outcome.approval_submitted_date.isoformat()
+                if outcome.approval_submitted_date
+                else None
+            ),
+            "approval_decided_date": (
+                outcome.approval_decided_date.isoformat()
+                if outcome.approval_decided_date
+                else None
+            ),
+            "approval_authority": outcome.approval_authority,
+            "approval_outcome": outcome.approval_outcome,
+            "approval_conditions": outcome.approval_conditions,
+            "gfa_amendment_sqm": (
+                float(outcome.gfa_amendment_sqm)
+                if outcome.gfa_amendment_sqm is not None
+                else None
+            ),
+            "jurisdiction_code": outcome.jurisdiction_code,
+            "asset_type": outcome.asset_type,
+            "metadata": outcome.metadata_json,
+        }
 
     async def create_outcome(
         self,
@@ -116,6 +185,25 @@ class DealOutcomeService:
             event_type="deal_outcome.created",
             actor_id=recorded_by,
         )
+        actor = self._actor_identity(recorded_by)
+        await capture_lifecycle_event(
+            session,
+            entity_type="deal_outcome",
+            entity_id=str(outcome.id),
+            action="create",
+            identity=actor,
+            after_payload=self._outcome_payload(outcome),
+            metadata={"deal_id": str(deal.id), "deal_status": deal.status.value},
+        )
+        await capture_success(
+            session,
+            source="deal_outcome.create",
+            operation="create",
+            entity_type="deal_outcome",
+            entity_id=str(outcome.id),
+            raw_payload=self._outcome_payload(outcome),
+            metadata={"deal_id": str(deal.id), "deal_status": deal.status.value},
+        )
         await session.commit()
         await session.refresh(outcome)
         return outcome
@@ -148,6 +236,7 @@ class DealOutcomeService:
         ``None`` for a nullable field clears it.
         """
 
+        before_payload = self._outcome_payload(outcome)
         touched: list[str] = []
         if "metadata" in fields:
             metadata_value = fields.pop("metadata")
@@ -167,6 +256,27 @@ class DealOutcomeService:
             event_type="deal_outcome.updated",
             actor_id=actor_id,
             extra={"updated_fields": sorted(touched)},
+        )
+        actor = self._actor_identity(actor_id)
+        after_payload = self._outcome_payload(outcome)
+        await capture_lifecycle_event(
+            session,
+            entity_type="deal_outcome",
+            entity_id=str(outcome.id),
+            action="update",
+            identity=actor,
+            before_payload=before_payload,
+            after_payload=after_payload,
+            metadata={"deal_id": str(deal.id), "updated_fields": sorted(touched)},
+        )
+        await capture_success(
+            session,
+            source="deal_outcome.update",
+            operation="update",
+            entity_type="deal_outcome",
+            entity_id=str(outcome.id),
+            raw_payload=after_payload,
+            metadata={"deal_id": str(deal.id), "updated_fields": sorted(touched)},
         )
         await session.commit()
         await session.refresh(outcome)

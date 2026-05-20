@@ -1,5 +1,6 @@
-import { Box, Paper, alpha, useTheme } from '@mui/material'
+import { Box, alpha, useTheme } from '@mui/material'
 import { ReactNode } from 'react'
+import { GlassCard } from '../../../components/canonical/GlassCard'
 
 export interface FeasibilityInteractiveLayoutProps {
   renderMap: () => ReactNode
@@ -41,7 +42,7 @@ export function FeasibilityInteractiveLayout({
       </Box>
 
       {/* 1. Glass Sidebar (Left Overlay) */}
-      <Paper
+      <GlassCard
         elevation={0}
         sx={{
           position: 'relative',
@@ -102,7 +103,7 @@ export function FeasibilityInteractiveLayout({
             {renderFooter()}
           </Box>
         )}
-      </Paper>
+      </GlassCard>
     </Box>
   )
 }

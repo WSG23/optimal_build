@@ -161,7 +161,7 @@ function getCategoryColor(category: string): { fill: string } {
 }
 
 /** SVG sizing constants (CSS custom properties don't resolve in SVG attributes) */
-const SVG_LABEL_FONT_SIZE = '11px'
+const SVG_LABEL_FONT_SIZE = '11px' // canon-ok: SVG label, sub-token-floor
 const SVG_LABEL_OFFSET = 14
 const LEGEND_DOT_SIZE = 8
 

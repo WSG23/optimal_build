@@ -101,7 +101,7 @@ export function StatusChip({
   const height = size === 'sm' ? 'var(--ob-space-125)' : 'var(--ob-space-150)'
   const fontSize =
     size === 'sm' ? 'var(--ob-font-size-xs)' : 'var(--ob-font-size-sm)'
-  const dotSize = size === 'sm' ? '6px' : 'var(--ob-space-050)'
+  const dotSize = size === 'sm' ? '6px' : 'var(--ob-space-050)' // canon-ok: micro indicator dot
 
   return (
     <Box

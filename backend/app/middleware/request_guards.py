@@ -104,7 +104,7 @@ class CorrelationIdMiddleware:
     Generates a unique ID for each request and:
     - Stores it in context for use by loggers
     - Adds it to response headers for client correlation
-    - Accepts incoming correlation IDs from X-Correlation-ID header
+    - Accepts incoming correlation IDs from X-Correlation-ID or X-Request-ID
 
     Uses pure ASGI implementation for compatibility with streaming responses.
     """
@@ -133,13 +133,17 @@ class CorrelationIdMiddleware:
 
         # Extract correlation ID from headers
         headers = dict(scope.get("headers", []))
+        request_id = headers.get(b"x-request-id", b"").decode("utf-8")
         correlation_id = headers.get(b"x-correlation-id", b"").decode("utf-8")
         if not correlation_id:
-            correlation_id = str(uuid.uuid4())
+            correlation_id = request_id or str(uuid.uuid4())
+        if not request_id:
+            request_id = correlation_id
 
         # Store in context for loggers
         token = correlation_id_var.set(correlation_id)
         scope["correlation_id"] = correlation_id
+        scope["request_id"] = request_id
 
         # Get request info for logging
         method = scope.get("method", "UNKNOWN")
@@ -166,6 +170,7 @@ class CorrelationIdMiddleware:
                 # Add correlation ID to response headers
                 headers = list(message.get("headers", []))
                 headers.append((b"x-correlation-id", correlation_id.encode("utf-8")))
+                headers.append((b"x-request-id", request_id.encode("utf-8")))
                 message = {**message, "headers": headers}
             await send(message)
 

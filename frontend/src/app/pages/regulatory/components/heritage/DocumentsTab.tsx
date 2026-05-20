@@ -5,10 +5,10 @@ import {
   Chip,
   FormControlLabel,
   Grid,
-  Paper,
   Typography,
 } from '@mui/material'
 import UploadIcon from '@mui/icons-material/Upload'
+import { GlassCard } from '../../../../../components/canonical/GlassCard'
 
 interface DocumentsTabProps {
   conservationPlanAttached: boolean
@@ -48,7 +48,7 @@ export function DocumentsTab({
 
       <Grid container spacing="var(--ob-space-200)">
         <Grid item xs={12}>
-          <Paper
+          <GlassCard
             sx={{
               p: 'var(--ob-space-200)',
               bgcolor: 'rgba(245, 235, 220, 0.03)',
@@ -77,11 +77,11 @@ export function DocumentsTab({
                 </Box>
               }
             />
-          </Paper>
+          </GlassCard>
         </Grid>
 
         <Grid item xs={12} sm={6}>
-          <Paper
+          <GlassCard
             onClick={onPhotoUpload}
             sx={{
               p: 'var(--ob-space-200)',
@@ -135,11 +135,11 @@ export function DocumentsTab({
                 ))}
               </Box>
             )}
-          </Paper>
+          </GlassCard>
         </Grid>
 
         <Grid item xs={12} sm={6}>
-          <Paper
+          <GlassCard
             onClick={onDrawingUpload}
             sx={{
               p: 'var(--ob-space-200)',
@@ -197,7 +197,7 @@ export function DocumentsTab({
                 ))}
               </Box>
             )}
-          </Paper>
+          </GlassCard>
         </Grid>
       </Grid>
 

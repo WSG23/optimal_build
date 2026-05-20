@@ -63,8 +63,9 @@ except Exception:  # pragma: no cover - fallback for stubbed environments
         return getattr(client, "host", "127.0.0.1")
 
 
-from sqlalchemy import func, select, text
+from sqlalchemy import MetaData, func, inspect, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.schema import CreateColumn
 
 from app.api.deps import require_viewer
 from app.api.error_handlers import (
@@ -195,6 +196,46 @@ def _ensure_api_router_loaded() -> None:
         _api_router_loaded = True
 
 
+def _repair_sqlite_schema_from_metadata(
+    sync_conn: Any, metadata: MetaData
+) -> list[str]:
+    """Add missing nullable model columns to existing SQLite dev tables.
+
+    ``metadata.create_all`` deliberately does not alter existing tables. Local
+    dev uses SQLite, so an older ``.devstack/app.db`` can otherwise keep running
+    with a stale schema after model columns are added.
+    """
+
+    inspector = inspect(sync_conn)
+    table_names = set(inspector.get_table_names())
+    preparer = sync_conn.dialect.identifier_preparer
+    repaired_columns: list[str] = []
+
+    for table in metadata.sorted_tables:
+        if table.name not in table_names:
+            continue
+
+        existing_columns = {
+            column["name"] for column in inspector.get_columns(table.name)
+        }
+        for column in table.columns:
+            if column.name in existing_columns:
+                continue
+            if column.primary_key:
+                continue
+            if not column.nullable:
+                continue
+
+            column_ddl = str(CreateColumn(column).compile(dialect=sync_conn.dialect))
+            table_name = preparer.quote(table.name)
+            sync_conn.exec_driver_sql(
+                f"ALTER TABLE {table_name} ADD COLUMN {column_ddl}"
+            )
+            repaired_columns.append(f"{table.name}.{column.name}")
+
+    return repaired_columns
+
+
 class ApiRouterLoaderMiddleware:
     """Load API routes lazily so importing ``app.main`` stays cheap."""
 
@@ -216,6 +257,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     log_event(logger, "app_starting", environment=settings.ENVIRONMENT)
 
+    # Attach the entity_history recorder so every mutation on tracked tables
+    # lands in the audit log. Idempotent — safe across reloads.
+    from app.services.entity_history_recorder import (
+        register_entity_history_recorder,
+    )
+    from app.services.soft_delete_filter import register_soft_delete_filter
+
+    register_entity_history_recorder()
+    register_soft_delete_filter()
+
     # For SQLite dev mode, create all tables on startup
     if "sqlite" in str(engine.url):
         from app.models import load_model_modules
@@ -224,6 +275,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         load_model_modules()
         async with engine.begin() as conn:
             await conn.run_sync(BaseModel.metadata.create_all)
+            repaired_columns = await conn.run_sync(
+                _repair_sqlite_schema_from_metadata, BaseModel.metadata
+            )
+        if repaired_columns:
+            log_event(
+                logger,
+                "sqlite_schema_repaired",
+                columns=repaired_columns,
+            )
         log_event(logger, "sqlite_tables_created")
 
         # Seed regulatory compliance paths if empty
@@ -295,6 +355,14 @@ _ALLOWED_HEADERS = [
     "X-User-Id",  # Development user ID header
     "X-User-Email",  # Development email header
     "X-Correlation-ID",  # Request tracing
+    "X-Request-ID",  # Request tracing
+    "X-Organization-ID",  # Analytics tenant context
+    "x-role",
+    "x-user-id",
+    "x-user-email",
+    "x-correlation-id",
+    "x-request-id",
+    "x-organization-id",
 ]
 
 app.add_middleware(

@@ -19,6 +19,11 @@ from app.services.preview_generator import (
     ensure_preview_asset,
     normalise_geometry_detail_level,
 )
+from app.services.analytics_capture import (
+    capture_failure,
+    capture_status_transition,
+    capture_success,
+)
 from app.utils import metrics
 
 
@@ -143,9 +148,28 @@ async def generate_preview_job(job_id: str) -> dict[str, Any]:
         job_metadata = job.metadata if isinstance(job.metadata, dict) else {}
         payload_layers = job_metadata.get("massing_layers")
         if not isinstance(payload_layers, list) or not payload_layers:
+            previous_status = job.status
             job.status = PreviewJobStatus.FAILED
             job.finished_at = utcnow()
             job.message = "Preview job missing massing layer metadata"
+            await capture_status_transition(
+                session,
+                entity_type="preview_job",
+                entity_id=str(job.id),
+                status_field="status",
+                from_status=previous_status.value if previous_status else None,
+                to_status=PreviewJobStatus.FAILED.value,
+                reason="missing_massing_layers",
+                metadata={"backend": backend_name},
+            )
+            await capture_failure(
+                source="preview.generate",
+                error=job.message,
+                operation="generate_preview",
+                raw_payload={"job_id": str(job.id), "metadata": job_metadata},
+                metadata={"backend": backend_name},
+                raise_on_error=False,
+            )
             await session.commit()
             await _record_completion(session, job, "failed", backend_name)
             return {"status": "failed", "job_id": job_id}
@@ -156,9 +180,20 @@ async def generate_preview_job(job_id: str) -> dict[str, Any]:
         color_legend = job_metadata.get("color_legend")
         legend_payload = color_legend if isinstance(color_legend, list) else None
 
+        previous_status = job.status
         job.status = PreviewJobStatus.PROCESSING
         job.started_at = utcnow()
         job.message = None
+        await capture_status_transition(
+            session,
+            entity_type="preview_job",
+            entity_id=str(job.id),
+            status_field="status",
+            from_status=previous_status.value if previous_status else None,
+            to_status=PreviewJobStatus.PROCESSING.value,
+            reason="preview_generation_started",
+            metadata={"backend": backend_name, "detail_level": detail_level},
+        )
         await session.flush()
 
         try:
@@ -173,6 +208,7 @@ async def generate_preview_job(job_id: str) -> dict[str, Any]:
             job.metadata_url = assets.metadata_url
             job.thumbnail_url = assets.thumbnail_url
             job.asset_version = assets.asset_version
+            previous_status = job.status
             job.status = PreviewJobStatus.READY
             job.finished_at = utcnow()
             asset_manifest = job.metadata.setdefault("asset_manifest", {})
@@ -185,6 +221,33 @@ async def generate_preview_job(job_id: str) -> dict[str, Any]:
                         "version": assets.asset_version,
                     }
                 )
+            await capture_status_transition(
+                session,
+                entity_type="preview_job",
+                entity_id=str(job.id),
+                status_field="status",
+                from_status=previous_status.value if previous_status else None,
+                to_status=PreviewJobStatus.READY.value,
+                reason="preview_generation_completed",
+                metadata={
+                    "backend": backend_name,
+                    "asset_version": assets.asset_version,
+                },
+            )
+            await capture_success(
+                session,
+                source="preview.generate",
+                operation="generate_preview",
+                entity_type="preview_job",
+                entity_id=str(job.id),
+                raw_payload={
+                    "preview_url": assets.preview_url,
+                    "metadata_url": assets.metadata_url,
+                    "thumbnail_url": assets.thumbnail_url,
+                    "asset_version": assets.asset_version,
+                },
+                metadata={"backend": backend_name},
+            )
             await session.commit()
             await _record_completion(session, job, "ready", backend_name)
             return {
@@ -195,9 +258,28 @@ async def generate_preview_job(job_id: str) -> dict[str, Any]:
                 "thumbnail_url": assets.thumbnail_url,
             }
         except Exception as exc:  # pragma: no cover - defensive guard
+            previous_status = job.status
             job.status = PreviewJobStatus.FAILED
             job.finished_at = utcnow()
             job.message = str(exc)
+            await capture_status_transition(
+                session,
+                entity_type="preview_job",
+                entity_id=str(job.id),
+                status_field="status",
+                from_status=previous_status.value if previous_status else None,
+                to_status=PreviewJobStatus.FAILED.value,
+                reason="preview_generation_failed",
+                metadata={"backend": backend_name},
+            )
+            await capture_failure(
+                source="preview.generate",
+                error=exc,
+                operation="generate_preview",
+                raw_payload={"job_id": str(job.id), "metadata": job_metadata},
+                metadata={"backend": backend_name},
+                raise_on_error=False,
+            )
             await session.commit()
             await _record_completion(session, job, "failed", backend_name)
             raise

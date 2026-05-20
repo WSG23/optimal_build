@@ -64,6 +64,9 @@ async def run_smoke(args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
     from app.services.agents.ura_integration import URAIntegrationService
 
     service = URAIntegrationService()
+    # Settings may already be imported in test processes; the smoke command
+    # should use the key resolved by this script's env/dotenv loading.
+    service.access_key = os.getenv("URA_ACCESS_KEY", "").strip()
     try:
         source = service.source_metadata()
         payload: dict[str, Any] = {

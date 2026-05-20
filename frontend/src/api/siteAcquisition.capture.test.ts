@@ -5,6 +5,7 @@ import { capturePropertyForDevelopment } from './siteAcquisition'
 describe('capturePropertyForDevelopment', () => {
   afterEach(() => {
     vi.restoreAllMocks()
+    localStorage.clear()
   })
 
   it('maps deeper envelope controls from the developer capture response', async () => {
@@ -122,6 +123,7 @@ describe('capturePropertyForDevelopment', () => {
         },
       ),
     )
+    localStorage.setItem('app:api-role', 'developer')
 
     const result = await capturePropertyForDevelopment({
       latitude: 1.331096,
@@ -140,6 +142,11 @@ describe('capturePropertyForDevelopment', () => {
       RequestInfo | URL,
       RequestInit,
     ]
+    expect(requestInit.headers).toMatchObject({
+      'X-Role': 'reviewer',
+      'X-User-Email': 'demo-owner@example.com',
+      'X-User-Id': '00000000-0000-0000-0000-000000000001',
+    })
     expect(JSON.parse(String(requestInit.body))).toMatchObject({
       latitude: 1.331096,
       longitude: 103.6977849,

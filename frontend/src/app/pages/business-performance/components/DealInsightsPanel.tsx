@@ -26,6 +26,7 @@ import {
   TimelineSeparator,
 } from '@mui/lab'
 import type { CommissionEntry, DealSnapshot, StageEvent } from '../types'
+import { GlassCard } from '../../../../components/canonical/GlassCard'
 
 interface DealInsightsPanelProps {
   deal: DealSnapshot | null
@@ -40,7 +41,7 @@ export function DealInsightsPanel({
 }: DealInsightsPanelProps) {
   if (!deal) {
     return (
-      <Paper elevation={0} className="bp-deal-panel bp-deal-panel--empty">
+      <GlassCard elevation={0} className="bp-deal-panel bp-deal-panel--empty">
         <Typography variant="h6" gutterBottom>
           Select a deal to inspect
         </Typography>
@@ -48,12 +49,12 @@ export function DealInsightsPanel({
           Choose any card in the pipeline to review stage history, commission
           records, and audit metadata.
         </Typography>
-      </Paper>
+      </GlassCard>
     )
   }
 
   return (
-    <Paper elevation={0} className="bp-deal-panel">
+    <GlassCard elevation={0} className="bp-deal-panel">
       <Box className="bp-deal-panel__header">
         <Box>
           <Typography variant="h6">{deal.title ?? deal.id}</Typography>
@@ -183,7 +184,7 @@ export function DealInsightsPanel({
           <Alert severity="info">No commission records yet.</Alert>
         ) : (
           <TableContainer
-            component={Paper}
+            component={Paper} // canon-ok: MUI TableContainer needs Paper as component
             variant="outlined"
             className="bp-commission-table"
           >
@@ -222,6 +223,6 @@ export function DealInsightsPanel({
           </TableContainer>
         )}
       </Box>
-    </Paper>
+    </GlassCard>
   )
 }

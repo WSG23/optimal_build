@@ -143,8 +143,8 @@ export function ColorLegendEditor({
                   onChange(entry.assetType, 'color', event.target.value)
                 }
                 style={{
-                  width: '44px',
-                  height: '44px',
+                  width: '44px', // canon-ok: WCAG 2.5.5 touch target
+                  height: '44px', // canon-ok: WCAG 2.5.5 touch target
                   border: '1px solid var(--ob-color-border-default, #d1d5db)',
                   borderRadius: 'var(--ob-radius-md)',
                   padding: 0,
@@ -194,7 +194,7 @@ export function ColorLegendEditor({
                 rows={2}
                 style={{
                   resize: 'vertical',
-                  minHeight: '56px',
+                  minHeight: '56px', // canon-ok: standard textarea floor
                   padding: 'var(--ob-space-035) var(--ob-space-050)',
                   borderRadius: 'var(--ob-radius-md)',
                   border: '1px solid var(--ob-color-border-default, #d1d5db)',

@@ -24,7 +24,7 @@ const StatCard = styled(Paper, {
   flexDirection: 'column',
   justifyContent: 'space-between',
   height: '100%',
-  minHeight: glass ? 'var(--ob-size-drop-zone)' : '160px', // Smaller for HUD
+  minHeight: glass ? 'var(--ob-size-drop-zone)' : '160px', // canon-ok: non-glass fallback // Smaller for HUD
   position: 'relative',
   overflow: 'hidden',
   transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',

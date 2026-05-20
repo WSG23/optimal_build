@@ -134,9 +134,22 @@ export default function Main() {
   }
 
   return (
-    <div className="bg-neutral-950 text-white">
+    <div
+      className="bg-neutral-950 text-white"
+      role="application"
+      aria-label="Security operations dashboard"
+      style={{ outlineColor: 'var(--ob-color-neon-cyan)' }}
+    >
       <ViewportFrame className="flex h-full flex-col gap-6">
-        <header className="mb-4 grid grid-cols-12 items-center gap-6">
+        <header
+          className="mb-4 grid grid-cols-12 items-center gap-6"
+          tabIndex={-1}
+          style={{
+            paddingBlock: 'var(--ob-space-100)',
+            gap: 'var(--ob-space-150)',
+            borderBlockEnd: '1px solid var(--ob-color-border-subtle)',
+          }}
+        >
           <div className="col-span-12 flex items-center gap-3 md:col-span-3">
             <img
               src={logoSrc}

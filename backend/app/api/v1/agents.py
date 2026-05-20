@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import sys
 from datetime import date, datetime, timedelta
 from enum import Enum
@@ -11,7 +12,7 @@ from typing import Any, Dict, Optional, cast
 from uuid import UUID, uuid4
 
 import structlog
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 
 from app.utils.logging import get_logger, log_event
 
@@ -25,12 +26,19 @@ from app.api.deps import Role, get_request_role, require_reviewer
 from app.core.config import settings
 from app.core.database import get_session
 from app.core.jwt_auth import TokenData, get_optional_user
-from app.models.property import Property, PropertyType
+from app.models.property import Property, PropertyPhoto, PropertyType, VoiceNote
 from app.schemas.external_sources import ExternalSourceMetadata
 from app.services.agents.gps_property_logger import DevelopmentScenario
 from app.services.finance import (
     calculate_comprehensive_metrics,
     value_property_multiple_approaches,
+)
+from app.services.analytics_capture import (
+    capture_failure,
+    capture_lifecycle_event,
+    capture_raw_artifact,
+    capture_rejection,
+    capture_success,
 )
 from app.services.geocoding import Address
 from app.utils.lazy import LazyProxy
@@ -1043,6 +1051,7 @@ async def analyze_development_potential(
 @router.post("/properties/{property_id}/photos")
 async def upload_property_photo(
     property_id: str,
+    request: Request,
     file: UploadFile = File(...),
     notes: str | None = None,
     tags: str | None = None,
@@ -1067,10 +1076,24 @@ async def upload_property_photo(
         phase: Property phase (acquisition or sales) - determines watermark text
     """
     if not file.content_type or not file.content_type.startswith("image/"):
+        await capture_rejection(
+            source="agents.photos.upload",
+            reason="File must be an image",
+            request=request,
+            identity=_identity,
+            request_payload={
+                "property_id": property_id,
+                "filename": file.filename,
+                "content_type": file.content_type,
+            },
+            status_code=400,
+            operation="validate_image_upload",
+        )
         raise HTTPException(status_code=400, detail="File must be an image")
 
     # Read file data
     photo_data = await file.read()
+    photo_sha256 = hashlib.sha256(photo_data).hexdigest()
 
     # Prepare user metadata
     user_metadata: dict[str, Any] = {}
@@ -1094,6 +1117,43 @@ async def upload_property_photo(
         )
 
         result = metadata.to_dict()
+        await capture_raw_artifact(
+            db,
+            artifact_type="image_upload",
+            source="agents.photos.upload",
+            storage_key=result["storage_key"],
+            sha256=photo_sha256,
+            size_bytes=len(photo_data),
+            mime_type=file.content_type,
+            entity_type="property_photo",
+            entity_id=result["photo_id"],
+            request_id=request.headers.get("x-request-id"),
+            metadata={
+                "property_id": property_id,
+                "filename": file.filename or "photo.jpg",
+                "phase": phase,
+                "user_metadata": user_metadata,
+            },
+        )
+        await capture_success(
+            db,
+            source="agents.photos.upload",
+            operation="upload_property_photo",
+            request=request,
+            identity=_identity,
+            request_payload={
+                "property_id": property_id,
+                "filename": file.filename,
+                "content_type": file.content_type,
+                "size_bytes": len(photo_data),
+                "sha256": photo_sha256,
+                "metadata": user_metadata,
+            },
+            response_payload=result,
+            entity_type="property_photo",
+            entity_id=result["photo_id"],
+        )
+        await db.commit()
 
         return PhotoUploadResponse(
             photo_id=result["photo_id"],
@@ -1105,6 +1165,19 @@ async def upload_property_photo(
         )
 
     except Exception as e:
+        await capture_failure(
+            source="agents.photos.upload",
+            error=e,
+            request=request,
+            identity=_identity,
+            request_payload={
+                "property_id": property_id,
+                "filename": file.filename,
+                "content_type": file.content_type,
+            },
+            operation="upload_property_photo",
+            status_code=400,
+        )
         log_event(
             _logger,
             "agents_endpoint_unhandled_exception",
@@ -1150,6 +1223,7 @@ async def get_property_photos(
 async def delete_property_photo(
     property_id: str,
     photo_id: str,
+    request: Request,
     db: AsyncSession = Depends(get_session),
     _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> dict[str, bool]:
@@ -1157,9 +1231,26 @@ async def delete_property_photo(
     photo_manager = _new_photo_manager()
 
     try:
+        existing = (
+            await db.execute(
+                select(PropertyPhoto).where(PropertyPhoto.id == UUID(photo_id))
+            )
+        ).scalar_one_or_none()
         success = await photo_manager.delete_photo(photo_id=photo_id, session=db)
         if not success:
             raise HTTPException(status_code=404, detail="Photo not found")
+        await capture_lifecycle_event(
+            db,
+            entity_type="property_photo",
+            entity_id=photo_id,
+            action="soft_delete",
+            identity=_identity,
+            request_id=request.headers.get("x-request-id"),
+            correlation_id=request.scope.get("correlation_id"),
+            reason="delete_property_photo",
+            tombstone_payload=existing.as_dict() if existing is not None else None,
+            metadata={"property_id": property_id},
+        )
         await db.commit()
         return {"deleted": True}
 
@@ -1187,6 +1278,7 @@ async def delete_property_photo(
 @router.post("/properties/{property_id}/voice-notes")
 async def upload_voice_note(
     property_id: str,
+    request: Request,
     file: UploadFile = File(...),
     duration_seconds: float | None = None,
     latitude: float | None = None,
@@ -1204,10 +1296,24 @@ async def upload_voice_note(
     Voice notes can optionally be associated with a photo for context.
     """
     if not file.content_type or not file.content_type.startswith("audio/"):
+        await capture_rejection(
+            source="agents.voice_notes.upload",
+            reason="File must be an audio file",
+            request=request,
+            identity=_identity,
+            request_payload={
+                "property_id": property_id,
+                "filename": file.filename,
+                "content_type": file.content_type,
+            },
+            status_code=400,
+            operation="validate_audio_upload",
+        )
         raise HTTPException(status_code=400, detail="File must be an audio file")
 
     # Read file data
     audio_data = await file.read()
+    audio_sha256 = hashlib.sha256(audio_data).hexdigest()
 
     # Prepare location if provided
     location = None
@@ -1234,6 +1340,48 @@ async def upload_voice_note(
         )
 
         result = metadata.to_dict()
+        await capture_raw_artifact(
+            db,
+            artifact_type="audio_upload",
+            source="agents.voice_notes.upload",
+            storage_key=result["storage_key"],
+            sha256=audio_sha256,
+            size_bytes=len(audio_data),
+            mime_type=file.content_type,
+            entity_type="property_voice_note",
+            entity_id=result["voice_note_id"],
+            request_id=request.headers.get("x-request-id"),
+            metadata={
+                "property_id": property_id,
+                "filename": file.filename or "voice_note.webm",
+                "duration_seconds": duration_seconds,
+                "photo_id": photo_id,
+                "tags": tag_list,
+            },
+        )
+        await capture_success(
+            db,
+            source="agents.voice_notes.upload",
+            operation="upload_voice_note",
+            request=request,
+            identity=_identity,
+            request_payload={
+                "property_id": property_id,
+                "filename": file.filename,
+                "content_type": file.content_type,
+                "duration_seconds": duration_seconds,
+                "location": location,
+                "title": title,
+                "tags": tag_list,
+                "photo_id": photo_id,
+                "size_bytes": len(audio_data),
+                "sha256": audio_sha256,
+            },
+            response_payload=result,
+            entity_type="property_voice_note",
+            entity_id=result["voice_note_id"],
+        )
+        await db.commit()
 
         return VoiceNoteResponse(
             voice_note_id=result["voice_note_id"],
@@ -1249,6 +1397,19 @@ async def upload_voice_note(
         )
 
     except Exception as e:
+        await capture_failure(
+            source="agents.voice_notes.upload",
+            error=e,
+            request=request,
+            identity=_identity,
+            request_payload={
+                "property_id": property_id,
+                "filename": file.filename,
+                "content_type": file.content_type,
+            },
+            operation="upload_voice_note",
+            status_code=400,
+        )
         log_event(
             _logger,
             "agents_endpoint_unhandled_exception",
@@ -1384,6 +1545,7 @@ async def update_voice_note(
 async def delete_voice_note(
     property_id: str,
     voice_note_id: str,
+    request: Request,
     db: AsyncSession = Depends(get_session),
     _identity: deps.RequestIdentity = Depends(deps.require_reviewer),
 ) -> dict[str, str]:
@@ -1401,6 +1563,11 @@ async def delete_voice_note(
 
         if existing["property_id"] != property_id:
             raise HTTPException(status_code=404, detail="Voice note not found")
+        existing_row = (
+            await db.execute(
+                select(VoiceNote).where(VoiceNote.id == UUID(voice_note_id))
+            )
+        ).scalar_one_or_none()
 
         success = await voice_note_service.delete_voice_note(
             voice_note_id=voice_note_id, session=db
@@ -1408,6 +1575,21 @@ async def delete_voice_note(
 
         if not success:
             raise HTTPException(status_code=404, detail="Voice note not found")
+        await capture_lifecycle_event(
+            db,
+            entity_type="property_voice_note",
+            entity_id=voice_note_id,
+            action="soft_delete",
+            identity=_identity,
+            request_id=request.headers.get("x-request-id"),
+            correlation_id=request.scope.get("correlation_id"),
+            reason="delete_voice_note",
+            tombstone_payload=(
+                existing_row.as_dict() if existing_row is not None else existing
+            ),
+            metadata={"property_id": property_id},
+        )
+        await db.commit()
 
         return {"status": "deleted", "voice_note_id": voice_note_id}
 

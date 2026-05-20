@@ -7,6 +7,7 @@ from uuid import uuid4
 from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.sql import func
 
+from app.models._vector import Vector
 from app.models.base import BaseModel
 from app.models.types import FlexibleJSONB
 
@@ -32,6 +33,8 @@ class ImportRecord(BaseModel):
     detected_units = Column(FlexibleJSONB, default=list)
     vector_storage_path = Column(Text)
     vector_summary = Column(FlexibleJSONB)
+    embedding = Column(Vector(1536), nullable=True)
+    embedding_model = Column(String(120))
     metric_overrides = Column(FlexibleJSONB, default=dict)
 
     parse_status = Column(String(32), nullable=False, default="pending")

@@ -8,10 +8,10 @@ from typing import Optional
 from sqlalchemy import (
     Boolean,
     DateTime,
-    Float,
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -90,7 +90,7 @@ class OverlaySuggestion(BaseModel):
     target_ids: Mapped[list[str]] = mapped_column(JSONType, default=list)
     props: Mapped[dict] = mapped_column(JSONType, default=dict)
     rule_refs: Mapped[list[str]] = mapped_column(JSONType, default=list)
-    score: Mapped[Optional[float]] = mapped_column(Float)
+    score: Mapped[Optional[float]] = mapped_column(Numeric(8, 4))
     geometry_checksum: Mapped[str] = mapped_column(String(64), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from types import SimpleNamespace
 from typing import Iterable, Optional
 from uuid import UUID
 
@@ -23,12 +24,59 @@ from app.models.business_performance import (
     DealType,
     PipelineStage,
 )
+from app.services.analytics_capture import (
+    capture_lifecycle_event,
+    capture_status_transition,
+    capture_success,
+)
 
 from .utils import audit_project_key
 
 
 class AgentDealService:
     """Create, update and inspect agent deal pipeline records."""
+
+    @staticmethod
+    def _actor_identity(actor_id: UUID | str | None) -> object | None:
+        if actor_id is None:
+            return None
+        return SimpleNamespace(user_id=str(actor_id))
+
+    @staticmethod
+    def _enum_value(value: object) -> object:
+        return value.value if hasattr(value, "value") else value
+
+    def _deal_payload(self, deal: AgentDeal) -> dict[str, object]:
+        return {
+            "id": str(deal.id),
+            "agent_id": str(deal.agent_id),
+            "project_id": str(deal.project_id) if deal.project_id else None,
+            "property_id": str(deal.property_id) if deal.property_id else None,
+            "title": deal.title,
+            "asset_type": self._enum_value(deal.asset_type),
+            "deal_type": self._enum_value(deal.deal_type),
+            "pipeline_stage": self._enum_value(deal.pipeline_stage),
+            "status": self._enum_value(deal.status),
+            "lead_source": deal.lead_source,
+            "estimated_value_amount": (
+                float(deal.estimated_value_amount)
+                if deal.estimated_value_amount is not None
+                else None
+            ),
+            "estimated_value_currency": deal.estimated_value_currency,
+            "expected_close_date": (
+                deal.expected_close_date.isoformat()
+                if deal.expected_close_date
+                else None
+            ),
+            "actual_close_date": (
+                deal.actual_close_date.isoformat() if deal.actual_close_date else None
+            ),
+            "confidence": (
+                float(deal.confidence) if deal.confidence is not None else None
+            ),
+            "metadata": getattr(deal, "metadata", None),
+        }
 
     async def list_deals(
         self,
@@ -150,6 +198,46 @@ class AgentDealService:
             event=event,
             changed_by=str(created_by) if created_by else str(agent_id),
         )
+        actor = self._actor_identity(created_by or agent_id)
+        await capture_lifecycle_event(
+            session,
+            entity_type="agent_deal",
+            entity_id=str(record.id),
+            action="create",
+            identity=actor,
+            after_payload=self._deal_payload(record),
+            metadata={"stage_event_id": str(event.id), "lead_source": lead_source},
+        )
+        await capture_status_transition(
+            session,
+            entity_type="agent_deal",
+            entity_id=str(record.id),
+            status_field="pipeline_stage",
+            from_status=None,
+            to_status=str(self._enum_value(pipeline_stage)),
+            reason="deal_created",
+            identity=actor,
+            metadata={"stage_event_id": str(event.id)},
+        )
+        await capture_status_transition(
+            session,
+            entity_type="agent_deal",
+            entity_id=str(record.id),
+            status_field="status",
+            from_status=None,
+            to_status=str(self._enum_value(status)),
+            reason="deal_created",
+            identity=actor,
+        )
+        await capture_success(
+            session,
+            source="deal_pipeline.create_deal",
+            operation="create",
+            entity_type="agent_deal",
+            entity_id=str(record.id),
+            raw_payload=self._deal_payload(record),
+            metadata={"stage_event_id": str(event.id)},
+        )
 
         await session.commit()
         await session.refresh(
@@ -187,6 +275,8 @@ class AgentDealService:
     ) -> AgentDeal:
         """Mutate deal attributes and persist changes."""
 
+        before_payload = self._deal_payload(deal)
+        previous_status = deal.status
         if title is not None:
             deal.title = title
         if description is not None:
@@ -215,6 +305,56 @@ class AgentDealService:
             deal.metadata = metadata
         if status is not None:
             deal.status = status
+
+        after_payload = self._deal_payload(deal)
+        await capture_lifecycle_event(
+            session,
+            entity_type="agent_deal",
+            entity_id=str(deal.id),
+            action="update",
+            before_payload=before_payload,
+            after_payload=after_payload,
+            metadata={
+                "updated_fields": [
+                    key
+                    for key, value in {
+                        "title": title,
+                        "description": description,
+                        "asset_type": asset_type,
+                        "deal_type": deal_type,
+                        "lead_source": lead_source,
+                        "estimated_value_amount": estimated_value_amount,
+                        "estimated_value_currency": estimated_value_currency,
+                        "expected_close_date": expected_close_date,
+                        "actual_close_date": actual_close_date,
+                        "confidence": confidence,
+                        "project_id": project_id,
+                        "property_id": property_id,
+                        "metadata": metadata,
+                        "status": status,
+                    }.items()
+                    if value is not None
+                ]
+            },
+        )
+        if status is not None and status != previous_status:
+            await capture_status_transition(
+                session,
+                entity_type="agent_deal",
+                entity_id=str(deal.id),
+                status_field="status",
+                from_status=str(self._enum_value(previous_status)),
+                to_status=str(self._enum_value(status)),
+                reason="deal_updated",
+            )
+        await capture_success(
+            session,
+            source="deal_pipeline.update_deal",
+            operation="update",
+            entity_type="agent_deal",
+            entity_id=str(deal.id),
+            raw_payload=after_payload,
+        )
 
         await session.commit()
         await session.refresh(deal)
@@ -265,6 +405,36 @@ class AgentDealService:
             deal=deal,
             event=event,
             changed_by=str(changed_by) if changed_by else None,
+        )
+        actor = self._actor_identity(changed_by)
+        await capture_status_transition(
+            session,
+            entity_type="agent_deal",
+            entity_id=str(deal.id),
+            status_field="pipeline_stage",
+            from_status=str(self._enum_value(from_stage)) if from_stage else None,
+            to_status=str(self._enum_value(to_stage)),
+            reason=note or "stage_transition",
+            identity=actor,
+            metadata={
+                "stage_event_id": str(event.id),
+                "event_metadata": metadata or {},
+            },
+        )
+        await capture_success(
+            session,
+            source="deal_pipeline.change_stage",
+            operation="status_transition",
+            entity_type="agent_deal",
+            entity_id=str(deal.id),
+            raw_payload={
+                "stage_event_id": str(event.id),
+                "from_stage": self._enum_value(from_stage) if from_stage else None,
+                "to_stage": self._enum_value(to_stage),
+                "status": self._enum_value(deal.status),
+                "note": note,
+                "metadata": metadata or {},
+            },
         )
 
         await session.commit()
@@ -371,6 +541,20 @@ class AgentDealService:
         """Persist a new contact entry."""
 
         session.add(contact)
+        await capture_lifecycle_event(
+            session,
+            entity_type="agent_deal_contact",
+            entity_id=str(contact.id),
+            action="create",
+            after_payload={
+                "deal_id": str(contact.deal_id),
+                "contact_name": contact.name,
+                "contact_type": self._enum_value(contact.contact_type),
+                "email": contact.email,
+                "phone": contact.phone,
+                "organisation": contact.company,
+            },
+        )
         await session.commit()
         await session.refresh(contact)
         return contact
@@ -384,6 +568,18 @@ class AgentDealService:
         """Persist a new document reference."""
 
         session.add(document)
+        await capture_lifecycle_event(
+            session,
+            entity_type="agent_deal_document",
+            entity_id=str(document.id),
+            action="create",
+            after_payload={
+                "deal_id": str(document.deal_id),
+                "document_type": self._enum_value(document.document_type),
+                "title": document.title,
+                "uri": document.uri,
+            },
+        )
         await session.commit()
         await session.refresh(document)
         return document

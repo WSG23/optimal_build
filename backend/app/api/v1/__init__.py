@@ -143,6 +143,9 @@ _ROUTER_MODULES: Final[tuple[str, ...]] = (
     "ai_config",  # AI configuration management endpoints
     "geocoding",  # Address lookup endpoints
     "data_readiness",  # Capture source dataset readiness endpoints
+    "events",  # Behavioral event + search-query telemetry ingestion (PR1)
+    "decisions",  # Decision-alternative provenance for preference training (PR2)
+    "documents",  # Document corpus + extraction pipeline metadata (PR2)
 )
 
 _LAZY_SUBMODULES: Final[tuple[str, ...]] = (

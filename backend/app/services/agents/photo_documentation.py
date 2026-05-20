@@ -554,7 +554,10 @@ class PhotoDocumentationManager:
 
         stmt = (
             select(PropertyPhoto)
-            .where(PropertyPhoto.property_id == UUID(property_id))
+            .where(
+                PropertyPhoto.property_id == UUID(property_id),
+                PropertyPhoto.deleted_at.is_(None),
+            )
             .order_by(PropertyPhoto.capture_date.desc())
         )
 
@@ -602,10 +605,13 @@ class PhotoDocumentationManager:
 
     async def delete_photo(self, photo_id: str, session: AsyncSession) -> bool:
         """Delete a photo and its versions from storage."""
-        from sqlalchemy import delete, select
+        from sqlalchemy import select
 
         # Get photo record
-        stmt = select(PropertyPhoto).where(PropertyPhoto.id == UUID(photo_id))
+        stmt = select(PropertyPhoto).where(
+            PropertyPhoto.id == UUID(photo_id),
+            PropertyPhoto.deleted_at.is_(None),
+        )
         result = await session.execute(stmt)
         photo = result.scalar_one_or_none()
 
@@ -621,10 +627,8 @@ class PhotoDocumentationManager:
             except Exception as e:
                 logger.warning(f"Could not delete {key}: {str(e)}")
 
-        # Delete from database
-        stmt = delete(PropertyPhoto).where(PropertyPhoto.id == UUID(photo_id))
-        await session.execute(stmt)
+        photo.mark_deleted()
         await session.commit()
 
-        logger.info(f"Deleted photo {photo_id}")
+        logger.info(f"Soft deleted photo {photo_id}")
         return True

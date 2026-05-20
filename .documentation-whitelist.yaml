@@ -77,6 +77,9 @@ allowed_files:
   # Observability
   - docs/observability/preview_generation_monitoring.md
 
+  # Analytics capture retention, access, and persistence proof policy
+  - docs/analytics_capture_policy.md
+
   # Validation procedures
   - docs/validation/live_testing_guide.md
   - docs/validation/finance_sensitivity_linux.md

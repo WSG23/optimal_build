@@ -14,7 +14,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -43,6 +43,10 @@ from app.schemas.finance import (
 )
 from app.services.finance import (
     calculator,
+)
+from app.services.analytics_capture import (
+    capture_lifecycle_event,
+    capture_status_transition,
 )
 from app.utils.logging import get_logger, log_event
 
@@ -712,6 +716,7 @@ async def list_finance_scenarios(
 
     stmt = (
         select(FinScenario)
+        .where(FinScenario.deleted_at.is_(None))
         .options(
             selectinload(FinScenario.fin_project),
             selectinload(FinScenario.capital_stack),
@@ -780,7 +785,7 @@ async def update_finance_scenario(
 
     base_stmt = (
         select(FinScenario)
-        .where(FinScenario.id == scenario_id)
+        .where(FinScenario.id == scenario_id, FinScenario.deleted_at.is_(None))
         .options(
             selectinload(FinScenario.fin_project),
             selectinload(FinScenario.capital_stack),
@@ -813,6 +818,7 @@ async def update_finance_scenario(
                 .where(
                     FinScenario.fin_project_id == scenario.fin_project_id,
                     FinScenario.id != scenario.id,
+                    FinScenario.deleted_at.is_(None),
                 )
                 .values(is_primary=False)
             )
@@ -828,14 +834,15 @@ async def update_finance_scenario(
 @router.delete("/scenarios/{scenario_id}", status_code=204)
 async def delete_finance_scenario(
     scenario_id: int,
+    request: Request,
     session: AsyncSession = Depends(get_session),
     identity: RequestIdentity = Depends(require_reviewer),
 ) -> Response:
-    """Delete a persisted finance scenario and associated modelling data."""
+    """Soft-delete a persisted finance scenario and preserve lifecycle history."""
 
     stmt = (
         select(FinScenario)
-        .where(FinScenario.id == scenario_id)
+        .where(FinScenario.id == scenario_id, FinScenario.deleted_at.is_(None))
         .options(selectinload(FinScenario.fin_project))
     )
     scenario = (await session.execute(stmt)).scalars().first()
@@ -844,7 +851,43 @@ async def delete_finance_scenario(
 
     scenario_project_uuid = project_uuid_from_scenario(scenario)
     await _ensure_project_owner(session, scenario_project_uuid, identity)
-    await session.delete(scenario)
+    tombstone = scenario.as_dict()
+    scenario.mark_deleted()
+    await capture_status_transition(
+        session,
+        entity_type="fin_scenario",
+        entity_id=str(scenario.id),
+        status_field="deleted_at",
+        from_status="active",
+        to_status="deleted",
+        reason="delete_finance_scenario",
+        identity=identity,
+        request_id=request.headers.get("x-request-id"),
+        correlation_id=request.scope.get("correlation_id"),
+        organization_id=(
+            str(scenario.organization_id)
+            if scenario.organization_id is not None
+            else None
+        ),
+        metadata={"project_id": str(scenario_project_uuid)},
+    )
+    await capture_lifecycle_event(
+        session,
+        entity_type="fin_scenario",
+        entity_id=str(scenario.id),
+        action="soft_delete",
+        identity=identity,
+        request_id=request.headers.get("x-request-id"),
+        correlation_id=request.scope.get("correlation_id"),
+        organization_id=(
+            str(scenario.organization_id)
+            if scenario.organization_id is not None
+            else None
+        ),
+        reason="delete_finance_scenario",
+        tombstone_payload=tombstone,
+        metadata={"project_id": str(scenario_project_uuid)},
+    )
     await session.commit()
 
     log_event(

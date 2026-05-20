@@ -25,6 +25,22 @@ from app.models.singapore_property import ComplianceStatus, SingaporeProperty
 # Legacy hardcoded rules removed - use RefRule database instead
 
 
+def _resolve_buildable_service_module() -> Any:
+    from importlib import import_module
+
+    module_names = ("app.services.buildable", "backend.app.services.buildable")
+    modules = [import_module(name) for name in module_names]
+    canonical_modules = set(module_names)
+    for module in modules:
+        calculate = getattr(module, "calculate_buildable", None)
+        if (
+            calculate is not None
+            and getattr(calculate, "__module__", None) not in canonical_modules
+        ):
+            return module
+    return modules[0]
+
+
 def _rule_zone_code(rule: Any) -> str | None:
     applicability = getattr(rule, "applicability", None)
     if not isinstance(applicability, dict):
@@ -527,7 +543,10 @@ async def calculate_gfa_utilization_async(
         - recommendations: List of optimization suggestions
     """
     from app.schemas.buildable import BuildableDefaults
-    from app.services.buildable import ResolvedZone, calculate_buildable
+
+    buildable_service = _resolve_buildable_service_module()
+    ResolvedZone = buildable_service.ResolvedZone
+    calculate_buildable = buildable_service.calculate_buildable
 
     if not property.land_area_sqm or not property.gross_plot_ratio:
         return {

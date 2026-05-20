@@ -9,9 +9,9 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
-    Float,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     Text,
 )
@@ -71,7 +71,7 @@ class AIAgent(BaseModel):
     # Model configuration
     model_provider = Column(String(100), default="openai")
     model_name = Column(String(100), default="gpt-4")
-    temperature = Column(Float, default=0.7)
+    temperature = Column(Numeric(4, 3), default=0.7)
     max_tokens = Column(Integer, default=2000)
 
     # Singapore regulatory knowledge base
@@ -87,8 +87,13 @@ class AIAgent(BaseModel):
     limitations = Column(JSON)  # Known limitations
 
     # Metadata
-    created_at = Column(DateTime, default=utcnow, nullable=False)
-    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        nullable=False,
+    )
 
     # Relationships
     sessions = relationship(
@@ -130,18 +135,18 @@ class AIAgentSession(BaseModel):
 
     # Usage metrics
     tokens_used = Column(Integer, default=0)
-    cost_estimate = Column(Float, default=0.0)
-    processing_time = Column(Float)  # in seconds
+    cost_estimate = Column(Numeric(12, 6), default=0)
+    processing_time = Column(Numeric(10, 3))  # in seconds
 
     # Singapore specific analysis
-    singapore_compliance_score = Column(Float)  # 0-100 score
+    singapore_compliance_score = Column(Numeric(6, 3))  # 0-100 score
     regulatory_issues = Column(JSON)  # List of compliance issues
     recommendations = Column(JSON)  # Agent recommendations
 
     # Timestamps
-    started_at = Column(DateTime, default=utcnow, nullable=False)
-    completed_at = Column(DateTime)
-    last_activity = Column(DateTime, default=utcnow)
+    started_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
+    completed_at = Column(DateTime(timezone=True))
+    last_activity = Column(DateTime(timezone=True), default=utcnow)
 
     # Relationships
     agent = relationship("AIAgent", back_populates="sessions")

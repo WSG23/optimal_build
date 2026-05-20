@@ -9,6 +9,7 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import relationship
 
 from app.models.base import UUID, BaseModel
+from app.models.mixins import OrgScopedMixin, SoftDeleteMixin
 
 
 class UserRole(str, Enum):
@@ -23,7 +24,7 @@ class UserRole(str, Enum):
     VIEWER = "viewer"
 
 
-class User(BaseModel):
+class User(SoftDeleteMixin, OrgScopedMixin, BaseModel):
     """User model for authentication and authorization."""
 
     __tablename__ = "users"
@@ -45,9 +46,14 @@ class User(BaseModel):
     is_active = Column(Boolean, default=True, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
 
-    created_at = Column(DateTime, default=utcnow, nullable=False)
-    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow, nullable=False)
-    last_login = Column(DateTime)
+    created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        nullable=False,
+    )
+    last_login = Column(DateTime(timezone=True))
 
     # Singapore specific fields
     uen_number = Column(String(50))  # Unique Entity Number for Singapore companies

@@ -16,6 +16,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.property import Property
 from app.models.regulatory import AuthoritySubmission
+from app.services.prediction_recorder import record_prediction
+
+MODEL_NAME = "compliance_predictor"
+MODEL_VERSION = "v1"
 
 logger = logging.getLogger(__name__)
 
@@ -181,6 +185,39 @@ class CompliancePredictorService:
                 overall_risk=overall_risk,
                 recommendations=recommendations,
                 required_consultations=consultations,
+            )
+
+            await record_prediction(
+                db,
+                model_name=MODEL_NAME,
+                model_version=MODEL_VERSION,
+                input_entity_type="properties",
+                input_entity_id=str(property_id),
+                input_payload={
+                    "submission_type": submission_type,
+                    "context": context,
+                },
+                output={
+                    "submission_type": submission_type,
+                    "property_address": property_data.address,
+                    "overall_risk": (
+                        overall_risk.value
+                        if hasattr(overall_risk, "value")
+                        else str(overall_risk)
+                    ),
+                    "risk_factor_count": len(risk_factors),
+                    "estimated_weeks": (
+                        timeline.estimated_weeks
+                        if hasattr(timeline, "estimated_weeks")
+                        else None
+                    ),
+                    "recommendation_count": len(recommendations),
+                },
+                label=(
+                    overall_risk.value
+                    if hasattr(overall_risk, "value")
+                    else str(overall_risk)
+                ),
             )
 
             return PredictionResult(success=True, assessment=assessment)

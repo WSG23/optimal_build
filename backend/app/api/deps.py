@@ -93,18 +93,50 @@ async def require_reviewer(
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency for getting async database session."""
+    from app.models import load_model_modules
     from app.core.database import AsyncSessionLocal
 
+    load_model_modules()
+
     async with AsyncSessionLocal() as session:
+        yield session
+
+
+async def get_attributed_db(
+    identity: RequestIdentity = Depends(get_identity),
+    x_request_id: str | None = Header(default=None),
+    x_change_reason: str | None = Header(default=None),
+) -> AsyncGenerator[AsyncSession, None]:
+    """Yield a session with attribution stamped on ``session.info``.
+
+    The ``entity_history`` recorder reads ``session.info`` to attribute each
+    mutation to a caller. Endpoints that need their writes tracked with
+    attribution (not just anonymous capture) should swap :func:`get_db` for
+    this dependency.
+    """
+
+    from app.core.database import AsyncSessionLocal
+    from app.models import load_model_modules
+
+    load_model_modules()
+
+    async with AsyncSessionLocal() as session:
+        session.info["changed_by"] = identity.user_id
+        session.info["changed_by_label"] = identity.email
+        if x_change_reason:
+            session.info["reason"] = x_change_reason
+        if x_request_id:
+            session.info["request_id"] = x_request_id
         yield session
 
 
 __all__ = [
     "RequestIdentity",
     "Role",
+    "get_attributed_db",
+    "get_db",
     "get_identity",
     "get_request_role",
     "require_reviewer",
     "require_viewer",
-    "get_db",
 ]

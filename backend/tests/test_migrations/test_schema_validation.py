@@ -153,6 +153,50 @@ def test_no_duplicate_migrations(alembic_config):
             revisions[revision_id] = migration_file.name
 
 
+def test_alembic_has_single_head(alembic_config):
+    """Verify migration graph has one head, so deploys do not need manual merge choices."""
+
+    from alembic.script import ScriptDirectory
+
+    script = ScriptDirectory.from_config(alembic_config)
+    heads = script.get_heads()
+    assert heads == ["20260520_000045"]
+
+
+def test_analytics_capture_migration_matches_model_tables():
+    """Verify the analytics capture migration covers every new capture model."""
+
+    from pathlib import Path
+
+    from app.models.analytics_capture import (
+        DataCaptureEvent,
+        EntityLifecycleEvent,
+        ExternalAPICall,
+        RawArtifact,
+        StatusTransition,
+    )
+
+    repo_root = Path(__file__).resolve().parents[3]
+    migration = (
+        repo_root
+        / "backend"
+        / "migrations"
+        / "versions"
+        / "20260520_000045_analytics_capture_layer.py"
+    )
+    content = migration.read_text()
+    model_tables = {
+        DataCaptureEvent.__tablename__,
+        EntityLifecycleEvent.__tablename__,
+        ExternalAPICall.__tablename__,
+        RawArtifact.__tablename__,
+        StatusTransition.__tablename__,
+    }
+
+    missing = [table for table in sorted(model_tables) if f'"{table}"' not in content]
+    assert not missing, f"Analytics capture migration missing tables: {missing}"
+
+
 def test_migration_naming_convention(alembic_config):
     """Verify migration files follow naming convention: YYYYMMDD_NNNNNN_description.py
 

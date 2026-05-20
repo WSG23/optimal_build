@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 from collections import Counter
 from collections.abc import Iterable, Mapping
@@ -19,6 +20,7 @@ from fastapi import (
     Header,
     HTTPException,
     Query,
+    Request,
     Response,
     UploadFile,
     status,
@@ -27,12 +29,19 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import require_reviewer, require_viewer
+from app.api.deps import RequestIdentity, require_reviewer, require_viewer
 from app.core.audit.ledger import append_event
 from app.core.database import get_session
 from app.models.imports import ImportRecord
 from app.schemas._typing import dump_model, typed_import_module
 from app.schemas.imports import DetectedFloor, ImportResult, ParseStatusResponse
+from app.services.analytics_capture import (
+    capture_failure,
+    capture_raw_artifact,
+    capture_rejection,
+    capture_status_transition,
+    capture_success,
+)
 from app.services.storage import get_storage_service
 from app.utils.logging import get_logger
 
@@ -571,6 +580,19 @@ async def _vectorize_payload_if_requested(
             if isinstance(inline_result, Mapping):
                 vector_payload = dict(inline_result)
     except Exception as exc:  # pragma: no cover - defensive logging surface
+        await capture_failure(
+            source="imports.vectorization",
+            error=exc,
+            request_payload={
+                "import_id": import_id,
+                "filename": filename,
+                "content_type": content_type,
+                "infer_walls": infer_walls,
+                "size_bytes": len(raw_payload),
+            },
+            operation="vectorize_floorplan",
+            raise_on_error=False,
+        )
         logger.warning(
             "vectorization_failed",
             import_id=import_id,
@@ -596,6 +618,7 @@ async def _vectorize_payload_if_requested(
     "/import", response_model=ImportResult, status_code=status.HTTP_201_CREATED
 )
 async def upload_import(
+    request: Request,
     file: UploadFile = File(...),
     enable_raster_processing: bool = Form(True),
     infer_walls: bool = Form(False),
@@ -607,12 +630,24 @@ async def upload_import(
     front_setback_m: float | None = Form(default=None),
     x_zone_code: str | None = Header(None),
     session: AsyncSession = Depends(get_session),
-    _: str = Depends(require_reviewer),
+    identity: RequestIdentity = Depends(require_reviewer),
 ) -> ImportResult:
     """Persist an uploaded CAD/BIM payload and return detection metadata."""
 
     raw_payload = await file.read()
     if not raw_payload:
+        await capture_rejection(
+            source="imports.upload",
+            reason="Empty upload payload",
+            request=request,
+            identity=identity,
+            request_payload={
+                "filename": file.filename,
+                "content_type": file.content_type,
+            },
+            status_code=status.HTTP_400_BAD_REQUEST,
+            operation="validate_upload",
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Empty upload payload"
         )
@@ -624,6 +659,15 @@ async def upload_import(
         _is_supported_import(filename, content_type)
         or _is_vectorizable(filename, content_type)
     ):
+        await capture_rejection(
+            source="imports.upload",
+            reason="Unsupported file type",
+            request=request,
+            identity=identity,
+            request_payload={"filename": filename, "content_type": content_type},
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            operation="validate_upload",
+        )
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail="Unsupported file type. Upload DXF, IFC, or JSON exports, or supply a PDF/SVG/JPEG for vectorisation.",
@@ -697,6 +741,58 @@ async def upload_import(
         record.vector_summary = vector_summary
 
     session.add(record)
+    payload_sha256 = hashlib.sha256(raw_payload).hexdigest()
+    await capture_raw_artifact(
+        session,
+        artifact_type="cad_import_upload",
+        source="imports.upload",
+        storage_key=record.storage_path,
+        sha256=payload_sha256,
+        size_bytes=len(raw_payload),
+        mime_type=content_type,
+        entity_type="import_record",
+        entity_id=record.id,
+        request_id=request.headers.get("x-request-id"),
+        metadata={
+            "filename": filename,
+            "project_id": project_id,
+            "zone_code": normalised_zone,
+            "enable_raster_processing": enable_raster_processing,
+            "infer_walls": infer_walls,
+        },
+    )
+    await capture_success(
+        session,
+        source="imports.upload",
+        capture_type="ingestion",
+        operation="upload_import",
+        request=request,
+        identity=identity,
+        request_payload={
+            "filename": filename,
+            "content_type": content_type,
+            "size_bytes": len(raw_payload),
+            "sha256": payload_sha256,
+            "project_id": project_id,
+            "zone_code": normalised_zone,
+            "metric_overrides": overrides or None,
+            "enable_raster_processing": enable_raster_processing,
+            "infer_walls": infer_walls,
+        },
+        response_payload={
+            "import_id": record.id,
+            "detected_floor_count": len(detected_floors or []),
+            "detected_unit_count": len(detected_units or []),
+            "vectorized": vector_summary is not None,
+        },
+        raw_payload={
+            "layer_metadata": stored_layer_metadata,
+            "vector_summary": vector_summary,
+        },
+        entity_type="import_record",
+        entity_id=record.id,
+        status_code=status.HTTP_201_CREATED,
+    )
 
     if project_id is not None:
         await append_event(
@@ -748,8 +844,9 @@ async def get_latest_import(
 async def update_import_overrides(
     import_id: str,
     payload: MetricOverridePayload,
+    request: Request,
     session: AsyncSession = Depends(get_session),
-    _: str = Depends(require_reviewer),
+    identity: RequestIdentity = Depends(require_reviewer),
 ) -> ImportResult:
     record = await session.get(ImportRecord, import_id)
     if record is None:
@@ -785,6 +882,17 @@ async def update_import_overrides(
             },
         )
 
+    await capture_success(
+        session,
+        source="imports.overrides",
+        operation="update_import_overrides",
+        request=request,
+        identity=identity,
+        request_payload=payload.model_dump(mode="json"),
+        response_payload={"import_id": record.id, "metric_overrides": overrides or {}},
+        entity_type="import_record",
+        entity_id=record.id,
+    )
     await session.commit()
     await session.refresh(record)
     return _import_result_from_record(record)
@@ -793,8 +901,9 @@ async def update_import_overrides(
 @router.post("/parse/{import_id}", response_model=ParseStatusResponse)
 async def enqueue_parse(
     import_id: str,
+    request: Request,
     session: AsyncSession = Depends(get_session),
-    _: str = Depends(require_reviewer),
+    identity: RequestIdentity = Depends(require_reviewer),
 ) -> ParseStatusResponse:
     """Trigger parsing of an uploaded model."""
 
@@ -805,7 +914,20 @@ async def enqueue_parse(
         )
 
     record.parse_requested_at = datetime.now(UTC)
+    previous_status = record.parse_status
     record.parse_status = "queued"
+    await capture_status_transition(
+        session,
+        entity_type="import_record",
+        entity_id=record.id,
+        status_field="parse_status",
+        from_status=previous_status,
+        to_status="queued",
+        reason="enqueue_parse",
+        identity=identity,
+        request_id=request.headers.get("x-request-id"),
+        correlation_id=request.scope.get("correlation_id"),
+    )
     await session.commit()
 
     try:
@@ -819,8 +941,31 @@ async def enqueue_parse(
         )
         await session.refresh(record)
         if record.parse_status != "failed":
+            previous_status = record.parse_status
             record.parse_status = "failed"
             record.parse_error = record.parse_error or str(exc)
+            await capture_status_transition(
+                session,
+                entity_type="import_record",
+                entity_id=record.id,
+                status_field="parse_status",
+                from_status=previous_status,
+                to_status="failed",
+                reason="parse_enqueue_failed",
+                identity=identity,
+                request_id=request.headers.get("x-request-id"),
+                correlation_id=request.scope.get("correlation_id"),
+                metadata={"error": str(exc)},
+            )
+            await capture_failure(
+                source="imports.parse",
+                error=exc,
+                request=request,
+                identity=identity,
+                request_payload={"import_id": import_id},
+                operation="enqueue_parse",
+                status_code=500,
+            )
             await session.commit()
         return ParseStatusResponse(
             import_id=record.id,

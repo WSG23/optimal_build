@@ -19,6 +19,7 @@ import {
   Select,
   MenuItem,
   CircularProgress,
+  Alert,
 } from '@mui/material'
 import AgencyIcon from '@mui/icons-material/AccountBalance'
 import DocIcon from '@mui/icons-material/Description'
@@ -100,6 +101,7 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
   const [selectedAgency, setSelectedAgency] = useState('')
   const [submissionType, setSubmissionType] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [capability, setCapability] = useState<CorenetCapability | null>(null)
 
   useEffect(() => {
@@ -129,8 +131,8 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
 
   const handleSubmit = async () => {
     setSubmitting(true)
+    setSubmitError(null)
     try {
-      // Backend accepts project_id as string (UUID or integer string)
       const submission = await regulatoryApi.createSubmission({
         project_id: String(projectId),
         agency: selectedAgency,
@@ -142,7 +144,11 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
       handleReset()
     } catch (error) {
       console.error('Submission failed', error)
-      alert('Failed to submit application. See console for details.')
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to submit application. Check your network connection and try again.'
+      setSubmitError(message)
     } finally {
       setSubmitting(false)
     }
@@ -339,6 +345,15 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
             <StepLabel>Review</StepLabel>
           </Step>
         </Stepper>
+        {submitError && (
+          <Alert
+            severity="error"
+            onClose={() => setSubmitError(null)}
+            sx={{ mb: 'var(--ob-space-150)' }}
+          >
+            {submitError}
+          </Alert>
+        )}
         {renderStepContent(activeStep)}
       </DialogContent>
       <DialogActions sx={{ p: 'var(--ob-space-200)' }}>
@@ -363,11 +378,8 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
                 <CheckIcon />
               )
             }
-            sx={{
-              background:
-                'linear-gradient(135deg, var(--ob-success-700) 0%, var(--ob-success-400) 100%)',
-              color: 'var(--ob-color-text-inverse)',
-            }}
+            color="success"
+            sx={{ borderRadius: 'var(--ob-radius-xs)' }}
           >
             {submitting
               ? 'Submitting...'

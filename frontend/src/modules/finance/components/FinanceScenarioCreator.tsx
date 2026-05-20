@@ -243,7 +243,12 @@ export function FinanceScenarioCreator({
   }
 
   return (
-    <Box component="form" onSubmit={handleSubmit}>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      aria-label={`Create finance scenario for ${projectName}`}
+      noValidate
+    >
       <Box
         sx={{
           display: 'grid',

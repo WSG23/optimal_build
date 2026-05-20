@@ -25,6 +25,7 @@ from app.core.metrics import OVERLAY_BASELINE_SECONDS
 from app.core.models.geometry import GeometryGraph
 from app.models.overlay import OverlayRunLock, OverlaySourceGeometry, OverlaySuggestion
 from app.models.rkp import RefRule
+from app.services.analytics_capture import capture_lifecycle_event, capture_success
 
 ENGINE_VERSION = "2024.1"
 
@@ -126,8 +127,51 @@ async def run_overlay_for_project(
                     )
                     source.suggestions.append(suggestion)
                     session.add(suggestion)
+                    await session.flush()
+                    await capture_lifecycle_event(
+                        session,
+                        entity_type="overlay_suggestion",
+                        entity_id=str(suggestion.id),
+                        action="create",
+                        after_payload={
+                            "project_id": project_id,
+                            "source_geometry_id": source.id,
+                            "code": code,
+                            "type": suggestion.type,
+                            "title": suggestion.title,
+                            "severity": suggestion.severity,
+                            "status": suggestion.status,
+                            "engine_version": suggestion.engine_version,
+                            "geometry_checksum": fingerprint,
+                            "target_ids": target_ids,
+                            "rule_refs": rule_refs,
+                            "score": (
+                                float(suggestion.score)
+                                if suggestion.score is not None
+                                else None
+                            ),
+                        },
+                        metadata={"zone_code": zone_code},
+                    )
                     result.created += 1
                 else:
+                    before_payload = {
+                        "title": existing.title,
+                        "rationale": existing.rationale,
+                        "severity": existing.severity,
+                        "type": existing.type,
+                        "engine_version": existing.engine_version,
+                        "engine_payload": existing.engine_payload,
+                        "target_ids": existing.target_ids,
+                        "props": existing.props,
+                        "rule_refs": existing.rule_refs,
+                        "score": (
+                            float(existing.score)
+                            if existing.score is not None
+                            else None
+                        ),
+                        "geometry_checksum": existing.geometry_checksum,
+                    }
                     existing.title = payload["title"]
                     existing.rationale = payload.get("rationale")
                     existing.severity = payload.get("severity")
@@ -139,6 +183,31 @@ async def run_overlay_for_project(
                     existing.rule_refs = rule_refs
                     existing.score = payload.get("score")
                     existing.geometry_checksum = fingerprint
+                    await capture_lifecycle_event(
+                        session,
+                        entity_type="overlay_suggestion",
+                        entity_id=str(existing.id),
+                        action="update",
+                        before_payload=before_payload,
+                        after_payload={
+                            "title": existing.title,
+                            "rationale": existing.rationale,
+                            "severity": existing.severity,
+                            "type": existing.type,
+                            "engine_version": existing.engine_version,
+                            "engine_payload": existing.engine_payload,
+                            "target_ids": existing.target_ids,
+                            "props": existing.props,
+                            "rule_refs": existing.rule_refs,
+                            "score": (
+                                float(existing.score)
+                                if existing.score is not None
+                                else None
+                            ),
+                            "geometry_checksum": existing.geometry_checksum,
+                        },
+                        metadata={"zone_code": zone_code, "project_id": project_id},
+                    )
                     result.updated += 1
         finally:
             lock.is_active = False
@@ -156,6 +225,16 @@ async def run_overlay_for_project(
             "created": result.created,
             "updated": result.updated,
         },
+    )
+    await capture_success(
+        session,
+        source="overlay.run",
+        operation="evaluate_project",
+        entity_type="project",
+        entity_id=str(project_id),
+        raw_payload=result.as_dict(),
+        duration_ms=int(duration * 1000),
+        metadata={"engine_version": ENGINE_VERSION},
     )
     await session.commit()
     return result

@@ -22,6 +22,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from app.models.base import UUID, BaseModel
+from app.models.mixins import OrgScopedMixin, SoftDeleteMixin
 
 
 class ProjectType(str, Enum):
@@ -63,7 +64,7 @@ class ApprovalStatus(str, Enum):
     EXPIRED = "expired"
 
 
-class Project(BaseModel):
+class Project(SoftDeleteMixin, OrgScopedMixin, BaseModel):
     """Development project for Singapore properties."""
 
     __tablename__ = "projects"

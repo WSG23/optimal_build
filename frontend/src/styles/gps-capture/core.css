@@ -29,44 +29,41 @@
     cursor: crosshair;
 }
 
-/* Scanning state — visible border pulse + vignette */
-.gps-background-map.scanning {
-    outline: 2px solid var(--ob-color-brand-primary);
-    outline-offset: -2px;
-    animation: scan-pulse 1.5s ease-in-out infinite;
-}
-
-.gps-background-map.scanning::after {
+/* Scanning state — subtle brand-color top progress strip; no vignette */
+.gps-background-map.scanning::before {
     content: '';
     position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(
-        ellipse at center,
-        transparent 40%,
-        color-mix(in srgb, var(--ob-color-brand-primary) 6%, transparent) 100%
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        var(--ob-color-brand-primary),
+        transparent
     );
-    animation: scan-vignette 1.5s ease-in-out infinite;
+    background-size: 40% 100%;
+    background-repeat: no-repeat;
+    animation: gps-scan-strip 1.5s linear infinite;
+    pointer-events: none;
     z-index: 1;
 }
 
-@keyframes scan-pulse {
-    0%,
-    100% {
-        outline-color: transparent;
+@keyframes gps-scan-strip {
+    0% {
+        background-position: -40% 0;
     }
-    50% {
-        outline-color: var(--ob-color-brand-primary);
+    100% {
+        background-position: 140% 0;
     }
 }
 
-@keyframes scan-vignette {
-    0%,
-    100% {
-        opacity: 0;
-    }
-    50% {
-        opacity: 1;
+@media (prefers-reduced-motion: reduce) {
+    .gps-background-map.scanning::before {
+        animation: none;
+        background: var(--ob-color-brand-primary);
+        background-size: 100% 100%;
     }
 }
 
@@ -85,8 +82,8 @@
 }
 
 /* Only interactive panels capture clicks */
-.capture-card-glass,
-.gps-hud-group,
+.gps-capture-card,
+.gps-results,
 .gps-page__developer-workspace {
     pointer-events: auto;
 }
@@ -103,7 +100,7 @@
 
 /* ── Left Panel (Capture Form) ── */
 
-.capture-card-glass {
+.gps-capture-card {
     flex: 1;
     max-width: 420px;
     background: var(--ob-color-bg-surface);
@@ -121,7 +118,7 @@
         transform 0.5s ease;
 }
 
-.capture-card-glass.dimmed {
+.gps-capture-card.dimmed {
     opacity: 0.3;
     transform: scale(0.98);
     pointer-events: none;
@@ -458,14 +455,14 @@ textarea.gps-input-ghost:focus {
 
 .gps-developer-mode-toggle {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--ob-space-075);
     padding: var(--ob-space-075);
     background: transparent;
     border: var(--ob-border-fine);
     border-radius: var(--ob-radius-xs);
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease;
 }
 
 .gps-developer-mode-toggle:hover {
@@ -477,17 +474,27 @@ textarea.gps-input-ghost:focus {
     height: var(--ob-space-100);
     accent-color: var(--ob-color-brand-primary);
     cursor: pointer;
+    margin-top: var(--ob-space-025);
+    flex-shrink: 0;
 }
 
-.gps-developer-mode-toggle span {
+.gps-developer-mode-toggle__label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-025);
+    min-width: 0;
+}
+
+.gps-developer-mode-toggle__title {
     color: var(--ob-color-text-primary);
     font-size: var(--ob-font-size-sm);
+    font-weight: var(--ob-font-weight-semibold);
 }
 
-.gps-developer-mode-hint {
+.gps-developer-mode-toggle__desc {
     color: var(--ob-color-text-muted);
     font-size: var(--ob-font-size-xs);
-    margin-left: auto;
+    line-height: var(--ob-line-height-snug);
 }
 
 /* ── Scan Button ── */
@@ -617,9 +624,9 @@ body.capture-results-active .pac-container {
     margin: 0;
 }
 
-/* ── Target Acquired Confirmation ── */
+/* ── Capture confirmation ── */
 
-.gps-target-acquired {
+.gps-capture-confirm {
     display: flex;
     align-items: center;
     gap: var(--ob-space-075);
@@ -632,27 +639,27 @@ body.capture-results-active .pac-container {
     border: 1px solid
         color-mix(in srgb, var(--ob-color-status-success-text) 25%, transparent);
     border-radius: var(--ob-radius-xs);
-    animation: target-acquired-in 0.4s ease-out;
+    animation: gps-capture-confirm-in 0.4s ease-out;
 }
 
-.gps-target-acquired:focus {
+.gps-capture-confirm:focus {
     outline: none; /* Programmatic focus — no visible ring needed */
 }
 
-.gps-target-acquired__icon {
+.gps-capture-confirm__icon {
     color: var(--ob-color-status-success-text);
     font-size: var(--ob-font-size-xl);
     flex-shrink: 0;
 }
 
-.gps-target-acquired__content {
+.gps-capture-confirm__content {
     display: flex;
     flex-direction: column;
     gap: var(--ob-space-025);
     min-width: 0;
 }
 
-.gps-target-acquired__label {
+.gps-capture-confirm__label {
     font-size: var(--ob-font-size-2xs);
     font-weight: var(--ob-font-weight-bold);
     text-transform: uppercase;
@@ -660,7 +667,7 @@ body.capture-results-active .pac-container {
     color: var(--ob-color-status-success-text);
 }
 
-.gps-target-acquired__address {
+.gps-capture-confirm__address {
     font-size: var(--ob-font-size-sm);
     color: var(--ob-color-text-primary);
     white-space: nowrap;
@@ -668,7 +675,7 @@ body.capture-results-active .pac-container {
     text-overflow: ellipsis;
 }
 
-@keyframes target-acquired-in {
+@keyframes gps-capture-confirm-in {
     0% {
         opacity: 0;
         transform: translateY(-4px);
@@ -679,72 +686,196 @@ body.capture-results-active .pac-container {
     }
 }
 
-/* ── Right Panel: HUD Widgets ── */
-
-.gps-hud-group {
-    flex: 0 0 300px;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ob-space-075);
-    align-items: flex-end;
+@media (prefers-reduced-motion: reduce) {
+    .gps-capture-confirm {
+        animation: none;
+    }
 }
 
-.gps-hud-card {
-    width: 100%;
+/* ── Right column: results ── */
+
+.gps-results {
+    flex: 0 0 320px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-125);
+    align-items: stretch;
+    min-width: 0;
+}
+
+/* Empty state — pre-capture, one quiet panel */
+.gps-results--empty {
     background: var(--ob-color-bg-surface);
     border: var(--ob-border-fine);
     border-radius: var(--ob-radius-sm);
-    padding: var(--ob-space-100);
-    color: var(--ob-color-text-primary);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
+    padding: var(--ob-space-150);
+    gap: var(--ob-space-075);
+    color: var(--ob-color-text-secondary);
 }
 
-.gps-hud-card.locked {
-    filter: grayscale(1);
-    opacity: 0.6;
-}
-
-.gps-hud-card h3 {
-    margin: 0 0 var(--ob-space-050) 0;
-    font-size: var(--ob-font-size-xs);
+.gps-results__empty-eyebrow {
+    margin: 0;
+    font-size: var(--ob-font-size-2xs);
+    font-weight: var(--ob-font-weight-semibold);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--ob-color-text-muted);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
 }
 
-/* Locked Overlay */
-.gps-hud-locked-overlay {
+.gps-results__empty-headline {
+    margin: 0;
+    font-size: var(--ob-font-size-md);
+    font-weight: var(--ob-font-weight-semibold);
+    color: var(--ob-color-text-primary);
+    line-height: var(--ob-line-height-snug);
+}
+
+.gps-results__empty-list {
+    list-style: none;
+    margin: var(--ob-space-050) 0 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--ob-space-100) 0;
     gap: var(--ob-space-050);
+    font-size: var(--ob-font-size-sm);
+    color: var(--ob-color-text-secondary);
+}
+
+.gps-results__empty-list > li {
+    padding-left: var(--ob-space-100);
+    position: relative;
+}
+
+.gps-results__empty-list > li::before {
+    content: '·';
+    position: absolute;
+    left: var(--ob-space-025);
     color: var(--ob-color-text-muted);
 }
 
-.gps-hud-locked-overlay svg {
-    font-size: var(--ob-font-size-2xl);
-    margin-bottom: var(--ob-space-025);
+/* Primary card — quick analysis */
+.gps-results__primary {
+    background: var(--ob-color-bg-surface);
+    border: var(--ob-border-fine);
+    border-radius: var(--ob-radius-sm);
+    padding: var(--ob-space-150);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-100);
 }
 
-.gps-hud-content {
-    opacity: 1;
-    transition: opacity 0.3s ease;
+.gps-results__primary-header h3 {
+    margin: 0;
+    font-size: var(--ob-font-size-sm);
+    font-weight: var(--ob-font-weight-semibold);
+    color: var(--ob-color-text-primary);
 }
 
-.gps-hud-card.locked .gps-hud-content {
-    opacity: 0.15;
-    filter: blur(var(--ob-blur-sm));
-    pointer-events: none;
+/* Secondary / tertiary rows — no card chrome, just a separator */
+.gps-results__row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-075);
+    padding-top: var(--ob-space-100);
+    border-top: var(--ob-border-fine);
 }
 
-/* ── HUD Panel List ── */
+.gps-results__row-eyebrow {
+    margin: 0;
+    font-size: var(--ob-font-size-2xs);
+    font-weight: var(--ob-font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ob-color-text-muted);
+}
+
+.gps-results__row-loading {
+    display: flex;
+    align-items: center;
+    gap: var(--ob-space-075);
+    color: var(--ob-color-text-muted);
+    font-size: var(--ob-font-size-sm);
+}
+
+.gps-results__row-empty {
+    margin: 0;
+    color: var(--ob-color-text-muted);
+    font-size: var(--ob-font-size-sm);
+    font-style: italic;
+}
+
+.gps-results__row-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: var(--ob-space-100);
+    margin: 0;
+}
+
+.gps-results__row-metrics > div {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ob-space-025);
+    min-width: 0;
+}
+
+.gps-results__row-metrics dt {
+    font-size: var(--ob-font-size-2xs);
+    color: var(--ob-color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.gps-results__row-metrics dd {
+    margin: 0;
+    font-size: var(--ob-font-size-sm);
+    font-weight: var(--ob-font-weight-semibold);
+    color: var(--ob-color-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gps-results__more {
+    margin: 0;
+    color: var(--ob-color-text-muted);
+    font-size: var(--ob-font-size-xs);
+}
+
+.gps-results__inline-empty {
+    margin: 0;
+    color: var(--ob-color-text-muted);
+    font-size: var(--ob-font-size-sm);
+    font-style: italic;
+}
+
+.gps-results__upsell {
+    margin: 0;
+    color: var(--ob-color-text-secondary);
+    font-size: var(--ob-font-size-xs);
+    line-height: var(--ob-line-height-snug);
+}
+
+.gps-results__upsell-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--ob-color-brand-primary);
+    font: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.gps-results__upsell-link:hover {
+    text-decoration-thickness: 2px;
+}
+
+.gps-results__upsell-link:focus-visible {
+    outline: 2px solid var(--ob-color-brand-primary);
+    outline-offset: 2px;
+    border-radius: var(--ob-radius-xs);
+}
+
+/* ── Quick-analysis list ── */
 
 .gps-panel__list {
     list-style: none;
@@ -759,7 +890,6 @@ body.capture-results-active .pac-container {
     padding: var(--ob-space-075);
     background: var(--ob-color-action-hover);
     border-radius: var(--ob-radius-xs);
-    border-left: 2px solid var(--ob-color-brand-primary);
 }
 
 .gps-panel__headline {
@@ -800,22 +930,7 @@ body.capture-results-active .pac-container {
     color: var(--ob-color-text-primary);
 }
 
-/* ── HUD helpers ── */
-
-.gps-hud-more-scenarios {
-    font-size: var(--ob-font-size-xs);
-    color: var(--ob-color-text-muted);
-    font-style: italic;
-    margin-top: var(--ob-space-050);
-}
-
-.gps-hud-loading {
-    display: flex;
-    align-items: center;
-    gap: var(--ob-space-050);
-    color: var(--ob-color-text-muted);
-    padding: var(--ob-space-100);
-}
+/* ── Spinner sizes ── */
 
 .gps-spinner--sm {
     width: var(--ob-space-100);
@@ -827,49 +942,46 @@ body.capture-results-active .pac-container {
     height: 14px;
 }
 
-/* ── Marketing Packs ── */
+/* ── Marketing packs ── */
 
 .gps-pack-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--ob-space-050);
+    gap: var(--ob-space-075);
 }
 
 .gps-pack-btn {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: var(--ob-space-050);
-    padding: var(--ob-space-075);
+    justify-content: flex-start;
+    gap: var(--ob-space-075);
+    padding: var(--ob-space-075) var(--ob-space-100);
     background: transparent;
     border: var(--ob-border-fine);
     border-radius: var(--ob-radius-xs);
     color: var(--ob-color-text-primary);
-    font-size: var(--ob-font-size-sm);
+    font-size: var(--ob-font-size-xs);
+    font-weight: var(--ob-font-weight-medium);
+    text-align: left;
     cursor: pointer;
-    transition: all 0.15s;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
 }
 
 .gps-pack-btn:hover:not(:disabled) {
     background: var(--ob-color-action-hover);
+    border-color: var(--ob-color-text-secondary);
 }
 
-/* ── Upsell Card ── */
-
-.gps-hud-card--upsell {
-    background: var(--ob-color-bg-surface);
-    border-color: var(--ob-color-border-brand);
+.gps-pack-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
-.gps-hud-upsell-text {
-    color: var(--ob-color-text-secondary);
-    font-size: var(--ob-font-size-sm);
-    margin: var(--ob-space-075) 0;
-}
-
-.gps-hud-upsell-btn {
-    width: 100%;
+.gps-pack-btn svg {
+    color: var(--ob-color-text-muted);
+    flex-shrink: 0;
 }
 
 /* ── Map Fallback (loading / error) ── */
@@ -957,6 +1069,11 @@ body.capture-results-active .pac-container {
     width: 100%;
     border-collapse: collapse;
     font-size: var(--ob-font-size-sm);
+}
+
+/* Coordinates and IDs stay mono for fixed-width alignment */
+.gps-panel td.gps-panel__cell--mono,
+.gps-panel th.gps-panel__cell--mono {
     font-family: var(--ob-font-family-mono, monospace);
 }
 
@@ -1027,17 +1144,12 @@ body.capture-results-active .pac-container {
         flex-direction: column;
     }
 
-    .capture-card-glass {
+    .gps-capture-card {
         max-width: 100%;
     }
 
-    .gps-hud-group {
+    .gps-results {
         flex: auto;
-        width: 100%;
-        align-items: stretch;
-    }
-
-    .gps-hud-card {
         width: 100%;
     }
 

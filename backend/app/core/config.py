@@ -271,6 +271,8 @@ class Settings:
     PREVIEW_MAX_VERSIONS: int
     PREVIEW_GEOMETRY_DETAIL_LEVEL: str
     CAPTURE_LIVE_SOURCE_SCAN_ENABLED: bool
+    ANALYTICS_CAPTURE_MAX_JSON_BYTES: int
+    ANALYTICS_CAPTURE_PREVIEW_BYTES: int
 
     def __init__(self) -> None:
         self.PROJECT_NAME = os.getenv("PROJECT_NAME", "Building Compliance Platform")
@@ -405,6 +407,14 @@ class Settings:
         self.CAPTURE_LIVE_SOURCE_SCAN_ENABLED = _load_bool(
             "CAPTURE_LIVE_SOURCE_SCAN_ENABLED",
             False,
+        )
+        self.ANALYTICS_CAPTURE_MAX_JSON_BYTES = _load_positive_int(
+            "ANALYTICS_CAPTURE_MAX_JSON_BYTES",
+            256 * 1024,
+        )
+        self.ANALYTICS_CAPTURE_PREVIEW_BYTES = _load_positive_int(
+            "ANALYTICS_CAPTURE_PREVIEW_BYTES",
+            4096,
         )
 
     def _load_listing_token_secret(self) -> str:

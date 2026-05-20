@@ -3,6 +3,7 @@ global:
   evaluation_interval: 15s
 
 rule_files:
+  - alerting_rules.yml
   - preview_generation.rules.yml
 
 scrape_configs:

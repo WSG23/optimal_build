@@ -1,13 +1,5 @@
 import React from 'react'
-import {
-  Box,
-  Paper,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Chip,
-} from '@mui/material'
+import { Box, Typography, Grid, Card, CardContent, Chip } from '@mui/material'
 import {
   BarChart,
   Bar,
@@ -22,6 +14,7 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown'
 import TrendingFlatIcon from '@mui/icons-material/TrendingFlat'
 import { YieldBenchmarks } from '../../../types/market'
 import { PropertyType } from '../../../types/property'
+import { GlassCard } from '../../canonical/GlassCard'
 
 interface YieldBenchmarkChartProps {
   yieldBenchmarks?: YieldBenchmarks | null
@@ -182,11 +175,11 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
           </Grid>
         </Grid>
       ) : (
-        <Paper sx={{ p: 'var(--ob-space-150)', mb: 'var(--ob-space-150)' }}>
+        <GlassCard sx={{ p: 'var(--ob-space-150)', mb: 'var(--ob-space-150)' }}>
           <Typography color="textSecondary">
             No yield benchmark data available.
           </Typography>
-        </Paper>
+        </GlassCard>
       )}
 
       {trends && (
@@ -211,7 +204,7 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
         </Box>
       )}
 
-      <Paper sx={{ p: 'var(--ob-space-150)' }}>
+      <GlassCard sx={{ p: 'var(--ob-space-150)' }}>
         <Typography variant="h6" sx={{ mb: 'var(--ob-space-100)' }}>
           Year-over-year movement
         </Typography>
@@ -251,7 +244,7 @@ const YieldBenchmarkChart: React.FC<YieldBenchmarkChartProps> = ({
             </ResponsiveContainer>
           </Box>
         )}
-      </Paper>
+      </GlassCard>
     </Box>
   )
 }

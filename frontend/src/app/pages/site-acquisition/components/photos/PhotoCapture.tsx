@@ -168,8 +168,8 @@ export function PhotoCapture({
           <div style={{ color: 'var(--ob-color-text-secondary)' }}>
             <div
               style={{
-                width: '44px',
-                height: '44px',
+                width: '44px', // canon-ok: WCAG touch target
+                height: '44px', // canon-ok: WCAG touch target
                 margin: '0 auto var(--ob-space-075)',
                 border: '3px solid var(--ob-color-border-subtle)',
                 borderTop: '3px solid var(--ob-color-brand-primary)',

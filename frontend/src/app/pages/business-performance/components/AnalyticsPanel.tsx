@@ -187,7 +187,7 @@ export function AnalyticsPanel({
                     color: tooltipLabelColor,
                   }}
                   contentStyle={{
-                    borderRadius: 4, // Square Cyber-Minimalism: sm for tooltips
+                    borderRadius: 4, // canon-ok: Recharts CSS, 4px = --ob-radius-sm
                     border: 'none',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                   }}

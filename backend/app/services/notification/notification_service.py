@@ -13,6 +13,11 @@ from app.models.notification import (
     NotificationPriority,
     NotificationType,
 )
+from app.services.analytics_capture import (
+    capture_lifecycle_event,
+    capture_status_transition,
+    capture_success,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +27,52 @@ class NotificationService:
 
     def __init__(self, db_session: AsyncSession):
         self.db = db_session
+
+    @staticmethod
+    def _enum_value(value: object) -> object:
+        return value.value if hasattr(value, "value") else value
+
+    def _notification_payload(self, notification: Notification) -> dict[str, object]:
+        return {
+            "id": str(notification.id),
+            "user_id": str(notification.user_id),
+            "notification_type": self._enum_value(notification.notification_type),
+            "title": notification.title,
+            "message": notification.message,
+            "priority": self._enum_value(notification.priority),
+            "related_entity_type": notification.related_entity_type,
+            "related_entity_id": (
+                str(notification.related_entity_id)
+                if notification.related_entity_id
+                else None
+            ),
+            "action_url": notification.action_url,
+            "is_read": bool(notification.is_read),
+            "is_dismissed": bool(notification.is_dismissed),
+            "read_at": (
+                notification.read_at.isoformat() if notification.read_at else None
+            ),
+            "dismissed_at": (
+                notification.dismissed_at.isoformat()
+                if notification.dismissed_at
+                else None
+            ),
+        }
+
+    @staticmethod
+    def _email_log_payload(email_log: EmailLog) -> dict[str, object]:
+        return {
+            "id": str(email_log.id),
+            "recipient_email": email_log.recipient_email,
+            "subject": email_log.subject,
+            "template_name": email_log.template_name,
+            "notification_id": (
+                str(email_log.notification_id) if email_log.notification_id else None
+            ),
+            "status": email_log.status,
+            "error_message": email_log.error_message,
+            "sent_at": email_log.sent_at.isoformat() if email_log.sent_at else None,
+        }
 
     async def create_notification(
         self,
@@ -47,6 +98,34 @@ class NotificationService:
         )
 
         self.db.add(notification)
+        await self.db.flush()
+        await capture_lifecycle_event(
+            self.db,
+            entity_type="notification",
+            entity_id=str(notification.id),
+            action="create",
+            after_payload=self._notification_payload(notification),
+            metadata={"user_id": str(user_id)},
+        )
+        await capture_status_transition(
+            self.db,
+            entity_type="notification",
+            entity_id=str(notification.id),
+            status_field="is_read",
+            from_status=None,
+            to_status=str(notification.is_read).lower(),
+            reason="notification_created",
+            metadata={"user_id": str(user_id)},
+        )
+        await capture_success(
+            self.db,
+            source="notification.create",
+            operation="create",
+            entity_type="notification",
+            entity_id=str(notification.id),
+            raw_payload=self._notification_payload(notification),
+            metadata={"user_id": str(user_id)},
+        )
         await self.db.commit()
         await self.db.refresh(notification)
 
@@ -142,9 +221,29 @@ class NotificationService:
         count = 0
         now = utcnow()
         for notification in notifications:
+            before = self._notification_payload(notification)
             notification.is_read = True
             notification.read_at = now
             self.db.add(notification)
+            await capture_status_transition(
+                self.db,
+                entity_type="notification",
+                entity_id=str(notification.id),
+                status_field="is_read",
+                from_status="false",
+                to_status="true",
+                reason="mark_as_read",
+                metadata={"user_id": str(user_id)},
+            )
+            await capture_lifecycle_event(
+                self.db,
+                entity_type="notification",
+                entity_id=str(notification.id),
+                action="update",
+                before_payload=before,
+                after_payload=self._notification_payload(notification),
+                metadata={"updated_fields": ["is_read", "read_at"]},
+            )
             count += 1
 
         if count > 0:
@@ -166,9 +265,29 @@ class NotificationService:
         count = 0
         now = utcnow()
         for notification in notifications:
+            before = self._notification_payload(notification)
             notification.is_read = True
             notification.read_at = now
             self.db.add(notification)
+            await capture_status_transition(
+                self.db,
+                entity_type="notification",
+                entity_id=str(notification.id),
+                status_field="is_read",
+                from_status="false",
+                to_status="true",
+                reason="mark_all_as_read",
+                metadata={"user_id": str(user_id)},
+            )
+            await capture_lifecycle_event(
+                self.db,
+                entity_type="notification",
+                entity_id=str(notification.id),
+                action="update",
+                before_payload=before,
+                after_payload=self._notification_payload(notification),
+                metadata={"updated_fields": ["is_read", "read_at"]},
+            )
             count += 1
 
         if count > 0:
@@ -196,9 +315,28 @@ class NotificationService:
         count = 0
         now = utcnow()
         for notification in notifications:
+            before = self._notification_payload(notification)
             notification.is_dismissed = True
             notification.dismissed_at = now
             self.db.add(notification)
+            await capture_status_transition(
+                self.db,
+                entity_type="notification",
+                entity_id=str(notification.id),
+                status_field="is_dismissed",
+                from_status="false",
+                to_status="true",
+                reason="dismiss_notifications",
+                metadata={"user_id": str(user_id)},
+            )
+            await capture_lifecycle_event(
+                self.db,
+                entity_type="notification",
+                entity_id=str(notification.id),
+                action="dismiss",
+                before_payload=before,
+                after_payload=self._notification_payload(notification),
+            )
             count += 1
 
         if count > 0:
@@ -220,9 +358,28 @@ class NotificationService:
         count = 0
         now = utcnow()
         for notification in notifications:
+            before = self._notification_payload(notification)
             notification.is_dismissed = True
             notification.dismissed_at = now
             self.db.add(notification)
+            await capture_status_transition(
+                self.db,
+                entity_type="notification",
+                entity_id=str(notification.id),
+                status_field="is_dismissed",
+                from_status="false",
+                to_status="true",
+                reason="dismiss_all",
+                metadata={"user_id": str(user_id)},
+            )
+            await capture_lifecycle_event(
+                self.db,
+                entity_type="notification",
+                entity_id=str(notification.id),
+                action="dismiss",
+                before_payload=before,
+                after_payload=self._notification_payload(notification),
+            )
             count += 1
 
         if count > 0:
@@ -287,10 +444,33 @@ class NotificationService:
         }
 
     async def delete_notification(self, notification_id: UUID, user_id: UUID) -> bool:
-        """Delete a notification. Returns True if deleted."""
+        """Dismiss a notification while retaining history. Returns True if found."""
         notification = await self.get_notification_by_id(notification_id, user_id)
         if notification:
-            await self.db.delete(notification)
+            before = self._notification_payload(notification)
+            notification.is_dismissed = True
+            notification.dismissed_at = notification.dismissed_at or utcnow()
+            self.db.add(notification)
+            await capture_status_transition(
+                self.db,
+                entity_type="notification",
+                entity_id=str(notification.id),
+                status_field="is_dismissed",
+                from_status=str(before["is_dismissed"]).lower(),
+                to_status="true",
+                reason="delete_notification_as_dismiss",
+                metadata={"user_id": str(user_id)},
+            )
+            await capture_lifecycle_event(
+                self.db,
+                entity_type="notification",
+                entity_id=str(notification.id),
+                action="delete",
+                before_payload=before,
+                after_payload=self._notification_payload(notification),
+                tombstone_payload={"dismissed_at": notification.dismissed_at},
+                metadata={"retained": True},
+            )
             await self.db.commit()
             return True
         return False
@@ -420,6 +600,31 @@ class NotificationService:
         )
 
         self.db.add(email_log)
+        await self.db.flush()
+        await capture_lifecycle_event(
+            self.db,
+            entity_type="email_log",
+            entity_id=str(email_log.id),
+            action="create",
+            after_payload=self._email_log_payload(email_log),
+        )
+        await capture_status_transition(
+            self.db,
+            entity_type="email_log",
+            entity_id=str(email_log.id),
+            status_field="status",
+            from_status=None,
+            to_status=status,
+            reason="email_log_created",
+        )
+        await capture_success(
+            self.db,
+            source="notification.email_log",
+            operation="create",
+            entity_type="email_log",
+            entity_id=str(email_log.id),
+            raw_payload=self._email_log_payload(email_log),
+        )
         await self.db.commit()
         await self.db.refresh(email_log)
 
@@ -437,12 +642,32 @@ class NotificationService:
         email_log = result.scalar_one_or_none()
 
         if email_log:
+            before = self._email_log_payload(email_log)
+            previous_status = email_log.status
             email_log.status = status
             if status == "sent":
                 email_log.sent_at = utcnow()
             if error_message:
                 email_log.error_message = error_message
             self.db.add(email_log)
+            await capture_status_transition(
+                self.db,
+                entity_type="email_log",
+                entity_id=str(email_log.id),
+                status_field="status",
+                from_status=previous_status,
+                to_status=status,
+                reason="email_log_status_update",
+            )
+            await capture_lifecycle_event(
+                self.db,
+                entity_type="email_log",
+                entity_id=str(email_log.id),
+                action="update",
+                before_payload=before,
+                after_payload=self._email_log_payload(email_log),
+                metadata={"updated_fields": ["status", "error_message", "sent_at"]},
+            )
             await self.db.commit()
             await self.db.refresh(email_log)
 
